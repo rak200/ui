@@ -31,3 +31,5 @@
 /.prettierignore                export-ignore
 /release-please-config.json     export-ignore
 /.release-please-manifest.json  export-ignore
+
+# canary: deliberate seed drift
