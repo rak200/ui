@@ -27,6 +27,9 @@
   "sideEffects": [
     "./dist/*.js"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "validate": "npm run build && publint --strict",
     "lint": "prettier --check .",
