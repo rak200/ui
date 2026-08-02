@@ -1,0 +1,49 @@
+{
+  "name": "@rak200/ui",
+  "version": "0.0.0",
+  "description": "Host-agnostic custom-element UI components for the rak200 ecosystem",
+  "license": "MIT",
+  "author": "rak200 <rak.ricardo@windowslive.com>",
+  "homepage": "https://github.com/rak200/ui",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rak200/ui.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/*.js"
+  ],
+  "scripts": {
+    "validate": "npm run build && publint --strict",
+    "lint": "prettier --check .",
+    "fix": "prettier --write . && eslint --fix .",
+    "analyse": "tsc --noEmit && eslint .",
+    "test": "vitest run",
+    "coverage": "coverage-floor",
+    "scan": "semgrep scan --config=p/typescript --severity=ERROR --sarif -o semgrep.sarif",
+    "mutation": "stryker run",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.0",
+    "@types/node": "^26.1.2",
+    "@vitest/browser-playwright": "^4.1.10"
+  }
+}
