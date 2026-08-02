@@ -1,0 +1,8 @@
+{
+  "extends": "@rak200/coding-standard-ts/tsconfig",
+  "compilerOptions": {
+    "experimentalDecorators": false,
+    "useDefineForClassFields": false
+  },
+  "include": ["src"]
+}
