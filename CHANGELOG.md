@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/rak200/ui/compare/0.1.0...0.1.1) (2026-08-02)
+
+
+### Features
+
+* publish to npm on release, over OIDC with no stored token ([#6](https://github.com/rak200/ui/issues/6)) ([4db8777](https://github.com/rak200/ui/commit/4db87773cbf9a97c40c3abc6935a9048eaf0ad31))
+
 ## 0.1.0 (2026-08-02)
 
 
