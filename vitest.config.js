@@ -9,11 +9,18 @@ export default mergeConfig(
     base,
     defineConfig({
         test: {
+            // Browser mode photographs a failing test and files the attachment beside it.
+            // Both are build artefacts, and the accessibility canary produces them on
+            // purpose — so they go to `reports/`, which the seeded `.gitignore` already
+            // covers. The alternative was two more ignore lines in a file CI diffs
+            // byte-for-byte against the pinned scaffold.
+            attachmentsDir: 'reports/vitest-attachments',
             browser: {
                 enabled: true,
                 headless: true,
                 provider: playwright(),
                 instances: [{ browser: 'chromium' }],
+                screenshotDirectory: 'reports/screenshots',
             },
         },
     }),

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import './button.js';
-import type { RakButton } from './button.js';
+import { expectAccessible } from './a11y.js';
+import '../src/button.js';
+import type { RakButton } from '../src/button.js';
 
 /** Mounts a `<rak-button>` and waits for its first render. */
 async function mount(html: string): Promise<RakButton> {
@@ -106,6 +107,18 @@ describe('rak-button', () => {
         const element = await mount('<rak-button>Save</rak-button>');
 
         expect(inner(element).getAttribute('part')).toBe('button');
+    });
+
+    it('has no accessibility violations', async () => {
+        await expectAccessible('<rak-button>Save</rak-button>');
+    });
+
+    it('has no accessibility violations as a secondary button', async () => {
+        await expectAccessible('<rak-button variant="secondary">Cancel</rak-button>');
+    });
+
+    it('has no accessibility violations while disabled', async () => {
+        await expectAccessible('<rak-button disabled>Unavailable</rak-button>');
     });
 
     it('keeps a visible focus ring — removing it is how a component stops being usable', () => {
