@@ -5,5 +5,9 @@
 /coverage/
 /reports/
 /.stryker-tmp/
+# Vitest browser mode photographs a failing test. Useful while debugging, never a
+# source file — and the accessibility canary produces them on purpose.
+/.vitest-attachments/
+__screenshots__/
 *.tsbuildinfo
 semgrep.sarif

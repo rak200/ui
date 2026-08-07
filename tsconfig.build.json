@@ -1,5 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "outDir": "dist", "rootDir": "src" },
+  // `include` is restated, not inherited: the base config also covers `testing/`, and a
+  // build rooted at `src` errors on an input outside its rootDir.
+  "include": ["src"],
   "exclude": ["src/**/*.test.ts"]
 }

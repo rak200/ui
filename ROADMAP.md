@@ -16,12 +16,6 @@ package does not depend on it yet — deliberately. A button has no state to mod
 carried before anything uses it is a claim the code does not back up. The first component with
 dismissable layers, focus trapping or roving tabindex brings Zag with it.
 
-## Accessibility assertions in the suite
-
-The quality bar in RFC 0016 includes **axe in CI**. The suite runs in a real browser, which is what
-makes automated a11y assertions possible at all, but `axe-core` is not wired in yet. It belongs in
-the `test` verb rather than a ninth one — the task vocabulary is closed at eight.
-
 ## Design tokens beyond the web
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by

@@ -30,6 +30,10 @@ would need every one of them written by hand, and would get one of them wrong.
 The class is exported as `RakButton` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
 
+Every state below is asserted against [axe](https://github.com/dequelabs/axe-core) in the suite,
+for WCAG A/AA, inside the real browser it renders in — including through the shadow root, which is
+where a check that stops at the host silently passes.
+
 ## `variant`
 
 ```html
