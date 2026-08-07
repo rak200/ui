@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { expectAccessible } from '../testing/a11y.js';
+import { expectAccessible } from '../tests/a11y.js';
 import './button.js';
 import type { RakButton } from './button.js';
 

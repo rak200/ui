@@ -24,14 +24,16 @@ src/
 ├── tokens.ts   # the design tokens: names, defaults, and a :root stylesheet
 ├── button.ts   # <rak-button>
 └── index.ts    # the public barrel
-testing/
+tests/
 └── a11y.ts     # the axe assertion the component suite is built on
 docs/           # one page per unit, indexed by docs/README.md
 ```
 
-`testing/` sits outside `src/` because three tools are keyed on `src/**` — the build emits it,
-coverage counts it, Stryker mutates it — and test scaffolding is none of those things. Inside
-`src/` the helper would ship to consumers with `axe-core` behind it.
+A component's own tests sit beside it in `src/`; `tests/` holds the suite's scaffolding, and it is
+outside `src/` because three tools are keyed on `src/**` — the build emits it, coverage counts it,
+Stryker mutates it — and scaffolding is none of those things. Inside `src/` the helper would ship
+to consumers with `axe-core` behind it. `tests/` is also the slot the scaffold already reserves and
+`export-ignore`s, so nothing seeded had to drift to make room for it.
 
 Each component lives in one file with its tests beside it, and registers itself with
 `customElements.define` at import — so a host imports the package and writes the tag.
@@ -43,7 +45,7 @@ Each component lives in one file with its tests beside it, and registers itself 
   semantics and focus behaviour stay the browser's job. Reimplementing them with `role=` is how a
   component gets one of them wrong.
 - **A component test asserts accessibility.** `expectAccessible('<rak-thing>…</rak-thing>')` from
-  `testing/a11y.ts`, at least once per component and once per state that changes the markup. The
+  `tests/a11y.ts`, at least once per component and once per state that changes the markup. The
   ruleset is WCAG A/AA and the bar is serious-and-critical; both are named in that file with their
   reason. Narrowing either is a change to the file, never a per-test opt-out.
 - **Every visual decision is a token.** A hardcoded colour, radius or spacing in a component is a
