@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { expectAccessible } from '../tests/a11y.js';
-import './button.js';
-import type { RakButton } from './button.js';
+import { expectAccessible } from './a11y.js';
+import '../src/button.js';
+import type { RakButton } from '../src/button.js';
 
 /** Mounts a `<rak-button>` and waits for its first render. */
 async function mount(html: string): Promise<RakButton> {

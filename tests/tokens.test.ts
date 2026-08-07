@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaults, tokens, tokenStyleSheet } from './tokens.js';
+import { defaults, tokens, tokenStyleSheet } from '../src/tokens.js';
 
 describe('tokens', () => {
     it('gives every declared token a default', () => {

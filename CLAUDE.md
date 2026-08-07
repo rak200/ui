@@ -21,22 +21,24 @@ has state to model, design tokens as the single source of truth for the visual l
 
 ```
 src/
-├── tokens.ts   # the design tokens: names, defaults, and a :root stylesheet
-├── button.ts   # <rak-button>
-└── index.ts    # the public barrel
-tests/
-└── a11y.ts     # the axe assertion the component suite is built on
-docs/           # one page per unit, indexed by docs/README.md
+├── tokens.ts        # the design tokens: names, defaults, and a :root stylesheet
+├── button.ts        # <rak-button>
+└── index.ts         # the public barrel
+tests/               # mirrors src/, one test file per unit
+├── tokens.test.ts
+├── button.test.ts
+├── a11y.ts          # the axe assertion the component suite is built on
+└── a11y.test.ts
+docs/                # one page per unit, indexed by docs/README.md
 ```
 
-A component's own tests sit beside it in `src/`; `tests/` holds the suite's scaffolding, and it is
-outside `src/` because three tools are keyed on `src/**` — the build emits it, coverage counts it,
-Stryker mutates it — and scaffolding is none of those things. Inside `src/` the helper would ship
-to consumers with `axe-core` behind it. `tests/` is also the slot the scaffold already reserves and
-`export-ignore`s, so nothing seeded had to drift to make room for it.
+`tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
+export-ignore` in the seeded `.gitattributes` has always been written for. `a11y.ts` is the
+exception the mirror does not cover: it is the suite's own scaffolding rather than a unit, so it
+has no counterpart in `src/`.
 
-Each component lives in one file with its tests beside it, and registers itself with
-`customElements.define` at import — so a host imports the package and writes the tag.
+Each component lives in one file and registers itself with `customElements.define` at import — so
+a host imports the package and writes the tag.
 
 ## Conventions specific to this library
 

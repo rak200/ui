@@ -5,10 +5,8 @@
  * than a ninth one: the task vocabulary is closed at eight, and this is the suite
  * asserting something more about the same subject, not a new kind of work.
  *
- * It lives outside `src/` deliberately. Three tools are keyed on `src/**` — the build
- * emits it, coverage counts it, Stryker mutates it — and a test helper is none of those
- * things. Inside `src/` it would ship to consumers with `axe-core` behind it; here it is
- * what it says it is, the suite's own scaffolding.
+ * Not a unit of the library and so not mirrored from `src/`: it is the suite's own
+ * scaffolding, and `a11y.test.ts` beside it tests the assertion rather than a component.
  */
 
 import axe, { type ImpactValue, type Result, type RunOptions } from 'axe-core';
