@@ -45,7 +45,7 @@
     "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.0",
+    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.3",
     "@types/node": "^26.1.2",
     "@vitest/browser-playwright": "^4.1.10"
   }
