@@ -22,7 +22,7 @@ The consumer-facing half of those decisions is [ARCHITECTURE.md](ARCHITECTURE.md
 ```
 src/
 ├── tokens.ts        # the design tokens: names, defaults, and a :root stylesheet
-├── button.ts        # <rak-button>
+├── button.ts        # <ui-button>
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
@@ -43,15 +43,15 @@ a host imports the package and writes the tag.
 ## Conventions specific to this library
 
 - **Delegate to the platform.** A component wraps the real element wherever one exists —
-  `<rak-button>` renders a `<button>` — so keyboard activation, the accessible name, disabled
+  `<ui-button>` renders a `<button>` — so keyboard activation, the accessible name, disabled
   semantics and focus behaviour stay the browser's job. Reimplementing them with `role=` is how a
   component gets one of them wrong.
-- **A component test asserts accessibility.** `expectAccessible('<rak-thing>…</rak-thing>')` from
+- **A component test asserts accessibility.** `expectAccessible('<ui-thing>…</ui-thing>')` from
   `tests/a11y.ts`, at least once per component and once per state that changes the markup. The
   ruleset is WCAG A/AA and the bar is serious-and-critical; both are named in that file with their
   reason. Narrowing either is a change to the file, never a per-test opt-out.
 - **Every visual decision is a token.** A hardcoded colour, radius or spacing in a component is a
-  decision a host cannot override without forking. Components read `var(--rak-*, fallback)`.
+  decision a host cannot override without forking. Components read `var(--ui-*, fallback)`.
 - **No `accessor`, no decorators.** Properties are declared with a `static properties` map beside
   plain fields, under `useDefineForClassFields: false`. The `accessor` keyword is an auto-accessor
   the test browser does not implement, and the transform leaves it in place — the module then fails

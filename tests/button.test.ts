@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { expectAccessible } from './a11y.js';
 import '../src/button.js';
-import type { RakButton } from '../src/button.js';
+import type { UiButton } from '../src/button.js';
 
-/** Mounts a `<rak-button>` and waits for its first render. */
-async function mount(html: string): Promise<RakButton> {
+/** Mounts a `<ui-button>` and waits for its first render. */
+async function mount(html: string): Promise<UiButton> {
     const host = document.createElement('div');
     host.innerHTML = html;
     document.body.append(host);
 
-    const element = host.querySelector('rak-button');
+    const element = host.querySelector('ui-button');
 
     if (element === null) {
-        throw new Error('no rak-button in the fixture');
+        throw new Error('no ui-button in the fixture');
     }
 
     await element.updateComplete;
@@ -21,7 +21,7 @@ async function mount(html: string): Promise<RakButton> {
 }
 
 /** The real `<button>` the component delegates to. */
-function inner(element: RakButton): HTMLButtonElement {
+function inner(element: UiButton): HTMLButtonElement {
     const button = element.shadowRoot?.querySelector('button');
 
     if (!(button instanceof HTMLButtonElement)) {
@@ -35,39 +35,39 @@ afterEach(() => {
     document.body.replaceChildren();
 });
 
-describe('rak-button', () => {
+describe('ui-button', () => {
     it('registers itself as a custom element', () => {
-        expect(customElements.get('rak-button')).toBeDefined();
+        expect(customElements.get('ui-button')).toBeDefined();
     });
 
     it('delegates to a real button, so the platform owns the semantics', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
 
         expect(inner(element).tagName).toBe('BUTTON');
     });
 
     it('takes its accessible name from the slotted content', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
 
         expect(element.textContent.trim()).toBe('Save');
     });
 
     it('is primary until told otherwise', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
 
         expect(element.variant).toBe('primary');
         expect(inner(element).classList.contains('primary')).toBe(true);
     });
 
     it('carries the variant onto the inner button', async () => {
-        const element = await mount('<rak-button variant="secondary">Cancel</rak-button>');
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
 
         expect(element.variant).toBe('secondary');
         expect(inner(element).classList.contains('secondary')).toBe(true);
     });
 
     it('reflects the variant back to the attribute when set as a property', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
         element.variant = 'secondary';
         await element.updateComplete;
 
@@ -75,21 +75,21 @@ describe('rak-button', () => {
     });
 
     it('is enabled until told otherwise', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
 
         expect(element.disabled).toBe(false);
         expect(inner(element).disabled).toBe(false);
     });
 
     it('disables the inner button, which is what stops the click', async () => {
-        const element = await mount('<rak-button disabled>Save</rak-button>');
+        const element = await mount('<ui-button disabled>Save</ui-button>');
 
         expect(element.disabled).toBe(true);
         expect(inner(element).disabled).toBe(true);
     });
 
     it('reflects disabled back to the attribute, so CSS can select on it', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
         element.disabled = true;
         await element.updateComplete;
 
@@ -97,33 +97,33 @@ describe('rak-button', () => {
     });
 
     it('is reachable by keyboard', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
         inner(element).focus();
 
         expect(element.shadowRoot?.activeElement).toBe(inner(element));
     });
 
     it('exposes the inner button as a part, so a host can style it', async () => {
-        const element = await mount('<rak-button>Save</rak-button>');
+        const element = await mount('<ui-button>Save</ui-button>');
 
         expect(inner(element).getAttribute('part')).toBe('button');
     });
 
     it('has no accessibility violations', async () => {
-        await expectAccessible('<rak-button>Save</rak-button>');
+        await expectAccessible('<ui-button>Save</ui-button>');
     });
 
     it('has no accessibility violations as a secondary button', async () => {
-        await expectAccessible('<rak-button variant="secondary">Cancel</rak-button>');
+        await expectAccessible('<ui-button variant="secondary">Cancel</ui-button>');
     });
 
     it('has no accessibility violations while disabled', async () => {
-        await expectAccessible('<rak-button disabled>Unavailable</rak-button>');
+        await expectAccessible('<ui-button disabled>Unavailable</ui-button>');
     });
 
     it('keeps a visible focus ring — removing it is how a component stops being usable', () => {
         const styles = String(
-            (customElements.get('rak-button') as unknown as { styles: unknown }).styles,
+            (customElements.get('ui-button') as unknown as { styles: unknown }).styles,
         );
 
         expect(styles).toContain('focus-visible');

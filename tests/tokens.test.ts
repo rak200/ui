@@ -8,9 +8,9 @@ describe('tokens', () => {
         }
     });
 
-    it('names every token under the --rak- prefix', () => {
+    it('names every token under the --ui- prefix', () => {
         for (const token of tokens) {
-            expect(token.startsWith('--rak-'), token).toBe(true);
+            expect(token.startsWith('--ui-'), token).toBe(true);
         }
     });
 

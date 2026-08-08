@@ -32,9 +32,19 @@ Zag is **not a dependency yet**, deliberately. A button has no state to model, a
 carried before anything uses it is a claim the code does not back up. It arrives with the first
 component that has dismissable layers, focus trapping or roving tabindex.
 
+## The prefix is `ui-`
+
+Tags, CSS custom properties and exported classes all carry it: `<ui-button>`, `--ui-radius`,
+`UiButton`. It is the repository name, so a reader can derive it from something that exists.
+
+The trade-off is stated rather than hidden: a short vendor-style prefix — the web-components
+convention, `sl-` or `md-` or `ion-` — would collide less on a page that combines this kit with
+another. `ui-` is generic, and that risk is accepted in exchange for a prefix that matches its
+source. A consumer mixing kits should expect to check for a clash.
+
 ## The platform owns what the platform is good at
 
-A component wraps the real element wherever one exists — `<rak-button>` renders a `<button>` — so
+A component wraps the real element wherever one exists — `<ui-button>` renders a `<button>` — so
 keyboard activation, the accessible name, disabled semantics and focus behaviour stay the browser's
 job. A `<div role="button">` needs every one of them written by hand, and gets one of them wrong.
 
@@ -54,7 +64,7 @@ Verification is two-layered, because automated tooling catches only a fraction o
 ## Every visual decision is a token
 
 Colour, radius and spacing are CSS custom properties with fallbacks, so a host restyles the kit
-without forking it. Components read `var(--rak-*, fallback)`; a hardcoded value is a decision a host
+without forking it. Components read `var(--ui-*, fallback)`; a hardcoded value is a decision a host
 cannot override.
 
 Tokens are also the single source of truth that keeps a native shell reachable later, which is why

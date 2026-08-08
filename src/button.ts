@@ -14,10 +14,10 @@ export type ButtonVariant = 'primary' | 'secondary';
  *
  * @example
  * ```html
- * <rak-button variant="primary">Save</rak-button>
+ * <ui-button variant="primary">Save</ui-button>
  * ```
  */
-export class RakButton extends LitElement {
+export class UiButton extends LitElement {
     static override readonly styles = css`
         :host {
             display: inline-block;
@@ -25,10 +25,10 @@ export class RakButton extends LitElement {
 
         button {
             font: inherit;
-            font-family: var(--rak-font, system-ui, sans-serif);
+            font-family: var(--ui-font, system-ui, sans-serif);
             border: 1px solid transparent;
-            border-radius: var(--rak-radius, 0.375rem);
-            padding: var(--rak-space, 0.5rem) calc(var(--rak-space, 0.5rem) * 2);
+            border-radius: var(--ui-radius, 0.375rem);
+            padding: var(--ui-space, 0.5rem) calc(var(--ui-space, 0.5rem) * 2);
             cursor: pointer;
         }
 
@@ -40,18 +40,18 @@ export class RakButton extends LitElement {
         /* A visible focus ring is not decoration: removing it is the single most common
        way a component stops being usable by keyboard. */
         button:focus-visible {
-            outline: 2px solid var(--rak-color-focus, #f59e0b);
+            outline: 2px solid var(--ui-color-focus, #f59e0b);
             outline-offset: 2px;
         }
 
         button.primary {
-            background: var(--rak-color-accent, #2563eb);
-            color: var(--rak-color-accent-contrast, #ffffff);
+            background: var(--ui-color-accent, #2563eb);
+            color: var(--ui-color-accent-contrast, #ffffff);
         }
 
         button.secondary {
-            background: var(--rak-color-surface, #ffffff);
-            color: var(--rak-color-text, #1f2937);
+            background: var(--ui-color-surface, #ffffff);
+            color: var(--ui-color-text, #1f2937);
             border-color: currentcolor;
         }
     `;
@@ -88,10 +88,10 @@ export class RakButton extends LitElement {
 // inside the warm process Stryker switches mutants in — so by the time a mutant on this
 // line is active the element is already defined under the original name, and no test can
 // observe the change. Outside the runner's reach, not an equivalent mutant.
-customElements.define('rak-button', RakButton);
+customElements.define('ui-button', UiButton);
 
 declare global {
     interface HTMLElementTagNameMap {
-        'rak-button': RakButton;
+        'ui-button': UiButton;
     }
 }
