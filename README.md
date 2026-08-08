@@ -13,8 +13,7 @@ Host-agnostic custom-element UI components for the rak200 ecosystem.
 They are **custom elements**, so they work in any page and any framework — or none. That is the
 whole point: a component welded to one framework is not reusable outside it, and this kit exists to
 be reused. Built with [Lit](https://lit.dev) for a thin runtime with no build step required of the
-host. See [RFC 0016](https://github.com/rak200/devr/blob/master/docs/proposals/0016-ui-component-library.md)
-for how that was decided and what was rejected.
+host. See [ARCHITECTURE.md](ARCHITECTURE.md) for how that was decided and what was rejected.
 
 ## Install
 
