@@ -37,10 +37,15 @@ component that has dismissable layers, focus trapping or roving tabindex.
 Tags, CSS custom properties and exported classes all carry it: `<ui-button>`, `--ui-radius`,
 `UiButton`. It is the repository name, so a reader can derive it from something that exists.
 
-The trade-off is stated rather than hidden: a short vendor-style prefix — the web-components
-convention, `sl-` or `md-` or `ion-` — would collide less on a page that combines this kit with
-another. `ui-` is generic, and that risk is accepted in exchange for a prefix that matches its
-source. A consumer mixing kits should expect to check for a clash.
+The trade-off is stated rather than hidden. A generic prefix collides more easily, and the collision
+worth naming is **not** with another kit: a distinctive prefix is the web-components convention
+(`sl-`, `md-`, `ion-`), which leaves the generic space largely unclaimed by libraries. It is with the
+host application's own components, where `ui-card` is the first thing anyone reaches for.
+
+That collision is unrecoverable rather than degraded. `customElements.define` throws on a name
+already registered, and these components register themselves at import — so whichever side loads
+second breaks, and if that is this package, it breaks on load. Opt-in registration would remove it,
+and is the change to make if it ever bites; nothing needs it today.
 
 ## The platform owns what the platform is good at
 
