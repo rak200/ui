@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/rak200/ui/compare/0.1.1...0.1.2) (2026-08-08)
+
+
+### Bug Fixes
+
+* public docs pointed at a private repository ([#31](https://github.com/rak200/ui/issues/31)) ([5efc43b](https://github.com/rak200/ui/commit/5efc43b81bc5991aad514f57d213e1f409385a63))
+
 ## [0.1.1](https://github.com/rak200/ui/compare/0.1.0...0.1.1) (2026-08-02)
 
 
