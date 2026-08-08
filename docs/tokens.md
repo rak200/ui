@@ -18,13 +18,13 @@ import { tokens, defaults, tokenStyleSheet } from '@rak200/ui';
 
 ## Overriding a token
 
-Every token is a CSS custom property under `--rak-`, so a host overrides one by setting it anywhere
+Every token is a CSS custom property under `--ui-`, so a host overrides one by setting it anywhere
 above the component. No build step, no theme object, no fork:
 
 ```css
 :root {
-  --rak-color-accent: rebeccapurple;
-  --rak-radius: 0;
+  --ui-color-accent: rebeccapurple;
+  --ui-radius: 0;
 }
 ```
 
@@ -37,7 +37,7 @@ without the components. A token added later is a token some target already hardc
 The token names this package defines, as they appear in CSS.
 
 ```js
-tokens; // ['--rak-color-accent', '--rak-color-accent-contrast', … , '--rak-font']
+tokens; // ['--ui-color-accent', '--ui-color-accent-contrast', … , '--ui-font']
 ```
 
 ## `defaults`
@@ -46,7 +46,7 @@ The default value of every token. Deliberately plain rather than branded: a desi
 defaults are what a host sees before it has decided anything.
 
 ```js
-defaults['--rak-color-accent']; // '#2563eb'
+defaults['--ui-color-accent']; // '#2563eb'
 ```
 
 ## `tokenStyleSheet`
@@ -56,7 +56,7 @@ Returns the text of a `:root` block; the host inserts it however it prefers.
 
 ```js
 tokenStyleSheet();
-// ':root {\n  --rak-color-accent: #2563eb;\n  … \n}'
+// ':root {\n  --ui-color-accent: #2563eb;\n  … \n}'
 ```
 
 ## `Token`

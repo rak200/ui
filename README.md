@@ -28,17 +28,17 @@ npm install @rak200/ui
   import '@rak200/ui';
 </script>
 
-<rak-button>Save</rak-button>
-<rak-button variant="secondary">Cancel</rak-button>
-<rak-button disabled>Unavailable</rak-button>
+<ui-button>Save</ui-button>
+<ui-button variant="secondary">Cancel</ui-button>
+<ui-button disabled>Unavailable</ui-button>
 ```
 
 Every visual decision is a CSS custom property, so a host restyles the kit without forking it:
 
 ```css
 :root {
-  --rak-color-accent: rebeccapurple;
-  --rak-radius: 0;
+  --ui-color-accent: rebeccapurple;
+  --ui-radius: 0;
 }
 ```
 

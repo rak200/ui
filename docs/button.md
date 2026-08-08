@@ -1,4 +1,4 @@
-# RakButton
+# UiButton
 
 [← Reference](README.md)
 
@@ -10,16 +10,16 @@ import '@rak200/ui';
 
 ## Contents
 
-- [`<rak-button>`](#rak-button)
+- [`<ui-button>`](#ui-button)
 - [`variant`](#variant)
 - [`disabled`](#disabled)
 - [`ButtonVariant`](#buttonvariant)
 - [Styling](#styling)
 
-## `<rak-button>`
+## `<ui-button>`
 
 ```html
-<rak-button>Save</rak-button>
+<ui-button>Save</ui-button>
 ```
 
 The element delegates to a real `<button>` inside its shadow root rather than reimplementing one.
@@ -27,7 +27,7 @@ That is the whole design: keyboard activation, the accessible name taken from th
 the disabled semantics and the focus behaviour stay the platform's job. A `<div role="button">`
 would need every one of them written by hand, and would get one of them wrong.
 
-The class is exported as `RakButton` for a host that needs the type; importing the package
+The class is exported as `UiButton` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
 
 Every state below is asserted against [axe](https://github.com/dequelabs/axe-core) in the suite,
@@ -37,7 +37,7 @@ where a check that stops at the host silently passes.
 ## `variant`
 
 ```html
-<rak-button variant="secondary">Cancel</rak-button>
+<ui-button variant="secondary">Cancel</ui-button>
 ```
 
 How much visual weight the button carries — `primary` (the default) or `secondary`. Reflected, so
@@ -46,7 +46,7 @@ it can be read back from the attribute and selected on in CSS.
 ## `disabled`
 
 ```html
-<rak-button disabled>Unavailable</rak-button>
+<ui-button disabled>Unavailable</ui-button>
 ```
 
 Whether the button rejects interaction. It sets `disabled` on the inner `<button>`, which is what
@@ -63,7 +63,7 @@ The inner button is exposed as a **part**, so a host can reach it without pierci
 blindly:
 
 ```css
-rak-button::part(button) {
+ui-button::part(button) {
   text-transform: uppercase;
 }
 ```

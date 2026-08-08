@@ -5,7 +5,7 @@ is **removed** by the pull request that delivers it, not annotated as done.
 
 ## The v0 surface
 
-RFC 0016 sets the v0 component surface. `rak-button` and the token layer ship; the rest is pending,
+RFC 0016 sets the v0 component surface. `ui-button` and the token layer ship; the rest is pending,
 and each entry gets an issue before it is worked.
 
 ## Zag arrives with the first stateful component
