@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/rak200/ui/compare/0.2.0...0.2.1) (2026-08-08)
+
+
+### Features
+
+* `<ui-field>` — label, help and error association ([#38](https://github.com/rak200/ui/issues/38)) ([1ba600b](https://github.com/rak200/ui/commit/1ba600bfcf7bb10b789267512e7198e5a916d6c6))
+
 ## [0.2.0](https://github.com/rak200/ui/compare/0.1.2...0.2.0) (2026-08-08)
 
 
