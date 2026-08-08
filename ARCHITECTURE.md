@@ -53,6 +53,23 @@ A component wraps the real element wherever one exists — `<ui-button>` renders
 keyboard activation, the accessible name, disabled semantics and focus behaviour stay the browser's
 job. A `<div role="button">` needs every one of them written by hand, and gets one of them wrong.
 
+## ARIA association is light-DOM only
+
+Where a component wires an ARIA relationship between elements — a label to a control, help text to
+`aria-describedby` — every one of those elements is slotted, and none is rendered into the shadow
+root.
+
+Not a preference. An IDREF does not cross a shadow boundary: a `<label for>` inside a component's
+shadow root leaves `control.labels` empty, and an `aria-describedby` pointing in resolves to nothing.
+Measured in the browser the suite runs in, both ways round. So a component that associates elements
+generates the ids and points them at each other, and leaves the elements in the host's tree where the
+browser can see them all.
+
+The cost is a more verbose call site — `<label slot="label">Amount</label>` rather than
+`label="Amount"`. ARIA element reflection (`ariaLabelledByElements`) would remove it and does cross
+the boundary, but its support cannot be verified by a suite that runs one engine, and this is the one
+place in the library where being wrong is invisible to everyone who can see.
+
 ## The accessibility bar
 
 **Every component meets WCAG 2.2 AA and conforms to its WAI-ARIA APG pattern.**

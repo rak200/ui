@@ -36,9 +36,17 @@ without the components. A token added later is a token some target already hardc
 
 The token names this package defines, as they appear in CSS.
 
-```js
-tokens; // ['--ui-color-accent', '--ui-color-accent-contrast', … , '--ui-font']
-```
+| Token                        | Covers                                  |
+| ---------------------------- | --------------------------------------- |
+| `--ui-color-accent`          | the accent surface of a primary control |
+| `--ui-color-accent-contrast` | text on that accent                     |
+| `--ui-color-surface`         | a neutral surface                       |
+| `--ui-color-text`            | body and secondary text                 |
+| `--ui-color-focus`           | the focus ring                          |
+| `--ui-color-danger`          | error text                              |
+| `--ui-radius`                | corner radius                           |
+| `--ui-space`                 | the spacing step components scale from  |
+| `--ui-font`                  | the font stack                          |
 
 ## `defaults`
 

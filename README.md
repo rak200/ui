@@ -28,6 +28,12 @@ npm install @rak200/ui
   import '@rak200/ui';
 </script>
 
+<ui-field>
+  <label slot="label">Amount</label>
+  <input type="number" />
+  <span slot="help">In BRL, two decimals.</span>
+</ui-field>
+
 <ui-button>Save</ui-button>
 <ui-button variant="secondary">Cancel</ui-button>
 <ui-button disabled>Unavailable</ui-button>
