@@ -13,9 +13,9 @@ Guidance for Claude Code when working in this repository.
 
 **@rak200/ui** is a library of host-agnostic custom elements: components that work in any page and
 any framework, or none. It is the ecosystem's first non-PHP artifact and its first npm package.
-[RFC 0016](https://github.com/rak200/devr/blob/master/docs/proposals/0016-ui-component-library.md)
-decided the shape — Lit for a thin runtime, Zag for behaviour and accessibility when a component
-has state to model, design tokens as the single source of truth for the visual language.
+RFC 0016 decided the shape — Lit for a thin runtime, Zag for behaviour and accessibility when a
+component has state to model, design tokens as the single source of truth for the visual language.
+The consumer-facing half of those decisions is [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Architecture
 
