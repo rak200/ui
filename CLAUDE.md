@@ -23,10 +23,12 @@ The consumer-facing half of those decisions is [ARCHITECTURE.md](ARCHITECTURE.md
 src/
 ├── tokens.ts        # the design tokens: names, defaults, and a :root stylesheet
 ├── button.ts        # <ui-button>
+├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
 ├── button.test.ts
+├── field.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 └── a11y.test.ts
 docs/                # one page per unit, indexed by docs/README.md
