@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/rak200/ui/compare/0.1.2...0.2.0) (2026-08-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* the element prefix is `ui-`, from the repository name ([#34](https://github.com/rak200/ui/issues/34))
+
+### Features
+
+* the element prefix is `ui-`, from the repository name ([#34](https://github.com/rak200/ui/issues/34)) ([f58c92e](https://github.com/rak200/ui/commit/f58c92eeed9299bd37de2515d07934d748f43f89))
+
 ## [0.1.2](https://github.com/rak200/ui/compare/0.1.1...0.1.2) (2026-08-08)
 
 
