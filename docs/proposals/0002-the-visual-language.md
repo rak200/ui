@@ -44,6 +44,18 @@ being extracted once something needs them.
 matters here for a reason beyond the switcher: whatever this proposal decides gets rendered, and
 anything rendered by the suite is inside the accessibility bar.
 
+**A component that accepts interaction and shows no feedback is defective** — from the owner, and a
+premise rather than a finding. This library is meant to be rich in effects and transitions, so
+`:hover` and `:focus` are not an enhancement a component may skip; their absence is a bug report, not
+a backlog entry. The criterion narrows this proposal without pre-deciding it: it says _that_
+interaction states exist, never which values they take. Read against the tree it already names one
+defect — `button.ts` has a focus ring and no hover — and it binds the nine interactive components
+still queued.
+
+**The pairing is load-bearing, and it is the accessible one.** A component that reacts to the mouse
+and not to the keyboard is the classic way an effect becomes an exclusion, so the criterion names
+both states or neither.
+
 **And a premise this proposal proposes rather than inherits, stated so it can be rejected:** what is
 settled here is **structure, not values**. Which categories of token exist, what a theme _is_
 mechanically, how motion is expressed — those are decisions a document can make, and the shape of
@@ -445,6 +457,68 @@ it has no rule to switch on. Enforcing it means a hand-written assertion, which 
 thing here: `tests/a11y.ts` is already exactly that, a hand-written accessibility assertion carrying
 its own reasoning.
 
+### What widening the token union actually breaks — measured
+
+_Adding a token breaks `Record<Token, string>`_ was stated early and left there, which priced every
+later question about how many tokens to declare. Measured properly: a two-token package, a consumer
+exercising eight ways of touching the surface, and one name appended.
+
+```
+Record<Token, string> exhaustive          BREAKS   TS2741, property missing
+{…} satisfies Record<Token, string>       BREAKS   TS1360
+switch + const never: never = t           BREAKS   TS2322, not assignable to never
+Partial<Record<Token, string>>            fine
+(t: Token) => …                           fine
+tokens.map(…)                             fine
+a literal assigned to Token               fine
+{ [K in Token]?: string }                 fine
+```
+
+**Three of eight, and the three are one thing.** Every breaking pattern is the consumer asserting it
+enumerates the whole set; nothing that merely _uses_ a token notices. At runtime nothing notices at
+all — a custom property that no rule reads has no effect, and the new token arrives with a default.
+
+**The consequence is about the caret, not the compiler.** Under `bump-minor-pre-major` a break cuts a
+minor, and `^0.3.0` refuses `0.4.0`. Treating every added token as a break means twelve components'
+worth of minors, each one severing automatic updates for every host — to protect a claim of
+completeness over a set that visibly is not complete. That is what item 11 answers.
+
+### What `:active` actually matches — measured
+
+The interaction states the criterion above requires were assumed to behave the obvious way. Four of
+them do not. Chromium via Playwright, read back from `getComputedStyle` rather than
+`Element.matches` — the first run used `matches` and answered for the selector engine rather than for
+the rule that applies.
+
+```
+mousedown on a button        the button, its ancestor <div> and <body> all match
+mousedown inside a shadow    the inner <button> matches AND :host(:active) matches
+Space held                   matches
+Enter held                   NEVER matches
+button is disabled           STILL matches
+dragged off, still held      STILL matches; the click never fires
+```
+
+**`:active` is a chain, and it crosses the shadow boundary**, so a component can style either the
+inner control or `:host(:active)`. One cascade note that cost a re-measurement: a `ui-button:active`
+rule in the host document beats the shadow tree's `:host(:active)`, which is `:host` being
+deliberately weak rather than a bug.
+
+**Enter produces no `:active` at all**, and that follows from the platform: Space activates on
+release, so there is an interval; Enter activates on keydown, so there is none. A pressed state can
+therefore never be the only evidence a button responded — which is the same conclusion the
+hover/focus pairing reaches from the other side.
+
+**A disabled button matches `:active`.** An unguarded `button:active { … }` would make a disabled
+control react to a click it does not perform, and ordering will not save it because
+`button:disabled` in `button.ts` sets `opacity` and `cursor` — different properties, no collision.
+The rule has to be written `button:not(:disabled):active`.
+
+**Not measured**: Firefox, Safari, and iOS touch, where `:active` has a long-standing dependency on a
+touch listener existing and `-webkit-tap-highlight-color` paints over the component's own answer. A
+library that intends to be rich in effects owes that a measurement before the first one ships, not
+after.
+
 ### The question underneath
 
 RFC 0001 found its question by measuring: _which hand-written surface is the one a gate can check._
@@ -480,7 +554,8 @@ decide; the worked shape after them follows from item 1, which is resolved.
 
   Spacing already lives this way without anyone deciding it — `calc(var(--ui-space) * 2)` in
   `button.ts` is a scale by multiplication. And the two kinds explain why item 1 gives colour one
-  layer while item 9 gives duration two, on a property of the domain rather than a preference.
+  layer while item 9 gives duration two, on a property of the domain rather than a preference. **How
+  a scale's steps are named is item 10**, and it applies to every category in the second kind.
 
 - **A host overrides one name to change one thing.** The override surface is the semantic layer, and
   its size is the cost a host pays to make the kit theirs. This is the argument against enumerating
@@ -623,7 +698,7 @@ something to fix rather than something already decided.
 
 ## Decision
 
-**Partly resolved**, which is what keeps this `Exploring`: seven items are settled, two are not, and
+**Partly resolved**, which is what keeps this `Exploring`: ten items are settled, one is not, and
 they are **kept apart below rather than interleaved**. Item 5 appears among the settled having been
 closed, reopened by item 2 and closed again, and item 3 arrived carrying two halves of which only one
 was settled — the round trips are left visible, because an item that reopens or splits says something
@@ -794,6 +869,78 @@ The decision is the one item 5 already made for `color-scheme`, applied again: o
 output, because leaving it to the host is a silent failure and a sibling export creates a which-do-I-call
 problem. The assertion changes; the principle does not.
 
+#### Item 4 — Which categories enter now
+
+**A category enters with the pull request of the component that consumes it, and a component that
+ships without its interaction states is a defect rather than a gap.** Today that admits exactly one
+new category — motion — and one purpose inside it.
+
+**The item had three questions, and the third was hiding under the other two.** _Which categories_
+and _which motion purposes_ were both being answered against an unpriced cost: if adding a token
+later is expensive, declaring the queue's tokens now is prudence; if it is cheap, the same act is a
+guess published as a promise. Measuring the widening settled that, and the answer moved to item 11.
+With additions cheap, **batching has no motive left**, and the two questions collapse into one
+trigger.
+
+**Four triggers were considered, and the losing arguments matter more than the winning one.**
+
+_Everything the queue foresees_ — motion, elevation, layering, a type scale, success and warning, all
+at once — loses on the shape of its failure. Values chosen with no component to judge them against
+get corrected when the component arrives, and correcting a published default moves the rendering of
+every host that did not override it, with no error anywhere. It trades a loud break for a silent one,
+which is the exact inversion the Layer 1 non-negotiables exist to prevent — every rule in that list
+is there because a failure was silent. What pre-population produces is also already measured in this
+Study: a peer with 390 tokens, 213 of them varying and 115 of them aliases.
+
+_Strictly what a component consumes today_ loses on item 3, which is **already resolved**. Nothing in
+the tree animates, so a reduced-motion collapse would have nothing to collapse and no test; the
+mechanism would arrive with the first component that animates, which is the retrofit this proposal
+exists to prevent.
+
+_What a written issue already names_ was the most checkable of the four, and it was checked: #18 says
+_surface, radius, spacing and elevation from tokens_, #21 says _motion respects
+`prefers-reduced-motion`_, and layering and a type scale are named in no issue at all — they were a
+forecast, not a fact. It still loses, because #18's sentence describes an intended discipline rather
+than specifying a value, and a card's elevation cannot be judged without a card. The checkability it
+offered survives in the winner: _the PR of the consuming component_ needs no forecast either.
+
+**So the criterion is the defect clause, and the premise in _What is already settled_ is what makes
+it a rule rather than an exception for one component.** An interactive component without `:hover` and
+`:focus` is defective, so those states are a present consumer, not an anticipated one. Elevation
+arrives with `ui-card` (#18), layering and positioning with the first overlay, a type scale with
+`ui-table` (#19), success and warning with `ui-toast` (#21) — each judged against something.
+
+**Every category admitted this way is scale-bearing**, which is the _Proposed design_'s split read
+forward: elevation, layering and type size each arrive as a scale with semantic names over it rather
+than as loose values, so item 10 governs all of them without a second debate. Border colour never
+reaches this list — the role count put it under item 1, as a derivation rather than a declaration.
+
+**The motion purposes follow from the same criterion applied honestly.** Item 9 made duration
+two-layer and easing single-layer; the only purpose with a consumer today is a property changing on
+an element that stays. `enter` and `exit` wait for the four overlays. Three names, and `tokens` goes
+from nine to twelve:
+
+```ts
+'--ui-duration-100',   // the step — item 10
+'--ui-duration-state', // the purpose, pointing at it — item 9
+'--ui-easing-state',   // easing has no ground layer — item 9
+```
+
+Choosing `state` alone prejudges nothing: `enter` wants an ease-out, `exit` an ease-in, and `state`
+something symmetric because it reverses mid-flight. Three independent decisions, and item 10's gaps
+let the scale grow underneath them.
+
+**The hover and active colours are not in that list, and that is item 1 working.** They are mixed
+from `--ui-color-accent`, so by item 7 they live in the second array and widen nothing. The colour
+half of the defect costs zero.
+
+**Two things this item deliberately does not decide.** The value of the step is item 6's _taste_
+class, and that rule already names who decides it. And the asymmetry a press wants — the measurement
+above puts a click near 100ms, so an entering transition of 150ms finishes after the click is over —
+is `transition-duration: 0s` on the `:active` rule, a structural decision in the component rather
+than a second token. The focus ring is likely a third case: delaying the affordance is the opposite
+of what it exists to do.
+
 #### Item 5 — `tokenStyleSheet()` and the thirteen fallbacks
 
 **Resolved, on the second pass: two records and a generated expression, with `color-scheme` emitted
@@ -944,13 +1091,17 @@ already makes about Zag.
 scale underneath its purposes, which easing does not.**
 
 ```css
-/* ground: the scale. Steps, not facts. */
---ui-duration-fast   --ui-duration-moderate   --ui-duration-slow
+/* ground: the scale. Steps, not facts. Named by item 10. */
+--ui-duration-100   --ui-duration-200
 
 /* derived: what a component reads. A formula that is a plain reference. */
---ui-duration-enter: var(--ui-duration-fast);
+--ui-duration-enter: var(--ui-duration-200);
 --ui-easing-enter    --ui-easing-exit    --ui-easing-state
 ```
+
+_An earlier draft of this entry wrote the scale as `fast / moderate / slow`. Item 10 replaced those
+names, for a reason that has nothing to do with motion and everything to do with what happens the
+first time a step is needed between two of them._
 
 Split out of item 3, which was recorded as resolving both halves and had only resolved one. The
 rival was **by speed alone** — `--ui-duration-fast` read directly by components, the peer's shape,
@@ -1017,35 +1168,84 @@ that stands on its own: a host changing a speed should not have to restate a cur
 more than a convention is that it can be gated, and cheaply** — see the Rollout, where the browser
 does the validating.
 
-**The set of purposes and the number of steps in the scale are item 4's**, and their values are item
+**The set of purposes is item 4's**, how the steps are named is item 10's, and the values are item
 6's — taste for the steps themselves, rule-bound for the relation between them.
+
+#### Item 10 — How the steps of a scale are named
+
+**Resolved: ordinal names with gaps — `--ui-duration-100`, `-200`, leaving room for `-150` and
+`-250` — for every scale-bearing category, with one standing exception below.**
+
+The question that produced this item: with `fast / moderate / slow`, **what happens when a component
+needs something between `moderate` and `slow`?** It is not hypothetical; it is what a growing
+component set does.
+
+**The framing that decided it:** a naming scheme that turns a **foreseeable** change into a breaking
+one is a bad scheme, and this change was foreseen before a line of it was written. Four schemes,
+judged on what insertion costs in each:
+
+| Scheme                                     | Inserting a step between two others                                           |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| Adjectives — `fast / moderate / slow`      | rename the neighbours (**breaking**), or a name that does not read as ordered |
+| Adjectives with reserved room — `x-fast …` | postpones it, does not solve it, and pre-populates                            |
+| **Ordinals with gaps — `100 / 200`**       | **additive** — `150` is a new token                                           |
+| Base and multiplier — `calc(base * 2)`     | free, no token at all                                                         |
+
+The first two are eliminated by the framing: renaming a token is breaking, per the study, and the
+second only moves the day it happens.
+
+**Base-and-multiplier is elegant, has precedent in this tree, and loses on the domain.** Spacing is
+genuinely multiplicative, which is why `calc(var(--ui-space) * 2)` in `button.ts` is right and
+**stays** — this item does not condemn it. Duration is not: the peer's measured scale runs 50, 150,
+250, 500, 1000, with ratios of 3, 1.67, 2, 2. Expressing that as a base times a multiplier puts
+`* 1.67` in a formula, or forces the scale to be geometric when good motion scales are not. **The
+rule is per category, and the test is whether the steps are genuinely proportional.**
+
+**The readability cost of ordinals is smaller here than elsewhere, because of item 9.** Components
+never read the ground — they read `--ui-duration-enter`. A number appears in exactly two places, the
+`formulas` record and the table in `docs/tokens.md`. Adjectives would be most legible precisely where
+nobody looks.
+
+**Two consequences.** It governs **every** scale-bearing category, so elevation, type size and
+layering inherit it without a second debate — which is the criterion item 4 already carries. And it
+**disarms the question of how many steps to start with**: with insertion additive, two steps commit
+nothing. That question stops being structural and becomes what item 6 calls rule-bound — the rule is
+_ordinals with gaps_, and the concrete steps appear as their consumers do.
+
+#### Item 11 — What a widened token union costs a consumer
+
+**Split out of item 4, because it turned out to precede it.** As long as the price of adding a token
+was unknown, _which categories enter now_ could not be argued on its merits — every option was really
+an argument about how much a later addition would hurt. It sat inside item 4 as a consequence and was
+in fact a premise.
+
+**The token set is declared open, and adding to it is a `feat`.** `docs/tokens.md` and the docblock on
+`tokens` say so in those words: the set grows as components arrive, and asserting completeness over it
+asserts something this package does not promise. The supported shape is the partial map — which is
+what a theme is anyway, and what item 5's `darkScheme` already is.
+
+**Measured before deciding, and the measurement is narrower than the claim it replaced.** Three of
+eight consumer patterns break, and all three are the same act: enumerating the whole set. Reading a
+token, taking one as a parameter, iterating the array and mapping optionally all survive, and nothing
+survives or breaks at runtime because a custom property nobody reads does nothing.
+
+**The deciding argument is the caret, not the compiler.** `^0.3.0` refuses `0.4.0`, and
+`bump-minor-pre-major` makes every break a minor. Calling each added token a break would mean twelve
+components' worth of minors, every one of them severing automatic updates for every host — a real,
+recurring cost imposed on everyone, to defend a claim of completeness against a set whose own
+documentation says it is not complete.
+
+**What was rejected: opening the type itself.** `Token | (string & {})` removes the break by
+accepting any string, and takes the typo with it — `read('--ui-color-surfase')` would compile. The
+openness is a documented promise about the set, never a widening of the type; the type stays exact so
+it keeps catching what it exists to catch.
+
+**Item 7 is not reopened by this.** It kept derived names out of `Token` for a semantic reason — a
+derivation is not a declaration — and that reason is untouched by the cost of widening being small.
 
 ### Open
 
-Two. **The work order is 4, then 8** — and 8 is answerable at any point, since nothing in it waits on
-the other.
-
-#### Item 4 — Which categories enter now
-
-Elevation, layering and a type scale are needed by queued components and by neither that exists.
-Adding a token is cheap and adding it _later_ is what `src/tokens.ts` already warns about; adding one
-nothing uses is a decision made without a case. Border colour has left this item — the count puts it
-under item 1, as a derivation rather than a declaration. Whether success and warning arrive now or
-with `ui-toast` arrived here from item 1.
-
-**This item inherits a criterion and a count.** The criterion is the identity-bearing versus
-scale-bearing split in the _Proposed design_: every category this item admits is scale-bearing —
-elevation, layering, type size — so each arrives as a scale with semantic names over it, not as
-loose values, and the question _how many tokens_ becomes _how many steps_. The count is item 9's:
-**the number of steps in the duration scale, and the set of purposes above it**, which that item
-settled the shape of and deliberately left the size of here.
-
-**And it carries a semver consequence it does not look like it has.** Item 7 kept `Token` from
-widening, but only for the derived names; every ground token this item admits still widens it, and
-the study established that widening breaks a consumer who writes `Record<Token, string>`
-exhaustively. So `--ui-color-success` and `--ui-color-warning`, and any elevation or layering token
-that lands beside them, are that breaking change. Whether it is worth a note in the release or more
-than a note is part of what this item decides.
+One, and it is answerable at any point because nothing in it waits on anything else here.
 
 #### Item 8 — Which of RFC 0001 and this one is built first
 
@@ -1063,9 +1263,19 @@ rather than preceding it.
 
 Conditional on the Decision, and only the parts already known are written down.
 
-- **A token added is a type widened.** Any pull request that adds one is at least a `feat`, and the
-  release notes say which names appeared, because a consumer mapping `Token` exhaustively finds out
-  at compile time.
+- **A token added is a type widened, and by item 11 that is a `feat` and not a break.** Any pull
+  request that adds one still names the appearing tokens in its release notes, because the three
+  consumer patterns that do break find out at compile time and deserve to read why. The openness is
+  written where a consumer looks — `docs/tokens.md` and the docblock on `tokens` — or it is not a
+  promise, only a habit.
+- **A component ships with its interaction states or it does not ship.** The criterion in _What is
+  already settled_ is a review rule, not an aspiration: `:hover` and `:focus` together, both or
+  neither, for every component that accepts interaction. The nine still queued inherit it, and
+  `ui-button` is the first to pay it off.
+- **`:active` is guarded against `:disabled`, measured and not assumed.** A disabled button matches
+  `:active`, so the rule is written `button:not(:disabled):active` and ordering does not substitute
+  for it. The same measurement says Enter produces no `:active` at all, which is why the pressed
+  state is never the only feedback a component gives.
 - **A second theme is a second contrast obligation.** Its stories render it, so `expectAccessible`
   reaches it; a theme without a story is outside the bar this repository advertises.
 - **Reduced motion gets a test, not a comment**, and it asserts two things rather than one. That the
