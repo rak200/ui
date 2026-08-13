@@ -42,22 +42,18 @@ has no counterpart in `src/`.
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
 
-## Conventions specific to this library
+## Where the rules are
 
-- **Delegate to the platform.** A component wraps the real element wherever one exists —
-  `<ui-button>` renders a `<button>` — so keyboard activation, the accessible name, disabled
-  semantics and focus behaviour stay the browser's job. Reimplementing them with `role=` is how a
-  component gets one of them wrong.
-- **A component test asserts accessibility.** `expectAccessible('<ui-thing>…</ui-thing>')` from
-  `tests/a11y.ts`, at least once per component and once per state that changes the markup. The
-  ruleset is WCAG A/AA and the bar is serious-and-critical; both are named in that file with their
-  reason. Narrowing either is a change to the file, never a per-test opt-out.
-- **Every visual decision is a token.** A hardcoded colour, radius or spacing in a component is a
-  decision a host cannot override without forking. Components read `var(--ui-*, fallback)`.
-- **No `accessor`, no decorators.** Properties are declared with a `static properties` map beside
-  plain fields, under `useDefineForClassFields: false`. The `accessor` keyword is an auto-accessor
-  the test browser does not implement, and the transform leaves it in place — the module then fails
-  to parse.
-- **A mutant on a module-level side effect cannot be killed.** Stryker switches mutants inside a
-  warm process, so `customElements.define(...)` has already run with the original value. Exclude
-  it at the narrowest node with that reason; never widen the exclusion to the file.
+In the two imports above, in [ARCHITECTURE.md](ARCHITECTURE.md), and in each file beside the line it
+explains. This file restates none of them.
+
+- **Delegate to the platform**, **every visual decision is a token**, and **the accessibility bar** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), which is the consumer-facing half of RFC 0016.
+- **How to write the accessibility assertion**, and how often —
+  `expectAccessible('<ui-thing>…</ui-thing>')` from `tests/a11y.ts`. The ruleset, the
+  serious-and-critical bar and the per-state obligation are all in that file, each with its reason.
+- **Why `accessor` and decorators are off** — the comment beside both flags in `tsconfig.json`.
+  Turning either on makes the suite unable to load the code that uses it.
+- **Why a mutant on a module-level side effect cannot be killed** — the `Stryker disable next-line`
+  comments in `src/button.ts` and `src/field.ts`, each carrying its reason. Exclude at the narrowest
+  node; never widen to the file.

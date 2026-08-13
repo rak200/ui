@@ -1,6 +1,13 @@
 {
   "extends": "@rak200/coding-standard-ts/tsconfig",
   "compilerOptions": {
+    // Both off so components declare properties with a `static properties` map beside
+    // plain fields, which is the only shape that survives this test setup.
+    //
+    // `accessor` is an auto-accessor the test browser does not implement, and the
+    // transform leaves the keyword in place rather than lowering it — so the module
+    // fails to parse, in the browser, at import. Turning either of these on makes Lit's
+    // decorator API available and the suite unable to load the code that uses it.
     "experimentalDecorators": false,
     "useDefineForClassFields": false
   },
