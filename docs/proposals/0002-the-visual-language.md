@@ -1,6 +1,6 @@
 # RFC 0002 — The visual language: token structure, motion and themes
 
-- **Status**: Exploring
+- **Status**: Accepted
 - **Scope**: library
 - **Created**: 2026-08-09
 
@@ -31,6 +31,12 @@ a language and becomes a pile.
 Pages, and among the bonuses that won it the tie-break is a theme toolbar, reached through
 Storybook's globals and decorators. The iframe/token boundary was measured specifically to make a
 global theme switcher possible. A theme switcher over one theme switches nothing.
+
+**Item 8 inverted the second half of that paragraph and left the first half standing.** The urgency is
+real and 0001 is still what creates it — but 0001 turned out not to be waiting: its toolbar is a bonus
+that appears in none of its six steps, while this proposal has a written obligation that only its
+stories discharge. So 0001 is built first, and the deadline this section names is a deadline for
+_starting_ rather than for _finishing first_.
 
 ### What is already settled
 
@@ -116,6 +122,12 @@ Which means the **shape** decided here is the expensive part, and the values are
 is the same reason `src/tokens.ts` already says _a token added later is a token some target already
 hardcoded_ — written about native targets, and true about the type as well.
 
+**Read this section against the later one that measured it.** _Adding one is breaking too_ was written
+from the declaration rather than from a compiler, and it sat here pricing every later question about
+how many tokens to declare. It is true of exactly three consumer patterns out of eight, all of them
+the same act — enumerated further down, and answered by item 11. The sentence is left standing because
+the order in which it was believed is part of why item 4 was hard.
+
 ### What the platform gives, and when each became safe
 
 Read from the `web-features` package, which carries the Baseline status of each feature rather than
@@ -186,7 +198,7 @@ prefers-reduced-motion      transition-duration: 0s
 ```
 
 The media query sits on the token block and collapses the duration token; the component reads
-`var(--ui-motion-…)` and never learns why it changed. **This is the argument for motion being
+`var(--ui-duration-…)` and never learns why it changed. **This is the argument for motion being
 tokens rather than literals**, and it is stronger than the theming argument: a hardcoded `150ms` is
 not merely un-overridable, it is an accessibility defect that every component would have to fix
 individually.
@@ -215,7 +227,7 @@ Their shapes, quoted because they are concrete and this proposal has to pick som
 ```
 
 Two of those are worth noticing rather than copying. **Motion is named by speed** — `fast`, `slow` —
-which is a value name; naming by purpose (`--ui-motion-enter`) would be a decision name, and the two
+which is a value name; naming by purpose (`--ui-duration-enter`) would be a decision name, and the two
 read very differently at the call site. **Layering is named by component role**, which is honest
 about what z-index is for and does not pretend to be a scale.
 
@@ -575,6 +587,14 @@ Written out because a resolution stated in prose is one that gets re-derived, an
 differently. **Every number below is a placeholder**, and item 6 says which kind: the border's
 percentage is floor-bound and answers to 3:1, the rest are taste and answer to the playground.
 
+**And every _name_ below is the end state, not the first release** — a distinction item 4 introduced
+after this section was written, and one a reader would otherwise get backwards. What follows shows the
+shape item 1 produces once the queue has been built: eleven ground names and ten derived. What
+actually lands in the first pull request is item 4's slice, which is narrower on both sides —
+`--ui-color-success` and `--ui-color-warning` wait for `ui-toast`, and of the ten derived only the
+interaction colours have a consumer. The structure is what this section decides; the schedule is item
+4's, and the two are read together.
+
 **The exported set splits in two, and the ground half barely moves.** It grows by the two hues no
 mix produces:
 
@@ -636,8 +656,11 @@ _`tokenStyleSheet()` does not change._ It iterates `tokens`, which by constructi
 derived name, so the function is already correct for the rule that a formula must never reach
 `:root`. Most of item 5 answers itself here.
 
-_`Token` does not widen and `defaults` stays exhaustive_, so the source-breaking change the study
-identified — a consumer's `Record<Token, string>` — never happens.
+_The split costs no widening of its own._ Ten derived names are ten names `Token` never sees, and
+`defaults` stays exhaustive over the ground half. The two new hues do widen it — the split does not
+pretend otherwise — and item 11 prices that at three of eight consumer patterns and calls it a `feat`.
+An earlier draft of this line claimed the widening _never happens_, which was reading the derived half
+and forgetting the two names declared ten lines above it.
 
 _The thirteen duplicated literals go away as a class._ A component stops writing the fallback and
 reads a reference generated from the same data:
@@ -698,9 +721,11 @@ something to fix rather than something already decided.
 
 ## Decision
 
-**Fully resolved: eleven items, none open.** The status stays `Exploring` regardless, because
-acceptance is an act of the owner and not a consequence of the last item closing — a proposal whose
-questions are answered is ready to be accepted, which is not the same as accepted.
+**Fully resolved: eleven items, none open** — and accepted on 2026-08-13, after a review pass whose
+corrections are recorded in place rather than smoothed. Five of them were the same kind of defect: a
+sentence written before a later item landed and left standing as though it still held. They are marked
+where they sit, because a document that silently agrees with itself teaches a reader nothing about
+which parts were hard.
 
 The two halves below are **kept apart rather than interleaved**, and the empty one is kept too. Item
 5 appears among the settled having been closed, reopened by item 2 and closed again; item 3 arrived
@@ -919,24 +944,44 @@ forward: elevation, layering and type size each arrive as a scale with semantic 
 than as loose values, so item 10 governs all of them without a second debate. Border colour never
 reaches this list — the role count put it under item 1, as a derivation rather than a declaration.
 
+**This resolution looks like the thing the Motivation feared, and the difference is the whole point.**
+That section says a token set becomes _a pile_ when components invent tokens on the spot, one
+component at a time — and one component at a time is exactly the schedule chosen here. What separates
+them is not the timing but whether the naming is legislated: a token that arrives with `ui-card` under
+item 9's role naming, item 10's ordinals, and the Rollout's prefix table cannot be invented on the
+spot, because a name matching no declared category **fails the suite**. The pile was never caused by
+lateness. It was caused by each component naming things its own way, and that is what is closed here —
+by a checked scheme rather than by pre-populating a set nobody has looked at.
+
 **The motion purposes follow from the same criterion applied honestly.** Item 9 made duration
 two-layer and easing single-layer; the only purpose with a consumer today is a property changing on
-an element that stays. `enter` and `exit` wait for the four overlays. Three names, and `tokens` goes
-from nine to twelve:
+an element that stays. `enter` and `exit` wait for the four overlays. Three names, and **items 7 and 9
+together put them in two different arrays** — which a first draft of this entry got wrong by listing
+all three as ground:
 
 ```ts
+// tokens — a literal default, emitted at :root. Nine becomes eleven.
 '--ui-duration-100',   // the step — item 10
-'--ui-duration-state', // the purpose, pointing at it — item 9
-'--ui-easing-state',   // easing has no ground layer — item 9
+'--ui-easing-state',   // easing has no ground layer, so its purpose name IS the ground — item 9
+
+// derivedTokens — a formula, never emitted at :root. Its formula is a plain reference.
+'--ui-duration-state', // → var(--ui-duration-100)
 ```
+
+The asymmetry is not an oversight in either item: a duration purpose points into a scale, so it is
+derived by construction, while an easing purpose has nothing to point at. Item 3 already assumed this
+reading — it collapses _every `--ui-duration-*` name, ground and derived alike_, which is only a
+sentence worth writing if some of them are derived.
 
 Choosing `state` alone prejudges nothing: `enter` wants an ease-out, `exit` an ease-in, and `state`
 something symmetric because it reverses mid-flight. Three independent decisions, and item 10's gaps
 let the scale grow underneath them.
 
-**The hover and active colours are not in that list, and that is item 1 working.** They are mixed
-from `--ui-color-accent`, so by item 7 they live in the second array and widen nothing. The colour
-half of the defect costs zero.
+**The hover and active colours are not in `tokens` either, and that is item 1 working.** They are
+mixed from `--ui-color-accent`, so by item 7 they join `--ui-duration-state` in the second array and
+widen nothing. Which names exactly is the implementing pull request's, derived under item 1's rule —
+the role count already says _accent hover / pressed_ is one role, so a pressed name comes with the
+hover one. The colour half of the defect costs no widening at all.
 
 **Two things this item deliberately does not decide.** The value of the step is item 6's _taste_
 class, and that rule already names who decides it. And the asymmetry a press wants — the measurement
@@ -1000,9 +1045,15 @@ it('varies only colour tokens by scheme', () => {
 });
 ```
 
-plus a dark value never equal to its light one, and the sheet declaring the scheme axis. **With item
-7's three, the token layer goes from three checked invariants to seven** — and the three it has today
-are all about shape.
+plus a dark value never equal to its light one, and the sheet declaring the scheme axis.
+
+**Two numbers here were counted before two later items landed, and the Rollout carries the current
+ones.** This entry said _three invariants become seven_; item 9's prefix table made the category
+lookup an invariant of its own, so the Rollout enumerates **eight**. And the line count asserted here
+as `tokens.length + 3` counts one `:root` block, while item 3 adds a
+`@media (prefers-reduced-motion: reduce)` rule to the same output — so the count and the
+`cssRules.length === 1` beside it are both restated by that item. The mechanism this entry decided is
+unaffected; only its arithmetic was superseded, and the Rollout is where the current form lives.
 
 #### Item 6 — Where the values get decided
 
@@ -1169,7 +1220,7 @@ never a differentiator between the two, and treating it as one obscured what is.
 **Two arguments survive, and both are about who has to know what.**
 
 _Role names, not value names._ The _Proposed design_ fixes that a component reads a name describing a
-role — `--ui-color-accent`, not `--ui-color-blue-600`. A speed is a value: **`--ui-motion-fast` is
+role — `--ui-color-accent`, not `--ui-color-blue-600`. A speed is a value: **`--ui-duration-fast` is
 `--ui-color-blue-600` for time.** Adopting speed names for motion while forbidding them for colour
 would make the two categories inconsistent.
 
@@ -1322,6 +1373,21 @@ Conditional on the Decision, and only the parts already known are written down.
   state is never the only feedback a component gives.
 - **A second theme is a second contrast obligation.** Its stories render it, so `expectAccessible`
   reaches it; a theme without a story is outside the bar this repository advertises.
+- **The interaction states are measured outside Chromium before the first one ships.** The Study
+  measured `:active` in one engine and says which four results were counterintuitive; Firefox, Safari
+  and iOS touch are unmeasured, and iOS is the one that matters, where `:active` has a long-standing
+  dependency on a touch listener existing and `-webkit-tap-highlight-color` paints over whatever the
+  component decided. The suite runs one engine and therefore cannot warn about this — the same caveat
+  already recorded for the browser-support measurement. So it is a step, not a test: a pressed state
+  invisible on a phone is half the value of a library that intends to be rich in effects.
+- **The new exports are documented, because a gate already requires it and a bigger reason does too.**
+  CI extracts every exported symbol from `src/` and greps `docs/` for it, so `darkScheme`,
+  `derivedTokens`, `DerivedToken` and `formulas` each need a home — item 7 used that gate as an
+  argument for exporting them and it applies to the consequence as well. Beyond the gate,
+  `docs/tokens.md` today is a table of nine names, and after this proposal it has to say three things
+  it cannot currently say: that the set is open (item 11), which names are derived and therefore
+  **write-only** — overridable, never readable, which is the one cost of item 1 a consumer can be
+  surprised by — and what each formula computes.
 - **Reduced motion gets a test, not a comment**, and it asserts two things rather than one. That the
   collapse happens — the suite's browser can emulate the preference, measured above — and that what
   it collapses to is **not zero**, because a zero-length transition fires no `transitionend` and the
