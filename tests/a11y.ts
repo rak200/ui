@@ -120,6 +120,13 @@ export function blockingViolations(violations: readonly Result[]): Result[] {
  * This is the one line a component test writes: no fixture, no teardown, no axe setup
  * repeated per component.
  *
+ * **Call it at least once per component, and once per state that changes the markup.**
+ * A single call proves the default rendering and nothing else — a disabled control, an
+ * error message, an expanded panel each emit different markup, and each can fail on its
+ * own. The ruleset and the bar above are the two knobs; narrowing either is a change to
+ * this file, with its reason, never a per-test opt-out that leaves the suite claiming a
+ * conformance it stopped checking.
+ *
  * @param markup - HTML for the subject, as {@link findViolations} takes it.
  * @throws If axe reports a violation of `serious` or `critical` impact, with the rule, its
  * help URL and the offending markup in the message.
