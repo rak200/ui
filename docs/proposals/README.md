@@ -13,3 +13,4 @@ descends from one written elsewhere, is joined to it by mother↔daughter links.
 | RFC                                  | Title                | Scope   | Status   |
 | ------------------------------------ | -------------------- | ------- | -------- |
 | [0001](0001-component-playground.md) | Component playground | library | Accepted |
+| [0002](0002-the-visual-language.md)  | The visual language  | library | Accepted |
