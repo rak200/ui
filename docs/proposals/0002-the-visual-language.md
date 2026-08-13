@@ -698,13 +698,17 @@ something to fix rather than something already decided.
 
 ## Decision
 
-**Partly resolved**, which is what keeps this `Exploring`: ten items are settled, one is not, and
-they are **kept apart below rather than interleaved**. Item 5 appears among the settled having been
-closed, reopened by item 2 and closed again, and item 3 arrived carrying two halves of which only one
-was settled — the round trips are left visible, because an item that reopens or splits says something
-about the order the items were taken in. A settled item is read once and referred to;
-an open one is read to be worked on. Numbers are stable across the split, so a later reference to
-_item 5_ still means what it meant.
+**Fully resolved: eleven items, none open.** The status stays `Exploring` regardless, because
+acceptance is an act of the owner and not a consequence of the last item closing — a proposal whose
+questions are answered is ready to be accepted, which is not the same as accepted.
+
+The two halves below are **kept apart rather than interleaved**, and the empty one is kept too. Item
+5 appears among the settled having been closed, reopened by item 2 and closed again; item 3 arrived
+carrying two halves of which only one was settled, and shed the other as item 9; item 4 shed a
+premise it had been carrying as a consequence, which became item 11. The round trips are left
+visible, because an item that reopens or splits says something about the order the items were taken
+in. A settled item is read once and referred to; an open one is read to be worked on. Numbers are
+stable across every split, so a later reference to _item 5_ still means what it meant.
 
 **An earlier draft listed seven, and two of them were one question asked from both ends.** _One layer
 or two_ and _derived states or enumerated_ cannot be answered independently: every answer to the
@@ -1085,6 +1089,52 @@ default_. And no `Token | DerivedToken` alias is exported yet; the internal refe
 the union, and exporting a third name before something needs it is the complaint `ROADMAP.md`
 already makes about Zag.
 
+#### Item 8 — Which of RFC 0001 and this one is built first
+
+**RFC 0001 first, and what this proposal is actually waiting on is its step 4, not its step 6.**
+
+**Promoted from a Rollout note, where it read as a scheduling detail and is not one:** 0001 is
+`Accepted` with a six-step rollout nobody has started, and the two constrain each other in both
+directions. A note cannot decide that.
+
+**The deadlock came from treating the two arrows as the same kind of thing, and they never were.**
+0001's dependency on this proposal is a **bonus**: the theme toolbar appears among the advantages
+that won its tie-break and in **none of its six steps**, so with one theme it is born empty, all six
+steps complete and the site publishes. This proposal's dependency on 0001 is a **gate**: the Rollout
+below discharges a second theme's contrast obligation through _its stories_ — _a theme without a
+story is outside the bar this repository advertises_ — and the premise in _What is already settled_
+sends every taste value to an instrument only 0001 builds. One direction postpones a bonus; the other
+leaves a written obligation with no mechanism.
+
+**The unmeasured risk is entirely in 0001, and this proposal already bets on it.** Step 4 is the only
+place in either document that its own author marks as _resting on a hypothesis rather than a
+measurement_ — portable stories under browser mode. The Rollout below was written assuming that
+hypothesis holds. Collapsing it before it is load-bearing costs a step; collapsing it afterwards
+costs this section.
+
+**Built second, this proposal is validated; built second, 0001 would only gain content.** With the
+playground standing, the dark scheme, the second theme, the motion collapse and the button's new
+states are all visible and all inside `expectAccessible` through composed stories, with the a11y
+addon over each. That is validation of precisely what this proposal produces. The reverse order buys
+0001 nothing but more to show.
+
+**Two arguments were considered and dropped.** 0001's step 1 is upstream, which looked like latency
+worth overlapping — but that rollout answers it directly: _nothing else waits on it_, since what it
+prevents are two defects rather than a blocked build. And the Motivation here says _a theme switcher
+over one theme switches nothing_, which reads as an argument for going first; it is an argument about
+the toolbar's completeness, not about 0001's delivery, and the toolbar gains its second entry
+additively.
+
+**The rework in the losing direction is real and is named rather than smoothed.** With 0001 first,
+`stories/tokens.ts` is born over one array and gains the second, the formulas and the dark scheme;
+`stories/button.ts` gains hover and active cases. That is _writing_ stories. The reverse order makes
+the second theme's contrast obligation a standalone test that is later duplicated or moved, which is
+_undoing_ one. Both are small; only one is undoing.
+
+**The generalisation, since the numbering will outlive the two proposals it decided:** when two
+accepted proposals constrain each other, build the one whose dependency on the other is a bonus
+rather than a gate.
+
 #### Item 9 — How motion is named
 
 **Resolved: by purpose, with duration and easing as separate names — and duration carrying a ground
@@ -1245,14 +1295,8 @@ derivation is not a declaration — and that reason is untouched by the cost of 
 
 ### Open
 
-One, and it is answerable at any point because nothing in it waits on anything else here.
-
-#### Item 8 — Which of RFC 0001 and this one is built first
-
-Promoted from a Rollout note, where it read as a scheduling detail and is not one: 0001 is `Accepted`
-with a six-step rollout nobody has started, and the two constrain each other in both directions.
-0001's theme toolbar needs a second theme to switch; the values this proposal defers need somewhere
-to be judged. A note cannot decide that, so it is an item.
+**None.** Item 8 was the last, and closing it left the split with one side — kept anyway, because the
+preamble reads against it and a reader arriving at an earlier version should find the same shape.
 
 ---
 
@@ -1311,5 +1355,9 @@ Conditional on the Decision, and only the parts already known are written down.
   the first token whose value it governs, not before — a gate with nothing behind it is the one kind
   this repository refuses. This is item 6's mechanism and it belongs here rather than in the
   Decision, because it is true whichever way that item had gone.
-- **The order against RFC 0001 is decided in item 8, not here.** It sat in this section as a note
-  until taking inventory showed a note was the wrong shape for it.
+- **None of this starts before RFC 0001's step 4.** Item 8 decided the order and the boundary: the
+  structural work here — the two arrays, the formulas, the generated sheet, the eight invariants —
+  waits only on the step that proves composed stories render, never on the two that publish the
+  site. The second theme's contrast obligation and the taste values wait for the site itself.
+  The item sat in this section as a note until taking inventory showed a note was the wrong shape
+  for it.
