@@ -32,6 +32,11 @@ tests/               # mirrors src/, one test file per unit
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 └── a11y.test.ts
+stories/             # mirrors src/ too — what the playground shows
+├── button.stories.ts
+├── field.stories.ts
+└── tokens.stories.ts
+.storybook/          # main.ts (the build) and preview.ts (what every story renders under)
 docs/                # one page per unit, indexed by docs/README.md
 ```
 
@@ -42,6 +47,10 @@ units, so neither has a counterpart in `src/`.
 
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
+
+**The playground runs outside the eight verbs**, the way `build` already does: `npm run storybook`
+opens it on port 6006, `npm run build-storybook` writes the static site. Neither is a verb and CI
+asserts neither — what the pipeline runs against the stories is `test`.
 
 ## Where the rules are
 
