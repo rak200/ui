@@ -41,8 +41,11 @@ function isRenderable(node: Element): node is Element & Renderable {
  *
  * A custom element upgrades synchronously on insertion but renders on a microtask, so
  * axe run any earlier would inspect an empty shadow root and pass everything.
+ *
+ * Exported because the same wait is what a mounted story needs before anything reads its
+ * shadow root, and one definition read twice cannot disagree with itself.
  */
-async function rendered(root: ParentNode): Promise<void> {
+export async function rendered(root: ParentNode): Promise<void> {
     await Promise.all(
         [...root.querySelectorAll('*')].filter(isRenderable).map((node) => node.updateComplete),
     );
@@ -66,17 +69,25 @@ function report(violations: readonly Result[]): string {
 }
 
 /**
- * Mounts `markup` in the real document and returns every violation axe reported, blocking
- * or not.
+ * Returns every violation axe reported for `subject`, blocking or not.
  *
- * The fixture is created and removed here, so nothing leaks into the next test.
+ * Markup is mounted here and removed again, so nothing leaks into the next test. An
+ * element is inspected where it already stands and is **not** removed: whoever mounted it
+ * owns it, and a story mounted for several assertions must survive the first one.
  *
- * @param markup - HTML for the subject, mounted as-is. Custom elements in it must already
- * be registered, which importing the component module does.
+ * @param subject - HTML for the subject, mounted as-is, or an element already in the
+ * document. Custom elements in markup must already be registered, which importing the
+ * component module does.
  */
-export async function findViolations(markup: string): Promise<Result[]> {
+export async function findViolations(subject: string | Element): Promise<Result[]> {
+    if (typeof subject !== 'string') {
+        await rendered(subject);
+
+        return (await axe.run(subject, ruleset)).violations;
+    }
+
     const container = document.createElement('div');
-    container.innerHTML = markup;
+    container.innerHTML = subject;
     document.body.append(container);
 
     try {
@@ -102,10 +113,11 @@ export function blockingViolations(violations: readonly Result[]): Result[] {
 }
 
 /**
- * Mounts `markup` and fails the test on any blocking violation.
+ * Checks `subject` and fails the test on any blocking violation.
  *
  * This is the one line a component test writes: no fixture, no teardown, no axe setup
- * repeated per component.
+ * repeated per component. A mounted story is passed straight in, which is what makes the
+ * playground's stories cases of this bar rather than a display beside it.
  *
  * **Call it at least once per component, and once per state that changes the markup.**
  * A single call proves the default rendering and nothing else — a disabled control, an
@@ -114,12 +126,12 @@ export function blockingViolations(violations: readonly Result[]): Result[] {
  * either is a change to the file that declares it, with its reason, never a per-test
  * opt-out that leaves the suite claiming a conformance it stopped checking.
  *
- * @param markup - HTML for the subject, as {@link findViolations} takes it.
+ * @param subject - Markup or a mounted element, as {@link findViolations} takes it.
  * @throws If axe reports a violation of `serious` or `critical` impact, with the rule, its
  * help URL and the offending markup in the message.
  */
-export async function expectAccessible(markup: string): Promise<void> {
-    const blocking = blockingViolations(await findViolations(markup));
+export async function expectAccessible(subject: string | Element): Promise<void> {
+    const blocking = blockingViolations(await findViolations(subject));
 
     if (blocking.length > 0) {
         expect.fail(report(blocking));

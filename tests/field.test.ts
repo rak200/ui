@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { expectAccessible } from './a11y.js';
+import { mountStory } from './stories.js';
+import meta, { Default, WithError, WithHelp } from '../stories/field.stories.js';
 import '../src/field.js';
 import type { UiField } from '../src/field.js';
 
@@ -370,5 +372,39 @@ describe('ui-field', () => {
                 <span slot="error">Amount is required.</span>
             </ui-field>
         `);
+    });
+});
+
+/**
+ * The playground's gate. A story that stops compiling or stops rendering fails here rather
+ * than on the deploy, which runs after the required check.
+ */
+describe('ui-field stories', () => {
+    it.each([
+        ['Default', Default],
+        ['WithHelp', WithHelp],
+        ['WithError', WithError],
+    ] as const)('%s associates its control and meets the bar', async (name, story) => {
+        const container = await mountStory(story, meta, name);
+        await settled();
+
+        const control = container.querySelector('input');
+        const label = container.querySelector('label');
+
+        expect(control?.id).not.toBe('');
+        expect(label?.htmlFor).toBe(control?.id);
+        await expectAccessible(container);
+    });
+
+    it('marks the error story invalid, so the story shows the state it names', async () => {
+        const container = await mountStory(WithError, meta, 'WithError');
+        await settled();
+
+        const control = container.querySelector('input');
+
+        expect(control?.getAttribute('aria-invalid')).toBe('true');
+        // The error is announced before the help it supplements, which is the whole of
+        // what this component decides — and the story has to show that, not just have it.
+        expect(control?.getAttribute('aria-describedby')).toMatch(/-error .*-help$/);
     });
 });
