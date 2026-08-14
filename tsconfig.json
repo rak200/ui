@@ -9,7 +9,22 @@
     // fails to parse, in the browser, at import. Turning either of these on makes Lit's
     // decorator API available and the suite unable to load the code that uses it.
     "experimentalDecorators": false,
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+
+    // The compiler's half of the story import rule. A story imports `@rak200/ui`, and
+    // without this the self-reference resolves through `exports` to `dist/`, which makes
+    // typechecking depend on a build having run first. `.storybook/main.ts` carries the
+    // same mapping for the bundler, and both point at the barrel rather than at a file
+    // under it — so a story can only use what a consumer can import.
+    "paths": { "@rak200/ui": ["./src/index.ts"] }
   },
-  "include": ["src", "tests"]
+  // `stories` and `.storybook` are included so they are typechecked at all: the shared
+  // ESLint config sets `parserOptions.projectService`, and a TypeScript file outside the
+  // program has no type-aware linting left to fail with. `tsconfig.build.json` restates
+  // its own `include`, so none of this reaches the published output.
+  //
+  // The last entry is a glob rather than a directory name, and that is not a style
+  // choice: expanding a directory drops anything under a dotted path, so `".storybook"`
+  // put NOTHING in the program — `tsc` passed by not looking, and only ESLint said so.
+  "include": ["src", "tests", "stories", ".storybook/**/*.ts"]
 }

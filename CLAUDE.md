@@ -30,17 +30,27 @@ tests/               # mirrors src/, one test file per unit
 ├── button.test.ts
 ├── field.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
+├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 └── a11y.test.ts
+stories/             # mirrors src/ too — what the playground shows
+├── button.stories.ts
+├── field.stories.ts
+└── tokens.stories.ts
+.storybook/          # main.ts (the build) and preview.ts (what every story renders under)
 docs/                # one page per unit, indexed by docs/README.md
 ```
 
 `tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
-export-ignore` in the seeded `.gitattributes` has always been written for. `a11y.ts` is the
-exception the mirror does not cover: it is the suite's own scaffolding rather than a unit, so it
-has no counterpart in `src/`.
+export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules
+are the exception the mirror does not cover: they are the suite's own scaffolding rather than
+units, so neither has a counterpart in `src/`.
 
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
+
+**The playground runs outside the eight verbs**, the way `build` already does: `npm run storybook`
+opens it on port 6006, `npm run build-storybook` writes the static site. Neither is a verb and CI
+asserts neither — what the pipeline runs against the stories is `test`.
 
 ## Where the rules are
 
@@ -50,8 +60,9 @@ explains. This file restates none of them.
 - **Delegate to the platform**, **every visual decision is a token**, and **the accessibility bar** —
   [ARCHITECTURE.md](ARCHITECTURE.md), which is the consumer-facing half of RFC 0016.
 - **How to write the accessibility assertion**, and how often —
-  `expectAccessible('<ui-thing>…</ui-thing>')` from `tests/a11y.ts`. The ruleset, the
-  serious-and-critical bar and the per-state obligation are all in that file, each with its reason.
+  `expectAccessible('<ui-thing>…</ui-thing>')` from `tests/a11y.ts`, which carries the
+  serious-and-critical bar and the per-state obligation with their reasons. **The ruleset is one
+  file over**, in `tests/a11y-ruleset.ts`, which says why it was moved out.
 - **Why `accessor` and decorators are off** — the comment beside both flags in `tsconfig.json`.
   Turning either on makes the suite unable to load the code that uses it.
 - **Why a mutant on a module-level side effect cannot be killed** — the `Stryker disable next-line`
