@@ -7,28 +7,15 @@
  *
  * Not a unit of the library and so not mirrored from `src/`: it is the suite's own
  * scaffolding, and `a11y.test.ts` beside it tests the assertion rather than a component.
- */
-
-import axe, { type ImpactValue, type Result, type RunOptions } from 'axe-core';
-import { expect } from 'vitest';
-
-/**
- * The ruleset, named rather than left to the default.
  *
- * axe's default set includes its best-practice rules — `region`, `landmark-one-main`,
- * `page-has-heading-one` — which describe the structure of a *page*. A component mounted
- * on its own can never satisfy them, so leaving them on would mean either a permanently
- * red suite or a pile of per-rule exclusions. The WCAG A/AA tags are the narrower claim
- * that is actually about the component, and they are the conformance target rather than
- * a convenience: nothing is excluded rule by rule.
+ * The ruleset it runs under is declared in `a11y-ruleset.ts`, free of the test runner and
+ * with the reason for the split; the impact bar below is the half that stays here, because
+ * nothing else reads it.
  */
-const ruleset: RunOptions = {
-    runOnly: {
-        type: 'tag',
-        values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
-    },
-    resultTypes: ['violations'],
-};
+
+import axe, { type ImpactValue, type Result } from 'axe-core';
+import { expect } from 'vitest';
+import { ruleset } from './a11y-ruleset.js';
 
 /**
  * The impacts that do *not* fail the suite.
@@ -123,9 +110,9 @@ export function blockingViolations(violations: readonly Result[]): Result[] {
  * **Call it at least once per component, and once per state that changes the markup.**
  * A single call proves the default rendering and nothing else — a disabled control, an
  * error message, an expanded panel each emit different markup, and each can fail on its
- * own. The ruleset and the bar above are the two knobs; narrowing either is a change to
- * this file, with its reason, never a per-test opt-out that leaves the suite claiming a
- * conformance it stopped checking.
+ * own. The two knobs are the bar above and the ruleset in `a11y-ruleset.ts`; narrowing
+ * either is a change to the file that declares it, with its reason, never a per-test
+ * opt-out that leaves the suite claiming a conformance it stopped checking.
  *
  * @param markup - HTML for the subject, as {@link findViolations} takes it.
  * @throws If axe reports a violation of `serious` or `critical` impact, with the rule, its
