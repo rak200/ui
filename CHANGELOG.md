@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/rak200/ui/compare/0.2.1...0.2.2) (2026-08-14)
+
+
+### Features
+
+* a Storybook playground, with the stories that make it reviewable ([#52](https://github.com/rak200/ui/issues/52)) ([a35e33a](https://github.com/rak200/ui/commit/a35e33ab7758066c2bdc35e167d7e2a5d0e6baa8))
+
 ## [0.2.1](https://github.com/rak200/ui/compare/0.2.0...0.2.1) (2026-08-08)
 
 
