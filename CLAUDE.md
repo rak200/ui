@@ -31,6 +31,7 @@ tests/               # mirrors src/, one test file per unit
 ├── field.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
+├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
@@ -42,15 +43,21 @@ docs/                # one page per unit, indexed by docs/README.md
 
 `tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
 export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules
-are the exception the mirror does not cover: they are the suite's own scaffolding rather than
-units, so neither has a counterpart in `src/`.
+and `stories.ts` are the exception the mirror does not cover: they are the suite's own scaffolding
+rather than units, so none has a counterpart in `src/`.
 
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
 
 **The playground runs outside the eight verbs**, the way `build` already does: `npm run storybook`
 opens it on port 6006, `npm run build-storybook` writes the static site. Neither is a verb and CI
-asserts neither — what the pipeline runs against the stories is `test`.
+asserts neither — what the pipeline runs against the stories is `test`, which composes each one and
+mounts it, so a story that stops compiling or stops rendering reds `ci / gate`.
+
+**`@rak200/ui` resolves to `src/index.ts` in three places**, because three tools resolve module
+names themselves: `.storybook/main.ts` for the bundler, `tsconfig.json`'s `paths` for the compiler,
+`vitest.config.js` for the suite. Adding a fourth reader means a fourth mapping; leaving one out
+means that tool silently loading `dist/` instead.
 
 ## Where the rules are
 

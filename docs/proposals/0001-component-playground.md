@@ -849,6 +849,28 @@ ordinary configuration.
    hypothesis until the suite runs one. It is the only load-bearing claim in this document still in
    that state, and the Rollout puts it early enough to be cheap if it is wrong.
 
+   **Both halves were then run, and the hypothesis held while the measurement did not.** At 10.5.8
+   `@storybook/web-components` exports seven symbols — `composeStories` and `composeStory` are not
+   among them, and appear in that package only inside a docblock. The composition helpers live in
+   `storybook/preview-api`, which is a **public subpath export** and carries types, so nothing
+   reaches into `storybook/internal/*` and the conclusion above is unchanged. What the suite does
+   import is therefore one module over from what this entry named.
+
+   Three further things were measured rather than assumed, each of which changed a line of code:
+
+   - **The renderer's default annotations are not needed and could not be used anyway.**
+     `@storybook/web-components/entry-preview` would supply them and ships **no type declarations**,
+     so importing it fails `analyse`. Without it, args still reach the DOM, decorators still apply,
+     and `.storybook/preview.ts`'s `parameters.a11y` still reaches the composed story.
+   - **`run()` renders where it likes.** Handed a container, it left it empty and mounted the story
+     elsewhere in the document. A composed story is _called_ instead, and its `TemplateResult` goes
+     through lit's `render` into a container the suite owns.
+   - **Storybook's portable-stories types do not survive `exactOptionalPropertyTypes`.** Neither the
+     per-story nor the whole-module form typechecks: the helpers fix their story parameter at the
+     index-signature `Args`, and the decorator and play positions are contravariant. It costs one
+     `@ts-expect-error` carrying that reason — which fails the day upstream fixes it, where a cast
+     would have outlived the defect in silence.
+
 And what follows to another repository is **two seed lines, not one**: `/stories/` and
 `/.storybook/` gain `export-ignore` in the `ts` `.gitattributes`, and `/storybook-static/` joins the
 `ts` `.gitignore`. Both are `exact` seeds, so both are one pull request to the baseline — the same

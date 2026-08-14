@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { expectAccessible } from './a11y.js';
+import { mountStory } from './stories.js';
+import meta, { Disabled, Primary, Secondary } from '../stories/button.stories.js';
 import '../src/button.js';
 import type { UiButton } from '../src/button.js';
 
@@ -16,6 +18,17 @@ async function mount(html: string): Promise<UiButton> {
     }
 
     await element.updateComplete;
+
+    return element;
+}
+
+/** The one `<ui-button>` a story mounted, which failing to find is the gate doing its job. */
+function only(container: HTMLElement): UiButton {
+    const element = container.querySelector('ui-button');
+
+    if (element === null) {
+        throw new Error('the story rendered no ui-button');
+    }
 
     return element;
 }
@@ -128,5 +141,28 @@ describe('ui-button', () => {
 
         expect(styles).toContain('focus-visible');
         expect(styles).toContain('outline:');
+    });
+});
+
+/**
+ * The playground's gate. A story that stops compiling or stops rendering fails here rather
+ * than on the deploy, which runs after the required check.
+ */
+describe('ui-button stories', () => {
+    it.each([
+        ['Primary', Primary],
+        ['Secondary', Secondary],
+        ['Disabled', Disabled],
+    ] as const)('%s renders a real button and meets the bar', async (name, story) => {
+        const container = await mountStory(story, meta, name);
+
+        expect(inner(only(container)).tagName).toBe('BUTTON');
+        await expectAccessible(container);
+    });
+
+    it('renders the disabled story disabled, so the story shows the state it names', async () => {
+        const container = await mountStory(Disabled, meta, 'Disabled');
+
+        expect(inner(only(container)).disabled).toBe(true);
     });
 });

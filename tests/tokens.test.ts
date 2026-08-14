@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { expectAccessible } from './a11y.js';
+import { mountStory } from './stories.js';
+import meta, { Defaults } from '../stories/tokens.stories.js';
 import { defaults, tokens, tokenStyleSheet } from '../src/tokens.js';
+
+afterEach(() => {
+    document.body.replaceChildren();
+});
 
 describe('tokens', () => {
     it('gives every declared token a default', () => {
@@ -42,5 +49,23 @@ describe('tokenStyleSheet', () => {
         sheet.replaceSync(tokenStyleSheet());
 
         expect(sheet.cssRules.length).toBe(1);
+    });
+});
+
+/**
+ * The playground's gate. A story that stops compiling or stops rendering fails here rather
+ * than on the deploy, which runs after the required check.
+ */
+describe('token stories', () => {
+    it('shows every declared token, so the page cannot fall behind the set', async () => {
+        const container = await mountStory(Defaults, meta, 'Defaults');
+
+        for (const token of tokens) {
+            expect(container.textContent, token).toContain(token);
+        }
+    });
+
+    it('meets the bar, which a table of swatches is not exempt from', async () => {
+        await expectAccessible(await mountStory(Defaults, meta, 'Defaults'));
     });
 });
