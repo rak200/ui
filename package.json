@@ -25,7 +25,8 @@
     "dist"
   ],
   "sideEffects": [
-    "./dist/*.js"
+    "./dist/*.js",
+    "./src/*.ts"
   ],
   "publishConfig": {
     "access": "public"
@@ -39,15 +40,20 @@
     "coverage": "coverage-floor",
     "scan": "semgrep scan --config=p/typescript --severity=ERROR --sarif -o semgrep.sarif",
     "mutation": "stryker run",
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "lit": "^3.3.3"
   },
   "devDependencies": {
     "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.3",
+    "@storybook/addon-a11y": "^10.5.8",
+    "@storybook/web-components-vite": "^10.5.8",
     "@types/node": "^26.1.2",
     "@vitest/browser-playwright": "^4.1.10",
-    "axe-core": "^4.13.0"
+    "axe-core": "^4.13.0",
+    "storybook": "^10.5.8"
   }
 }

@@ -785,6 +785,15 @@ ordinary configuration.
    `.test.ts` already is, and consistency settles it. `tokens.stories.ts` is not the mirror being
    forced: a page of swatches is the thing missing today for seeing the palette at all.
 
+   **The bare name was tried first and the tool refuses it, which is recorded here rather than
+   smoothed.** An earlier form of this entry dropped the suffix — `stories/button.ts` — on the
+   argument above. Storybook matches a story by **filename, not by directory**: the default indexer's
+   test is `(stories|story).[jt]s`, so the three files built to
+   `Unable to index files: No matching indexer found`. Keeping the bare name means supplying an
+   indexer out of `storybook/internal/*`, which is an internal entrypoint bought for a naming
+   preference. And the argument was reading its own analogy backwards — `tests/button.test.ts`
+   **keeps** its suffix, so consistency with the neighbouring mirror was always on the other side.
+
    Checked rather than assumed, and it is the whole argument: **nothing needs a carve-out.**
    `coverage.include` is `['src/**/*.ts']`, Stryker mutates `src/`, and `tsconfig.build.json`
    includes `src` — a `stories/` tree falls outside all three with no line added anywhere. What it
