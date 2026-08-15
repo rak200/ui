@@ -53,11 +53,56 @@ export const defaults: Readonly<Record<Token, string>> = {
 };
 
 /**
+ * The grounds whose value differs when the page is rendered dark.
+ *
+ * **A scheme is not a theme, and conflating them is the mistake this shape exists to
+ * avoid.** A theme is a named set of decisions, selected with `data-ui-theme`; a scheme is
+ * the light or dark rendering of whichever theme is in force, selected with
+ * `color-scheme`. The two axes are independent, and a token carries both of its schemes in
+ * one value through `light-dark()`, so a theme is a handful of grounds rather than a
+ * parallel block per scheme plus a media query nobody writes correctly the first time.
+ *
+ * `Partial` is the type doing the work: it answers *which grounds vary by scheme* in the
+ * type system. `--ui-radius` does not vary and `--ui-color-surface` does, and folding both
+ * schemes into {@link defaults} as a single expression would make those two
+ * indistinguishable — and would hand a native emitter a CSS function to parse instead of a
+ * value to read.
+ *
+ * Only colours appear here, and that is a rule rather than a coincidence: `light-dark()`
+ * takes colours, so a dark value for `--ui-radius` would emit CSS the browser discards.
+ */
+export const darkScheme: Readonly<Partial<Record<Token, string>>> = {
+    // Blue-400 over the dark surface rather than blue-600, which is legible on white and
+    // muddy on charcoal. Its contrast pair is inverted with it: dark text on a light
+    // accent is what reads at this end.
+    '--ui-color-accent': '#60a5fa',
+    '--ui-color-accent-contrast': '#111827',
+    '--ui-color-surface': '#111827',
+    '--ui-color-text': '#e5e7eb',
+    // Red-700 is 2.74:1 on the dark surface — under the 4.5:1 floor for text, and error
+    // text is the one thing in this set that must never be hard to read. Red-400 is 6.41.
+    '--ui-color-danger': '#f87171',
+};
+
+/**
  * The token defaults as a CSS rule, for a host that wants them without importing a
  * component. Returns the text of a `:root` block; a host inserts it however it prefers.
+ *
+ * **It declares `color-scheme` as well as the tokens, and that is deliberate.**
+ * `color-scheme` is a real property rather than a custom one, so it can never be a token —
+ * and leaving it to the host is a silent failure at the highest possible frequency: every
+ * host would have to remember, and forgetting means dark mode simply never happens, with
+ * no error anywhere to read. A host who wants something else — `only light`, say — governs
+ * the order this sheet is inserted in, which is a knob they already hold.
  */
 export function tokenStyleSheet(): string {
-    const body = tokens.map((token) => `  ${token}: ${defaults[token]};`).join('\n');
+    const body = tokens
+        .map((token) => {
+            const dark = darkScheme[token];
 
-    return `:root {\n${body}\n}`;
+            return `  ${token}: ${dark === undefined ? defaults[token] : `light-dark(${defaults[token]}, ${dark})`};`;
+        })
+        .join('\n');
+
+    return `:root {\n  color-scheme: light dark;\n${body}\n}`;
 }
