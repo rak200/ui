@@ -1,0 +1,80 @@
+name: pages
+
+# The playground, published. RFC 0001 decided GitHub Pages, sourced from Actions, in a
+# workflow of its own — `release.yml` is a masked seed and cannot host the job, and a tag
+# and a Release created with the repository's own GITHUB_TOKEN start no new workflow, so
+# there is nothing on the release path for a deploy to hang from.
+#
+# THE SITE FOLLOWS THE BRANCH, NOT THE RELEASE. It shows the tip of `master`, which can be
+# ahead of the latest published version — a consumer evaluating 0.2.2 may be looking at a
+# component 0.2.2 does not contain. That is a deliberate trade the proposal records: this
+# surface exists for evaluation BEFORE adoption, and what is coming serves that reader
+# better than what shipped. What the site owes them instead is being unambiguous about
+# which it is, which is what the commit stamp below is for.
+#
+# NO `paths:` FILTER, and here that is prudence rather than the non-negotiable: this
+# workflow publishes no required check, so a filtered run would not deadlock a pull
+# request. It would do something quieter and worse — leave the published site silently
+# behind `master` whenever a change fell outside the list.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, and never cancel one in flight: a cancelled deploy leaves the
+# site on its previous build, which is recoverable, but a cancelled one that had already
+# started uploading is a state nobody wants to reason about. Queue instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Node 22 is the floor `package.json` declares. The site is built once, so it rides
+      # the floor rather than a matrix — what a matrix protects is the library, and `ci`
+      # already runs one over it.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: npm ci
+        run: npm ci
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      # The stamp. `STORYBOOK_`-prefixed variables are what Storybook exposes to the
+      # built site, and this one reaches the sidebar through `.storybook/manager.ts`.
+      - name: Build the playground
+        run: npm run build-storybook
+        env:
+          STORYBOOK_COMMIT: ${{ github.sha }}
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: storybook-static
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Widened here and nowhere else, which is the least privilege this deploy can run at:
+    # the build job above reads the repository and nothing more.
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

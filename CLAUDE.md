@@ -37,7 +37,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
 ├── field.stories.ts
 └── tokens.stories.ts
-.storybook/          # main.ts (the build) and preview.ts (what every story renders under)
+.storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
 docs/                # one page per unit, indexed by docs/README.md
 ```
 
