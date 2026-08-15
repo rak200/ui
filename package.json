@@ -38,7 +38,7 @@
     "analyse": "tsc --noEmit && eslint .",
     "test": "vitest run",
     "coverage": "coverage-floor",
-    "scan": "semgrep scan --config=p/typescript --severity=ERROR --sarif -o semgrep.sarif",
+    "scan": "rak200-scan",
     "mutation": "stryker run",
     "build": "tsc -p tsconfig.build.json",
     "storybook": "storybook dev -p 6006",
@@ -48,7 +48,7 @@
     "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.3",
+    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.7",
     "@storybook/addon-a11y": "^10.5.8",
     "@storybook/web-components-vite": "^10.5.8",
     "@types/node": "^26.1.2",
