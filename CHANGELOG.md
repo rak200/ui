@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/rak200/ui/compare/0.2.3...0.2.4) (2026-08-15)
+
+
+### Features
+
+* a dark scheme, carried inside each token rather than beside it ([#62](https://github.com/rak200/ui/issues/62)) ([1720102](https://github.com/rak200/ui/commit/1720102ae7984a19c818252062bff5f8a127d49f))
+
 ## [0.2.3](https://github.com/rak200/ui/compare/0.2.2...0.2.3) (2026-08-15)
 
 
