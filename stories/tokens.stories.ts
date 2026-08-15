@@ -11,7 +11,8 @@
  * button.
  */
 
-import { defaults, tokens, type Token } from '@rak200/ui';
+import '@rak200/ui';
+import { defaults, tokens, tokenStyleSheet, type Token } from '@rak200/ui';
 import { html, type TemplateResult } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 
@@ -96,3 +97,57 @@ export default meta;
 
 /** The palette as it ships, before a host has decided anything. */
 export const Defaults: StoryObj = {};
+
+/**
+ * The sheet a host inserts, built as an element rather than interpolated into a `<style>`
+ * template — the content is this package's own output, and a node needs no exception made
+ * for it.
+ */
+function sheet(): HTMLStyleElement {
+    const element = document.createElement('style');
+    element.textContent = tokenStyleSheet();
+
+    return element;
+}
+
+/**
+ * The same tokens, rendered dark.
+ *
+ * **Nothing here restates a value.** `tokenStyleSheet()` declares each ground as
+ * `light-dark(light, dark)` and the wrapper declares `color-scheme: dark`, so the browser
+ * picks the branch — which is the whole of the mechanism, shown rather than described. A
+ * scheme is not a theme: no `data-ui-theme` appears anywhere in this story.
+ *
+ * It carries a button and a field beside the swatches on purpose. A palette proves the
+ * values resolve; only a rendered component proves they are legible, and the accessibility
+ * bar reaches this story exactly as it reaches every other one.
+ */
+export const DarkScheme: StoryObj = {
+    render: (): TemplateResult => html`
+        ${sheet()}
+        <div class="scheme">
+            <p>Every value below is the dark branch of one <code>light-dark()</code> pair.</p>
+            <ui-button>Save</ui-button>
+            <ui-button variant="secondary">Cancel</ui-button>
+            <ui-field>
+                <label slot="label">Amount</label>
+                <input type="number" />
+                <span slot="help">In BRL, two decimals.</span>
+                <span slot="error">Amount is required.</span>
+            </ui-field>
+        </div>
+
+        <style>
+            .scheme {
+                color-scheme: dark;
+                background: var(--ui-color-surface);
+                color: var(--ui-color-text);
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+                padding: 1.5rem;
+            }
+        </style>
+    `,
+};
