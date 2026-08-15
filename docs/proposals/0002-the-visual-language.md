@@ -1351,8 +1351,9 @@ preamble reads against it and a reader arriving at an earlier version should fin
 
 ---
 
-**No issue tracks this proposal yet**, and no roadmap entry exists for it. Both follow acceptance
-rather than preceding it.
+**Both of this proposal's bookkeeping obligations are discharged**: it is tracked by issue #47 and
+carried by `ROADMAP.md`. Each followed acceptance rather than preceding it, which is why an earlier
+version of this line said neither existed.
 
 ## Rollout
 

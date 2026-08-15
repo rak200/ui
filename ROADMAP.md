@@ -3,7 +3,7 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The visual language
+## The visual language (#47)
 
 [RFC 0002](docs/proposals/0002-the-visual-language.md) is `Accepted`: eleven items resolved, from
 where a colour with no token comes from to how the steps of a scale are named. The structural half is
@@ -16,7 +16,7 @@ rather than in each component.
 It sat below the playground, and the proposal's item 8 said why: its own contrast obligation for a
 second theme is discharged by stories, so it waited on the playground's fourth step — the one that
 proves composed stories render. **That step landed, and the whole playground with it**, so nothing
-holds this back any more. Its issue is #47.
+holds this back any more.
 
 **What arrives is decided per component, not all at once.** A token category enters with the pull
 request of the component that consumes it, with one clause that makes it a rule rather than a
@@ -25,19 +25,21 @@ schedule: a component that accepts interaction and shows no feedback is defectiv
 elevation waits for `ui-card`, a type scale for `ui-table`, and `success` and `warning` for
 `ui-toast`.
 
-## The v0 surface
+## The v0 surface (#13–#23)
 
 RFC 0016 sets the v0 component surface. The token layer, `ui-button` and `ui-field` ship — the last
-of them in 0.2.1 — and the rest is pending, with each entry getting an issue before it is worked.
+of them in 0.2.1 — and the remaining twelve components are open as #13 through #23, one issue each
+and the first of them holding `ui-input` and `ui-textarea` together.
 
-## Zag arrives with the first stateful component
+## Zag arrives with the first stateful component (#22)
 
 RFC 0016 adopts [Zag](https://zagjs.com) state machines for behaviour and accessibility, and this
 package does not depend on it yet — deliberately. A button has no state to model, and a dependency
 carried before anything uses it is a claim the code does not back up. The first component with
-dismissable layers, focus trapping or roving tabindex brings Zag with it.
+dismissable layers, focus trapping or roving tabindex brings Zag with it — `ui-dialog`, whose issue
+names it.
 
-## Design tokens beyond the web
+## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
 treating tokens as a single source of truth, which will mean emitting them in a second format. No
