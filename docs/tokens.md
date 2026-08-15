@@ -42,11 +42,20 @@ The token names this package defines, as they appear in CSS.
 | `--ui-color-accent-contrast` | text on that accent                     |
 | `--ui-color-surface`         | a neutral surface                       |
 | `--ui-color-text`            | body and secondary text                 |
-| `--ui-color-focus`           | the focus ring                          |
+| `--ui-color-focus`           | the focus ring — see the floor below    |
 | `--ui-color-danger`          | error text                              |
 | `--ui-radius`                | corner radius                           |
 | `--ui-space`                 | the spacing step components scale from  |
 | `--ui-font`                  | the font stack                          |
+
+### One token carries a floor
+
+`--ui-color-focus` is the visual information that identifies a focused control, so WCAG 1.4.11 asks
+for **3:1 against the surface it sits on** — `outline-offset` puts the surface on both sides of the
+ring, so the surface is what it is measured against rather than the control underneath.
+
+An override is yours to choose, but a focus ring below that ratio is one some people cannot see. The
+default is 5.02:1 on the light surface and clears the floor on a dark one too.
 
 ## `defaults`
 
