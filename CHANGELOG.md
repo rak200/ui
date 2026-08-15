@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/rak200/ui/compare/0.2.2...0.2.3) (2026-08-15)
+
+
+### Bug Fixes
+
+* the focus ring was below the contrast floor it exists to clear ([#60](https://github.com/rak200/ui/issues/60)) ([d366c11](https://github.com/rak200/ui/commit/d366c11d56b3c6e7836b4a189ee2253b84c2f34d))
+
 ## [0.2.2](https://github.com/rak200/ui/compare/0.2.1...0.2.2) (2026-08-14)
 
 
