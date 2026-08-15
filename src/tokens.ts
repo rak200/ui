@@ -37,7 +37,15 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-color-accent-contrast': '#ffffff',
     '--ui-color-surface': '#ffffff',
     '--ui-color-text': '#1f2937',
-    '--ui-color-focus': '#f59e0b',
+    // Amber-700 rather than the amber-500 this shipped with, and the change is a floor
+    // rather than a preference: a focus ring is the visual information that identifies a
+    // component's state, so WCAG 1.4.11 asks 3:1 against what it sits on. `#f59e0b`
+    // against the default surface is 2.15:1 — and `outline-offset` puts the surface on
+    // both sides of the ring, so the surface is what it is measured against, not the
+    // button underneath. This value is 5.02:1 there and 3.53:1 on a dark surface, so it
+    // clears the floor in either scheme. `tests/tokens.test.ts` holds the assertion,
+    // because no axe rule does.
+    '--ui-color-focus': '#b45309',
     '--ui-color-danger': '#b91c1c',
     '--ui-radius': '0.375rem',
     '--ui-space': '0.5rem',

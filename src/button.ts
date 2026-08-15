@@ -40,7 +40,7 @@ export class UiButton extends LitElement {
         /* A visible focus ring is not decoration: removing it is the single most common
        way a component stops being usable by keyboard. */
         button:focus-visible {
-            outline: 2px solid var(--ui-color-focus, #f59e0b);
+            outline: 2px solid var(--ui-color-focus, #b45309);
             outline-offset: 2px;
         }
 
