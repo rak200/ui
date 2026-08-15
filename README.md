@@ -48,9 +48,19 @@ Every visual decision is a CSS custom property, so a host restyles the kit witho
 }
 ```
 
+## Playground
+
+**[rak200.github.io/ui](https://rak200.github.io/ui/)** — every component, rendered, with its
+variants and states side by side and an accessibility panel over each one.
+
+It follows `master` rather than the latest release, so it can show a component a published version
+does not contain. The commit it was built from is stamped in the sidebar, so you can always tell
+which one you are looking at.
+
 ## Documentation
 
-The reference lives in [docs/](docs/README.md) — one page per unit.
+The reference lives in [docs/](docs/README.md) — one page per unit. The playground shows the
+components; `docs/` is what describes them.
 
 ## Status
 

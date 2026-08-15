@@ -939,5 +939,22 @@ In order, one pull request per step. It is short because the Decision did the wo
 6. **The deploy is made to fail on purpose once**, and confirmed to block, before it is trusted. A
    gate that has never failed has never been tested.
 
+   **Done, and the first attempt at it found something this document had wrong.** A story was broken
+   the way step 4 breaks one — a compile error — and `build-storybook` **built it anyway**:
+   Storybook's Vite build strips types and never typechecks. So the deploy is not a backstop for a
+   story that does not compile, and step 5's fallback line — _a plain `build-storybook` in the
+   deploy with the gap stated_ — would not have been one. `analyse` is what catches that, on the
+   required check, which is where step 4 already put it.
+
+   Broken at the bundler instead, with an unresolvable import, the gate holds exactly as designed:
+   `build` **failure**, `deploy` **skipped** on its `needs`, and the published site still serving
+   all seven stories from the previous build.
+
+   **And the environment refuses a branch outright**, which was discovered rather than configured:
+   dispatching the workflow from a branch reached the deploy job and was rejected —
+   _Branch "…" is not allowed to deploy to github-pages due to environment protection rules._ So no
+   branch can publish over `master`'s site even if its build succeeds, and the failure-injection
+   above could never have deployed the broken build it was testing with.
+
 The published page meets the same accessibility bar as the components it shows, and step 4 is what
 asserts it — the stories are cases of the suite, not a display beside it.
