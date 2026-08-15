@@ -3,17 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The component playground (#28)
-
-[RFC 0001](docs/proposals/0001-component-playground.md) is `Accepted`: Storybook, built to GitHub
-Pages at `/ui/`, with stories in `stories/` mirroring `src/` and rendered by the existing suite, so
-a broken story fails `ci / gate` without opening a ninth verb. Its rollout is six steps, the first
-of them a seed change in the baseline repository.
-
-It sits above the component queue deliberately. The proposal's Decision C is _now, and built for
-what is coming_ — the shape chosen here is the one every component after it inherits, and building
-it after a dozen components means retrofitting a dozen.
-
 ## The visual language
 
 [RFC 0002](docs/proposals/0002-the-visual-language.md) is `Accepted`: eleven items resolved, from
@@ -24,10 +13,10 @@ axes (`data-ui-theme` for the theme, `color-scheme` and `light-dark()` for the s
 as a duration scale with purposes over it, and reduced motion collapses every duration in one place
 rather than in each component.
 
-It sits **below** the playground, and the proposal's item 8 says why: its own contrast obligation for
-a second theme is discharged by stories, so it waits on the playground's fourth step — the one that
-proves composed stories render — and not on the two that publish the site. Its issue comes before it
-is worked.
+It sat below the playground, and the proposal's item 8 said why: its own contrast obligation for a
+second theme is discharged by stories, so it waited on the playground's fourth step — the one that
+proves composed stories render. **That step landed, and the whole playground with it**, so nothing
+holds this back any more. Its issue is #47.
 
 **What arrives is decided per component, not all at once.** A token category enters with the pull
 request of the component that consumes it, with one clause that makes it a rule rather than a
