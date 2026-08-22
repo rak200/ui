@@ -100,3 +100,5 @@ formats ships two behaviours and debugs three.
 The quality bar mirrors the ecosystem's PHP side — strict types, strict lint, a coverage floor, and
 a mutation floor at 100% — so a consumer gets the same guarantees whichever language an artifact is
 written in.
+
+A canary paragraph, added by a commit whose author is not a GitHub account.
