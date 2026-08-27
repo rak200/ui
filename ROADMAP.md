@@ -3,33 +3,18 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The visual language (#47)
-
-[RFC 0002](docs/proposals/0002-the-visual-language.md) is `Accepted`: eleven items resolved, from
-where a colour with no token comes from to how the steps of a scale are named. The structural half is
-what changes the package — the exported set splits into ground tokens with literal defaults and
-derived tokens whose value is a formula that must never reach `:root`, a theme becomes two independent
-axes (`data-ui-theme` for the theme, `color-scheme` and `light-dark()` for the scheme), motion arrives
-as a duration scale with purposes over it, and reduced motion collapses every duration in one place
-rather than in each component.
-
-It sat below the playground, and the proposal's item 8 said why: its own contrast obligation for a
-second theme is discharged by stories, so it waited on the playground's fourth step — the one that
-proves composed stories render. **That step landed, and the whole playground with it**, so nothing
-holds this back any more.
-
-**What arrives is decided per component, not all at once.** A token category enters with the pull
-request of the component that consumes it, with one clause that makes it a rule rather than a
-schedule: a component that accepts interaction and shows no feedback is defective. `ui-button` has no
-`:hover`, so interaction colours and the first motion tokens arrive with the fix to it — while
-elevation waits for `ui-card`, a type scale for `ui-table`, and `success` and `warning` for
-`ui-toast`.
-
 ## The v0 surface (#13–#23)
 
 RFC 0016 sets the v0 component surface. The token layer, `ui-button` and `ui-field` ship — the last
 of them in 0.2.1 — and the remaining twelve components are open as #13 through #23, one issue each
 and the first of them holding `ui-input` and `ui-textarea` together.
+
+**Each of them brings its own token category with it**, which is a rule rather than a schedule and
+is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with
+the component that consumes it_. Elevation waits for `ui-card` (#18), a type scale for `ui-table`
+(#19), `success` and `warning` for `ui-toast` (#21), layering for the first overlay. And each ships
+with its interaction states or it does not ship: a component that accepts interaction and shows no
+feedback is defective rather than incomplete.
 
 ## Zag arrives with the first stateful component (#22)
 

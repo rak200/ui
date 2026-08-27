@@ -1,4 +1,5 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
+import { reference } from './reference.js';
 
 /** Distinguishes one field's generated ids from another's. */
 let sequence = 0;
@@ -31,24 +32,24 @@ export class UiField extends LitElement {
     static override readonly styles = css`
         :host {
             display: block;
-            font-family: var(--ui-font, system-ui, sans-serif);
+            font-family: ${reference('--ui-font')};
         }
 
         .stack {
             display: flex;
             flex-direction: column;
-            gap: calc(var(--ui-space, 0.5rem) / 2);
+            gap: calc(${reference('--ui-space')} / 2);
         }
 
         slot[name='help']::slotted(*) {
-            color: var(--ui-color-text, #1f2937);
+            color: ${reference('--ui-color-text')};
             font-size: 0.875em;
         }
 
         /* Colour is not the only cue — the error text says what is wrong, and
        aria-invalid marks the control regardless of styling. */
         slot[name='error']::slotted(*) {
-            color: var(--ui-color-danger, #b91c1c);
+            color: ${reference('--ui-color-danger')};
             font-size: 0.875em;
         }
     `;
