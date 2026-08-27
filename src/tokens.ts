@@ -106,3 +106,6 @@ export function tokenStyleSheet(): string {
 
     return `:root {\n  color-scheme: light dark;\n${body}\n}`;
 }
+
+/** Canary probe for RFC 0017 step 5 — an exported symbol absent from docs/. */
+export const canaryProbe = 'undocumented';
