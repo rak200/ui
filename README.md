@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/rak200/ui/actions/workflows/ci.yml/badge.svg)](https://github.com/rak200/ui/actions/workflows/ci.yml)
 [![Latest tag](https://img.shields.io/github/v/tag/rak200/ui?sort=semver)](https://github.com/rak200/ui/tags)
-[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Mutation testing](https://img.shields.io/badge/Stryker-MSI%20100%25-brightgreen)](stryker.config.js)
 [![Code style](https://img.shields.io/badge/code%20style-Prettier-blue?logo=prettier&logoColor=white)](prettier.config.js)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
