@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/rak200/ui/compare/0.2.4...0.2.5) (2026-08-28)
+
+
+### Features
+
+* the visual language — the derived half, motion, and the button's interaction states ([#77](https://github.com/rak200/ui/issues/77)) ([d071d44](https://github.com/rak200/ui/commit/d071d441ded9a5a5130f70b0d453cb8fa8a53e98))
+
 ## [0.2.4](https://github.com/rak200/ui/compare/0.2.3...0.2.4) (2026-08-15)
 
 
