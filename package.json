@@ -38,7 +38,6 @@
     "analyse": "tsc --noEmit && eslint .",
     "test": "vitest run",
     "coverage": "coverage-floor",
-    "scan": "rak200-scan",
     "mutation": "stryker run",
     "build": "tsc -p tsconfig.build.json",
     "storybook": "storybook dev -p 6006",
