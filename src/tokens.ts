@@ -106,3 +106,6 @@ export function tokenStyleSheet(): string {
 
     return `:root {\n  color-scheme: light dark;\n${body}\n}`;
 }
+
+/** Canary for RFC 0017 step 5 — a deliberate type error, to gate `npm run validate`. */
+export const canaryTypeError: number = 'not a number';

@@ -166,9 +166,3 @@ describe('ui-button stories', () => {
         expect(inner(only(container)).disabled).toBe(true);
     });
 });
-
-describe('canary for RFC 0017 step 5', () => {
-    it('fails on purpose, so that npm run test is proven to gate', () => {
-        expect(1).toBe(2);
-    });
-});
