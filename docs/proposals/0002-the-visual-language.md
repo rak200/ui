@@ -1,6 +1,6 @@
 # RFC 0002 — The visual language: token structure, motion and themes
 
-- **Status**: Accepted
+- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-08-09
 
@@ -1351,9 +1351,23 @@ preamble reads against it and a reader arriving at an earlier version should fin
 
 ---
 
-**Both of this proposal's bookkeeping obligations are discharged**: it is tracked by issue #47 and
+**Both of this proposal's bookkeeping obligations were discharged**: it was tracked by issue #47 and
 carried by `ROADMAP.md`. Each followed acceptance rather than preceding it, which is why an earlier
 version of this line said neither existed.
+
+**Built in [#77](https://github.com/rak200/ui/pull/77)**, which closed #47 and pruned the
+`ROADMAP.md` entry that carried it — so the sentence above is now history rather than a description.
+What that pull request implemented is the structure: the two arrays, the formulas, the generated
+sheet, the reduced-motion collapse, the eight invariants, and the first category admitted under item
+4 — motion, with the interaction colours, arriving with the `ui-button` defect they answer. What it
+deliberately did **not** implement is the rest of item 4's schedule: elevation still waits for
+`ui-card` (#18), a type scale for `ui-table` (#19), `success` and `warning` for `ui-toast` (#21).
+That is the resolution working rather than an unfinished rollout, and the rule that governs it now
+lives in `ARCHITECTURE.md`, where a consumer reads it.
+
+**One Rollout step below is outstanding, and it is named rather than assumed discharged**: the
+interaction states have not been measured outside Chromium. It is a step before the release that
+carries them, not before the merge, and #77 says so in its own body.
 
 ## Rollout
 
@@ -1381,6 +1395,11 @@ Conditional on the Decision, and only the parts already known are written down.
   component decided. The suite runs one engine and therefore cannot warn about this — the same caveat
   already recorded for the browser-support measurement. So it is a step, not a test: a pressed state
   invisible on a phone is half the value of a library that intends to be rich in effects.
+
+  **Outstanding.** #77 shipped the first `:active` in the repository and did not discharge this. The
+  static playground is what it is measured against — `npm run build-storybook`, served to a real
+  phone — and the `States` story in `stories/button.stories.ts` is the one to open.
+
 - **The new exports are documented, because a gate already requires it and a bigger reason does too.**
   CI extracts every exported symbol from `src/` and greps `docs/` for it, so `darkScheme`,
   `derivedTokens`, `DerivedToken` and `formulas` each need a home — item 7 used that gate as an
