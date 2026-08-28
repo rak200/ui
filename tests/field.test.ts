@@ -353,6 +353,44 @@ describe('ui-field', () => {
         expect(styles).toContain('flex-direction: column');
     });
 
+    /**
+     * And *reads from tokens* is asserted as the host's own act rather than as a substring.
+     *
+     * A hardcoded value fails this, and so does a reference that stopped being one: an
+     * invalid `var()` drops the whole declaration, so the override below reaches nothing
+     * while the component still renders and every other test still passes.
+     */
+    it('takes every value it paints with from the host', async () => {
+        const field = await mount(`
+            <ui-field>
+                <label slot="label">Amount</label>
+                <input type="number" />
+                <span slot="help">In BRL, two decimals.</span>
+                <span slot="error">Amount is required.</span>
+            </ui-field>
+        `);
+
+        field.style.setProperty('--ui-font', 'monospace');
+        field.style.setProperty('--ui-space', '9px');
+        field.style.setProperty('--ui-color-text', 'rgb(1, 2, 3)');
+        field.style.setProperty('--ui-color-danger', 'rgb(4, 5, 6)');
+
+        const stack = field.shadowRoot?.querySelector('.stack');
+
+        if (stack === null || stack === undefined) {
+            throw new Error('the component rendered no stack');
+        }
+
+        expect(getComputedStyle(field).fontFamily, '--ui-font').toBe('monospace');
+        expect(getComputedStyle(stack).rowGap, '--ui-space, halved').toBe('4.5px');
+        expect(getComputedStyle(slotted(field, 'help')).color, '--ui-color-text').toBe(
+            'rgb(1, 2, 3)',
+        );
+        expect(getComputedStyle(slotted(field, 'error')).color, '--ui-color-danger').toBe(
+            'rgb(4, 5, 6)',
+        );
+    });
+
     it('has no accessibility violations', async () => {
         await expectAccessible(`
             <ui-field>

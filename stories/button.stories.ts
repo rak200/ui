@@ -55,3 +55,25 @@ export const Secondary: StoryObj<ButtonArgs> = {
 export const Disabled: StoryObj<ButtonArgs> = {
     args: { disabled: true },
 };
+
+/**
+ * Both weights side by side, for the states a screenshot cannot show.
+ *
+ * Hover one and press it: the background moves toward the text over
+ * `--ui-duration-state`, and the pressed colour lands with no transition at all, because a
+ * click is over in about 100ms and an entering transition of 150ms would finish after the
+ * finger has left. A reader judging whether the motion is right has to see it run, and
+ * that is what this story is for — the other three show a resting button.
+ *
+ * The disabled story is the control: it takes a pointer and does nothing, which is the
+ * `:not(:disabled)` guard rather than an accident of the colours.
+ */
+export const States: StoryObj<ButtonArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; gap: 0.5rem; align-items: center">
+            <ui-button>Save</ui-button>
+            <ui-button variant="secondary">Cancel</ui-button>
+            <ui-button disabled>Unavailable</ui-button>
+        </div>
+    `,
+};

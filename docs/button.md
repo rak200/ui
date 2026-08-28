@@ -14,6 +14,7 @@ import '@rak200/ui';
 - [`variant`](#variant)
 - [`disabled`](#disabled)
 - [`ButtonVariant`](#buttonvariant)
+- [Interaction states](#interaction-states)
 - [Styling](#styling)
 
 ## `<ui-button>`
@@ -56,6 +57,40 @@ so a host stylesheet can select on it.
 ## `ButtonVariant`
 
 The union of accepted `variant` values: `'primary' | 'secondary'`.
+
+## Interaction states
+
+The button answers a pointer, and every colour it answers with comes from the
+[tokens](tokens.md):
+
+| State            | What moves                                                               |
+| ---------------- | ------------------------------------------------------------------------ |
+| Hover            | the background, over `--ui-duration-state` and along `--ui-easing-state` |
+| Pressed          | the background again, further, and **with no transition at all**         |
+| Focus (keyboard) | a 2px `--ui-color-focus` ring, immediately                               |
+| Disabled         | nothing — a disabled button takes a pointer and does not respond to it   |
+
+Three of those are deliberate rather than incidental. The pressed colour lands instantly because a
+click is over in about 100ms, so a 150ms transition would finish after the finger has left and the
+state would never be seen. The focus ring is left out of the transition for the same kind of reason
+in reverse: delaying the affordance that says _this is where you are_ is the opposite of what it
+exists for. And the hover and pressed rules are guarded with `:not(:disabled)`, because a disabled
+button still matches `:hover` and `:active` — without the guard it would light up under a pointer
+that cannot activate it.
+
+**A press is never the only feedback.** Activating with <kbd>Enter</kbd> produces no `:active` at
+all, which is why the focus ring and the action itself carry the interaction for a keyboard user.
+
+To retune the motion, set the purpose rather than the step:
+
+```css
+ui-button {
+  --ui-duration-state: 300ms;
+}
+```
+
+Under `prefers-reduced-motion: reduce` every duration collapses in the token sheet, and this
+component never learns why.
 
 ## Styling
 

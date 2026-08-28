@@ -85,12 +85,63 @@ Verification is two-layered, because automated tooling catches only a fraction o
 
 ## Every visual decision is a token
 
-Colour, radius and spacing are CSS custom properties with fallbacks, so a host restyles the kit
-without forking it. Components read `var(--ui-*, fallback)`; a hardcoded value is a decision a host
-cannot override.
+Colour, radius, spacing and motion are CSS custom properties with fallbacks, so a host restyles the
+kit without forking it. Components read `var(--ui-*, fallback)`; a hardcoded value is a decision a
+host cannot override.
 
 Tokens are also the single source of truth that keeps a native shell reachable later, which is why
 they exist from day one rather than being extracted once something needs them.
+
+### The set splits into grounds and derivations
+
+A **ground** carries a literal value and is declared at `:root`. A **derived** role carries a
+formula — `color-mix()` over the grounds — and is declared nowhere: it lives in the `var()` fallback
+at the point of use.
+
+That placement is the whole of it, and the alternative was measured rather than argued about. A
+derivation written beside its grounds resolves **once**, against the grounds in force there, and
+freezes — a dark subtree then inherits the light mix, and a themed region inherits the untheme'd
+one, with nothing anywhere to read. In the fallback it resolves against the grounds in force at that
+element instead, so a hover colour follows a scheme and a theme without either restating it.
+
+The price is real and is stated where a consumer meets it: a derived name is **write-only**. You can
+override one; nothing can read one back. What it buys is an override surface a host can hold in
+their head — change the accent and the hover and pressed colours follow, rather than being one more
+name each.
+
+### A theme and a scheme are two axes
+
+A **scheme** is the light or dark rendering of whichever theme is in force, selected with
+`color-scheme`, with each ground carrying both of its values in one `light-dark()`. A **theme** is a
+named set of decisions, selected with the `data-ui-theme` attribute. They are independent: two
+themes cost two blocks rather than two blocks plus two guarded media queries, and a whole theme is
+four grounds.
+
+### Motion is tokens, and reduced motion is one rule
+
+Components read a **purpose** — `--ui-duration-state` — over a scale named by ordinals with gaps, so
+inserting a step later is additive rather than a rename. `prefers-reduced-motion` is honoured once,
+in the token layer, and collapses every duration to `0.01ms` rather than to zero — at zero a
+transition still lands but fires no `transitionend`, so anything awaiting the end of one waits
+forever, and only for the people who asked for less motion.
+
+That is the argument for motion being tokens at all, and it is stronger than the theming one: a
+hardcoded `150ms` is not merely un-overridable, it is an accessibility defect that every component
+would otherwise have to fix on its own.
+
+### A category arrives with the component that consumes it
+
+Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
+before. Values chosen with no component to judge them against get corrected when one arrives, and
+correcting a published default silently moves the rendering of every host that did not override it.
+
+**The exception is a component's own interaction states, which are not a later category but a
+present defect.** A component that accepts interaction and shows no feedback is incomplete, so
+`:hover` and `:focus` ship together with the component or the component does not ship.
+
+This is a schedule, not a licence to invent: a name is checked against the categories the token
+layer declares, and one matching none fails the suite. What made an unmanaged token set a pile was
+never lateness — it was each component naming things its own way.
 
 ## Distribution
 

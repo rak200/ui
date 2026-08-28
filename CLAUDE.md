@@ -21,16 +21,19 @@ The consumer-facing half of those decisions is [ARCHITECTURE.md](ARCHITECTURE.md
 
 ```
 src/
-├── tokens.ts        # the design tokens: names, defaults, and a :root stylesheet
+├── tokens.ts        # the tokens: the two arrays, their values, and the emitted stylesheet
+├── reference.ts     # how a component writes a token — internal, and the only importer of Lit here
 ├── button.ts        # <ui-button>
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
+├── reference.test.ts
 ├── button.test.ts
 ├── field.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
+├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
@@ -42,9 +45,9 @@ docs/                # one page per unit, indexed by docs/README.md
 ```
 
 `tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
-export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules
-and `stories.ts` are the exception the mirror does not cover: they are the suite's own scaffolding
-rather than units, so none has a counterpart in `src/`.
+export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules,
+`contrast.ts` and `stories.ts` are the exception the mirror does not cover: they are the suite's own
+scaffolding rather than units, so none has a counterpart in `src/`.
 
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
@@ -75,3 +78,11 @@ explains. This file restates none of them.
 - **Why a mutant on a module-level side effect cannot be killed** — the `Stryker disable next-line`
   comments in `src/button.ts` and `src/field.ts`, each carrying its reason. Exclude at the narrowest
   node; never widen to the file.
+- **Why a derived token's formula must never be declared at `:root`** — the docblock on `formulas`
+  in `src/tokens.ts`, which shows the broken placement rather than only naming it, and the gate in
+  `tests/tokens.test.ts` that makes it fail rather than be remembered.
+- **Why a component never writes `var(--ui-*, …)` by hand** — `src/reference.ts`, which also says
+  why the helper cannot live in `tokens.ts` and why a formula carries its grounds' own fallbacks.
+- **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
+  _A category arrives with the component that consumes it_. A name in no declared category fails
+  `tests/tokens.test.ts`, so the scheme is checked rather than described.

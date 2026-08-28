@@ -1,4 +1,5 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
+import { reference } from './reference.js';
 
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
@@ -25,11 +26,16 @@ export class UiButton extends LitElement {
 
         button {
             font: inherit;
-            font-family: var(--ui-font, system-ui, sans-serif);
+            font-family: ${reference('--ui-font')};
             border: 1px solid transparent;
-            border-radius: var(--ui-radius, 0.375rem);
-            padding: var(--ui-space, 0.5rem) calc(var(--ui-space, 0.5rem) * 2);
+            border-radius: ${reference('--ui-radius')};
+            padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 2);
             cursor: pointer;
+            /* Only the colour moves. The focus ring is deliberately not in this list:
+           delaying the affordance that says *this is where you are* is the opposite of
+           what it exists to do. */
+            transition: background-color ${reference('--ui-duration-state')}
+                ${reference('--ui-easing-state')};
         }
 
         button:disabled {
@@ -40,19 +46,46 @@ export class UiButton extends LitElement {
         /* A visible focus ring is not decoration: removing it is the single most common
        way a component stops being usable by keyboard. */
         button:focus-visible {
-            outline: 2px solid var(--ui-color-focus, #b45309);
+            outline: 2px solid ${reference('--ui-color-focus')};
             outline-offset: 2px;
         }
 
         button.primary {
-            background: var(--ui-color-accent, #2563eb);
-            color: var(--ui-color-accent-contrast, #ffffff);
+            background: ${reference('--ui-color-accent')};
+            color: ${reference('--ui-color-accent-contrast')};
         }
 
         button.secondary {
-            background: var(--ui-color-surface, #ffffff);
-            color: var(--ui-color-text, #1f2937);
+            background: ${reference('--ui-color-surface')};
+            color: ${reference('--ui-color-text')};
             border-color: currentcolor;
+        }
+
+        /* The :not(:disabled) guard is measured rather than assumed: a disabled button
+       still matches :hover and :active, so without it the button would light up under a
+       pointer that cannot activate it. Ordering does not substitute for the guard — both
+       rules below outrank the resting one on specificity whatever their position. */
+        button.primary:not(:disabled):hover {
+            background: ${reference('--ui-color-accent-hover')};
+        }
+
+        button.secondary:not(:disabled):hover {
+            background: ${reference('--ui-color-hover')};
+        }
+
+        /* A press is over in about 100ms, so an entering transition of 150ms would land
+       after the finger has left and the pressed colour would never be seen. Zero here
+       rather than a second token: it is a fact about how long a click lasts, not a
+       decision a host would want to retune. And the pressed state is never the only
+       feedback a component gives — activating by Enter produces no :active at all. */
+        button.primary:not(:disabled):active {
+            background: ${reference('--ui-color-accent-pressed')};
+            transition-duration: 0s;
+        }
+
+        button.secondary:not(:disabled):active {
+            background: ${reference('--ui-color-pressed')};
+            transition-duration: 0s;
         }
     `;
 
