@@ -7,6 +7,12 @@
 
 * the visual language — the derived half, motion, and the button's interaction states ([#77](https://github.com/rak200/ui/issues/77)) ([d071d44](https://github.com/rak200/ui/commit/d071d441ded9a5a5130f70b0d453cb8fa8a53e98))
 
+  Appearing tokens, because adding one widens `Token` and code that enumerates the set finds out at
+  compile time: `--ui-duration-100` and `--ui-easing-state` as grounds, and `--ui-duration-state`,
+  `--ui-color-hover`, `--ui-color-pressed`, `--ui-color-accent-hover` and `--ui-color-accent-pressed`
+  as derived. New exports: `derivedTokens`, `formulas`, `DerivedToken`. The supported override shape
+  is a partial map; an exhaustive `Record<Token, string>` is the pattern that breaks.
+
 ## [0.2.4](https://github.com/rak200/ui/compare/0.2.3...0.2.4) (2026-08-15)
 
 

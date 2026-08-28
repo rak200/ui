@@ -3,6 +3,19 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
+## The button's interaction states, measured off Chromium (#80)
+
+RFC 0002 requires the interaction states to be measured outside Chromium **before the first one
+ships**, and 0.2.5 shipped them without it — deferred deliberately, which is why it is here rather
+than only in the proposal. `ui-button` gained `:hover` and `:active` in 0.2.5, the first `:active`
+in the repository.
+
+The suite cannot absorb this and never will: it runs one engine. iOS Safari is the case that
+matters, where `:active` has a long-standing dependency on a touch listener existing and
+`-webkit-tap-highlight-color` paints over whatever the component decided — so a pressed state can be
+invisible on a phone while every gate here stays green. The nine components still queued inherit the
+same obligation, which is the other reason to answer it once, now.
+
 ## The v0 surface (#13–#23)
 
 RFC 0016 sets the v0 component surface. The token layer, `ui-button` and `ui-field` ship — the last

@@ -64,8 +64,8 @@ components; `docs/` is what describes them.
 
 ## Status
 
-**v0.** One component and the token layer, built to the ecosystem's full quality bar rather than
-sketched: type-checked at the strictest available setting, formatted, tested in a real browser
-and **asserted against axe** for WCAG A/AA, 100% coverage and **100% mutation score**, scanned, and
-every public symbol documented. The v0
-surface in RFC 0016 grows from here — see [ROADMAP.md](ROADMAP.md).
+**v0.** Two components — `<ui-button>` and `<ui-field>` — and the token layer under them, built to
+the ecosystem's full quality bar rather than sketched: type-checked at the strictest available
+setting, formatted, tested in a real browser and **asserted against axe** for WCAG A/AA, 100%
+coverage and **100% mutation score**, scanned, and every public symbol documented. The v0 surface in
+RFC 0016 grows from here — see [ROADMAP.md](ROADMAP.md).

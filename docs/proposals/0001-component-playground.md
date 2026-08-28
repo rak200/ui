@@ -1,6 +1,6 @@
 # RFC 0001 — Component playground
 
-- **Status**: Accepted
+- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-08-08
 
@@ -958,3 +958,14 @@ In order, one pull request per step. It is short because the Decision did the wo
 
 The published page meets the same accessibility bar as the components it shows, and step 4 is what
 asserts it — the stories are cases of the suite, not a display beside it.
+
+---
+
+**Implemented.** All six steps of the Rollout above are built, and step 6 records what its own
+failure injection found. The site follows `master` and the stories are inside `test`, so a story
+that stops compiling or stops rendering reds `ci / gate` rather than reaching the deploy.
+
+The theme toolbar that appeared among this proposal's advantages is still absent, and that is the
+tie-break working rather than a gap: it was a bonus in none of the six steps, and it gains its
+second entry additively whenever a second theme ships. RFC 0002 shipped the mechanism — `data-ui-theme`
+— and a second theme in a story, not in the package.
