@@ -106,8 +106,3 @@ export function tokenStyleSheet(): string {
 
     return `:root {\n  color-scheme: light dark;\n${body}\n}`;
 }
-
-/** Canary for RFC 0017 step 5 — exported, type-clean, and exercised by no test. */
-export function canaryUncovered(flag: boolean): string {
-    return flag ? 'covered' : 'uncovered';
-}
