@@ -167,7 +167,8 @@ describe('ui-button stories', () => {
     });
 });
 
-// Canary for RFC 0017 step 5 — a deliberately failing assertion.
-test('canary: this assertion is meant to fail', () => {
-  expect(1).toBe(2);
+describe('canary for RFC 0017 step 5', () => {
+    it('fails on purpose, so that npm run test is proven to gate', () => {
+        expect(1).toBe(2);
+    });
 });
