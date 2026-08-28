@@ -166,3 +166,8 @@ describe('ui-button stories', () => {
         expect(inner(only(container)).disabled).toBe(true);
     });
 });
+
+// Canary for RFC 0017 step 5 — a deliberately failing assertion.
+test('canary: this assertion is meant to fail', () => {
+  expect(1).toBe(2);
+});
