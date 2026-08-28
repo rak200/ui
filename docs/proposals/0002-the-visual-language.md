@@ -1396,9 +1396,11 @@ Conditional on the Decision, and only the parts already known are written down.
   already recorded for the browser-support measurement. So it is a step, not a test: a pressed state
   invisible on a phone is half the value of a library that intends to be rich in effects.
 
-  **Outstanding.** #77 shipped the first `:active` in the repository and did not discharge this. The
-  static playground is what it is measured against — `npm run build-storybook`, served to a real
-  phone — and the `States` story in `stories/button.stories.ts` is the one to open.
+  **Outstanding, and tracked by #80.** #77 shipped the first `:active` in the repository and did
+  not discharge this; 0.2.5 released it unmeasured, deliberately and with the deferral recorded
+  rather than forgotten. The static playground is what it is measured against —
+  `npm run build-storybook`, served to a real phone — and the `States` story in
+  `stories/button.stories.ts` is the one to open. Whatever closes #80 unmarks this.
 
 - **The new exports are documented, because a gate already requires it and a bigger reason does too.**
   CI extracts every exported symbol from `src/` and greps `docs/` for it, so `darkScheme`,
