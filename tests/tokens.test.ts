@@ -23,6 +23,7 @@ import { reference } from '../src/reference.js';
 import { UiButton } from '../src/button.js';
 import { UiDialog } from '../src/dialog.js';
 import { UiField } from '../src/field.js';
+import { UiInput, UiTextarea } from '../src/input.js';
 
 afterEach(() => {
     document.body.replaceChildren();
@@ -429,7 +430,15 @@ describe('the reduced-motion collapse, as the browser applies it', () => {
  * here in the first place.
  */
 describe('the references components write', () => {
-    const styles = [UiButton.styles, UiDialog.styles, UiField.styles].map(String).join('\n');
+    const styles = [
+        UiButton.styles,
+        UiDialog.styles,
+        UiField.styles,
+        UiInput.styles,
+        UiTextarea.styles,
+    ]
+        .map(String)
+        .join('\n');
 
     /** Every `--ui-` name mentioned anywhere in a component's CSS. */
     const mentioned = [...styles.matchAll(/--ui-[a-z0-9-]+/g)].map((match) => match[0]);
@@ -667,6 +676,33 @@ describe('the contrast floors', () => {
             expect(
                 contrastRatio(label, painted('--ui-color-accent-pressed', scheme)),
                 'pressed',
+            ).toBeGreaterThanOrEqual(4.5);
+        });
+
+        it.each(['light', 'dark'] as const)(
+            'gives a control a boundary that clears the non-text floor, in %s',
+            (scheme) => {
+                // WCAG 1.4.11: a control's boundary is what identifies the component, so
+                // it owes 3:1 against what it sits on. The step below the shipped one is
+                // 2.94 in light — which is what a percentage chosen by eye would have
+                // shipped, and what nothing would have caught.
+                expect(
+                    contrastRatio(
+                        painted('--ui-color-border', scheme),
+                        ground('--ui-color-surface', scheme),
+                    ),
+                ).toBeGreaterThanOrEqual(3);
+            },
+        );
+
+        it.each(['light', 'dark'] as const)('keeps muted text legible as text, in %s', (scheme) => {
+            // A placeholder is text, so 4.5:1 rather than 3:1 — the floor that makes a
+            // muted role only just muted.
+            expect(
+                contrastRatio(
+                    painted('--ui-color-text-muted', scheme),
+                    ground('--ui-color-surface', scheme),
+                ),
             ).toBeGreaterThanOrEqual(4.5);
         });
 

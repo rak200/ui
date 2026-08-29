@@ -15,16 +15,18 @@ existing, a tap there answers with nothing at all — and the fix is a listener,
 now rather than carried before anything needed it. A phone and ten seconds settles it, and the nine
 queued components inherit the answer.
 
-## The v0 surface (#13–#23)
+## The v0 surface (#14–#23)
 
-RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field` and `ui-dialog`
-ship, and the remaining eleven components are open as #13 through #21 and #23, one issue each and
-the first of them holding `ui-input` and `ui-textarea` together.
+RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field`, `ui-dialog`,
+`ui-input` and `ui-textarea` ship, and the remaining nine components are open as #14 through #21 and
+#23, one issue each.
 
 **Each of them brings its own token category with it**, which is a rule rather than a schedule and
 is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with
 the component that consumes it_. Elevation waits for `ui-card` (#18), a type scale for `ui-table`
-(#19), `success` and `warning` for `ui-toast` (#21).
+(#19), `success` and `warning` for `ui-toast` (#21). The boundary and the muted text arrived with
+`ui-input`, which is the pair the rest of the form cluster inherits rather than each naming its
+own.
 
 Layering was expected to arrive with the first overlay, and did not. A modal `<dialog>` is promoted
 to the top layer, so `ui-dialog` has no `z-index` anywhere to name — the category waits for an

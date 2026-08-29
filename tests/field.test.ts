@@ -411,6 +411,45 @@ describe('ui-field', () => {
             </ui-field>
         `);
     });
+
+    it('wires the control below a wrapper, not the wrapper itself', async () => {
+        // `<ui-input>` is such a wrapper, and it exists because the control has to stay in
+        // the light DOM for these IDREFs to resolve at all — so the box that styles it can
+        // only ever sit around it. A `<label for>` aimed at the box labels nothing, which
+        // axe reports at critical impact.
+        //
+        // Written with a plain `<span>` rather than with `<ui-input>`: the rule is about a
+        // wrapper, and a test that imports the component would be asserting the pair
+        // instead of the rule.
+        const field = await mount(`
+            <ui-field>
+                <label slot="label">Amount</label>
+                <span><input /></span>
+                <span slot="help">In BRL.</span>
+            </ui-field>
+        `);
+        const inner = field.querySelector('input');
+        const wrapper = field.querySelector(':scope > :not([slot])');
+
+        expect(inner?.id, 'the control got the id').toMatch(/\S/);
+        expect(wrapper?.id, 'and the wrapper got none').toBe('');
+        expect(slotted(field, 'label').getAttribute('for')).toBe(inner?.id);
+        expect(inner?.getAttribute('aria-describedby')).toMatch(/\S/);
+    });
+
+    it('still wires a control written as a direct child', async () => {
+        // Every call site that predates the wrapper. The descent matches nothing here and
+        // returns the child as it is.
+        const field = await mount(`
+            <ui-field>
+                <label slot="label">Amount</label>
+                <input />
+            </ui-field>
+        `);
+
+        expect(control(field).tagName).toBe('INPUT');
+        expect(slotted(field, 'label').getAttribute('for')).toBe(control(field).id);
+    });
 });
 
 /**

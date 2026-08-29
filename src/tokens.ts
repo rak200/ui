@@ -94,6 +94,16 @@ export type Token = (typeof tokens)[number];
  */
 export const derivedTokens = [
     '--ui-duration-state',
+    // The boundary of a control, and the text inside one that is not a value yet. Both
+    // arrive with `ui-input`, and both are the same mix at different strengths — which is
+    // what makes them one category rather than two: a border and a placeholder are the
+    // surface travelling toward the text, stopped at the contrast each one owes.
+    //
+    // The percentages are read off a measurement rather than chosen. A control's boundary
+    // is what identifies the component, so WCAG 1.4.11 asks 3:1 against the surface, and
+    // a placeholder is text, so 1.4.3 asks 4.5:1. `tests/tokens.test.ts` holds both.
+    '--ui-color-border',
+    '--ui-color-text-muted',
     // `hover` matches the pseudo-class it answers to; `pressed` deliberately does not —
     // `--ui-color-active` would read as *the active item* as readily as *the pressed
     // control*, and the role this implements was named `accent hover / pressed`.
@@ -210,6 +220,14 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-color-pressed': mix('--ui-color-text', 14, '--ui-color-surface'),
     '--ui-color-accent-hover': mix('--ui-color-text', 12, '--ui-color-accent'),
     '--ui-color-accent-pressed': mix('--ui-color-text', 22, '--ui-color-accent'),
+    // 3.39:1 on the light surface and 3.96:1 on the dark one, against a floor of 3. The
+    // step below clears neither — 45% is 2.94 in light, which is what a value chosen by
+    // eye would have shipped.
+    '--ui-color-border': mix('--ui-color-text', 50, '--ui-color-surface'),
+    // 5.24:1 and 6.07:1, against a floor of 4.5. Not the 60% that first cleared it: that
+    // is 4.52 in light, a rounding error from failing, and a default nobody could then
+    // retune without breaking a floor they were not thinking about.
+    '--ui-color-text-muted': mix('--ui-color-text', 65, '--ui-color-surface'),
 };
 
 /**

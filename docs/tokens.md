@@ -153,6 +153,13 @@ zero, and that difference is not cosmetic: at zero a transition still lands but 
 `transitionstart` and no `transitionend`, so anything waiting on the end of one waits forever, and
 only for the people who asked for less motion.
 
+**Two of those percentages are read off a measurement rather than chosen.** A control's boundary is
+what identifies the component, so WCAG 1.4.11 asks 3:1 against the surface, and a placeholder is
+text, so 1.4.3 asks 4.5:1. `--ui-color-border` clears 3 at 50% (3.39 light, 3.96 dark) and does not
+at 45% (2.94 light); `--ui-color-text-muted` clears 4.5 at 65% (5.24, 6.07) rather than at the 60%
+that first cleared it, because 4.52 is a rounding error away from failing. The suite holds both
+floors, in both schemes.
+
 [`<ui-dialog>`](dialog.md) is the component that makes that concrete: it waits for its exit to
 finish before closing, so it is the thing that would have waited forever.
 
@@ -209,6 +216,8 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-color-accent-pressed` | a primary control being pressed     |
 | `--ui-color-hover`          | a neutral surface under the pointer |
 | `--ui-color-pressed`        | a neutral surface being pressed     |
+| `--ui-color-border`         | the boundary of a control           |
+| `--ui-color-text-muted`     | text that is not a value yet        |
 | `--ui-duration-state`       | how long a state change takes       |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
@@ -238,6 +247,8 @@ formulas['--ui-duration-state'];
 | `--ui-color-accent-pressed` | the accent, 22% of the way toward the text  |
 | `--ui-color-hover`          | the surface, 8% of the way toward the text  |
 | `--ui-color-pressed`        | the surface, 14% of the way toward the text |
+| `--ui-color-border`         | the surface, 50% of the way toward the text |
+| `--ui-color-text-muted`     | the surface, 65% of the way toward the text |
 | `--ui-duration-state`       | the first step of the duration scale        |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only

@@ -18,6 +18,10 @@ let sequence = 0;
  * where the association is the platform's job — and this element only generates the ids
  * and points them at each other.
  *
+ * **The control may sit below a wrapper**, and the same constraint is why: `<ui-input>` is
+ * a box around a control that had to stay in the light DOM, so this element looks through
+ * it. See {@link UiField.#control}.
+ *
  * @example
  * ```html
  * <ui-field>
@@ -105,13 +109,31 @@ export class UiField extends LitElement {
     }
 
     /**
+     * The control this field is about, which a wrapper may stand in front of.
+     *
+     * `<ui-input>` is such a wrapper, and it is one because the control has to stay in the
+     * light DOM for the IDREFs below to resolve at all — so the box that styles it can
+     * only ever sit around it, never instead of it. The label points at the control and
+     * never at the box: `<label for>` aimed at a custom element labels nothing, which axe
+     * reports at critical impact.
+     *
+     * A control written as a direct child, which is every call site that predates the
+     * wrapper, matches nothing to descend into and is returned as it is.
+     */
+    #control(): HTMLElement | undefined {
+        const slotted = this.#slotted(null);
+
+        return slotted?.querySelector('input, textarea, select') ?? slotted;
+    }
+
+    /**
      * Points the label, the help and the error at the control.
      *
      * A host-supplied `id` is never overwritten — it may already be referenced by something
      * this element cannot see.
      */
     #associate(): void {
-        const control = this.#slotted(null);
+        const control = this.#control();
 
         if (control === undefined) {
             return;

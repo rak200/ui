@@ -26,6 +26,7 @@ src/
 ├── button.ts        # <ui-button>
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
+├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
@@ -33,6 +34,7 @@ tests/               # mirrors src/, one test file per unit
 ├── button.test.ts
 ├── dialog.test.ts
 ├── field.test.ts
+├── input.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
@@ -43,6 +45,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
 ├── dialog.stories.ts
 ├── field.stories.ts
+├── input.stories.ts
 └── tokens.stories.ts
 .storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
 docs/                # one page per unit, indexed by docs/README.md
@@ -98,6 +101,10 @@ explains. This file restates none of them.
   that now carries the trigger. The local half — why `showModal()` and never the `open` attribute,
   and why the accessible name is a copied string rather than an IDREF — is in `src/dialog.ts`
   beside each.
+- **Why the control is slotted rather than rendered, and why that answered form participation** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _ARIA association is light-DOM only_, and `src/input.ts`
+  beside the rule that reaches it. `src/field.ts`'s `#control()` is the other half: the field looks
+  _through_ the wrapper, because a `<label for>` aimed at a custom element labels nothing.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
