@@ -7,7 +7,17 @@ export default [
         // seed — until the baseline carries the line, the directory sits untracked after
         // any local build. Linting it would put generated JavaScript in front of
         // `projectService`, which can place none of it in a program.
-        ignores: ['dist/**', 'coverage/**', '.stryker-tmp/**', 'storybook-static/**'],
+        ignores: [
+            'dist/**',
+            'coverage/**',
+            '.stryker-tmp/**',
+            'storybook-static/**',
+            // A manual step rather than a unit, and JavaScript rather than TypeScript, so
+            // `projectService` can place it in no program and type-aware linting has
+            // nothing to run against. It sits under `tests/` because that path is already
+            // `export-ignore`d and the alternative was editing a byte-compared seed.
+            'tests/manual/**',
+        ],
     },
     {
         // A story shows what a consumer can have. Reaching under the barrel would let one

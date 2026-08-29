@@ -31,6 +31,15 @@ export class UiButton extends LitElement {
             border-radius: ${reference('--ui-radius')};
             padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 2);
             cursor: pointer;
+            /* Measured in WebKit and in Chromium under a phone viewport: the platform
+           paints its own wash on tap — 40% black in WebKit, the Android blue in
+           Chromium — over whatever the component decided, so the pressed colour below
+           arrives underneath it and is not what a finger sees.
+
+           Removing it is only correct because the pressed state exists. Until it did,
+           this wash was the ONLY response a touch got, and turning it off would have
+           left a button that answers a finger with nothing. */
+            -webkit-tap-highlight-color: transparent;
             /* Only the colour moves. The focus ring is deliberately not in this list:
            delaying the affordance that says *this is where you are* is the opposite of
            what it exists to do. */

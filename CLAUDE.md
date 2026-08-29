@@ -35,6 +35,7 @@ tests/               # mirrors src/, one test file per unit
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
+├── manual/          # steps a person runs, collected by nothing — see the file's own header
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
@@ -48,6 +49,12 @@ docs/                # one page per unit, indexed by docs/README.md
 export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules,
 `contrast.ts` and `stories.ts` are the exception the mirror does not cover: they are the suite's own
 scaffolding rather than units, so none has a counterpart in `src/`.
+
+**`tests/manual/` is a second kind of exception**, and it is not the suite at all: steps a person
+runs, collected by nothing and gating nothing. It sits here because `/tests/` is already
+`export-ignore`d, so a development script does not ride along in a consumer's `git archive`, and the
+alternative was editing a seed the conformance check compares byte for byte. `eslint.config.js`
+ignores the path and says why.
 
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
