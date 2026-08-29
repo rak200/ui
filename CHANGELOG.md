@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/rak200/ui/compare/0.2.6...0.2.7) (2026-08-29)
+
+
+### Features
+
+* ui-dialog, a modal that delegates its trap to the platform ([#85](https://github.com/rak200/ui/issues/85)) ([e8c5d94](https://github.com/rak200/ui/commit/e8c5d94b91bef4a5134c32bf3eed35eaff0569a5))
+
 ## [0.2.6](https://github.com/rak200/ui/compare/0.2.5...0.2.6) (2026-08-29)
 
 
