@@ -94,16 +94,13 @@ async function close(element: UiDialog): Promise<void> {
     await element.updateComplete;
 }
 
-afterEach(async () => {
+afterEach(() => {
+    // Synchronous, and that is a property of the component rather than of this callback:
+    // removing an open dialog closes it and gives the page back in the same turn, so no
+    // lock survives into the next test. It did not always — the release used to hang off
+    // the platform's `close` event, which is a queued task, and the leak showed up as
+    // tests failing on one Node version and not another.
     document.body.replaceChildren();
-
-    // Removing an open dialog closes it, and the platform fires `close` as a queued task
-    // rather than synchronously — so without this turn the release lands in the middle of
-    // the *next* test and gives the page back under it. Measured, as three tests failing
-    // in a way that depended on the order they ran in.
-    await new Promise((resolve) => {
-        setTimeout(resolve, 0);
-    });
 
     // Hygiene rather than assertion: the tests below check that the component gives the
     // page back, and this only stops one that fails from taking the rest of the file with
@@ -254,6 +251,12 @@ describe('focus', () => {
 
         await userEvent.keyboard('{Escape}');
 
+        // `cancel` sets the property synchronously, so an update is already pending here
+        // and this waits for it. Asserting straight off the keypress would be asserting
+        // against whether Lit's microtask had run yet, which is the shape of the CI
+        // failure that took two tries to stop chasing.
+        await element.updateComplete;
+
         expect(inner(element).open, 'still up while the exit runs').toBe(true);
         expect(inner(element).getAnimations({ subtree: true }).length).toBeGreaterThan(0);
     });
@@ -372,14 +375,25 @@ describe('the scroll lock', () => {
         // property on the host's behalf, one dialog at a time.
         const root = document.documentElement;
 
-        root.style.overflow = 'clip';
+        root.style.overflow = 'auto';
         root.style.setProperty('scrollbar-gutter', 'stable both-edges');
 
         const element = await mount(fixture);
+
+        // The page has to actually scroll, or the lock never touches the gutter and the
+        // restore has nothing to give back — a version that dropped the gutter entirely
+        // would pass against a short page.
+        const tall = document.createElement('div');
+        tall.style.height = '5000px';
+        document.body.append(tall);
+
         await open(element);
+
+        expect(root.style.getPropertyValue('scrollbar-gutter'), 'displaced').toBe('stable');
+
         await close(element);
 
-        expect(root.style.overflow).toBe('clip');
+        expect(root.style.overflow).toBe('auto');
         expect(root.style.getPropertyValue('scrollbar-gutter')).toBe('stable both-edges');
     });
 
@@ -564,9 +578,15 @@ describe('the lifecycle', () => {
         expect(seen[0]?.composed, 'and crosses a shadow boundary').toBe(true);
     });
 
-    it('gives the page back when it is removed while open', async () => {
+    it('gives the page back in the same turn it is removed in', async () => {
         // Removing an open dialog drops it out of the top layer and announces nothing, so
         // without this the page stays held by a dialog that is no longer anywhere.
+        //
+        // **In the same turn**, with nothing awaited between the removal and the
+        // assertion, and that is the point of the test rather than a tightening of it.
+        // The platform fires `close` as a queued task, so a release hung off that event
+        // leaves the page locked for a turn — long enough for a second dialog to open
+        // against a count nobody was holding.
         const root = document.documentElement;
         const element = await mount(fixture);
 
@@ -575,11 +595,8 @@ describe('the lifecycle', () => {
         expect(root.style.overflow, 'held').toBe('hidden');
 
         element.remove();
-        await new Promise((resolve) => {
-            setTimeout(resolve, 0);
-        });
 
-        expect(root.style.overflow, 'given back').toBe('');
+        expect(root.style.overflow, 'given back, with nothing awaited').toBe('');
     });
 });
 

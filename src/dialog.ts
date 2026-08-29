@@ -275,17 +275,15 @@ export class UiDialog extends LitElement {
         });
 
         this.#dialog.addEventListener('close', () => {
-            // Both ways out arrive here — the exit below and the disconnect above — so
-            // the page is given back and the close announced in one place rather than in
-            // each of them.
-            //
-            // `<form method="dialog">` is **not** one of those ways, measured rather than
-            // assumed: the platform looks for the form's nearest ancestor `<dialog>` in
-            // the *node* tree, and slotted content is not a descendant of the element it
-            // is slotted into. Such a form submits and closes nothing. `docs/dialog.md`
-            // says so where a consumer will look for it.
+            // The announcement only. The platform fires `close` as a *queued task* rather
+            // than synchronously, so this runs a turn after the dialog actually closed —
+            // which is fine for telling a host, and was wrong for giving the page back:
+            // the lock outlived the dialog by a task, and a second dialog opening inside
+            // that window counted against a page nobody was holding any more. Measured on
+            // Node 22 in CI and not on Node 24, which is what a timing dependency looks
+            // like from the outside. {@link UiDialog.#shut} owns the release instead, at
+            // both of the synchronous points where this element closes the dialog.
             this.open = false;
-            release();
             this.dispatchEvent(new Event('ui-close', { bubbles: true, composed: true }));
         });
     }
@@ -303,9 +301,8 @@ export class UiDialog extends LitElement {
         this.#observer.disconnect();
 
         // Removing an open dialog takes it out of the top layer and announces nothing, so
-        // the page would stay held by a dialog that is no longer anywhere. Closing it is
-        // how it leaves through the one exit that gives the page back.
-        this.#dialog.close();
+        // the page would stay held by a dialog that is no longer anywhere.
+        this.#shut();
 
         super.disconnectedCallback();
     }
@@ -391,7 +388,25 @@ export class UiDialog extends LitElement {
             return;
         }
 
-        dialog.close();
+        this.#shut();
+    }
+
+    /**
+     * Closes the dialog and gives the page back, in that order and in one place.
+     *
+     * Both ways out run through here — the exit above and the disconnect below — so the
+     * release is paired with the close rather than with the event the close will later
+     * fire. The guard is the platform's own state rather than a flag this element keeps:
+     * a dialog that is not open is holding nothing, so calling this twice gives the page
+     * back once.
+     */
+    #shut(): void {
+        if (!this.#dialog.open) {
+            return;
+        }
+
+        this.#dialog.close();
+        release();
     }
 
     /**
