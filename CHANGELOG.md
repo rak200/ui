@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/rak200/ui/compare/0.2.7...0.2.8) (2026-08-29)
+
+
+### Features
+
+* ui-input and ui-textarea, with the control left in the light DOM ([#87](https://github.com/rak200/ui/issues/87)) ([1e2e7ca](https://github.com/rak200/ui/commit/1e2e7caabf702443a9d3485256986a76c50827b6))
+
 ## [0.2.7](https://github.com/rak200/ui/compare/0.2.6...0.2.7) (2026-08-29)
 
 
