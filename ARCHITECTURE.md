@@ -76,8 +76,21 @@ Measured in the browser the suite runs in, both ways round. So a component that 
 generates the ids and points them at each other, and leaves the elements in the host's tree where the
 browser can see them all.
 
+**It binds the control itself, not only the text around it**, and `<ui-input>` is what made that
+concrete. A styled text field is the obvious candidate for rendering the `<input>` into a shadow
+root — and measured there, in this repository's own suite, it is an axe `label` violation at
+critical impact with an `aria-describedby` that dangles. So the control is the host's own element,
+slotted in, and the component is a box around it.
+
+That cost bought three things back. Attributes are the platform's, so there is no pass-through list
+to fall out of step with `type`, `inputmode` or whatever comes next; the control is directly
+styleable, being the host's own element in the host's own tree; and **form participation stopped
+being a design question**. A native control inside a `<form>` reaches the submit because it is a
+native control inside a `<form>` — no `ElementInternals`, no value mirroring. The shape the
+accessibility rule forced is the shape that answered the open question.
+
 The cost is a more verbose call site — `<label slot="label">Amount</label>` rather than
-`label="Amount"`. ARIA element reflection (`ariaLabelledByElements`) would remove it and does cross
+`label="Amount"`, and `<ui-input><input /></ui-input>` rather than `<ui-input />`. ARIA element reflection (`ariaLabelledByElements`) would remove it and does cross
 the boundary, but its support cannot be verified by a suite that runs one engine, and this is the one
 place in the library where being wrong is invisible to everyone who can see.
 
