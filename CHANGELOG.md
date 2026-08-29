@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/rak200/ui/compare/0.2.5...0.2.6) (2026-08-29)
+
+
+### Bug Fixes
+
+* the platform's tap highlight painted over the pressed state ([#83](https://github.com/rak200/ui/issues/83)) ([ca4b406](https://github.com/rak200/ui/commit/ca4b4063fba93883a099ef5724fbbf770aa83f1f))
+
 ## [0.2.5](https://github.com/rak200/ui/compare/0.2.4...0.2.5) (2026-08-28)
 
 
