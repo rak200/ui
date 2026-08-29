@@ -29,8 +29,19 @@ and its verification cost, per component. Theming somebody else's monolith gives
 owning the source is not negotiable here.
 
 Zag is **not a dependency yet**, deliberately. A button has no state to model, and a dependency
-carried before anything uses it is a claim the code does not back up. It arrives with the first
-component that has dismissable layers, focus trapping or roving tabindex.
+carried before anything uses it is a claim the code does not back up.
+
+**The first component that could have brought it did not, and that is worth stating rather than
+quietly not doing.** `ui-dialog` has dismissable layers and a focus trap — the two things Zag was
+adopted for — and it gets both from `<dialog>` and `showModal()`, where the background is inert
+because the user agent says so rather than because a script is holding the boundary. Zag's dialog
+machine implements the same pattern over a `<div>`, so adopting it there would have meant giving up
+the top layer in order to re-acquire in JavaScript what the top layer already grants.
+
+_The platform owns what the platform is good at_ is the older rule, and it wins where the two meet.
+Nothing about the adoption changed; what changed is which component triggers it. Zag arrives with
+the first component the platform has **no element for** — a menu with roving tabindex and
+positioning is the nearest one — and `ROADMAP.md` names it.
 
 ## The prefix is `ui-`
 
@@ -132,7 +143,9 @@ would otherwise have to fix on its own.
 ### A category arrives with the component that consumes it
 
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
-before. Values chosen with no component to judge them against get corrected when one arrives, and
+before. The rule cuts the other way as often as it looks like it will: the first overlay was
+expected to bring a layering category, and brought none, because a modal `<dialog>` is promoted to
+the top layer and there is no `z-index` anywhere in it to name. Values chosen with no component to judge them against get corrected when one arrives, and
 correcting a published default silently moves the rendering of every host that did not override it.
 
 **The exception is a component's own interaction states, which are not a later category but a

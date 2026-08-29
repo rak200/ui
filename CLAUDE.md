@@ -24,12 +24,14 @@ src/
 ├── tokens.ts        # the tokens: the two arrays, their values, and the emitted stylesheet
 ├── reference.ts     # how a component writes a token — internal, and the only importer of Lit here
 ├── button.ts        # <ui-button>
+├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
 ├── reference.test.ts
 ├── button.test.ts
+├── dialog.test.ts
 ├── field.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
@@ -39,6 +41,7 @@ tests/               # mirrors src/, one test file per unit
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
+├── dialog.stories.ts
 ├── field.stories.ts
 └── tokens.stories.ts
 .storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
@@ -90,6 +93,11 @@ explains. This file restates none of them.
   `tests/tokens.test.ts` that makes it fail rather than be remembered.
 - **Why a component never writes `var(--ui-*, …)` by hand** — `src/reference.ts`, which also says
   why the helper cannot live in `tokens.ts` and why a formula carries its grounds' own fallbacks.
+- **Why `ui-dialog` did not bring Zag, when RFC 0016 said the first stateful component would** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is adopted_, and `ROADMAP.md` names the component
+  that now carries the trigger. The local half — why `showModal()` and never the `open` attribute,
+  and why the accessible name is a copied string rather than an IDREF — is in `src/dialog.ts`
+  beside each.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.

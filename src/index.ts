@@ -1,4 +1,5 @@
 export { UiButton, type ButtonVariant } from './button.js';
+export { UiDialog } from './dialog.js';
 export { UiField } from './field.js';
 export {
     tokens,

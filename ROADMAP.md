@@ -17,24 +17,39 @@ queued components inherit the answer.
 
 ## The v0 surface (#13–#23)
 
-RFC 0016 sets the v0 component surface. The token layer, `ui-button` and `ui-field` ship — the last
-of them in 0.2.1 — and the remaining twelve components are open as #13 through #23, one issue each
-and the first of them holding `ui-input` and `ui-textarea` together.
+RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field` and `ui-dialog`
+ship, and the remaining eleven components are open as #13 through #21 and #23, one issue each and
+the first of them holding `ui-input` and `ui-textarea` together.
 
 **Each of them brings its own token category with it**, which is a rule rather than a schedule and
 is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with
 the component that consumes it_. Elevation waits for `ui-card` (#18), a type scale for `ui-table`
-(#19), `success` and `warning` for `ui-toast` (#21), layering for the first overlay. And each ships
-with its interaction states or it does not ship: a component that accepts interaction and shows no
-feedback is defective rather than incomplete.
+(#19), `success` and `warning` for `ui-toast` (#21).
 
-## Zag arrives with the first stateful component (#22)
+Layering was expected to arrive with the first overlay, and did not. A modal `<dialog>` is promoted
+to the top layer, so `ui-dialog` has no `z-index` anywhere to name — the category waits for an
+overlay the platform does not lift, and may never be needed at all. The rule cuts both ways, which
+is the point of writing it as a rule rather than a schedule.
+
+And each ships with its interaction states or it does not ship: a component that accepts interaction
+and shows no feedback is defective rather than incomplete.
+
+## Zag arrives with the first component the platform has no element for (#23)
 
 RFC 0016 adopts [Zag](https://zagjs.com) state machines for behaviour and accessibility, and this
-package does not depend on it yet — deliberately. A button has no state to model, and a dependency
-carried before anything uses it is a claim the code does not back up. The first component with
-dismissable layers, focus trapping or roving tabindex brings Zag with it — `ui-dialog`, whose issue
-names it.
+package still does not depend on it.
+
+**The trigger was expected to be `ui-dialog`, and it was not.** Dismissable layers and focus
+trapping are exactly what Zag was adopted for, and `<dialog>` with `showModal()` supplies both —
+with the background inert because the user agent says so rather than because a script is holding
+the boundary. Zag's dialog machine implements the same pattern over a `<div>`, so taking it there
+would have traded the top layer for a JavaScript trap. _The platform owns what the platform is good
+at_ is the older rule and it won; [ARCHITECTURE.md](ARCHITECTURE.md) carries that for a consumer.
+
+`ui-menu` (#23) is the nearest candidate — roving tabindex, a dismissable layer the platform does
+not lift, and positioning. Whichever component reaches it first, the test is now stated rather than
+assumed: Zag arrives where the platform has no element for the pattern, not merely where the
+pattern has state.
 
 ## Design tokens beyond the web (#24)
 

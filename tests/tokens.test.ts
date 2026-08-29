@@ -21,6 +21,7 @@ import {
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
 import { UiButton } from '../src/button.js';
+import { UiDialog } from '../src/dialog.js';
 import { UiField } from '../src/field.js';
 
 afterEach(() => {
@@ -428,7 +429,7 @@ describe('the reduced-motion collapse, as the browser applies it', () => {
  * here in the first place.
  */
 describe('the references components write', () => {
-    const styles = [UiButton.styles, UiField.styles].map(String).join('\n');
+    const styles = [UiButton.styles, UiDialog.styles, UiField.styles].map(String).join('\n');
 
     /** Every `--ui-` name mentioned anywhere in a component's CSS. */
     const mentioned = [...styles.matchAll(/--ui-[a-z0-9-]+/g)].map((match) => match[0]);

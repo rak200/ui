@@ -37,6 +37,13 @@ npm install @rak200/ui
 <ui-button>Save</ui-button>
 <ui-button variant="secondary">Cancel</ui-button>
 <ui-button disabled>Unavailable</ui-button>
+
+<ui-dialog>
+  <h2 slot="title">Delete account</h2>
+  <p>This cannot be undone.</p>
+  <ui-button slot="actions" variant="secondary">Cancel</ui-button>
+  <ui-button slot="actions">Delete</ui-button>
+</ui-dialog>
 ```
 
 Every visual decision is a CSS custom property, so a host restyles the kit without forking it:
@@ -64,8 +71,8 @@ components; `docs/` is what describes them.
 
 ## Status
 
-**v0.** Two components — `<ui-button>` and `<ui-field>` — and the token layer under them, built to
-the ecosystem's full quality bar rather than sketched: type-checked at the strictest available
+**v0.** Three components — `<ui-button>`, `<ui-field>` and `<ui-dialog>` — and the token layer under
+them, built to the ecosystem's full quality bar rather than sketched: type-checked at the strictest available
 setting, formatted, tested in a real browser and **asserted against axe** for WCAG A/AA, 100%
 coverage and **100% mutation score**, scanned, and every public symbol documented. The v0 surface in
 RFC 0016 grows from here — see [ROADMAP.md](ROADMAP.md).
