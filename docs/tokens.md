@@ -139,12 +139,22 @@ a naming scheme that turns _inserting a step_ into a rename is a scheme that bre
 change. Duration and easing are separate names so that changing a speed does not mean restating a
 curve.
 
+**Easing has three names and duration has one purpose, which is not an inconsistency.** A state
+change reverses mid-flight — a pointer leaves a button while the hover is still arriving — so
+`--ui-easing-state` is symmetric. An overlay does not reverse: it arrives and it leaves, and
+`--ui-easing-enter` and `--ui-easing-exit` are asked to feel different on purpose. No second
+duration step came with them, because nothing needed one; a step enters when a component judges it
+against something rather than when a name looks incomplete.
+
 **Reduced motion is honoured in the sheet, once.** `tokenStyleSheet()` emits a
 `@media (prefers-reduced-motion: reduce)` rule that collapses every duration — ground and derived
 alike, so a host who tuned one still gets the collapse. It collapses to `0.01ms` rather than to
 zero, and that difference is not cosmetic: at zero a transition still lands but fires no
 `transitionstart` and no `transitionend`, so anything waiting on the end of one waits forever, and
 only for the people who asked for less motion.
+
+[`<ui-dialog>`](dialog.md) is the component that makes that concrete: it waits for its exit to
+finish before closing, so it is the thing that would have waited forever.
 
 ## `tokens`
 
@@ -158,11 +168,14 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-color-text`            | body and secondary text                 |
 | `--ui-color-focus`           | the focus ring — see the floor below    |
 | `--ui-color-danger`          | error text                              |
+| `--ui-color-scrim`           | the dim behind a modal                  |
 | `--ui-radius`                | corner radius                           |
 | `--ui-space`                 | the spacing step components scale from  |
 | `--ui-font`                  | the font stack                          |
 | `--ui-duration-100`          | the first step of the duration scale    |
 | `--ui-easing-state`          | the curve a state change follows        |
+| `--ui-easing-enter`          | the curve an overlay arrives along      |
+| `--ui-easing-exit`           | the curve it leaves along               |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -258,7 +271,9 @@ darkScheme['--ui-radius']; // undefined
 
 Five entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent`,
 `--ui-color-accent-contrast` and `--ui-color-danger`. `--ui-color-focus` is absent because one value
-clears its contrast floor in both schemes.
+clears its contrast floor in both schemes, and `--ui-color-scrim` because dimming is dimming in
+either — it is the one neutral here that does **not** follow the text, since mixing toward the text
+would lighten the page behind a dialog on a dark one.
 
 Only colours may appear here, and that is a rule rather than a coincidence: `light-dark()` takes
 colours, so a dark value for `--ui-radius` would emit CSS the browser discards.

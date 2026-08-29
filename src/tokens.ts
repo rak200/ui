@@ -39,6 +39,19 @@ export const tokens = [
     '--ui-color-text',
     '--ui-color-focus',
     '--ui-color-danger',
+    // The dim behind a modal, and a *ground* rather than a derivation even though every
+    // other neutral here is derived. A derived neutral mixes toward the text, which is
+    // what makes one formula right in both schemes — and it is exactly wrong for this
+    // one: on a dark page the text is the light pole, so the mix would *lighten* the
+    // page behind the dialog instead of dimming it. A scrim dims in both schemes, so it
+    // carries a literal and appears in neither `darkScheme` nor `formulas`.
+    //
+    // **This departs from RFC 0002**, whose survey of the queued components answered
+    // *text at an alpha* for this role. That table asks whether a role needs a new hue,
+    // and the answer to that question is still no — what it could not weigh, with no
+    // overlay yet written to judge against, is which pole the mix should run toward. The
+    // proposal says so in the same breath: read as a judgement, not a measurement.
+    '--ui-color-scrim',
     '--ui-radius',
     '--ui-space',
     '--ui-font',
@@ -53,6 +66,17 @@ export const tokens = [
     // ground and a component reads it directly.
     '--ui-duration-100',
     '--ui-easing-state',
+    // The pair `--ui-easing-state` promised, arriving with the overlay that has an enter
+    // and an exit to name — `ui-dialog`. A state change reverses mid-flight and wants a
+    // symmetric curve; an overlay does not reverse, it arrives and it leaves, and the two
+    // directions are asked to feel different on purpose.
+    //
+    // No duration steps come with them. The scale is ordinal with gaps precisely so a step
+    // can be inserted when something needs one, and the dialog needs no duration the state
+    // step does not already give it — inventing `--ui-duration-200` before a component
+    // judges it against something is the claim ROADMAP.md declines to make about Zag.
+    '--ui-easing-enter',
+    '--ui-easing-exit',
 ] as const;
 
 /** A CSS custom property this package defines and gives a default. */
@@ -103,6 +127,11 @@ export const defaults: Readonly<Record<Token, string>> = {
     // because no axe rule does.
     '--ui-color-focus': '#b45309',
     '--ui-color-danger': '#b91c1c',
+    // Half black. Enough to push the page behind a modal out of the reading order for the
+    // eye as well as for the accessibility tree, and not so much that the context a modal
+    // is *about* stops being visible. The alpha is the whole point, so this is the one
+    // default that is not an opaque hex.
+    '--ui-color-scrim': 'rgb(0 0 0 / 0.5)',
     '--ui-radius': '0.375rem',
     '--ui-space': '0.5rem',
     '--ui-font': 'system-ui, sans-serif',
@@ -117,6 +146,11 @@ export const defaults: Readonly<Record<Token, string>> = {
     // for. `enter` will want an ease-out and `exit` an ease-in, and they arrive with the
     // overlays that have an enter and an exit to name.
     '--ui-easing-state': 'ease-in-out',
+    // Fast out of the gate and settling at the end, which is what makes an arriving
+    // overlay feel like it was already on its way. The exit is its mirror: slow to let go
+    // and quick to be gone, so a dismissal does not linger over a decision already made.
+    '--ui-easing-enter': 'ease-out',
+    '--ui-easing-exit': 'ease-in',
 };
 
 /**
