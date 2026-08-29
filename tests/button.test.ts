@@ -340,6 +340,19 @@ describe('the interaction states', () => {
         expect(styles.transitionDuration).toBe('0.15s');
     });
 
+    it('owns the tap highlight, so the pressed colour is what a finger sees', async () => {
+        // Measured off Chromium before this was written: WebKit paints 40% black on tap
+        // and Chromium under a phone viewport paints the Android blue, both over whatever
+        // the component decided. The component now has a pressed state of its own, which
+        // is the only reason turning the wash off is a fix rather than a removal.
+        const element = await mount('<ui-button>Save</ui-button>');
+        const highlight = getComputedStyle(inner(element)).getPropertyValue(
+            '-webkit-tap-highlight-color',
+        );
+
+        expect(highlight).toBe('rgba(0, 0, 0, 0)');
+    });
+
     it('lands on the pressed colour with no transition at all', async () => {
         // A press is over in about 100ms, so an entering transition of 150ms would finish
         // after the finger has left and the pressed colour would never be seen.

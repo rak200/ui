@@ -1396,11 +1396,25 @@ Conditional on the Decision, and only the parts already known are written down.
   already recorded for the browser-support measurement. So it is a step, not a test: a pressed state
   invisible on a phone is half the value of a library that intends to be rich in effects.
 
-  **Outstanding, and tracked by #80.** #77 shipped the first `:active` in the repository and did
-  not discharge this; 0.2.5 released it unmeasured, deliberately and with the deferral recorded
-  rather than forgotten. The static playground is what it is measured against —
-  `npm run build-storybook`, served to a real phone — and the `States` story in
-  `stories/button.stories.ts` is the one to open. Whatever closes #80 unmarks this.
+  **Measured after 0.2.5, and it found something the colours did not.** Chromium, Firefox and
+  WebKit — the last inside the official Playwright image, since WebKit needs libraries a current
+  Debian does not carry — agree on every derived colour to the fifth decimal of `oklab()`, on the
+  transition, on the focus ring at `#b45309` with `:focus-visible` matching, and on the
+  `:not(:disabled)` guard holding. Under an iPhone viewport too. `tests/manual/interaction-states.mjs`
+  is the step, kept because the nine queued components inherit this obligation.
+
+  What it found is that **`-webkit-tap-highlight-color` was nobody's**: 40% black in WebKit, the
+  Android blue in Chromium under a phone viewport, painted over the pressed colour on every tap.
+  Owned in `src/button.ts`, and only correct because the pressed state exists — until it did, that
+  wash was the only answer a touch got.
+
+  _A caution the run itself taught:_ the first WebKit pass read a hover partway through the 150ms
+  transition and looked like a cross-engine discrepancy. It was the settle time, not the engine.
+
+  **Still outstanding, and narrowed to it — #80.** Whether `:active` fires from a real finger on
+  real iOS. Playwright's touchscreen taps instantaneously and cannot hold; an emulated context is
+  not a device. Partial evidence, not a confirmation: under emulated touch, WebKit matched
+  `:active` on a pointer press with no touch listener anywhere on the page.
 
 - **The new exports are documented, because a gate already requires it and a bigger reason does too.**
   CI extracts every exported symbol from `src/` and greps `docs/` for it, so `darkScheme`,

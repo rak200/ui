@@ -3,18 +3,17 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The button's interaction states, measured off Chromium (#80)
+## `:active` from a real finger, on a real phone (#80)
 
-RFC 0002 requires the interaction states to be measured outside Chromium **before the first one
-ships**, and 0.2.5 shipped them without it — deferred deliberately, which is why it is here rather
-than only in the proposal. `ui-button` gained `:hover` and `:active` in 0.2.5, the first `:active`
-in the repository.
+Three engines are measured and agree — `tests/manual/interaction-states.mjs` is the step, and it
+already earned its keep by finding that `-webkit-tap-highlight-color` was painting over the pressed
+colour. One question survives it, and no amount of emulation answers it: **does `:active` fire from
+a real finger on real iOS?** Playwright's touchscreen taps instantaneously and cannot hold.
 
-The suite cannot absorb this and never will: it runs one engine. iOS Safari is the case that
-matters, where `:active` has a long-standing dependency on a touch listener existing and
-`-webkit-tap-highlight-color` paints over whatever the component decided — so a pressed state can be
-invisible on a phone while every gate here stays green. The nine components still queued inherit the
-same obligation, which is the other reason to answer it once, now.
+It matters because the tap wash is now off. If iOS turns out to gate `:active` on a touch listener
+existing, a tap there answers with nothing at all — and the fix is a listener, decided against for
+now rather than carried before anything needed it. A phone and ten seconds settles it, and the nine
+queued components inherit the answer.
 
 ## The v0 surface (#13–#23)
 
