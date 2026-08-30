@@ -49,19 +49,42 @@ const PACKAGE = 'lucide-static@1.37.0';
 const OUT = resolve(import.meta.dirname, '../../src/icons');
 
 /**
- * The geometry inside a Lucide SVG, with the wrapper and the licence comment taken off.
+ * The geometry inside a Lucide SVG, with the wrapper taken off.
+ *
+ * **Sliced at the wrapper's own boundaries rather than pattern-matched away.** The first
+ * version stripped the licence comment with a regex, and CodeQL was right to red it:
+ * `js/incomplete-multi-character-sanitization` fires on exactly that shape, because one
+ * pass over `<!-- -->` can leave a `<!--` behind. Measured across all 2048 files, the
+ * comment sits *outside* the wrapper in every one of them — so slicing already drops it
+ * and the regex never had anything to do.
+ *
+ * If one ever moves inside, this refuses rather than strips. A comment carried into an
+ * `svg` template is markup this package would be emitting blind, and a generator that
+ * quietly half-cleans it is how that arrives unnoticed.
  *
  * Whitespace is collapsed rather than preserved: the emitted file is generated, so the
  * only reader who benefits from its formatting is a diff, and a diff benefits more from
  * one line per glyph.
  */
 function geometry(svg) {
-    return svg
-        .replace(/<!--[\s\S]*?-->/g, '')
-        .replace(/[\s\S]*?<svg[^>]*>/, '')
-        .replace(/<\/svg>[\s\S]*/, '')
+    const open = svg.indexOf('<svg');
+    const start = svg.indexOf('>', open);
+    const end = svg.lastIndexOf('</svg>');
+
+    if (open === -1 || start === -1 || end === -1 || end < start) {
+        throw new Error('no <svg> wrapper to take off — has the upstream format changed?');
+    }
+
+    const inner = svg
+        .slice(start + 1, end)
         .replace(/\s+/g, ' ')
         .trim();
+
+    if (inner.includes('<!--')) {
+        throw new Error('a comment inside the wrapper — the upstream format has changed');
+    }
+
+    return inner;
 }
 
 /** Downloads the pinned tarball into a scratch directory and unpacks it. */
