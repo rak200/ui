@@ -28,6 +28,7 @@ src/
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
+├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
@@ -37,6 +38,7 @@ tests/               # mirrors src/, one test file per unit
 ├── dialog.test.ts
 ├── field.test.ts
 ├── input.test.ts
+├── select.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
@@ -49,6 +51,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── dialog.stories.ts
 ├── field.stories.ts
 ├── input.stories.ts
+├── select.stories.ts
 └── tokens.stories.ts
 .storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
 docs/                # one page per unit, indexed by docs/README.md
@@ -114,6 +117,11 @@ explains. This file restates none of them.
   then freeze the mark's colour, which `mask-composite: exclude` avoids by making the mark absent
   rather than coloured. The target-size floor and the forced-colors block beside it are the other
   two things `appearance: none` made this component's to own.
+- **Why `ui-select` writes the box out instead of sharing `ui-input`'s** — the docblock on
+  `src/select.ts`, and `tests/select.test.ts`'s _the box, against the input it has to match_, which
+  is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
+  file records why `appearance: none` is set at all, and why `appearance: base-select` — supported
+  in this engine, measured — is deliberately not adopted.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.

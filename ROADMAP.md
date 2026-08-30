@@ -25,8 +25,16 @@ part with a wrong answer — decorative by default, nameable when the icon _is_ 
 ## The v0 surface (#15–#23)
 
 RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field`, `ui-dialog`,
-`ui-input`, `ui-textarea`, `ui-checkbox` and `ui-switch` ship, and the remaining seven components
-are open as #15, #17 through #21 and #23, one issue each.
+`ui-input`, `ui-textarea`, `ui-checkbox`, `ui-switch` and `ui-select` ship, and the remaining six
+components are open as #15 and #18 through #21 and #23, one issue each.
+
+**One deferral now has an expiry date rather than a reason.** RFC 0016 put a custom listbox off
+because a native `<select>` is accessible for free on every platform and a listbox is an
+accessibility project of its own. That still holds — and Chromium now ships `appearance: base-select`
+with `::picker(select)` and `::checkmark`, measured as supported in the engine this suite runs.
+`ui-select` deliberately does not adopt it: a visual language that changes shape per engine is what a
+kit exists to prevent, and one engine cannot speak for the others. What reopens the listbox question
+is that feature arriving broadly, not a decision here — `docs/select.md` carries it for a consumer.
 
 **Each of them brings its own token category with it**, which is a rule rather than a schedule and
 is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with
