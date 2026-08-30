@@ -125,7 +125,8 @@ one: an overlay scrollbar floats over the content and reserves nothing, so a pag
 still have no gutter to keep — reserving one there pulls the content in by the width of a scrollbar
 nobody was using, which is the same shift in the other direction. `reservedGutter` is the rule, and
 it is decided from the viewport width against the content width rather than from whether the page
-scrolls.
+scrolls; `applyLock` is what writes the two properties the lock is made of, in the one place either
+is named.
 
 Whatever the host had set is given back, not cleared — a page with its own `overflow` or its own
 gutter keeps them, through the lock as well as after it. The lock is counted, so a confirm opened
