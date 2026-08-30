@@ -34,6 +34,11 @@ npm install @rak200/ui
   <span slot="help">In BRL, two decimals.</span>
 </ui-field>
 
+<ui-field>
+  <label slot="label">Email notifications</label>
+  <ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
+</ui-field>
+
 <ui-button>Save</ui-button>
 <ui-button variant="secondary">Cancel</ui-button>
 <ui-button disabled>Unavailable</ui-button>
@@ -71,8 +76,8 @@ components; `docs/` is what describes them.
 
 ## Status
 
-**v0.** Five components — `<ui-button>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>` and
-`<ui-textarea>` — and the token layer under them, built to the ecosystem's full quality bar rather than sketched: type-checked at the strictest available
+**v0.** Seven components — `<ui-button>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
+`<ui-textarea>`, `<ui-checkbox>` and `<ui-switch>` — and the token layer under them, built to the ecosystem's full quality bar rather than sketched: type-checked at the strictest available
 setting, formatted, tested in a real browser and **asserted against axe** for WCAG A/AA, 100%
 coverage and **100% mutation score**, scanned, and every public symbol documented. The v0 surface in
 RFC 0016 grows from here — see [ROADMAP.md](ROADMAP.md).

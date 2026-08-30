@@ -24,6 +24,7 @@ src/
 ├── tokens.ts        # the tokens: the two arrays, their values, and the emitted stylesheet
 ├── reference.ts     # how a component writes a token — internal, and the only importer of Lit here
 ├── button.ts        # <ui-button>
+├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
@@ -32,6 +33,7 @@ tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
 ├── reference.test.ts
 ├── button.test.ts
+├── checkbox.test.ts
 ├── dialog.test.ts
 ├── field.test.ts
 ├── input.test.ts
@@ -43,6 +45,7 @@ tests/               # mirrors src/, one test file per unit
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
+├── checkbox.stories.ts
 ├── dialog.stories.ts
 ├── field.stories.ts
 ├── input.stories.ts
@@ -105,6 +108,12 @@ explains. This file restates none of them.
   [ARCHITECTURE.md](ARCHITECTURE.md), _ARIA association is light-DOM only_, and `src/input.ts`
   beside the rule that reaches it. `src/field.ts`'s `#control()` is the other half: the field looks
   _through_ the wrapper, because a `<label for>` aimed at a custom element labels nothing.
+- **Why a drawn control paints its own mark, and why the mark is a hole** — `src/checkbox.ts`,
+  beside the mask constant. `:host(:has(input:checked))` is invalid in this engine, so shadow CSS
+  cannot read a slotted control's state and only `::slotted(input:checked)` can; a `data:` URI would
+  then freeze the mark's colour, which `mask-composite: exclude` avoids by making the mark absent
+  rather than coloured. The target-size floor and the forced-colors block beside it are the other
+  two things `appearance: none` made this component's to own.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
