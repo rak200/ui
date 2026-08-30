@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.11](https://github.com/rak200/ui/compare/0.2.10...0.2.11) (2026-08-30)
+
+
+### Features
+
+* ui-select, a native select the token layer draws the box for ([#96](https://github.com/rak200/ui/issues/96)) ([91929ec](https://github.com/rak200/ui/commit/91929ecc9efde1c5dcc97c145b26d7477af9a600)), closes [#17](https://github.com/rak200/ui/issues/17)
+
 ## [0.2.10](https://github.com/rak200/ui/compare/0.2.9...0.2.10) (2026-08-30)
 
 
