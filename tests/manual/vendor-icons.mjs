@@ -41,6 +41,14 @@
  * comment is read wherever the list comes from. `tsconfig.icons.json` strips comments from
  * the build, so it costs the published package nothing.
  *
+ * **It is `disable all`, not `disable next-line`, and that cost a second red gate.** The
+ * emitted call is one statement, but prettier wraps the longer ones — 1897 of 2048 — over
+ * four lines, and `next-line` then covers `register(` while the two strings under it stay
+ * mutated. The first fix was verified against `x` and `check`, which happen to be short
+ * enough to fit on one line, so it looked like it worked. A generated file with a single
+ * statement is the one place where the file-wide form and the narrow one cover exactly the
+ * same ground.
+ *
  * **The licence travels with the files.** ISC requires the notice to ship, so it is
  * written to `src/icons/LICENSE` and reaches the package through `dist`.
  */
@@ -142,13 +150,16 @@ try {
                 `import { svg } from 'lit';`,
                 `import { register } from '../icon.js';`,
                 ``,
-                `// Stryker disable next-line all: the registration runs once, at import, inside the`,
-                `// warm process Stryker switches mutants in, so by the time a mutant on this line is`,
-                `// active the glyph is already registered under its original name and geometry —`,
-                `// outside the runner's reach, the same category \`src/button.ts\` names beside`,
-                `// \`customElements.define\`. It is emitted per file rather than excluded in`,
-                `// \`stryker.config.js\` because a pull request runs \`--mutate\` over the changed`,
-                `// files, and that argument replaces the config's list rather than adding to it.`,
+                `// Stryker disable all: the registration below runs once, at import, inside the warm`,
+                `// process Stryker switches mutants in — so by the time a mutant on it is active the`,
+                `// glyph is already registered under its original name and geometry. Outside the`,
+                `// runner's reach, the category \`src/button.ts\` names beside \`customElements.define\`.`,
+                `//`,
+                `// \`all\` rather than \`next-line\`, and the file holds one statement so the two cover`,
+                `// the same ground: prettier wraps the longer calls across four lines, and`,
+                `// \`next-line\` then covers \`register(\` while the strings under it stay mutated —`,
+                `// measured, as 3790 live mutants on a green local run. See vendor-icons.mjs for why`,
+                `// this is emitted per file rather than excluded in \`stryker.config.js\`.`,
                 `register('${name}', svg\`${inner}\`);`,
                 ``,
             ].join('\n'),

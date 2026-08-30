@@ -2,13 +2,16 @@
 import { svg } from 'lit';
 import { register } from '../icon.js';
 
-// Stryker disable next-line all: the registration runs once, at import, inside the
-// warm process Stryker switches mutants in, so by the time a mutant on this line is
-// active the glyph is already registered under its original name and geometry —
-// outside the runner's reach, the same category `src/button.ts` names beside
-// `customElements.define`. It is emitted per file rather than excluded in
-// `stryker.config.js` because a pull request runs `--mutate` over the changed
-// files, and that argument replaces the config's list rather than adding to it.
+// Stryker disable all: the registration below runs once, at import, inside the warm
+// process Stryker switches mutants in — so by the time a mutant on it is active the
+// glyph is already registered under its original name and geometry. Outside the
+// runner's reach, the category `src/button.ts` names beside `customElements.define`.
+//
+// `all` rather than `next-line`, and the file holds one statement so the two cover
+// the same ground: prettier wraps the longer calls across four lines, and
+// `next-line` then covers `register(` while the strings under it stay mutated —
+// measured, as 3790 live mutants on a green local run. See vendor-icons.mjs for why
+// this is emitted per file rather than excluded in `stryker.config.js`.
 register(
     'signature',
     svg`<path d="m21 17-2.156-1.868A.5.5 0 0 0 18 15.5v.5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1c0-2.545-3.991-3.97-8.5-4a1 1 0 0 0 0 5c4.153 0 4.745-11.295 5.708-13.5a2.5 2.5 0 1 1 3.31 3.284" /> <path d="M3 21h18" />`,

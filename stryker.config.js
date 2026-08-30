@@ -4,8 +4,8 @@ export default {
     ...base,
 
     // The generated glyph modules are excluded from mutation, and NOT from here: each one
-    // carries its own `// Stryker disable next-line all`, emitted by
-    // `tests/manual/vendor-icons.mjs`, which states the reason beside the line it covers.
+    // carries its own `// Stryker disable all`, emitted by `tests/manual/vendor-icons.mjs`,
+    // which states the reason beside the single statement it covers.
     //
     // A negation in this file would have been the obvious place and it does not work. A
     // pull request runs `--mutate` over the changed files, and that argument REPLACES this
