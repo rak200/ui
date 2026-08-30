@@ -16,6 +16,50 @@ let locks = 0;
 let displaced: { overflow: string; gutter: string };
 
 /**
+ * The `scrollbar-gutter` to hold while the page is locked.
+ *
+ * **The question is not whether the page scrolls**, which is what this asked first and
+ * what `tests/manual/scroll-lock.mjs` caught. A page can scroll and still have no gutter
+ * to keep — an overlay scrollbar takes no layout space — and reserving one there pulls the
+ * content in by the width of a scrollbar that was never there: the same shift, in the
+ * other direction, measured at -15px. The question is whether the scrollbar is *taking
+ * space*, and the viewport minus the content width is what answers it.
+ *
+ * **Taken as arguments rather than read from `window`, and that is the floors talking.**
+ * The suite's engine reports no scrollbar width at all, so the reserving branch is
+ * unreachable from anything this code could measure itself — and a branch no test can
+ * reach is a branch no floor can hold. As a function of two numbers it is decided here and
+ * checked directly, while the call site keeps no branch of its own.
+ *
+ * @param viewport - The viewport's width, scrollbar included.
+ * @param content - The width available to content, scrollbar excluded.
+ * @param current - What the host already had, returned untouched when there is nothing to
+ * reserve — so a page that sets its own gutter keeps it through the lock.
+ */
+export function reservedGutter(viewport: number, content: number, current: string): string {
+    return viewport > content ? 'stable' : current;
+}
+
+/**
+ * Writes the two properties the lock is made of, and the only place either is named.
+ *
+ * **Handed an element rather than reaching for `document.documentElement`**, for the same
+ * reason {@link reservedGutter} is handed numbers. In the engine the suite runs, the root's
+ * gutter never changes: the scrollbar takes no space, so the value written is always the
+ * value already there and the write is a no-op that nothing can observe — the property name
+ * becomes a string no test compares against anything. On an element handed in, both writes
+ * are observable, and the names are checked rather than assumed.
+ *
+ * @param root - The element the lock is written on; `document.documentElement` in use.
+ * @param overflow - What to set `overflow` to; the empty string removes the declaration.
+ * @param gutter - What to set `scrollbar-gutter` to; likewise.
+ */
+export function applyLock(root: HTMLElement, overflow: string, gutter: string): void {
+    root.style.overflow = overflow;
+    root.style.setProperty('scrollbar-gutter', gutter);
+}
+
+/**
  * Holds the page still behind a modal, and gives it back when the last one leaves.
  *
  * `<dialog>` gives a modal the top layer, an inert background, a focus trap and focus
@@ -28,7 +72,7 @@ let displaced: { overflow: string; gutter: string };
  * back as padding — and the browser this suite runs in has overlay scrollbars, so the
  * width is `0`, every sign error in that arithmetic passes, and the check is theatre.
  * `scrollbar-gutter: stable` asks the browser to keep the space it was already using,
- * with no number to get wrong.
+ * with no number to get wrong — {@link reservedGutter} decides whether there is any.
  *
  * Counted rather than flagged, because a dialog opening a dialog is ordinary — a confirm
  * over a form — and the second one closing must not give the page back while the first is
@@ -48,14 +92,11 @@ function hold(): void {
         gutter: root.style.getPropertyValue('scrollbar-gutter'),
     };
 
-    // Only where there was a scrollbar to lose. `stable` on a page that never had one
-    // reserves space that was not there, which is the same layout shift in the other
-    // direction.
-    if (root.scrollHeight > root.clientHeight) {
-        root.style.setProperty('scrollbar-gutter', 'stable');
-    }
-
-    root.style.overflow = 'hidden';
+    applyLock(
+        root,
+        'hidden',
+        reservedGutter(window.innerWidth, root.clientWidth, displaced.gutter),
+    );
 }
 
 /** Gives the page back, once the last dialog has closed. */
@@ -70,8 +111,7 @@ function release(): void {
 
     // What the host had, not what this module would have chosen. A page that sets its own
     // `overflow` or reserves its own gutter gets it back rather than being cleared.
-    root.style.overflow = displaced.overflow;
-    root.style.setProperty('scrollbar-gutter', displaced.gutter);
+    applyLock(root, displaced.overflow, displaced.gutter);
 }
 
 /** One of the dialog's slots — named, or the default one when the name is empty. */

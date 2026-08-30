@@ -12,8 +12,12 @@ a real finger on real iOS?** Playwright's touchscreen taps instantaneously and c
 
 It matters because the tap wash is now off. If iOS turns out to gate `:active` on a touch listener
 existing, a tap there answers with nothing at all — and the fix is a listener, decided against for
-now rather than carried before anything needed it. A phone and ten seconds settles it, and the nine
-queued components inherit the answer.
+now rather than carried before anything needed it. A phone and ten seconds settles it, and the
+components still queued inherit the answer.
+
+**The ten seconds are written down**, in that step's own header: open `ui-button` → `States` on the
+phone and **press and hold**. Holding is the whole trick — `:active` persists while the finger is
+down, so there is no 100ms flash to catch and nothing to judge.
 
 ## The v0 surface (#14–#23)
 

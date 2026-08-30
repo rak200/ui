@@ -4,6 +4,7 @@ import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Confirm, Long, Nested } from '../stories/dialog.stories.js';
 import '../src/dialog.js';
+import { applyLock, reservedGutter } from '../src/dialog.js';
 import type { UiDialog } from '../src/dialog.js';
 
 /** The markup the behavioural tests open, unless one needs a different shape. */
@@ -389,7 +390,9 @@ describe('the scroll lock', () => {
 
         await open(element);
 
-        expect(root.style.getPropertyValue('scrollbar-gutter'), 'displaced').toBe('stable');
+        // Untouched rather than displaced: this engine's scrollbar takes no space, so
+        // there is nothing to reserve and the host's own gutter stands through the lock.
+        expect(root.style.getPropertyValue('scrollbar-gutter'), 'kept').toBe('stable both-edges');
 
         await close(element);
 
@@ -397,31 +400,25 @@ describe('the scroll lock', () => {
         expect(root.style.getPropertyValue('scrollbar-gutter')).toBe('stable both-edges');
     });
 
-    it('reserves the gutter only where there was a scrollbar to lose', async () => {
+    it('reserves nothing in an engine whose scrollbar takes no space', async () => {
+        // Scrolling is not the question — taking space is. This engine reports a
+        // scrollbar width of zero even on a page that scrolls, so there is no gutter to
+        // keep and reserving one would pull the content in by a scrollbar that was never
+        // there. `tests/manual/scroll-lock.mjs` measured that at -15px against the
+        // `scrollHeight` test this used to make, on a browser that draws one.
         const root = document.documentElement;
         const element = await mount(fixture);
-
-        expect(root.scrollHeight, 'the fixture page does not scroll').toBeLessThanOrEqual(
-            root.clientHeight,
-        );
-
-        await open(element);
-
-        expect(root.style.getPropertyValue('scrollbar-gutter'), 'nothing to reserve').toBe('');
-
-        await close(element);
 
         const tall = document.createElement('div');
         tall.style.height = '5000px';
         document.body.append(tall);
 
-        expect(root.scrollHeight, 'the page scrolls now').toBeGreaterThan(root.clientHeight);
+        expect(root.scrollHeight, 'the page scrolls').toBeGreaterThan(root.clientHeight);
+        expect(window.innerWidth - root.clientWidth, 'and its scrollbar takes nothing').toBe(0);
 
         await open(element);
 
-        expect(root.style.getPropertyValue('scrollbar-gutter'), 'a scrollbar to keep').toBe(
-            'stable',
-        );
+        expect(root.style.getPropertyValue('scrollbar-gutter')).toBe('');
     });
 
     it('gives the page back only when the last dialog has closed', async () => {
@@ -443,6 +440,60 @@ describe('the scroll lock', () => {
         await close(first);
 
         expect(root.style.overflow, 'and now nothing is').toBe('');
+    });
+});
+
+/**
+ * The rule the scroll lock cannot check from inside this engine, checked as a rule.
+ *
+ * The suite's browser reports no scrollbar width, so the reserving branch is unreachable
+ * from anything the component could measure itself. Decided as a function of two numbers,
+ * it is checkable here — and `tests/manual/scroll-lock.mjs` is what confirms the numbers
+ * are the right ones, on a browser that draws a scrollbar.
+ */
+describe('applyLock', () => {
+    it('writes both properties by name', () => {
+        // On the root, in this engine, the gutter written is always the gutter already
+        // there — so the property name is a string nothing compares. On an element handed
+        // in, it is observable.
+        const element = document.createElement('div');
+
+        applyLock(element, 'hidden', 'stable');
+
+        expect(element.style.overflow).toBe('hidden');
+        expect(element.style.getPropertyValue('scrollbar-gutter')).toBe('stable');
+    });
+
+    it('gives both back when handed the empty string', () => {
+        const element = document.createElement('div');
+
+        applyLock(element, 'hidden', 'stable');
+        applyLock(element, '', '');
+
+        expect(element.style.overflow).toBe('');
+        expect(element.style.getPropertyValue('scrollbar-gutter')).toBe('');
+    });
+});
+
+describe('reservedGutter', () => {
+    it('reserves the space a scrollbar is taking', () => {
+        expect(reservedGutter(1280, 1265, '')).toBe('stable');
+    });
+
+    it('reserves nothing when the scrollbar takes no space', () => {
+        // Overlay scrollbars: the page scrolls, the bar floats over it, and reserving a
+        // gutter would move the content by a width nobody was using.
+        expect(reservedGutter(1280, 1280, '')).toBe('');
+    });
+
+    it('gives back what the host had rather than clearing it', () => {
+        expect(reservedGutter(1280, 1280, 'stable both-edges')).toBe('stable both-edges');
+    });
+
+    it('does not reserve for a content box wider than the viewport', () => {
+        // Which happens: a page overflowing horizontally reports a content width above the
+        // viewport, and there is no vertical gutter to keep there either.
+        expect(reservedGutter(1280, 1400, '')).toBe('');
     });
 });
 

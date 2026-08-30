@@ -39,7 +39,7 @@ tests/               # mirrors src/, one test file per unit
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
-├── manual/          # steps a person runs, collected by nothing — see the file's own header
+├── manual/          # steps a person runs, collected by nothing — see each file's own header
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts

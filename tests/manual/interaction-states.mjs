@@ -35,6 +35,15 @@
  * instantaneously and cannot hold, and an emulated context is not a device. That question
  * needs a phone, and it is the one the tracking issue keeps open.
  *
+ * **Answering it takes ten seconds and no instrument.** Open the playground on the phone —
+ * `Components/ui-button` → `States` — and **press and hold** a button. Holding is the whole
+ * trick: `:active` persists for as long as the finger is down, so there is no 100ms flash
+ * to catch and nothing to judge. The button darkens and stays darkened, or it does not.
+ *
+ * If it does not, iOS is gating `:active` on a touch listener existing, and the fix is a
+ * no-op listener on the component — decided against for now rather than carried before
+ * anything needed it. If it does, nothing changes and the question closes.
+ *
  * ## Reading it
  *
  * Engines are named on the command line, `:mobile` appends an iPhone descriptor. Every
