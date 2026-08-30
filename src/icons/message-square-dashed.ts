@@ -2,6 +2,13 @@
 import { svg } from 'lit';
 import { register } from '../icon.js';
 
+// Stryker disable next-line all: the registration runs once, at import, inside the
+// warm process Stryker switches mutants in, so by the time a mutant on this line is
+// active the glyph is already registered under its original name and geometry —
+// outside the runner's reach, the same category `src/button.ts` names beside
+// `customElements.define`. It is emitted per file rather than excluded in
+// `stryker.config.js` because a pull request runs `--mutate` over the changed
+// files, and that argument replaces the config's list rather than adding to it.
 register(
     'message-square-dashed',
     svg`<path d="M14 3h2" /> <path d="M16 19h-2" /> <path d="M2 12v-2" /> <path d="M2 16v5.286a.71.71 0 0 0 1.212.502l1.149-1.149" /> <path d="M20 19a2 2 0 0 0 2-2v-1" /> <path d="M22 10v2" /> <path d="M22 6V5a2 2 0 0 0-2-2" /> <path d="M4 3a2 2 0 0 0-2 2v1" /> <path d="M8 19h2" /> <path d="M8 3h2" />`,

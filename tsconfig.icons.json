@@ -4,7 +4,12 @@
     // The one difference, and the whole reason this file exists. A glyph module is
     // generated data: there is no original to map back to and nothing to debug in it.
     "sourceMap": false,
-    "declarationMap": false
+    "declarationMap": false,
+    // And nothing to read in it either. Each module carries a seven-line comment
+    // addressed to the mutation engine — see `tests/manual/vendor-icons.mjs` for why it
+    // has to live in the file — which is 2048 copies of a note no consumer opens. Comments
+    // are for `src/`, where the reader is.
+    "removeComments": true
   },
   // `exclude` is reset, because the config this extends excludes exactly what this builds.
   "exclude": ["src/**/*.test.ts"],

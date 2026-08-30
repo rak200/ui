@@ -120,9 +120,9 @@ Measured, because a glyph set is the kind of dependency that grows quietly:
 
 | What you import        | What it costs                              |
 | ---------------------- | ------------------------------------------ |
-| one glyph module       | 368 bytes on average, 222 for `x`          |
+| one glyph module       | 282 bytes on average, 136 for `x`          |
 | `icons/all.js`         | about 96 KiB gzipped, bundled and minified |
-| installing the package | 249 kB tarball, whatever you import        |
+| installing the package | 246 kB tarball, whatever you import        |
 
 **Tree-shaking protects your bundle, not your install.** The vendored set is in the package
 whether you use it or not; what you import is what reaches your build.

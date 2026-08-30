@@ -2,6 +2,13 @@
 import { svg } from 'lit';
 import { register } from '../icon.js';
 
+// Stryker disable next-line all: the registration runs once, at import, inside the
+// warm process Stryker switches mutants in, so by the time a mutant on this line is
+// active the glyph is already registered under its original name and geometry —
+// outside the runner's reach, the same category `src/button.ts` names beside
+// `customElements.define`. It is emitted per file rather than excluded in
+// `stryker.config.js` because a pull request runs `--mutate` over the changed
+// files, and that argument replaces the config's list rather than adding to it.
 register(
     'navigation-off',
     svg`<path d="M8.43 8.43 3 11l8 2 2 8 2.57-5.43" /> <path d="M17.39 11.73 22 2l-9.73 4.61" /> <line x1="2" x2="22" y1="2" y2="22" />`,

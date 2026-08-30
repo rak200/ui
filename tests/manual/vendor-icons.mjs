@@ -33,6 +33,14 @@
  * out of the docs gate, which asks that every exported symbol under `src/` appears in
  * `docs/`. Two thousand exported names could not honestly satisfy that.
  *
+ * **Each one carries its own Stryker exclusion**, and the comment says why it is there
+ * rather than in `stryker.config.js`: a pull request runs `--mutate` over the changed
+ * files, and that argument REPLACES the config's list. An exclusion written in the config
+ * holds on a full run and is silently dropped on the path that gates every pull request —
+ * measured, as a 2.87% score over four thousand mutants nobody meant to make. The emitted
+ * comment is read wherever the list comes from. `tsconfig.icons.json` strips comments from
+ * the build, so it costs the published package nothing.
+ *
  * **The licence travels with the files.** ISC requires the notice to ship, so it is
  * written to `src/icons/LICENSE` and reaches the package through `dist`.
  */
@@ -134,6 +142,13 @@ try {
                 `import { svg } from 'lit';`,
                 `import { register } from '../icon.js';`,
                 ``,
+                `// Stryker disable next-line all: the registration runs once, at import, inside the`,
+                `// warm process Stryker switches mutants in, so by the time a mutant on this line is`,
+                `// active the glyph is already registered under its original name and geometry —`,
+                `// outside the runner's reach, the same category \`src/button.ts\` names beside`,
+                `// \`customElements.define\`. It is emitted per file rather than excluded in`,
+                `// \`stryker.config.js\` because a pull request runs \`--mutate\` over the changed`,
+                `// files, and that argument replaces the config's list rather than adding to it.`,
                 `register('${name}', svg\`${inner}\`);`,
                 ``,
             ].join('\n'),
