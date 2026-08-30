@@ -33,16 +33,20 @@
  *
  * Whether `:active` fires from a real finger on real iOS. Playwright's touchscreen taps
  * instantaneously and cannot hold, and an emulated context is not a device. That question
- * needs a phone, and it is the one the tracking issue keeps open.
+ * needs a phone, and **no issue tracks it any more**: #80 closed unmeasured, for want of
+ * one. This header is where it lives now.
  *
- * **Answering it takes ten seconds and no instrument.** Open the playground on the phone —
- * `Components/ui-button` → `States` — and **press and hold** a button. Holding is the whole
- * trick: `:active` persists for as long as the finger is down, so there is no 100ms flash
- * to catch and nothing to judge. The button darkens and stays darkened, or it does not.
+ * **Answering it takes ten seconds and no instrument**, if a phone ever passes by. Open the
+ * playground on it — `Components/ui-button` → `States` — and **press and hold** a button.
+ * Holding is the whole trick: `:active` persists for as long as the finger is down, so
+ * there is no 100ms flash to catch and nothing to judge. The button darkens and stays
+ * darkened, or it does not.
  *
  * If it does not, iOS is gating `:active` on a touch listener existing, and the fix is a
- * no-op listener on the component — decided against for now rather than carried before
- * anything needed it. If it does, nothing changes and the question closes.
+ * no-op listener on the component — one line, and reason enough to reopen #80. If it does,
+ * nothing changes. Emulated WebKit matched `:active` on a pointer press with no listener
+ * anywhere on the page, and the element is a native `<button>` with `cursor: pointer`,
+ * which is what made closing it tolerable rather than reckless.
  *
  * ## Reading it
  *

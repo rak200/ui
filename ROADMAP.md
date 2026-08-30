@@ -3,22 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `:active` from a real finger, on a real phone (#80)
-
-Three engines are measured and agree — `tests/manual/interaction-states.mjs` is the step, and it
-already earned its keep by finding that `-webkit-tap-highlight-color` was painting over the pressed
-colour. One question survives it, and no amount of emulation answers it: **does `:active` fire from
-a real finger on real iOS?** Playwright's touchscreen taps instantaneously and cannot hold.
-
-It matters because the tap wash is now off. If iOS turns out to gate `:active` on a touch listener
-existing, a tap there answers with nothing at all — and the fix is a listener, decided against for
-now rather than carried before anything needed it. A phone and ten seconds settles it, and the
-components still queued inherit the answer.
-
-**The ten seconds are written down**, in that step's own header: open `ui-button` → `States` on the
-phone and **press and hold**. Holding is the whole trick — `:active` persists while the finger is
-down, so there is no 100ms flash to catch and nothing to judge.
-
 ## The v0 surface (#14–#23)
 
 RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field`, `ui-dialog`,
