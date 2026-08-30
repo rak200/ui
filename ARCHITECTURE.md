@@ -64,6 +64,13 @@ A component wraps the real element wherever one exists — `<ui-button>` renders
 keyboard activation, the accessible name, disabled semantics and focus behaviour stay the browser's
 job. A `<div role="button">` needs every one of them written by hand, and gets one of them wrong.
 
+**Where an element exists but is half-styleable, the limit is published rather than papered over.**
+`<ui-select>` wraps a native `<select>`, so the picker a phone opens stays the platform's — and the
+drop-down list stays unstyleable, which [docs/select.md](docs/select.md) says in as many words. A
+custom listbox would style it and would have to reimplement that picker, which is the trade RFC 0016
+declined. Chromium's `appearance: base-select` will eventually remove the trade; adopting it while
+one engine has it would make the kit look like two kits.
+
 **Where no element exists, the component says so rather than pretending one does.** `<ui-switch>` is
 a native checkbox carrying `role="switch"` and a drawing, because there is nothing else for it to
 be: `<input type="checkbox" switch>` is unsupported in the engine this package's suite measures.
