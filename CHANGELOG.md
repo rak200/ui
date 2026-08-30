@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/rak200/ui/compare/0.2.11...0.2.12) (2026-08-30)
+
+
+### Features
+
+* an icon element, and the glyph set behind it ([#100](https://github.com/rak200/ui/issues/100)) ([f34e552](https://github.com/rak200/ui/commit/f34e55224d83df2f90a4019d10948929a210a398))
+
 ## [0.2.11](https://github.com/rak200/ui/compare/0.2.10...0.2.11) (2026-08-30)
 
 
