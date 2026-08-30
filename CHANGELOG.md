@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/rak200/ui/compare/0.2.9...0.2.10) (2026-08-30)
+
+
+### Features
+
+* ui-checkbox and ui-switch, drawn because the platform has no switch ([#93](https://github.com/rak200/ui/issues/93)) ([f2d98f3](https://github.com/rak200/ui/commit/f2d98f385caa8d0ab05f1e4ed884468e63f02d0f)), closes [#14](https://github.com/rak200/ui/issues/14) [#16](https://github.com/rak200/ui/issues/16)
+
 ## [0.2.9](https://github.com/rak200/ui/compare/0.2.8...0.2.9) (2026-08-30)
 
 
