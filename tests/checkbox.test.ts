@@ -77,6 +77,18 @@ function withoutMotion(form: HTMLFormElement): void {
     expect(new Set(durations), 'the motion is out').toEqual(new Set(['0s']));
 }
 
+/**
+ * Waits out whatever is transitioning on the control.
+ *
+ * `withoutMotion` is the cheaper answer and only works when the test schedules the change
+ * itself. Where the change lands during mount — `ui-field` writing `aria-invalid` from a
+ * MutationObserver, say — the transition is already in flight before any test code runs,
+ * and changing the duration then does not retract a running one.
+ */
+async function settled(element: Element): Promise<void> {
+    await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
+}
+
 /** The component's own stylesheet, as text, for the rules no rendering can show. */
 function styleText(tag: string): string {
     return String((customElements.get(tag) as unknown as { styles: unknown }).styles);
@@ -214,6 +226,7 @@ describe('ui-checkbox', () => {
 
     it('draws a dash for the mixed state the platform stopped drawing', async () => {
         const form = await mount(fixture);
+        withoutMotion(form);
         control(form).indeterminate = true;
 
         const styles = getComputedStyle(control(form));
@@ -228,6 +241,11 @@ describe('ui-checkbox', () => {
 
     it('takes the boundary from the host', async () => {
         const form = await mount(fixture);
+        // The boundary is transitioned, so a read taken straight after the change returns
+        // the first frame of a 150ms interpolation — which is the *resting* colour, and
+        // reads exactly like the override having been ignored. Measured: with the duration
+        // held at 5s the immediate read is the resting `color-mix()`, every time.
+        withoutMotion(form);
         wrapper(form).style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
 
         expect(getComputedStyle(control(form)).borderTopColor).toBe('rgb(1, 2, 3)');
@@ -243,6 +261,12 @@ describe('ui-checkbox', () => {
         `);
 
         expect(control(form).getAttribute('aria-invalid'), 'ui-field wired it').toBe('true');
+
+        // `ui-field` sets the attribute from its observer, during mount, so the boundary is
+        // already transitioning by the time this test runs and there is no earlier moment
+        // to take the motion out at. Waited out rather than pre-empted.
+        await settled(control(form));
+
         expect(getComputedStyle(control(form)).borderTopColor).toBe('rgb(185, 28, 28)');
     });
 
