@@ -1365,9 +1365,12 @@ deliberately did **not** implement is the rest of item 4's schedule: elevation s
 That is the resolution working rather than an unfinished rollout, and the rule that governs it now
 lives in `ARCHITECTURE.md`, where a consumer reads it.
 
-**One Rollout step below is outstanding, and it is named rather than assumed discharged**: the
-interaction states have not been measured outside Chromium. It is a step before the release that
-carries them, not before the merge, and #77 says so in its own body.
+**The Rollout step that was outstanding here is discharged, and half of it closed unmeasured**: the
+interaction states are measured in three engines and agree, and the one reading that needed hardware
+— a real finger on real iOS — was never taken, because no iPhone was available to anyone who could
+have held one. #80 closed on that rather than staying open indefinitely. The bullet below carries
+both halves, and the second is written as an open question with a known remedy rather than as a
+result.
 
 ## Rollout
 
@@ -1411,10 +1414,23 @@ Conditional on the Decision, and only the parts already known are written down.
   _A caution the run itself taught:_ the first WebKit pass read a hover partway through the 150ms
   transition and looked like a cross-engine discrepancy. It was the settle time, not the engine.
 
-  **Still outstanding, and narrowed to it — #80.** Whether `:active` fires from a real finger on
-  real iOS. Playwright's touchscreen taps instantaneously and cannot hold; an emulated context is
-  not a device. Partial evidence, not a confirmation: under emulated touch, WebKit matched
-  `:active` on a pointer press with no touch listener anywhere on the page.
+  **Closed unmeasured — #80.** Whether `:active` fires from a real finger on real iOS. Playwright's
+  touchscreen taps instantaneously and cannot hold; an emulated context is not a device. The reading
+  was never taken: no iPhone was available, and an obligation nobody present can discharge is a line
+  in a file rather than a safeguard. So it is closed as unmeasured — which is a different claim from
+  closed as satisfied, and the distinction is the reason this paragraph exists.
+
+  What is known points one way without settling it. Under emulated touch, WebKit matched `:active`
+  on a pointer press with no touch listener anywhere on the page; and the element the question is
+  about is a native `<button>` carrying `cursor: pointer`, which is the shape WebKit is documented to
+  treat as clickable — the condition the quirk turns on. Partial evidence, not a confirmation.
+
+  **What being wrong costs is bounded, and the remedy is one line.** If a tap on real iOS answers
+  with nothing, iOS is gating `:active` on a touch listener existing, and a no-op listener on the
+  component restores it — still decided against, now for want of evidence rather than for want of a
+  need. Ten seconds on a phone settles it, the procedure is in
+  `tests/manual/interaction-states.mjs`'s own header, and a finding reopens this with somewhere to
+  start.
 
 - **The new exports are documented, because a gate already requires it and a bigger reason does too.**
   CI extracts every exported symbol from `src/` and greps `docs/` for it, so `darkScheme`,
