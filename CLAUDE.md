@@ -27,6 +27,8 @@ src/
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
+├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
+├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
 ├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
 └── index.ts         # the public barrel
@@ -37,6 +39,7 @@ tests/               # mirrors src/, one test file per unit
 ├── checkbox.test.ts
 ├── dialog.test.ts
 ├── field.test.ts
+├── icon.test.ts
 ├── input.test.ts
 ├── select.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
@@ -50,6 +53,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── checkbox.stories.ts
 ├── dialog.stories.ts
 ├── field.stories.ts
+├── icon.stories.ts
 ├── input.stories.ts
 ├── select.stories.ts
 └── tokens.stories.ts
@@ -122,6 +126,17 @@ explains. This file restates none of them.
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
   file records why `appearance: none` is set at all, and why `appearance: base-select` — supported
   in this engine, measured — is deliberately not adopted.
+- **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
+  `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
+  reasons at `stryker.config.js` and `vitest.config.js`. `tsc` is what covers the generated half:
+  `tsconfig.json` includes `src`, so all two thousand modules and the barrel are typechecked by
+  `analyse`. **Never hand-edit a file under `src/icons/`** — re-run the script.
+- **Why the build is two `tsc` passes, and why the order matters** — `tsconfig.icons.json` runs
+  first and emits the glyphs without source maps; `tsconfig.build.json` runs second and re-emits
+  everything else with them. Reversing it strips the maps from the whole package.
+- **Why `@rak200/ui/icons/*` needs its own alias entry in three resolvers** — an alias matches by
+  prefix, so a lone `@rak200/ui` entry rewrites `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`.
+  The specific entry comes first in `.storybook/main.ts`, `vitest.config.js` and `tsconfig.json`.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.

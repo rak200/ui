@@ -19,6 +19,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./icons/*.js": {
+      "types": "./dist/icons/*.d.ts",
+      "default": "./dist/icons/*.js"
     }
   },
   "files": [
@@ -26,7 +30,9 @@
   ],
   "sideEffects": [
     "./dist/*.js",
-    "./src/*.ts"
+    "./src/*.ts",
+    "./dist/icons/*.js",
+    "./src/icons/*.ts"
   ],
   "publishConfig": {
     "access": "public"
@@ -40,7 +46,7 @@
     "coverage": "coverage-floor",
     "scan": "rak200-scan",
     "mutation": "stryker run",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.icons.json && tsc -p tsconfig.build.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

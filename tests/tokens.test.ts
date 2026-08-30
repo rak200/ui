@@ -494,6 +494,11 @@ describe('every value is legal for the property its token serves', () => {
         ['--ui-radius', 'border-radius'],
         ['--ui-space', 'padding'],
         ['--ui-font', 'font-family'],
+        // Two rows rather than one `--ui-icon-` prefix: the pair serves two different
+        // properties, and a prefix row would have to pick one of them and stop checking
+        // the other.
+        ['--ui-icon-size', 'inline-size'],
+        ['--ui-icon-stroke', 'stroke-width'],
     ] as const;
 
     function propertyFor(token: string): string {

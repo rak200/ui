@@ -3,6 +3,23 @@ import base from '@rak200/coding-standard-ts/stryker';
 export default {
     ...base,
 
+    // The generated glyph modules are excluded from mutation, and NOT from here: each one
+    // carries its own `// Stryker disable all`, emitted by `tests/manual/vendor-icons.mjs`,
+    // which states the reason beside the single statement it covers.
+    //
+    // A negation in this file would have been the obvious place and it does not work. A
+    // pull request runs `--mutate` over the changed files, and that argument REPLACES this
+    // list rather than adding to it — so the exclusion held on a full local run and was
+    // silently dropped on the path that gates every pull request. Measured, as a 2.87%
+    // score over four thousand mutants on path coordinates that nobody meant to make.
+    //
+    // What is actually at risk is the *element*, and it stays mutated: `src/icon.ts` is in
+    // scope, and the suite imports three glyph modules the way a host imports them. The
+    // generated half is covered by `tsc` instead — `tsconfig.json` includes `src`, so all
+    // two thousand modules and the barrel are typechecked by `analyse`, and a module that
+    // failed to emit reds there. A glyph whose coordinates drifted is a question for the
+    // diff against upstream, not for a mutant.
+
     // Stryker counts a timed-out mutant as killed, and at the stock timeout that is a lie
     // here: a browser-mode suite is slow enough that a mutant which merely makes a control
     // hard to find — one `userEvent.hover` retrying against a box the mutation moved —

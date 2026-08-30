@@ -6,5 +6,9 @@
   "include": ["src"],
   // Matches nothing now that tests live in `tests/`, and kept anyway: it asserts no rule,
   // it only fails safe if a test file is ever colocated by accident.
-  "exclude": ["src/**/*.test.ts"]
+  // `src/icons` is excluded here and built by `tsconfig.icons.json` instead, which turns
+  // the source maps off. Two thousand generated data modules carry 885 KiB of maps that
+  // point at a `register()` call — nothing anybody will ever step through — and that was
+  // half the weight of the published package.
+  "exclude": ["src/**/*.test.ts", "src/icons"]
 }
