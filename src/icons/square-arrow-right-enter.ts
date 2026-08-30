@@ -1,0 +1,8 @@
+// Generated from lucide-static@1.37.0 by tests/manual/vendor-icons.mjs. Do not edit.
+import { svg } from 'lit';
+import { register } from '../icon.js';
+
+register(
+    'square-arrow-right-enter',
+    svg`<path d="m10 16 4-4-4-4" /> <path d="M3 12h11" /> <path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3" />`,
+);

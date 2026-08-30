@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    // The one difference, and the whole reason this file exists. A glyph module is
+    // generated data: there is no original to map back to and nothing to debug in it.
+    "sourceMap": false,
+    "declarationMap": false
+  },
+  // `exclude` is reset, because the config this extends excludes exactly what this builds.
+  "exclude": ["src/**/*.test.ts"],
+  "include": ["src/icons"]
+}

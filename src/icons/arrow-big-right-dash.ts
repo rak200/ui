@@ -1,0 +1,8 @@
+// Generated from lucide-static@1.37.0 by tests/manual/vendor-icons.mjs. Do not edit.
+import { svg } from 'lit';
+import { register } from '../icon.js';
+
+register(
+    'arrow-big-right-dash',
+    svg`<path d="M11 9a1 1 0 0 0 1-1V4.707a.707.707 0 0 1 1.207-.5l6.94 6.94a1.207 1.207 0 0 1 0 1.707l-6.94 6.94a.707.707 0 0 1-1.207-.5V16a1 1 0 0 0-1-1H9a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" /> <path d="M4 9v6" />`,
+);

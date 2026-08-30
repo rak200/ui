@@ -77,6 +77,20 @@ export const tokens = [
     // judges it against something is the claim ROADMAP.md declines to make about Zag.
     '--ui-easing-enter',
     '--ui-easing-exit',
+    // The icon category, arriving with `ui-icon` rather than with the twelve components
+    // that will eventually hold one. Two names, because an adopted set has exactly two
+    // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
+    // how heavy its stroke is.
+    //
+    // The size is in `em` rather than `rem` or pixels, so an icon beside a word is the
+    // size of that word — the placement that dominates. A host who wants a fixed size
+    // sets one; a host who wants it to follow the text gets that without asking.
+    //
+    // The stroke is unitless on purpose. It is a `stroke-width` against a 24-unit
+    // viewBox, so it scales with the glyph rather than staying two device pixels at every
+    // size, and 2 is the weight the adopted set is drawn at.
+    '--ui-icon-size',
+    '--ui-icon-stroke',
 ] as const;
 
 /** A CSS custom property this package defines and gives a default. */
@@ -161,6 +175,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     // and quick to be gone, so a dismissal does not linger over a decision already made.
     '--ui-easing-enter': 'ease-out',
     '--ui-easing-exit': 'ease-in',
+    '--ui-icon-size': '1.25em',
+    '--ui-icon-stroke': '2',
 };
 
 /**

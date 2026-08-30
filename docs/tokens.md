@@ -146,6 +146,14 @@ change reverses mid-flight — a pointer leaves a button while the hover is stil
 duration step came with them, because nothing needed one; a step enters when a component judges it
 against something rather than when a name looks incomplete.
 
+**The icon pair are the two knobs that decide whether an adopted set looks like it belongs.**
+`--ui-icon-size` is in `em`, so an icon beside a word is the size of that word — the placement that
+dominates — and a host who wants a fixed size sets one. `--ui-icon-stroke` is unitless because it is
+a `stroke-width` against a 24-unit viewBox: it scales with the glyph rather than staying two device
+pixels at every size. There is no icon _colour_, and that is deliberate rather than missing — a glyph
+strokes with `currentColor`, so it takes the colour of whatever it sits in, which is what lets one
+registration serve a primary button, a danger message and body text.
+
 **Reduced motion is honoured in the sheet, once.** `tokenStyleSheet()` emits a
 `@media (prefers-reduced-motion: reduce)` rule that collapses every duration — ground and derived
 alike, so a host who tuned one still gets the collapse. It collapses to `0.01ms` rather than to
@@ -183,6 +191,8 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-easing-state`          | the curve a state change follows        |
 | `--ui-easing-enter`          | the curve an overlay arrives along      |
 | `--ui-easing-exit`           | the curve it leaves along               |
+| `--ui-icon-size`             | how big a glyph is drawn                |
+| `--ui-icon-stroke`           | how heavy its stroke is, on a 24 grid   |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.

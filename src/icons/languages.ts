@@ -1,0 +1,8 @@
+// Generated from lucide-static@1.37.0 by tests/manual/vendor-icons.mjs. Do not edit.
+import { svg } from 'lit';
+import { register } from '../icon.js';
+
+register(
+    'languages',
+    svg`<path d="m5 8 6 6" /> <path d="m4 14 6-6 2-3" /> <path d="M2 5h12" /> <path d="M7 2h1" /> <path d="m22 22-5-10-5 10" /> <path d="M14 18h6" />`,
+);

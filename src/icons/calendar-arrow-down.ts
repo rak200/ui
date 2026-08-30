@@ -1,0 +1,8 @@
+// Generated from lucide-static@1.37.0 by tests/manual/vendor-icons.mjs. Do not edit.
+import { svg } from 'lit';
+import { register } from '../icon.js';
+
+register(
+    'calendar-arrow-down',
+    svg`<path d="m14 17 4 4 4-4" /> <path d="M16 2v3" /> <path d="M18 13v8" /> <path d="M21 10.354V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h7.343" /> <path d="M3 9h18" /> <path d="M8 2v3" />`,
+);

@@ -13,6 +13,9 @@ import type { StorybookConfig } from '@storybook/web-components-vite';
 /** The public barrel, resolved from this file rather than from the working directory. */
 const barrel = fileURLToPath(new URL('../src/index.ts', import.meta.url));
 
+/** The vendored glyph modules, which are a second published subpath. */
+const icons = fileURLToPath(new URL('../src/icons/', import.meta.url));
+
 const config: StorybookConfig = {
     // `stories/` mirrors `src/`, one file per unit, beside `tests/button.test.ts`.
     //
@@ -56,7 +59,16 @@ const config: StorybookConfig = {
             // drops the whole graph. Measured before the field was widened: the site built
             // green, every story rendered its slotted text, and NOTHING upgraded —
             // `customElements.define` appeared nowhere in the output.
-            alias: { '@rak200/ui': barrel },
+            //
+            // The array form, and the order is the rule rather than a style: an alias
+            // matches by PREFIX, so a lone `@rak200/ui` entry rewrites
+            // `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`. The specific one has
+            // to come first, and there is no configuration that makes the general one
+            // safe on its own.
+            alias: [
+                { find: /^@rak200\/ui\/icons\/(.*)\.js$/, replacement: `${icons}$1.ts` },
+                { find: '@rak200/ui', replacement: barrel },
+            ],
         },
     }),
 };

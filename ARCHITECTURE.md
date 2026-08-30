@@ -112,6 +112,34 @@ The cost is a more verbose call site — `<label slot="label">Amount</label>` ra
 the boundary, but its support cannot be verified by a suite that runs one engine, and this is the one
 place in the library where being wrong is invisible to everyone who can see.
 
+## Glyphs are adopted, the delivery is owned
+
+The icons come from [Lucide](https://lucide.dev), vendored under its ISC licence; `<ui-icon>`, the
+registry behind it and the accessibility contract are this repository's.
+
+**This is the build-versus-adopt rule aimed at the axis that actually carries cost.** RFC 0016 turned
+that question on accessibility and interaction behaviour, and neither exists for an icon — there is
+no APG pattern for drawing a padlock. What a glyph set costs is volume and optical consistency:
+hundreds of marks on one grid at one stroke weight, each corrected by eye. That is designer-months
+with no differentiation at the end of it, so drawing our own was an easier reject than Zag's was.
+
+Adopting gives up no source. Under ISC the SVGs are copied in and are ours to edit, with no upstream
+to fight — the copy-in model RFC 0016 wanted for components and could not have.
+
+**A glyph module carries the geometry alone.** Every Lucide SVG has the same wrapper — 24 grid,
+`fill="none"`, `stroke="currentColor"`, one stroke width — and that wrapper belongs to the element,
+which is what keeps the grid, the stroke and the colour one decision rather than two thousand.
+
+**The glyph is selected by an attribute, not by a value passed in**, and that follows from the first
+decision in this document: a page that only emits tags has no way to hand a component a value. So
+importing a glyph module registers it, and `<ui-icon name>` starts working. The price is a global map
+of names and one silent failure — an unregistered name draws nothing — which is why the element says
+so in the console rather than leaving a blank box.
+
+**A mark the set does not have is slotted rather than registered**, and gets the adopted grid's
+stroke, caps and colour applied to it — so a brand glyph is indistinguishable from a vendored one,
+which is the condition under which drawing your own is worth doing at all.
+
 ## The accessibility bar
 
 **Every component meets WCAG 2.2 AA and conforms to its WAI-ARIA APG pattern.**

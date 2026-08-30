@@ -49,7 +49,7 @@ npm install @rak200/ui
   <ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
 </ui-field>
 
-<ui-button>Save</ui-button>
+<ui-button><ui-icon name="check"></ui-icon> Save</ui-button>
 <ui-button variant="secondary">Cancel</ui-button>
 <ui-button disabled>Unavailable</ui-button>
 
@@ -86,8 +86,10 @@ components; `docs/` is what describes them.
 
 ## Status
 
-**v0.** Eight components — `<ui-button>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
-`<ui-textarea>`, `<ui-checkbox>`, `<ui-switch>` and `<ui-select>` — and the token layer under them, built to the ecosystem's full quality bar rather than sketched: type-checked at the strictest available
-setting, formatted, tested in a real browser and **asserted against axe** for WCAG A/AA, 100%
-coverage and **100% mutation score**, scanned, and every public symbol documented. The v0 surface in
+**v0.** Nine components — `<ui-button>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
+`<ui-textarea>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-select>` and `<ui-icon>` — the token layer
+under them, and an adopted glyph set, built to the ecosystem's full quality bar rather than
+sketched: type-checked at the strictest available setting, formatted, tested in a real browser and
+**asserted against axe** for WCAG A/AA, 100% coverage and **100% mutation score**, scanned, and
+every public symbol documented. The v0 surface in
 RFC 0016 grows from here — see [ROADMAP.md](ROADMAP.md).

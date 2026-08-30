@@ -3,30 +3,16 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A glyph set, adopted (#89)
-
-Half the v0 cut needs a glyph before it is finished — a toast's status mark, a menu's chevron, and
-the icon-only button that is the most repeated control on any real screen. **RFC 0016 covers none of
-it**: icons appear in no row of the v0 component cut and in none of its open questions, though
-several of those rows cannot ship without one. A gap in the cut rather than an addition to it, which
-is why this sits above the surface it blocks.
-
-The house rule holds on the axis that carries the cost here: **the glyphs are adopted and the
-delivery is owned.** There is no APG pattern for drawing a padlock, so what a set costs is volume
-and optical consistency — hundreds of marks on one grid at one stroke weight, each corrected by
-eye — and that is designer-months with no differentiation at the end of it. Under ISC or MIT the
-SVGs are vendored and are ours to edit, with no upstream to fight.
-
-**The decision to make is which set**, and the issue carries the candidates with their licences and
-the criteria in the order that should decide them. Everything after that is implementation: one
-module per glyph so a bundle carries what a host imports, `currentColor` throughout, and the one
-part with a wrong answer — decorative by default, nameable when the icon _is_ the content.
-
 ## The v0 surface (#15–#23)
 
 RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field`, `ui-dialog`,
-`ui-input`, `ui-textarea`, `ui-checkbox`, `ui-switch` and `ui-select` ship, and the remaining six
-components are open as #15 and #18 through #21 and #23, one issue each.
+`ui-input`, `ui-textarea`, `ui-checkbox`, `ui-switch`, `ui-select` and `ui-icon` ship, and the
+remaining six components are open as #15 and #18 through #21 and #23, one issue each.
+
+**`ui-icon` was a gap in the cut rather than a row of it**, and it shipped ahead of the rest because
+several of those rows cannot be finished without a glyph — a toast's status mark, a menu's chevron,
+an icon-only button. Left later, each would have inlined its own SVG and the decision would have
+been made by accumulation instead of by anybody.
 
 **One deferral now has an expiry date rather than a reason.** RFC 0016 put a custom listbox off
 because a native `<select>` is accessible for free on every platform and a listbox is an

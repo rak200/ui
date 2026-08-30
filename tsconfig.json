@@ -16,7 +16,13 @@
     // typechecking depend on a build having run first. `.storybook/main.ts` carries the
     // same mapping for the bundler, and both point at the barrel rather than at a file
     // under it — so a story can only use what a consumer can import.
-    "paths": { "@rak200/ui": ["./src/index.ts"] }
+    "paths": {
+      "@rak200/ui": ["./src/index.ts"],
+      // The fourth reader of this mapping, and the same rule CLAUDE.md states for the
+      // first three: a tool that resolves module names itself needs its own line, or it
+      // silently loads `dist/`.
+      "@rak200/ui/icons/*.js": ["./src/icons/*.ts"]
+    }
   },
   // `stories` and `.storybook` are included so they are typechecked at all: the shared
   // ESLint config sets `parserOptions.projectService`, and a TypeScript file outside the
