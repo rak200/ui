@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/rak200/ui/compare/0.2.8...0.2.9) (2026-08-30)
+
+
+### Bug Fixes
+
+* reserve the scroll lock's gutter only where the scrollbar takes space ([#90](https://github.com/rak200/ui/issues/90)) ([23680b7](https://github.com/rak200/ui/commit/23680b77be4e09a781b90710636684e59f6a9b55))
+
 ## [0.2.8](https://github.com/rak200/ui/compare/0.2.7...0.2.8) (2026-08-29)
 
 
