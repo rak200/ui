@@ -64,6 +64,17 @@ A component wraps the real element wherever one exists — `<ui-button>` renders
 keyboard activation, the accessible name, disabled semantics and focus behaviour stay the browser's
 job. A `<div role="button">` needs every one of them written by hand, and gets one of them wrong.
 
+**Where no element exists, the component says so rather than pretending one does.** `<ui-switch>` is
+a native checkbox carrying `role="switch"` and a drawing, because there is nothing else for it to
+be: `<input type="checkbox" switch>` is unsupported in the engine this package's suite measures.
+
+**And taking a drawing over is a debt, not a free hand.** `appearance: none` removes the platform's
+tick, its mixed-state dash, its target size and its behaviour under forced colors in one
+declaration, and every one of those is then this package's to hold — which is why a checkbox here
+draws the mixed state it was never asked for, floors itself at 24×24, and names system colours in a
+`forced-colors` block. That list is the price of the decision rather than a set of extras, and it is
+the reason a component takes the drawing over only where the alternative is worse.
+
 ## ARIA association is light-DOM only
 
 Where a component wires an ARIA relationship between elements — a label to a control, help text to
@@ -158,7 +169,9 @@ would otherwise have to fix on its own.
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
 before. The rule cuts the other way as often as it looks like it will: the first overlay was
 expected to bring a layering category, and brought none, because a modal `<dialog>` is promoted to
-the top layer and there is no `z-index` anywhere in it to name. Values chosen with no component to judge them against get corrected when one arrives, and
+the top layer and there is no `z-index` anywhere in it to name. `<ui-checkbox>` and `<ui-switch>`
+brought none either, being drawn entirely from the boundary and the accent that were already there —
+a component arriving with no category is the schedule working, not a corner being cut. Values chosen with no component to judge them against get corrected when one arrives, and
 correcting a published default silently moves the rendering of every host that did not override it.
 
 **The exception is a component's own interaction states, which are not a later category but a
