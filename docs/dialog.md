@@ -116,13 +116,26 @@ the top layer and taking a JS focus trap in exchange for one the user agent enfo
 ### The scroll lock
 
 `<dialog>` does not stop the page behind it scrolling, and that is the one piece of modality left
-to the component. While any dialog is open the document is `overflow: hidden`, and where the page
-had a scrollbar its gutter is reserved with `scrollbar-gutter: stable`, so the page does not jump
-sideways as the scrollbar goes.
+to the component. While any dialog is open the document is `overflow: hidden`, and where the
+scrollbar was **taking layout space** its gutter is reserved with `scrollbar-gutter: stable`, so the
+page does not jump sideways as the scrollbar goes.
+
+**Taking space, not scrolling.** Those are different questions and only one of them is the right
+one: an overlay scrollbar floats over the content and reserves nothing, so a page can scroll and
+still have no gutter to keep — reserving one there pulls the content in by the width of a scrollbar
+nobody was using, which is the same shift in the other direction. `reservedGutter` is the rule, and
+it is decided from the viewport width against the content width rather than from whether the page
+scrolls; `applyLock` is what writes the two properties the lock is made of, in the one place either
+is named.
 
 Whatever the host had set is given back, not cleared — a page with its own `overflow` or its own
-gutter keeps them. The lock is counted, so a confirm opened over a form does not hand the page back
-when the inner dialog closes.
+gutter keeps them, through the lock as well as after it. The lock is counted, so a confirm opened
+over a form does not hand the page back when the inner dialog closes.
+
+**Verified where it can be.** The suite's browser reports no scrollbar width at all, so the absence
+of a layout shift is not observable there — the suite asserts the mechanism and the rule, and
+`tests/manual/scroll-lock.mjs` measures the effect on a headed browser that draws a scrollbar. It
+reads `shift 0px` in both directions: with a scrollbar to keep, and without one to invent.
 
 ## The accessible name
 
