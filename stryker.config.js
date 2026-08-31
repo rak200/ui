@@ -13,6 +13,19 @@ export default {
     // silently dropped on the path that gates every pull request. Measured, as a 2.87%
     // score over four thousand mutants on path coordinates that nobody meant to make.
     //
+    // The negation below is the same exclusion for the OTHER path. A full run passes no
+    // `--mutate` at all, so it reads this list — and without the negation it would
+    // instrument 2052 files to create four thousand mutants it then ignores. The pull
+    // request path cannot be served from here, because its `--mutate` replaces this list;
+    // `tests/tooling/mutate-changed.mjs`, the `mutation` verb's binding, takes the
+    // generated tree out of that argument instead.
+    //
+    // So the rule is written three times, and none of the three is redundant: here for a
+    // full run, in the verb's wrapper for a diff run, and in each generated module for
+    // whatever reaches Stryker anyway. The first two are speed; the third is the floor.
+    mutate: [...base.mutate, '!src/icons/**'],
+
+    //
     // What is actually at risk is the *element*, and it stays mutated: `src/icon.ts` is in
     // scope, and the suite imports three glyph modules the way a host imports them. The
     // generated half is covered by `tsc` instead — `tsconfig.json` includes `src`, so all
