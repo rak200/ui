@@ -12,11 +12,14 @@ export default [
             'coverage/**',
             '.stryker-tmp/**',
             'storybook-static/**',
-            // A manual step rather than a unit, and JavaScript rather than TypeScript, so
-            // `projectService` can place it in no program and type-aware linting has
-            // nothing to run against. It sits under `tests/` because that path is already
-            // `export-ignore`d and the alternative was editing a byte-compared seed.
+            // Scripts rather than units, and JavaScript rather than TypeScript, so
+            // `projectService` can place them in no program and type-aware linting has
+            // nothing to run against. Both sit under `tests/` because that path is already
+            // `export-ignore`d and the alternative was editing a byte-compared seed —
+            // `manual/` holds the steps a person runs, `tooling/` the ones the pipeline
+            // does.
             'tests/manual/**',
+            'tests/tooling/**',
         ],
     },
     {
