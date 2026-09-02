@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.13](https://github.com/rak200/ui/compare/0.2.12...0.2.13) (2026-09-02)
+
+
+### Features
+
+* ui-radio-group, and the behaviour it did not have to write ([#105](https://github.com/rak200/ui/issues/105)) ([3bdc171](https://github.com/rak200/ui/commit/3bdc171be723c2ca862cdf1572e2048e0a71dd2c))
+
 ## [0.2.12](https://github.com/rak200/ui/compare/0.2.11...0.2.12) (2026-08-30)
 
 
