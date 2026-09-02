@@ -20,7 +20,12 @@ let sequence = 0;
  *
  * **The control may sit below a wrapper**, and the same constraint is why: `<ui-input>` is
  * a box around a control that had to stay in the light DOM, so this element looks through
- * it. See {@link UiField.#control}.
+ * it. See {@link UiField.#control} — and the one wrapper it does *not* look through, which
+ * is a wrapper carrying a `role`, because a group is the control rather than a box for one.
+ *
+ * **Not every control can be labelled the platform's way**, and `<ui-radio-group>` is the
+ * first that cannot: `<label for>` reaches a labelable element and nothing else, so the
+ * name arrives as `aria-labelledby` there. See {@link UiField.#name}.
  *
  * @example
  * ```html
@@ -123,6 +128,15 @@ export class UiField extends LitElement {
     #control(): HTMLElement | undefined {
         const slotted = this.#slotted(null);
 
+        // A wrapper carrying a `role` is claiming to *be* the widget rather than to box
+        // one, and the descent stops there. `<ui-radio-group>` is the first: it sets
+        // `role="radiogroup"` on itself, and the thing this field names is that group —
+        // looking through it would reach the first radio, which names one option and
+        // leaves the group anonymous.
+        if (slotted?.hasAttribute('role') === true) {
+            return slotted;
+        }
+
         return slotted?.querySelector('input, textarea, select') ?? slotted;
     }
 
@@ -149,11 +163,7 @@ export class UiField extends LitElement {
             control.id = `${uid}-control`;
         }
 
-        const label = this.#slotted('label');
-
-        if (label instanceof HTMLLabelElement) {
-            label.htmlFor = control.id;
-        }
+        this.#name(control, this.#slotted('label'), `${uid}-label`);
 
         const help = this.#describer(this.#slotted('help'), `${uid}-help`);
         const error = this.#describer(this.#slotted('error'), `${uid}-error`);
@@ -178,6 +188,48 @@ export class UiField extends LitElement {
         } else {
             control.setAttribute('aria-invalid', 'true');
         }
+    }
+
+    /**
+     * Gives the control its accessible name from whatever fills the label slot.
+     *
+     * **`<label for>` is preferred wherever it reaches**, because it is the platform's own
+     * association and it does two things `aria-labelledby` does not: it names the control
+     * and it makes the label a click target for it. It only reaches a **labelable**
+     * element, though, and `<ui-radio-group>` is not one — a `<label for>` aimed at a
+     * custom element labels nothing, which axe reports at critical impact.
+     *
+     * Which elements are labelable is asked of the platform rather than listed here: those
+     * are exactly the ones it gives a `labels` collection to. A list kept in this file
+     * would be one the next labelable element ages out of, silently.
+     *
+     * The name is dropped when the slot empties, the way `aria-describedby` is: a group
+     * left pointing at a label that is no longer there has a dangling IDREF, which is the
+     * one failure mode nobody sees — the group simply stops having a name.
+     *
+     * @param fallbackId - Given to the label only on the path that needs one to point at.
+     * A host-supplied id survives, the same way the control's and the describers' do.
+     */
+    #name(control: HTMLElement, label: HTMLElement | undefined, fallbackId: string): void {
+        if ('labels' in control) {
+            if (label instanceof HTMLLabelElement) {
+                label.htmlFor = control.id;
+            }
+
+            return;
+        }
+
+        if (label === undefined) {
+            control.removeAttribute('aria-labelledby');
+
+            return;
+        }
+
+        if (label.id === '') {
+            label.id = fallbackId;
+        }
+
+        control.setAttribute('aria-labelledby', label.id);
     }
 
     /**

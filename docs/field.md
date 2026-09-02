@@ -51,12 +51,22 @@ job — and `<ui-field>` only generates the ids and points them at each other.
 The control is found as the one child with no `slot` attribute, so any element works: a native
 `<input>` or `<textarea>` today, a `<ui-input>` later.
 
+**A wrapper carrying a `role` is the control**, and the search stops there rather than looking
+through it. `<ui-radio-group>` is the first: what a field names there is the group, and reaching
+the first radio inside would name one option and leave the set anonymous.
+
 ## What it wires
 
 - **an `id` on the control**, generated when it has none. An `id` you supplied is never overwritten —
   something you can see and this element cannot may already reference it.
 - **`for` on the label**, pointing at that id. Only when the slotted element really is a `<label>`; a
   `<span slot="label">` is left alone, because `for` on it would mean nothing.
+- **`aria-labelledby` on the control instead**, when the control is not a **labelable** element —
+  an `<input>`, a `<textarea>`, a `<select>`. A `<label for>` aimed anywhere else labels nothing,
+  which axe reports at critical impact, so a [`<ui-radio-group>`](radio.md) is named by reference.
+  Which elements are labelable is asked of the platform rather than listed: they are exactly the
+  ones it gives a `labels` collection to. The name is dropped again if the label slot empties,
+  rather than left dangling at an element that is gone.
 - **`aria-describedby` on the control**, listing the error and the help.
 - **`aria-invalid="true"` on the control** while the error says something, and removed when it does
   not.

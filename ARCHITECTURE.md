@@ -43,6 +43,14 @@ Nothing about the adoption changed; what changed is which component triggers it.
 the first component the platform has **no element for** — a menu with roving tabindex and
 positioning is the nearest one — and `ROADMAP.md` names it.
 
+**`<ui-radio-group>` is the second component that could have brought it, and the test above is what
+sent it away.** A radio group is an APG pattern with a roving tabindex in it — one tab stop, arrow
+keys that move _and_ select, wrapping at either end — which reads like the trigger until the
+question is asked the right way round: native radios sharing a `name` **are** that pattern, and
+they keep being it inside a wrapper, which this package's suite measures rather than assumes. So
+the group hand-rolls nothing and adopts nothing; what is left for it is the layout, the `role` and
+the group-level name. The pattern having state was never the test. Having no element for it is.
+
 ## The prefix is `ui-`
 
 Tags, CSS custom properties and exported classes all carry it: `<ui-button>`, `--ui-radius`,
@@ -93,6 +101,13 @@ shadow root leaves `control.labels` empty, and an `aria-describedby` pointing in
 Measured in the browser the suite runs in, both ways round. So a component that associates elements
 generates the ids and points them at each other, and leaves the elements in the host's tree where the
 browser can see them all.
+
+**Where the platform's own association cannot reach, the ARIA one is used instead**, and
+`<ui-radio-group>` is what made that concrete. `<label for>` reaches a **labelable** element and
+nothing else, so a group — a custom element with a role — is named by `aria-labelledby` pointing at
+the same slotted label. The order is the rule rather than the mechanism: `for` wherever it works,
+because it names the control _and_ makes the label a click target for it, and a reference only
+where it cannot.
 
 **It binds the control itself, not only the text around it**, and `<ui-input>` is what made that
 concrete. A styled text field is the obvious candidate for rendering the `<input>` into a shadow
