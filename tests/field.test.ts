@@ -453,6 +453,77 @@ describe('ui-field', () => {
 });
 
 /**
+ * A wrapper carrying a `role` is claiming to *be* the widget rather than to box one, and
+ * the descent stops there — `<ui-radio-group>` is the first, and what a field names there
+ * is the group, never the first radio inside it.
+ *
+ * Written with a plain element rather than with the component, the same way the wrapper
+ * tests above are: the rule is about a role and a labelable element, and a test that
+ * imported the component would be asserting the pair instead of the rule.
+ */
+describe('a control the platform cannot label', () => {
+    const group = `
+        <ui-field>
+            <label slot="label">Plan</label>
+            <div role="radiogroup">
+                <label><input type="radio" name="plan" value="free" /> Free</label>
+                <label><input type="radio" name="plan" value="pro" /> Pro</label>
+            </div>
+            <span slot="error">Pick a plan to continue.</span>
+        </ui-field>
+    `;
+
+    it('stops at the wrapper instead of reaching the first control inside it', async () => {
+        const field = await mount(group);
+
+        expect(control(field).tagName).toBe('DIV');
+        expect(field.querySelector('input')?.id, 'no option was wired').toBe('');
+    });
+
+    it('names it by reference, because a for aimed there would label nothing', async () => {
+        const field = await mount(group);
+        const label = slotted(field, 'label');
+
+        expect(label.id, 'the label got an id to point at').toMatch(/\S/);
+        expect(control(field).getAttribute('aria-labelledby')).toBe(label.id);
+        expect(label.hasAttribute('for'), 'and no for').toBe(false);
+    });
+
+    it('keeps an id the host gave the label', async () => {
+        const field = await mount(`
+            <ui-field>
+                <label slot="label" id="chosen">Plan</label>
+                <div role="radiogroup"><input type="radio" name="plan" /></div>
+            </ui-field>
+        `);
+
+        expect(control(field).getAttribute('aria-labelledby')).toBe('chosen');
+    });
+
+    it('drops the name when the label goes away, rather than dangling at nothing', async () => {
+        const field = await mount(group);
+
+        slotted(field, 'label').remove();
+        await settled();
+
+        expect(control(field).hasAttribute('aria-labelledby')).toBe(false);
+    });
+
+    it('describes and invalidates the wrapper, which is the thing that is wrong', async () => {
+        const field = await mount(group);
+
+        expect(describers(field).map((element) => element.textContent.trim())).toEqual([
+            'Pick a plan to continue.',
+        ]);
+        expect(control(field).getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('has no accessibility violations naming a group', async () => {
+        await expectAccessible(group);
+    });
+});
+
+/**
  * The playground's gate. A story that stops compiling or stops rendering fails here rather
  * than on the deploy, which runs after the required check.
  */

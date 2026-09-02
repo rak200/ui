@@ -21,9 +21,13 @@ import {
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
 import { UiButton } from '../src/button.js';
+import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { UiDialog } from '../src/dialog.js';
 import { UiField } from '../src/field.js';
+import { UiIcon } from '../src/icon.js';
 import { UiInput, UiTextarea } from '../src/input.js';
+import { UiRadio, UiRadioGroup } from '../src/radio.js';
+import { UiSelect } from '../src/select.js';
 
 afterEach(() => {
     document.body.replaceChildren();
@@ -430,11 +434,19 @@ describe('the reduced-motion collapse, as the browser applies it', () => {
  * here in the first place.
  */
 describe('the references components write', () => {
+    // Every component, and the list is the assertion: one left out is a component free to
+    // hand-write a fallback, which is exactly what this block exists to stop.
     const styles = [
         UiButton.styles,
+        UiCheckbox.styles,
         UiDialog.styles,
         UiField.styles,
+        UiIcon.styles,
         UiInput.styles,
+        UiRadio.styles,
+        UiRadioGroup.styles,
+        UiSelect.styles,
+        UiSwitch.styles,
         UiTextarea.styles,
     ]
         .map(String)

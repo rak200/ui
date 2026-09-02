@@ -30,6 +30,7 @@ src/
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
+├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
@@ -41,6 +42,7 @@ tests/               # mirrors src/, one test file per unit
 ├── field.test.ts
 ├── icon.test.ts
 ├── input.test.ts
+├── radio.test.ts
 ├── select.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
@@ -56,6 +58,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── field.stories.ts
 ├── icon.stories.ts
 ├── input.stories.ts
+├── radio.stories.ts
 ├── select.stories.ts
 └── tokens.stories.ts
 .storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
@@ -124,6 +127,14 @@ explains. This file restates none of them.
   then freeze the mark's colour, which `mask-composite: exclude` avoids by making the mark absent
   rather than coloured. The target-size floor and the forced-colors block beside it are the other
   two things `appearance: none` made this component's to own.
+- **Why `ui-radio-group` hand-rolls no roving tabindex and brings no Zag** — the docblock on
+  `UiRadioGroup` in `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform
+  already had_, which measures the APG pattern on native radios through the wrappers rather than
+  citing it. The two halves a group still owns are written beside themselves: **why the field names
+  the group and not an option** is `#name` in `src/field.ts` — a `<label for>` reaches a labelable
+  element and nothing else, so the group is named by reference — and **why the error is painted by
+  retargeting a token** is the last rule of `UiRadioGroup.styles`, which names the three selectors
+  that cannot reach a control two elements down.
 - **Why `ui-select` writes the box out instead of sharing `ui-input`'s** — the docblock on
   `src/select.ts`, and `tests/select.test.ts`'s _the box, against the input it has to match_, which
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
