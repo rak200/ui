@@ -86,7 +86,7 @@ components; `docs/` is what describes them.
 
 ## Status
 
-**v0.** Eleven components — `<ui-button>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
+**v0.** Twelve components — `<ui-button>`, `<ui-card>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
 `<ui-textarea>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-select>`, `<ui-radio-group>`, `<ui-radio>`
 and `<ui-icon>` — the token layer
 under them, and an adopted glyph set, built to the ecosystem's full quality bar rather than

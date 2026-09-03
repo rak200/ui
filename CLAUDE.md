@@ -24,6 +24,7 @@ src/
 ├── tokens.ts        # the tokens: the two arrays, their values, and the emitted stylesheet
 ├── reference.ts     # how a component writes a token — internal, and the only importer of Lit here
 ├── button.ts        # <ui-button>
+├── card.ts          # <ui-card> — a surface, three regions, and the elevation category
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
@@ -37,6 +38,7 @@ tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
 ├── reference.test.ts
 ├── button.test.ts
+├── card.test.ts
 ├── checkbox.test.ts
 ├── dialog.test.ts
 ├── field.test.ts
@@ -53,6 +55,7 @@ tests/               # mirrors src/, one test file per unit
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
+├── card.stories.ts
 ├── checkbox.stories.ts
 ├── dialog.stories.ts
 ├── field.stories.ts
@@ -127,6 +130,11 @@ explains. This file restates none of them.
   then freeze the mark's colour, which `mask-composite: exclude` avoids by making the mark absent
   rather than coloured. The target-size floor and the forced-colors block beside it are the other
   two things `appearance: none` made this component's to own.
+- **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
+  `UiCard` in `src/card.ts`, beside each. `light-dark()` takes colours and a shadow is not one, so
+  the elevation category cannot follow the scheme and the derived boundary is what both schemes
+  have; the missing role is the same rule `ui-button` states from the other side — there is no card
+  element to delegate to, so what a card _means_ stays the host's.
 - **Why `ui-radio-group` hand-rolls no roving tabindex and brings no Zag** — the docblock on
   `UiRadioGroup` in `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform
   already had_, which measures the APG pattern on native radios through the wrappers rather than

@@ -193,6 +193,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-easing-exit`           | the curve it leaves along               |
 | `--ui-icon-size`             | how big a glyph is drawn                |
 | `--ui-icon-stroke`           | how heavy its stroke is, on a 24 grid   |
+| `--ui-elevation-100`         | the first step of the elevation scale   |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -205,6 +206,18 @@ ring, so the surface is what it is measured against rather than the control unde
 
 An override is yours to choose, but a focus ring below that ratio is one some people cannot see. The
 default is 5.02:1 on the light surface and clears the floor on a dark one too.
+
+### One category cannot follow the scheme
+
+`--ui-elevation-100` is a `box-shadow`, and a shadow is not a colour — so it cannot go through
+`light-dark()` the way every scheme-varying value here does, and it carries **one value in both
+schemes**. On a dark page it does almost nothing: the shadow is black at a low alpha, and black on
+charcoal is black.
+
+That is stated rather than worked around, because the component that consumes it answers it:
+[`<ui-card>`](card.md) draws a boundary as well as a shadow, and the boundary is derived — it mixes
+toward the text, so it is correct in both schemes by construction. The lift is the light scheme's
+cue; the edge is what both schemes have.
 
 ## `defaults`
 
@@ -229,6 +242,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-color-border`         | the boundary of a control           |
 | `--ui-color-text-muted`     | text that is not a value yet        |
 | `--ui-duration-state`       | how long a state change takes       |
+| `--ui-elevation-raised`     | a surface lifted off the page       |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
