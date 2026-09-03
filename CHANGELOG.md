@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.14](https://github.com/rak200/ui/compare/0.2.13...0.2.14) (2026-09-03)
+
+
+### Features
+
+* ui-card, and the elevation category it was holding ([#109](https://github.com/rak200/ui/issues/109)) ([9281f0f](https://github.com/rak200/ui/commit/9281f0f980125ef084901bf44e2ae82099b20d8b))
+
 ## [0.2.13](https://github.com/rak200/ui/compare/0.2.12...0.2.13) (2026-09-02)
 
 
