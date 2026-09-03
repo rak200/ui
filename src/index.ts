@@ -1,4 +1,5 @@
 export { UiButton, type ButtonVariant } from './button.js';
+export { UiCard } from './card.js';
 export { UiCheckbox, UiSwitch } from './checkbox.js';
 export { UiDialog } from './dialog.js';
 export { UiField } from './field.js';

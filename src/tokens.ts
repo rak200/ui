@@ -91,6 +91,23 @@ export const tokens = [
     // size, and 2 is the weight the adopted set is drawn at.
     '--ui-icon-size',
     '--ui-icon-stroke',
+    // Elevation, arriving with `ui-card` — the category `ROADMAP.md` said would, after the
+    // first overlay arrived and brought none.
+    //
+    // A step in a scale, named by an ordinal with gaps, for the reason the duration scale
+    // gives above: elevation is *relative* by nature — a card sits above the page, a menu
+    // above the card — so the names have to be able to grow between each other. No
+    // component reads this one; they read `--ui-elevation-raised`, which points in here.
+    // No second step comes with it: a tooltip and a menu are the components that would
+    // judge one, and neither is written.
+    //
+    // **It carries no dark value, and cannot.** `darkScheme` is emitted through
+    // `light-dark()`, which takes colours — and a shadow is not a colour. So this is one
+    // value in both schemes, and on a dark page it does almost nothing: black on charcoal
+    // is black. What separates a raised surface there is the *boundary*, which is derived
+    // and therefore already scheme-correct — which is why `src/card.ts` draws both and
+    // says so beside them.
+    '--ui-elevation-100',
 ] as const;
 
 /** A CSS custom property this package defines and gives a default. */
@@ -125,6 +142,11 @@ export const derivedTokens = [
     '--ui-color-pressed',
     '--ui-color-accent-hover',
     '--ui-color-accent-pressed',
+    // The purpose the elevation scale is read through, arriving with `ui-card`. `raised`
+    // is a role rather than a component: a card is the first surface lifted off the page
+    // and will not be the last, and the name a host retunes should not be the name of
+    // whichever component happened to need it first.
+    '--ui-elevation-raised',
 ] as const;
 
 /** A CSS custom property this package computes rather than declares. */
@@ -177,6 +199,12 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-easing-exit': 'ease-in',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
+    // Two layers rather than one, which is what makes a shadow read as *lift* instead of
+    // as a smudge: a tight, nearly opaque one draws the contact edge, and a wider, softer
+    // one is the cast. Both are black at a low alpha, so the shadow darkens whatever it
+    // falls on rather than tinting it — a coloured shadow is a decision this layer would
+    // have to defend at every hue a host might set.
+    '--ui-elevation-100': '0 1px 2px -1px rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.1)',
 };
 
 /**
@@ -244,6 +272,10 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // is 4.52 in light, a rounding error from failing, and a default nobody could then
     // retune without breaking a floor they were not thinking about.
     '--ui-color-text-muted': mix('--ui-color-text', 65, '--ui-color-surface'),
+    // A plain reference, like the duration purpose above: the scale is where the value
+    // lives, and a host who wants flatter cards moves the role rather than reverse
+    // engineering which step a card happens to read.
+    '--ui-elevation-raised': ground('--ui-elevation-100'),
 };
 
 /**

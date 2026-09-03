@@ -21,6 +21,7 @@ import {
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
 import { UiButton } from '../src/button.js';
+import { UiCard } from '../src/card.js';
 import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { UiDialog } from '../src/dialog.js';
 import { UiField } from '../src/field.js';
@@ -438,6 +439,7 @@ describe('the references components write', () => {
     // hand-write a fallback, which is exactly what this block exists to stop.
     const styles = [
         UiButton.styles,
+        UiCard.styles,
         UiCheckbox.styles,
         UiDialog.styles,
         UiField.styles,
@@ -476,16 +478,23 @@ describe('the references components write', () => {
         }
     });
 
-    it('reads no ground duration directly, because a component reads a purpose', () => {
-        // `--ui-duration-100` is a step in a scale, and a component that reads it makes
-        // the host reverse-engineer which step a button uses before they can slow it down.
-        // Take the purpose out of the styles and the step goes with it: every mention of
-        // the ground is inside the purpose's own fallback, which is a reference to the
-        // scale rather than a reading of it.
-        const purpose = String(reference('--ui-duration-state'));
+    // A step in a scale is a position, and a component that reads one makes the host
+    // reverse-engineer which step a button or a card happens to use before they can slow
+    // it down or flatten it. Take the purpose out of the styles and the step goes with it:
+    // every mention of the ground is inside the purpose's own fallback, which is a
+    // reference to the scale rather than a reading of it.
+    //
+    // A table rather than a case per scale, because the rule is the scale-and-purpose
+    // shape itself: whichever category grows a scale next inherits the check by adding a
+    // row, and a scale that arrives without a purpose has nothing to add.
+    it.each([
+        ['--ui-duration-state', '--ui-duration-100'],
+        ['--ui-elevation-raised', '--ui-elevation-100'],
+    ] as const)('reads %s rather than the step under it', (name, step) => {
+        const purpose = String(reference(name));
 
         expect(styles).toContain(purpose);
-        expect(styles.split(purpose).join('')).not.toContain('--ui-duration-100');
+        expect(styles.split(purpose).join('')).not.toContain(step);
     });
 });
 
@@ -511,6 +520,7 @@ describe('every value is legal for the property its token serves', () => {
         // the other.
         ['--ui-icon-size', 'inline-size'],
         ['--ui-icon-stroke', 'stroke-width'],
+        ['--ui-elevation-', 'box-shadow'],
     ] as const;
 
     function propertyFor(token: string): string {
@@ -530,7 +540,12 @@ describe('every value is legal for the property its token serves', () => {
     });
 
     it('refuses a name in no declared category', () => {
-        expect(() => propertyFor('--ui-elevation-100')).toThrow(/invent a category/);
+        // Layering, which is the category `ROADMAP.md` expected the first overlay to bring
+        // and it brought none — a modal `<dialog>` is promoted to the top layer, so there
+        // is no `z-index` anywhere to name. So this is a name nobody has declared *and*
+        // one somebody might, which is the shape this check exists for. It was
+        // `--ui-elevation-100` until `ui-card` declared that one.
+        expect(() => propertyFor('--ui-z-100')).toThrow(/invent a category/);
     });
 
     it('accepts every default', () => {

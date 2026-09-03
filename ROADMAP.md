@@ -3,11 +3,12 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The v0 surface (#18–#23)
+## The v0 surface (#19–#23)
 
-RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-field`, `ui-dialog`,
-`ui-input`, `ui-textarea`, `ui-checkbox`, `ui-switch`, `ui-select`, `ui-radio-group` and `ui-icon`
-ship, and the remaining five components are open as #18 through #21 and #23, one issue each.
+RFC 0016 sets the v0 component surface. The token layer, `ui-button`, `ui-card`, `ui-field`,
+`ui-dialog`, `ui-input`, `ui-textarea`, `ui-checkbox`, `ui-switch`, `ui-select`, `ui-radio-group`
+and `ui-icon` ship, and the remaining four components are open as #19 through #21 and #23, one
+issue each.
 
 **`ui-icon` was a gap in the cut rather than a row of it**, and it shipped ahead of the rest because
 several of those rows cannot be finished without a glyph — a toast's status mark, a menu's chevron,
@@ -24,8 +25,10 @@ is that feature arriving broadly, not a decision here — `docs/select.md` carri
 
 **Each of them brings its own token category with it**, which is a rule rather than a schedule and
 is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with
-the component that consumes it_. Elevation waits for `ui-card` (#18), a type scale for `ui-table`
-(#19), `success` and `warning` for `ui-toast` (#21). The boundary and the muted text arrived with
+the component that consumes it_. A type scale waits for `ui-table` (#19), `success` and `warning`
+for `ui-toast` (#21). Elevation arrived with `ui-card` as predicted, and it is the first category
+that cannot follow the scheme: a shadow is not a colour, so `light-dark()` cannot carry a second
+value for it — which is why a card draws a boundary as well as a lift. The boundary and the muted text arrived with
 `ui-input`, which is the pair the rest of the form cluster inherits rather than each naming its
 own — and `ui-checkbox`, `ui-switch` and `ui-radio-group` arrive with **no** category at all, drawn
 entirely from what was already there. What they brought instead is a floor: a control this package
@@ -60,7 +63,8 @@ rather than assumes. So _roving tabindex_ is not the marker either; nothing abou
 shape is.
 
 `ui-menu` (#23) is the nearest candidate left — a dismissable layer the platform does not lift, and
-positioning. Whichever component reaches it first, the test is stated rather than assumed: Zag
+positioning. It takes the positioning answer from `ui-tooltip` (#20) rather than making it twice,
+so that pair has an order: the tooltip decides, the menu inherits. Whichever component reaches it first, the test is stated rather than assumed: Zag
 arrives where the platform has **no element** for the pattern, not merely where the pattern has
 state, and not merely where it has a roving tabindex.
 
