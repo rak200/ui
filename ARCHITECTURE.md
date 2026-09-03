@@ -232,9 +232,10 @@ emitter for one category, and the thing it would buy is available from a name th
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
 before. The rule cuts the other way as often as it looks like it will: the first overlay was
 expected to bring a layering category, and brought none, because a modal `<dialog>` is promoted to
-the top layer and there is no `z-index` anywhere in it to name. `<ui-checkbox>` and `<ui-switch>`
-brought none either, being drawn entirely from the boundary and the accent that were already there —
-a component arriving with no category is the schedule working, not a corner being cut. Values chosen with no component to judge them against get corrected when one arrives, and
+the top layer and there is no `z-index` anywhere in it to name. `<ui-checkbox>`, `<ui-switch>` and
+`<ui-radio-group>` brought none either, being drawn entirely from the boundary and the accent that
+were already there — a component arriving with no category is the schedule working, not a corner
+being cut. Values chosen with no component to judge them against get corrected when one arrives, and
 correcting a published default silently moves the rendering of every host that did not override it.
 
 **The exception is a component's own interaction states, which are not a later category but a
