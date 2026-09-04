@@ -233,6 +233,44 @@ describe('ui-field', () => {
         expect(control(field).getAttribute('aria-invalid')).toBe('true');
     });
 
+    it('carries forward a description it did not write', async () => {
+        // `<ui-tooltip>` is the first thing to add one, and it was measured being erased —
+        // not on the first association, which runs before a tooltip wires, but on the next
+        // one, when the list is rebuilt from what this field alone knows about.
+        const field = await mount(`
+            <ui-field>
+                <label slot="label">Amount</label>
+                <input aria-describedby="elsewhere" />
+                <span slot="help">In BRL.</span>
+            </ui-field>
+        `);
+
+        expect(control(field).getAttribute('aria-describedby')?.split(' ')).toContain('elsewhere');
+
+        slotted(field, 'help').textContent = 'In BRL, two decimals.';
+        await settled();
+
+        expect(
+            control(field).getAttribute('aria-describedby')?.split(' '),
+            'and it survives the re-association',
+        ).toEqual([expect.stringContaining('-help'), 'elsewhere']);
+    });
+
+    it('does not repeat a describer whose id the host supplied', async () => {
+        const field = await mount(`
+            <ui-field>
+                <label slot="label">Amount</label>
+                <input />
+                <span slot="help" id="chosen">In BRL.</span>
+            </ui-field>
+        `);
+
+        slotted(field, 'help').textContent = 'In BRL, two decimals.';
+        await settled();
+
+        expect(control(field).getAttribute('aria-describedby')).toBe('chosen');
+    });
+
     it('drops aria-describedby once the last describer is gone', async () => {
         const field = await mount(`
             <ui-field>
@@ -318,6 +356,11 @@ describe('ui-field', () => {
         await settled();
 
         expect(control(field).hasAttribute('aria-invalid')).toBe(false);
+        // And the id it generated for that element goes with it. It is still on the
+        // element — the span is there, empty — so anything that carried forward *unknown*
+        // ids has to know this one as its own, or the control stays described by a
+        // sentence nobody can read.
+        expect(control(field).hasAttribute('aria-describedby')).toBe(false);
     });
 
     it('stops watching once removed from the document', async () => {

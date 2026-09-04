@@ -79,6 +79,16 @@ custom listbox would style it and would have to reimplement that picker, which i
 declined. Chromium's `appearance: base-select` will eventually remove the trade; adopting it while
 one engine has it would make the kit look like two kits.
 
+**Where the platform has the feature but only in one engine, it is measured and declined.**
+`<ui-tooltip>` places itself with thirty lines of script over a `popover`, and CSS anchor positioning
+is not adopted even though this package's suite measures it working end to end — an anchored popover
+really is placed against its anchor here. The reason is `<ui-select>`'s, one step harsher: where an
+engine lacks the rules, a popover is `position: fixed` at `inset: 0`, so the failure is a tooltip in
+the corner of the screen rather than one that merely looks different. The flip at a viewport edge is
+`position-try-fallbacks`, so the script would have to exist anyway — and a component with a CSS path
+and a script path is two components. The script goes when the feature is broadly available, and the
+tests do not, because they assert where the tip lands rather than who put it there.
+
 **Where no element exists, the component says so rather than pretending one does.** `<ui-switch>` is
 a native checkbox carrying `role="switch"` and a drawing, because there is nothing else for it to
 be: `<input type="checkbox" switch>` is unsupported in the engine this package's suite measures.

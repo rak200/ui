@@ -175,7 +175,16 @@ export class UiField extends LitElement {
         // format requirement, which is exactly the error suggestion the user needs in order
         // to recover (WCAG 3.3.3) — dropping it at the moment it becomes useful is the
         // opposite of helping.
-        const described = [error, help].filter((id) => id !== undefined);
+        //
+        // And a description this field did not write survives all of it, which is the same
+        // courtesy the `id` above gets and for the same reason: something this element
+        // cannot see may have put it there. `<ui-tooltip>` is the first to do so, and it
+        // was measured being erased — not on the first association, which runs before the
+        // tooltip wires, but on the next one, when a re-render moves the help text and the
+        // list is rebuilt from what this field alone knows about.
+        const described = [error, help, ...this.#foreign(control, uid, [error, help])].filter(
+            (id) => id !== undefined,
+        );
 
         if (described.length > 0) {
             control.setAttribute('aria-describedby', described.join(' '));
@@ -188,6 +197,22 @@ export class UiField extends LitElement {
         } else {
             control.setAttribute('aria-invalid', 'true');
         }
+    }
+
+    /**
+     * The ids already describing `control` that this field is not responsible for.
+     *
+     * Everything it could have written is excluded rather than remembered: the two ids it
+     * generates from `uid`, and whatever the help and error elements are called right now,
+     * which may be ids the host supplied. What is left belongs to somebody else and is
+     * carried forward in place rather than dropped.
+     */
+    #foreign(control: HTMLElement, uid: string, mine: (string | undefined)[]): string[] {
+        const written = new Set([...mine, `${uid}-help`, `${uid}-error`]);
+
+        return (control.getAttribute('aria-describedby') ?? '')
+            .split(' ')
+            .filter((id) => id !== '' && !written.has(id));
     }
 
     /**
