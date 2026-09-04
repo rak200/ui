@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.15](https://github.com/rak200/ui/compare/0.2.14...0.2.15) (2026-09-04)
+
+
+### Features
+
+* ui-tooltip, placed by hand over a popover the platform lifts ([#114](https://github.com/rak200/ui/issues/114)) ([13a4345](https://github.com/rak200/ui/commit/13a434512bbadae8830b52e80b8cc620066704a4))
+
 ## [0.2.14](https://github.com/rak200/ui/compare/0.2.13...0.2.14) (2026-09-03)
 
 
