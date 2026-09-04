@@ -29,6 +29,7 @@ import { UiIcon } from '../src/icon.js';
 import { UiInput, UiTextarea } from '../src/input.js';
 import { UiRadio, UiRadioGroup } from '../src/radio.js';
 import { UiSelect } from '../src/select.js';
+import { UiTooltip } from '../src/tooltip.js';
 
 afterEach(() => {
     document.body.replaceChildren();
@@ -450,6 +451,7 @@ describe('the references components write', () => {
         UiSelect.styles,
         UiSwitch.styles,
         UiTextarea.styles,
+        UiTooltip.styles,
     ]
         .map(String)
         .join('\n');

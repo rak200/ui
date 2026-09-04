@@ -5,15 +5,13 @@ is **removed** by the pull request that delivers it, not annotated as done.
 
 ## The v0 surface (#19–#23)
 
-RFC 0016 sets the v0 component surface. Four components are open, one issue each: `ui-table` (#19),
-`ui-tooltip` (#20), `ui-toast` (#21) and `ui-menu` (#23).
+RFC 0016 sets the v0 component surface. Three components are open, one issue each: `ui-table` (#19),
+`ui-toast` (#21) and `ui-menu` (#23).
 
-**Two of them have an order between them.** `ui-menu` takes its positioning and viewport-edge
-behaviour from whatever `ui-tooltip` settles on, because two answers to one problem is one too many
-— so #20 decides and #23 inherits. What #20 has to state, and cannot inherit from anything here, is
-whether that answer is CSS anchor positioning or a dependency: a feature one engine has is what
-makes a kit look like two kits, which is the same test `docs/select.md` applies to
-`appearance: base-select`.
+**`ui-menu` inherits its positioning rather than deciding it.** That answer is settled — measured
+placement in this package, over a `popover`, with CSS anchor positioning measured as present in this
+engine and deliberately not adopted; `docs/tooltip.md` carries the whole of it. What is left for #23
+is to use it, not to choose it.
 
 **One deferral has an expiry date rather than a reason.** RFC 0016 put a custom listbox off because
 a native `<select>` is accessible for free on every platform and a listbox is an accessibility
@@ -27,10 +25,10 @@ schedule and is written where a consumer reads it — [ARCHITECTURE.md](ARCHITEC
 arrives with the component that consumes it_. A type scale waits for `ui-table` (#19); `success` and
 `warning` for `ui-toast` (#21).
 
-**Layering may never be needed at all**, and that is the rule cutting the other way. It was expected
-with the first overlay and did not arrive: a modal `<dialog>` is promoted to the top layer, so there
-is no `z-index` anywhere to name. It waits for an overlay the platform does not lift — `ui-tooltip`
-and `ui-menu` are the two that might be it.
+**Layering may never be needed at all**, and that is the rule cutting the other way. Two overlays
+have now arrived and neither brought it: a modal `<dialog>` and a `popover` are both promoted to the
+top layer, so there is no `z-index` anywhere to name. `ui-menu` is the last candidate, and it will be
+a popover too.
 
 And each ships with its interaction states or it does not ship: a component that accepts interaction
 and shows no feedback is defective rather than incomplete.

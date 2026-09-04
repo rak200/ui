@@ -71,6 +71,11 @@ the first radio inside would name one option and leave the set anonymous.
 - **`aria-invalid="true"` on the control** while the error says something, and removed when it does
   not.
 
+- **a description it did not write is carried forward.** The list is rebuilt on every re-association,
+  and anything in it that this field did not put there stays — [`<ui-tooltip>`](tooltip.md) is the
+  first thing to add one, and the erasure it would otherwise cause happens on the _second_
+  association rather than the first, which is the kind nobody sees.
+
 Ids for the help and the error are generated the same way, and the same rule applies: yours survive.
 
 Slots filled after the first render are picked up, and so is text rewritten in place — the shape a

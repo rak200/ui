@@ -33,6 +33,7 @@ src/
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
+├── tooltip.ts       # <ui-tooltip> — a popover the platform lifts, placed by hand
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
@@ -46,6 +47,7 @@ tests/               # mirrors src/, one test file per unit
 ├── input.test.ts
 ├── radio.test.ts
 ├── select.test.ts
+├── tooltip.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
@@ -63,6 +65,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── input.stories.ts
 ├── radio.stories.ts
 ├── select.stories.ts
+├── tooltip.stories.ts
 └── tokens.stories.ts
 .storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
 docs/                # one page per unit, indexed by docs/README.md
@@ -130,6 +133,12 @@ explains. This file restates none of them.
   then freeze the mark's colour, which `mask-composite: exclude` avoids by making the mark absent
   rather than coloured. The target-size floor and the forced-colors block beside it are the other
   two things `appearance: none` made this component's to own.
+- **Why `ui-tooltip` places itself instead of adopting CSS anchor positioning** — the docblock on
+  `UiTooltip` in `src/tooltip.ts`, which records both measurements: anchor positioning works end to
+  end in this engine, and an engine without it puts the popover at `inset: 0` rather than near the
+  trigger. `popover="manual"` and the Escape handler carry their reasons beside them, and
+  `src/field.ts`'s `#foreign()` is the other half — two components writing one
+  `aria-describedby`, with the erasure measured on the _second_ association.
 - **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
   `UiCard` in `src/card.ts`, beside each. `light-dark()` takes colours and a shadow is not one, so
   the elevation category cannot follow the scheme and the derived boundary is what both schemes
