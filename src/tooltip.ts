@@ -1,4 +1,5 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
+import { place } from './placement.js';
 import { reference } from './reference.js';
 
 /** Distinguishes one tooltip's generated id from another's. */
@@ -50,9 +51,13 @@ const side = 'data-side';
  * a real element needs — and it would be this package's second runtime dependency, where
  * RFC 0016's adoption was a *behaviour* library and not a layout one.
  *
- * So the placement is thirty lines here, measured at the edges by a suite that runs in a
- * real browser. When anchor positioning is available broadly it replaces them and the
- * tests stay: they assert where the tip lands, not who put it there.
+ * So the placement is thirty lines of arithmetic, measured at the edges by a suite that
+ * runs in a real browser. When anchor positioning is available broadly it replaces them and
+ * the tests stay: they assert where the tip lands, not who put it there.
+ *
+ * **The arithmetic itself is one module over**, in `src/placement.ts`. It was written here
+ * first and moved when `<ui-menu>` needed the same thing pointing the other way — which is
+ * what issue #23 asked for in as many words: two answers to one problem is one too many.
  *
  * @example
  * ```html
@@ -328,7 +333,8 @@ export class UiTooltip extends LitElement {
      *
      * Read rather than assumed: the tip's own box is measured after it is shown, because
      * its height depends on how its text wrapped at this width in this font — a number
-     * this file cannot know and must not guess.
+     * this file cannot know and must not guess. What it does with the two boxes is
+     * `src/placement.ts`, which `<ui-menu>` reads as well.
      */
     #place(): void {
         const trigger = this.#trigger();
@@ -338,25 +344,18 @@ export class UiTooltip extends LitElement {
             return;
         }
 
-        const anchor = trigger.getBoundingClientRect();
-        const box = tip.getBoundingClientRect();
-        const above = anchor.top >= box.height;
+        const root = document.documentElement;
+        const placement = place(
+            trigger.getBoundingClientRect(),
+            tip.getBoundingClientRect(),
+            { width: root.clientWidth, height: root.clientHeight },
+            'block-start',
+            'center',
+        );
 
-        tip.setAttribute(side, above ? 'block-start' : 'block-end');
-        tip.style.insetBlockStart = `${String(above ? anchor.top - box.height : anchor.bottom)}px`;
-        // Centred on the trigger, then pulled back inside the viewport — in that order,
-        // because a tip centred on a trigger near the edge is a tip half off the screen.
-        // `Math.max` last so a tip wider than the viewport starts at the leading edge
-        // rather than at a negative one.
-        tip.style.insetInlineStart = `${String(
-            Math.max(
-                0,
-                Math.min(
-                    anchor.left + anchor.width / 2 - box.width / 2,
-                    document.documentElement.clientWidth - box.width,
-                ),
-            ),
-        )}px`;
+        tip.setAttribute(side, placement.side);
+        tip.style.insetBlockStart = `${String(placement.blockStart)}px`;
+        tip.style.insetInlineStart = `${String(placement.inlineStart)}px`;
     }
 }
 

@@ -3,15 +3,9 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The v0 surface (#19–#23)
+## The v0 surface (#19)
 
-RFC 0016 sets the v0 component surface. Two components are open, one issue each: `ui-table` (#19)
-and `ui-menu` (#23).
-
-**`ui-menu` inherits its positioning rather than deciding it.** That answer is settled — measured
-placement in this package, over a `popover`, with CSS anchor positioning measured as present in this
-engine and deliberately not adopted; `docs/tooltip.md` carries the whole of it. What is left for #23
-is to use it, not to choose it.
+RFC 0016 sets the v0 component surface. One component is open: `ui-table` (#19).
 
 **One deferral has an expiry date rather than a reason.** RFC 0016 put a custom listbox off because
 a native `<select>` is accessible for free on every platform and a listbox is an accessibility
@@ -22,29 +16,34 @@ it for a consumer.
 
 **Each open component brings its own token category with it**, which is a rule rather than a
 schedule and is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category
-arrives with the component that consumes it_. A type scale waits for `ui-table` (#19). `ui-menu` (#23)
-is expected to bring none: a menu is a surface over a page, and elevation, boundary and the derived
-neutrals are all already here.
+arrives with the component that consumes it_. A type scale waits for `ui-table` (#19), and it is the
+last category the v0 surface expects.
 
-**Layering may never be needed at all**, and that is the rule cutting the other way. Three overlays
-have now arrived and none brought it: a modal `<dialog>` and two `popover`s are all promoted to the
-top layer, so there is no `z-index` anywhere to name. `ui-menu` is the last candidate, and it will be
-a popover too.
+**Layering was never needed**, and that is the rule cutting the other way. Four overlays have now
+arrived and none brought it: a modal `<dialog>` and three `popover`s are all promoted to the top
+layer, so there is no `z-index` anywhere to name. `ui-menu` was the last candidate on the list and it
+is a popover too, so nothing pending is expected to open the category.
 
 And each ships with its interaction states or it does not ship: a component that accepts interaction
 and shows no feedback is defective rather than incomplete.
 
-## Zag arrives with the first component the platform has no element for (#23)
+## Zag has no candidate left, and that is a decision to make (#122)
 
 RFC 0016 adopts [Zag](https://zagjs.com) state machines for behaviour and accessibility, and this
-package still does not depend on it. Three components have declined it already, and
-[ARCHITECTURE.md](ARCHITECTURE.md) carries all three refusals for a consumer.
+package still does not depend on it. **Four components have now declined it**, and
+[ARCHITECTURE.md](ARCHITECTURE.md) carries all four refusals for a consumer.
 
-`ui-menu` (#23) is the nearest candidate left — a dismissable layer the platform does not lift, and
-positioning. The test is stated rather than assumed: Zag arrives where the **accessible behaviour**
-is the expensive part. Not merely where the pattern has state; not merely where it has a roving
-tabindex; and — as `ui-toast` showed, declining a machine Zag actually ships — not merely where the
-platform has no element, if what the component owns turns out to be markup rather than behaviour.
+`ui-menu` was the one this file named, and the reason it declined is the reason the question is now
+open rather than pending: measured, `popover="auto"` supplies the layer, the light dismissal, Escape
+and the ordering against other open layers, so what a machine would have replaced is a roving
+tabindex and four keys. Zag's menu also positions through Floating UI, which would be a second
+placement in a package whose first one is measured, shared and documented.
+
+The test is stated rather than assumed: Zag arrives where the **accessible behaviour** is the
+expensive part. No component has met it, and no unwritten one is expected to — `ui-table` is static.
+So the choice is between **retiring the adoption** and naming the component that would justify it,
+and it is a decision rather than a wait. Nothing blocks on it: a dependency nobody has added costs
+nothing, and the four refusals are each written where a reader meets them.
 
 ## Design tokens beyond the web (#24)
 

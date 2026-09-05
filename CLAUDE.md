@@ -31,6 +31,8 @@ src/
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
+├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
+├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
 ├── toast.ts         # <ui-toaster> and <ui-toast> — two live regions, and a clock that is not a token
@@ -46,6 +48,8 @@ tests/               # mirrors src/, one test file per unit
 ├── field.test.ts
 ├── icon.test.ts
 ├── input.test.ts
+├── menu.test.ts
+├── placement.test.ts
 ├── radio.test.ts
 ├── select.test.ts
 ├── toast.test.ts
@@ -65,6 +69,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── field.stories.ts
 ├── icon.stories.ts
 ├── input.stories.ts
+├── menu.stories.ts
 ├── radio.stories.ts
 ├── select.stories.ts
 ├── toast.stories.ts
@@ -169,6 +174,18 @@ explains. This file restates none of them.
   re-promoted. **The dwell is deliberately not a token**: `tokenStyleSheet()` collapses every
   `--ui-duration-*` under reduced motion, so a dwell that was one would take the notice away from
   the reader who asked for less movement; the constant in `src/toast.ts` says so beside itself.
+- **Why `ui-menu` renders its own trigger, when every other component slots one** — the docblock
+  on `UiMenu` in `src/menu.ts`, and `docs/menu.md`. Both ends of the `aria-controls` reference
+  are rendered into one shadow root, so the IDREF resolves and a consumer has nothing to
+  miswire; the items stay slotted, because containment crosses and a reference does not. The
+  same docblock carries what `popover="auto"` gives — the layer, light dismissal, Escape — and
+  the one thing it measurably does not: **the focus does not come back** across the shadow
+  boundary, so `#give()` writes the return trip and only for the two ways out that leave the
+  reader inside the menu.
+- **Why the placement is a module rather than a method** — `src/placement.ts`, which issue #23
+  asked for in as many words. `ui-tooltip` wrote it first and `ui-menu` needed it pointing the
+  other way; it takes boxes rather than elements for the reason `reservedGutter` in
+  `src/dialog.ts` takes numbers, so the viewport edges are checked directly.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three

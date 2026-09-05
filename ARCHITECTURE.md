@@ -66,6 +66,25 @@ Zag is redundant; where there is barely any of it to supply, Zag is overhead. `<
 `<ui-radio-group>` are the first case, `<ui-toast>` is the second, and `ROADMAP.md` names the
 component that is still expected to be neither.
 
+**`<ui-menu>` was that component, and it declined too — which makes four, and turns a deferral
+into a question.** A menu button is the pattern the adoption was written for: a single tab stop,
+arrow keys, Home/End, typeahead, Escape, focus returned to the trigger. Measured in the component's
+own arrangement, `popover="auto"` supplies the top layer, light dismissal, Escape, and the ordering
+against every other open layer; what is left over is a roving tabindex and four keys, which the
+`<ui-radio-group>` refusal already named as not the trigger. The one thing the platform did **not**
+supply was focus restoration across the shadow boundary, and that is three lines rather than a
+machine.
+
+The second reason is narrower and harder to argue with: Zag's menu positions through Floating UI,
+and this package's placement is measured, documented and shared by two components. Adopting the
+machine would put a second answer to that question in the same package — which is the trade
+`<ui-tooltip>` already refused, from the other direction.
+
+**So the honest state of the adoption is that no component has ever met its test**, and the
+candidates are used up. `ROADMAP.md` carries that as an open question rather than as a schedule:
+the choice is between retiring the adoption and finding the component that would justify it, and
+neither is decided here.
+
 ## The prefix is `ui-`
 
 Tags, CSS custom properties and exported classes all carry it: `<ui-button>`, `--ui-radius`,
@@ -126,6 +145,14 @@ shadow root leaves `control.labels` empty, and an `aria-describedby` pointing in
 Measured in the browser the suite runs in, both ways round. So a component that associates elements
 generates the ids and points them at each other, and leaves the elements in the host's tree where the
 browser can see them all.
+
+**Where a component owns _both_ ends, the relationship goes inside**, and `<ui-menu>` is the one
+that does. A menu button's `aria-haspopup`, `aria-expanded` and `aria-controls` all point from a
+trigger at a panel, and both are elements the component renders — so they share one tree scope, the
+IDREF resolves, and a consumer has nothing to miswire. That is not an exception to the rule above
+but the same rule read forwards: the elements in a relationship must be in one tree, and which tree
+follows from who owns them. The menu's _items_ stay slotted, because they are the host's controls
+and what binds them is containment rather than a name.
 
 **Containment is the one relationship that does cross, and `<ui-toaster>` is what made the
 distinction concrete.** An IDREF is resolved inside a tree scope, which is exactly what a shadow root
@@ -266,8 +293,8 @@ emitter for one category, and the thing it would buy is available from a name th
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
 before. The rule cuts the other way as often as it looks like it will: the first overlay was
 expected to bring a layering category, and brought none, because a modal `<dialog>` is promoted to
-the top layer and there is no `z-index` anywhere in it to name. Three overlays have now arrived and
-none has brought one — the other two are `popover`s, which the platform promotes the same way. `<ui-checkbox>`, `<ui-switch>` and
+the top layer and there is no `z-index` anywhere in it to name. Four overlays have now arrived and
+none has brought one — the other three are `popover`s, which the platform promotes the same way. `<ui-checkbox>`, `<ui-switch>` and
 `<ui-radio-group>` brought none either, being drawn entirely from the boundary and the accent that
 were already there — a component arriving with no category is the schedule working, not a corner
 being cut. Values chosen with no component to judge them against get corrected when one arrives, and
