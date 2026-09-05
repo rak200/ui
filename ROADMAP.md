@@ -5,8 +5,8 @@ is **removed** by the pull request that delivers it, not annotated as done.
 
 ## The v0 surface (#19–#23)
 
-RFC 0016 sets the v0 component surface. Three components are open, one issue each: `ui-table` (#19),
-`ui-toast` (#21) and `ui-menu` (#23).
+RFC 0016 sets the v0 component surface. Two components are open, one issue each: `ui-table` (#19)
+and `ui-menu` (#23).
 
 **`ui-menu` inherits its positioning rather than deciding it.** That answer is settled — measured
 placement in this package, over a `popover`, with CSS anchor positioning measured as present in this
@@ -22,11 +22,12 @@ it for a consumer.
 
 **Each open component brings its own token category with it**, which is a rule rather than a
 schedule and is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category
-arrives with the component that consumes it_. A type scale waits for `ui-table` (#19); `success` and
-`warning` for `ui-toast` (#21).
+arrives with the component that consumes it_. A type scale waits for `ui-table` (#19). `ui-menu` (#23)
+is expected to bring none: a menu is a surface over a page, and elevation, boundary and the derived
+neutrals are all already here.
 
-**Layering may never be needed at all**, and that is the rule cutting the other way. Two overlays
-have now arrived and neither brought it: a modal `<dialog>` and a `popover` are both promoted to the
+**Layering may never be needed at all**, and that is the rule cutting the other way. Three overlays
+have now arrived and none brought it: a modal `<dialog>` and two `popover`s are all promoted to the
 top layer, so there is no `z-index` anywhere to name. `ui-menu` is the last candidate, and it will be
 a popover too.
 
@@ -36,13 +37,14 @@ and shows no feedback is defective rather than incomplete.
 ## Zag arrives with the first component the platform has no element for (#23)
 
 RFC 0016 adopts [Zag](https://zagjs.com) state machines for behaviour and accessibility, and this
-package still does not depend on it. Two components have declined it already, and
-[ARCHITECTURE.md](ARCHITECTURE.md) carries both refusals for a consumer.
+package still does not depend on it. Three components have declined it already, and
+[ARCHITECTURE.md](ARCHITECTURE.md) carries all three refusals for a consumer.
 
 `ui-menu` (#23) is the nearest candidate left — a dismissable layer the platform does not lift, and
-positioning. The test is stated rather than assumed: Zag arrives where the platform has **no
-element** for the pattern, not merely where the pattern has state, and not merely where it has a
-roving tabindex.
+positioning. The test is stated rather than assumed: Zag arrives where the **accessible behaviour**
+is the expensive part. Not merely where the pattern has state; not merely where it has a roving
+tabindex; and — as `ui-toast` showed, declining a machine Zag actually ships — not merely where the
+platform has no element, if what the component owns turns out to be markup rather than behaviour.
 
 ## Design tokens beyond the web (#24)
 

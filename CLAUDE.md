@@ -33,6 +33,7 @@ src/
 ├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
+├── toast.ts         # <ui-toaster> and <ui-toast> — two live regions, and a clock that is not a token
 ├── tooltip.ts       # <ui-tooltip> — a popover the platform lifts, placed by hand
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
@@ -47,6 +48,7 @@ tests/               # mirrors src/, one test file per unit
 ├── input.test.ts
 ├── radio.test.ts
 ├── select.test.ts
+├── toast.test.ts
 ├── tooltip.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
@@ -65,6 +67,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── input.stories.ts
 ├── radio.stories.ts
 ├── select.stories.ts
+├── toast.stories.ts
 ├── tooltip.stories.ts
 └── tokens.stories.ts
 .storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
@@ -157,6 +160,15 @@ explains. This file restates none of them.
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
   file records why `appearance: none` is set at all, and why `appearance: base-select` — supported
   in this engine, measured — is deliberately not adopted.
+- **Why `ui-toaster` renders two live regions into its shadow root, when every other ARIA
+  relationship here is light-DOM only** — the docblock on `UiToaster` in `src/toast.ts`, and
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Containment is the one relationship that does cross_. A
+  reference is resolved in a tree scope and a region holds what is inside it, so a slotted toast
+  really is in the region. The same docblock carries why neither region takes `role="alert"` —
+  the implied `aria-atomic` re-reads the whole stack — and why the popover is shown once and never
+  re-promoted. **The dwell is deliberately not a token**: `tokenStyleSheet()` collapses every
+  `--ui-duration-*` under reduced motion, so a dwell that was one would take the notice away from
+  the reader who asked for less movement; the constant in `src/toast.ts` says so beside itself.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three

@@ -39,6 +39,16 @@ export const tokens = [
     '--ui-color-text',
     '--ui-color-focus',
     '--ui-color-danger',
+    // The other two outcomes, arriving with `ui-toast` — the component `ROADMAP.md` said
+    // would bring them. They complete a set `--ui-color-danger` has been half of since the
+    // first field: a form told you what went wrong and had no way to say that anything
+    // went right.
+    //
+    // Grounds rather than derivations, and for the reason `--ui-color-danger` is one: a
+    // hue cannot be mixed out of the grounds that exist. Both are values a host is
+    // expected to replace with their own brand's, which is what a ground is for.
+    '--ui-color-success',
+    '--ui-color-warning',
     // The dim behind a modal, and a *ground* rather than a derivation even though every
     // other neutral here is derived. A derived neutral mixes toward the text, which is
     // what makes one formula right in both schemes — and it is exactly wrong for this
@@ -173,6 +183,18 @@ export const defaults: Readonly<Record<Token, string>> = {
     // because no axe rule does.
     '--ui-color-focus': '#b45309',
     '--ui-color-danger': '#b91c1c',
+    // Green-700 and amber-700, each the darkest step of its hue that still reads as that
+    // hue. Both clear **4.5:1** against the surface rather than the 3:1 a coloured edge
+    // would owe, because the floor a value has to clear is the strictest use it is put to
+    // and nothing stops a host using one as text — `--ui-color-danger` was chosen the same
+    // way and is text in `ui-field` today.
+    //
+    // The warning is the same amber as `--ui-color-focus`, and the two arrived at it
+    // independently: both are *the darkest amber that clears its floor in both schemes*,
+    // and that question has one answer. They stay separate names because they are separate
+    // knobs — a host who retunes the focus ring has said nothing about warnings.
+    '--ui-color-success': '#15803d',
+    '--ui-color-warning': '#b45309',
     // Half black. Enough to push the page behind a modal out of the reading order for the
     // eye as well as for the accessibility tree, and not so much that the context a modal
     // is *about* stops being visible. The alpha is the whole point, so this is the one
@@ -308,6 +330,11 @@ export const darkScheme: Readonly<Partial<Record<Token, string>>> = {
     // Red-700 is 2.74:1 on the dark surface — under the 4.5:1 floor for text, and error
     // text is the one thing in this set that must never be hard to read. Red-400 is 6.41.
     '--ui-color-danger': '#f87171',
+    // The same inversion, for the same reason: green-700 is 3.54:1 on the dark surface and
+    // amber-700 is 3.53, so both would clear a coloured edge and fail as text — which is
+    // the half of the pair a reader is most likely to need.
+    '--ui-color-success': '#4ade80',
+    '--ui-color-warning': '#fbbf24',
 };
 
 /** The category every duration name shares, which is what reduced motion collapses. */
