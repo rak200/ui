@@ -183,6 +183,8 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-color-text`            | body and secondary text                 |
 | `--ui-color-focus`           | the focus ring — see the floor below    |
 | `--ui-color-danger`          | error text                              |
+| `--ui-color-success`         | a successful outcome                    |
+| `--ui-color-warning`         | an outcome worth a second look          |
 | `--ui-color-scrim`           | the dim behind a modal                  |
 | `--ui-radius`                | corner radius                           |
 | `--ui-space`                 | the spacing step components scale from  |
@@ -197,6 +199,16 @@ The names that have a default and are emitted at `:root` — the **ground** half
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
+
+### Three tokens carry a text floor
+
+`--ui-color-danger`, `--ui-color-success` and `--ui-color-warning` each clear **4.5:1 against the
+surface** in both schemes — the floor for text, not the 3:1 a coloured edge would owe. The floor a
+value has to clear is the strictest use it is put to, and nothing stops a host writing one of these as
+text; [`<ui-field>`](field.md) already writes the first one that way.
+
+Override one and you own that ratio. A `success` that only ever draws an edge can be lighter; one that
+also labels something cannot.
 
 ### One token carries a floor
 
@@ -304,8 +316,10 @@ darkScheme['--ui-color-surface']; // '#111827'
 darkScheme['--ui-radius']; // undefined
 ```
 
-Five entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent`,
-`--ui-color-accent-contrast` and `--ui-color-danger`. `--ui-color-focus` is absent because one value
+Seven entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent`,
+`--ui-color-accent-contrast` and the three outcomes — `--ui-color-danger`, `--ui-color-success` and
+`--ui-color-warning`. Each of those three is a mid-dark hue that reads on white and goes muddy on
+charcoal, so each is inverted here for the same reason. `--ui-color-focus` is absent because one value
 clears its contrast floor in both schemes, and `--ui-color-scrim` because dimming is dimming in
 either — it is the one neutral here that does **not** follow the text, since mixing toward the text
 would lighten the page behind a dialog on a dark one.

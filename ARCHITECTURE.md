@@ -51,6 +51,21 @@ they keep being it inside a wrapper, which this package's suite measures rather 
 the group hand-rolls nothing and adopts nothing; what is left for it is the layout, the `role` and
 the group-level name. The pattern having state was never the test. Having no element for it is.
 
+**`<ui-toast>` is the third, and it declines on different grounds — which is what showed the test
+was carrying more weight than its wording.** Zag ships a toast machine, so this is a refusal rather
+than an absence of an option, and the platform has no toast element: read literally, _no element for
+the pattern_ says adopt. It was not adopted, because the expensive part of a toast is not behaviour.
+It is **announcement** — one live region per politeness, in the document before any message, carrying
+no role that would re-read the whole stack — and that is a structural decision no state machine can
+make on your behalf, because it depends on what existed when. What is left over is a timer that pauses
+while the toast is being read, which is fifteen lines and no machine.
+
+So the test reads, in full: Zag arrives where the **accessible behaviour** is the expensive part —
+keyboard interaction, focus management, a layer that dismisses. Where the platform supplies that,
+Zag is redundant; where there is barely any of it to supply, Zag is overhead. `<ui-dialog>` and
+`<ui-radio-group>` are the first case, `<ui-toast>` is the second, and `ROADMAP.md` names the
+component that is still expected to be neither.
+
 ## The prefix is `ui-`
 
 Tags, CSS custom properties and exported classes all carry it: `<ui-button>`, `--ui-radius`,
@@ -111,6 +126,15 @@ shadow root leaves `control.labels` empty, and an `aria-describedby` pointing in
 Measured in the browser the suite runs in, both ways round. So a component that associates elements
 generates the ids and points them at each other, and leaves the elements in the host's tree where the
 browser can see them all.
+
+**Containment is the one relationship that does cross, and `<ui-toaster>` is what made the
+distinction concrete.** An IDREF is resolved inside a tree scope, which is exactly what a shadow root
+is one of — so a reference fails. A live region is not a reference: it holds whatever is _inside_ it,
+and the accessibility tree is built from the flattened tree, where a slotted element really is inside
+the slot's parent. So the toaster's two `aria-live` regions are rendered in its shadow root and the
+toasts stay in the host's tree, slotted into them — which is the arrangement this section forbids for
+a label and permits for a region, for a reason and not by exception. The rule is about how the
+relationship is _expressed_: by name, or by position.
 
 **Where the platform's own association cannot reach, the ARIA one is used instead**, and
 `<ui-radio-group>` is what made that concrete. `<label for>` reaches a **labelable** element and
@@ -242,7 +266,8 @@ emitter for one category, and the thing it would buy is available from a name th
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
 before. The rule cuts the other way as often as it looks like it will: the first overlay was
 expected to bring a layering category, and brought none, because a modal `<dialog>` is promoted to
-the top layer and there is no `z-index` anywhere in it to name. `<ui-checkbox>`, `<ui-switch>` and
+the top layer and there is no `z-index` anywhere in it to name. Three overlays have now arrived and
+none has brought one — the other two are `popover`s, which the platform promotes the same way. `<ui-checkbox>`, `<ui-switch>` and
 `<ui-radio-group>` brought none either, being drawn entirely from the boundary and the accent that
 were already there — a component arriving with no category is the schedule working, not a corner
 being cut. Values chosen with no component to judge them against get corrected when one arrives, and

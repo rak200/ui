@@ -29,6 +29,7 @@ import { UiIcon } from '../src/icon.js';
 import { UiInput, UiTextarea } from '../src/input.js';
 import { UiRadio, UiRadioGroup } from '../src/radio.js';
 import { UiSelect } from '../src/select.js';
+import { UiToast, UiToaster } from '../src/toast.js';
 import { UiTooltip } from '../src/tooltip.js';
 
 afterEach(() => {
@@ -451,6 +452,8 @@ describe('the references components write', () => {
         UiSelect.styles,
         UiSwitch.styles,
         UiTextarea.styles,
+        UiToast.styles,
+        UiToaster.styles,
         UiTooltip.styles,
     ]
         .map(String)
@@ -630,6 +633,19 @@ describe('the contrast floors', () => {
         ).toBeGreaterThanOrEqual(4.5);
     });
 
+    // The two outcomes that arrived with `ui-toast`, held to the text floor rather than to
+    // the 3:1 a coloured edge would owe. The floor a value has to clear is the strictest
+    // use it is put to, and nothing stops a host writing one as text — `--ui-color-danger`
+    // is that use, in `ui-field`, today.
+    it.each(['--ui-color-success', '--ui-color-warning'] as const)(
+        'keeps %s at 4.5:1 against the surface',
+        (token) => {
+            expect(
+                contrastRatio(defaults[token], defaults['--ui-color-surface']),
+            ).toBeGreaterThanOrEqual(4.5);
+        },
+    );
+
     it('keeps a primary button legible, which is its own pair rather than the surface', () => {
         expect(
             contrastRatio(defaults['--ui-color-accent-contrast'], defaults['--ui-color-accent']),
@@ -656,6 +672,18 @@ describe('the contrast floors', () => {
                 contrastRatio(dark('--ui-color-danger'), dark('--ui-color-surface')),
             ).toBeGreaterThanOrEqual(4.5);
         });
+
+        // Both are inverted for the dark surface for the reason the error is: green-700 is
+        // 3.54:1 there and amber-700 is 3.53, so each would pass as an edge and fail as the
+        // text a host is free to write it as.
+        it.each(['--ui-color-success', '--ui-color-warning'] as const)(
+            'keeps %s at 4.5:1',
+            (token) => {
+                expect(
+                    contrastRatio(dark(token), dark('--ui-color-surface')),
+                ).toBeGreaterThanOrEqual(4.5);
+            },
+        );
 
         it('keeps a primary button legible against its own accent', () => {
             expect(
