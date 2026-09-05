@@ -293,9 +293,12 @@ export class UiToast extends LitElement {
             outline-offset: 2px;
         }
 
+        /* One dimension, not two, and the mutation floor is what proved it: an svg carrying
+           a viewBox is a replaced element with an intrinsic ratio, so a square glyph given
+           a width takes the same height from the ratio. Writing both was the same fact
+           twice — and a fact written twice is a rule whose removal nothing can observe. */
         svg {
             inline-size: ${reference('--ui-icon-size')};
-            block-size: ${reference('--ui-icon-size')};
             stroke-width: ${reference('--ui-icon-stroke')};
         }
     `;

@@ -337,6 +337,8 @@ describe('ui-toast', () => {
     it('reflects the variant, which is what the stylesheet selects on', async () => {
         const host = await mount(fixture);
 
+        expect(toast(host).getAttribute('variant'), 'the default is written out too').toBe('info');
+
         toast(host).variant = 'success';
         await toast(host).updateComplete;
 
@@ -702,7 +704,10 @@ describe('dismissal', () => {
         const element = toast(host);
         let announced = 0;
 
-        host.addEventListener('ui-dismiss', () => {
+        // On the toast rather than on an ancestor, and the difference is the whole
+        // assertion: a second exit finishes after the first one has removed the element, so
+        // its event bubbles to nothing and a listener above would count one either way.
+        element.addEventListener('ui-dismiss', () => {
             announced += 1;
         });
 
@@ -713,6 +718,25 @@ describe('dismissal', () => {
         await wait(settled);
 
         expect(announced).toBe(1);
+    });
+
+    it('stays on the page until the exit has finished', async () => {
+        const host = await mount(fixture);
+        const element = toast(host);
+
+        // Arrived first, so there is an exit to run at all, and then stretched so the
+        // assertion below lands inside it rather than after it.
+        await still(element);
+        element.style.setProperty('--ui-duration-state', '1s');
+        element.dismiss();
+
+        await wait(settled);
+
+        expect(element.isConnected, 'still there while the exit runs').toBe(true);
+
+        await dismissed(element);
+
+        expect(element.isConnected).toBe(false);
     });
 
     it('dismisses on Escape, for a reader who has tabbed into it', async () => {
@@ -831,6 +855,28 @@ describe('the clock', () => {
         element.dispatchEvent(new PointerEvent('pointerleave'));
         element.dispatchEvent(new PointerEvent('pointerleave'));
         element.remove();
+
+        await wait(settled);
+
+        expect(announced).toBe(0);
+    });
+
+    it('takes its listeners off when it leaves, so a removed toast hears nothing', async () => {
+        // One `abort()` rather than five `removeEventListener` calls, and this is the half
+        // that reports: a leaked `pointerleave` reaches the resume, which starts a clock on
+        // a toast that is no longer anywhere and then dismisses it from outside the tree.
+        const host = await mount(
+            `<ui-toaster><ui-toast duration="${String(brief)}">Saved.</ui-toast></ui-toaster>`,
+        );
+        const element = toast(host);
+        let announced = 0;
+
+        element.addEventListener('ui-dismiss', () => {
+            announced += 1;
+        });
+
+        element.remove();
+        element.dispatchEvent(new PointerEvent('pointerleave'));
 
         await wait(settled);
 
