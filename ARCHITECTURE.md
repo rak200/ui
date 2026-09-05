@@ -291,10 +291,21 @@ emitter for one category, and the thing it would buy is available from a name th
 ### A category arrives with the component that consumes it
 
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
-before. The rule cuts the other way as often as it looks like it will: the first overlay was
+before.
+
+**The type scale is the case where the rule paid off most visibly, and it did so backwards.** It
+arrived with `<ui-table>` as scheduled, and what it found on arrival was not a gap but a **defect**:
+`font-size: 0.875em` was already shipping in three places — twice in `<ui-field>`, once in
+`<ui-tooltip>` — all three agreeing, none of them compared to anything, and every one of them a
+decision a host could not override. Had the category been admitted earlier, on a schedule, those
+three would have read a token from the start and nothing would have recorded that they were once a
+literal. Waiting is what made the extraction a correction rather than a formality.
+
+The rule cuts the other way as often as it looks like it will: the first overlay was
 expected to bring a layering category, and brought none, because a modal `<dialog>` is promoted to
 the top layer and there is no `z-index` anywhere in it to name. Four overlays have now arrived and
-none has brought one — the other three are `popover`s, which the platform promotes the same way. `<ui-checkbox>`, `<ui-switch>` and
+none has brought one — the other three are `popover`s, which the platform promotes the same way, and
+with the v0 surface delivered the category never opened at all. `<ui-checkbox>`, `<ui-switch>` and
 `<ui-radio-group>` brought none either, being drawn entirely from the boundary and the accent that
 were already there — a component arriving with no category is the schedule working, not a corner
 being cut. Values chosen with no component to judge them against get corrected when one arrives, and

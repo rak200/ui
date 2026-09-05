@@ -118,6 +118,29 @@ export const tokens = [
     // and therefore already scheme-correct — which is why `src/card.ts` draws both and
     // says so beside them.
     '--ui-elevation-100',
+    // The type scale, arriving with `ui-table` — the category `ROADMAP.md` said would, and
+    // the last one the v0 surface expects. It arrives to fix a defect rather than to
+    // anticipate one: `src/field.ts` wrote `font-size: 0.875em` twice and `src/tooltip.ts`
+    // a third time, all three agreeing and nothing comparing them — the shape
+    // `src/reference.ts` records finding in thirteen hand-copied fallbacks, and the thing
+    // `ARCHITECTURE.md` forbids in writing, since a hardcoded value is a decision a host
+    // cannot override.
+    //
+    // A step in a scale, ordinal with gaps, for the reason the duration and elevation
+    // scales give above: a size is *relative* by nature, so the names have to be able to
+    // grow between each other. It follows the scale-and-purpose shape rather than easing's
+    // purpose-is-the-ground shape, and that split is item 9's: a curve is qualitative, a
+    // size is not. No component reads this one; they read `--ui-text-supporting`.
+    //
+    // The unit is `em` rather than `rem`, for the reason `--ui-icon-size` is: the role is
+    // text set *beside* other text, so it should be a fraction of whatever that text is
+    // rather than a fraction of the root. A host who wants a fixed size sets one.
+    //
+    // **The ordinal ascends with the size**, so `100` is the smallest step this package has
+    // needed and a body or heading step later is `200` or `300`. Neither is invented here:
+    // every component sets `font: inherit` and takes the page's own size, which is the
+    // right default and not a step at all.
+    '--ui-text-100',
 ] as const;
 
 /** A CSS custom property this package defines and gives a default. */
@@ -157,6 +180,26 @@ export const derivedTokens = [
     // and will not be the last, and the name a host retunes should not be the name of
     // whichever component happened to need it first.
     '--ui-elevation-raised',
+    // The purpose the type scale is read through, and the only name a component writes.
+    // `supporting` is a role rather than a size and rather than a component: the four
+    // places that want it are a field's help text, a field's error, a tooltip's tip and a
+    // table's caption, and what unites them is that each explains the thing beside it. A
+    // `--ui-text-small` here would be `--ui-color-blue-600` for type, which item 9 rejects
+    // in as many words.
+    '--ui-text-supporting',
+    // A second surface tone: the same plane, tinted only enough to group. A table stripes
+    // its rows with it and rests its header on it.
+    //
+    // **Not `--ui-color-hover`, which is the same kind of value at a different strength.**
+    // A token name says what it answers to, and a zebra row answers to nothing — reading
+    // the hover colour for it is the reverse engineering item 9 names as the cost of value
+    // names. It also sits deliberately *below* that value, so an interactive layer drawn
+    // over a striped row is still a change rather than a coincidence.
+    //
+    // The pairing with `--ui-color-text-muted` is the point of the name: this package
+    // already says `muted` for *the same role, one step back*, and a second vocabulary for
+    // the surface half would be one more thing for a host to learn.
+    '--ui-color-surface-muted',
 ] as const;
 
 /** A CSS custom property this package computes rather than declares. */
@@ -227,6 +270,12 @@ export const defaults: Readonly<Record<Token, string>> = {
     // falls on rather than tinting it — a coloured shadow is a decision this layer would
     // have to defend at every hue a host might set.
     '--ui-elevation-100': '0 1px 2px -1px rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.1)',
+    // The value the three hardcoded sites already carried, adopted rather than re-chosen:
+    // this token exists to make an existing decision overridable, and changing it in the
+    // same breath would hide whether the extraction was faithful. 87.5% is 14px against a
+    // 16px page, which is the smallest size in wide use that is still ordinary body text
+    // rather than fine print.
+    '--ui-text-100': '0.875em',
 };
 
 /**
@@ -298,6 +347,19 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // lives, and a host who wants flatter cards moves the role rather than reverse
     // engineering which step a card happens to read.
     '--ui-elevation-raised': ground('--ui-elevation-100'),
+    // A plain reference, like the two purposes above: the scale is where the value lives,
+    // and a host who wants larger supporting text moves the role rather than working out
+    // which step a tooltip happens to read.
+    '--ui-text-supporting': ground('--ui-text-100'),
+    // 5% rather than the hover colour's 8%, and the gap is the whole design: a stripe has
+    // to be visible without reading as a different surface, and it has to leave room above
+    // itself for a state that is not a stripe. Mixing toward the text is what makes one
+    // formula right in both schemes, for the reason the neutrals above give — the tint
+    // darkens a light page and lightens a dark one without either being named.
+    //
+    // `tests/tokens.test.ts` holds the floor that matters here: text on a striped row is
+    // still text, so 4.5:1 is owed against this surface and not only against the plain one.
+    '--ui-color-surface-muted': mix('--ui-color-text', 5, '--ui-color-surface'),
 };
 
 /**

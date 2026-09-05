@@ -8,6 +8,7 @@ export { UiInput, UiTextarea } from './input.js';
 export { UiMenu } from './menu.js';
 export { UiRadio, UiRadioGroup, type RadioOrientation } from './radio.js';
 export { UiSelect } from './select.js';
+export { UiTable } from './table.js';
 export { UiToast, UiToaster, type ToastVariant } from './toast.js';
 export { UiTooltip } from './tooltip.js';
 export {

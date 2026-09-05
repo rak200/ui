@@ -3,29 +3,23 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The v0 surface (#19)
+## The listbox deferral, which has an expiry date rather than a reason
 
-RFC 0016 sets the v0 component surface. One component is open: `ui-table` (#19).
+RFC 0016 put a custom listbox off because a native `<select>` is accessible for free on every
+platform and a listbox is an accessibility project of its own. That still holds — and Chromium now
+ships `appearance: base-select` with `::picker(select)` and `::checkmark`, measured as supported in
+the engine this suite runs. What reopens the question is that feature arriving broadly, not a
+decision here; `docs/select.md` carries it for a consumer.
 
-**One deferral has an expiry date rather than a reason.** RFC 0016 put a custom listbox off because
-a native `<select>` is accessible for free on every platform and a listbox is an accessibility
-project of its own. That still holds — and Chromium now ships `appearance: base-select` with
-`::picker(select)` and `::checkmark`, measured as supported in the engine this suite runs. What
-reopens the question is that feature arriving broadly, not a decision here; `docs/select.md` carries
-it for a consumer.
+**The v0 component surface is delivered**, and both halves of the token schedule closed with it.
+The type scale arrived with `ui-table`, which was the last category the surface expected — and it
+arrived to replace three hardcoded sizes rather than to anticipate a need, which is the schedule
+working. **Layering never arrived at all**, and that is the rule cutting the other way: four
+overlays came, a modal `<dialog>` and three `popover`s, every one promoted to the top layer, so
+there is no `z-index` anywhere to name.
 
-**Each open component brings its own token category with it**, which is a rule rather than a
-schedule and is written where a consumer reads it — [ARCHITECTURE.md](ARCHITECTURE.md), _A category
-arrives with the component that consumes it_. A type scale waits for `ui-table` (#19), and it is the
-last category the v0 surface expects.
-
-**Layering was never needed**, and that is the rule cutting the other way. Four overlays have now
-arrived and none brought it: a modal `<dialog>` and three `popover`s are all promoted to the top
-layer, so there is no `z-index` anywhere to name. `ui-menu` was the last candidate on the list and it
-is a popover too, so nothing pending is expected to open the category.
-
-And each ships with its interaction states or it does not ship: a component that accepts interaction
-and shows no feedback is defective rather than incomplete.
+And each shipped with its interaction states or it did not ship: a component that accepts
+interaction and shows no feedback is defective rather than incomplete.
 
 ## Zag has no candidate left, and that is a decision to make (#122)
 

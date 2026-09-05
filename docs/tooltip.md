@@ -145,17 +145,17 @@ start typing — a tooltip is for what they might want, not what they must have.
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
 
-| Part                 | Token                             |
-| -------------------- | --------------------------------- |
-| padding              | `--ui-space` ÷ 2 and `--ui-space` |
-| gap from the trigger | `--ui-space` ÷ 2                  |
-| maximum width        | `--ui-space` × 40                 |
-| surface              | `--ui-color-surface`              |
-| text                 | `--ui-color-text`                 |
-| boundary             | `--ui-color-border`               |
-| corner               | `--ui-radius`                     |
-| lift                 | `--ui-elevation-raised`           |
-| font                 | `--ui-font`, at `0.875em`         |
+| Part                 | Token                                  |
+| -------------------- | -------------------------------------- |
+| padding              | `--ui-space` ÷ 2 and `--ui-space`      |
+| gap from the trigger | `--ui-space` ÷ 2                       |
+| maximum width        | `--ui-space` × 40                      |
+| surface              | `--ui-color-surface`                   |
+| text                 | `--ui-color-text`                      |
+| boundary             | `--ui-color-border`                    |
+| corner               | `--ui-radius`                          |
+| lift                 | `--ui-elevation-raised`                |
+| font                 | `--ui-font`, at `--ui-text-supporting` |
 
 **It is a small raised surface rather than an inverted one.** A dark bubble on a light page is the
 convention, and it would need a colour pair no other component in this kit uses — a category invented

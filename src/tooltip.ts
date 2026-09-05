@@ -91,7 +91,7 @@ export class UiTooltip extends LitElement {
             max-inline-size: calc(${reference('--ui-space')} * 40);
             padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
             font-family: ${reference('--ui-font')};
-            font-size: 0.875em;
+            font-size: ${reference('--ui-text-supporting')};
             /* The pair, never half of it: a surface without the colour chosen against it
                inherits whatever the page set, and the contrast measured for that pair
                stops holding. */
