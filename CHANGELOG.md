@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.16](https://github.com/rak200/ui/compare/0.2.15...0.2.16) (2026-09-05)
+
+
+### Features
+
+* ui-toast, two live regions and a clock that is not a token ([#117](https://github.com/rak200/ui/issues/117)) ([fc35d10](https://github.com/rak200/ui/commit/fc35d1067c2815310c304398e9974be685578dd9))
+
 ## [0.2.15](https://github.com/rak200/ui/compare/0.2.14...0.2.15) (2026-09-04)
 
 
