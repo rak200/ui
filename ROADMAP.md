@@ -27,7 +27,7 @@ is a popover too, so nothing pending is expected to open the category.
 And each ships with its interaction states or it does not ship: a component that accepts interaction
 and shows no feedback is defective rather than incomplete.
 
-## Zag has no candidate left, and that is a decision to make (#23 closed it)
+## Zag has no candidate left, and that is a decision to make (#122)
 
 RFC 0016 adopts [Zag](https://zagjs.com) state machines for behaviour and accessibility, and this
 package still does not depend on it. **Four components have now declined it**, and
