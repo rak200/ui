@@ -14,3 +14,5 @@ descends from one written elsewhere, is joined to it by mother↔daughter links.
 | ------------------------------------ | -------------------- | ------- | ----------- |
 | [0001](0001-component-playground.md) | Component playground | library | Implemented |
 | [0002](0002-the-visual-language.md)  | The visual language  | library | Implemented |
+| [0003](0003-themes.md)               | Themes               | library | Draft       |
+| [0004](0004-motion.md)               | Motion               | library | Draft       |
