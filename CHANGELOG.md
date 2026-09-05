@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.17](https://github.com/rak200/ui/compare/0.2.16...0.2.17) (2026-09-05)
+
+
+### Features
+
+* ui-menu, both ends of one ARIA relationship in one shadow root ([#121](https://github.com/rak200/ui/issues/121)) ([c742df8](https://github.com/rak200/ui/commit/c742df869b7ce930a451c0c635e198ea493bfa77))
+
 ## [0.2.16](https://github.com/rak200/ui/compare/0.2.15...0.2.16) (2026-09-05)
 
 
