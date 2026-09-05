@@ -27,6 +27,7 @@ import { UiDialog } from '../src/dialog.js';
 import { UiField } from '../src/field.js';
 import { UiIcon } from '../src/icon.js';
 import { UiInput, UiTextarea } from '../src/input.js';
+import { UiMenu } from '../src/menu.js';
 import { UiRadio, UiRadioGroup } from '../src/radio.js';
 import { UiSelect } from '../src/select.js';
 import { UiToast, UiToaster } from '../src/toast.js';
@@ -447,6 +448,7 @@ describe('the references components write', () => {
         UiField.styles,
         UiIcon.styles,
         UiInput.styles,
+        UiMenu.styles,
         UiRadio.styles,
         UiRadioGroup.styles,
         UiSelect.styles,
