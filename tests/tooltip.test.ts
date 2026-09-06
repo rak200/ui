@@ -781,12 +781,17 @@ describe('the drawing', () => {
         element.style.setProperty('--ui-color-border', 'rgb(4, 5, 6)');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-space', '10px');
+        element.style.setProperty('--ui-text-supporting', '21px');
 
         await userEvent.hover(trigger(host));
 
         const styles = getComputedStyle(tip(host));
 
         expect(styles.backgroundColor).toBe('rgb(1, 2, 3)');
+        // A tip is supporting text, and shipped as a hardcoded `0.875em` until the type
+        // scale arrived to replace it — here and twice in `ui-field`, all three agreeing
+        // and none of them read back by anything.
+        expect(styles.fontSize).toBe('21px');
         expect(styles.borderTopColor).toBe('rgb(4, 5, 6)');
         expect(styles.borderRadius).toBe('11px');
         expect(styles.padding).toBe('5px 10px');

@@ -417,6 +417,7 @@ describe('ui-field', () => {
         field.style.setProperty('--ui-space', '9px');
         field.style.setProperty('--ui-color-text', 'rgb(1, 2, 3)');
         field.style.setProperty('--ui-color-danger', 'rgb(4, 5, 6)');
+        field.style.setProperty('--ui-text-supporting', '19px');
 
         const stack = field.shadowRoot?.querySelector('.stack');
 
@@ -431,6 +432,15 @@ describe('ui-field', () => {
         );
         expect(getComputedStyle(slotted(field, 'error')).color, '--ui-color-danger').toBe(
             'rgb(4, 5, 6)',
+        );
+        // Both, and read back rather than assumed: this size shipped as a hardcoded
+        // `0.875em` in both rules, agreeing with a third in `ui-tooltip` and compared to
+        // nothing. The token is what makes it overridable; this is what makes it checked.
+        expect(getComputedStyle(slotted(field, 'help')).fontSize, '--ui-text-supporting').toBe(
+            '19px',
+        );
+        expect(getComputedStyle(slotted(field, 'error')).fontSize, '--ui-text-supporting').toBe(
+            '19px',
         );
     });
 
