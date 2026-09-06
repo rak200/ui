@@ -54,11 +54,11 @@
     "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.7",
+    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.8",
     "@storybook/addon-a11y": "^10.5.8",
     "@storybook/web-components-vite": "^10.5.8",
     "@types/node": "^26.1.2",
-    "@vitest/browser-playwright": "^4.1.10",
+    "@vitest/browser-playwright": "^5.0.0",
     "axe-core": "^4.13.0",
     "storybook": "^10.5.8"
   }
