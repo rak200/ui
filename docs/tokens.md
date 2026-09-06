@@ -196,6 +196,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-icon-size`             | how big a glyph is drawn                |
 | `--ui-icon-stroke`           | how heavy its stroke is, on a 24 grid   |
 | `--ui-elevation-100`         | the first step of the elevation scale   |
+| `--ui-text-100`              | the first step of the type scale        |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -245,16 +246,18 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                       | Covers                              |
-| --------------------------- | ----------------------------------- |
-| `--ui-color-accent-hover`   | a primary control under the pointer |
-| `--ui-color-accent-pressed` | a primary control being pressed     |
-| `--ui-color-hover`          | a neutral surface under the pointer |
-| `--ui-color-pressed`        | a neutral surface being pressed     |
-| `--ui-color-border`         | the boundary of a control           |
-| `--ui-color-text-muted`     | text that is not a value yet        |
-| `--ui-duration-state`       | how long a state change takes       |
-| `--ui-elevation-raised`     | a surface lifted off the page       |
+| Token                       | Covers                               |
+| --------------------------- | ------------------------------------ |
+| `--ui-color-accent-hover`   | a primary control under the pointer  |
+| `--ui-color-accent-pressed` | a primary control being pressed      |
+| `--ui-color-hover`          | a neutral surface under the pointer  |
+| `--ui-color-pressed`        | a neutral surface being pressed      |
+| `--ui-color-border`         | the boundary of a control            |
+| `--ui-color-text-muted`     | text that is not a value yet         |
+| `--ui-duration-state`       | how long a state change takes        |
+| `--ui-elevation-raised`     | a surface lifted off the page        |
+| `--ui-text-supporting`      | text that explains what is beside it |
+| `--ui-color-surface-muted`  | a second surface tone, for grouping  |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -286,6 +289,9 @@ formulas['--ui-duration-state'];
 | `--ui-color-border`         | the surface, 50% of the way toward the text |
 | `--ui-color-text-muted`     | the surface, 65% of the way toward the text |
 | `--ui-duration-state`       | the first step of the duration scale        |
+| `--ui-elevation-raised`     | the first step of the elevation scale       |
+| `--ui-text-supporting`      | the first step of the type scale            |
+| `--ui-color-surface-muted`  | the surface, 5% of the way toward the text  |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no

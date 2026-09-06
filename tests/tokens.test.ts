@@ -497,6 +497,7 @@ describe('the references components write', () => {
     it.each([
         ['--ui-duration-state', '--ui-duration-100'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
+        ['--ui-text-supporting', '--ui-text-100'],
     ] as const)('reads %s rather than the step under it', (name, step) => {
         const purpose = String(reference(name));
 
@@ -528,6 +529,7 @@ describe('every value is legal for the property its token serves', () => {
         ['--ui-icon-size', 'inline-size'],
         ['--ui-icon-stroke', 'stroke-width'],
         ['--ui-elevation-', 'box-shadow'],
+        ['--ui-text-', 'font-size'],
     ] as const;
 
     function propertyFor(token: string): string {
@@ -756,6 +758,22 @@ describe('the contrast floors', () => {
                         ground('--ui-color-surface', scheme),
                     ),
                 ).toBeGreaterThanOrEqual(3);
+            },
+        );
+
+        it.each(['light', 'dark'] as const)(
+            'keeps text legible on a striped row, in %s',
+            (scheme) => {
+                // A stripe is a surface that a row of text sits on, so what it owes is the
+                // text floor rather than the 3:1 a tint might look like it owes. The value
+                // arrived with `ui-table`, which stripes its rows and rests its header on
+                // it, and this is the reading that says how far the tint may go.
+                expect(
+                    contrastRatio(
+                        ground('--ui-color-text', scheme),
+                        painted('--ui-color-surface-muted', scheme),
+                    ),
+                ).toBeGreaterThanOrEqual(4.5);
             },
         );
 

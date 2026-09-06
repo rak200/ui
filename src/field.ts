@@ -52,14 +52,14 @@ export class UiField extends LitElement {
 
         slot[name='help']::slotted(*) {
             color: ${reference('--ui-color-text')};
-            font-size: 0.875em;
+            font-size: ${reference('--ui-text-supporting')};
         }
 
         /* Colour is not the only cue — the error text says what is wrong, and
        aria-invalid marks the control regardless of styling. */
         slot[name='error']::slotted(*) {
             color: ${reference('--ui-color-danger')};
-            font-size: 0.875em;
+            font-size: ${reference('--ui-text-supporting')};
         }
     `;
 

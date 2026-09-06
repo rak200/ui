@@ -35,6 +35,7 @@ src/
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
+├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
 ├── toast.ts         # <ui-toaster> and <ui-toast> — two live regions, and a clock that is not a token
 ├── tooltip.ts       # <ui-tooltip> — a popover the platform lifts, placed by hand
 └── index.ts         # the public barrel
@@ -52,6 +53,7 @@ tests/               # mirrors src/, one test file per unit
 ├── placement.test.ts
 ├── radio.test.ts
 ├── select.test.ts
+├── table.test.ts
 ├── toast.test.ts
 ├── tooltip.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
@@ -72,6 +74,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── menu.stories.ts
 ├── radio.stories.ts
 ├── select.stories.ts
+├── table.stories.ts
 ├── toast.stories.ts
 ├── tooltip.stories.ts
 └── tokens.stories.ts
@@ -201,6 +204,20 @@ explains. This file restates none of them.
 - **Why `@rak200/ui/icons/*` needs its own alias entry in three resolvers** — an alias matches by
   prefix, so a lone `@rak200/ui` entry rewrites `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`.
   The specific entry comes first in `.storybook/main.ts`, `vitest.config.js` and `tsconfig.json`.
+- **Why `ui-table` adopts a stylesheet into the host's tree instead of styling with
+  `::slotted()`** — the docblock on `rules` in `src/table.ts`, and `docs/table.md`'s _Where the
+  styles actually live_. `::slotted()` matches the top level of what a slot was given and nothing
+  below it, and every part of a table worth styling is a descendant — so the rules go where the
+  table is, found with `getRootNode()` rather than `document`, because a `<ui-table>` inside another
+  component's shadow root would be bare otherwise. The tab stop beside it carries WCAG 2.1.1 and
+  says why it is unconditional; **the name is deliberately the host's**, because a caption in the
+  light DOM cannot be reached by an IDREF from in here.
+- **Why the type scale arrived to fix something rather than to enable something** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with the component that consumes it_, and
+  the comment beside `--ui-text-100` in `src/tokens.ts`. Three hardcoded `font-size: 0.875em`
+  declarations were already shipping across `src/field.ts` and `src/tooltip.ts`, and waiting for the
+  component that judged them is what made the extraction a correction. `--ui-color-surface-muted`
+  arrived beside it and says at its formula why it is not `--ui-color-hover`.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.

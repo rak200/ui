@@ -14,6 +14,7 @@ One page per unit, sized by what a reader would look up on its own.
 | `UiMenu`       | [menu.md](menu.md)         | the `<ui-menu>` element, its keyboard, and whose the items are     |
 | `UiRadioGroup` | [radio.md](radio.md)       | `<ui-radio-group>` and `<ui-radio>`, and whose the behaviour is    |
 | `UiSelect`     | [select.md](select.md)     | the `<ui-select>` element, and what the platform still refuses     |
+| `UiTable`      | [table.md](table.md)       | the `<ui-table>` element, what it styles, and what it is not       |
 | `UiToaster`    | [toast.md](toast.md)       | `<ui-toaster>` and `<ui-toast>`, the two regions and the clock     |
 | `UiTooltip`    | [tooltip.md](tooltip.md)   | the `<ui-tooltip>` element, when it shows, and where it lands      |
 | tokens         | [tokens.md](tokens.md)     | the design tokens, their defaults, and how a host overrides them   |
