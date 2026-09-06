@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.19](https://github.com/rak200/ui/compare/0.2.18...0.2.19) (2026-09-06)
+
+
+### Features
+
+* the playground renders under the token sheet, and switches scheme ([#129](https://github.com/rak200/ui/issues/129)) ([e3485b0](https://github.com/rak200/ui/commit/e3485b069035f13c3ccf0058b62b3cf842da7a07))
+
 ## [0.2.18](https://github.com/rak200/ui/compare/0.2.17...0.2.18) (2026-09-06)
 
 
