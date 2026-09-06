@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.18](https://github.com/rak200/ui/compare/0.2.17...0.2.18) (2026-09-06)
+
+
+### Features
+
+* ui-table, a surface around your table, in the tree your table is in ([#126](https://github.com/rak200/ui/issues/126)) ([d5dcc2c](https://github.com/rak200/ui/commit/d5dcc2c66cb0b361c2049c8f5d14b21f638fe4f5))
+
 ## [0.2.17](https://github.com/rak200/ui/compare/0.2.16...0.2.17) (2026-09-05)
 
 
