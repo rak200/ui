@@ -878,3 +878,49 @@ describe('token stories', () => {
         await expectAccessible(await mountStory(Theme, meta, 'Theme'));
     });
 });
+
+/**
+ * The playground renders under the sheet, which is what a host does and what the site did
+ * not.
+ *
+ * Every component writes `var(--ui-token, fallback)`, and a fallback is a bare literal —
+ * the `light-dark()` pairs live only in {@link tokenStyleSheet}. So a preview that inserted
+ * nothing rendered the fallbacks, and the dark half of this package could not be seen at
+ * all except in the one story that built its own sheet. `.storybook/preview.ts` inserts it
+ * under every story now, and `tests/stories.ts` composes those annotations, so the claim is
+ * checkable here rather than only visible in a browser.
+ *
+ * **The third leg needs no test of its own.** That `color-scheme` plus the sheet yields the
+ * dark values is what the whole *in the dark scheme* block above already measures; what was
+ * missing was never the mechanism, only whether the playground had it.
+ */
+describe('what the playground renders under', () => {
+    it('puts the sheet under a story, so a token resolves to its value and not its fallback', async () => {
+        const container = await mountStory(Defaults, meta, 'Defaults');
+        const probe = document.createElement('div');
+        // The ground alone, with no fallback behind it: this is blank on a page that
+        // declared no `:root` block, and the declared value on a page that did.
+        probe.style.color = 'var(--ui-color-accent)';
+        container.append(probe);
+
+        expect(sRGB(getComputedStyle(probe).color)).toBe(defaults['--ui-color-accent']);
+    });
+
+    it('declares the scheme axis, which is what makes a dark value reachable at all', async () => {
+        await mountStory(Defaults, meta, 'Defaults');
+
+        // `color-scheme` is a real property rather than a custom one, so it can never be a
+        // token — and without it declared, `light-dark()` resolves to its first argument
+        // whatever the reader asked for.
+        expect(getComputedStyle(document.documentElement).colorScheme).toBe('light dark');
+    });
+
+    it('writes the scheme the toolbar asked for, on the root rather than on a wrapper', async () => {
+        await mountStory(Defaults, meta, 'Defaults');
+
+        // The preview's own background is painted by the canvas and not by the story, so a
+        // scheme written on a wrapper would leave a dark component on a light page. The
+        // default is the reader's own setting, which is what the sheet already declares.
+        expect(document.documentElement.style.colorScheme).toBe('light dark');
+    });
+});

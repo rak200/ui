@@ -18,7 +18,6 @@ import {
     derivedTokens,
     formulas,
     tokens,
-    tokenStyleSheet,
     type DerivedToken,
     type Token,
 } from '@rak200/ui';
@@ -200,18 +199,13 @@ export const Derived: StoryObj = {
 };
 
 /**
- * The sheet a host inserts, built as an element rather than interpolated into a `<style>`
- * template — the content is this package's own output, and a node needs no exception made
- * for it. Lit takes no binding inside a `<style>` element anyway.
+ * A button, a field and the derived swatches, which is what a panel below shows.
+ *
+ * No `<style>` carrying `tokenStyleSheet()` appears here any more. `.storybook/preview.ts`
+ * inserts it under every story, the way a host inserts it once under a page — so a story
+ * that carried its own would be a second copy of a block the site already has, and would
+ * go on showing the dark scheme in the one story that remembered to ask for it.
  */
-function sheet(): HTMLStyleElement {
-    const element = document.createElement('style');
-    element.textContent = tokenStyleSheet();
-
-    return element;
-}
-
-/** A button, a field and the derived swatches, which is what a panel below shows. */
 function panel(scheme: 'light' | 'dark'): TemplateResult {
     return html`
         <div class="panel" style="color-scheme: ${scheme}">
@@ -274,7 +268,7 @@ const panelStyles = html`
  * bar reaches this story exactly as it reaches every other one.
  */
 export const DarkScheme: StoryObj = {
-    render: (): TemplateResult => html` ${sheet()}${panelStyles} ${panel('dark')} `,
+    render: (): TemplateResult => html` ${panelStyles} ${panel('dark')} `,
 };
 
 /**
@@ -292,7 +286,7 @@ export const DarkScheme: StoryObj = {
  */
 export const Theme: StoryObj = {
     render: (): TemplateResult => html`
-        ${sheet()}${panelStyles}
+        ${panelStyles}
         <style>
             [data-ui-theme='brand'] {
                 --ui-color-surface: light-dark(#faf5ff, #1a0b2e);

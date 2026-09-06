@@ -78,7 +78,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── toast.stories.ts
 ├── tooltip.stories.ts
 └── tokens.stories.ts
-.storybook/          # main.ts (the build), preview.ts (what stories render under), manager.ts (the stamp)
+.storybook/          # main.ts (the build), preview.ts (the sheet, the scheme control), manager.ts (the stamp)
 docs/                # one page per unit, indexed by docs/README.md
 ```
 
@@ -218,6 +218,13 @@ explains. This file restates none of them.
   declarations were already shipping across `src/field.ts` and `src/tooltip.ts`, and waiting for the
   component that judged them is what made the extraction a correction. `--ui-color-surface-muted`
   arrived beside it and says at its formula why it is not `--ui-color-hover`.
+- **Why the playground inserts the token sheet into each story rather than into the document
+  head** — the docblock on `sheet()` in `.storybook/preview.ts`. `tests/stories.ts` composes those
+  annotations, so a sheet appended to the head would outlive the story that carried it and re-tune
+  every test that ran after; a rule reaches `:root` from wherever the `<style>` sits. The scheme
+  control beside it is one `color-scheme` write and no class swap, which is RFC 0002 item 2 being
+  spent rather than a mechanism of its own — and it is written on the root element because the
+  preview's background is the canvas's, not the story's.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
