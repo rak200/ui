@@ -1,6 +1,6 @@
 # RFC 0005 — The control the host writes, and whether it still has to
 
-- **Status**: Draft
+- **Status**: Accepted
 - **Scope**: library
 - **Created**: 2026-09-07
 
@@ -810,73 +810,101 @@ and because the residual form of it is the price G asks in exchange for S10 bein
 
 ## Decision
 
-**Open.** _Proposed design_ is written out in full, and writing a design out is not deciding it —
-it exists so the thing being weighed is concrete rather than described. In particular:
+**Accepted, as variant F**, with the radios deferred to
+[#122](https://github.com/rak200/ui/issues/122).
 
-- **the design does not carry its own behaviour**, and the gap is uneven. `ui-checkbox` and
-  `ui-switch` take on form plumbing whose accessible half is `role` and `aria-checked` through
-  `internals` — settled here, and declining Zag under either outcome of
-  [#122](https://github.com/rak200/ui/issues/122). `ui-radio` and `ui-radio-group` take on a
-  roving tabindex, arrow keys with wrap, selection following focus, Home and End, and RTL — which
-  is #122's own test met, and is that issue's to answer.
-- **the dependency runs one way, and the earlier reading here had it backwards.** This proposal
-  unblocks #122 rather than waiting on it: that issue cannot name a candidate while
-  `ui-radio-group` delegates to native radios, and this is what withdraws the delegation.
-  **Group 1 is therefore two decisions** — the toggles can be settled with this proposal, the
-  radios cannot.
-- **the cut has already moved once under measurement.** Variant F carried `ui-input`,
-  `ui-textarea` and `ui-select` from _no change_ to _changed_ after an earlier draft had closed
-  them. A study that has redrawn its own conclusion once should not be read as having finished.
-- **`ui-field` is to be discontinued**, and that is an objective rather than a finding — stated in
-  the Motivation, and not something the measurements decided. What the measurements establish is
-  that F and G each make it _reachable_; S5 is what says whether it is _payable_.
-- **autofill is held to be dispensable**, which is a position rather than a measurement and is
-  recorded as one. It demotes S8 from a gate to a consequence: under F it is a cost knowingly
-  accepted, under G it does not arise. Nothing else here turns on it.
-- **The label takes an attribute with a slot escape hatch** — decided. The attribute carries the
-  common case and `slot="label"` carries markup, measured clean and without reintroducing the
-  two-scope problem, since the slot supplies content while the association stays between two
-  elements the component owns. Slot-only was refused for making the common case verbose again,
-  which is most of what this proposal exists to fix; attribute-only was refused because _"I accept
-  the `<a href="/terms">terms</a>`"_ is an ordinary label, not an exotic one.
-- **That decision is not neutral between F and G**, and the consequence is recorded rather than
-  left implicit: a slot lives in a shadow root, so the escape hatch exists under F and not under
-  G. Under G a host needing markup writes its own `<label>` and the component wires it — today's
-  shape, carrying `ui-field`'s verbosity without `ui-field`. **F vs G is now the open design
-  question**, where before this it read the other way.
-- **Variant H is rejected, and the reason is measured**: a shadow-root `<label>` wrapping the slot
-  passes axe with nothing incomplete, and still leaves `label.control` `null`, `control.labels`
-  `0`, and the label inert as a click target. It buys a clean gate and loses an affordance, which
-  is the one trade this library refuses on principle. Recorded so its absence is not read later as
-  an oversight.
-- **G reads as the fairer middle for group 2**, and that is a leaning, not a decision. The
-  objection raised against it here — that a component re-injecting nodes would fight a framework
-  that removes them — was measured against a real reconciler and **does not happen**. What replaced
-  it is narrower and sharper: G has to keep an association _synchronised_, and the obvious
-  hardening produces a stale label that passes a glance and names nothing. That is a solvable
-  problem with a known shape, which is a better position than the proposal was in an hour ago,
-  and it is still the strongest objection standing.
+### What is decided
 
-- the measurement does **not** decide the question. It retires one premise — that form
-  participation and the accessible name require a light-DOM control — and leaves the behaviour
-  argument untouched.
-- **the engine objection is retired.** Blink, Gecko and WebKit agree on every value of every
-  variant, so the weakness this proposal shared with the rejected `ariaLabelledByElements`
-  alternative is gone rather than reduced. What remains open is design judgement — S9 — and
-  ownership of behaviour — [#122](https://github.com/rak200/ui/issues/122). No measurement is
-  outstanding.
-- **`ui-input`, `ui-textarea` and `ui-select` move after all, and the earlier draft of this
-  section said they did not.** That draft rested on variant B, which measures correctly and was
-  read too broadly: B strands the control because the label stays outside, not because the control
-  is inside. Variant F is clean on every probe. The reversal is recorded rather than smoothed,
-  because the narrow reading is the one `ARCHITECTURE.md` still carries.
-- **Two arguments this proposal originally made for that conclusion are withdrawn** — the OS
-  picker and the attribute pass-through list. Both are recorded above rather than deleted, so
-  their absence is not read later as an oversight.
+- **Every form control owns both ends of its own relationship, inside its shadow root.** The label,
+  the help and the error are rendered there beside the control, so the IDREFs resolve in one tree
+  scope. Measured clean in Blink, Gecko and WebKit.
+- **`<ui-field>` is discontinued.** It exists to point scattered ends at each other, and under F
+  there are none. This was the objective the proposal was written to serve, stated in the
+  Motivation.
+- **The label takes an attribute, with `slot="label"` as the escape hatch** for markup an attribute
+  cannot hold. Measured: rich content slotted into the rendered label keeps the name, keeps the
+  markup, toggles on a click of the text, and does not toggle on a click of a link inside it.
+- **`ui-checkbox` and `ui-switch` decline Zag**, under either outcome of #122. What they take on is
+  form plumbing whose accessible half is `role` and `aria-checked` through `ElementInternals`.
+- **`ui-input`, `ui-textarea` and `ui-select` move**, which an earlier draft of this section denied.
+  That draft rested on variant B, which measures correctly and was read too broadly: B strands the
+  control because the label stays outside, not because the control is inside.
+- **Groups 3 and `ui-button` are unchanged.** Their slots carry content, and content is the host's.
+
+### What is deferred
+
+**`ui-radio` and `ui-radio-group`.** They are the only elements here whose behaviour meets #122's
+own test — a roving tabindex, arrows with wrap, selection following focus, Home and End, the
+single-selection invariant, and RTL. This proposal is what makes that issue answerable; it does not
+answer it.
+
+### Alternatives rejected, each with the argument that retired it
+
+- **G — both ends in the host's tree**, the component creating the label as a light-DOM child.
+  Measured clean, and the objection first raised against it — a component re-injecting nodes
+  fighting a framework that removes them — **did not happen** against a real reconciler. It lost on
+  two other counts. The hardening that fixes duplication and erasure produces **S10.3**: a stale
+  label that survives a control swap, points at a node that is gone, and looks correct. And S9 is
+  not neutral — a slot lives in a shadow root, so under G a host needing markup writes its own
+  `<label>` and the component wires it, which is `ui-field`'s verbosity without `ui-field`. G
+  discontinues the element and keeps its shape; F discontinues both.
+- **H — a shadow `<label>` wrapping the slot.** Passes axe with nothing incomplete in all three
+  engines, and leaves `label.control` `null`, `control.labels` `0`, and the label inert as a click
+  target. It buys a clean gate and loses an affordance — the failure `ARCHITECTURE.md` names as
+  being wrong invisibly to everyone who can see.
+- **B — the control inside, the label left outside.** A critical `label` violation in all three
+  engines, with or without form association.
+- **S7, naming a rendered control by copying.** It works for the name and stops at the description,
+  because `aria-describedby` is irreducibly a reference. F needs none of it.
+- **Attribute-only and slot-only labels.** The first treats _"I accept the
+  `<a href="/terms">terms</a>`"_ as exotic; the second returns the common case to verbosity, which
+  is most of what this proposal exists to remove.
+
+### Positions rather than findings, recorded as such
+
+- **Autofill is held to be dispensable.** Under F the control lives in a shadow root and the
+  standard form machinery does not see it; whether a browser's own filling pierces that is
+  unmeasured and, by this position, does not gate the decision.
+- **Discontinuing `<ui-field>` is an objective**, not something a measurement produced. The
+  measurements establish only that it is reachable.
+
+### What this cost being honest about
+
+The cut moved twice under measurement, and both reversals are recorded where they happened rather
+than smoothed: `ui-input` went from _no change_ to _changed_ when variant F was tried, and the
+leaning went from G to F when S9 was measured. Two arguments this proposal originally made for
+keeping the control slotted — the OS picker and the attribute pass-through list — were withdrawn as
+wrong. A study that has corrected itself three times is not a study that has been careful once.
 
 ## Rollout
 
-Not applicable while the Decision is open. Written when it is not.
+In order. Each step is verified by the suite that already exists — `expectAccessible` per state,
+100% coverage, and the mutation floor — plus the specific obligation below.
+
+1. **Turn the load-bearing measurements into tests.** Every result in this proposal came from a
+   throwaway probe that was deleted. The ones the design rests on — that the IDREF resolves inside
+   one scope, that a slotted label names the control, that a link inside a label does not toggle it
+   — must exist in `tests/` before the code that depends on them, or the proposal's evidence dies
+   with this document.
+2. **`ui-checkbox` and `ui-switch` to variant F.** The smallest pair, no Zag question, and the two
+   that prove the shape. `src/checkbox.ts`'s mask machinery is expected to _simplify_: the state
+   becomes the component's own, so `:host([checked])` reaches it and the `::slotted(input:checked)`
+   constraint that forced `mask-composite: exclude` is gone. Verify against `forced-colors`, which
+   the mask also serves.
+3. **`ui-input`, `ui-textarea` and `ui-select` to variant F.** `<option>` stays slotted content.
+4. **Rehome what `<ui-field>` carries, then remove it.** The vertical rhythm between label, control
+   and help is its stylesheet; the error colour is a token `ui-radio-group` retargets through three
+   selectors it could not otherwise use. Both need a home first — this is S5, and it is the step
+   that can block the removal.
+5. **Update `ARCHITECTURE.md`.** _ARIA association is light-DOM only_ is no longer true as stated,
+   and it is the document a consumer reads. It should say what the six variants showed: that every
+   end of a relationship must share a tree scope, that there are two consistent ways to arrange
+   that, and that the middle one is what was measured when the rule was first written.
+6. **`ui-radio` and `ui-radio-group`** — only after #122.
+
+Below `1.0.0` a break is a minor, so the versioning cost is low. Whether both call-site shapes
+coexist for a release is S6; `<ui-icon>` already dispatches on two shapes and is the precedent if
+they should.
 
 ## Related
 
