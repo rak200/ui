@@ -366,7 +366,49 @@ For any component that stops slotting, the package inherits what the native cont
 the toggle, the key handling, the focus behaviour, the state the CSS reads, and — for a group —
 the roving tabindex and arrow keys `src/radio.ts` currently gets for free.
 
-**This is the work [#122](https://github.com/rak200/ui/issues/122) exists to place.** RFC 0016
+### Which of the four refusals this proposal touches
+
+[#122](https://github.com/rak200/ui/issues/122) records four components that declined Zag, and
+states the test it would have to meet: _"Zag arrives where the accessible behaviour is the
+expensive part."_ Two of those four refusals rest on the platform supplying the behaviour — which
+is exactly what group 1 gives up here.
+
+| Component                   | Why it declined                                   | Touched by this proposal |
+| --------------------------- | ------------------------------------------------- | ------------------------ |
+| `ui-checkbox` / `ui-switch` | the platform supplies the state                   | **yes**                  |
+| `ui-radio-group`            | the APG pattern is what native radios already do  | **yes**                  |
+| `ui-toast`                  | a live region is markup, not a machine            | no                       |
+| `ui-menu`                   | `popover="auto"` supplies the layer and dismissal | no                       |
+
+**The two it touches fall on opposite sides of #122's own test.**
+
+_Checkbox and switch do not become a candidate._ What they take on is a click and Space toggle
+(and not Enter), `internals.ariaChecked`, a tab stop that disabled removes, `setFormValue` with
+the rule that an unchecked box submits nothing, and `formResetCallback` /
+`formStateRestoreCallback` / `formDisabledCallback`. It is a real list of small things, and almost
+none of it is accessibility — the accessible half is `role` and `aria-checked`, which `internals`
+supplies and which S1 measured in three engines. Form plumbing is not the expensive part.
+
+_The radio group does become one, and it is the first._ `tests/radio.test.ts` already documents
+what it gets free, in tests that run — _one tab stop, not one per option_; _enters at the selected
+option rather than at the first_; _moves and selects with the arrow keys, and wraps at the end_.
+Written by hand that becomes a roving tabindex, arrow keys with wrap, **selection following
+focus** — which is what separates a radiogroup from a listbox — Home and End, the single-selection
+invariant across the set, `required` validated on the group rather than the option, and **RTL, where
+left and right swap**. That is an APG pattern with directionality and wrapping, which is #122's
+test met rather than argued.
+
+**So the dependency runs one way**: this proposal unblocks #122, not the reverse. #122 cannot name
+a candidate today because `ui-radio-group` delegates to native radios; it is this proposal that
+withdraws the delegation. Deciding #122 first would be deciding it without the thing that makes it
+answerable.
+
+**Which suggests group 1 is two decisions, not one.** `ui-checkbox` and `ui-switch` decline Zag in
+either outcome and can be settled here. `ui-radio` and `ui-radio-group` carry the expensive half
+and are the ones #122 governs — which is the same shape as the rule the architecture already
+follows, that a category arrives with the component that consumes it.
+
+**This is the work #122 exists to place.** RFC 0016
 adopted Zag for behaviour and accessibility when a component has state to model, and every
 candidate so far has been refused because the platform already carried the behaviour. If a
 component stops slotting the platform's control, it stops getting the platform's behaviour, and
@@ -771,10 +813,17 @@ and because the residual form of it is the price G asks in exchange for S10 bein
 **Open.** _Proposed design_ is written out in full, and writing a design out is not deciding it —
 it exists so the thing being weighed is concrete rather than described. In particular:
 
-- **the design does not carry its own behaviour.** Nothing in it says how a drawn toggle
-  implements Space, how a group implements a roving tabindex, or who writes either. That is
-  [#122](https://github.com/rak200/ui/issues/122), and until it is answered the four elements in
-  group 1 have a call site and no implementation strategy.
+- **the design does not carry its own behaviour**, and the gap is uneven. `ui-checkbox` and
+  `ui-switch` take on form plumbing whose accessible half is `role` and `aria-checked` through
+  `internals` — settled here, and declining Zag under either outcome of
+  [#122](https://github.com/rak200/ui/issues/122). `ui-radio` and `ui-radio-group` take on a
+  roving tabindex, arrow keys with wrap, selection following focus, Home and End, and RTL — which
+  is #122's own test met, and is that issue's to answer.
+- **the dependency runs one way, and the earlier reading here had it backwards.** This proposal
+  unblocks #122 rather than waiting on it: that issue cannot name a candidate while
+  `ui-radio-group` delegates to native radios, and this is what withdraws the delegation.
+  **Group 1 is therefore two decisions** — the toggles can be settled with this proposal, the
+  radios cannot.
 - **the cut has already moved once under measurement.** Variant F carried `ui-input`,
   `ui-textarea` and `ui-select` from _no change_ to _changed_ after an earlier draft had closed
   them. A study that has redrawn its own conclusion once should not be read as having finished.
