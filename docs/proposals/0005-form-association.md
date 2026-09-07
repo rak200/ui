@@ -103,26 +103,102 @@ Read against step 3 of the chain above, item by item:
 The difference is that the objection is answerable here: `vitest.config.js` already declares
 `instances: [{ browser: 'chromium' }]`, and the suite's own browser mode takes more. See S1.
 
-### What the light DOM still buys, and where
+### What decides the cut, measured
 
-The measurement removes a blocker; it does not make the light DOM worthless. What the slotted
-control still carries is **behaviour and platform integration**, and that varies sharply by
-component:
+The first sketch of this section asked _what platform integration does the slotted control
+carry_ — `type`, `inputmode`, autofill, the operating system's picker. **Two of those three
+arguments do not survive contact with a measurement**, and are recorded here rather than quietly
+dropped:
 
-| Component                     | What the slotted native control carries today                                                                                                                                     |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ui-input` / `ui-textarea`    | `type`, `inputmode`, `pattern`, `minlength`, autofill, the mobile keyboard the type selects, IME, spellcheck, text selection, undo                                                |
-| `ui-select`                   | the operating system's picker — which `docs/select.md` already records as the part no rule here reaches                                                                           |
-| `ui-checkbox` / `ui-switch`   | a toggle, Space, `:checked` for the CSS to read                                                                                                                                   |
-| `ui-radio` / `ui-radio-group` | the roving tabindex, arrow-key navigation and single-selection the group hand-rolls nothing for — `src/radio.ts` measures the APG pattern on native radios _through_ the wrappers |
+- **The OS picker is not at risk.** A `<select>` inside a shadow root is still a native
+  `<select>` and still opens the platform picker. What `docs/select.md` records as unreachable is
+  the styling of the drop-down, and that is true wherever the element lives. The picker was never
+  an argument for slotting.
+- **The attribute pass-through list is avoidable.** `ARCHITECTURE.md` gives _"no pass-through
+  list to fall out of step with `type`, `inputmode` or whatever comes next"_ as a thing the light
+  DOM bought. That assumes an allowlist. A denylist — forward every attribute except the
+  component's own — is stable against whatever the platform adds next.
 
-The first two rows are a long list of things a package would be reimplementing badly. The last
-two are a much shorter one — and those are exactly the components that **already draw their own
-control**: `src/checkbox.ts`, `src/radio.ts` and `src/select.ts` are the three files carrying
-`appearance: none` or a mask.
+What does decide it is a different question, and it has a measured answer.
 
-So **the cut is probably not uniform**, and a proposal that answers "slot everything" or "slot
-nothing" is likely answering the wrong question.
+**The probe.** Three variants, each with `<label for>` pointing at the custom element, each run
+through `axe` under this suite's own `ruleset`:
+
+|       | What it is                                                                                         | axe                            |
+| ----- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
+| **A** | a custom element rendering `<input>` into its shadow root, not form-associated                     | `label [critical]`             |
+| **B** | the same, **form-associated**, with `delegatesFocus: true`                                         | `label [critical]` — unchanged |
+| **D** | form-associated, rendering **no inner control**; the host _is_ the control, `role` via `internals` | **no violations**              |
+
+In **B** the host is correctly labelled — `internals.labels` is `1` — and focus delegates into
+the shadow root, `shadowRoot.activeElement` being the `INPUT`. The critical violation survives
+all of it: the `<label for>` names the **custom element**, and the element a screen reader
+actually reaches is the inner `<input>`, which has no accessible name.
+
+**So form association makes a host labelable; it does not make a control the host hides inside
+itself labelable.** `ARCHITECTURE.md` measured variant A and concluded the control must be
+slotted. That conclusion stands — and variant B is the reason it stands, which the original
+measurement could not have known.
+
+### The test, restated
+
+Not _does the native element carry platform integration_, but:
+
+> **Does the component need a real focusable control inside it, or can the host itself be the
+> control?**
+
+| Component                                                                            | Needs a control inside                    | Cut                                                                |
+| ------------------------------------------------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------ |
+| `ui-checkbox`, `ui-switch`                                                           | no — a boolean with a drawn face          | **variant D**: the host is the control                             |
+| `ui-radio`, `ui-radio-group`                                                         | no — same, plus group behaviour           | **variant D**, at the highest behaviour cost                       |
+| `ui-input`, `ui-textarea`                                                            | yes — text entry, selection, IME, undo    | **no change**: variant B is a critical violation                   |
+| `ui-select`                                                                          | yes — a native picker the host must reach | **no change**, for the same reason                                 |
+| `ui-button`                                                                          | renders its own `<button>` already        | see below                                                          |
+| `ui-card`, `ui-dialog`, `ui-menu`, `ui-tooltip`, `ui-table`, `ui-toaster`, `ui-icon` | not controls                              | **no change**: the slot carries content, and content is the host's |
+
+The first two rows are exactly the three files that already carry `appearance: none` or a mask —
+`src/checkbox.ts` and `src/radio.ts`. Having thrown away the native drawing, what they still take
+from the slotted control is a boolean, a name and the Space key.
+
+### What each call site would become
+
+```html
+<!-- ui-switch — today -->
+<ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
+<!-- proposed -->
+<ui-switch name="notify" checked></ui-switch>
+```
+
+```html
+<!-- ui-radio-group — today -->
+<ui-radio-group>
+  <label
+    ><ui-radio><input type="radio" name="plan" value="free" /></ui-radio> Free</label
+  >
+  <label
+    ><ui-radio><input type="radio" name="plan" value="pro" /></ui-radio> Pro</label
+  >
+</ui-radio-group>
+<!-- proposed -->
+<ui-radio-group name="plan" value="free">
+  <ui-radio value="free">Free</ui-radio>
+  <ui-radio value="pro">Pro</ui-radio>
+</ui-radio-group>
+```
+
+`ui-input`, `ui-textarea` and `ui-select` keep the shape they have.
+
+### `ui-button`, which is a different question wearing the same coat
+
+`<ui-button>` declares `variant` and `disabled` and nothing else, and `docs/button.md` never
+mentions forms. Measured: the inner `<button>` reports `type` `submit` — the HTML default for a
+`<button>` with no `type` written, which `src/button.ts` does not write — and `form` `null`, and
+clicking it submits nothing where a native button in the same form submits.
+
+**That is a capability the component has never claimed, not a defect.** Form association would
+give it, at no change to the call site at all. Whether it _should_ have it is a question this
+proposal raises and does not answer; what should not survive either way is `docs/button.md`
+saying neither.
 
 ### What it would cost: the behaviour becomes ours
 
@@ -143,32 +219,47 @@ whichever is decided first constrains the other.
   takes more `instances`, so this is answerable in this repository rather than by citation. Until
   it is answered, this proposal carries the same weakness as the alternative the architecture
   rejected, and should not be decided.
-- **S2 — where is the cut?** Per component, and stated as a table with a reason per row rather
-  than a rule. The two lists in _What the light DOM still buys_ are the starting sketch, not the
-  answer.
+- **S2 — where is the cut?** **Drafted above**, in _The test, restated_, and resting on the A/B/D
+  probe rather than on judgement. What is still open is whether the test survives S1 and S7: a
+  three-engine result that disagrees would retire it, and a workable answer to S7 would move
+  `ui-input` back across the line.
 - **S3 — what does the drawn control lose?** `src/checkbox.ts` records that
   `:host(:has(input:checked))` is invalid in this engine, so only `::slotted(input:checked)` can
-  read a slotted control's state. With no slotted control, the state is the component's own — this
-  may _simplify_ the mask machinery rather than complicate it. Worth measuring before assuming
-  either.
+  read a slotted control's state — and that constraint is what forced the mask and its
+  `mask-composite: exclude`. With no slotted control the state is the component's own and
+  `:host([checked])` reaches it, so this is more likely a **simplification** than a cost. Still
+  worth measuring rather than assuming, because the mask also serves `forced-colors`.
 - **S4 — how does `ui-field` change?** `#control()` descends through a wrapper to find
-  `input, textarea, select`, and stops at anything carrying a `role`. A form-associated custom
-  element is neither: it is labelable _and_ may carry a role. The descent rule needs re-deriving,
-  not patching.
+  `input, textarea, select`, and stops at anything carrying a `role`. **Partly answered, and the
+  answer is uncomfortable**: a form-associated element carries its role in `internals.role`, which
+  does not reflect to an attribute — measured, the probe's `outerHTML` is bare. So the
+  `hasAttribute('role')` guard is dead for such an element, the descent finds no native control,
+  and the `?? slotted` fallback returns the custom element — which is the right answer, reached by
+  falling through rather than by design. The rule needs re-deriving, not patching.
 - **S5 — what happens to `ui-field` itself?** If a control is a custom element with `internals`,
   the field could set the description through the control rather than by generating ids. Whether
   that is better is a separate question from whether it is possible.
 - **S6 — the migration, and what `0.x` permits.** Seven form components. Below `1.0.0` a break is
   a minor, so the versioning cost is low, but the call sites are every example in `docs/` and
-  every story. Whether both shapes can coexist for a release is worth answering before the cut is
-  chosen.
+  every story. **Coexistence has a shipped precedent here**: `<ui-icon>` already dispatches on
+  both shapes, `name="check"` against the registry and a slotted `<svg>` for a host's own. Whether
+  that is the right pattern for a control is the question; whether it is possible is settled.
+
+- **S7 — can a rendered control be named by copying?** Variant B fails because the inner control
+  is anonymous. Writing the label's text onto it as an `aria-label` would name it, and the
+  package already does exactly that once: `<ui-dialog>`'s accessible name is a copied string
+  rather than an IDREF. The cost is equally known — a copied name goes stale when the label
+  changes, which is one more thing to observe, and `ui-field` already runs a `MutationObserver`
+  for a neighbouring reason. This is what would reopen `ui-input`; it is not a dead end and it is
+  not free.
 
 ## Proposed design
 
-**Deliberately not written yet.** This proposal is at the stage the index describes as its first
-purpose — _"a place to study"_ — and two of its six open studies (S1, S2) would change the shape
-of any design written today. What is established is the Motivation and the measurement; what is
-not established is where the cut falls.
+**A cut is drafted, a design is not.** _The test, restated_ and _What each call site would
+become_ are the shape this would take if it were decided today, and they rest on a measurement
+rather than on taste. They are not a design: nothing here says how a drawn toggle implements
+Space, how a group implements a roving tabindex, or who writes either — which is the whole of
+S1 through S7 still being open, and #122 still being undecided.
 
 ## Decision
 
@@ -177,9 +268,13 @@ not established is where the cut falls.
 - the measurement does **not** decide the question. It retires one premise — that form
   participation and the accessible name require a light-DOM control — and leaves the behaviour
   argument untouched.
-- **`ui-input`, `ui-textarea` and `ui-select` are not assumed to move.** The platform integration
-  in those three is the strongest form of the original argument and this proposal does not weaken
-  it.
+- **`ui-input`, `ui-textarea` and `ui-select` do not move**, and now for a measured reason rather
+  than an argued one. Variant B is a critical `label` violation with form association applied, so
+  the original conclusion survives the thing that was supposed to overturn it. S7 is the only
+  route back.
+- **Two arguments this proposal originally made for that conclusion are withdrawn** — the OS
+  picker and the attribute pass-through list. Both are recorded above rather than deleted, so
+  their absence is not read later as an oversight.
 
 ## Rollout
 
