@@ -878,29 +878,26 @@ wrong. A study that has corrected itself three times is not a study that has bee
 
 ## Rollout
 
-In order. Each step is verified by the suite that already exists — `expectAccessible` per state,
-100% coverage, and the mutation floor — plus the specific obligation below.
+In order. Verification is not listed per step: this repository's floors already require it —
+`expectAccessible` per state, 100% coverage, and `thresholds.break: 100` — so a step that named
+tests as work would be describing the precondition of every commit here as though it were an
+option.
 
-1. **Turn the load-bearing measurements into tests.** Every result in this proposal came from a
-   throwaway probe that was deleted. The ones the design rests on — that the IDREF resolves inside
-   one scope, that a slotted label names the control, that a link inside a label does not toggle it
-   — must exist in `tests/` before the code that depends on them, or the proposal's evidence dies
-   with this document.
-2. **`ui-checkbox` and `ui-switch` to variant F.** The smallest pair, no Zag question, and the two
+1. **`ui-checkbox` and `ui-switch` to variant F.** The smallest pair, no Zag question, and the two
    that prove the shape. `src/checkbox.ts`'s mask machinery is expected to _simplify_: the state
    becomes the component's own, so `:host([checked])` reaches it and the `::slotted(input:checked)`
    constraint that forced `mask-composite: exclude` is gone. Verify against `forced-colors`, which
    the mask also serves.
-3. **`ui-input`, `ui-textarea` and `ui-select` to variant F.** `<option>` stays slotted content.
-4. **Rehome what `<ui-field>` carries, then remove it.** The vertical rhythm between label, control
+2. **`ui-input`, `ui-textarea` and `ui-select` to variant F.** `<option>` stays slotted content.
+3. **Rehome what `<ui-field>` carries, then remove it.** The vertical rhythm between label, control
    and help is its stylesheet; the error colour is a token `ui-radio-group` retargets through three
    selectors it could not otherwise use. Both need a home first — this is S5, and it is the step
    that can block the removal.
-5. **Update `ARCHITECTURE.md`.** _ARIA association is light-DOM only_ is no longer true as stated,
+4. **Update `ARCHITECTURE.md`.** _ARIA association is light-DOM only_ is no longer true as stated,
    and it is the document a consumer reads. It should say what the six variants showed: that every
    end of a relationship must share a tree scope, that there are two consistent ways to arrange
    that, and that the middle one is what was measured when the rule was first written.
-6. **`ui-radio` and `ui-radio-group`** — only after #122.
+5. **`ui-radio` and `ui-radio-group`** — only after #122.
 
 Below `1.0.0` a break is a minor, so the versioning cost is low. Whether both call-site shapes
 coexist for a release is S6; `<ui-icon>` already dispatches on two shapes and is the precedent if
