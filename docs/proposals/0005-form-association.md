@@ -193,25 +193,59 @@ It is also not a new idea in this repository. `ARCHITECTURE.md` already states i
 `<ui-menu>` is the only component that does it today, with `aria-controls`. Nothing in that
 sentence limits it to a menu.
 
-### What the five variants actually show
+### A third working shape: both ends, in the host's tree
+
+Variant F puts both ends in the component's shadow root. **A sixth variant puts both in the
+host's**, which is where they already are today — the component simply stops waiting for someone
+else to supply the label and creates it as its own light-DOM child:
+
+```html
+<ui-input label="Amount" help="In BRL, two decimals.">
+  <input type="number" name="amount" />
+</ui-input>
+```
+
+The control stays slotted, the host's own element, in the host's own tree. The `<label>` and the
+help are created there beside it, so both ends share the document's scope. Measured:
+
+| Probe                       | Result                                       |
+| --------------------------- | -------------------------------------------- |
+| `label.control`             | `INPUT`                                      |
+| `control.labels.length`     | `1`                                          |
+| `control.form`              | `FORM`                                       |
+| in `form.elements`          | **`true`**                                   |
+| `form.elements` contents    | `INPUT` — one native control, nothing custom |
+| axe violations / incomplete | **none / none**                              |
+| `new FormData(form)`        | `[["amount","42"]]`                          |
+
+**G needs no form association at all** — no `formAssociated`, no `setFormValue`. The control is a
+native control inside a `<form>`, exactly as today, so everything that follows from that is
+untouched. And `<ui-field>` still goes: the wiring it existed to do is done by the component that
+owns the control.
+
+Its cost is new and is not small. **The component writes into its own light DOM**, creating nodes
+that appear in the host's `innerHTML`. `ui-field` mutates light DOM today — ids and attributes —
+but it creates nothing, and creating is the step that frameworks reconcile against: a React or Vue
+render of `<ui-input>` owns that subtree and may remove what the component put there. See S10.
+
+### What the six variants actually show
 
 The variable was never _whether the control is slotted_. It is **whether every end of the
 relationship is in one tree scope**:
 
-|       | Control       | Label                      | Result                                |
-| ----- | ------------- | -------------------------- | ------------------------------------- |
-| today | light DOM     | light DOM                  | works — one scope, the host's         |
-| **A** | shadow        | light DOM                  | `label [critical]` — two scopes       |
-| **B** | shadow        | light DOM, form-associated | `label [critical]` — still two scopes |
-| **D** | _is_ the host | light DOM                  | works — one scope, the host's         |
-| **F** | shadow        | **shadow**                 | works — one scope, the component's    |
+|       | Control       | Label                            | Result                                |
+| ----- | ------------- | -------------------------------- | ------------------------------------- |
+| today | light DOM     | light DOM                        | works — one scope, the host's         |
+| **A** | shadow        | light DOM                        | `label [critical]` — two scopes       |
+| **B** | shadow        | light DOM, form-associated       | `label [critical]` — still two scopes |
+| **D** | _is_ the host | light DOM                        | works — one scope, the host's         |
+| **F** | shadow        | **shadow**                       | works — one scope, the component's    |
+| **G** | light DOM     | light DOM, **component-created** | works — one scope, the host's         |
 
-There are two consistent answers and one broken middle. Today's design is the first; **F is the
-second**; A and B are the middle, and the middle is what `ARCHITECTURE.md` measured before
-concluding the control must be slotted. That conclusion was right about the middle and was read
-as a rule about the whole. `ARCHITECTURE.md` measured variant A and concluded the control must be
-slotted. That conclusion stands — and variant B is the reason it stands, which the original
-measurement could not have known.
+**Three shapes work and two do not**, and the line between them is not where the control sits but
+whether both ends sit together. A and B are the broken middle: the control inside, the label left
+outside. That middle is what `ARCHITECTURE.md` measured before concluding the control must be
+slotted — a conclusion right about the middle and read since as a rule about the whole.
 
 ### The test, restated
 
@@ -221,14 +255,14 @@ control inside it_ — the fifth variant retires both. What is left is the rule
 
 > **Can this component own every end of its own relationship?**
 
-| Component                                                                            | Can own every end                                          | Shape                                                           |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------- |
-| `ui-checkbox`, `ui-switch`                                                           | yes — there is no inner control to strand                  | **D**, or **F** if it renders its own label                     |
-| `ui-radio`, `ui-radio-group`                                                         | yes — same, at the highest behaviour cost                  | **D** or **F**                                                  |
-| `ui-input`, `ui-textarea`                                                            | yes, **via F** — the label comes inside with the control   | **F**, measured clean                                           |
-| `ui-select`                                                                          | yes, via F — a `<select>` in a shadow root is still native | **F**, subject to S8                                            |
-| `ui-button`                                                                          | already does; it renders its own `<button>`                | unchanged; see below                                            |
-| `ui-card`, `ui-dialog`, `ui-menu`, `ui-tooltip`, `ui-table`, `ui-toaster`, `ui-icon` | not controls                                               | unchanged — the slot carries content, and content is the host's |
+| Component                                                                            | Can own every end                                             | Shape                                                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `ui-checkbox`, `ui-switch`                                                           | yes — there is no inner control to strand                     | **D**, or **F** if it renders its own label                     |
+| `ui-radio`, `ui-radio-group`                                                         | yes — same, at the highest behaviour cost                     | **D** or **F**                                                  |
+| `ui-input`, `ui-textarea`                                                            | yes, via **F or G** — either shape puts both ends together    | **G** reads as the fairer middle; both measured clean           |
+| `ui-select`                                                                          | yes, via F or G — `<option>` stays slotted content either way | **G**, same reasoning                                           |
+| `ui-button`                                                                          | already does; it renders its own `<button>`                   | unchanged; see below                                            |
+| `ui-card`, `ui-dialog`, `ui-menu`, `ui-tooltip`, `ui-table`, `ui-toaster`, `ui-icon` | not controls                                                  | unchanged — the slot carries content, and content is the host's |
 
 **This is the finding that reopened `ui-input`.** An earlier draft of this section closed those
 three rows with _no change_, on the strength of variant B measuring as a critical violation. That
@@ -306,14 +340,28 @@ whichever is decided first constrains the other.
   and measured from inside a shadow root at a light-DOM id, axe reports `aria-valid-attr-value` as
   _incomplete_ rather than as a violation, which is the failure mode this library least wants.
   F needs none of it. S7 survives only as the fallback if F is blocked by S8 or S9.
-- **S8 — does autofill reach a control in a shadow root?** Unmeasured, and it is the strongest
-  open objection to F: a browser's own form filling is the part of a text field a consumer
-  notices, and headless testing cannot answer it honestly. Needs manual verification, and it
-  gates F for `ui-input` and `ui-select` specifically.
+- **S8 — autofill. No longer a gate; a consequence of the variant chosen.** What is measured is
+  that the standard form machinery does not see a control inside a shadow root: it is absent from
+  `form.elements`, its `form` is `null`, and `closest('form')` returns nothing, while the
+  form-associated host takes its place in the collection. What is **not** measured, and cannot be
+  here, is whether a browser's autofill runs its own shadow-piercing traversal rather than that
+  collection — the CDP `Autofill` domain is absent from the `chrome-headless-shell` this suite
+  runs, so the automated route is closed, and recollection is not evidence. It is recorded as a
+  hypothesis and left there. **The maintainer's position is that autofill is dispensable**, which
+  removes it as a blocker: under F it is a cost knowingly accepted, and under G the question does
+  not arise, because nothing about the control's position changes. Either way it is an outcome of
+  the choice rather than an input to it.
 - **S9 — what is lost when a label becomes a string?** Today `<label slot="label">` may hold
   markup — an `<abbr>`, a link, emphasis. `label="Amount"` may not. Whether an escape hatch is
   needed, and whether one can exist without reintroducing the two-scope problem for whoever uses
   it, is unanswered.
+- **S10 — what does a component writing into its own light DOM cost?** Variant G's price.
+  `ui-field` mutates light DOM today, setting ids and attributes on nodes the host wrote; G goes
+  further and _creates_ nodes there. A framework rendering `<ui-input>` owns that subtree and
+  reconciles it, which is the long-standing friction between custom elements and virtual DOMs.
+  Whether it bites in practice, and whether a component can defend its own injected nodes, is
+  unmeasured — and it is now the strongest open objection to G, in the seat S8 used to hold
+  against F.
 
 ## Proposed design
 
@@ -373,7 +421,7 @@ measured above.
 only because the native element requires it there. This is the largest reduction in the library
 and the largest behaviour cost in it, and those are the same row.
 
-### Group 2 — the control stays inside, and the label joins it
+### Group 2 — the label joins the control, wherever the control is
 
 Variant F. The control keeps every reason it had to be a real native element; what changes is
 that the label, the help and the error come inside with it, so nothing is stranded across a
@@ -421,8 +469,23 @@ boundary.
 `<option>` stays slotted, and that is not an inconsistency: an option is content, not a control,
 and the same rule that keeps a card's header in the host's tree keeps it there.
 
-**Two things gate this group and not group 1**: S8, whether a browser's own autofill reaches a
-control in a shadow root, and S9, what is lost when a label stops being able to hold markup.
+**There are two shapes for this group, and the difference is where the pair of ends lives.** Above
+is **F**, both ends in the component's shadow root. **G** puts both in the host's tree instead: the
+control stays slotted, and the component creates the label beside it.
+
+```html
+<!-- ui-input, variant G -->
+<ui-input label="Amount" help="In BRL, two decimals.">
+  <input type="number" name="amount" />
+</ui-input>
+```
+
+G keeps the wrapper that group 1 sheds, and buys back everything that follows from the control
+being an ordinary native control in an ordinary form — it needs no form association at all. What it
+costs is that the component creates nodes in its own light DOM, which is S10.
+
+**Either way `<ui-field>` goes**, which is the objective. S9 applies to both; S8 applies to F only,
+and is no longer a gate.
 
 ### Group 3 — unchanged, because the slot carries content
 
@@ -507,22 +570,35 @@ vertical rhythm between label, control and help, which is `ui-field`'s own style
 error colour, which `ui-radio-group` reaches by retargeting a token through three selectors it
 could not otherwise use. See S5.
 
-### The asymmetry, which variant F removes
+### The asymmetry, and what each shape does to it
 
 An earlier draft of this section called the asymmetry the design's main cost, and it was right
 about the design it was describing: with group 1 taking attributes and group 2 still slotting, two
 form fields on one screen would not have read alike.
 
-**Variant F removes it**, and that is most of what recommends F over the alternatives:
+**Variant F removes it entirely** — one shape, both rows:
 
 ```html
 <ui-switch label="Email notifications" name="notify" checked></ui-switch>
 <ui-input label="Amount" help="In BRL, two decimals." type="number" name="amount"></ui-input>
 ```
 
-One shape, both rows. The section is kept rather than deleted because the cost was real for the
-design as first drafted, and because if S8 or S9 blocks F for group 2, the asymmetry comes
-straight back and becomes the deciding argument again.
+**Variant G leaves a much milder one**, and it is worth naming precisely rather than waving at:
+
+```html
+<ui-switch label="Email notifications" name="notify" checked></ui-switch>
+<ui-input label="Amount" help="In BRL, two decimals.">
+  <input type="number" name="amount" />
+</ui-input>
+```
+
+Both rows read `<ui-x label="…">`. They differ only in whether a control is written inside — which
+is a difference a reader can see in the markup rather than one they have to know a rule to
+predict. That is a weaker objection than the original asymmetry, where the _label_ changed shape
+between the two.
+
+The section is kept rather than deleted because the cost was real for the design as first drafted,
+and because the residual form of it is the price G asks in exchange for S10 being smaller than S8.
 
 ## Decision
 
@@ -538,7 +614,13 @@ it exists so the thing being weighed is concrete rather than described. In parti
   them. A study that has redrawn its own conclusion once should not be read as having finished.
 - **`ui-field` is to be discontinued**, and that is an objective rather than a finding — stated in
   the Motivation, and not something the measurements decided. What the measurements establish is
-  that variant F makes it _reachable_; S5 is what says whether it is _payable_.
+  that F and G each make it _reachable_; S5 is what says whether it is _payable_.
+- **autofill is held to be dispensable**, which is a position rather than a measurement and is
+  recorded as one. It demotes S8 from a gate to a consequence: under F it is a cost knowingly
+  accepted, under G it does not arise. Nothing else here turns on it.
+- **G reads as the fairer middle for group 2**, and that is a leaning, not a decision. It keeps the
+  control exactly where it is today and pays instead in light-DOM writes — a cost that is real,
+  unmeasured, and now the strongest objection standing against any shape in this proposal.
 
 - the measurement does **not** decide the question. It retires one premise — that form
   participation and the accessible name require a light-DOM control — and leaves the behaviour
