@@ -408,8 +408,42 @@ whichever is decided first constrains the other.
   re-render does, and the fix is a `MutationObserver` re-injecting — a pattern `ui-field` already
   uses. **The difference matters**: the field rewrites _attributes on nodes the host wrote_, where
   G would re-create _nodes_, which the framework may remove again, which the observer would
-  re-inject again. Whether that loop is real is what is still unmeasured, and it is the strongest
-  open objection to G — the seat S8 used to hold against F.
+  re-inject again.
+
+  **The loop was measured and does not happen.** `lit-html` is a real reconciler and is already a
+  dependency, so the test used it rather than a simulation: re-rendering the same template six
+  times with changed bindings leaves `labels=1 named=1` and the injection count static; an unmount
+  and remount re-injects exactly once; re-rendering the children of the host directly settles the
+  same way. A reconciler touches its bindings, not the static DOM around them, and the observer
+  never fires against it.
+
+  **What the hardening produced instead is worse than the loop, and is S10.3.** The idempotence
+  that fixes the duplication is a guard that returns early when a label already exists. When the
+  reconciler swaps the _control_ for a new element, that guard fires, the label survives, and it
+  goes on pointing at an id that no longer exists:
+
+  ```
+  A  label.for = c-14251 | input.id = c-14251 | named = 1
+  B  label.for = c-14251 | input.id =         | named = 0
+  C  label survived = true | points at a node that exists = false
+  ```
+
+  |                     | Symptom                          | Visible?         |
+  | ------------------- | -------------------------------- | ---------------- |
+  | S10.1 duplication   | two labels                       | yes, at a glance |
+  | S10.2 erasure       | no label                         | yes, at a glance |
+  | **S10.3 staleness** | one label, right text, **inert** | **no**           |
+
+  The fix is real — reconcile rather than return early, checking that `for` still names the
+  current control — but the finding is that **the first two fixes produced the third failure**,
+  and the third is the class this repository treats as worst. So G's true price is not _writing to
+  the light DOM_; it is **keeping an association synchronised against a renderer that may replace
+  any node at any time** — which is the work `ui-field` does today, now done without `ui-field`.
+
+  **Measured with one reconciler.** Lit is the one this package is built on and the one a
+  consumer is most likely to pair it with; React and Vue have their own semantics and neither is
+  installable here without changing the dependency tree. The result is strong for Lit and
+  indicative, not conclusive, elsewhere.
 
 ## Proposed design
 
@@ -671,9 +705,13 @@ it exists so the thing being weighed is concrete rather than described. In parti
   `0`, and the label inert as a click target. It buys a clean gate and loses an affordance, which
   is the one trade this library refuses on principle. Recorded so its absence is not read later as
   an oversight.
-- **G reads as the fairer middle for group 2**, and that is a leaning, not a decision. It keeps the
-  control exactly where it is today and pays instead in light-DOM writes — a cost that is real,
-  unmeasured, and now the strongest objection standing against any shape in this proposal.
+- **G reads as the fairer middle for group 2**, and that is a leaning, not a decision. The
+  objection raised against it here — that a component re-injecting nodes would fight a framework
+  that removes them — was measured against a real reconciler and **does not happen**. What replaced
+  it is narrower and sharper: G has to keep an association _synchronised_, and the obvious
+  hardening produces a stale label that passes a glance and names nothing. That is a solvable
+  problem with a known shape, which is a better position than the proposal was in an hour ago,
+  and it is still the strongest objection standing.
 
 - the measurement does **not** decide the question. It retires one premise — that form
   participation and the accessible name require a light-DOM control — and leaves the behaviour
