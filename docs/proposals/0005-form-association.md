@@ -228,21 +228,62 @@ that appear in the host's `innerHTML`. `ui-field` mutates light DOM today — id
 but it creates nothing, and creating is the step that frameworks reconcile against: a React or Vue
 render of `<ui-input>` owns that subtree and may remove what the component put there. See S10.
 
-### What the six variants actually show
+### The variant that passes the gate and is worse
+
+Containment crosses a shadow boundary where a reference does not — `<ui-toaster>` is built on
+that. A `<label>` that _contains_ a control labels it implicitly, with no IDREF at all. So a
+seventh variant suggests itself, and it looks like the best of both: no light-DOM writes, the
+control still slotted, the label in the shadow root **wrapping the slot**.
+
+```html
+<!-- rendered into the shadow root -->
+<label part="label">
+  <span>Amount</span>
+  <slot></slot>
+  <!-- the host's control lands in here -->
+</label>
+```
+
+Measured, and the verdict is split:
+
+| Probe                       | Result                |
+| --------------------------- | --------------------- |
+| axe violations / incomplete | **none / none**       |
+| `label.control`             | **`null`**            |
+| `control.labels.length`     | **`0`**               |
+| `control.form`              | `FORM`                |
+| clicking the label text     | focus lands on `BODY` |
+
+The accessibility tree is built from the flattened tree, where the control really is inside the
+label — so **axe passes**. The DOM's own labelling APIs are not: they walk the node tree, where a
+slot is not its assigned nodes, so the label has no control and the control has no label.
+
+**And the label stops being a click target**, which `ARCHITECTURE.md` names as half of why `for`
+is preferred wherever it works:
+
+> `for` wherever it works, because it names the control _and_ makes the label a click target for
+> it
+
+So H delivers the name, silently drops the affordance, and **passes the gate while doing it** —
+the failure shape this library least wants, and the one the architecture calls out by name.
+Rejected, and written down because it is seductive enough to be proposed again.
+
+### What the seven variants actually show
 
 The variable was never _whether the control is slotted_. It is **whether every end of the
 relationship is in one tree scope**:
 
-|       | Control       | Label                            | Result                                |
-| ----- | ------------- | -------------------------------- | ------------------------------------- |
-| today | light DOM     | light DOM                        | works — one scope, the host's         |
-| **A** | shadow        | light DOM                        | `label [critical]` — two scopes       |
-| **B** | shadow        | light DOM, form-associated       | `label [critical]` — still two scopes |
-| **D** | _is_ the host | light DOM                        | works — one scope, the host's         |
-| **F** | shadow        | **shadow**                       | works — one scope, the component's    |
-| **G** | light DOM     | light DOM, **component-created** | works — one scope, the host's         |
+|       | Control             | Label                            | Result                                    |
+| ----- | ------------------- | -------------------------------- | ----------------------------------------- |
+| today | light DOM           | light DOM                        | works — one scope, the host's             |
+| **A** | shadow              | light DOM                        | `label [critical]` — two scopes           |
+| **B** | shadow              | light DOM, form-associated       | `label [critical]` — still two scopes     |
+| **D** | _is_ the host       | light DOM                        | works — one scope, the host's             |
+| **F** | shadow              | **shadow**                       | works — one scope, the component's        |
+| **G** | light DOM           | light DOM, **component-created** | works — one scope, the host's             |
+| **H** | light DOM (slotted) | shadow, **wrapping the slot**    | axe-clean, no click target — **rejected** |
 
-**Three shapes work and two do not**, and the line between them is not where the control sits but
+**Three shapes work, two do not, and one only appears to**, and the line between them is not where the control sits but
 whether both ends sit together. A and B are the broken middle: the control inside, the label left
 outside. That middle is what `ARCHITECTURE.md` measured before concluding the control must be
 slotted — a conclusion right about the middle and read since as a rule about the whole.
@@ -355,13 +396,20 @@ whichever is decided first constrains the other.
   markup — an `<abbr>`, a link, emphasis. `label="Amount"` may not. Whether an escape hatch is
   needed, and whether one can exist without reintroducing the two-scope problem for whoever uses
   it, is unanswered.
-- **S10 — what does a component writing into its own light DOM cost?** Variant G's price.
-  `ui-field` mutates light DOM today, setting ids and attributes on nodes the host wrote; G goes
-  further and _creates_ nodes there. A framework rendering `<ui-input>` owns that subtree and
-  reconciles it, which is the long-standing friction between custom elements and virtual DOMs.
-  Whether it bites in practice, and whether a component can defend its own injected nodes, is
-  unmeasured — and it is now the strongest open objection to G, in the seat S8 used to hold
-  against F.
+- **S10 — what does a component writing into its own light DOM cost?** Variant G's price, and
+  **partly measured**. Two failure modes, both real in this engine:
+
+  |                                      | Measured                                                                    |
+  | ------------------------------------ | --------------------------------------------------------------------------- |
+  | the element is **moved** in the tree | labels go `1` → `2`; `connectedCallback` runs again and injects a second    |
+  | the host **rewrites its children**   | labels go `1` → `0`, `control.labels` `0` — silently unnamed, with no error |
+
+  The first is cheap to fix: make the injection idempotent. The second is what a framework
+  re-render does, and the fix is a `MutationObserver` re-injecting — a pattern `ui-field` already
+  uses. **The difference matters**: the field rewrites _attributes on nodes the host wrote_, where
+  G would re-create _nodes_, which the framework may remove again, which the observer would
+  re-inject again. Whether that loop is real is what is still unmeasured, and it is the strongest
+  open objection to G — the seat S8 used to hold against F.
 
 ## Proposed design
 
@@ -618,6 +666,11 @@ it exists so the thing being weighed is concrete rather than described. In parti
 - **autofill is held to be dispensable**, which is a position rather than a measurement and is
   recorded as one. It demotes S8 from a gate to a consequence: under F it is a cost knowingly
   accepted, under G it does not arise. Nothing else here turns on it.
+- **Variant H is rejected, and the reason is measured**: a shadow-root `<label>` wrapping the slot
+  passes axe with nothing incomplete, and still leaves `label.control` `null`, `control.labels`
+  `0`, and the label inert as a click target. It buys a clean gate and loses an affordance, which
+  is the one trade this library refuses on principle. Recorded so its absence is not read later as
+  an oversight.
 - **G reads as the fairer middle for group 2**, and that is a leaning, not a decision. It keeps the
   control exactly where it is today and pays instead in light-DOM writes — a cost that is real,
   unmeasured, and now the strongest objection standing against any shape in this proposal.
