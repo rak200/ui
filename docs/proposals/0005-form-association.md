@@ -136,7 +136,14 @@ all of it: the `<label for>` names the **custom element**, and the element a scr
 actually reaches is the inner `<input>`, which has no accessible name.
 
 **So form association makes a host labelable; it does not make a control the host hides inside
-itself labelable.** `ARCHITECTURE.md` measured variant A and concluded the control must be
+itself labelable.**
+
+**A fourth variant settles the shape the radio would take.** `checkbox`, `radio` and `switch` are
+all _name from content_ roles, so a host element can be named by its own slotted text rather than
+by a `<label for>`. Measured, a `role="radiogroup"` named by a `<label for>` holding two
+`role="radio"` elements each naming itself from slotted text: **no violations and nothing
+incomplete**. Both naming routes are therefore available to group 1, and the proposed radio does
+not need the wrapping `<label>` its current form requires. `ARCHITECTURE.md` measured variant A and concluded the control must be
 slotted. That conclusion stands — and variant B is the reason it stands, which the original
 measurement could not have known.
 
@@ -159,34 +166,6 @@ Not _does the native element carry platform integration_, but:
 The first two rows are exactly the three files that already carry `appearance: none` or a mask —
 `src/checkbox.ts` and `src/radio.ts`. Having thrown away the native drawing, what they still take
 from the slotted control is a boolean, a name and the Space key.
-
-### What each call site would become
-
-```html
-<!-- ui-switch — today -->
-<ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
-<!-- proposed -->
-<ui-switch name="notify" checked></ui-switch>
-```
-
-```html
-<!-- ui-radio-group — today -->
-<ui-radio-group>
-  <label
-    ><ui-radio><input type="radio" name="plan" value="free" /></ui-radio> Free</label
-  >
-  <label
-    ><ui-radio><input type="radio" name="plan" value="pro" /></ui-radio> Pro</label
-  >
-</ui-radio-group>
-<!-- proposed -->
-<ui-radio-group name="plan" value="free">
-  <ui-radio value="free">Free</ui-radio>
-  <ui-radio value="pro">Pro</ui-radio>
-</ui-radio-group>
-```
-
-`ui-input`, `ui-textarea` and `ui-select` keep the shape they have.
 
 ### `ui-button`, which is a different question wearing the same coat
 
@@ -255,15 +234,180 @@ whichever is decided first constrains the other.
 
 ## Proposed design
 
-**A cut is drafted, a design is not.** _The test, restated_ and _What each call site would
-become_ are the shape this would take if it were decided today, and they rest on a measurement
-rather than on taste. They are not a design: nothing here says how a drawn toggle implements
-Space, how a group implements a roving tabindex, or who writes either — which is the whole of
-S1 through S7 still being open, and #122 still being undecided.
+Every element the package registers, in the shape it has today and the shape this proposal would
+give it. Nothing below is settled — see _Decision_ — but everything below is what the cut in
+_The test, restated_ actually produces when written out.
+
+### Group 1 — the host becomes the control
+
+The four elements that already threw the native drawing away, and take a boolean, a name and a
+key from the control they slot.
+
+```html
+<!-- ui-checkbox — today -->
+<ui-checkbox><input type="checkbox" name="receipt" /></ui-checkbox>
+<!-- proposed -->
+<ui-checkbox name="receipt"></ui-checkbox>
+```
+
+```html
+<!-- ui-switch — today -->
+<ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
+<!-- proposed -->
+<ui-switch name="notify" checked></ui-switch>
+```
+
+```html
+<!-- ui-radio — today -->
+<label
+  ><ui-radio><input type="radio" name="plan" value="free" /></ui-radio> Free</label
+>
+<!-- proposed -->
+<ui-radio value="free">Free</ui-radio>
+```
+
+The wrapping `<label>` goes: the text names the element itself, which is the fourth variant
+measured above.
+
+```html
+<!-- ui-radio-group — today -->
+<ui-radio-group>
+  <label
+    ><ui-radio><input type="radio" name="plan" value="free" /></ui-radio> Free</label
+  >
+  <label
+    ><ui-radio><input type="radio" name="plan" value="pro" /></ui-radio> Pro</label
+  >
+</ui-radio-group>
+<!-- proposed -->
+<ui-radio-group name="plan" value="free">
+  <ui-radio value="free">Free</ui-radio>
+  <ui-radio value="pro">Pro</ui-radio>
+</ui-radio-group>
+```
+
+`name` rises to the group, which is where it always belonged — repeated on every option today
+only because the native element requires it there. This is the largest reduction in the library
+and the largest behaviour cost in it, and those are the same row.
+
+### Group 2 — unchanged, because the control must be reachable
+
+Variant B is a critical `label` violation with form association applied. These keep the shape
+they have, and only S7 would reopen them.
+
+```html
+<ui-input><input type="number" name="amount" /></ui-input>
+<ui-textarea><textarea name="notes" rows="4"></textarea></ui-textarea>
+<ui-select>
+  <select name="currency">
+    <option value="brl">Real</option>
+  </select>
+</ui-select>
+```
+
+### Group 3 — unchanged, because the slot carries content
+
+Content is the host's by definition, and none of these is a form control.
+
+```html
+<ui-button variant="primary">Save</ui-button>
+
+<ui-card>
+  <h3 slot="header">Monthly plan</h3>
+  <p>Everything in the free tier.</p>
+  <div slot="footer"><ui-button>Choose</ui-button></div>
+</ui-card>
+
+<ui-dialog>
+  <h2 slot="title">Delete account</h2>
+  <p>This cannot be undone.</p>
+  <ui-button slot="actions">Delete</ui-button>
+</ui-dialog>
+
+<ui-menu>
+  <span slot="trigger">Actions</span>
+  <button type="button">Rename</button>
+</ui-menu>
+
+<ui-tooltip>
+  <button type="button">Save</button>
+  <span slot="tip">Saves without closing.</span>
+</ui-tooltip>
+
+<ui-table aria-label="Invoices">
+  <table>
+    …
+  </table>
+</ui-table>
+
+<ui-toaster></ui-toaster>
+<ui-toast variant="success">Saved.</ui-toast>
+
+<ui-icon name="check"></ui-icon>
+<ui-icon
+  ><svg viewBox="0 0 24 24"><path d="M12 2 2 22h20Z" /></svg
+></ui-icon>
+```
+
+`<ui-button>` sits here with a caveat rather than a change: its call site would not move even if
+form participation were granted to it. See _`ui-button`, which is a different question wearing
+the same coat_.
+
+### `ui-field`, and the composed result
+
+`<ui-field>` keeps its shape. What changes is what a host puts in its control slot.
+
+```html
+<!-- today -->
+<ui-field>
+  <label slot="label">Email notifications</label>
+  <ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
+</ui-field>
+<!-- proposed -->
+<ui-field>
+  <label slot="label">Email notifications</label>
+  <ui-switch name="notify" checked></ui-switch>
+</ui-field>
+```
+
+### The asymmetry, which is the design's main cost
+
+Two form fields on one screen, under this proposal, do not read alike:
+
+```html
+<ui-field>
+  <label slot="label">Amount</label>
+  <!-- a control lives inside, so it is slotted -->
+  <ui-input><input type="number" name="amount" /></ui-input>
+  <span slot="help">In BRL, two decimals.</span>
+</ui-field>
+
+<ui-field>
+  <label slot="label">Email notifications</label>
+  <!-- the element IS the control, so it is an attribute -->
+  <ui-switch name="notify" checked></ui-switch>
+</ui-field>
+```
+
+**This is stated as a cost rather than defended away.** The proposal's whole appeal is that a host
+writes less, and it delivers that for four elements out of seven while leaving three alone — so a
+consumer meets two shapes in one form.
+
+What can be said for it is that the line is not arbitrary: it falls exactly where a control has to
+exist inside the element, and that is a property a reader can name. What has to be answered before
+the proposal is worth taking is whether that line is _legible to someone writing HTML_ — because a
+rule that is principled and unlearnable buys nothing. That is not a study; it is the question the
+Decision turns on.
 
 ## Decision
 
-**Open.** Nothing is decided, and in particular:
+**Open.** _Proposed design_ is written out in full, and writing a design out is not deciding it —
+it exists so the thing being weighed is concrete rather than described. In particular:
+
+- **the design does not carry its own behaviour.** Nothing in it says how a drawn toggle
+  implements Space, how a group implements a roving tabindex, or who writes either. That is
+  [#122](https://github.com/rak200/ui/issues/122), and until it is answered the four elements in
+  group 1 have a call site and no implementation strategy.
 
 - the measurement does **not** decide the question. It retires one premise — that form
   participation and the accessible name require a light-DOM control — and leaves the behaviour
