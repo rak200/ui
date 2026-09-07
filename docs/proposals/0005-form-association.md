@@ -268,6 +268,43 @@ So H delivers the name, silently drops the affordance, and **passes the gate whi
 the failure shape this library least wants, and the one the architecture calls out by name.
 Rejected, and written down because it is seductive enough to be proposed again.
 
+### Rich markup, and where the escape hatch can live
+
+A label is not always a word. `<abbr title="Cadastro de Pessoas Físicas">CPF</abbr>`, a required
+marker, and above all _"I accept the `<a href="/terms">terms</a>`"_ are ordinary labels that an
+attribute cannot hold.
+
+The escape hatch is a slot **inside** the rendered label, and the reason it works is the one this
+whole proposal turns on:
+
+```html
+<!-- shadow root -->
+<label for="c"><slot name="label"></slot></label>
+<input id="c" type="checkbox" />
+```
+
+The **association** is between the `<label>` and the `<input>`, both in the shadow root — one
+scope, so it resolves. The slotted content is _content_: projection, not reference, and markup
+crosses because it never needed a scope.
+
+Measured, with a control so the result is not vacuous:
+
+|                                        | Result                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| the slot left **empty**                | `label [critical]` — so the name really is coming from the slotted content |
+| rich markup slotted                    | axe **clean**, `label.control` `INPUT`, `input.labels` `1`                 |
+| the markup itself                      | preserved — `<a href="/terms">terms</a>`                                   |
+| clicking the label text                | **toggles the control**                                                    |
+| clicking the **link inside the label** | **does not also toggle**                                                   |
+
+The last row is the one worth having: the classic hazard of an interactive element inside a label
+is handled by the platform, and needs nothing written here.
+
+**This is available under F and not under G.** A slot exists in a shadow root; the light DOM has
+none. Under G a host that needs markup writes its own `<label>` and the component wires it — which
+is the shape the library has today, carrying `ui-field`'s verbosity without `ui-field`. S9 is
+therefore not neutral between the two shapes, and says so in the Decision.
+
 ### What the seven variants actually show
 
 The variable was never _whether the control is slotted_. It is **whether every end of the
@@ -413,10 +450,15 @@ whichever is decided first constrains the other.
   removes it as a blocker: under F it is a cost knowingly accepted, and under G the question does
   not arise, because nothing about the control's position changes. Either way it is an outcome of
   the choice rather than an input to it.
-- **S9 — what is lost when a label becomes a string?** Today `<label slot="label">` may hold
-  markup — an `<abbr>`, a link, emphasis. `label="Amount"` may not. Whether an escape hatch is
-  needed, and whether one can exist without reintroducing the two-scope problem for whoever uses
-  it, is unanswered.
+- **S9 — what is lost when a label becomes a string? Answered: nothing, given an escape hatch.**
+  Three shapes were weighed — attribute only, attribute plus a slot, slot only — and the second is
+  taken. The attribute carries the common case; a `slot="label"` carries markup when there is
+  markup, measured clean above. **It does not reintroduce the two-scope problem**, because the
+  slot supplies the label's _content_ while the association stays between two elements the
+  component owns. Two ways to say one thing is a real cost, and it is the cost this library
+  already pays deliberately once: `<ui-icon>` dispatches between `name="check"` and a slotted
+  `<svg>`, and the consumer has already learnt that an attribute is the short road and a slot is
+  the way in for something of your own.
 - **S10 — what does a component writing into its own light DOM cost?** Variant G's price, and
   **partly measured**. Two failure modes, both real in this engine:
 
@@ -590,6 +632,27 @@ costs is that the component creates nodes in its own light DOM, which is S10.
 **Either way `<ui-field>` goes**, which is the objective. S9 applies to both; S8 applies to F only,
 and is no longer a gate.
 
+### The label, in both shapes
+
+Every call site above writes `label="…"`, and that is the common case rather than the only one. A
+label that carries markup arrives through a slot inside the rendered label:
+
+```html
+<!-- the short road -->
+<ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>
+
+<!-- and the way in, for a label an attribute cannot hold -->
+<ui-checkbox name="terms">
+  <span slot="label">I accept the <a href="/terms">terms</a></span>
+</ui-checkbox>
+```
+
+Measured clean, with the control toggling on a click of the label text and **not** toggling on a
+click of the link inside it. The same pair applies to `help` and `error`.
+
+Two ways to say one thing, deliberately, and not for the first time: `<ui-icon>` already
+dispatches between `name="check"` and a slotted `<svg>`.
+
 ### Group 3 — unchanged, because the slot carries content
 
 Content is the host's by definition, and none of these is a form control.
@@ -721,6 +784,17 @@ it exists so the thing being weighed is concrete rather than described. In parti
 - **autofill is held to be dispensable**, which is a position rather than a measurement and is
   recorded as one. It demotes S8 from a gate to a consequence: under F it is a cost knowingly
   accepted, under G it does not arise. Nothing else here turns on it.
+- **The label takes an attribute with a slot escape hatch** — decided. The attribute carries the
+  common case and `slot="label"` carries markup, measured clean and without reintroducing the
+  two-scope problem, since the slot supplies content while the association stays between two
+  elements the component owns. Slot-only was refused for making the common case verbose again,
+  which is most of what this proposal exists to fix; attribute-only was refused because _"I accept
+  the `<a href="/terms">terms</a>`"_ is an ordinary label, not an exotic one.
+- **That decision is not neutral between F and G**, and the consequence is recorded rather than
+  left implicit: a slot lives in a shadow root, so the escape hatch exists under F and not under
+  G. Under G a host needing markup writes its own `<label>` and the component wires it — today's
+  shape, carrying `ui-field`'s verbosity without `ui-field`. **F vs G is now the open design
+  question**, where before this it read the other way.
 - **Variant H is rejected, and the reason is measured**: a shadow-root `<label>` wrapping the slot
   passes axe with nothing incomplete, and still leaves `label.control` `null`, `control.labels`
   `0`, and the label inert as a click target. It buys a clean gate and loses an affordance, which
