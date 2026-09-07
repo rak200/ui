@@ -338,29 +338,30 @@ whichever is decided first constrains the other.
 
 ### Open studies
 
-- **S1 — does it hold in three engines? Two of three: yes, with no disagreement at all.** Run by
-  giving `vitest.config.js` a second and third `instances` entry — the whole apparatus this needed
-  — every variant was re-measured in Gecko against the Blink results:
+- **S1 — does it hold in three engines? Yes. All three, and not one value apart.** Every variant
+  was re-measured in Blink, Gecko and WebKit:
 
-  |                                          | Chromium (Blink)                                    | Firefox (Gecko) |
-  | ---------------------------------------- | --------------------------------------------------- | --------------- |
-  | `formAssociated` supported               | yes                                                 | yes             |
-  | **B** — control in shadow, label outside | `label` violation, `internals.labels` `1`           | identical       |
-  | **D** — host is the control              | clean, `labels` `1`, `role` `switch`                | identical       |
-  | **F** — both ends in the shadow root     | clean, `label.control` `INPUT`, `FormData` carries  | identical       |
-  | **G** — both ends in the light DOM       | clean, `labels` `1`, in `form.elements`             | identical       |
-  | **H** — shadow label wrapping the slot   | clean, `label.control` `null`, `control.labels` `0` | identical       |
+  |                                          | Blink                                              | Gecko     | WebKit    |
+  | ---------------------------------------- | -------------------------------------------------- | --------- | --------- |
+  | `formAssociated` supported               | yes                                                | yes       | yes       |
+  | **B** — control in shadow, label outside | `label` violation, `labels` `1`                    | identical | identical |
+  | **D** — host is the control              | clean, `labels` `1`, `role` `switch`               | identical | identical |
+  | **F** — both ends in the shadow root     | clean, `label.control` `INPUT`, `FormData` carries | identical | identical |
+  | **G** — both ends in the light DOM       | clean, `labels` `1`, in `form.elements`            | identical | identical |
+  | **H** — shadow label wrapping the slot   | clean, `label.control` `null`, `labels` `0`        | identical | identical |
 
-  Not one value differs. That includes the H trap: **Gecko passes it too**, so a variant that
-  clears the gate and drops the click target does so in both engines — which makes recording its
-  rejection more necessary, not less.
+  **This retires the objection that killed the alternative `ARCHITECTURE.md` rejected.** ARIA
+  element reflection was turned down because _"its support cannot be verified by a suite that runs
+  one engine"_. That is a statement about the apparatus, not about the mechanism — and the
+  apparatus was one `instances` entry away from answering it. Two engines run directly from
+  `vitest.config.js`; the third needs a container, because Playwright's WebKit build wants an
+  older `libicu` than a current Debian ships and its dependency installer resolves Ubuntu 20.04
+  package names that do not exist there. The official `mcr.microsoft.com/playwright` image carries
+  all three with their libraries, which makes this reproducible rather than a one-off.
 
-  **WebKit is not measured, and the reason is environmental rather than a finding.** Playwright's
-  WebKit build is installed here but refuses to launch — _"Host system is missing dependencies to
-  run browsers"_ — and installing them needs system packages rather than anything this repository
-  controls. So S1 is two thirds answered. What is left is a third engine that has historically
-  been the last to ship `ElementInternals` features, which is exactly where a disagreement would
-  be expected if there is one; the proposal should not be decided as though it were three.
+  **H agrees across all three too**, which is the uncomfortable half: a shape that clears the gate
+  and drops the click target does so in every engine, so no browser will catch it for a reader who
+  runs axe and stops.
 
 - **S2 — where is the cut?** **Drafted above**, in _The test, restated_, and resting on the
   five-variant probe rather than on judgement. It has already been redrawn once — variant F moved
@@ -736,10 +737,11 @@ it exists so the thing being weighed is concrete rather than described. In parti
 - the measurement does **not** decide the question. It retires one premise — that form
   participation and the accessible name require a light-DOM control — and leaves the behaviour
   argument untouched.
-- **the engine objection is two thirds retired.** Gecko agrees with Blink on every value, so the
-  weakness this proposal shared with the rejected `ariaLabelledByElements` alternative is much
-  smaller than it was. It is not gone: WebKit is unmeasured for an environmental reason, and it is
-  the engine where a disagreement would be least surprising.
+- **the engine objection is retired.** Blink, Gecko and WebKit agree on every value of every
+  variant, so the weakness this proposal shared with the rejected `ariaLabelledByElements`
+  alternative is gone rather than reduced. What remains open is design judgement — S9 — and
+  ownership of behaviour — [#122](https://github.com/rak200/ui/issues/122). No measurement is
+  outstanding.
 - **`ui-input`, `ui-textarea` and `ui-select` move after all, and the earlier draft of this
   section said they did not.** That draft rested on variant B, which measures correctly and was
   read too broadly: B strands the control because the label stays outside, not because the control
