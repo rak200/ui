@@ -253,6 +253,73 @@ describe('the control and its label, in one tree scope', () => {
         expect([...new FormData(form)]).toEqual([]);
     });
 
+    it('puts the two states a host cannot otherwise reach where CSS can', async () => {
+        // Measured before this existed: `::part(box):checked` does not match, because a
+        // ::part() takes user-action pseudo-classes and not state ones. So without these a
+        // host had no way at all to select on a state kept in this shadow root — which is
+        // what would have made *not reflecting* `checked` cost the host something.
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        expect(element.matches(':state(checked)'), 'off').toBe(false);
+
+        element.checked = true;
+        await element.updateComplete;
+
+        expect(element.matches(':state(checked)'), 'on').toBe(true);
+
+        element.checked = false;
+        await element.updateComplete;
+
+        expect(element.matches(':state(checked)'), 'off again — it is removed, not left').toBe(
+            false,
+        );
+    });
+
+    it('exposes the mixed state the same way, and only the checkbox has one', async () => {
+        const form = await mount(`
+            <ui-checkbox label="All" indeterminate></ui-checkbox>
+            <ui-switch label="Notify" checked></ui-switch>
+        `);
+        const [checkbox, uiSwitch] = [
+            ...form.querySelectorAll<Toggle>('ui-checkbox, ui-switch'),
+        ] as [UiCheckbox, UiSwitch];
+
+        expect(checkbox.matches(':state(indeterminate)')).toBe(true);
+        expect(uiSwitch.matches(':state(checked)'), 'the shared one still reaches it').toBe(true);
+        expect(uiSwitch.matches(':state(indeterminate)'), 'and the other never does').toBe(false);
+
+        checkbox.indeterminate = false;
+        await checkbox.updateComplete;
+
+        expect(checkbox.matches(':state(indeterminate)')).toBe(false);
+    });
+
+    it('takes part in the pseudo-classes a form control already has', async () => {
+        // Nothing here is this element's work — a form-associated custom element matches
+        // them because it is one, which is why only the two states above are written.
+        const form = await mount(`
+            <ui-checkbox label="Terms" required></ui-checkbox>
+            <ui-checkbox label="Off" disabled></ui-checkbox>
+        `);
+        const [required, disabled] = [...form.querySelectorAll<UiCheckbox>('ui-checkbox')] as [
+            UiCheckbox,
+            UiCheckbox,
+        ];
+
+        expect(required.matches(':invalid'), 'required and off').toBe(true);
+
+        required.checked = true;
+        await required.updateComplete;
+
+        expect(required.matches(':valid')).toBe(true);
+        expect(disabled.matches(':disabled')).toBe(true);
+        // And the trap that comes with reflecting a string whose default is empty: Lit
+        // writes `error=""`, which a presence selector matches. `:invalid` is the one to
+        // reach for, and the docs say so.
+        expect(disabled.matches('[error]'), 'an empty attribute is still an attribute').toBe(true);
+    });
+
     it('hugs its content rather than filling the line', async () => {
         const form = await mount(fixture);
 

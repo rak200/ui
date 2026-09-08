@@ -19,6 +19,7 @@ import '@rak200/ui';
 - [In error](#in-error)
 - [The mixed state](#the-mixed-state)
 - [Events](#events)
+- [Selecting on state](#selecting-on-state)
 - [Interaction states](#interaction-states)
 - [Styling](#styling)
 
@@ -128,8 +129,8 @@ toggling the box, which is the platform's own rule rather than one written here.
   submits. An unticked one submits nothing, and neither does a disabled one.
 - **`checked` is the default, not the live state.** It is the attribute a reset returns to, which
   is exactly what `checked` does on a native `<input>`: the property tracks what the user did, the
-  attribute does not follow it. Read `element.checked` for the state; use `::part(box):checked` to
-  style on it.
+  attribute does not follow it. Read `element.checked` for the state, and see
+  [Selecting on state](#selecting-on-state) to style on it.
 - A `<fieldset disabled>` above the element disables it.
 - The browser restores the state on a back-navigation.
 
@@ -203,6 +204,40 @@ would disappear for the people who turned the mode on to see states more clearly
 mixed states name `Highlight`, and the disabled one names `GrayText` instead of dimming, because
 opacity is not a colour and is not forced.
 
+## Selecting on state
+
+```css
+ui-checkbox:state(checked) {
+  font-weight: 600;
+}
+ui-checkbox:state(indeterminate) {
+  opacity: 0.8;
+}
+ui-switch:invalid {
+  outline: 1px dashed red;
+}
+```
+
+**Two states are published, and only two**, because they are the two with no other route. The
+control lives in this element's shadow root, and `::part(box):checked` **does not match** — a
+`::part()` may be followed by user-action pseudo-classes such as `:hover`, not by state ones. So
+`checked` and `indeterminate` are exposed as custom states instead. Measured in the engine this
+package's suite runs.
+
+Everything else already works, and none of it is this element's doing:
+
+| Selector                | Reaches                                                   |
+| ----------------------- | --------------------------------------------------------- |
+| `:state(checked)`       | the live state, which `checked` does not reflect          |
+| `:state(indeterminate)` | the mixed state, `<ui-checkbox>` only                     |
+| `:valid` / `:invalid`   | constraint validation — a form-associated element gets it |
+| `:disabled`             | likewise, including from a `<fieldset disabled>`          |
+| `[required]`            | the attribute, which reflects                             |
+
+**Do not select on `[error]`.** It reflects, and a reflected string whose default is empty is
+written as `error=""` — which a presence selector matches on every element, error or not. `:invalid`
+is what you want.
+
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the tick.
@@ -223,12 +258,12 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the t
 
 **Four parts are exposed**, because the drawing is now in here:
 
-| `::part()` | Is                                               |
-| ---------- | ------------------------------------------------ |
-| `label`    | the `<label>`, which wraps the whole pair        |
-| `box`      | the `<input>` — `::part(box):checked` also works |
-| `text`     | the span holding the label text                  |
-| `error`    | the message, when there is one                   |
+| `::part()` | Is                                        |
+| ---------- | ----------------------------------------- |
+| `label`    | the `<label>`, which wraps the whole pair |
+| `box`      | the `<input>` itself                      |
+| `text`     | the span holding the label text           |
+| `error`    | the message, when there is one            |
 
 **The tick is a hole, not a colour**, and that is what keeps it overridable. An SVG embedded in a
 `data:` URI freezes whatever colour is drawn into it, and no host could override that. A mask has no
