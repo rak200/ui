@@ -1,4 +1,4 @@
-import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
 
 /**
@@ -30,18 +30,20 @@ const whole = css`linear-gradient(#000, #000)`;
 /**
  * What a drawn boolean control looks like, which both elements share.
  *
- * **The control and its label are both rendered here**, which RFC 0005 settled and
- * measured. An ARIA relationship needs every end in one tree scope; putting the control
- * inside and leaving the label outside is the arrangement that strands it, not the fact
- * that the control is inside. With both here the `<label>` contains the `<input>`, so the
- * association is the platform's — and so are the toggle, the Space key, the click target
- * over the label text, and the rule that a link inside the label follows the link instead.
- * None of that is written in this file, which is the point of the shape.
+ * **The control and its label are rendered together, in this element's shadow root.** RFC
+ * 0005 settled that and measured why: an ARIA relationship needs every end of it inside one
+ * tree scope, and the arrangement that strands a control is the one that puts the control on
+ * one side of a shadow boundary and its label on the other — not the fact that the control
+ * is rendered. With the `<label>` and the `<input>` in the same root the association is the
+ * platform's, and so is everything that follows from it: the toggle, the <kbd>Space</kbd>
+ * key, the click target over the label text, and the rule that a link inside a label
+ * follows the link rather than toggling. None of that is written in this file, which is the
+ * point of the shape.
  *
- * The state is now this element's own, so these rules read `input:checked` directly. The
+ * The state is this element's own, so these rules read `input:checked` directly. The
  * `::slotted(input:checked)` this file used to be built on was forced by
- * `:host(:has(input:checked))` being invalid in this engine, and that constraint is gone
- * with the slotted control.
+ * `:host(:has(input:checked))` being invalid in this engine, and that constraint went with
+ * the slotted control.
  *
  * **`appearance: none` is the whole cost of this component**, and it is taken knowingly.
  * It buys one drawing for the pair — the same border, radius, focus ring and accent the
@@ -54,23 +56,29 @@ const whole = css`linear-gradient(#000, #000)`;
  * target-size floor at {@link size}, and the forced-colors block at the end.
  */
 const toggle = css`
+    /* A column, because the error sits under the control rather than beside it — and
+       flex-start rather than the default stretch, so a message wider than the label does
+       not widen the label, which is the click target. */
     :host {
         display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: calc(${reference('--ui-space')} / 2);
         font-family: ${reference('--ui-font')};
     }
 
-    /* The label is the whole element's worth of click target, which is what a host used
-       to get by wrapping the pair in a <label> of their own. */
+    /* The label is the whole pair's worth of click target, which a host used to have to
+       build by wrapping the component in a <label> of their own.
+
+       flex rather than inline-flex, and the difference is one the platform erases: a flex
+       item's display is blockified, so inline-flex here would compute to flex anyway — a
+       declaration no rendering could tell from this one. */
     label {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: ${reference('--ui-space')};
         cursor: pointer;
         color: ${reference('--ui-color-text')};
-    }
-
-    label:has(input:disabled) {
-        cursor: not-allowed;
     }
 
     input {
@@ -124,15 +132,22 @@ const toggle = css`
         opacity: 0.5;
     }
 
-    label:has(input:disabled) {
+    /* Read off the host rather than through :has(), because the property is reflected and
+       the host attribute is therefore the same fact one selector earlier. */
+    :host([disabled]) label {
+        cursor: not-allowed;
         color: ${reference('--ui-color-text-muted')};
     }
 
-    /* The error state is drawn from this element's own invalidity rather than from an
-       attribute a second component wrote: the host sets the error, the same value reaches
-       setValidity, and the message under the control and the boundary around it cannot
-       disagree. Only the boundary moves; a red fill on a switch would read as *on*. */
-    :host([error]) input {
+    /* Read off the control's own aria-invalid rather than off a host attribute, which is
+       the same source a screen reader uses and the same rule this file carried when
+       ui-field was the one writing it. One property now feeds all three — the boundary,
+       the message and setValidity — so they cannot disagree. Only the boundary moves; a
+       red fill on a switch would read as *on*.
+
+       Not :host([error]): a reflected string property whose default is empty puts an
+       empty attribute on the host, and an attribute-presence selector matches it. */
+    input[aria-invalid='true'] {
         border-color: ${reference('--ui-color-danger')};
     }
 
@@ -152,8 +167,7 @@ const toggle = css`
        half-transparent against a palette chosen for contrast. GrayText is what that mode
        has for *unavailable*, and it is a colour rather than a veil. */
     @media (forced-colors: active) {
-        input:checked,
-        input:indeterminate {
+        input:checked {
             background-color: Highlight;
             border-color: Highlight;
         }
@@ -173,39 +187,78 @@ const toggle = css`
  * inside a `<label>` in this element's shadow root, so every behaviour a boolean control
  * has stays the platform's — see the docblock on the shared styles above.
  *
- * **The element is the form control**, through `ElementInternals`: the inner `<input>` is
- * in a shadow root and therefore has no form owner, so the value reaches a submit because
- * this element passes it on, and never because the input did.
+ * **The element is the form control**, through `ElementInternals`. An `<input>` inside a
+ * shadow root has no form owner, so the value reaches a submit because this element passes
+ * it on and never because the input did.
+ *
+ * That is the entire price, and it is worth listing because it is smaller than it looks:
+ * `setFormValue`, `setValidity`, the three form lifecycle callbacks a form can no longer
+ * perform directly, and a re-dispatch of `change`, which is non-composed. **None of it is
+ * accessibility** — the role, the checked state, the tab stop and what `disabled` does to
+ * it are all still the platform's, because the control really is one.
  */
 class UiToggle extends LitElement {
     static readonly formAssociated = true;
 
+    /**
+     * Focus is delegated, so `focus()` and `reportValidity()` reach the control.
+     *
+     * Neither is optional: the host is not a focusable element, so without this a call to
+     * either lands on something that cannot take focus and does nothing — and the second
+     * one is what the browser does on its own when a form with an invalid control is
+     * submitted.
+     */
+    static override readonly shadowRootOptions = {
+        ...LitElement.shadowRootOptions,
+        delegatesFocus: true,
+    };
+
     static override readonly properties = {
-        label: { type: String },
-        name: { type: String },
-        value: { type: String },
-        checked: { type: Boolean, reflect: true },
+        label: { type: String, reflect: true },
+        name: { type: String, reflect: true },
+        value: { type: String, reflect: true },
+        checked: { type: Boolean },
         disabled: { type: Boolean, reflect: true },
         required: { type: Boolean, reflect: true },
         error: { type: String, reflect: true },
     };
 
-    /** The short road for a label. A `slot="label"` overrides it where markup is needed. */
+    /**
+     * The short road to a label. `slot="label"` overrides it where markup is needed.
+     *
+     * A plain field rather than the `accessor` keyword, for the reason `src/button.ts`
+     * gives beside its own — and so for every property below.
+     */
     label = '';
 
-    /** The name the value is submitted under. */
+    /**
+     * The name the value is submitted under.
+     *
+     * **Reflected, and that is a requirement rather than a convenience.** A form reads a
+     * form-associated custom element's name from the content attribute, so a host who sets
+     * only the property would submit nothing at all — silently, with a value published and
+     * no entry to carry it.
+     */
     name = '';
 
     /** What a checked control submits, which the platform spells `on` by default. */
     value = 'on';
 
-    /** Whether the control is on. Reflected, so a host stylesheet can select on it. */
+    /**
+     * Whether the control is on.
+     *
+     * **Not reflected, which is the platform's own answer rather than an omission.** A
+     * native checkbox's `checked` IDL attribute does not reflect either: the content
+     * attribute is the *default*, which is what a form reset returns to, and an attribute
+     * that followed every click would make the default whatever the user last did. A host
+     * stylesheet reaches the live state through `::part(box):checked`.
+     */
     checked = false;
 
-    /** Whether the control rejects interaction. Reflected, for the same reason. */
+    /** Whether the control rejects interaction. Reflected, the way the platform's is. */
     disabled = false;
 
-    /** Whether a form is invalid while this control is off. */
+    /** Whether a form is invalid while this control is off. Reflected, likewise. */
     required = false;
 
     /** The error message, which paints the boundary and is announced with the control. */
@@ -213,40 +266,16 @@ class UiToggle extends LitElement {
 
     readonly #internals = this.attachInternals();
 
-    /**
-     * The state the element was created with, which a form reset returns to.
-     *
-     * Read once rather than on every reset: `checked` is a live property by then, so
-     * asking it later would return the state being reset away from.
-     */
-    #initial = false;
-
-    override connectedCallback(): void {
-        super.connectedCallback();
-        this.#initial = this.checked;
-    }
-
-    override firstUpdated(): void {
-        this.#publish();
-    }
-
-    override updated(): void {
-        this.#publish();
-    }
-
-    /** The form value and the validity, which move together or disagree. */
+    /** The form value and the validity, which move together here or disagree anywhere. */
     #publish(): void {
         this.#internals.setFormValue(this.checked ? this.value : null);
 
-        const control = this.renderRoot.querySelector('input');
-
         if (this.error !== '') {
-            this.#internals.setValidity({ customError: true }, this.error, control ?? undefined);
+            this.#internals.setValidity({ customError: true }, this.error);
         } else if (this.required && !this.checked) {
             this.#internals.setValidity(
                 { valueMissing: true },
                 'Please tick this box if you want to proceed.',
-                control ?? undefined,
             );
         } else {
             this.#internals.setValidity({});
@@ -254,28 +283,57 @@ class UiToggle extends LitElement {
     }
 
     /**
-     * What the inner control announces itself as.
-     *
-     * An `<input type="checkbox">` announces `checkbox` on its own, so writing it here
-     * changes nothing — and writing it unconditionally is what lets {@link UiSwitch} change
-     * one word instead of restating the whole template.
+     * Published after every render, and after the first one too — Lit calls this on the
+     * initial update as well, which is why there is no `firstUpdated` beside it. A second
+     * call from there would be a statement no test could distinguish from its own absence.
      */
-    protected readonly controlRole: string = 'checkbox';
+    override updated(): void {
+        this.#publish();
+    }
+
+    /**
+     * What the inner control announces itself as, where the platform needs telling.
+     *
+     * Empty here, and the attribute is then omitted rather than written blank: an
+     * `<input type="checkbox">` already announces `checkbox`, and restating it would be
+     * this component overriding the platform with the platform. {@link UiSwitch} is the
+     * one that has something to add.
+     */
+    protected readonly controlRole: string = '';
+
+    /**
+     * Whether the control is drawn in the mixed state.
+     *
+     * A method rather than a field, because {@link UiCheckbox} answers it from a property
+     * and a field cannot be overridden by an accessor. It is bound into the template
+     * instead of written onto the control after render, which is what keeps this element
+     * free of a query whose null branch nothing could ever reach.
+     */
+    protected mixed(): boolean {
+        return false;
+    }
 
     /**
      * The listener, as a field rather than a method, which is this repository's shape for
      * one — `src/toast.ts` carries the same. What it delegates to is a method, so a
      * subclass can extend the mirroring without restating the binding.
+     *
+     * **The `change` is re-dispatched rather than left to bubble**, because it does not:
+     * `change` is one of the events the platform marks non-composed, so the one the inner
+     * control fires stops at the shadow boundary and a host listening on the tag would
+     * hear nothing. `input` needs no such help — it is composed, and arrives retargeted to
+     * this element on its own.
      */
     protected readonly changed = (event: Event): void => {
         this.sync(event.target as HTMLInputElement);
+        this.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
     /**
-     * Mirrors the platform's own state back into the properties it is reflected from.
+     * Mirrors the platform's own state back into the properties it came from.
      *
      * Read off the control rather than inverted from what was there: the platform is what
-     * just changed it, and asking is the only way to stay right about states this element
+     * just changed it, and asking is the only way to stay right about a state this element
      * did not decide.
      */
     protected sync(control: HTMLInputElement): void {
@@ -285,13 +343,12 @@ class UiToggle extends LitElement {
     /**
      * A form reset, which the platform calls and this element cannot see any other way.
      *
-     * `formResetCallback` and its two siblings are the whole of what moving the control
-     * into the shadow root costs: a native control in a `<form>` is reset, disabled and
-     * restored by the form itself, and one this element owns is this element's to answer
-     * for.
+     * The content attribute is what it returns to, which is exactly `defaultChecked` on a
+     * native control — and it stays a usable default only because `checked` is not
+     * reflected onto it.
      */
     formResetCallback(): void {
-        this.checked = this.#initial;
+        this.checked = this.hasAttribute('checked');
     }
 
     /** A `<fieldset disabled>` above this element, which reaches it and nothing below. */
@@ -314,24 +371,31 @@ class UiToggle extends LitElement {
         return this.#internals.validity;
     }
 
+    /** The message a form would report for it, empty while the control is valid. */
+    get validationMessage(): string {
+        return this.#internals.validationMessage;
+    }
+
     override render(): TemplateResult {
         return html`
             <label part="label">
                 <input
                     type="checkbox"
                     part="box"
-                    role=${this.controlRole}
+                    role=${this.controlRole === '' ? nothing : this.controlRole}
                     .checked=${this.checked}
+                    .indeterminate=${this.mixed()}
                     ?disabled=${this.disabled}
                     ?required=${this.required}
-                    aria-describedby=${this.error === '' ? '' : 'error'}
+                    aria-invalid=${this.error === '' ? nothing : 'true'}
+                    aria-describedby=${this.error === '' ? nothing : 'error'}
                     @change=${this.changed}
                 />
                 <span part="text"><slot name="label">${this.label}</slot></span>
             </label>
             ${
                 this.error === ''
-                    ? ''
+                    ? nothing
                     : html`<span class="error" id="error" part="error">${this.error}</span>`
             }
         `;
@@ -344,8 +408,7 @@ class UiToggle extends LitElement {
  * **The control is this element's**, which RFC 0005 decided and reversed an earlier rule to
  * do: the `<input>` and its `<label>` are rendered together in one shadow root, so `name`,
  * `checked`, `required` and `disabled` are properties here rather than attributes a host
- * writes on a control it supplies. The value reaches a submit through `ElementInternals`,
- * because an input inside a shadow root has no form owner.
+ * writes on a control it supplies.
  *
  * **The indeterminate state is drawn, and that is not a feature being added.**
  * `appearance: none` takes the platform's dash away with the rest of the drawing, so a
@@ -368,10 +431,16 @@ class UiToggle extends LitElement {
 export class UiCheckbox extends UiToggle {
     static override readonly properties = {
         ...UiToggle.properties,
-        indeterminate: { type: Boolean, reflect: true },
+        indeterminate: { type: Boolean },
     };
 
-    /** The mixed state, which the platform stopped drawing once `appearance` was removed. */
+    /**
+     * The mixed state, which the platform stopped drawing once `appearance` was removed.
+     *
+     * It takes an attribute where the platform offers none, which is this element having
+     * become the control rather than a box around one — and it is not reflected, for the
+     * reason `checked` is not.
+     */
     indeterminate = false;
 
     static override readonly styles: CSSResult[] = [
@@ -404,30 +473,31 @@ export class UiCheckbox extends UiToggle {
                 mask-position: center;
                 mask-repeat: no-repeat;
             }
+
+            /* The mixed state's forced-colors override lives here rather than beside the
+               checked one in the shared sheet, and the cascade is why: the rule above is
+               in a later sheet at equal specificity, so a Highlight declared back there
+               loses to the accent declared here — and the accent is exactly what forced
+               colors replaces with the surface, taking the state away for the reader who
+               turned the mode on to see it. Measured, as a test the shared block passed
+               for :checked and could not pass for this one. */
+            @media (forced-colors: active) {
+                input:indeterminate {
+                    background-color: Highlight;
+                    border-color: Highlight;
+                }
+            }
         `,
     ];
 
-    /**
-     * Puts the mixed state onto the control, which no attribute can carry.
-     *
-     * `indeterminate` is an IDL property with no content attribute, so the template cannot
-     * bind it and this is the only place it can be set. Written on every update rather
-     * than on change, because a host may set it at any time.
-     */
-    override updated(): void {
-        super.updated();
-
-        const control = this.renderRoot.querySelector('input');
-
-        if (control !== null) {
-            control.indeterminate = this.indeterminate;
-        }
+    protected override mixed(): boolean {
+        return this.indeterminate;
     }
 
     /**
      * A toggle answers the question the mixed state was asking, and the platform has
      * already cleared it on the control — so this reads it back rather than assuming.
-     * Without it `updated()` would put the mixed state straight back.
+     * Without it the next render would put the mixed state straight back.
      */
     protected override sync(control: HTMLInputElement): void {
         super.sync(control);
@@ -447,7 +517,7 @@ export class UiCheckbox extends UiToggle {
  * There is no native switch to delegate to: `<input type="checkbox" switch>` is
  * unsupported in the engine this suite measures, so the element is a checkbox with a role
  * and a drawing. A host who wants the mixed state wants {@link UiCheckbox} — `switch` has
- * no third value, so this element does not draw one.
+ * no third value, so this element does not draw one and offers no property for one.
  *
  * @example
  * ```html

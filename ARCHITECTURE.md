@@ -134,17 +134,25 @@ draws the mixed state it was never asked for, floors itself at 24×24, and names
 `forced-colors` block. That list is the price of the decision rather than a set of extras, and it is
 the reason a component takes the drawing over only where the alternative is worse.
 
-## ARIA association is light-DOM only
+## A relationship needs one tree scope
 
 Where a component wires an ARIA relationship between elements — a label to a control, help text to
-`aria-describedby` — every one of those elements is slotted, and none is rendered into the shadow
-root.
+`aria-describedby` — **every end of it is in one tree**, and which tree follows from who owns the
+elements.
 
-Not a preference. An IDREF does not cross a shadow boundary: a `<label for>` inside a component's
-shadow root leaves `control.labels` empty, and an `aria-describedby` pointing in resolves to nothing.
-Measured in the browser the suite runs in, both ways round. So a component that associates elements
-generates the ids and points them at each other, and leaves the elements in the host's tree where the
-browser can see them all.
+Not a preference. An IDREF is resolved _within_ a tree scope, and a shadow root is one of those: a
+`<label for>` inside a component's shadow root leaves a slotted `control.labels` empty, and an
+`aria-describedby` pointing in resolves to nothing. Measured in the browser the suite runs in, both
+ways round.
+
+**So two arrangements work and one does not.** Both ends in the host's tree, with the component
+generating the ids and pointing them at each other; or both ends in the component's, rendered
+together. What fails is one of each.
+
+This section used to say _ARIA association is light-DOM only_, which was the middle arrangement
+measured correctly and read too broadly: what strands a slotted control is the label staying
+outside, not the control being inside. RFC 0005 measured the other shapes and moved the drawn
+boolean controls to the second arrangement.
 
 **Where a component owns _both_ ends, the relationship goes inside**, and `<ui-menu>` is the one
 that does. A menu button's `aria-haspopup`, `aria-expanded` and `aria-controls` all point from a
@@ -153,6 +161,15 @@ IDREF resolves, and a consumer has nothing to miswire. That is not an exception 
 but the same rule read forwards: the elements in a relationship must be in one tree, and which tree
 follows from who owns them. The menu's _items_ stay slotted, because they are the host's controls
 and what binds them is containment rather than a name.
+
+**`<ui-checkbox>` and `<ui-switch>` are the second arrangement in full**, and they are what
+reversed the reading above. Each renders a real `<input type="checkbox">` inside a real `<label>`
+in its own shadow root, so there is no IDREF to strand — a label that _contains_ its control needs
+none — and the toggle, <kbd>Space</kbd>, the click target over the text and the rule that a link
+inside a label follows the link all stay the platform's. What moved is form participation, not
+accessibility: an `<input>` in a shadow root has no form owner, so the element joins the form
+itself through `ElementInternals` and answers for the value, the validity and the three form
+lifecycle callbacks.
 
 **Containment is the one relationship that does cross, and `<ui-toaster>` is what made the
 distinction concrete.** An IDREF is resolved inside a tree scope, which is exactly what a shadow root
@@ -175,6 +192,12 @@ concrete. A styled text field is the obvious candidate for rendering the `<input
 root — and measured there, in this repository's own suite, it is an axe `label` violation at
 critical impact with an `aria-describedby` that dangles. So the control is the host's own element,
 slotted in, and the component is a box around it.
+
+**That measurement holds and its conclusion did not**, which is the correction the first
+arrangement above records: the label was left in the host's tree, so it was one end of each. With
+both ends rendered together it is clean. `<ui-input>`, `<ui-textarea>` and `<ui-select>` still take
+a control you write — RFC 0005 decided they move and has not yet been rolled out to them — and
+`<ui-field>`, which exists to point scattered ends at each other, goes when the last of them does.
 
 That cost bought three things back. Attributes are the platform's, so there is no pass-through list
 to fall out of step with `type`, `inputmode` or whatever comes next; the control is directly
