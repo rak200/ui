@@ -901,6 +901,20 @@ option.
    becomes the component's own, so `:host([checked])` reaches it and the `::slotted(input:checked)`
    constraint that forced `mask-composite: exclude` is gone. Verify against `forced-colors`, which
    the mask also serves.
+
+   > **Done, and half of that prediction was wrong.** The `::slotted` constraint did go and every
+   > rule reads `input:checked` directly — but **`:host([checked])` is not what reaches it, and
+   > deliberately not**: a native checkbox's `checked` IDL attribute does not reflect either,
+   > because the content attribute is the _default_ a reset returns to. A host reads the live state
+   > through `::part(box):checked`. The mask stayed, because it was never about how the state is
+   > read: a `data:` URI freezes the mark's colour whoever owns the control.
+   >
+   > The `forced-colors` verification is what earned its place. The mixed state's override was
+   > declared in the shared sheet and lost to the accent declared in `UiCheckbox`'s later one at
+   > equal specificity — so the state disappeared under exactly the mode the block exists for. It
+   > was invisible to the old suite, which had no mixed-state assertion under `forced-colors` to
+   > make.
+
 2. **`ui-input`, `ui-textarea` and `ui-select` to variant F.** `<option>` stays slotted content.
 3. **Rehome what `<ui-field>` carries, then remove it.** The vertical rhythm between label, control
    and help is its stylesheet; the error colour is a token `ui-radio-group` retargets through three
@@ -910,6 +924,12 @@ option.
    and it is the document a consumer reads. It should say what the six variants showed: that every
    end of a relationship must share a tree scope, that there are two consistent ways to arrange
    that, and that the middle one is what was measured when the rule was first written.
+
+   > **Brought forward to step 1**, because a rule cannot stay in the consumer-facing document
+   > while two shipped components contradict it. The section is now _A relationship needs one tree
+   > scope_ and states both arrangements. What is left for this step is pruning the transitional
+   > half — which components still take the other arrangement, and why — once there are none.
+
 5. **`ui-radio` and `ui-radio-group`** — only after #122.
 
 Below `1.0.0` a break is a minor, so the versioning cost is low. Whether both call-site shapes
