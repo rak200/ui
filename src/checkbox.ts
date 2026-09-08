@@ -196,6 +196,10 @@ const toggle = css`
  * perform directly, and a re-dispatch of `change`, which is non-composed. **None of it is
  * accessibility** — the role, the checked state, the tab stop and what `disabled` does to
  * it are all still the platform's, because the control really is one.
+ *
+ * The same object pays the other half, which is a cost of the control being *in here*
+ * rather than of the form: two states a host stylesheet could no longer see. See
+ * {@link UiToggle.expose}.
  */
 class UiToggle extends LitElement {
     static readonly formAssociated = true;

@@ -19,8 +19,8 @@ import '@rak200/ui';
 - [In error](#in-error)
 - [The mixed state](#the-mixed-state)
 - [Events](#events)
-- [Selecting on state](#selecting-on-state)
 - [Interaction states](#interaction-states)
+- [Selecting on state](#selecting-on-state)
 - [Styling](#styling)
 
 ## `<ui-checkbox>`
@@ -213,7 +213,7 @@ ui-checkbox:state(checked) {
 ui-checkbox:state(indeterminate) {
   opacity: 0.8;
 }
-ui-switch:invalid {
+ui-checkbox:invalid {
   outline: 1px dashed red;
 }
 ```
