@@ -244,6 +244,15 @@ describe('the control and its label, in one tree scope', () => {
         );
     });
 
+    it('starts with nothing to say, which is the host not having said it', async () => {
+        const form = await mount('<ui-checkbox checked></ui-checkbox>');
+
+        expect(part(toggle(form), 'text').textContent, 'no label').toBe('');
+        // And no name, so nothing is submitted however the box is set: a form names the
+        // entry from the content attribute, and there is not one to name it from.
+        expect([...new FormData(form)]).toEqual([]);
+    });
+
     it('hugs its content rather than filling the line', async () => {
         const form = await mount(fixture);
 
@@ -440,6 +449,13 @@ describe('the validity', () => {
         expect(box(toggle(form)).hasAttribute('aria-describedby'), 'nothing to point at').toBe(
             false,
         );
+        expect(box(toggle(form)).hasAttribute('aria-invalid'), 'and nothing wrong').toBe(false);
+        // Not an empty one, which would be a described-by target with no text and a red
+        // boundary waiting on a selector.
+        expect(
+            toggle(form).shadowRoot?.querySelector('[part="error"]'),
+            'and no message at all',
+        ).toBeNull();
 
         toggle(form).error = 'The terms have to be accepted.';
         await toggle(form).updateComplete;
@@ -773,7 +789,7 @@ describe('ui-switch', () => {
         // The property is a checkbox's and this element does not answer it, so the control
         // it renders is never in the mixed state — read rather than asserted against the
         // stylesheet's text, which does name `:indeterminate` in the forced-colors block.
-        expect(box(toggle(form)).indeterminate).toBe(false);
+        expect(box(toggle(form)).indeterminate, 'the control is never mixed').toBe(false);
         expect('indeterminate' in toggle(form), 'and no property invites one').toBe(false);
     });
 });

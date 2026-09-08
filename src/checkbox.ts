@@ -302,18 +302,6 @@ class UiToggle extends LitElement {
     protected readonly controlRole: string = '';
 
     /**
-     * Whether the control is drawn in the mixed state.
-     *
-     * A method rather than a field, because {@link UiCheckbox} answers it from a property
-     * and a field cannot be overridden by an accessor. It is bound into the template
-     * instead of written onto the control after render, which is what keeps this element
-     * free of a query whose null branch nothing could ever reach.
-     */
-    protected mixed(): boolean {
-        return false;
-    }
-
-    /**
      * The listener, as a field rather than a method, which is this repository's shape for
      * one — `src/toast.ts` carries the same. What it delegates to is a method, so a
      * subclass can extend the mirroring without restating the binding.
@@ -377,6 +365,23 @@ class UiToggle extends LitElement {
     }
 
     override render(): TemplateResult {
+        return this.template(false);
+    }
+
+    /**
+     * The whole drawing, with the one thing the two elements disagree on passed in.
+     *
+     * **A parameter rather than an overridable hook**, and the difference is one the
+     * mutation floor found: a hook returning `false` is indistinguishable from a hook
+     * returning nothing, because `input.indeterminate` coerces `undefined` to `false` — so
+     * no test could tell the base implementation from its own absence. Passed at the call
+     * site it is a value, and `<ui-switch>` reading back an unmixed control is what checks
+     * it.
+     *
+     * The mixed state is bound rather than written onto the control after render, which is
+     * what keeps this element free of a query whose null branch nothing could reach.
+     */
+    protected template(mixed: boolean): TemplateResult {
         return html`
             <label part="label">
                 <input
@@ -384,7 +389,7 @@ class UiToggle extends LitElement {
                     part="box"
                     role=${this.controlRole === '' ? nothing : this.controlRole}
                     .checked=${this.checked}
-                    .indeterminate=${this.mixed()}
+                    .indeterminate=${mixed}
                     ?disabled=${this.disabled}
                     ?required=${this.required}
                     aria-invalid=${this.error === '' ? nothing : 'true'}
@@ -490,8 +495,8 @@ export class UiCheckbox extends UiToggle {
         `,
     ];
 
-    protected override mixed(): boolean {
-        return this.indeterminate;
+    override render(): TemplateResult {
+        return this.template(this.indeterminate);
     }
 
     /**
