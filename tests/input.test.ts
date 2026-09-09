@@ -151,6 +151,18 @@ describe('the control and its frame, in one tree scope', () => {
         expect(field(form).shadowRoot?.querySelector('[part="error"]')).toBeNull();
     });
 
+    it('starts as a text field with nothing written on it', async () => {
+        const form = await mount('<ui-input></ui-input>');
+        const element = field(form) as UiInput;
+
+        expect(element.label, 'no label until a host writes one').toBe('');
+        expect(part(element, 'label').textContent).toBe('');
+        // `type=""` is not an empty type: the platform reads any unknown value as text, so
+        // the control cannot show the difference and the property is where it is visible.
+        expect(element.type, 'the type a host did not name').toBe('text');
+        expect(box(element).getAttribute('type')).toBe('text');
+    });
+
     it('writes no attribute it was given nothing for', async () => {
         // An empty attribute is not a neutral one, which is the whole reason for the rule:
         // `pattern=""` is the empty expression and matches only the empty string, so a
@@ -207,6 +219,36 @@ describe('the control and its frame, in one tree scope', () => {
         // The content attribute is the *default* a reset returns to, and one that followed
         // every keystroke would make the default whatever was last typed.
         expect(element.hasAttribute('value'), 'value is the default, not the state').toBe(false);
+    });
+
+    it('reflects the pass-through set too, which is what makes it a declared API', async () => {
+        // Written as properties on purpose. An attribute reaches its property without any
+        // reflection at all, so a test that only writes markup passes on a component that
+        // reflects nothing — and what a host reads back, and what a stylesheet selects on,
+        // is the attribute.
+        const form = await mount(fixture);
+        const element = field(form) as UiInput;
+
+        element.type = 'number';
+        element.autocomplete = 'off';
+        element.inputmode = 'decimal';
+        element.pattern = '[0-9]*';
+        element.minlength = '1';
+        element.maxlength = '4';
+        element.min = '10';
+        element.max = '20';
+        element.step = '5';
+        await element.updateComplete;
+
+        expect(element.getAttribute('type')).toBe('number');
+        expect(element.getAttribute('autocomplete')).toBe('off');
+        expect(element.getAttribute('inputmode')).toBe('decimal');
+        expect(element.getAttribute('pattern')).toBe('[0-9]*');
+        expect(element.getAttribute('minlength')).toBe('1');
+        expect(element.getAttribute('maxlength')).toBe('4');
+        expect(element.getAttribute('min')).toBe('10');
+        expect(element.getAttribute('max')).toBe('20');
+        expect(element.getAttribute('step')).toBe('5');
     });
 
     it('fills the line it is given', async () => {
@@ -409,6 +451,19 @@ describe('the validity', () => {
         expect(form.reportValidity()).toBe(false);
         expect(document.activeElement).toBe(field(form));
         expect(field(form).shadowRoot?.activeElement).toBe(box(field(form)));
+
+        // And the plain call, which is the half `reportValidity()` does not measure: the
+        // browser focuses the anchor `setValidity` was given whether or not focus is
+        // delegated, so only `focus()` on the host tells the two apart. Without the
+        // delegation it lands on nothing, because the host is not a focusable element.
+        box(field(form)).blur();
+
+        expect(document.activeElement, 'the focus is off it').not.toBe(field(form));
+
+        field(form).focus();
+
+        expect(document.activeElement, 'and back on it by hand').toBe(field(form));
+        expect(field(form).shadowRoot?.activeElement).toBe(box(field(form)));
     });
 });
 
@@ -437,9 +492,32 @@ describe('every visual decision a control paints is a token', () => {
         expect(styles.backgroundColor, '--ui-color-surface').toBe('rgb(1, 2, 3)');
         expect(styles.color, '--ui-color-text').toBe('rgb(4, 5, 6)');
         expect(styles.fontFamily, '--ui-font').toBe('Courier');
-        expect(getComputedStyle(part(element, 'label')).color, 'the label too').toBe(
-            'rgb(4, 5, 6)',
+
+        const label = getComputedStyle(part(element, 'label'));
+
+        expect(label.color, 'the label too').toBe('rgb(4, 5, 6)');
+        // The label has no family of its own, so this is `:host`'s rule and only that one.
+        expect(label.fontFamily, 'and the family it inherits').toBe('Courier');
+    });
+
+    it('keeps the control on the token when the host writes a family of its own', async () => {
+        // `:host` sets the family and the control's `font: inherit` would carry it down on
+        // its own — so the control's *own* declaration only shows up where the two
+        // disagree, which is a host writing `font-family` on the element. Without it the
+        // control follows that instead of the token, and a kit stops being one thing.
+        const form = await mount(fixture);
+        const element = field(form);
+
+        element.style.setProperty('--ui-font', 'Courier');
+        element.style.fontFamily = 'Georgia';
+
+        expect(getComputedStyle(box(element)).fontFamily, 'the control keeps the token').toBe(
+            'Courier',
         );
+        expect(
+            getComputedStyle(part(element, 'label')).fontFamily,
+            'and the label follows the host',
+        ).toBe('Georgia');
     });
 
     it('takes the boundary from the host', async () => {
@@ -569,6 +647,13 @@ describe('ui-textarea', () => {
         const bare = await mount(fixture);
 
         expect(box(field(bare)).hasAttribute('rows')).toBe(false);
+
+        const element = field(form) as UiTextarea;
+
+        element.rows = '3';
+        await element.updateComplete;
+
+        expect(element.getAttribute('rows'), 'and reflects it, for a host reading back').toBe('3');
     });
 
     it('submits and validates the same way', async () => {

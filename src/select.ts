@@ -25,6 +25,10 @@ const clearance = css`calc(${reference('--ui-space')} * 2 + ${arm} * 2)`;
  * **Private to this file**, and a mechanism rather than an API: a host listens to
  * `<ui-select>`, never to this.
  */
+// Stryker disable next-line StringLiteral: both ends of this event read the constant —
+// the declaration dispatches it and the select listens for it — so a different name, the
+// empty string included, still meets itself. Nothing outside this module names it, which
+// is what makes the mutant provably equivalent rather than merely uncaught.
 const announcement = 'ui-option-changed';
 
 /**
@@ -321,6 +325,10 @@ export class UiSelect extends LitElement {
         help: { type: String, reflect: true },
         error: { type: String, reflect: true },
         name: { type: String, reflect: true },
+        // Stryker disable next-line ObjectLiteral: `{}` is what Lit's default converter
+        // already does for a string — `type` only switches the converter for Boolean,
+        // Number, Object and Array — and `reflect` defaults to false either way. The
+        // declaration is written out to say which of the two `value` is, not to change it.
         value: { type: String },
         required: { type: Boolean, reflect: true },
         disabled: { type: Boolean, reflect: true },
@@ -379,12 +387,13 @@ export class UiSelect extends LitElement {
 
         // The half a slot cannot report: a property write on a choice. It reaches here by
         // bubbling, because the choices are this element's own light-DOM children.
+        //
+        // There is deliberately no removal in `disconnectedCallback`. A listener an
+        // element holds on *itself* cannot outlive it, so there is nothing to leak — and
+        // `#redraw` is one stable reference, so re-adding it on a reconnect is discarded
+        // by `addEventListener` rather than doubled. The override that removed it was
+        // three statements no test could tell apart from their absence.
         this.addEventListener(announcement, this.#redraw);
-    }
-
-    override disconnectedCallback(): void {
-        this.removeEventListener(announcement, this.#redraw);
-        super.disconnectedCallback();
     }
 
     /** Every choice a host declared, groups included, in the order they were written. */

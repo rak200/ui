@@ -144,6 +144,74 @@ describe('the control and its frame, in one tree scope', () => {
 
         expect(form.querySelector('select'), 'nothing in the light DOM').toBeNull();
         expect(box(select(form)).tagName).toBe('SELECT');
+        expect(box(select(form)).getAttribute('name'), 'and the name reaches it').toBe('currency');
+    });
+
+    it('starts with nothing written on it, which no fixture here ever shows', async () => {
+        const form = await mount('<ui-select></ui-select>');
+        const element = select(form);
+
+        expect(element.label, 'no label until a host writes one').toBe('');
+        expect(part(element, 'label').textContent).toBe('');
+        // An empty name writes no attribute rather than an empty one, the way every
+        // optional attribute in this package does.
+        expect(element.name).toBe('');
+        expect(box(element).hasAttribute('name'), 'and none on the control').toBe(false);
+        // Empty means *the declared default* rather than nothing, so the property starts
+        // empty however the choices below it are marked.
+        expect(element.value).toBe('');
+        expect(element.required).toBe(false);
+        expect(box(element).required, 'nothing a host did not ask for').toBe(false);
+        expect(element.multiple).toBe(false);
+        expect(box(element).multiple).toBe(false);
+    });
+
+    it('renders the two supporting texts only when it has them', async () => {
+        const form = await mount(fixture);
+        const element = select(form);
+
+        expect(element.renderRoot.querySelector('.help'), 'nothing to say').toBeNull();
+        expect(element.renderRoot.querySelector('.error')).toBeNull();
+
+        element.help = 'Pick one.';
+        element.error = 'Pick a currency.';
+        await element.updateComplete;
+
+        expect(part(element, 'help').textContent).toBe('Pick one.');
+        expect(part(element, 'error').textContent).toBe('Pick a currency.');
+
+        element.help = '';
+        element.error = '';
+        await element.updateComplete;
+
+        expect(element.renderRoot.querySelector('.help'), 'and gone again').toBeNull();
+        expect(element.renderRoot.querySelector('.error')).toBeNull();
+    });
+
+    it('reflects what a host would style or read back, and not the choice in force', async () => {
+        const form = await mount(fixture);
+        const element = select(form);
+
+        element.label = 'Money';
+        element.help = 'Pick one.';
+        element.error = 'Nope.';
+        element.name = 'money';
+        element.value = 'usd';
+        element.required = true;
+        element.disabled = true;
+        element.multiple = true;
+        await element.updateComplete;
+
+        expect(element.getAttribute('label')).toBe('Money');
+        expect(element.getAttribute('help')).toBe('Pick one.');
+        expect(element.getAttribute('error')).toBe('Nope.');
+        expect(element.getAttribute('name')).toBe('money');
+        expect(element.hasAttribute('required')).toBe(true);
+        expect(element.hasAttribute('disabled')).toBe(true);
+        expect(element.hasAttribute('multiple')).toBe(true);
+        // The choice in force is state rather than a default, the way a native control's
+        // `value` IDL attribute is — so a reset has somewhere to return to.
+        expect(element.hasAttribute('value'), 'value is the state, not the default').toBe(false);
     });
 
     it('names it with a label that points at it, which resolves in the same root', async () => {
@@ -253,6 +321,46 @@ describe('the choices', () => {
         expect(control.options.length, 'the group is not an option').toBe(2);
     });
 
+    it('reflect what a host writes, so a stylesheet and a reader both see it', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <ui-optgroup label="Americas">
+                    <ui-option value="brl">Real</ui-option>
+                </ui-optgroup>
+            </ui-select>
+        `);
+        const option = choice(select(form), 'brl');
+        const group = select(form).querySelector('ui-optgroup');
+
+        if (group === null) {
+            throw new Error('no group in the fixture');
+        }
+
+        option.value = 'usd';
+        option.selected = true;
+        option.disabled = true;
+        group.label = 'Europe';
+        group.disabled = true;
+        await settled(select(form));
+
+        expect(option.getAttribute('value')).toBe('usd');
+        expect(option.hasAttribute('selected')).toBe(true);
+        expect(option.hasAttribute('disabled')).toBe(true);
+        expect(group.getAttribute('label')).toBe('Europe');
+        expect(group.hasAttribute('disabled')).toBe(true);
+    });
+
+    it('start empty, so an undeclared choice declares nothing', () => {
+        const option = document.createElement('ui-option');
+        const group = document.createElement('ui-optgroup');
+
+        expect(option.value).toBe('');
+        expect(option.selected).toBe(false);
+        expect(option.disabled).toBe(false);
+        expect(group.label).toBe('');
+        expect(group.disabled, 'a group nobody disabled').toBe(false);
+    });
+
     it('report arriving and leaving through the slot they sit in', async () => {
         const form = await mount(fixture);
 
@@ -293,6 +401,14 @@ describe('the choices', () => {
         `);
 
         expect([...box(select(form)).options].map((option) => option.value)).toEqual(['brl']);
+
+        // Not an empty option and not a stray string either: the fallback draws nothing,
+        // so the control has no text of its own between the options.
+        const loose = [...box(select(form)).childNodes]
+            .filter((node) => node.nodeType === Node.TEXT_NODE)
+            .map((node) => node.textContent?.trim() ?? '');
+
+        expect(loose.join(''), 'nothing drawn for what is not a choice').toBe('');
     });
 
     it('report it from inside a group too, which the top-level slot cannot see', async () => {
@@ -370,6 +486,9 @@ describe('the form, which the element joins in the place of the control', () => 
         await select(form).updateComplete;
 
         expect(box(select(form)).value).toBe('usd');
+        // Empty rather than 'usd': the property means *the declared default*, and a reset
+        // that wrote the resolved choice back would freeze it against a later declaration.
+        expect(select(form).value, 'and the property is empty again').toBe('');
     });
 
     it('follows a fieldset that disables it', async () => {
@@ -395,6 +514,7 @@ describe('the form, which the element joins in the place of the control', () => 
         await select(form).updateComplete;
 
         expect(box(select(form)).value, 'back to the declared default').toBe('brl');
+        expect(select(form).value, 'by emptying the property, not by naming a choice').toBe('');
     });
 
     it('mirrors a choice made by hand, and re-dispatches the change', async () => {
@@ -456,6 +576,19 @@ describe('the validity', () => {
 
         expect(form.reportValidity()).toBe(false);
         expect(document.activeElement).toBe(select(form));
+        expect(select(form).shadowRoot?.activeElement).toBe(box(select(form)));
+
+        // And the plain call, which is the half `reportValidity()` does not measure: the
+        // browser focuses the anchor `setValidity` was given whether or not focus is
+        // delegated, so only `focus()` on the host tells the two apart. Without the
+        // delegation it lands on nothing, because the host is not a focusable element.
+        box(select(form)).blur();
+
+        expect(document.activeElement, 'the focus is off it').not.toBe(select(form));
+
+        select(form).focus();
+
+        expect(document.activeElement, 'and back on it by hand').toBe(select(form));
         expect(select(form).shadowRoot?.activeElement).toBe(box(select(form)));
     });
 });
@@ -565,6 +698,20 @@ describe('the caret', () => {
         expect(getComputedStyle(box(select(form))).paddingInlineEnd).toBe('35px');
     });
 
+    it('sits at the end, one space in, with the second triangle beside it', async () => {
+        const form = await mount(fixture);
+        select(form).style.setProperty('--ui-space', '10px');
+
+        // Two gradients, so two positions: the far triangle a space plus an arm from the
+        // edge, the near one a space. An arm is three quarters of a space, which is 7.5px
+        // here — and the pair is what the padding above leaves room for. The engine
+        // resolves the edge-offset form into a percentage and a calc, which is what a
+        // computed background-position is.
+        expect(getComputedStyle(box(select(form))).backgroundPosition).toBe(
+            'calc(100% - 17.5px) 50%, calc(100% - 10px) 50%',
+        );
+    });
+
     it('follows the control to the other side under rtl', async () => {
         const form = await mount(fixture);
         const ltr = getComputedStyle(box(select(form))).backgroundPosition;
@@ -586,6 +733,67 @@ describe('the caret', () => {
 
         expect(box(select(form)).multiple).toBe(true);
         expect(getComputedStyle(box(select(form))).backgroundImage).toBe('none');
+    });
+});
+
+/**
+ * *Every visual decision is a token* is a promise a component can quietly stop keeping.
+ *
+ * The assertion is the host's own act: declare the property above the component and read
+ * what it rendered. A hardcoded value fails it, and so does a reference that stopped being
+ * one — an invalid `var()` drops the whole declaration.
+ */
+describe('every visual decision it paints is a token', () => {
+    it('paints the boundary and the two supporting texts from their own tokens', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" help="How." error="Nope.">
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+        const element = select(form);
+        withoutMotion(element);
+
+        element.style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-text-supporting', '19px');
+        element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
+
+        // Read off the control's own aria-invalid rather than a reflected attribute on the
+        // host, which is the trap `ui-checkbox` measured: an empty string reflects as an
+        // empty attribute, and an attribute-presence selector matches every element.
+        expect(getComputedStyle(box(element)).borderTopColor, '--ui-color-danger').toBe(
+            'rgb(1, 2, 3)',
+        );
+
+        const message = getComputedStyle(part(element, 'error'));
+        const help = getComputedStyle(part(element, 'help'));
+
+        expect(message.color, '--ui-color-danger').toBe('rgb(1, 2, 3)');
+        expect(message.fontSize, '--ui-text-supporting').toBe('19px');
+        expect(help.color, '--ui-color-text').toBe('rgb(4, 5, 6)');
+        expect(help.fontSize, '--ui-text-supporting').toBe('19px');
+    });
+
+    it('takes the label colour from the host, and mutes it while unavailable', async () => {
+        const form = await mount(fixture);
+
+        select(form).style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
+
+        expect(getComputedStyle(part(select(form), 'label')).color, '--ui-color-text').toBe(
+            'rgb(4, 5, 6)',
+        );
+
+        const off = await mount(`
+            <ui-select label="C" name="c" disabled>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        select(off).style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(part(select(off), 'label')).color, '--ui-color-text-muted').toBe(
+            'rgb(1, 2, 3)',
+        );
+        expect(getComputedStyle(box(select(off))).opacity).toBe('0.5');
     });
 });
 

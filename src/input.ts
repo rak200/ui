@@ -159,6 +159,10 @@ class UiTextField extends LitElement {
         help: { type: String, reflect: true },
         error: { type: String, reflect: true },
         name: { type: String, reflect: true },
+        // Stryker disable next-line ObjectLiteral: `{}` is what Lit's default converter
+        // already does for a string — `type` only switches the converter for Boolean,
+        // Number, Object and Array — and `reflect` defaults to false either way. The
+        // declaration is written out to say which of the two `value` is, not to change it.
         value: { type: String },
         placeholder: { type: String, reflect: true },
         autocomplete: { type: String, reflect: true },
