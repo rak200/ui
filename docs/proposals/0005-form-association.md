@@ -665,6 +665,18 @@ boundary.
 `<option>` stays slotted, and that is not an inconsistency: an option is content, not a control,
 and the same rule that keeps a card's header in the host's tree keeps it there.
 
+> **Wrong, and measured wrong during the rollout.** A `<slot>` inside a `<select>` assigns the nodes
+> and the select sees none of them — `options.length` `0`, `value` empty, `selectedIndex` `-1`, with
+> two options assigned — because `HTMLSelectElement.options` is built from the element's own
+> children rather than from the flattened tree. The sentence above was reasoning from what an option
+> _is_, and never checked what the platform _does_.
+>
+> Mirroring host-written `<option>`s into the rendered control was the obvious repair and it fails
+> on the case that matters most: `option.selected = true` is a property write, which no
+> `MutationObserver` reports, so the control never moved. The shape that works is `<ui-option>` and
+> `<ui-optgroup>` — declarations this package owns, whose properties are therefore reactive, and
+> from which the platform's own elements are built. It is the first element here that draws nothing.
+
 **There are two shapes for this group, and the difference is where the pair of ends lives.** Above
 is **F**, both ends in the component's shadow root. **G** puts both in the host's tree instead: the
 control stays slotted, and the component creates the label beside it.
@@ -916,6 +928,17 @@ option.
    > make.
 
 2. **`ui-input`, `ui-textarea` and `ui-select` to variant F.** `<option>` stays slotted content.
+
+   > **Done, and the second half of that sentence was wrong** — see the correction under _Group 2_.
+   > The choices could not stay slotted at all, and became `<ui-option>` and `<ui-optgroup>`.
+   >
+   > Two more results the step produced, both of which the next reader would otherwise rediscover:
+   > an **empty attribute is not a neutral one** — `pattern=""` is the empty expression and matches
+   > only the empty string, so an optional attribute is omitted rather than written blank — and
+   > **constraint validation does not have to be reimplemented**, because the rendered control still
+   > computes its own and `setValidity(control.validity, control.validationMessage, control)` hands
+   > the whole of it over, with the message the engine wrote.
+
 3. **Rehome what `<ui-field>` carries, then remove it.** The vertical rhythm between label, control
    and help is its stylesheet; the error colour is a token `ui-radio-group` retargets through three
    selectors it could not otherwise use. Both need a home first — this is S5, and it is the step

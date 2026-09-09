@@ -78,14 +78,15 @@ manage, so neither does this element.
 
 ## The controls are yours
 
-**You write each `<input type="radio">`, and they stay in the light DOM.** The same decision
-[`<ui-input>`](input.md) is made of, and forced by the same constraint: an ARIA relationship by
-IDREF does not cross a shadow boundary, and the group is named by one.
+**You write each `<input type="radio">`, and they stay in the light DOM.** This is now the only
+element in the package that asks for a control, and the reason it still does is that a group is
+named by **reference** — a `<label for>` reaches a labelable element and nothing else, so the name
+arrives as an `aria-labelledby` pointing at a label the host wrote.
 
-[`<ui-checkbox>`](checkbox.md) was made of it too and no longer is. What a relationship actually
-needs is for every end of it to share a tree scope, which a `<label>` wrapping its own control
-satisfies without an IDREF at all — so a drawn boolean control renders both ends together. A group
-is named by reference rather than by containment, so that arrangement does not reach it yet.
+Every other form control here moved: what a relationship actually needs is for every end of it to
+share a tree scope, and [`<ui-checkbox>`](checkbox.md), [`<ui-input>`](input.md) and
+[`<ui-select>`](select.md) render both ends together. The arrangement has not reached a group
+because containment is not what names one — see `ROADMAP.md`.
 
 Each option is named by the `<label>` around it — implicit association, so there is no `id` to
 write and no `for` to forget:

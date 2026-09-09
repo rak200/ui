@@ -1,12 +1,12 @@
 /**
  * `<ui-select>`, one story per thing a reader would go looking for.
  *
- * What the platform still refuses is in `docs/select.md`, which CI checks and a consumer
- * opens first. This file shows the component; it does not describe it.
+ * What each attribute does is in `docs/select.md`, which CI checks and a consumer opens
+ * first. This file shows the component; it does not describe it.
  *
- * **Every story writes the native `<select>` and its options by hand**, and that is the
- * demonstration rather than boilerplate: the control is the host's, it stays in the light
- * DOM where the label can resolve against it, and its attributes are the platform's.
+ * **The choices are `<ui-option>` rather than `<option>`**, and that is measured rather
+ * than stylistic: a `<slot>` inside a `<select>` assigns the nodes and the select sees none
+ * of them, so the real `<option>` elements are built from these declarations.
  */
 
 // Two lines for one module, and the split is forced: `verbatimModuleSyntax` erases a
@@ -19,6 +19,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 interface SelectArgs {
     label: string;
     help: string;
+    error: string;
     disabled: boolean;
 }
 
@@ -26,133 +27,107 @@ const meta: Meta<SelectArgs> = {
     title: 'Components/ui-select',
 
     // `argTypes` carry control affordance, not documentation: a name and a control type,
-    // so the panel works and nothing more. A `description` here would start the second API
-    // surface this playground exists without.
+    // so the panel works and nothing more.
     argTypes: {
         label: { control: 'text' },
         help: { control: 'text' },
+        error: { control: 'text' },
         disabled: { control: 'boolean' },
     },
 
     args: {
         label: 'Currency',
-        help: 'Used for every amount on the invoice.',
+        help: '',
+        error: '',
         disabled: false,
     },
 
-    render: ({ label, help, disabled }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-select>
-                <select name="currency" ?disabled=${disabled}>
-                    <option value="brl">Real</option>
-                    <option value="usd">Dollar</option>
-                    <option value="eur">Euro</option>
-                </select>
-            </ui-select>
-            <span slot="help">${help}</span>
-        </ui-field>
+    render: ({ label, help, error, disabled }): TemplateResult => html`
+        <ui-select label=${label} help=${help} error=${error} name="currency" ?disabled=${disabled}>
+            <ui-option value="brl" selected>Real</ui-option>
+            <ui-option value="usd">Dollar</ui-option>
+            <ui-option value="eur">Euro</ui-option>
+        </ui-select>
     `,
 };
 
 export default meta;
 
-/** The ordinary case: a labelled drop-down with help under it. */
+/** The ordinary case: a labelled drop-down over a native control. */
 export const Select: StoryObj<SelectArgs> = {};
 
 /**
- * Beside a text field, which is the comparison this component has to survive.
+ * Beside a text field, which is what the shared box exists for.
  *
- * The two boxes are written in different files and `tests/select.test.ts` asserts they
- * agree — the boundary, the radius, the padding, the font and the focus ring. A kit whose
- * select does not line up with its input is a kit nobody trusts with a form.
+ * The two are drawn by different stylesheets on purpose — `src/select.ts` says why — and
+ * `tests/select.test.ts` compares them, so a drift shows up as a failure rather than as a
+ * control that stopped matching the one next to it.
  */
 export const BesideAnInput: StoryObj<SelectArgs> = {
-    render: (): TemplateResult => html`
+    render: ({ label }): TemplateResult => html`
         <div style="display: flex; flex-direction: column; gap: 1rem">
-            <ui-field>
-                <label slot="label">Amount</label>
-                <ui-input><input type="number" name="amount" placeholder="0,00" /></ui-input>
-            </ui-field>
-            <ui-field>
-                <label slot="label">Currency</label>
-                <ui-select>
-                    <select name="currency">
-                        <option value="brl">Real</option>
-                        <option value="usd">Dollar</option>
-                    </select>
-                </ui-select>
-            </ui-field>
+            <ui-input label="Amount" name="amount" placeholder="0,00"></ui-input>
+            <ui-select label=${label} name="currency">
+                <ui-option value="brl" selected>Real</ui-option>
+                <ui-option value="usd">Dollar</ui-option>
+            </ui-select>
         </div>
     `,
 };
 
-/**
- * In error, and nothing here says so twice.
- *
- * The red boundary is not set by this story or by the wrapper: `ui-field` marks the
- * control `aria-invalid` as part of the wiring it already owns, and the box reads that.
- */
-export const Invalid: StoryObj<SelectArgs> = {
+/** Choices under headings, which the platform draws inside the list it opens. */
+export const Grouped: StoryObj<SelectArgs> = {
     render: ({ label }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-select>
-                <select name="currency" required>
-                    <option value="">Choose one</option>
-                    <option value="brl">Real</option>
-                </select>
-            </ui-select>
-            <span slot="error">A currency is required.</span>
-        </ui-field>
+        <ui-select label=${label} name="currency" help="Grouped by where they are spent.">
+            <ui-optgroup label="Americas">
+                <ui-option value="brl" selected>Real</ui-option>
+                <ui-option value="usd">Dollar</ui-option>
+            </ui-optgroup>
+            <ui-optgroup label="Europe">
+                <ui-option value="eur">Euro</ui-option>
+                <ui-option value="gbp">Pound</ui-option>
+            </ui-optgroup>
+        </ui-select>
     `,
 };
 
-/** Refusing input, which for a select is the one way the platform has. */
+/** In error, from the one property that also reaches `setValidity`. */
+export const Invalid: StoryObj<SelectArgs> = {
+    args: { error: 'Pick a currency.' },
+};
+
+/** Unavailable, which the label follows rather than only the box. */
 export const Disabled: StoryObj<SelectArgs> = {
-    args: { disabled: true, help: 'Disabled — not submitted, not focusable.' },
+    args: { disabled: true },
 };
 
 /**
- * A list rather than a drop-down, which is what `multiple` makes it.
+ * A list rather than a drop-down, where the caret would point at nothing.
  *
- * The caret is guarded off here rather than drawn on a list it would point at nothing
- * from. The box stays, because the box is the part this component owns.
+ * The guard is a rule rather than a judgement call: `multiple` turns the control into a
+ * list box, and a chevron on a list is a promise of something to open.
  */
 export const Multiple: StoryObj<SelectArgs> = {
-    args: { label: 'Tags', help: 'Hold ctrl or cmd to pick more than one.' },
-    render: ({ label, help }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-select>
-                <select name="tags" multiple size="4">
-                    <option value="urgent">Urgent</option>
-                    <option value="billed">Billed</option>
-                    <option value="draft">Draft</option>
-                </select>
-            </ui-select>
-            <span slot="help">${help}</span>
-        </ui-field>
+    render: ({ label }): TemplateResult => html`
+        <ui-select label=${label} name="currency" multiple>
+            <ui-option value="brl" selected>Real</ui-option>
+            <ui-option value="usd">Dollar</ui-option>
+            <ui-option value="eur">Euro</ui-option>
+        </ui-select>
     `,
 };
 
 /**
- * Right to left, where the caret is the one thing that does not follow on its own.
+ * Right to left, where the caret follows the control rather than the page.
  *
- * `padding-inline-end` is logical and flips by itself; `background-position` has no
- * logical form, so the component mirrors it explicitly against the control's own
- * direction rather than the page's.
+ * `background-position` has no logical form, so it is the one physical thing in the
+ * stylesheet and it is mirrored explicitly.
  */
 export const RightToLeft: StoryObj<SelectArgs> = {
     render: (): TemplateResult => html`
-        <ui-field>
-            <label slot="label" dir="rtl">العملة</label>
-            <ui-select>
-                <select name="currency" dir="rtl">
-                    <option value="brl">ريال</option>
-                    <option value="usd">دولار</option>
-                </select>
-            </ui-select>
-        </ui-field>
+        <ui-select dir="rtl" label="عملة" name="currency">
+            <ui-option value="aed" selected>درهم</ui-option>
+            <ui-option value="sar">ريال</ui-option>
+        </ui-select>
     `,
 };

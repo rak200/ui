@@ -1,12 +1,12 @@
 /**
  * `<ui-input>` and `<ui-textarea>`, one story per thing a reader would go looking for.
  *
- * What the wrapper owns and what the control owns is in `docs/input.md`, which CI checks
- * and a consumer opens first. This file shows the components; it does not describe them.
+ * What each attribute does is in `docs/input.md`, which CI checks and a consumer opens
+ * first. This file shows the components; it does not describe them.
  *
- * **Every story writes the native control by hand**, and that is the demonstration rather
- * than boilerplate: the control is the host's, it stays in the light DOM where the label
- * and the description can resolve against it, and its attributes are the platform's.
+ * **No story writes a control, and none reaches for `<ui-field>`.** Both elements render
+ * their own control, their own label, their own help and their own message into one shadow
+ * root, which is what RFC 0005 decided.
  */
 
 // Two lines for one module, and the split is forced: `verbatimModuleSyntax` erases a
@@ -19,6 +19,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 interface InputArgs {
     label: string;
     help: string;
+    error: string;
     placeholder: string;
     disabled: boolean;
 }
@@ -32,6 +33,7 @@ const meta: Meta<InputArgs> = {
     argTypes: {
         label: { control: 'text' },
         help: { control: 'text' },
+        error: { control: 'text' },
         placeholder: { control: 'text' },
         disabled: { control: 'boolean' },
     },
@@ -39,86 +41,87 @@ const meta: Meta<InputArgs> = {
     args: {
         label: 'Amount',
         help: 'In BRL, two decimals.',
+        error: '',
         placeholder: '0,00',
         disabled: false,
     },
 
-    render: ({ label, help, placeholder, disabled }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-input>
-                <input type="text" name="amount" placeholder=${placeholder} ?disabled=${disabled} />
-            </ui-input>
-            <span slot="help">${help}</span>
-        </ui-field>
+    render: ({ label, help, error, placeholder, disabled }): TemplateResult => html`
+        <ui-input
+            label=${label}
+            help=${help}
+            error=${error}
+            placeholder=${placeholder}
+            name="amount"
+            ?disabled=${disabled}
+        ></ui-input>
     `,
 };
 
 export default meta;
 
-/** The ordinary case: a labelled text field with help under it. */
+/** The ordinary case, which is one tag and its attributes. */
 export const Text: StoryObj<InputArgs> = {};
 
-/** The same wiring around a `<textarea>`, which starts taller and resizes vertically. */
+/** The same box around a control that grows, which is the one rule that differs. */
 export const Multiline: StoryObj<InputArgs> = {
-    args: { label: 'Notes', help: 'Anything the invoice should carry.', placeholder: '' },
-    render: ({ label, help }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-textarea><textarea name="notes" rows="3"></textarea></ui-textarea>
-            <span slot="help">${help}</span>
-        </ui-field>
+    args: { label: 'Notes', help: '', placeholder: 'Anything worth remembering' },
+    render: ({ label, placeholder, disabled }): TemplateResult => html`
+        <ui-textarea
+            label=${label}
+            placeholder=${placeholder}
+            name="notes"
+            rows="4"
+            ?disabled=${disabled}
+        ></ui-textarea>
     `,
 };
 
 /**
- * In error, and nothing here says so twice.
+ * In error, and one property says it once.
  *
- * The red boundary is not set by this story or by the wrapper: `ui-field` marks the
- * control `aria-invalid` as part of the wiring it already owns, and the box reads that.
- * One source, and it is the one a screen reader is already using — so the message and the
- * border cannot disagree.
+ * The red boundary, the message under the control and the `aria-describedby` that ties
+ * them together all come from `error` — which is also what the element hands to
+ * `setValidity`, so a form cannot be submitted past a message the reader can see. The help
+ * text stays: it is usually the format requirement, which is the suggestion a reader needs
+ * in order to recover.
  */
 export const Invalid: StoryObj<InputArgs> = {
-    render: ({ label, help, placeholder }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-input><input type="text" name="amount" placeholder=${placeholder} /></ui-input>
-            <span slot="help">${help}</span>
-            <span slot="error">Amount is required.</span>
-        </ui-field>
+    args: { error: 'Amount is required.' },
+    render: ({ label, help, error, placeholder }): TemplateResult => html`
+        <ui-input
+            label=${label}
+            help=${help}
+            error=${error}
+            placeholder=${placeholder}
+            name="amount"
+            required
+        ></ui-input>
     `,
 };
 
-/** Refusing input, and refusing it in the two different ways the platform has. */
+/** Unavailable, which the label follows rather than only the box. */
 export const Disabled: StoryObj<InputArgs> = {
-    render: ({ label }): TemplateResult => html`
-        <div style="display: flex; flex-direction: column; gap: 1rem">
-            <ui-field>
-                <label slot="label">${label}</label>
-                <ui-input><input type="text" value="12,00" disabled /></ui-input>
-                <span slot="help">Disabled — not submitted, not focusable.</span>
-            </ui-field>
-            <ui-field>
-                <label slot="label">Reference</label>
-                <ui-input><input type="text" value="INV-2026-0031" readonly /></ui-input>
-                <span slot="help">Readonly — submitted, focusable, not editable.</span>
-            </ui-field>
-        </div>
-    `,
+    args: { disabled: true },
 };
 
 /**
- * A control with no field around it, which is why this is an element of its own.
+ * What the platform validates, handed to it rather than reimplemented.
  *
- * `ui-field` is form plumbing and not everything is a form: a search box in a toolbar
- * wants the styling and has no label, help or error to wire. It carries its accessible
- * name on the control, where the platform can already see it.
+ * `type`, `min` and `step` go to a real `<input>`, which computes its own validity and
+ * writes its own message — the element only passes the answer on.
  */
-export const Standalone: StoryObj<InputArgs> = {
-    render: (): TemplateResult => html`
+export const Constrained: StoryObj<InputArgs> = {
+    args: { label: 'Quantity', help: 'Ten or more, in fives.', placeholder: '' },
+    render: ({ label, help }): TemplateResult => html`
         <ui-input
-            ><input type="search" aria-label="Search invoices" placeholder="Search"
-        /></ui-input>
+            label=${label}
+            help=${help}
+            name="quantity"
+            type="number"
+            min="10"
+            step="5"
+            value="3"
+        ></ui-input>
     `,
 };

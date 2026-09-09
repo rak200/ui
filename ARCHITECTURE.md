@@ -188,28 +188,46 @@ because it names the control _and_ makes the label a click target for it, and a 
 where it cannot.
 
 **It binds the control itself, not only the text around it**, and `<ui-input>` is what made that
-concrete. A styled text field is the obvious candidate for rendering the `<input>` into a shadow
-root — and measured there, in this repository's own suite, it is an axe `label` violation at
-critical impact with an `aria-describedby` that dangles. So the control is the host's own element,
-slotted in, and the component is a box around it.
+concrete — twice, in opposite directions. A styled text field is the obvious candidate for
+rendering the `<input>` into a shadow root, and measured there it was an axe `label` violation at
+critical impact with an `aria-describedby` that dangled. The library was built on that measurement:
+the control stayed the host's own element, and the component was a box around it.
 
-**That measurement holds and its conclusion did not**, which is the correction the first
-arrangement above records: the label was left in the host's tree, so it was one end of each. With
-both ends rendered together it is clean. `<ui-input>`, `<ui-textarea>` and `<ui-select>` still take
-a control you write — RFC 0005 decided they move and has not yet been rolled out to them — and
-`<ui-field>`, which exists to point scattered ends at each other, goes when the last of them does.
+**The measurement holds; the conclusion drawn from it did not.** The label had been left in the
+host's tree, so it was one end on each side — the arrangement this section names as the one that
+fails. Rendered _together_ with the control, a `<label for>` and its `aria-describedby` resolve
+cleanly, in all three engines. Every form control here now owns both ends of its own relationship:
+`<ui-checkbox>`, `<ui-switch>`, `<ui-input>`, `<ui-textarea>` and `<ui-select>` render their
+control, their label, their help and their message into one shadow root, and a host writes the tag
+and its attributes.
 
-That cost bought three things back. Attributes are the platform's, so there is no pass-through list
-to fall out of step with `type`, `inputmode` or whatever comes next; the control is directly
-styleable, being the host's own element in the host's own tree; and **form participation stopped
-being a design question**. A native control inside a `<form>` reaches the submit because it is a
-native control inside a `<form>` — no `ElementInternals`, no value mirroring. The shape the
-accessibility rule forced is the shape that answered the open question.
+**What that costs is `ElementInternals`, and it is smaller than it looks.** A control in a shadow
+root has no form owner, so the element joins the form itself and answers for the value, the
+validity and the three form lifecycle callbacks. **Constraint validation is not reimplemented** —
+the rendered control is a real one, so it still computes its own `type="email"`, `min`, `pattern`
+and `required`, and the element hands the whole `ValidityState` over with the message the engine
+wrote. `change` is re-dispatched, being non-composed; `input` is not, being composed.
 
-The cost is a more verbose call site — `<label slot="label">Amount</label>` rather than
-`label="Amount"`, and `<ui-input><input /></ui-input>` rather than `<ui-input />`. ARIA element reflection (`ariaLabelledByElements`) would remove it and does cross
-the boundary, but its support cannot be verified by a suite that runs one engine, and this is the one
-place in the library where being wrong is invisible to everyone who can see.
+**The attribute pass-through is a declared API rather than a forwarding table.** Each element
+declares the attributes it accepts, and the objection this shape used to answer — _no pass-through
+list to fall out of step with `type`, `inputmode` or whatever comes next_ — is answered differently
+rather than dodged: the list is the component's interface, which is where a design system's
+attributes live anyway. A denylist that forwarded everything else was the alternative, and it is
+not stable in the way it looks: `id` would collide with the label's `for`, `style` would apply
+twice, and an `aria-describedby` written on the host would dangle across the very boundary this
+section is about.
+
+**One element could not take the shape, and that is measured too.** `<ui-select>`'s choices cannot
+be slotted `<option>`s: a `<slot>` inside a `<select>` assigns the nodes and the select sees none of
+them, because `HTMLSelectElement.options` is built from its own children rather than from the
+flattened tree. So the choices are `<ui-option>` and `<ui-optgroup>` — declarations that draw
+nothing, from which the platform's own elements are built. That is the first time this library has
+added an element to say something rather than to show something, and it was the platform's refusal
+that asked for it.
+
+**`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each other,
+and there are none left to point at except `<ui-radio-group>`'s, which waits on a decision of its
+own.
 
 ## Glyphs are adopted, the delivery is owned
 

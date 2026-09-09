@@ -29,21 +29,12 @@ npm install @rak200/ui
   import '@rak200/ui';
 </script>
 
-<ui-field>
-  <label slot="label">Amount</label>
-  <ui-input><input type="number" name="amount" /></ui-input>
-  <span slot="help">In BRL, two decimals.</span>
-</ui-field>
+<ui-input label="Amount" help="In BRL, two decimals." type="number" name="amount"></ui-input>
 
-<ui-field>
-  <label slot="label">Currency</label>
-  <ui-select>
-    <select name="currency">
-      <option value="brl">Real</option>
-      <option value="usd">Dollar</option>
-    </select>
-  </ui-select>
-</ui-field>
+<ui-select label="Currency" name="currency">
+  <ui-option value="brl">Real</ui-option>
+  <ui-option value="usd">Dollar</ui-option>
+</ui-select>
 
 <ui-switch label="Email notifications" name="notify" checked></ui-switch>
 
@@ -86,9 +77,10 @@ schemes rather than one.
 
 ## Status
 
-**v0.** Seventeen components — `<ui-button>`, `<ui-card>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
-`<ui-textarea>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-select>`, `<ui-radio-group>`, `<ui-radio>`,
-`<ui-tooltip>`, `<ui-toaster>`, `<ui-toast>`, `<ui-menu>`, `<ui-table>` and `<ui-icon>` — the token layer
+**v0.** Nineteen components — `<ui-button>`, `<ui-card>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
+`<ui-textarea>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-select>`, `<ui-option>`, `<ui-optgroup>`,
+`<ui-radio-group>`, `<ui-radio>`, `<ui-tooltip>`, `<ui-toaster>`, `<ui-toast>`, `<ui-menu>`,
+`<ui-table>` and `<ui-icon>` — the token layer
 under them, and an adopted glyph set, built to the ecosystem's full quality bar rather than
 sketched: type-checked at the strictest available setting, formatted, tested in a real browser and
 **asserted against axe** for WCAG A/AA, 100% coverage and **100% mutation score**, scanned, and
