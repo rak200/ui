@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/rak200/ui/compare/0.2.19...0.3.0) (2026-09-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **checkbox:** `<ui-checkbox>` and `<ui-switch>` no longer take a slotted `<input type="checkbox">` and no longer go inside `<ui-field>`. Write the tag and its attributes instead — `label`, `name`, `value`, `checked`, `indeterminate`, `disabled`, `required` and `error` — or fill the `label` slot where the name needs markup.
+
+### Features
+
+* **checkbox:** the toggle renders its own control and its own label ([#140](https://github.com/rak200/ui/issues/140)) ([8031cca](https://github.com/rak200/ui/commit/8031cca6a2ae47579e52d56f5352e34fc2a4c627))
+
 ## [0.2.19](https://github.com/rak200/ui/compare/0.2.18...0.2.19) (2026-09-06)
 
 
