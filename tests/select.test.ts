@@ -8,6 +8,7 @@ import { mountStory } from './stories.js';
 import meta, {
     BesideAnInput,
     Disabled,
+    Grouped,
     Invalid,
     Multiple,
     RightToLeft,
@@ -15,33 +16,29 @@ import meta, {
 } from '../stories/select.stories.js';
 import '../src/select.js';
 import '../src/input.js';
-import '../src/field.js';
-import type { UiSelect } from '../src/select.js';
+import type { UiOption, UiSelect } from '../src/select.js';
+import type { UiInput } from '../src/input.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
-    <ui-field>
-        <label slot="label">Currency</label>
-        <ui-select>
-            <select name="currency">
-                <option value="brl">Real</option>
-                <option value="usd">Dollar</option>
-            </select>
-        </ui-select>
-    </ui-field>
+    <ui-select label="Currency" name="currency">
+        <ui-option value="brl">Real</ui-option>
+        <ui-option value="usd">Dollar</ui-option>
+    </ui-select>
 `;
 
-/** Mounts a fixture inside a form and waits for the wiring to settle. */
+/** Mounts a fixture inside a form and waits for every declaration to settle. */
 async function mount(markup: string): Promise<HTMLFormElement> {
     const form = document.createElement('form');
     form.innerHTML = markup;
     document.body.append(form);
 
-    for (const element of form.querySelectorAll('ui-field, ui-select, ui-input')) {
+    for (const element of form.querySelectorAll('ui-option, ui-optgroup, ui-select, ui-input')) {
         await (element as UiSelect).updateComplete;
     }
 
-    // `ui-field` associates from a MutationObserver, which lands on a microtask.
+    // A declaration announces itself on its own first update, which lands after the
+    // select's — so the select renders a second time, on a microtask.
     await new Promise((resolve) => {
         setTimeout(resolve, 0);
     });
@@ -49,46 +46,67 @@ async function mount(markup: string): Promise<HTMLFormElement> {
     return form;
 }
 
-/** The wrapper, which is the component under test. */
-function wrapper(form: HTMLFormElement): UiSelect {
+/** The element under test. */
+function select(form: HTMLFormElement): UiSelect {
     const element = form.querySelector('ui-select');
 
     if (element === null) {
-        throw new Error('no wrapper in the fixture');
+        throw new Error('no select in the fixture');
     }
 
     return element;
 }
 
-/** The control the host wrote, which is the thing the wrapper is about. */
-function control(form: HTMLFormElement): HTMLSelectElement {
-    const element = form.querySelector('select');
+/** The rendered control, which is what every drawing assertion is about. */
+function box(element: UiSelect): HTMLSelectElement {
+    const control = element.renderRoot.querySelector('select');
 
-    if (element === null) {
-        throw new Error('no control in the fixture');
+    if (control === null) {
+        throw new Error('the select rendered no control');
     }
 
-    return element;
+    return control;
+}
+
+/** One of the exposed parts, which is how a host reaches anything in here. */
+function part(element: UiSelect | UiInput, name: string): HTMLElement {
+    const found = element.renderRoot.querySelector<HTMLElement>(`[part='${name}']`);
+
+    if (found === null) {
+        throw new Error(`no part named ${name}`);
+    }
+
+    return found;
+}
+
+/** One declaration the host wrote, which is what the control is built from. */
+function choice(element: UiSelect, value: string): UiOption {
+    const found = element.querySelector<UiOption>(`ui-option[value='${value}']`);
+
+    if (found === null) {
+        throw new Error(`no choice named ${value}`);
+    }
+
+    return found;
+}
+
+/** Waits out the render a declaration's own announcement schedules. */
+async function settled(element: UiSelect): Promise<void> {
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+
+    await element.updateComplete;
 }
 
 /**
  * Takes the motion out, flushed, so that a colour read is the destination rather than
  * whichever frame of a 150ms interpolation the read landed on.
- *
- * The flush is not optional and is not decoration: setting the duration and changing the
- * colour in one recalculation starts the transition under the duration that was in force
- * before it. `tests/checkbox.test.ts` shipped a read without this and it reached master as
- * a flake that passed one CI run and failed the next.
  */
-function withoutMotion(form: HTMLFormElement): void {
-    wrapper(form).style.setProperty('--ui-duration-state', '0s');
+function withoutMotion(element: UiSelect): void {
+    element.style.setProperty('--ui-duration-state', '0s');
 
-    expect(getComputedStyle(control(form)).transitionDuration, 'the motion is out').toBe('0s');
-}
-
-/** Waits out whatever is transitioning, for a change this file does not get to schedule. */
-async function settled(element: Element): Promise<void> {
-    await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
+    expect(getComputedStyle(box(element)).transitionDuration, 'the motion is out').toBe('0s');
 }
 
 /** The component's own stylesheet, as text, for the rules no rendering can show. */
@@ -96,12 +114,7 @@ function styleText(tag: string): string {
     return String((customElements.get(tag) as unknown as { styles: unknown }).styles);
 }
 
-/**
- * Moves the pointer out of the way, because nothing in the page can.
- *
- * Before as well as after: the pointer keeps its position across files, so a control left
- * under it matches `:hover` before its test has done anything.
- */
+/** Moves the pointer out of the way — see `checkbox.test.ts` for why nothing else can. */
 async function parkPointer(): Promise<void> {
     await cdp().send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
@@ -119,95 +132,499 @@ afterEach(async () => {
     document.body.replaceChildren();
 });
 
-describe('ui-select', () => {
-    it('registers itself as a custom element', () => {
+describe('the control and its frame, in one tree scope', () => {
+    it('registers all three elements', () => {
         expect(customElements.get('ui-select')).toBeDefined();
+        expect(customElements.get('ui-option')).toBeDefined();
+        expect(customElements.get('ui-optgroup')).toBeDefined();
     });
 
-    it('leaves the control in the light DOM, where a label can reach it', async () => {
+    it('renders the control, leaving the host nothing to write but the choices', async () => {
         const form = await mount(fixture);
 
-        expect(control(form).parentElement).toBe(wrapper(form));
-        expect(wrapper(form).shadowRoot?.querySelector('select')).toBeNull();
+        expect(form.querySelector('select'), 'nothing in the light DOM').toBeNull();
+        expect(box(select(form)).tagName).toBe('SELECT');
     });
 
-    it('lets the control reach a submit, because it never stopped being one', async () => {
+    it('names it with a label that points at it, which resolves in the same root', async () => {
         const form = await mount(fixture);
-        control(form).value = 'usd';
+        const label = part(select(form), 'label');
 
-        expect([...new FormData(form).entries()]).toEqual([['currency', 'usd']]);
+        expect(label.tagName).toBe('LABEL');
+        expect(box(select(form)).labels[0]).toBe(label);
+        expect(label.textContent).toBe('Currency');
     });
 
-    it('is labelled by the field around it, through the wrapper', async () => {
-        // The promise `ui-field` has been making since it shipped: its `#control()` looks
-        // for `input, textarea, select` inside the wrapper, and until this component
-        // existed the third name in that list was a claim nothing exercised.
+    it('describes it by the help, and by the message before it in error', async () => {
         const form = await mount(fixture);
-        const label = form.querySelector('label');
 
-        expect(label?.htmlFor).toBe(control(form).id);
-        expect(control(form).labels[0]).toBe(label);
+        expect(box(select(form)).hasAttribute('aria-describedby')).toBe(false);
+
+        select(form).help = 'Pick one.';
+        await select(form).updateComplete;
+
+        expect(box(select(form)).getAttribute('aria-describedby')).toBe('help');
+
+        select(form).error = 'Pick a currency.';
+        await select(form).updateComplete;
+
+        expect(box(select(form)).getAttribute('aria-describedby')).toBe('error help');
+        expect(box(select(form)).getAttribute('aria-invalid')).toBe('true');
     });
 
-    it('takes the platform drawing off, which is what makes the box possible', async () => {
+    it('draws nothing for the declarations themselves', async () => {
         const form = await mount(fixture);
 
-        expect(getComputedStyle(control(form)).appearance).toBe('none');
-    });
-
-    it('opens as a pointer rather than a caret', async () => {
-        const form = await mount(fixture);
-
-        expect(getComputedStyle(control(form)).cursor).toBe('pointer');
+        expect(choice(select(form), 'brl').getBoundingClientRect().height).toBe(0);
+        expect(getComputedStyle(choice(select(form), 'brl')).display).toBe('none');
     });
 
     it('fills the line it is given', async () => {
         const form = await mount(fixture);
 
-        expect(getComputedStyle(wrapper(form)).display).toBe('block');
-        expect(getComputedStyle(control(form)).inlineSize).toBe(
-            getComputedStyle(wrapper(form)).inlineSize,
+        expect(getComputedStyle(select(form)).display).toBe('block');
+        expect(getComputedStyle(box(select(form))).inlineSize).toBe(
+            getComputedStyle(select(form)).inlineSize,
         );
     });
+});
 
-    it('reads the error from the control, never from a second source', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Currency</label>
-                <ui-select><select required><option value="">Choose</option></select></ui-select>
-                <span slot="error">A currency is required.</span>
-            </ui-field>
-        `);
-
-        expect(control(form).getAttribute('aria-invalid'), 'ui-field wired it').toBe('true');
-
-        // `ui-field` sets the attribute from its observer, during mount, so the boundary is
-        // already transitioning by the time this runs and there is no earlier moment to
-        // take the motion out at.
-        await settled(control(form));
-
-        expect(getComputedStyle(control(form)).borderTopColor).toBe('rgb(185, 28, 28)');
-    });
-
-    it('takes the boundary from the host', async () => {
+/**
+ * The choices, which could not stay as `<option>`s.
+ *
+ * Measured before the shape was chosen: a `<slot>` inside a `<select>` assigns the nodes
+ * and the select sees none of them — `options.length` was `0` with two assigned, because
+ * `HTMLSelectElement.options` is built from its own children rather than the flattened
+ * tree. So the choices are declarations, and the platform's elements are built from them.
+ */
+describe('the choices', () => {
+    it('become the options the platform needs', async () => {
         const form = await mount(fixture);
-        withoutMotion(form);
-        wrapper(form).style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        const control = box(select(form));
 
-        expect(getComputedStyle(control(form)).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(
+            [...control.options].map((option) => `${option.value}:${option.text.trim()}`),
+        ).toEqual(['brl:Real', 'usd:Dollar']);
     });
 
-    it('refuses a pointer it will do nothing with', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Currency</label>
-                <ui-select><select disabled><option>Real</option></select></ui-select>
-            </ui-field>
+    it('start on the one declared selected, and on the first where none is', async () => {
+        const declared = await mount(`
+            <ui-select label="C" name="c">
+                <ui-option value="brl">Real</ui-option>
+                <ui-option value="usd" selected>Dollar</ui-option>
+            </ui-select>
         `);
-        const styles = getComputedStyle(control(form));
 
-        expect(styles.cursor).toBe('not-allowed');
-        expect(styles.opacity).toBe('0.5');
+        expect(box(select(declared)).value, 'the declared default').toBe('usd');
+
+        const bare = await mount(fixture);
+
+        // The platform's own rule, read off the declarations: a native select with no
+        // selected option in it lands on the first.
+        expect(box(select(bare)).value, 'the first, where none is declared').toBe('brl');
+    });
+
+    it('carry a change written as a property, which no observer could see', async () => {
+        // This is what decided the shape. A `<option>` the host wrote is somebody else's
+        // element, and `option.selected = true` is a property write that a MutationObserver
+        // does not report — measured, as a mirrored control that simply never moved. These
+        // are this package's own elements, so the property is reactive.
+        const form = await mount(fixture);
+
+        choice(select(form), 'usd').selected = true;
+        await settled(select(form));
+
+        expect(box(select(form)).value).toBe('usd');
+    });
+
+    it('carry a disabled one, and a group with a heading', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <ui-optgroup label="Americas">
+                    <ui-option value="brl">Real</ui-option>
+                    <ui-option value="usd" disabled>Dollar</ui-option>
+                </ui-optgroup>
+            </ui-select>
+        `);
+        const control = box(select(form));
+
+        expect(control.querySelector('optgroup')?.label).toBe('Americas');
+        expect(control.options[1]?.disabled).toBe(true);
+        expect(control.options.length, 'the group is not an option').toBe(2);
+    });
+
+    it('report arriving and leaving through the slot they sit in', async () => {
+        const form = await mount(fixture);
+
+        choice(select(form), 'brl').remove();
+        await settled(select(form));
+
+        expect(box(select(form)).options.length).toBe(1);
+
+        const added = document.createElement('ui-option');
+        added.value = 'eur';
+        added.textContent = 'Euro';
+        select(form).append(added);
+        await added.updateComplete;
+        await settled(select(form));
+
+        expect([...box(select(form)).options].map((option) => option.value)).toEqual([
+            'usd',
+            'eur',
+        ]);
+    });
+
+    it('leave the control empty when there are none', async () => {
+        const form = await mount('<ui-select label="C" name="c"></ui-select>');
+
+        expect(box(select(form)).options.length).toBe(0);
+        expect(box(select(form)).value).toBe('');
+        expect([...new FormData(form)], 'an empty choice is still an entry').toEqual([['c', '']]);
+    });
+
+    it('ignore anything that is not a choice', async () => {
+        // A host can put whatever it likes in there; only the two declarations become
+        // options, and a stray element draws nothing rather than an empty choice.
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <span>not a choice</span>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        expect([...box(select(form)).options].map((option) => option.value)).toEqual(['brl']);
+    });
+
+    it('report it from inside a group too, which the top-level slot cannot see', async () => {
+        // A slot reports only the nodes assigned to *it*, so the select's own slot sees
+        // nothing when a choice moves inside a group. Measured, as a removal that left the
+        // control showing a choice that was gone — which is why each declaration carries a
+        // slot of its own.
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <ui-optgroup label="Americas">
+                    <ui-option value="brl">Real</ui-option>
+                    <ui-option value="usd">Dollar</ui-option>
+                </ui-optgroup>
+            </ui-select>
+        `);
+
+        choice(select(form), 'usd').remove();
+        await settled(select(form));
+
+        expect(box(select(form)).options.length).toBe(1);
+    });
+});
+
+describe('the form, which the element joins in the place of the control', () => {
+    it('submits the choice in force', async () => {
+        const form = await mount(fixture);
+
+        expect([...new FormData(form)]).toEqual([['currency', 'brl']]);
+
+        select(form).value = 'usd';
+        await select(form).updateComplete;
+
+        expect([...new FormData(form)]).toEqual([['currency', 'usd']]);
+    });
+
+    it('takes the name from a property, because a form reads the attribute', async () => {
+        const form = await mount(`
+            <ui-select label="C"><ui-option value="brl">Real</ui-option></ui-select>
+        `);
+        select(form).name = 'currency';
+        await select(form).updateComplete;
+
+        expect([...new FormData(form)]).toEqual([['currency', 'brl']]);
+    });
+
+    it('submits nothing while disabled', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" disabled>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        expect([...new FormData(form)]).toEqual([]);
+    });
+
+    it('knows the form it is in', async () => {
+        const form = await mount(fixture);
+
+        expect(select(form).form).toBe(form);
+    });
+
+    it('resets to the choice the declarations name', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <ui-option value="brl">Real</ui-option>
+                <ui-option value="usd" selected>Dollar</ui-option>
+            </ui-select>
+        `);
+        select(form).value = 'brl';
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value).toBe('brl');
+
+        form.reset();
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value).toBe('usd');
+    });
+
+    it('follows a fieldset that disables it', async () => {
+        const form = await mount(`
+            <fieldset disabled>
+                <ui-select label="C" name="c"><ui-option value="brl">Real</ui-option></ui-select>
+            </fieldset>
+        `);
+
+        expect(select(form).disabled, 'the callback fired').toBe(true);
+        expect(box(select(form)).disabled, 'and reached the control').toBe(true);
+    });
+
+    it('restores what a back-navigation hands back', async () => {
+        const form = await mount(fixture);
+
+        select(form).formStateRestoreCallback('usd');
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value).toBe('usd');
+
+        select(form).formStateRestoreCallback(null);
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value, 'back to the declared default').toBe('brl');
+    });
+
+    it('mirrors a choice made by hand, and re-dispatches the change', async () => {
+        // `change` is non-composed, so the one the control fires stops at the shadow
+        // boundary and a host listening on the tag would hear nothing.
+        const form = await mount(fixture);
+        const heard: (EventTarget | null)[] = [];
+
+        form.addEventListener('change', (event) => heard.push(event.target));
+
+        await userEvent.selectOptions(box(select(form)), 'usd');
+
+        expect(select(form).value, 'mirrored back into the property').toBe('usd');
+        expect(heard, 'retargeted to the element').toEqual([select(form)]);
+    });
+});
+
+describe('the validity', () => {
+    it('is missing while a required control has no choice made', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" required>
+                <ui-option value="">Choose</ui-option>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        expect(select(form).validity.valueMissing).toBe(true);
+        expect(select(form).matches(':invalid')).toBe(true);
+
+        select(form).value = 'brl';
+        await select(form).updateComplete;
+
+        expect(select(form).validity.valid).toBe(true);
+    });
+
+    it('takes the message the host wrote', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" error="Pick a currency.">
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        expect(select(form).validity.customError).toBe(true);
+        expect(select(form).validationMessage).toBe('Pick a currency.');
+
+        select(form).error = '';
+        await select(form).updateComplete;
+
+        expect(select(form).validity.valid).toBe(true);
+        expect(select(form).validationMessage).toBe('');
+    });
+
+    it('delegates focus, so the browser can put the reader on the control', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" required>
+                <ui-option value="">Choose</ui-option>
+            </ui-select>
+        `);
+
+        expect(form.reportValidity()).toBe(false);
+        expect(document.activeElement).toBe(select(form));
+        expect(select(form).shadowRoot?.activeElement).toBe(box(select(form)));
+    });
+});
+
+/**
+ * The box, against the input it has to match.
+ *
+ * `src/select.ts` writes the drawing out rather than sharing `src/input.ts`'s, for the
+ * reason its docblock gives — and this is the mechanism that answers the duplication
+ * objection on its own terms. Something compares them, and it fails when they drift.
+ */
+describe('the box, against the input it has to match', () => {
+    async function pair(): Promise<[UiSelect, UiInput]> {
+        const form = await mount(`
+            ${fixture}
+            <ui-input label="Amount" name="amount"></ui-input>
+        `);
+        const input = form.querySelector('ui-input');
+
+        if (input === null) {
+            throw new Error('no input in the fixture');
+        }
+
+        return [select(form), input];
+    }
+
+    /** The input's own control, which is the thing the box is compared against. */
+    function written(element: UiInput): HTMLInputElement {
+        const control = element.renderRoot.querySelector('input');
+
+        if (control === null) {
+            throw new Error('the input rendered no control');
+        }
+
+        return control;
+    }
+
+    it('agrees on the boundary, the corner, the padding and the type', async () => {
+        const [drop, text] = await pair();
+        const drawn = getComputedStyle(box(drop));
+        const beside = getComputedStyle(written(text));
+
+        for (const property of [
+            'boxSizing',
+            'borderTopWidth',
+            'borderTopStyle',
+            'borderTopColor',
+            'borderRadius',
+            'paddingBlockStart',
+            'paddingBlockEnd',
+            'paddingInlineStart',
+            'backgroundColor',
+            'color',
+            'fontFamily',
+            'fontSize',
+            'transitionProperty',
+            'transitionDuration',
+        ] as const) {
+            expect(drawn[property], property).toBe(beside[property]);
+        }
+    });
+
+    it('agrees on the frame around it, which ui-field used to own', async () => {
+        const [drop, text] = await pair();
+        const stack = getComputedStyle(part(drop, 'stack'));
+        const beside = getComputedStyle(part(text, 'stack'));
+
+        expect(stack.display).toBe(beside.display);
+        expect(stack.flexDirection).toBe(beside.flexDirection);
+        expect(stack.rowGap).toBe(beside.rowGap);
+    });
+
+    it('parts company only on the two rules it declares it does', async () => {
+        const [drop, text] = await pair();
+
+        // A select opens something when clicked, so it is a pointer rather than a caret,
+        // and it reserves room for the caret the platform stopped drawing.
+        expect(getComputedStyle(box(drop)).cursor).toBe('pointer');
+        expect(getComputedStyle(written(text)).cursor).toBe('text');
+        expect(getComputedStyle(box(drop)).paddingInlineEnd).not.toBe(
+            getComputedStyle(written(text)).paddingInlineEnd,
+        );
+    });
+});
+
+describe('the caret', () => {
+    it('is drawn from gradients, so its colour stays a token', async () => {
+        const form = await mount(fixture);
+        const image = getComputedStyle(box(select(form))).backgroundImage;
+
+        expect(image).toContain('linear-gradient');
+        expect(image, 'a picture would freeze the colour').not.toContain('url(');
+    });
+
+    it('takes its colour from the muted token', async () => {
+        const form = await mount(fixture);
+        select(form).style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(select(form))).backgroundImage).toContain('rgb(1, 2, 3)');
+    });
+
+    it('keeps clear of the text, by the room it actually takes', async () => {
+        const form = await mount(fixture);
+        select(form).style.setProperty('--ui-space', '10px');
+
+        // One space of air, two arms, and one more space to the edge.
+        expect(getComputedStyle(box(select(form))).paddingInlineEnd).toBe('35px');
+    });
+
+    it('follows the control to the other side under rtl', async () => {
+        const form = await mount(fixture);
+        const ltr = getComputedStyle(box(select(form))).backgroundPosition;
+
+        select(form).setAttribute('dir', 'rtl');
+        await select(form).updateComplete;
+
+        // Direction is the control's own, and background-position has no logical form —
+        // so the one physical thing in this sheet is mirrored explicitly.
+        expect(getComputedStyle(box(select(form))).backgroundPosition).not.toBe(ltr);
+    });
+
+    it('is not drawn on a list, where it would point at nothing', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" multiple>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        expect(box(select(form)).multiple).toBe(true);
+        expect(getComputedStyle(box(select(form))).backgroundImage).toBe('none');
+    });
+});
+
+describe('the interaction states', () => {
+    it('answers a pointer', async () => {
+        const form = await mount(fixture);
+        withoutMotion(select(form));
+
+        const resting = getComputedStyle(box(select(form))).borderColor;
+
+        await userEvent.hover(box(select(form)));
+
+        expect(getComputedStyle(box(select(form))).borderColor).not.toBe(resting);
+    });
+
+    it('ignores a pointer while disabled', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" disabled>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+        withoutMotion(select(form));
+
+        const resting = getComputedStyle(box(select(form))).borderColor;
+
+        await userEvent.hover(box(select(form)));
+
+        expect(getComputedStyle(box(select(form))).borderColor).toBe(resting);
+        expect(getComputedStyle(box(select(form))).cursor).toBe('not-allowed');
+    });
+
+    it('takes the focus ring colour from the host', async () => {
+        const form = await mount(fixture);
+        select(form).style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
+
+        await userEvent.tab();
+
+        expect(document.activeElement, 'tab reached the element').toBe(select(form));
+        expect(getComputedStyle(box(select(form))).outlineColor).toBe('rgb(1, 2, 3)');
     });
 
     it('keeps a visible focus ring — removing it is how a component stops being usable', () => {
@@ -216,250 +633,16 @@ describe('ui-select', () => {
         expect(styleText('ui-select')).toContain('outline-offset:');
     });
 
-    it('takes the focus ring colour from the host', async () => {
-        // Tabbed to rather than focused by script: `:focus-visible` is what carries the
-        // ring, and it matches on a keyboard interaction rather than on a `focus()` call.
-        const form = await mount(fixture);
-        wrapper(form).style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
-
-        await userEvent.tab();
-
-        expect(document.activeElement, 'tab reached the control').toBe(control(form));
-        expect(getComputedStyle(control(form)).outlineColor).toBe('rgb(1, 2, 3)');
-    });
-
     it('carries no readonly guard, because a select has no readonly', () => {
-        // Measured rather than asserted from memory, and the reason the hover rule here is
-        // one guard shorter than `ui-input`'s rather than an oversight.
-        expect('readOnly' in document.createElement('select')).toBe(false);
-
-        // Read off the selectors rather than the sheet's text: the comment beside that
-        // rule says the word `readonly` out loud, so a search over the whole stylesheet
-        // finds the explanation and calls it a guard. It did.
-        const selectors = [
-            ...styleText('ui-select').matchAll(/::slotted\((?:[^()]|\([^()]*\))*\)/g),
-        ];
-
-        expect(selectors.length, 'there are rules to check').toBeGreaterThan(0);
-
-        for (const [selector] of selectors) {
-            expect(selector, selector).not.toContain('readonly');
-        }
-    });
-});
-
-/**
- * The box is written twice — here and in `src/input.ts` — and this is what answers the
- * objection that file records against duplicating it: *two copies of a contract with
- * nothing comparing them*. Something compares them.
- */
-describe('the box, against the input it has to match', () => {
-    async function bothControls(): Promise<{ select: HTMLSelectElement; input: HTMLInputElement }> {
-        const form = await mount(`
-            <ui-select><select><option>Real</option></select></ui-select>
-            <ui-input><input type="text" /></ui-input>
-        `);
-        const input = form.querySelector('input');
-
-        if (input === null) {
-            throw new Error('no input in the fixture');
-        }
-
-        return { select: control(form), input };
-    }
-
-    it('agrees on the boundary, the corner, the padding and the type', async () => {
-        const { select, input } = await bothControls();
-        const drawn = (element: Element): Record<string, string> => {
-            const styles = getComputedStyle(element);
-
-            return {
-                borderTopColor: styles.borderTopColor,
-                borderTopWidth: styles.borderTopWidth,
-                borderTopStyle: styles.borderTopStyle,
-                borderRadius: styles.borderRadius,
-                paddingTop: styles.paddingTop,
-                paddingLeft: styles.paddingLeft,
-                backgroundColor: styles.backgroundColor,
-                color: styles.color,
-                fontFamily: styles.fontFamily,
-                fontSize: styles.fontSize,
-                boxSizing: styles.boxSizing,
-                transitionProperty: styles.transitionProperty,
-                transitionDuration: styles.transitionDuration,
-            };
-        };
-
-        expect(drawn(select)).toEqual(drawn(input));
-    });
-
-    it('agrees on the focus ring', async () => {
-        const { select, input } = await bothControls();
-        const ring = (element: Element): string => {
-            const styles = getComputedStyle(element);
-
-            return `${styles.outlineWidth} ${styles.outlineStyle} ${styles.outlineOffset}`;
-        };
-
-        // Read one at a time, and tabbed to rather than focused by script: the ring is
-        // carried by `:focus-visible`, so a control that is not currently focused reports
-        // the user agent's default and two of those compare equal while proving nothing.
-        await userEvent.tab();
-
-        expect(document.activeElement, 'tab reached the select').toBe(select);
-
-        const selectRing = ring(select);
-
-        await userEvent.tab();
-
-        expect(document.activeElement, 'tab reached the input').toBe(input);
-
-        expect(selectRing).toBe(ring(input));
-        expect(selectRing, 'a ring, not the absence of one').toContain('solid');
-    });
-
-    it('parts company only on the two rules it declares it does', async () => {
-        const { select, input } = await bothControls();
-
-        // The caret needs room the input has no use for, and a select opens something.
-        expect(getComputedStyle(select).paddingRight).not.toBe(
-            getComputedStyle(input).paddingRight,
-        );
-        expect(getComputedStyle(select).cursor).not.toBe(getComputedStyle(input).cursor);
-    });
-});
-
-/**
- * The caret is the one thing this component draws, so it is the one thing a rendering has
- * to be read for rather than a stylesheet.
- */
-describe('the caret', () => {
-    it('is drawn from gradients, so its colour stays a token', async () => {
-        const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
-
-        expect(styles.backgroundImage.split('linear-gradient').length - 1, 'two arms').toBe(2);
-        expect(styles.backgroundRepeat, 'one caret, not a row of them').toBe(
-            'no-repeat, no-repeat',
-        );
-        expect(styles.backgroundImage, 'no frozen picture').not.toContain('url(');
-    });
-
-    it('takes its colour from the muted token', async () => {
-        const form = await mount(fixture);
-        wrapper(form).style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
-
-        expect(getComputedStyle(control(form)).backgroundImage).toContain('rgb(1, 2, 3)');
-    });
-
-    it('keeps clear of the text, by the room it actually takes', async () => {
-        const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
-        const clearance = Number.parseFloat(styles.paddingRight);
-        const arm = Number.parseFloat(styles.backgroundSize);
-
-        // The caret ends one space from the edge and is two arms wide, so the padding has
-        // to clear that. Asserted as the relationship rather than as 28px, which would be
-        // a fact about the default space token instead of about the rule.
-        expect(clearance).toBeGreaterThan(arm * 2);
-    });
-
-    it('sets the caret one space in, with the arms side by side', async () => {
-        // Asserted as the relationship rather than as pixels: the space token is the
-        // host's knob, so a literal here would be a fact about the default rather than
-        // about the rule. Retuned to a value nothing else in the sheet rounds to.
-        const form = await mount(fixture);
-        wrapper(form).style.setProperty('--ui-space', '20px');
-
-        const styles = getComputedStyle(control(form));
-        const arm = Number.parseFloat(styles.backgroundSize);
-        const [far, near] = [
-            ...styles.backgroundPosition.matchAll(/calc\(100% - ([\d.]+)px\)/g),
-        ].map(([, offset]) => Number.parseFloat(offset ?? ''));
-
-        if (far === undefined || near === undefined) {
-            throw new Error(
-                `the caret is not measured from the trailing edge: ${styles.backgroundPosition}`,
-            );
-        }
-
-        expect(near, 'the near arm sits one space in').toBe(20);
-        expect(far - near, 'the far arm sits one arm beyond it').toBe(arm);
-    });
-
-    it('follows the control to the other side under rtl', async () => {
-        const form = await mount(fixture);
-        const ltr = getComputedStyle(control(form)).backgroundPosition;
-
-        control(form).setAttribute('dir', 'rtl');
-
-        const rtl = getComputedStyle(control(form)).backgroundPosition;
-
-        expect(rtl).not.toBe(ltr);
-        // Anchored to the near edge rather than measured off the far one, which is what
-        // `left` resolves to and `calc(100% - …)` would not.
-        expect(rtl.startsWith('calc('), `rtl was ${rtl}`).toBe(false);
-    });
-
-    it('is not drawn on a list, where it would point at nothing', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Tags</label>
-                <ui-select>
-                    <select multiple size="3"><option>Urgent</option></select>
-                </ui-select>
-            </ui-field>
-        `);
-
-        expect(getComputedStyle(control(form)).backgroundImage).toBe('none');
-    });
-});
-
-/**
- * A component that accepts interaction and shows no feedback is defective. Nothing here
- * restates a colour: the question a hover asks is *did it move*.
- */
-describe('the interaction states', () => {
-    it('answers a pointer', async () => {
-        const form = await mount(fixture);
-        withoutMotion(form);
-
-        const resting = getComputedStyle(control(form)).borderColor;
-
-        await userEvent.hover(control(form));
-
-        expect(getComputedStyle(control(form)).borderColor).not.toBe(resting);
-    });
-
-    it('ignores a pointer while disabled', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Currency</label>
-                <ui-select><select disabled><option>Real</option></select></ui-select>
-            </ui-field>
-        `);
-        withoutMotion(form);
-
-        const resting = getComputedStyle(control(form)).borderColor;
-
-        await userEvent.hover(control(form));
-
-        expect(getComputedStyle(control(form)).borderColor).toBe(resting);
-    });
-
-    it('moves the boundary over the state duration, and moves nothing else', async () => {
-        const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
-
-        expect(styles.transitionProperty).toBe('border-color');
-        expect(styles.transitionDuration).toBe('0.15s');
+        // Measured rather than forgotten: readOnly is not a property of a select at all,
+        // so the input's second guard would be a rule about an attribute the platform
+        // never sets.
+        expect(styleText('ui-select')).not.toContain(':not([readonly])');
     });
 
     it('guards every interaction rule against the state that refuses it', () => {
         const rules = [
-            ...styleText('ui-select').matchAll(
-                /::slotted\([a-z]+[^)]*:hover(?:[^()]|\([^()]*\))*\)/g,
-            ),
+            ...styleText('ui-select').matchAll(/select[a-z:()[\]-]*:hover[a-z:()[\]-]*/g),
         ];
 
         expect(rules.length, 'there are hover rules to check').toBeGreaterThan(0);
@@ -470,11 +653,6 @@ describe('the interaction states', () => {
     });
 });
 
-/**
- * The stories are the playground, and mounting them here is what puts it behind the gate.
- * `expectAccessible` is called per state rather than once, because a disabled control, an
- * error and a list are different markup and each can fail on its own.
- */
 describe('accessibility', () => {
     it('has no violations as a labelled drop-down', async () => {
         await expectAccessible(await mountStory(Select, meta, 'Select'));
@@ -482,6 +660,10 @@ describe('accessibility', () => {
 
     it('has no violations beside a text field', async () => {
         await expectAccessible(await mountStory(BesideAnInput, meta, 'BesideAnInput'));
+    });
+
+    it('has no violations with its choices under headings', async () => {
+        await expectAccessible(await mountStory(Grouped, meta, 'Grouped'));
     });
 
     it('has no violations in error', async () => {

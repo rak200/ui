@@ -1,8 +1,8 @@
-# UiSelect
+# UiSelect, UiOption and UiOptgroup
 
 [← Reference](README.md)
 
-A native `<select>`, styled by the token layer rather than replaced.
+A drop-down over a native `<select>`, drawn from the token layer rather than replaced.
 
 ```js
 import '@rak200/ui';
@@ -11,150 +11,175 @@ import '@rak200/ui';
 ## Contents
 
 - [`<ui-select>`](#ui-select)
-- [The control is yours](#the-control-is-yours)
-- [What this cannot style](#what-this-cannot-style)
-- [Inside a field](#inside-a-field)
-- [A list rather than a drop-down](#a-list-rather-than-a-drop-down)
-- [Interaction states](#interaction-states)
+- [`<ui-option>` and `<ui-optgroup>`](#ui-option-and-ui-optgroup)
+- [Why the choices are not `<option>`](#why-the-choices-are-not-option)
+- [The element is the control](#the-element-is-the-control)
+- [In a form](#in-a-form)
+- [In error](#in-error)
+- [What the platform still refuses](#what-the-platform-still-refuses)
 - [Styling](#styling)
 
 ## `<ui-select>`
 
 ```html
-<ui-select>
-  <select name="currency">
-    <option value="brl">Real</option>
-    <option value="usd">Dollar</option>
-  </select>
+<ui-select label="Currency" name="currency">
+  <ui-option value="brl" selected>Real</ui-option>
+  <ui-option value="usd">Dollar</ui-option>
 </ui-select>
 ```
 
-A box around a `<select>` you wrote. It carries the appearance — the boundary, the radius, the
-padding, the type, the caret, the focus ring and the interaction states — and nothing else.
+The class is exported as `UiSelect` for a host that needs the type; importing the package registers
+the element, so nothing has to be called.
 
-Exported as `UiSelect`; importing the package registers the element, so nothing has to be called.
+| Attribute  | Type    | Default | Means                                                   |
+| ---------- | ------- | ------- | ------------------------------------------------------- |
+| `label`    | string  | `''`    | the accessible name, and the text above the control     |
+| `help`     | string  | `''`    | supporting text under it, which an error does not hide  |
+| `error`    | string  | `''`    | a message, which also makes the control invalid         |
+| `name`     | string  | `''`    | what the choice is submitted under                      |
+| `value`    | string  | `''`    | the choice in force; empty means _the declared default_ |
+| `required` | boolean | `false` | the form is invalid while no choice is made             |
+| `disabled` | boolean | `false` | refuses interaction, and submits nothing                |
+| `multiple` | boolean | `false` | a list rather than a drop-down                          |
+
+`form`, `validity` and `validationMessage` are read-only properties.
+
+## `<ui-option>` and `<ui-optgroup>`
+
+```html
+<ui-select label="Currency" name="currency">
+  <ui-optgroup label="Americas">
+    <ui-option value="brl" selected>Real</ui-option>
+    <ui-option value="usd">Dollar</ui-option>
+  </ui-optgroup>
+  <ui-optgroup label="Europe">
+    <ui-option value="eur">Euro</ui-option>
+  </ui-optgroup>
+</ui-select>
+```
+
+**These draw nothing**, and they are the first elements here that do not. They are declarations: the
+real `<option>` elements the platform needs are built from them.
+
+| `<ui-option>` | Type    | Default | Means                                      |
+| ------------- | ------- | ------- | ------------------------------------------ |
+| _text_        |         |         | what the reader sees                       |
+| `value`       | string  | `''`    | what a form submits for this choice        |
+| `selected`    | boolean | `false` | the **default** — where the control starts |
+| `disabled`    | boolean | `false` | whether this choice can be made at all     |
+
+| `<ui-optgroup>` | Type    | Default | Means                                 |
+| --------------- | ------- | ------- | ------------------------------------- |
+| `label`         | string  | `''`    | the heading the platform draws        |
+| `disabled`      | boolean | `false` | whether every choice in it is refused |
+
+Exported as `UiOption` and `UiOptgroup`. Anything else you put inside a `<ui-select>` is ignored.
+
+**Change them however you like.** Adding one, removing one and writing a property all reach the
+control — including from inside a group:
+
+```js
+document.querySelector('ui-option[value=usd]').selected = true;
+```
+
+## Why the choices are not `<option>`
+
+**Because it does not work**, and that is measured rather than argued. A `<slot>` inside a
+`<select>` assigns the nodes and the select sees none of them:
+
+```
+assignedElements  2
+options.length    0
+value             ""
+selectedIndex     -1
+```
+
+`HTMLSelectElement.options` is built from the select's own children, not from the flattened tree. So
+the choices could not be slotted `<option>`s under any arrangement that puts the `<select>` in this
+element's shadow root — and putting it anywhere else strands the label.
+
+Mirroring host-written `<option>`s into the control was measured too, and it fails on the case that
+matters most: `option.selected = true` is a property write, and no `MutationObserver` reports one, so
+the control never moved. Declarations this package owns have reactive properties, so the change is
+the platform's own rather than a watcher over somebody else's element.
+
+## The element is the control
+
+**You write the tag, its attributes and the choices.** The `<select>`, its `<label for>`, its help
+text and its message are rendered together into this element's shadow root, so every IDREF resolves
+in one tree scope — see [`<ui-input>`](input.md#the-element-is-the-control), which changed for the
+same reason and records it.
 
 **The native element is the decision, not a shortcut.** A custom listbox is an accessibility project
-of its own, and it would have to reimplement the picker a phone already opens — the part a consumer
-notices most and a library gets wrong most. RFC 0016 defers that listbox, and this element is not a
-step toward it.
+of its own, and it would have to reimplement the platform picker a phone already opens — which is
+the part a consumer notices most and a library gets wrong most. What is rendered here is a real
+`<select>` with real `<option>`s in it, so the keyboard, the typeahead, the picker and the semantics
+are all still the platform's.
 
-## The control is yours
+## In a form
 
-**You write the `<select>` and its `<option>`s, and they stay in the light DOM.** The same shape
-[`<ui-input>`](input.md) has, forced by the same constraint: an ARIA relationship by IDREF does not
-cross a shadow boundary, so a control rendered into a shadow root could not be labelled by the
-`<label>` beside it.
+- `name` is what the entry is called. A control with no `name` submits nothing, and neither does a
+  disabled one.
+- **`value` empty means _the declared default_, not _nothing_.** That is what lets
+  `<ui-option selected>` mean what `<option selected>` means. With no choice marked, the control
+  starts on the first — the platform's own rule.
+- A form reset returns to that declared default.
+- A `<fieldset disabled>` above the element disables it.
 
-So `name`, `required`, `disabled`, `multiple`, `size` and `value` are the platform's business, there
-is no pass-through list to fall out of step with them, and the control reaches a form submit because
-it is a native control inside a `<form>`.
-
-## What this cannot style
-
-The honest part, and the reason to read this page before reaching for the component.
-
-**The drop-down list is drawn by the operating system.** Nothing in this package reaches inside it —
-not the list's background, not its padding, not the highlight on the option under the pointer, and
-not the checkmark beside the selected one. On a phone it is not a list at all but the platform's own
-picker. That is the trade the native element makes, and it is the right one: the picker is
-accessible, familiar and correct on every platform, for free.
-
-**`<option>` styling is close to nothing.** `color` and `background-color` are honoured unevenly
-across engines and ignored outright inside the OS picker. Do not build a design on them.
-
-**The closed control is drawn here rather than by the platform.** `appearance: none` is set, which
-takes the operating system's own chevron off and hands the box to the token layer — otherwise a
-select would stop matching the text field beside it on the engines that ignore most of what an
-`appearance: auto` select is told. It does **not** affect what opens: the picker is still the
-platform's.
-
-**A styleable drop-down is coming, and is not adopted here.** Chromium ships `appearance: base-select`
-with `::picker(select)` and `::checkmark` — measured as supported in the engine this package's suite
-runs. It is not used, because a visual language that changes shape depending on the engine is the
-thing a kit exists to prevent, and a suite that runs one engine cannot speak for the others. When it
-is available broadly, it is what reopens the deferred listbox question — by removing the reason the
-listbox was wanted.
-
-## Inside a field
-
-[`<ui-field>`](field.md) wires the label, the help, the error and `aria-invalid`, and finds the
-control through the wrapper:
+## In error
 
 ```html
-<ui-field>
-  <label slot="label">Currency</label>
-  <ui-select>
-    <select name="currency" required>
-      <option value="">Choose one</option>
-      <option value="brl">Real</option>
-    </select>
-  </ui-select>
-  <span slot="error">A currency is required.</span>
-</ui-field>
-```
-
-The error boundary is not set here and not by the wrapper: the field marks the control
-`aria-invalid`, and the drawing reads it — one source, and it is the one a screen reader is already
-using.
-
-## A list rather than a drop-down
-
-```html
-<ui-select>
-  <select name="tags" multiple size="4">
-    …
-  </select>
+<ui-select label="Currency" name="currency" error="Pick a currency.">
+  <ui-option value="">Choose…</ui-option>
+  <ui-option value="brl">Real</ui-option>
 </ui-select>
 ```
 
-`multiple` makes the control a list, and **the caret is not drawn on one** — it would point at
-nothing. The box stays, because the box is the part this component owns.
+One property renders the message, marks the control `aria-invalid`, points `aria-describedby` at it,
+paints the boundary and reaches `setValidity` — the same shape [`<ui-input>`](input.md#in-error)
+has, and the same warning applies: select on `:invalid`, never on `[error]`.
 
-A `size` above 1 without `multiple` also renders as a list, and there the caret _is_ still drawn,
-centred against a box far taller than it. CSS cannot compare an attribute's value to a number, so
-this is a rough edge rather than a guard: reach for `multiple` when you want a list.
+## What the platform still refuses
 
-## Interaction states
+**The list a click opens is drawn by the operating system**, and no rule here reaches inside it. The
+box, the caret and the states are this package's; the popup is not. That is the cost of delegating
+to a native `<select>`, and it is the reason to.
 
-The boundary completes the mix it started, the same way [`<ui-input>`](input.md)'s does and against
-the same token, guarded against `:disabled`. There is **no `[readonly]` guard**, and its absence is
-measured rather than forgotten: `readOnly` is not a property of a select at all, so the input's
-second guard would be a rule about an attribute the platform never sets.
-
-The focus ring is `:focus-visible`, never transitioned, and never removed.
-
-**The box matches the input's, and something checks that.** The two are written in different files,
-and `tests/select.test.ts` mounts both and asserts they agree on the boundary, the corner, the
-padding, the type and the focus ring — then asserts they differ on exactly the two rules this
-component declares they do. A kit whose select does not line up with its text field is a kit nobody
-trusts with a form.
+`ROADMAP.md` carries what would reopen the question, and it is a platform feature arriving broadly
+rather than a decision here.
 
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the caret.
 
-| Part                | Token                                           |
-| ------------------- | ----------------------------------------------- |
-| boundary            | `--ui-color-border`, `--ui-color-text` on hover |
-| fill                | `--ui-color-surface`                            |
-| value               | `--ui-color-text`                               |
-| caret               | `--ui-color-text-muted`                         |
-| in error            | `--ui-color-danger`                             |
-| focus ring          | `--ui-color-focus`                              |
-| corner              | `--ui-radius`                                   |
-| padding, caret room | `--ui-space`                                    |
-| type                | `--ui-font`                                     |
-| motion              | `--ui-duration-state`, `--ui-easing-state`      |
+| Part               | Token                                                        |
+| ------------------ | ------------------------------------------------------------ |
+| surface            | `--ui-color-surface`                                         |
+| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
+| boundary           | `--ui-color-border`, and `--ui-color-text` on hover          |
+| the caret          | `--ui-color-text-muted`                                      |
+| in error           | `--ui-color-danger`, at `--ui-text-supporting`               |
+| help text          | `--ui-color-text`, at `--ui-text-supporting`                 |
+| focus ring         | `--ui-color-focus`                                           |
+| corner             | `--ui-radius`                                                |
+| padding and rhythm | `--ui-space`                                                 |
+| motion             | `--ui-duration-state`, `--ui-easing-state`                   |
+
+The same five parts [`<ui-input>`](input.md#styling) exposes — `stack`, `label`, `control`, `help`
+and `error` — aimed at a `<select>` rather than an `<input>`.
 
 **The caret is two gradients, not a picture**, and that is what keeps its colour overridable: a
-gradient takes `var()`, while an SVG embedded in a `data:` URI freezes whatever colour is drawn into
-it. [`<ui-checkbox>`](checkbox.md) answers the same problem the other way, by making its mark a hole
-— which is not available here, because a mask would clip the option text along with everything else.
+gradient takes `var()`, while an SVG in a `data:` URI freezes whatever colour is drawn into it.
+[`<ui-checkbox>`](checkbox.md) answers the same problem the other way, by making its mark a hole —
+which is not available here, because a mask would clip the option text with it.
 
 **It follows the control's direction.** `padding-inline-end` is logical and flips on its own;
-`background-position` has no logical form, so the caret is mirrored explicitly against
-`:dir(rtl)` — the control's own direction, not the page's.
+`background-position` has no logical form, so the caret is mirrored explicitly against `:dir(rtl)`.
 
-`::part()` is not exposed. There is nothing in the shadow root to aim it at — the control is yours,
-so it is styleable directly.
+**It is not drawn on a `multiple` control**, where the list has nothing to open and a chevron would
+be a promise of something that is not there.
+
+**The box is written out rather than shared with [`<ui-input>`](input.md)**, and the duplication is
+answered on its own terms rather than dodged: `tests/select.test.ts` mounts both and asserts they
+agree on the boundary, the corner, the padding, the type and the frame around them. Something
+compares them, and it fails when they drift.

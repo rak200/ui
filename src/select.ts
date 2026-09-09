@@ -1,4 +1,4 @@
-import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
 
 /**
@@ -20,13 +20,132 @@ const arm = css`calc(${reference('--ui-space')} * 0.75)`;
 const clearance = css`calc(${reference('--ui-space')} * 2 + ${arm} * 2)`;
 
 /**
+ * The event a declaration fires when anything about it changes.
+ *
+ * **Private to this file**, and a mechanism rather than an API: a host listens to
+ * `<ui-select>`, never to this.
+ */
+const announcement = 'ui-option-changed';
+
+/**
+ * What {@link UiOption} and {@link UiOptgroup} have in common, which is that they draw
+ * nothing.
+ *
+ * **A declaration rather than a control**, and the first of its kind here: every other
+ * element in this package renders something a person can see. These two exist so that the
+ * choices a host writes stay markup, while the thing the platform actually needs — real
+ * `<option>` elements inside a real `<select>` — is built from them.
+ *
+ * They announce themselves on every update, and that is the half a `MutationObserver`
+ * cannot do: `option.selected = true` is a property write, and no observer reports one.
+ * Measured on the shape this replaced, where the control simply never moved. Because these
+ * are this package's own elements the property is reactive, so the announcement is the
+ * platform's own change detection rather than a watcher over somebody else's element.
+ *
+ * **Arriving and leaving are announced from the slot rather than from a callback**, and
+ * that is measured rather than chosen: an event dispatched from `disconnectedCallback` has
+ * no path left to bubble along — the option is already out of the tree, and the removal
+ * never reached the select. A slot reports both directions, which is the thing it exists
+ * to tell you.
+ *
+ * **Each declaration carries its own slot, and that is why**: a slot reports only the
+ * nodes assigned to *it*, so `<ui-select>`'s own slot sees a choice added or removed at the
+ * top level and sees nothing at all when one moves inside an `<ui-optgroup>`. Measured, as
+ * a removal from inside a group that left the control showing a choice that was gone.
+ */
+class UiDeclaration extends LitElement {
+    static override readonly styles: CSSResult = css`
+        :host {
+            display: none;
+        }
+    `;
+
+    override updated(): void {
+        this.#announce();
+    }
+
+    readonly #announce = (): void => {
+        this.dispatchEvent(new Event(announcement, { bubbles: true }));
+    };
+
+    override render(): TemplateResult {
+        return html`<slot @slotchange=${this.#announce}></slot>`;
+    }
+}
+
+/**
+ * One choice in a {@link UiSelect}.
+ *
+ * The text is what the reader sees; `value` is what a form submits. `selected` is the
+ * **default** — the choice the control starts on and returns to on reset — which is what
+ * `selected` means on a native `<option>`.
+ *
+ * @example
+ * ```html
+ * <ui-option value="brl">Real</ui-option>
+ * ```
+ */
+export class UiOption extends UiDeclaration {
+    static override readonly properties = {
+        value: { type: String, reflect: true },
+        selected: { type: Boolean, reflect: true },
+        disabled: { type: Boolean, reflect: true },
+    };
+
+    /**
+     * What a form submits when this is the choice made.
+     *
+     * A plain field rather than the `accessor` keyword, for the reason `src/button.ts`
+     * gives beside its own.
+     */
+    value = '';
+
+    /** Whether this is the choice the control starts on. */
+    selected = false;
+
+    /** Whether this choice can be made at all. */
+    disabled = false;
+}
+
+/**
+ * A named set of choices, which the platform draws as a heading inside the list.
+ *
+ * @example
+ * ```html
+ * <ui-optgroup label="Americas">
+ *   <ui-option value="brl">Real</ui-option>
+ * </ui-optgroup>
+ * ```
+ */
+export class UiOptgroup extends UiDeclaration {
+    static override readonly properties = {
+        label: { type: String, reflect: true },
+        disabled: { type: Boolean, reflect: true },
+    };
+
+    /** The heading the platform draws above the set. */
+    label = '';
+
+    /** Whether every choice in the set is unavailable. */
+    disabled = false;
+}
+
+/**
  * A native `<select>`, styled by the token layer rather than replaced.
  *
- * **The `<select>` is yours.** You write it and its `<option>`s, and it stays in the light
- * DOM — the same shape {@link UiInput} has, and forced by the same constraint: an ARIA
- * relationship by IDREF does not cross a shadow boundary, so a control rendered in here
- * could not be labelled by the `<label>` beside it. It reaches a form submit because it is
- * a native control inside a `<form>`.
+ * **The `<select>` is this element's**, rendered into its shadow root with its label, its
+ * help and its message, so the IDREFs resolve in one tree scope. What a host writes is the
+ * tag, its attributes, and the choices — as {@link UiOption} and {@link UiOptgroup}.
+ *
+ * **The choices could not stay as `<option>`s**, and that is measured rather than
+ * preferred: a `<slot>` inside a `<select>` assigns the nodes and the select sees none of
+ * them. `HTMLSelectElement.options` is built from its own children, not from the flattened
+ * tree — `options.length` was `0`, `value` empty and `selectedIndex` `-1`, with two options
+ * assigned. So the choices are declarations this package owns, and the `<option>` elements
+ * the platform needs are built from them.
+ *
+ * The element joins the form itself, through `ElementInternals`: a control in a shadow root
+ * has no form owner.
  *
  * **The native element is the decision, not a shortcut.** A custom listbox is an
  * accessibility project of its own, and it would have to reimplement the platform picker
@@ -51,15 +170,10 @@ const clearance = css`calc(${reference('--ui-space')} * 2 + ${arm} * 2)`;
  *
  * @example
  * ```html
- * <ui-field>
- *   <label slot="label">Currency</label>
- *   <ui-select>
- *     <select name="currency">
- *       <option value="brl">Real</option>
- *       <option value="usd">Dollar</option>
- *     </select>
- *   </ui-select>
- * </ui-field>
+ * <ui-select label="Currency" name="currency">
+ *   <ui-option value="brl">Real</ui-option>
+ *   <ui-option value="usd">Dollar</ui-option>
+ * </ui-select>
  * ```
  */
 export class UiSelect extends LitElement {
@@ -69,7 +183,7 @@ export class UiSelect extends LitElement {
         }
 
         /* The box, which src/input.ts also draws and tests/select.test.ts compares. */
-        ::slotted(select) {
+        select {
             box-sizing: border-box;
             inline-size: 100%;
             font: inherit;
@@ -96,7 +210,7 @@ export class UiSelect extends LitElement {
 
            It does NOT cost the picker. appearance: none changes how the closed control
            is painted and nothing about what opens, so a phone still opens its own wheel. */
-        ::slotted(select) {
+        select {
             appearance: none;
             padding-inline-end: ${clearance};
             background-repeat: no-repeat;
@@ -110,7 +224,7 @@ export class UiSelect extends LitElement {
 
            A multiple select is a list rather than a drop-down, and a caret on a list
            points at nothing, so it is guarded rather than drawn everywhere. */
-        ::slotted(select:not([multiple])) {
+        select:not([multiple]) {
             background-image:
                 linear-gradient(45deg, transparent 50%, ${reference('--ui-color-text-muted')} 50%),
                 linear-gradient(135deg, ${reference('--ui-color-text-muted')} 50%, transparent 50%);
@@ -124,7 +238,7 @@ export class UiSelect extends LitElement {
            logical form — so the one physical thing in this sheet is mirrored explicitly.
            The padding needs no rule: padding-inline-end already follows. Measured, both
            halves. */
-        ::slotted(select:not([multiple]):dir(rtl)) {
+        select:not([multiple]):dir(rtl) {
             background-position:
                 left ${reference('--ui-space')} center,
                 left calc(${reference('--ui-space')} + ${arm}) center;
@@ -136,31 +250,297 @@ export class UiSelect extends LitElement {
            There is no [readonly] guard here and its absence is measured rather than
            forgotten: readOnly is not a property of a select at all, so the input's
            second guard would be a rule about an attribute the platform never sets. */
-        ::slotted(select:hover:not(:disabled)) {
+        select:hover:not(:disabled) {
             border-color: ${reference('--ui-color-text')};
         }
 
         /* A visible focus ring is not decoration: removing it is the single most common
            way a component stops being usable by keyboard. */
-        ::slotted(select:focus-visible) {
+        select:focus-visible {
             outline: 2px solid ${reference('--ui-color-focus')};
             outline-offset: 2px;
         }
 
-        ::slotted(select:disabled) {
+        select:disabled {
             cursor: not-allowed;
             opacity: 0.5;
         }
 
-        /* The error state is not this component's to decide: ui-field sets aria-invalid on
-           the control as part of the wiring it already owns, and this rule reads it. */
-        ::slotted(select[aria-invalid='true']) {
+        /* Read off the control's own aria-invalid, which this element now writes: it is
+           the same source a screen reader uses. Not :host([error]) — a reflected string
+           property whose default is empty puts an empty attribute on the host, and an
+           attribute-presence selector matches every element. Measured on ui-checkbox. */
+        select[aria-invalid='true'] {
             border-color: ${reference('--ui-color-danger')};
+        }
+
+        /* The rhythm ui-field used to own, written out here rather than shared with
+           src/input.ts for the reason the docblock above gives about the box — and
+           compared by tests/select.test.ts on the same terms. */
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: calc(${reference('--ui-space')} / 2);
+        }
+
+        label {
+            color: ${reference('--ui-color-text')};
+        }
+
+        :host([disabled]) label {
+            color: ${reference('--ui-color-text-muted')};
+        }
+
+        .help {
+            color: ${reference('--ui-color-text')};
+            font-size: ${reference('--ui-text-supporting')};
+        }
+
+        /* Colour is not the only cue — the message says what is wrong, and aria-invalid
+           marks the control whatever the styling does. */
+        .error {
+            color: ${reference('--ui-color-danger')};
+            font-size: ${reference('--ui-text-supporting')};
         }
     `;
 
+    static readonly formAssociated = true;
+
+    /**
+     * Focus is delegated, so `focus()` and `reportValidity()` reach the control — the host
+     * is not a focusable element, and the second is what the browser calls itself when a
+     * form with an invalid control is submitted.
+     */
+    static override readonly shadowRootOptions = {
+        ...LitElement.shadowRootOptions,
+        delegatesFocus: true,
+    };
+
+    static override readonly properties = {
+        label: { type: String, reflect: true },
+        help: { type: String, reflect: true },
+        error: { type: String, reflect: true },
+        name: { type: String, reflect: true },
+        value: { type: String },
+        required: { type: Boolean, reflect: true },
+        disabled: { type: Boolean, reflect: true },
+        multiple: { type: Boolean, reflect: true },
+    };
+
+    /**
+     * The accessible name, and the text above the control.
+     *
+     * A plain field rather than the `accessor` keyword, for the reason `src/button.ts`
+     * gives beside its own — and so for every property below.
+     */
+    label = '';
+
+    /** Supporting text under the control, which survives an error rather than yielding. */
+    help = '';
+
+    /** The message, which paints the boundary and is announced with the control. */
+    error = '';
+
+    /**
+     * The name the value is submitted under.
+     *
+     * **Reflected, and that is a requirement rather than a convenience.** A form names a
+     * form-associated custom element's entry from the content attribute, so a host who set
+     * only the property would submit nothing at all — silently.
+     */
+    name = '';
+
+    /**
+     * The choice currently made.
+     *
+     * **Empty means _the declared default_ rather than _nothing_**, which is what lets an
+     * `<ui-option selected>` mean what `<option selected>` means and a reset return to it.
+     * Not reflected, the way a native control's `value` IDL attribute is not.
+     */
+    value = '';
+
+    /** Whether a form is invalid while no choice is made. */
+    required = false;
+
+    /** Whether the control refuses interaction, and submits nothing. */
+    disabled = false;
+
+    /** Whether the control is a list rather than a drop-down. */
+    multiple = false;
+
+    readonly #internals = this.attachInternals();
+
+    readonly #redraw = (): void => {
+        this.requestUpdate();
+    };
+
+    override connectedCallback(): void {
+        super.connectedCallback();
+
+        // The half a slot cannot report: a property write on a choice. It reaches here by
+        // bubbling, because the choices are this element's own light-DOM children.
+        this.addEventListener(announcement, this.#redraw);
+    }
+
+    override disconnectedCallback(): void {
+        this.removeEventListener(announcement, this.#redraw);
+        super.disconnectedCallback();
+    }
+
+    /** Every choice a host declared, groups included, in the order they were written. */
+    #options(): UiOption[] {
+        return [...this.querySelectorAll('ui-option')];
+    }
+
+    /**
+     * The choice in force: the host's `value` where it names one, the declared default
+     * otherwise.
+     *
+     * The fallback is the platform's own rule, read off the declarations — the first
+     * choice marked `selected`, and failing that the first choice at all, which is what a
+     * native `<select>` does with no `selected` option in it.
+     */
+    #chosen(): string {
+        const options = this.#options();
+
+        if (options.some((option) => option.value === this.value)) {
+            return this.value;
+        }
+
+        return (options.find((option) => option.selected) ?? options[0])?.value ?? '';
+    }
+
+    /** The validity, taken from the control that computed it. */
+    #publish(control: HTMLSelectElement): void {
+        if (this.error !== '') {
+            this.#internals.setValidity({ customError: true }, this.error, control);
+
+            return;
+        }
+
+        this.#internals.setValidity(control.validity, control.validationMessage, control);
+    }
+
+    /**
+     * The value and the validity, which move together here or disagree anywhere.
+     *
+     * **Iterated rather than asserted**, and there is exactly one control to iterate —
+     * `render()` puts it there unconditionally. A query and a null check would put a branch
+     * here that no test could reach, which is a coverage hole and an immortal mutant at
+     * once rather than safety. `src/input.ts` carries the same shape for the same reason.
+     */
+    override updated(): void {
+        this.#internals.setFormValue(this.#chosen());
+
+        for (const control of this.renderRoot.querySelectorAll('select')) {
+            this.#publish(control);
+        }
+    }
+
+    /**
+     * `change` is re-dispatched because it is non-composed and stops at the shadow
+     * boundary; `input` is composed and leaves on its own, retargeted. Measured on
+     * `<ui-checkbox>`, and the same here.
+     */
+    readonly #changed = (event: Event): void => {
+        this.value = (event.target as HTMLSelectElement).value;
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    /** A form reset, which returns to the choice the declarations name. */
+    formResetCallback(): void {
+        this.value = '';
+    }
+
+    /** A `<fieldset disabled>` above this element, which reaches it and nothing below. */
+    formDisabledCallback(disabled: boolean): void {
+        this.disabled = disabled;
+    }
+
+    /** Restoring after a back-navigation, where the browser hands the value back. */
+    formStateRestoreCallback(state: string | null): void {
+        this.value = state ?? '';
+    }
+
+    /** The form this element participates in, for a host that needs it. */
+    get form(): HTMLFormElement | null {
+        return this.#internals.form;
+    }
+
+    /** Whether the control currently satisfies its constraints. */
+    get validity(): ValidityState {
+        return this.#internals.validity;
+    }
+
+    /** The message a form would report for it, empty while the control is valid. */
+    get validationMessage(): string {
+        return this.#internals.validationMessage;
+    }
+
+    /** The ids describing the control, in the order a reader needs them. */
+    #described(): string | typeof nothing {
+        const ids = [this.error === '' ? '' : 'error', this.help === '' ? '' : 'help'].filter(
+            (id) => id !== '',
+        );
+
+        return ids.length === 0 ? nothing : ids.join(' ');
+    }
+
+    /** One declaration, as the element the platform needs. */
+    #draw(node: Element, chosen: string): TemplateResult {
+        if (node instanceof UiOptgroup) {
+            return html`<optgroup label=${node.label} ?disabled=${node.disabled}>
+                ${[...node.children].map((child) => this.#draw(child, chosen))}
+            </optgroup>`;
+        }
+
+        if (node instanceof UiOption) {
+            return html`<option
+                value=${node.value}
+                ?selected=${node.value === chosen}
+                ?disabled=${node.disabled}
+            >
+                ${node.textContent}
+            </option>`;
+        }
+
+        return html``;
+    }
+
     override render(): TemplateResult {
-        return html`<slot></slot>`;
+        const chosen = this.#chosen();
+
+        return html`
+            <div class="stack" part="stack">
+                <label for="control" part="label">${this.label}</label>
+                <select
+                    id="control"
+                    part="control"
+                    name=${this.name === '' ? nothing : this.name}
+                    ?required=${this.required}
+                    ?disabled=${this.disabled}
+                    ?multiple=${this.multiple}
+                    aria-invalid=${this.error === '' ? nothing : 'true'}
+                    aria-describedby=${this.#described()}
+                    @change=${this.#changed}
+                >
+                    ${[...this.children].map((node) => this.#draw(node, chosen))}
+                </select>
+                ${
+                    this.help === ''
+                        ? nothing
+                        : html`<span class="help" id="help" part="help">${this.help}</span>`
+                }
+                ${
+                    this.error === ''
+                        ? nothing
+                        : html`<span class="error" id="error" part="error">${this.error}</span>`
+                }
+                <!-- The structural half, which slotchange reports and no observer has to.
+                     What it holds draws nothing: a declaration is display: none. -->
+                <slot @slotchange=${this.#redraw}></slot>
+            </div>
+        `;
     }
 }
 
@@ -170,8 +550,16 @@ export class UiSelect extends LitElement {
 // the change. Outside the runner's reach, not an equivalent mutant.
 customElements.define('ui-select', UiSelect);
 
+// Stryker disable next-line StringLiteral: the same, for the same reason.
+customElements.define('ui-option', UiOption);
+
+// Stryker disable next-line StringLiteral: the same, for the same reason.
+customElements.define('ui-optgroup', UiOptgroup);
+
 declare global {
     interface HTMLElementTagNameMap {
         'ui-select': UiSelect;
+        'ui-option': UiOption;
+        'ui-optgroup': UiOptgroup;
     }
 }

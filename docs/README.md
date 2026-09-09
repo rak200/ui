@@ -10,10 +10,10 @@ One page per unit, sized by what a reader would look up on its own.
 | `UiDialog`     | [dialog.md](dialog.md)     | the `<ui-dialog>` element, what it delegates and what it adds      |
 | `UiField`      | [field.md](field.md)       | the `<ui-field>` element, its slots, and the ARIA wiring it owns   |
 | `UiIcon`       | [icon.md](icon.md)         | the `<ui-icon>` element, importing glyphs, and the accessible name |
-| `UiInput`      | [input.md](input.md)       | `<ui-input>` and `<ui-textarea>`, and why the control is yours     |
+| `UiInput`      | [input.md](input.md)       | `<ui-input>` and `<ui-textarea>`, their attributes and validation  |
 | `UiMenu`       | [menu.md](menu.md)         | the `<ui-menu>` element, its keyboard, and whose the items are     |
 | `UiRadioGroup` | [radio.md](radio.md)       | `<ui-radio-group>` and `<ui-radio>`, and whose the behaviour is    |
-| `UiSelect`     | [select.md](select.md)     | the `<ui-select>` element, and what the platform still refuses     |
+| `UiSelect`     | [select.md](select.md)     | `<ui-select>`, its choices, and what the platform still refuses    |
 | `UiTable`      | [table.md](table.md)       | the `<ui-table>` element, what it styles, and what it is not       |
 | `UiToaster`    | [toast.md](toast.md)       | `<ui-toaster>` and `<ui-toast>`, the two regions and the clock     |
 | `UiTooltip`    | [tooltip.md](tooltip.md)   | the `<ui-tooltip>` element, when it shows, and where it lands      |

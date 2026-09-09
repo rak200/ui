@@ -30,11 +30,12 @@ src/
 ├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
-├── input.ts         # <ui-input> and <ui-textarea> — the box around a control the host wrote
+├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
 ├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
-├── select.ts        # <ui-select> — the same box, and the caret the platform stopped drawing
+├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
+│                   #   the platform could not take slotted
 ├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
 ├── toast.ts         # <ui-toaster> and <ui-toast> — two live regions, and a clock that is not a token
 ├── tooltip.ts       # <ui-tooltip> — a popover the platform lifts, placed by hand
@@ -172,6 +173,22 @@ explains. This file restates none of them.
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
   file records why `appearance: none` is set at all, and why `appearance: base-select` — supported
   in this engine, measured — is deliberately not adopted.
+- **Why a choice is `<ui-option>` rather than `<option>`** — the docblock on `UiSelect` and on
+  `UiDeclaration` in `src/select.ts`, and `docs/select.md`'s _Why the choices are not `<option>`_. A
+  `<slot>` inside a `<select>` assigns the nodes and the select sees none of them, measured; and a
+  mirrored `<option>` the host owns cannot report `option.selected = true`, because a property write
+  is not something a `MutationObserver` reports. **The two halves of change detection are split on
+  purpose**: `slotchange` reports structure and each declaration carries its own slot — the select's
+  own sees nothing when a choice moves inside an `<ui-optgroup>` — while a property change is
+  announced by the declaration itself, an event from `disconnectedCallback` having no path left to
+  bubble along.
+- **Why a form control renders its own label, and what that costs** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and the docblock on
+  each element. `src/input.ts`'s `attribute()` carries the rule an empty attribute breaks:
+  `pattern=""` is the empty expression and matches only the empty string, so an optional attribute
+  is omitted rather than written blank. The `updated()` loop beside it says why the control is
+  iterated rather than asserted — a null branch there is a coverage hole and an immortal mutant at
+  once, and there is exactly one control to iterate.
 - **Why `ui-toaster` renders two live regions into its shadow root, when every other ARIA
   relationship here is light-DOM only** — the docblock on `UiToaster` in `src/toast.ts`, and
   [ARCHITECTURE.md](ARCHITECTURE.md), _Containment is the one relationship that does cross_. A

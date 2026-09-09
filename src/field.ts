@@ -11,9 +11,11 @@ let sequence = 0;
  * Written once here rather than per control that needs it, because copies of one wiring are
  * copies of one chance to get it subtly wrong.
  *
- * **`<ui-checkbox>` and `<ui-switch>` are not among them any more.** They render their label,
- * their message and their `aria-invalid` beside the control, in one tree scope, so there is
- * nothing scattered here to point at anything — see `docs/checkbox.md`.
+ * **None of this package's own form controls are among them any more.** `<ui-checkbox>`,
+ * `<ui-switch>`, `<ui-input>`, `<ui-textarea>` and `<ui-select>` each render their label, their
+ * message and their `aria-invalid` beside the control, in one tree scope, so there is nothing
+ * scattered here to point at anything. What is left is a control the host wrote, and
+ * {@link UiRadioGroup}, which is named by reference rather than by containment.
  *
  * **Everything is slotted, and that is forced rather than chosen.** An ARIA relationship
  * by IDREF does not cross a shadow boundary: a `<label for>` rendered in this element's
