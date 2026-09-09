@@ -13,40 +13,55 @@ import '@rak200/ui';
 - [`<ui-checkbox>`](#ui-checkbox)
 - [`<ui-switch>`](#ui-switch)
 - [Which one to reach for](#which-one-to-reach-for)
-- [The control is yours](#the-control-is-yours)
+- [The element is the control](#the-element-is-the-control)
+- [Naming it](#naming-it)
+- [In a form](#in-a-form)
+- [In error](#in-error)
 - [The mixed state](#the-mixed-state)
-- [Inside a field](#inside-a-field)
+- [Events](#events)
 - [Interaction states](#interaction-states)
+- [Selecting on state](#selecting-on-state)
 - [Styling](#styling)
 
 ## `<ui-checkbox>`
 
 ```html
-<ui-checkbox>
-  <input type="checkbox" name="receipt" />
-</ui-checkbox>
+<ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>
 ```
 
-A box around a checkbox you wrote. It carries the appearance — the size, the boundary, the radius,
-the fill, the tick, the focus ring and the interaction states — and nothing else.
+A checkbox. It renders the control, its label and — when there is one — its error message, and it
+is the thing the form talks to.
 
 The class is exported as `UiCheckbox` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
 
+| Attribute       | Type    | Default | Means                                               |
+| --------------- | ------- | ------- | --------------------------------------------------- |
+| `label`         | string  | `''`    | the accessible name, and the text beside the box    |
+| `name`          | string  | `''`    | what the value is submitted under                   |
+| `value`         | string  | `'on'`  | what a ticked box submits                           |
+| `checked`       | boolean | `false` | the **default** state — see [In a form](#in-a-form) |
+| `indeterminate` | boolean | `false` | the mixed state, `<ui-checkbox>` only               |
+| `disabled`      | boolean | `false` | refuses interaction, and submits nothing            |
+| `required`      | boolean | `false` | the form is invalid while the box is off            |
+| `error`         | string  | `''`    | a message, which also makes the control invalid     |
+
+`form`, `validity` and `validationMessage` are read-only properties, and they answer for the
+element rather than for anything inside it.
+
 ## `<ui-switch>`
 
 ```html
-<ui-switch>
-  <input type="checkbox" name="notify" checked />
-</ui-switch>
+<ui-switch label="Email notifications" name="notify" checked></ui-switch>
 ```
 
 The same control, drawn as a track and a thumb and announced as a switch. **`role="switch"` is set
-by the element**, on the control you wrote, so a switch cannot ship looking like one and announcing
-as a checkbox because an attribute was forgotten. A `role` you write yourself is never overwritten.
+by the element**, on the control it renders, so a switch cannot ship looking like one and
+announcing as a checkbox because an attribute was forgotten.
 
 There is no native switch to delegate to: `<input type="checkbox" switch>` is unsupported in the
-engine this package's suite measures, so a switch is drawn rather than adopted.
+engine this package's suite measures, so a switch is drawn rather than adopted. It takes every
+attribute above except `indeterminate` — `role="switch"` has no third value.
 
 Exported as `UiSwitch`.
 
@@ -63,58 +78,111 @@ Exported as `UiSwitch`.
 If the answer is _it goes in the form_, it is a checkbox. Two components that differed only in
 appearance would be one component with a `variant`.
 
-## The control is yours
+## The element is the control
 
-**You write the `<input type="checkbox">`, and it stays in the light DOM.** That is the single
-decision these components are made of, and it is forced rather than preferred — the same constraint
-that shapes [`<ui-input>`](input.md) and [`<ui-field>`](field.md): an ARIA relationship by IDREF does
-not cross a shadow boundary, so a control rendered into a shadow root cannot be labelled by the
-`<label>` beside it.
+**You write the tag and its attributes. There is no `<input>` to supply and no `<ui-field>` to wrap
+it in.** The `<input type="checkbox">` and the `<label>` around it are rendered together into this
+element's shadow root, which is what makes every behaviour below the platform's rather than this
+package's: the toggle, <kbd>Space</kbd>, the click target over the label text, and the rule that a
+link inside a label follows the link instead of toggling.
 
-What it buys back is the same three things: `name`, `checked`, `required` and `disabled` are the
-platform's business with no pass-through list to fall out of step with; the control is directly
-styleable, being your own element in your own tree; and it reaches a form submit because it is a
-native control inside a `<form>`, with no `ElementInternals` and no value mirroring.
+> **This changed.** These elements used to take a control you wrote, in the light DOM, because an
+> ARIA relationship by IDREF does not cross a shadow boundary. That is still true — and it was
+> never the whole rule. What a relationship needs is for **every end of it to share a tree scope**,
+> and a `<label>` that _contains_ its control needs no IDREF at all. RFC 0005 measured that in
+> Blink, Gecko and WebKit and moved both ends inside together.
 
-A `<label>` wrapping the control labels it, too — the control is a descendant of that label in the
-tree the browser reads:
+**The element is what the form sees**, through `ElementInternals`: an `<input>` in a shadow root
+has no form owner, so the value reaches a submit because this element passes it on.
+
+## Naming it
+
+`label` is the short road, and it is the accessible name:
 
 ```html
-<label>
-  <ui-checkbox><input type="checkbox" name="remember" /></ui-checkbox>
-  Remember this device
-</label>
+<ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>
 ```
+
+For a name an attribute cannot hold, fill the `label` slot instead:
+
+```html
+<ui-checkbox name="terms">
+  <span slot="label">I accept the <a href="/terms">terms of service</a></span>
+</ui-checkbox>
+```
+
+The slot wins where both are given. The markup stays in your own tree — only the `<label>` around
+it is in the shadow root — so a link inside it is a link: clicking it follows the link rather than
+toggling the box, which is the platform's own rule rather than one written here.
+
+**Give it one or the other.** A control with neither has no accessible name.
+
+## In a form
+
+```html
+<form>
+  <ui-checkbox label="Send a receipt" name="receipt" checked></ui-checkbox>
+</form>
+```
+
+- `name` is what the entry is called, and `value` — `'on'` by default — is what a ticked box
+  submits. An unticked one submits nothing, and neither does a disabled one.
+- **`checked` is the default, not the live state.** It is the attribute a reset returns to, which
+  is exactly what `checked` does on a native `<input>`: the property tracks what the user did, the
+  attribute does not follow it. Read `element.checked` for the state, and see
+  [Selecting on state](#selecting-on-state) to style on it.
+- A `<fieldset disabled>` above the element disables it.
+- The browser restores the state on a back-navigation.
+
+Constraint validation is the element's, because a control in a shadow root is not a submittable
+one. `required` makes the form invalid while the box is off, `element.validity` and
+`element.validationMessage` answer for it, and `form.reportValidity()` focuses it — focus is
+delegated, so it lands on the control.
+
+## In error
+
+```html
+<ui-checkbox
+  label="I accept the terms"
+  name="terms"
+  required
+  error="The terms have to be accepted."
+>
+</ui-checkbox>
+```
+
+**One property, and it says everything once.** `error` renders the message under the control, marks
+the control `aria-invalid`, points `aria-describedby` at the message, paints the boundary from
+`--ui-color-danger`, and hands the same string to `setValidity` — so the form cannot be submitted
+past a message the reader can see, and nothing the reader sees can disagree with what the form
+thinks. Clear it by setting `error` to the empty string.
+
+A custom message wins over the one `required` writes for itself.
 
 ## The mixed state
 
-```js
-document.querySelector('#select-all').indeterminate = true;
+```html
+<ui-checkbox label="Select all" indeterminate></ui-checkbox>
 ```
 
 A checkbox drawn by this package **draws the mixed state**, and that is not a tri-state feature
 being offered. `appearance: none` takes the platform's own dash away along with the rest of the
-drawing, so a control you set `indeterminate` on would otherwise render as plainly _unchecked_ — a
-wrong answer rather than a missing one. The dash exists to stop that.
+drawing, so a control set `indeterminate` would otherwise render as plainly _unchecked_ — a wrong
+answer rather than a missing one. The dash exists to stop that.
 
-`<ui-switch>` draws no mixed state, because `role="switch"` has no third value.
+It takes an attribute where the platform offers only a property, which is this element having
+become the control. A toggle answers the question the mixed state was asking, so the first click
+clears it.
 
-## Inside a field
+`<ui-switch>` has no mixed state at all, because `role="switch"` has no third value.
 
-[`<ui-field>`](field.md) wires the label, the help, the error and `aria-invalid`, and it finds the
-control through the wrapper:
+## Events
 
-```html
-<ui-field>
-  <label slot="label">I accept the terms</label>
-  <ui-checkbox><input type="checkbox" name="terms" required /></ui-checkbox>
-  <span slot="error">The terms have to be accepted.</span>
-</ui-field>
-```
+`change` and `input` both reach a listener on the tag, with `event.target` being the element.
 
-The error boundary is not set here and not by the wrapper: the field marks the control
-`aria-invalid`, and the drawing reads that — one source, and it is the one a screen reader is
-already using.
+`change` is **re-dispatched**, and that is worth knowing rather than assuming: the platform marks
+it non-composed, so the one the inner control fires stops at the shadow boundary. `input` is
+composed and arrives on its own, retargeted.
 
 ## Interaction states
 
@@ -132,35 +200,72 @@ that criterion's _user agent control_ exception, which drawing our own gives up.
 
 **Forced colors is handled rather than inherited.** That mode replaces every author colour, so the
 accent that says _checked_ would become the same `Canvas` as the surface that says _not_ — the state
-would disappear for the people who turned the mode on to see states more clearly. The checked states
-name `Highlight`, and the disabled one names `GrayText` instead of dimming, because opacity is not a
-colour and is not forced.
+would disappear for the people who turned the mode on to see states more clearly. The checked and
+mixed states name `Highlight`, and the disabled one names `GrayText` instead of dimming, because
+opacity is not a colour and is not forced.
+
+## Selecting on state
+
+```css
+ui-checkbox:state(checked) {
+  font-weight: 600;
+}
+ui-checkbox:state(indeterminate) {
+  opacity: 0.8;
+}
+ui-checkbox:invalid {
+  outline: 1px dashed red;
+}
+```
+
+**Two states are published, and only two**, because they are the two with no other route. The
+control lives in this element's shadow root, and `::part(box):checked` **does not match** — a
+`::part()` may be followed by user-action pseudo-classes such as `:hover`, not by state ones. So
+`checked` and `indeterminate` are exposed as custom states instead. Measured in the engine this
+package's suite runs.
+
+Everything else already works, and none of it is this element's doing:
+
+| Selector                | Reaches                                                   |
+| ----------------------- | --------------------------------------------------------- |
+| `:state(checked)`       | the live state, which `checked` does not reflect          |
+| `:state(indeterminate)` | the mixed state, `<ui-checkbox>` only                     |
+| `:valid` / `:invalid`   | constraint validation — a form-associated element gets it |
+| `:disabled`             | likewise, including from a `<fieldset disabled>`          |
+| `[required]`            | the attribute, which reflects                             |
+
+**Do not select on `[error]`.** It reflects, and a reflected string whose default is empty is
+written as `error=""` — which a presence selector matches on every element, error or not. `:invalid`
+is what you want.
 
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the tick.
 
-| Part                                      | Token                                                       |
-| ----------------------------------------- | ----------------------------------------------------------- |
-| size                                      | `--ui-space` × 3, floored at 24px                           |
-| resting fill                              | `--ui-color-surface`                                        |
-| boundary, and the switch's track when off | `--ui-color-border`                                         |
-| checked fill                              | `--ui-color-accent`, and `--ui-color-accent-hover` on hover |
-| unchecked boundary on hover               | `--ui-color-text`                                           |
-| the switch's thumb                        | `--ui-color-surface`                                        |
-| in error                                  | `--ui-color-danger`                                         |
-| focus ring                                | `--ui-color-focus`                                          |
-| corner                                    | `--ui-radius` (the switch is always a pill)                 |
-| motion                                    | `--ui-duration-state`, `--ui-easing-state`                  |
+| Part                                      | Token                                                        |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| size                                      | `--ui-space` × 3, floored at 24px                            |
+| resting fill                              | `--ui-color-surface`                                         |
+| boundary, and the switch's track when off | `--ui-color-border`                                          |
+| checked fill                              | `--ui-color-accent`, and `--ui-color-accent-hover` on hover  |
+| unchecked boundary on hover               | `--ui-color-text`                                            |
+| the switch's thumb                        | `--ui-color-surface`                                         |
+| label text                                | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
+| in error                                  | `--ui-color-danger`, at `--ui-text-supporting`               |
+| focus ring                                | `--ui-color-focus`                                           |
+| corner                                    | `--ui-radius` (the switch is always a pill)                  |
+| motion                                    | `--ui-duration-state`, `--ui-easing-state`                   |
+
+**Four parts are exposed**, because the drawing is now in here:
+
+| `::part()` | Is                                        |
+| ---------- | ----------------------------------------- |
+| `label`    | the `<label>`, which wraps the whole pair |
+| `box`      | the `<input>` itself                      |
+| `text`     | the span holding the label text           |
+| `error`    | the message, when there is one            |
 
 **The tick is a hole, not a colour**, and that is what keeps it overridable. An SVG embedded in a
 `data:` URI freezes whatever colour is drawn into it, and no host could override that. A mask has no
 colour — only its alpha is read — so the tick is punched out of the accent fill with
 `mask-composite: exclude`, and what shows through it is whatever the control sits on.
-
-The alternative was a mark rendered into the shadow root, and it is not available:
-`:host(:has(input:checked))` is invalid in this engine, measured with `CSS.supports`, and shadow CSS
-has no other way to read a slotted control's state.
-
-`::part()` is not exposed. There is nothing in the shadow root to aim it at — the control is yours,
-so it is styleable directly.

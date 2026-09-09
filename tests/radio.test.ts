@@ -82,6 +82,22 @@ function only(form: HTMLFormElement, selector: string): HTMLElement {
     return found;
 }
 
+/**
+ * The checkbox's own control, which is in its shadow root rather than the fixture.
+ *
+ * RFC 0005 moved it there — the element renders the control and the label together, so
+ * there is nothing in the light DOM for a light-DOM query to find.
+ */
+function checkbox(form: HTMLFormElement): HTMLInputElement {
+    const control = only(form, 'ui-checkbox').shadowRoot?.querySelector('input');
+
+    if (control === null || control === undefined) {
+        throw new Error('the checkbox rendered no control');
+    }
+
+    return control;
+}
+
 /** The first of them, which most drawing assertions are taken on. */
 function radio(form: HTMLFormElement): HTMLInputElement {
     const [first] = radios(form);
@@ -491,10 +507,10 @@ describe('the control, against the checkbox it has to match', () => {
     it('agrees on the size, the boundary, the fill and the cursor', async () => {
         const form = await mount(`
             ${fixture}
-            <ui-checkbox><input type="checkbox" /></ui-checkbox>
+            <ui-checkbox label="The drawing this one has to match"></ui-checkbox>
         `);
         const drawn = getComputedStyle(radio(form));
-        const checkbox = getComputedStyle(only(form, 'input[type=checkbox]'));
+        const box = getComputedStyle(checkbox(form));
 
         for (const property of [
             'appearance',
@@ -508,33 +524,33 @@ describe('the control, against the checkbox it has to match', () => {
             'transitionProperty',
             'transitionDuration',
         ] as const) {
-            expect(drawn[property], property).toBe(checkbox[property]);
+            expect(drawn[property], property).toBe(box[property]);
         }
     });
 
     it('agrees on the accent it fills with, and on the focus ring', async () => {
         const form = await mount(`
             ${fixture}
-            <ui-checkbox><input type="checkbox" checked /></ui-checkbox>
+            <ui-checkbox label="The drawing this one has to match" checked></ui-checkbox>
         `);
         radio(form).checked = true;
         await settled(radio(form));
 
         const drawn = getComputedStyle(radio(form));
-        const checkbox = getComputedStyle(only(form, 'input[type=checkbox]'));
+        const box = getComputedStyle(checkbox(form));
 
-        expect(drawn.backgroundColor).toBe(checkbox.backgroundColor);
-        expect(drawn.outlineColor).toBe(checkbox.outlineColor);
+        expect(drawn.backgroundColor).toBe(box.backgroundColor);
+        expect(drawn.outlineColor).toBe(box.outlineColor);
     });
 
     it('differs on the shape, and only on the shape', async () => {
         const form = await mount(`
             ${fixture}
-            <ui-checkbox><input type="checkbox" /></ui-checkbox>
+            <ui-checkbox label="The drawing this one has to differ from"></ui-checkbox>
         `);
 
         expect(getComputedStyle(radio(form)).borderRadius).not.toBe(
-            getComputedStyle(only(form, 'input[type=checkbox]')).borderRadius,
+            getComputedStyle(checkbox(form)).borderRadius,
         );
     });
 });

@@ -3,6 +3,28 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
+## The form controls that have not moved yet (#138)
+
+RFC 0005 decided that a form control owns **both ends of its own relationship, inside its shadow
+root**, and its first step has shipped: `<ui-checkbox>` and `<ui-switch>` render their own control
+and their own label, and take what a host writes as attributes.
+
+Three components have not moved — `<ui-input>`, `<ui-textarea>` and `<ui-select>` still take a
+control you write — and `<ui-field>` exists to point scattered ends at each other, so it goes when
+the last of them does. Two things it carries need a home first, and that is the step that can block
+the removal rather than a formality: the vertical rhythm between label, control and help is its
+stylesheet, and the error colour is a token `<ui-radio-group>` retargets through three selectors it
+could not otherwise use.
+
+**`<ui-radio>` and `<ui-radio-group>` are last, and they wait on #122** rather than on this. They
+are the only elements here whose behaviour meets that issue's own test, and RFC 0005 is what makes
+it answerable — the dependency runs that way and not the reverse.
+
+[ARCHITECTURE.md](ARCHITECTURE.md) already carries the corrected rule for a consumer, brought
+forward because a rule cannot stay in the consumer-facing document while shipped components
+contradict it. What is left there is pruning the half that says which components still take the
+other arrangement.
+
 ## The listbox deferral, which has an expiry date rather than a reason
 
 RFC 0016 put a custom listbox off because a native `<select>` is accessible for free on every

@@ -79,8 +79,13 @@ manage, so neither does this element.
 ## The controls are yours
 
 **You write each `<input type="radio">`, and they stay in the light DOM.** The same decision
-[`<ui-checkbox>`](checkbox.md) and [`<ui-input>`](input.md) are made of, and forced by the same
-constraint: an ARIA relationship by IDREF does not cross a shadow boundary.
+[`<ui-input>`](input.md) is made of, and forced by the same constraint: an ARIA relationship by
+IDREF does not cross a shadow boundary, and the group is named by one.
+
+[`<ui-checkbox>`](checkbox.md) was made of it too and no longer is. What a relationship actually
+needs is for every end of it to share a tree scope, which a `<label>` wrapping its own control
+satisfies without an IDREF at all — so a drawn boolean control renders both ends together. A group
+is named by reference rather than by containment, so that arrangement does not reach it yet.
 
 Each option is named by the `<label>` around it — implicit association, so there is no `id` to
 write and no `for` to forget:

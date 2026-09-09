@@ -27,8 +27,13 @@ import '@rak200/ui';
 </ui-field>
 ```
 
-Every form control in the v0 surface needs the same wiring. Written per control it is five chances
-to get one subtly wrong; written here it is one.
+A control whose label lives beside it needs this wiring, and writing it per control is a chance to
+get one subtly wrong; written here it is one.
+
+**It is not for [`<ui-checkbox>`](checkbox.md) or [`<ui-switch>`](checkbox.md).** Those render
+their own label, their own message and their own `aria-invalid`, so there are no scattered ends
+left for this element to point at each other — put one inside a field and it will name a wrapper
+that is not the control.
 
 The class is exported as `UiField` for a host that needs the type; importing the package registers
 the element, so nothing has to be called.

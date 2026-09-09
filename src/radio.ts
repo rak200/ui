@@ -267,8 +267,8 @@ export class UiRadioGroup extends LitElement {
      * which lands before this element's. Set a microtask later, the role would arrive
      * after the only reader that needs it.
      *
-     * A `role` the host wrote is never overwritten, the same way `<ui-switch>` never
-     * overwrites one on the control it announces.
+     * A `role` the host wrote is never overwritten, the same courtesy {@link UiField}
+     * extends to an `id` it finds already there.
      */
     override connectedCallback(): void {
         super.connectedCallback();
