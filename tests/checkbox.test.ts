@@ -5,58 +5,75 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { Checkbox, Inline, Invalid, States, Switch } from '../stories/checkbox.stories.js';
+import meta, { Checkbox, Invalid, Markup, States, Switch } from '../stories/checkbox.stories.js';
 import '../src/checkbox.js';
-import '../src/field.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 
-/** The markup the behavioural tests use, unless one needs a different shape. */
-const fixture = `
-    <ui-field>
-        <label slot="label">Send a receipt</label>
-        <ui-checkbox><input type="checkbox" name="receipt" /></ui-checkbox>
-    </ui-field>
-`;
+/** Either element, since almost everything under test is the pair's rather than one's. */
+type Toggle = UiCheckbox | UiSwitch;
 
-/** Mounts a fixture inside a form and waits for the wiring to settle. */
+/** The markup the behavioural tests use, unless one needs a different shape. */
+const fixture = '<ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>';
+
+/** Mounts a fixture inside a form and waits for the first render. */
 async function mount(markup: string): Promise<HTMLFormElement> {
     const form = document.createElement('form');
     form.innerHTML = markup;
     document.body.append(form);
 
-    for (const element of form.querySelectorAll('ui-field, ui-checkbox, ui-switch')) {
-        await (element as UiCheckbox).updateComplete;
+    for (const element of form.querySelectorAll<Toggle>('ui-checkbox, ui-switch')) {
+        await element.updateComplete;
     }
-
-    // `ui-field` associates from a MutationObserver, which lands on a microtask.
-    await new Promise((resolve) => {
-        setTimeout(resolve, 0);
-    });
 
     return form;
 }
 
-/** The wrapper, which is the component under test. */
-function wrapper(form: HTMLFormElement): UiCheckbox | UiSwitch {
+/** The element under test, which is now the control rather than a box around one. */
+function toggle(form: HTMLFormElement): Toggle {
     // The tag map resolves a single tag name, not a list, so the union is named here.
-    const element = form.querySelector<UiCheckbox | UiSwitch>('ui-checkbox, ui-switch');
+    const element = form.querySelector<Toggle>('ui-checkbox, ui-switch');
 
     if (element === null) {
-        throw new Error('no wrapper in the fixture');
+        throw new Error('no toggle in the fixture');
     }
 
     return element;
 }
 
-/** The control the host wrote, which is the thing the wrapper is about. */
-function control(form: HTMLFormElement): HTMLInputElement {
-    const element = form.querySelector('input');
+/** The rendered control, which is what every drawing assertion is about. */
+function box(element: Toggle): HTMLInputElement {
+    const control = element.renderRoot.querySelector('input');
 
-    if (element === null) {
-        throw new Error('no control in the fixture');
+    if (control === null) {
+        throw new Error('the toggle rendered no control');
     }
 
-    return element;
+    return control;
+}
+
+/** One of the exposed parts, which is how a host reaches anything in here. */
+function part(element: Toggle, name: string): HTMLElement {
+    const found = element.renderRoot.querySelector<HTMLElement>(`[part='${name}']`);
+
+    if (found === null) {
+        throw new Error(`no part named ${name}`);
+    }
+
+    return found;
+}
+
+/** One element of the host's own markup, which only the label slot ever carries any of. */
+function light<K extends keyof HTMLElementTagNameMap>(
+    form: HTMLFormElement,
+    selector: K,
+): HTMLElementTagNameMap[K] {
+    const found = form.querySelector(selector);
+
+    if (found === null) {
+        throw new Error(`no ${selector} in the fixture`);
+    }
+
+    return found;
 }
 
 /**
@@ -67,12 +84,12 @@ function control(form: HTMLFormElement): HTMLInputElement {
  * colour is not optional: both in one recalculation and the transition starts under the
  * duration that was in force before it.
  */
-function withoutMotion(form: HTMLFormElement): void {
-    wrapper(form).style.setProperty('--ui-duration-state', '0s');
+function withoutMotion(element: Toggle): void {
+    element.style.setProperty('--ui-duration-state', '0s');
 
     // Every declared transition, not the first: these sheets transition two properties and
     // the switch's three, so a check on the whole string would be a check on how many.
-    const durations = getComputedStyle(control(form)).transitionDuration.split(', ');
+    const durations = getComputedStyle(box(element)).transitionDuration.split(', ');
 
     expect(new Set(durations), 'the motion is out').toEqual(new Set(['0s']));
 }
@@ -81,9 +98,9 @@ function withoutMotion(form: HTMLFormElement): void {
  * Waits out whatever is transitioning on the control.
  *
  * `withoutMotion` is the cheaper answer and only works when the test schedules the change
- * itself. Where the change lands during mount — `ui-field` writing `aria-invalid` from a
- * MutationObserver, say — the transition is already in flight before any test code runs,
- * and changing the duration then does not retract a running one.
+ * itself. Where the change lands during mount — an `error` written in the markup, say —
+ * the transition is already in flight before any test code runs, and changing the duration
+ * then does not retract a running one.
  */
 async function settled(element: Element): Promise<void> {
     await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
@@ -124,71 +141,486 @@ afterEach(async () => {
     document.body.replaceChildren();
 });
 
-describe('ui-checkbox', () => {
+/**
+ * The shape RFC 0005 decided, and the one thing it turns on.
+ *
+ * The variable was never whether the control is rendered — it is whether every end of the
+ * relationship shares a tree scope. These assertions are that sentence, measured.
+ */
+describe('the control and its label, in one tree scope', () => {
     it('registers both elements', () => {
         expect(customElements.get('ui-checkbox')).toBeDefined();
         expect(customElements.get('ui-switch')).toBeDefined();
     });
 
-    it('leaves the control in the light DOM, where a label can reach it', async () => {
+    it('renders the control, leaving the host nothing to write', async () => {
         const form = await mount(fixture);
 
-        expect(control(form).parentElement).toBe(wrapper(form));
-        expect(wrapper(form).shadowRoot?.querySelector('input')).toBeNull();
+        expect(form.querySelector('input'), 'nothing in the light DOM').toBeNull();
+        expect(box(toggle(form)).type).toBe('checkbox');
     });
 
-    it('lets the control reach a submit, because it never stopped being one', async () => {
+    it('labels it the platform way, by containing it', async () => {
         const form = await mount(fixture);
-        control(form).checked = true;
+        const label = part(toggle(form), 'label');
 
-        expect([...new FormData(form).entries()]).toEqual([['receipt', 'on']]);
+        // A `<label>` around the control needs no IDREF and therefore no id — which is why
+        // the arrangement survives the shadow boundary that strands `<label for>`.
+        expect(label.tagName).toBe('LABEL');
+        expect(box(toggle(form)).labels?.[0]).toBe(label);
+        expect(label.contains(box(toggle(form)))).toBe(true);
     });
 
-    it('is labelled by the field around it, through the wrapper', async () => {
+    it('takes the label from an attribute, which is the short road', async () => {
         const form = await mount(fixture);
-        const label = form.querySelector('label');
 
-        expect(label?.htmlFor).toBe(control(form).id);
-        expect(control(form).labels?.[0]).toBe(label);
+        expect(part(toggle(form), 'text').textContent).toBe('Send a receipt');
     });
 
-    it('hugs the control rather than filling the line', async () => {
-        // Outside a field on purpose: `ui-field` lays its slots out with flex, and a flex
-        // item's display is blockified — `inline-flex` computes to `flex` in there, which
-        // is the platform being right rather than this rule being ignored.
-        const form = await mount('<ui-checkbox><input type="checkbox" /></ui-checkbox>');
+    it('lets markup fill the label instead, and the attribute steps aside', async () => {
+        const form = await mount(`
+            <ui-checkbox label="ignored" name="terms">
+                <span slot="label">I accept the <a href="#terms">terms</a></span>
+            </ui-checkbox>
+        `);
+        const assigned = part(toggle(form), 'text').querySelector('slot')?.assignedNodes() ?? [];
 
-        expect(getComputedStyle(wrapper(form)).display).toBe('inline-flex');
+        expect(assigned.map((node) => node.textContent)).toEqual(['I accept the terms']);
+        // The markup stays in the host's own tree — only the `<label>` around it is in
+        // here, which is the arrangement that makes the association the platform's.
+        expect(assigned[0]?.parentElement).toBe(toggle(form));
     });
 
+    it('makes the label text a click target, which a host used to build by hand', async () => {
+        const form = await mount(fixture);
+
+        await userEvent.click(part(toggle(form), 'text'));
+
+        expect(toggle(form).checked).toBe(true);
+    });
+
+    it('leaves a link in the label to the link, which is the platform being right', async () => {
+        const form = await mount(`
+            <ui-checkbox name="terms">
+                <span slot="label">I accept the <a href="#terms">terms</a></span>
+            </ui-checkbox>
+        `);
+
+        await userEvent.click(light(form, 'a'));
+
+        expect(toggle(form).checked, 'a link inside a label follows the link').toBe(false);
+    });
+
+    it('takes its initial state from the attribute, the way the platform does', async () => {
+        const form = await mount('<ui-checkbox label="On" checked></ui-checkbox>');
+
+        expect(toggle(form).checked).toBe(true);
+        expect(box(toggle(form)).checked).toBe(true);
+    });
+
+    it('reflects what a host writes back or styles on, and nothing more', async () => {
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        element.label = 'Send two';
+        element.name = 'copies';
+        element.value = 'both';
+        element.error = 'Pick one.';
+        element.disabled = true;
+        element.required = true;
+        element.checked = true;
+        await element.updateComplete;
+
+        expect(element.getAttribute('label')).toBe('Send two');
+        expect(element.getAttribute('name')).toBe('copies');
+        expect(element.getAttribute('value')).toBe('both');
+        expect(element.getAttribute('error')).toBe('Pick one.');
+        expect(element.hasAttribute('disabled')).toBe(true);
+        expect(element.hasAttribute('required')).toBe(true);
+        // The live state deliberately does not: the content attribute is the *default*, and
+        // one that followed every click would make the default whatever the user last did.
+        expect(element.hasAttribute('checked'), 'checked is the default, not the state').toBe(
+            false,
+        );
+    });
+
+    it('starts with nothing to say, which is the host not having said it', async () => {
+        const form = await mount('<ui-checkbox checked></ui-checkbox>');
+
+        expect(part(toggle(form), 'text').textContent, 'no label').toBe('');
+        // And no name, so nothing is submitted however the box is set: a form names the
+        // entry from the content attribute, and there is not one to name it from.
+        expect([...new FormData(form)]).toEqual([]);
+    });
+
+    it('puts the two states a host cannot otherwise reach where CSS can', async () => {
+        // Measured before this existed: `::part(box):checked` does not match, because a
+        // ::part() takes user-action pseudo-classes and not state ones. So without these a
+        // host had no way at all to select on a state kept in this shadow root — which is
+        // what would have made *not reflecting* `checked` cost the host something.
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        expect(element.matches(':state(checked)'), 'off').toBe(false);
+
+        element.checked = true;
+        await element.updateComplete;
+
+        expect(element.matches(':state(checked)'), 'on').toBe(true);
+
+        element.checked = false;
+        await element.updateComplete;
+
+        expect(element.matches(':state(checked)'), 'off again — it is removed, not left').toBe(
+            false,
+        );
+    });
+
+    it('exposes the mixed state the same way, and only the checkbox has one', async () => {
+        const form = await mount(`
+            <ui-checkbox label="All" indeterminate></ui-checkbox>
+            <ui-switch label="Notify" checked></ui-switch>
+        `);
+        const [checkbox, uiSwitch] = [
+            ...form.querySelectorAll<Toggle>('ui-checkbox, ui-switch'),
+        ] as [UiCheckbox, UiSwitch];
+
+        expect(checkbox.matches(':state(indeterminate)')).toBe(true);
+        expect(uiSwitch.matches(':state(checked)'), 'the shared one still reaches it').toBe(true);
+        expect(uiSwitch.matches(':state(indeterminate)'), 'and the other never does').toBe(false);
+
+        checkbox.indeterminate = false;
+        await checkbox.updateComplete;
+
+        expect(checkbox.matches(':state(indeterminate)')).toBe(false);
+    });
+
+    it('takes part in the pseudo-classes a form control already has', async () => {
+        // Nothing here is this element's work — a form-associated custom element matches
+        // them because it is one, which is why only the two states above are written.
+        const form = await mount(`
+            <ui-checkbox label="Terms" required></ui-checkbox>
+            <ui-checkbox label="Off" disabled></ui-checkbox>
+        `);
+        const [required, disabled] = [...form.querySelectorAll<UiCheckbox>('ui-checkbox')] as [
+            UiCheckbox,
+            UiCheckbox,
+        ];
+
+        expect(required.matches(':invalid'), 'required and off').toBe(true);
+
+        required.checked = true;
+        await required.updateComplete;
+
+        expect(required.matches(':valid')).toBe(true);
+        expect(disabled.matches(':disabled')).toBe(true);
+        // And the trap that comes with reflecting a string whose default is empty: Lit
+        // writes `error=""`, which a presence selector matches. `:invalid` is the one to
+        // reach for, and the docs say so.
+        expect(disabled.matches('[error]'), 'an empty attribute is still an attribute').toBe(true);
+    });
+
+    it('hugs its content rather than filling the line', async () => {
+        const form = await mount(fixture);
+
+        expect(getComputedStyle(toggle(form)).display).toBe('inline-flex');
+    });
+
+    it('takes the typeface from the host', async () => {
+        const form = await mount(fixture);
+        toggle(form).style.setProperty('--ui-font', 'Courier');
+
+        expect(getComputedStyle(part(toggle(form), 'text')).fontFamily).toBe('Courier');
+    });
+});
+
+/**
+ * The element joins the form, because the control cannot: an `<input>` in a shadow root has
+ * no form owner. Everything here is `ElementInternals` paying that back.
+ */
+describe('the form, which the element joins in the place of the control', () => {
+    it('submits under its name when checked, and nothing when not', async () => {
+        const form = await mount(fixture);
+
+        expect([...new FormData(form)], 'off, so there is no entry').toEqual([]);
+
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
+
+        expect([...new FormData(form)]).toEqual([['receipt', 'on']]);
+    });
+
+    it('takes the name from a property, because a form reads the attribute', async () => {
+        // The failure this is here for is silent: a form-associated custom element's entry
+        // is named from the content attribute, so a name set only as a property submits
+        // nothing at all while every other sign says the control is participating.
+        const form = await mount('<ui-checkbox label="Send a receipt"></ui-checkbox>');
+        toggle(form).name = 'receipt';
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
+
+        expect([...new FormData(form)]).toEqual([['receipt', 'on']]);
+    });
+
+    it('submits the value it was given, rather than the default the platform writes', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Send a receipt" name="receipt" value="pdf" checked></ui-checkbox>',
+        );
+
+        expect([...new FormData(form)]).toEqual([['receipt', 'pdf']]);
+    });
+
+    it('submits nothing while disabled, which is what a native control does', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Send a receipt" name="receipt" checked disabled></ui-checkbox>',
+        );
+
+        expect([...new FormData(form)]).toEqual([]);
+    });
+
+    it('knows the form it is in', async () => {
+        const form = await mount(fixture);
+
+        expect(toggle(form).form).toBe(form);
+    });
+
+    it('resets to the attribute, which is the default rather than the last click', async () => {
+        const form = await mount(`
+            <ui-checkbox label="Off by default" name="a"></ui-checkbox>
+            <ui-checkbox label="On by default" name="b" checked></ui-checkbox>
+        `);
+        const [off, on] = [...form.querySelectorAll<UiCheckbox>('ui-checkbox')] as [
+            UiCheckbox,
+            UiCheckbox,
+        ];
+
+        off.checked = true;
+        on.checked = false;
+        await Promise.all([off.updateComplete, on.updateComplete]);
+
+        form.reset();
+        await Promise.all([off.updateComplete, on.updateComplete]);
+
+        expect([off.checked, on.checked]).toEqual([false, true]);
+    });
+
+    it('follows a fieldset that disables it, which reaches it and nothing below', async () => {
+        const form = await mount(
+            '<fieldset disabled><ui-checkbox label="Send a receipt"></ui-checkbox></fieldset>',
+        );
+
+        expect(toggle(form).disabled, 'the callback fired').toBe(true);
+        expect(box(toggle(form)).disabled, 'and reached the control').toBe(true);
+    });
+
+    it('restores what a back-navigation hands back', async () => {
+        const form = await mount(fixture);
+
+        toggle(form).formStateRestoreCallback('on');
+        await toggle(form).updateComplete;
+
+        expect(toggle(form).checked).toBe(true);
+
+        toggle(form).formStateRestoreCallback(null);
+        await toggle(form).updateComplete;
+
+        expect(toggle(form).checked).toBe(false);
+    });
+});
+
+/**
+ * Constraint validation, which moved here with the value: a control in a shadow root is not
+ * a submittable element, so a form asks this element and nobody else.
+ */
+describe('the validity', () => {
+    it('is missing while a required box is off, with a message a form can report', async () => {
+        const form = await mount('<ui-checkbox label="Terms" name="terms" required></ui-checkbox>');
+
+        expect(toggle(form).validity.valueMissing).toBe(true);
+        expect(toggle(form).validationMessage).toBe('Please tick this box if you want to proceed.');
+        expect(form.checkValidity(), 'and the form knows').toBe(false);
+    });
+
+    it('is satisfied once the required box is ticked', async () => {
+        const form = await mount('<ui-checkbox label="Terms" name="terms" required></ui-checkbox>');
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
+
+        expect(toggle(form).validity.valueMissing).toBe(false);
+        expect(toggle(form).validationMessage).toBe('');
+        expect(form.checkValidity()).toBe(true);
+    });
+
+    it('leaves a box nobody required alone while it is off', async () => {
+        const form = await mount(fixture);
+
+        expect(toggle(form).validity.valid).toBe(true);
+        expect(form.checkValidity()).toBe(true);
+    });
+
+    it('takes the message the host wrote, which wins over the one it writes itself', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Terms" name="terms" required error="Nope."></ui-checkbox>',
+        );
+
+        expect(toggle(form).validity.customError).toBe(true);
+        expect(toggle(form).validity.valueMissing, 'the host said it first').toBe(false);
+        expect(toggle(form).validationMessage).toBe('Nope.');
+    });
+
+    it('drops the message when the host takes it back', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Terms" name="terms" error="Nope."></ui-checkbox>',
+        );
+        toggle(form).error = '';
+        await toggle(form).updateComplete;
+
+        expect(toggle(form).validity.valid).toBe(true);
+        expect(toggle(form).validationMessage).toBe('');
+    });
+
+    it('blocks a submit while invalid, and allows one once it is not', async () => {
+        const form = await mount('<ui-checkbox label="Terms" name="terms" required></ui-checkbox>');
+        let submits = 0;
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            submits += 1;
+        });
+
+        form.requestSubmit();
+
+        expect(submits, 'the platform stopped it').toBe(0);
+
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
+        form.requestSubmit();
+
+        expect(submits).toBe(1);
+    });
+
+    it('delegates focus, so the browser can put the reader on the control', async () => {
+        // Neither half is decoration: the host is not a focusable element, so without the
+        // delegation `focus()` lands on something that cannot take it — and `focus()` is
+        // what the platform calls itself when a form reports an invalid control.
+        const form = await mount('<ui-checkbox label="Terms" name="terms" required></ui-checkbox>');
+
+        expect(form.reportValidity()).toBe(false);
+        expect(document.activeElement).toBe(toggle(form));
+        expect(toggle(form).shadowRoot?.activeElement).toBe(box(toggle(form)));
+    });
+
+    it('describes the control by the message it renders, in the root that holds both', async () => {
+        const form = await mount(fixture);
+
+        expect(box(toggle(form)).hasAttribute('aria-describedby'), 'nothing to point at').toBe(
+            false,
+        );
+        expect(box(toggle(form)).hasAttribute('aria-invalid'), 'and nothing wrong').toBe(false);
+        // Not an empty one, which would be a described-by target with no text and a red
+        // boundary waiting on a selector.
+        expect(
+            toggle(form).shadowRoot?.querySelector('[part="error"]'),
+            'and no message at all',
+        ).toBeNull();
+
+        toggle(form).error = 'The terms have to be accepted.';
+        await toggle(form).updateComplete;
+
+        const message = part(toggle(form), 'error');
+
+        expect(message.textContent).toBe('The terms have to be accepted.');
+        expect(box(toggle(form)).getAttribute('aria-describedby')).toBe(message.id);
+    });
+});
+
+/** What a person does to it, and what a host hears back. */
+describe('the interaction', () => {
+    it('toggles on a click and mirrors the platform back into the property', async () => {
+        const form = await mount(fixture);
+
+        await userEvent.click(box(toggle(form)));
+
+        expect(toggle(form).checked).toBe(true);
+
+        await userEvent.click(box(toggle(form)));
+
+        expect(toggle(form).checked).toBe(false);
+    });
+
+    it('toggles on Space, which is the key the platform binds', async () => {
+        const form = await mount(fixture);
+        toggle(form).focus();
+
+        await userEvent.keyboard(' ');
+
+        expect(toggle(form).checked).toBe(true);
+    });
+
+    it('re-dispatches the change the platform keeps inside the shadow root', async () => {
+        // `change` is non-composed, so the one the inner control fires stops at the
+        // boundary and a host listening on the tag would hear nothing. `input` is
+        // composed and needs no help, arriving retargeted on its own — both are asserted
+        // from the form, which is where a host most often listens.
+        const form = await mount(fixture);
+        const heard: string[] = [];
+        const targets: (EventTarget | null)[] = [];
+
+        for (const type of ['input', 'change']) {
+            form.addEventListener(type, (event) => {
+                heard.push(event.type);
+                targets.push(event.target);
+            });
+        }
+
+        await userEvent.click(box(toggle(form)));
+
+        expect(heard).toEqual(['input', 'change']);
+        expect(new Set(targets), 'retargeted to the element, not the inner control').toEqual(
+            new Set([toggle(form)]),
+        );
+    });
+
+    it('refuses a click it would do nothing with', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Send a receipt" name="receipt" disabled></ui-checkbox>',
+        );
+
+        await userEvent.click(part(toggle(form), 'label'), { force: true });
+
+        expect(toggle(form).checked).toBe(false);
+    });
+});
+
+describe('ui-checkbox', () => {
     it('drops the margin the user agent puts around a checkbox', async () => {
         const form = await mount(fixture);
 
-        expect(getComputedStyle(control(form)).margin).toBe('0px');
+        expect(getComputedStyle(box(toggle(form))).margin).toBe('0px');
     });
 
     it('draws at the target-size floor, and holds it against a smaller space token', async () => {
         const form = await mount(fixture);
 
         // WCAG 2.2 2.5.8 asks 24x24 of a target the author sized, which this one is.
-        expect(getComputedStyle(control(form)).blockSize).toBe('24px');
-        expect(getComputedStyle(control(form)).inlineSize).toBe('24px');
+        expect(getComputedStyle(box(toggle(form))).blockSize).toBe('24px');
+        expect(getComputedStyle(box(toggle(form))).inlineSize).toBe('24px');
 
-        wrapper(form).style.setProperty('--ui-space', '4px');
+        toggle(form).style.setProperty('--ui-space', '4px');
 
-        expect(getComputedStyle(control(form)).blockSize, 'the floor holds').toBe('24px');
+        expect(getComputedStyle(box(toggle(form))).blockSize, 'the floor holds').toBe('24px');
     });
 
     it('grows with the space token above the floor', async () => {
         const form = await mount(fixture);
-        wrapper(form).style.setProperty('--ui-space', '16px');
+        toggle(form).style.setProperty('--ui-space', '16px');
 
-        expect(getComputedStyle(control(form)).blockSize).toBe('48px');
+        expect(getComputedStyle(box(toggle(form))).blockSize).toBe('48px');
     });
 
     it('rests on the surface, inside the boundary the rest of the kit uses', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.appearance).toBe('none');
         expect(styles.backgroundColor).toBe('rgb(255, 255, 255)');
@@ -198,22 +630,34 @@ describe('ui-checkbox', () => {
         expect(styles.cursor).toBe('pointer');
     });
 
+    it('sets the control beside its text, a space apart', async () => {
+        const form = await mount(fixture);
+        const styles = getComputedStyle(part(toggle(form), 'label'));
+
+        // Not inline-flex: a flex item's display is blockified, so the two would render
+        // identically here and the sheet declares the one that is readable back.
+        expect(styles.display).toBe('flex');
+        expect(styles.alignItems).toBe('center');
+        expect(styles.columnGap).toBe('8px');
+        expect(styles.color, '--ui-color-text').toBe('rgb(31, 41, 55)');
+    });
+
     it('fills with the accent when checked', async () => {
         const form = await mount(fixture);
-        withoutMotion(form);
-        control(form).checked = true;
+        withoutMotion(toggle(form));
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
 
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.backgroundColor).toBe('rgb(37, 99, 235)');
         expect(styles.borderTopColor).toBe('rgb(37, 99, 235)');
     });
 
     it('marks the fill by subtracting the tick from it, rather than painting one on', async () => {
-        const form = await mount(fixture);
-        control(form).checked = true;
+        const form = await mount('<ui-checkbox label="Send a receipt" checked></ui-checkbox>');
 
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         // Two layers and `exclude` is the whole mechanism: the mark is the hole, so its
         // colour is whatever the control sits on and no colour is frozen in the data URI.
@@ -225,11 +669,12 @@ describe('ui-checkbox', () => {
     });
 
     it('draws a dash for the mixed state the platform stopped drawing', async () => {
-        const form = await mount(fixture);
-        withoutMotion(form);
-        control(form).indeterminate = true;
+        const form = await mount('<ui-checkbox label="All" indeterminate></ui-checkbox>');
+        withoutMotion(toggle(form));
 
-        const styles = getComputedStyle(control(form));
+        expect(box(toggle(form)).indeterminate, 'an attribute the platform never had').toBe(true);
+
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.backgroundColor, 'filled, like checked').toBe('rgb(37, 99, 235)');
         expect(styles.borderTopColor, 'boundary included').toBe('rgb(37, 99, 235)');
@@ -239,48 +684,80 @@ describe('ui-checkbox', () => {
         expect(styles.maskPosition).toBe('50% 50%, 50% 50%');
     });
 
+    it('lets a toggle answer the question the mixed state was asking', async () => {
+        // The platform clears `indeterminate` on the control as part of the toggle, so the
+        // property is read back rather than assumed — without it the next render would put
+        // the mixed state straight back on.
+        const form = await mount('<ui-checkbox label="All" indeterminate></ui-checkbox>');
+
+        await userEvent.click(box(toggle(form)));
+        await toggle(form).updateComplete;
+
+        expect((toggle(form) as UiCheckbox).indeterminate).toBe(false);
+        expect(box(toggle(form)).indeterminate).toBe(false);
+    });
+
     it('takes the boundary from the host', async () => {
         const form = await mount(fixture);
         // The boundary is transitioned, so a read taken straight after the change returns
         // the first frame of a 150ms interpolation — which is the *resting* colour, and
         // reads exactly like the override having been ignored. Measured: with the duration
         // held at 5s the immediate read is the resting `color-mix()`, every time.
-        withoutMotion(form);
-        wrapper(form).style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        withoutMotion(toggle(form));
+        toggle(form).style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
 
-        expect(getComputedStyle(control(form)).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(box(toggle(form))).borderTopColor).toBe('rgb(1, 2, 3)');
     });
 
-    it('reads the error from the control, never from a second source', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">I accept the terms</label>
-                <ui-checkbox><input type="checkbox" required /></ui-checkbox>
-                <span slot="error">The terms have to be accepted.</span>
-            </ui-field>
-        `);
+    it('paints the boundary and the message from one error, never from two', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Terms" error="The terms have to be accepted."></ui-checkbox>',
+        );
 
-        expect(control(form).getAttribute('aria-invalid'), 'ui-field wired it').toBe('true');
+        // The error is in the markup, so the boundary is already transitioning by the time
+        // this test runs and there is no earlier moment to take the motion out at.
+        await settled(box(toggle(form)));
 
-        // `ui-field` sets the attribute from its observer, during mount, so the boundary is
-        // already transitioning by the time this test runs and there is no earlier moment
-        // to take the motion out at. Waited out rather than pre-empted.
-        await settled(control(form));
+        expect(getComputedStyle(box(toggle(form))).borderTopColor).toBe('rgb(185, 28, 28)');
 
-        expect(getComputedStyle(control(form)).borderTopColor).toBe('rgb(185, 28, 28)');
+        const message = getComputedStyle(part(toggle(form), 'error'));
+
+        expect(message.color, '--ui-color-danger').toBe('rgb(185, 28, 28)');
+
+        toggle(form).style.setProperty('--ui-text-supporting', '19px');
+
+        expect(getComputedStyle(part(toggle(form), 'error')).fontSize, '--ui-text-supporting').toBe(
+            '19px',
+        );
+    });
+
+    it('stacks the message under the control without widening the click target', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Yes" error="A message longer than that label"></ui-checkbox>',
+        );
+        const label = part(toggle(form), 'label').getBoundingClientRect();
+        const message = part(toggle(form), 'error').getBoundingClientRect();
+
+        expect(message.top, 'under, not beside').toBeGreaterThanOrEqual(label.bottom);
+        expect(getComputedStyle(toggle(form)).rowGap, 'half a space apart').toBe('4px');
+        // Stretched to the message's width, the label would be a click target running
+        // under text that is not part of it.
+        expect(label.width).toBeLessThan(toggle(form).getBoundingClientRect().width);
     });
 
     it('refuses a pointer it will do nothing with', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Send a receipt</label>
-                <ui-checkbox><input type="checkbox" disabled /></ui-checkbox>
-            </ui-field>
-        `);
-        const styles = getComputedStyle(control(form));
+        const form = await mount('<ui-checkbox label="Send a receipt" disabled></ui-checkbox>');
 
-        expect(styles.cursor).toBe('not-allowed');
-        expect(styles.opacity).toBe('0.5');
+        expect(getComputedStyle(box(toggle(form))).opacity).toBe('0.5');
+
+        expect(getComputedStyle(part(toggle(form), 'label')).cursor).toBe('not-allowed');
+
+        // The muted text is a derived token, so its value is a `color-mix()` that computes
+        // in oklab — overridden rather than compared to a literal, which would assert the
+        // mix rather than that the rule reads this name.
+        toggle(form).style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(part(toggle(form), 'label')).color).toBe('rgb(1, 2, 3)');
     });
 
     it('keeps a visible focus ring — removing it is how a component stops being usable', () => {
@@ -293,95 +770,36 @@ describe('ui-checkbox', () => {
         // Tabbed to rather than focused by script: `:focus-visible` is what carries the
         // ring, and it matches on a keyboard interaction rather than on a `focus()` call.
         const form = await mount(fixture);
-        wrapper(form).style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
+        toggle(form).style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
 
         await userEvent.tab();
 
-        expect(document.activeElement, 'tab reached the control').toBe(control(form));
-        expect(getComputedStyle(control(form)).outlineColor).toBe('rgb(1, 2, 3)');
+        expect(document.activeElement, 'tab reached the element').toBe(toggle(form));
+        expect(toggle(form).shadowRoot?.activeElement, 'and the control inside it').toBe(
+            box(toggle(form)),
+        );
+        expect(getComputedStyle(box(toggle(form))).outlineColor).toBe('rgb(1, 2, 3)');
+    });
+
+    it('announces nothing about itself — an input already says what it is', async () => {
+        const form = await mount(fixture);
+
+        expect(box(toggle(form)).hasAttribute('role')).toBe(false);
     });
 });
 
 describe('ui-switch', () => {
-    const fixture = `
-        <ui-field>
-            <label slot="label">Email notifications</label>
-            <ui-switch><input type="checkbox" name="notify" /></ui-switch>
-        </ui-field>
-    `;
+    const fixture = '<ui-switch label="Email notifications" name="notify"></ui-switch>';
 
     it('announces itself as a switch, so the host cannot forget to', async () => {
         const form = await mount(fixture);
 
-        expect(control(form).getAttribute('role')).toBe('switch');
-    });
-
-    it('never overwrites a role the host wrote', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Email notifications</label>
-                <ui-switch><input type="checkbox" role="checkbox" /></ui-switch>
-            </ui-field>
-        `);
-
-        expect(control(form).getAttribute('role')).toBe('checkbox');
-    });
-
-    it('announces a control the host swapped in later, not only the first', async () => {
-        const form = await mount(fixture);
-        const replacement = document.createElement('input');
-        replacement.type = 'checkbox';
-
-        control(form).replaceWith(replacement);
-        await wrapper(form).updateComplete;
-        // `slotchange` is queued as a microtask against the slot, not against the render.
-        await new Promise((resolve) => {
-            setTimeout(resolve, 0);
-        });
-
-        expect(replacement.getAttribute('role')).toBe('switch');
-    });
-
-    it('says nothing about a control the host took away', async () => {
-        // An empty `<ui-switch>` does not reach this: `slotchange` fires when the assigned
-        // nodes *change*, and a slot that starts empty never changed — measured, as a test
-        // that passed with the guard removed. Taking the control away is the change that
-        // reaches it, and then the guard is the only thing between a lifecycle callback and
-        // an attribute read on nothing, which throws where no assertion would see it.
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
-        const form = await mount(fixture);
-
-        window.addEventListener('error', capture);
-
-        try {
-            control(form).remove();
-            await new Promise((resolve) => {
-                setTimeout(resolve, 0);
-            });
-        } finally {
-            window.removeEventListener('error', capture);
-        }
-
-        expect(thrown, 'an emptied slot is not an error').toEqual([]);
-    });
-
-    it('leaves a checkbox alone — it already announces what it is', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Send a receipt</label>
-                <ui-checkbox><input type="checkbox" /></ui-checkbox>
-            </ui-field>
-        `);
-
-        expect(control(form).hasAttribute('role')).toBe(false);
+        expect(box(toggle(form)).getAttribute('role')).toBe('switch');
     });
 
     it('is a pill wider than it is tall, and takes its track from the boundary token', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.blockSize).toBe('24px');
         expect(styles.inlineSize).toBe('40px');
@@ -389,10 +807,10 @@ describe('ui-switch', () => {
         // Compared against the checkbox's boundary rather than to a literal: the token is
         // derived, so its value is a `color-mix()` that computes in oklab, and asserting
         // the number would assert the mix rather than that both read the same name.
-        const checkbox = await mount('<ui-checkbox><input type="checkbox" /></ui-checkbox>');
+        const other = await mount('<ui-checkbox label="Send a receipt"></ui-checkbox>');
 
         expect(styles.backgroundColor, 'the 3:1 boundary, as a fill').toBe(
-            getComputedStyle(control(checkbox)).borderTopColor,
+            getComputedStyle(box(toggle(other))).borderTopColor,
         );
         // One flat track: the border is the same colour, so the pill has no ring around it
         // that the checkbox's boundary would otherwise leave behind.
@@ -401,7 +819,7 @@ describe('ui-switch', () => {
 
     it('carries the thumb as a layer, because an element could not be told it is on', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.backgroundImage).toContain('radial-gradient');
         expect(styles.backgroundSize).toBe('16px');
@@ -410,20 +828,21 @@ describe('ui-switch', () => {
 
     it('slides the thumb across on the way to on', async () => {
         const form = await mount(fixture);
-        withoutMotion(form);
+        withoutMotion(toggle(form));
 
-        const off = getComputedStyle(control(form)).backgroundPosition;
+        const off = getComputedStyle(box(toggle(form))).backgroundPosition;
 
         expect(off).toBe('4px 50%');
 
-        control(form).checked = true;
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
 
-        expect(getComputedStyle(control(form)).backgroundPosition).not.toBe(off);
+        expect(getComputedStyle(box(toggle(form))).backgroundPosition).not.toBe(off);
     });
 
     it('moves the thumb over the state duration, along with the colours', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.transitionProperty).toBe(
             'background-color, border-color, background-position',
@@ -431,16 +850,14 @@ describe('ui-switch', () => {
         expect(styles.transitionDuration).toBe('0.15s, 0.15s, 0.15s');
     });
 
-    it('draws no mixed state, because a switch has no third value', async () => {
+    it('has no mixed state, because a switch has no third value', async () => {
         const form = await mount(fixture);
-        const off = getComputedStyle(control(form)).maskImage;
 
-        control(form).indeterminate = true;
-
-        // Read rather than asserted against the stylesheet's text: the shared sheet does
-        // name `:indeterminate`, in the forced-colors block, so a check for the word would
-        // pass whatever the drawing did.
-        expect(getComputedStyle(control(form)).maskImage).toBe(off);
+        // The property is a checkbox's and this element does not answer it, so the control
+        // it renders is never in the mixed state — read rather than asserted against the
+        // stylesheet's text, which does name `:indeterminate` in the forced-colors block.
+        expect(box(toggle(form)).indeterminate, 'the control is never mixed').toBe(false);
+        expect('indeterminate' in toggle(form), 'and no property invites one').toBe(false);
     });
 });
 
@@ -451,25 +868,24 @@ describe('ui-switch', () => {
 describe('the interaction states', () => {
     it('answers a pointer while unchecked, on the boundary', async () => {
         const form = await mount(fixture);
-        withoutMotion(form);
+        withoutMotion(toggle(form));
 
-        const resting = getComputedStyle(control(form)).borderColor;
+        const resting = getComputedStyle(box(toggle(form))).borderColor;
 
-        await userEvent.hover(control(form));
+        await userEvent.hover(box(toggle(form)));
 
-        expect(getComputedStyle(control(form)).borderColor).not.toBe(resting);
+        expect(getComputedStyle(box(toggle(form))).borderColor).not.toBe(resting);
     });
 
     it('answers a pointer while checked, on the fill', async () => {
-        const form = await mount(fixture);
-        withoutMotion(form);
-        control(form).checked = true;
+        const form = await mount('<ui-checkbox label="Send a receipt" checked></ui-checkbox>');
+        withoutMotion(toggle(form));
 
-        const resting = getComputedStyle(control(form)).backgroundColor;
+        const resting = getComputedStyle(box(toggle(form))).backgroundColor;
 
-        await userEvent.hover(control(form));
+        await userEvent.hover(box(toggle(form)));
 
-        const hovered = getComputedStyle(control(form));
+        const hovered = getComputedStyle(box(toggle(form)));
 
         expect(hovered.backgroundColor).not.toBe(resting);
         // The boundary moves with the fill rather than being left at the resting accent,
@@ -478,24 +894,19 @@ describe('the interaction states', () => {
     });
 
     it('ignores a pointer while disabled', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Send a receipt</label>
-                <ui-checkbox><input type="checkbox" disabled /></ui-checkbox>
-            </ui-field>
-        `);
-        withoutMotion(form);
+        const form = await mount('<ui-checkbox label="Send a receipt" disabled></ui-checkbox>');
+        withoutMotion(toggle(form));
 
-        const resting = getComputedStyle(control(form)).borderColor;
+        const resting = getComputedStyle(box(toggle(form))).borderColor;
 
-        await userEvent.hover(control(form));
+        await userEvent.hover(box(toggle(form)));
 
-        expect(getComputedStyle(control(form)).borderColor).toBe(resting);
+        expect(getComputedStyle(box(toggle(form))).borderColor).toBe(resting);
     });
 
     it('moves the boundary and the fill over the state duration, and nothing else', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(control(form));
+        const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.transitionProperty).toBe('background-color, border-color');
         expect(styles.transitionDuration).toBe('0.15s, 0.15s');
@@ -503,14 +914,8 @@ describe('the interaction states', () => {
 
     it('guards every interaction rule against the state that refuses it', () => {
         // Structural, and it reaches the rules a later control might add: a disabled
-        // control still matches :hover. The nested `:not(...)` is why this is not
-        // `[^)]*` — that stops at the first closing parenthesis, which is inside the
-        // guard it is meant to be checking for.
-        const rules = [
-            ...styleText('ui-checkbox').matchAll(
-                /::slotted\([a-z]+[^)]*:hover(?:[^()]|\([^()]*\))*\)/g,
-            ),
-        ];
+        // control still matches :hover.
+        const rules = [...styleText('ui-checkbox').matchAll(/input[a-z:()-]*:hover[a-z:()-]*/g)];
 
         expect(rules.length, 'there are hover rules to check').toBeGreaterThan(0);
 
@@ -537,28 +942,40 @@ describe('under forced colors', () => {
 
     it('keeps checked and unchecked apart', async () => {
         const form = await mount(fixture);
-        withoutMotion(form);
+        withoutMotion(toggle(form));
         await forcedColors(true);
 
         expect(matchMedia('(forced-colors: active)').matches, 'the mode is on').toBe(true);
 
-        const resting = getComputedStyle(control(form)).backgroundColor;
+        const resting = getComputedStyle(box(toggle(form))).backgroundColor;
 
-        control(form).checked = true;
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
 
-        expect(getComputedStyle(control(form)).backgroundColor).not.toBe(resting);
+        expect(getComputedStyle(box(toggle(form))).backgroundColor).not.toBe(resting);
+    });
+
+    it('keeps the mixed state apart from unchecked too', async () => {
+        const form = await mount(fixture);
+        withoutMotion(toggle(form));
+        await forcedColors(true);
+
+        const resting = getComputedStyle(box(toggle(form))).backgroundColor;
+
+        (toggle(form) as UiCheckbox).indeterminate = true;
+        await toggle(form).updateComplete;
+
+        expect(getComputedStyle(box(toggle(form))).backgroundColor).not.toBe(resting);
     });
 
     it('says unavailable with a colour rather than a veil, which is not forced', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Send a receipt</label>
-                <ui-checkbox><input type="checkbox" disabled /></ui-checkbox>
-            </ui-field>
-        `);
+        const form = await mount('<ui-checkbox label="Send a receipt" disabled></ui-checkbox>');
         await forcedColors(true);
 
-        expect(getComputedStyle(control(form)).opacity).toBe('1');
+        expect(getComputedStyle(box(toggle(form))).opacity).toBe('1');
+        expect(getComputedStyle(box(toggle(form))).borderTopColor, 'GrayText').not.toBe(
+            'rgb(255, 255, 255)',
+        );
     });
 });
 
@@ -584,7 +1001,7 @@ describe('accessibility', () => {
         await expectAccessible(await mountStory(Invalid, meta, 'Invalid'));
     });
 
-    it('has no violations labelled by a wrapping label, with no field at all', async () => {
-        await expectAccessible(await mountStory(Inline, meta, 'Inline'));
+    it('has no violations named by markup the slot carries', async () => {
+        await expectAccessible(await mountStory(Markup, meta, 'Markup'));
     });
 });

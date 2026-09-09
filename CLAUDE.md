@@ -134,16 +134,20 @@ explains. This file restates none of them.
   that now carries the trigger. The local half — why `showModal()` and never the `open` attribute,
   and why the accessible name is a copied string rather than an IDREF — is in `src/dialog.ts`
   beside each.
-- **Why the control is slotted rather than rendered, and why that answered form participation** —
-  [ARCHITECTURE.md](ARCHITECTURE.md), _ARIA association is light-DOM only_, and `src/input.ts`
-  beside the rule that reaches it. `src/field.ts`'s `#control()` is the other half: the field looks
-  _through_ the wrapper, because a `<label for>` aimed at a custom element labels nothing.
+- **Why a relationship needs one tree scope, and which of the two arrangements a component
+  takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
+  records why the rule used to be stated as _light-DOM only_ and what that read too broadly.
+  `src/input.ts` carries the slotted half beside the rule that reaches it, and `src/field.ts`'s
+  `#control()` is its other end: the field looks _through_ the wrapper, because a `<label for>`
+  aimed at a custom element labels nothing. `src/checkbox.ts` is the arrangement RFC 0005 moved to,
+  and `docs/checkbox.md` is the consumer-facing half.
 - **Why a drawn control paints its own mark, and why the mark is a hole** — `src/checkbox.ts`,
-  beside the mask constant. `:host(:has(input:checked))` is invalid in this engine, so shadow CSS
-  cannot read a slotted control's state and only `::slotted(input:checked)` can; a `data:` URI would
-  then freeze the mark's colour, which `mask-composite: exclude` avoids by making the mark absent
-  rather than coloured. The target-size floor and the forced-colors block beside it are the other
-  two things `appearance: none` made this component's to own.
+  beside the mask constant. A `data:` URI would freeze the mark's colour in a package whose rule is
+  that a host overrides every visual decision, which `mask-composite: exclude` avoids by making the
+  mark absent rather than coloured. The target-size floor and the forced-colors block beside it are
+  the other two things `appearance: none` made this component's to own — and **the mixed state's
+  forced-colors override lives in `UiCheckbox`'s own sheet rather than the shared one**, because a
+  later sheet at equal specificity wins; the comment there carries the measurement.
 - **Why `ui-tooltip` places itself instead of adopting CSS anchor positioning** — the docblock on
   `UiTooltip` in `src/tooltip.ts`, which records both measurements: anchor positioning works end to
   end in this engine, and an engine without it puts the popover at `inset: 0` rather than near the

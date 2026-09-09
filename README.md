@@ -45,10 +45,7 @@ npm install @rak200/ui
   </ui-select>
 </ui-field>
 
-<ui-field>
-  <label slot="label">Email notifications</label>
-  <ui-switch><input type="checkbox" name="notify" checked /></ui-switch>
-</ui-field>
+<ui-switch label="Email notifications" name="notify" checked></ui-switch>
 
 <ui-button><ui-icon name="check"></ui-icon> Save</ui-button>
 <ui-button variant="secondary">Cancel</ui-button>

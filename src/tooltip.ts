@@ -227,7 +227,7 @@ export class UiTooltip extends LitElement {
      * one that stops being announced at a moment nothing reports.
      *
      * A `role` or an `id` the host wrote is never overwritten, the same courtesy
-     * `<ui-field>` and `<ui-switch>` extend. `aria-describedby` is **added to** rather than
+     * `<ui-field>` and `<ui-radio-group>` extend. `aria-describedby` is **added to** rather than
      * replaced: the trigger may already be described by a field's help text, and a
      * description that silently replaced another is the failure nobody sees.
      */

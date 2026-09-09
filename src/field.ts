@@ -8,8 +8,12 @@ let sequence = 0;
  * Form plumbing: a label bound to a control, help and error text bound through
  * `aria-describedby`, and `aria-invalid` while the field is in error.
  *
- * Written once here rather than per control. Every form component in the v0 cut needs the
- * same wiring, and five copies of it are five chances to get one subtly wrong.
+ * Written once here rather than per control that needs it, because copies of one wiring are
+ * copies of one chance to get it subtly wrong.
+ *
+ * **`<ui-checkbox>` and `<ui-switch>` are not among them any more.** They render their label,
+ * their message and their `aria-invalid` beside the control, in one tree scope, so there is
+ * nothing scattered here to point at anything — see `docs/checkbox.md`.
  *
  * **Everything is slotted, and that is forced rather than chosen.** An ARIA relationship
  * by IDREF does not cross a shadow boundary: a `<label for>` rendered in this element's

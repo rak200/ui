@@ -382,12 +382,21 @@ is exactly what group 1 gives up here.
 
 **The two it touches fall on opposite sides of #122's own test.**
 
-_Checkbox and switch do not become a candidate._ What they take on is a click and Space toggle
-(and not Enter), `internals.ariaChecked`, a tab stop that disabled removes, `setFormValue` with
-the rule that an unchecked box submits nothing, and `formResetCallback` /
-`formStateRestoreCallback` / `formDisabledCallback`. It is a real list of small things, and almost
-none of it is accessibility — the accessible half is `role` and `aria-checked`, which `internals`
-supplies and which S1 measured in three engines. Form plumbing is not the expensive part.
+_Checkbox and switch do not become a candidate._ What they take on is `setFormValue` with the rule
+that an unchecked box submits nothing, `setValidity`, `formResetCallback` /
+`formStateRestoreCallback` / `formDisabledCallback`, and a re-dispatch of `change`, which is
+non-composed and therefore stops at the shadow boundary. It is a real list of small things, and
+**none of it is accessibility**. Form plumbing is not the expensive part.
+
+> **Corrected during the rollout.** This paragraph originally also listed _a click and Space
+> toggle (and not Enter)_, `internals.ariaChecked` and _a tab stop that disabled removes_ — and
+> named `role` and `aria-checked` through `internals` as the accessible half that survived. **That
+> is variant D's list, not F's.** Under D the host _is_ the control and every one of those is
+> hand-written; under F the element renders a real `<input type="checkbox">` inside a real
+> `<label>`, so the toggle, the Space key, the tab stop, `disabled` removing it, and `aria-checked`
+> are all still the platform's. F was the variant accepted. The conclusion is unchanged and the
+> argument for it is stronger: measured on the implementation, the cost is form plumbing and one
+> event that does not bubble out.
 
 _The radio group does become one, and it is the first._ `tests/radio.test.ts` already documents
 what it gets free, in tests that run — _one tab stop, not one per option_; _enters at the selected
@@ -825,7 +834,8 @@ and because the residual form of it is the price G asks in exchange for S10 bein
   cannot hold. Measured: rich content slotted into the rendered label keeps the name, keeps the
   markup, toggles on a click of the text, and does not toggle on a click of a link inside it.
 - **`ui-checkbox` and `ui-switch` decline Zag**, under either outcome of #122. What they take on is
-  form plumbing whose accessible half is `role` and `aria-checked` through `ElementInternals`.
+  form plumbing with no accessible half at all — see the correction under _Which of the four
+  refusals this proposal touches_, which the rollout measured.
 - **`ui-input`, `ui-textarea` and `ui-select` move**, which an earlier draft of this section denied.
   That draft rested on variant B, which measures correctly and was read too broadly: B strands the
   control because the label stays outside, not because the control is inside.
@@ -874,7 +884,10 @@ The cut moved twice under measurement, and both reversals are recorded where the
 than smoothed: `ui-input` went from _no change_ to _changed_ when variant F was tried, and the
 leaning went from G to F when S9 was measured. Two arguments this proposal originally made for
 keeping the control slotted — the OS picker and the attribute pass-through list — were withdrawn as
-wrong. A study that has corrected itself three times is not a study that has been careful once.
+wrong. A fourth correction came from the rollout rather than the study: the cost this proposal
+attributed to `ui-checkbox` and `ui-switch` was variant D's and not F's, and is recorded inline
+above rather than quietly rewritten. A study that has corrected itself four times is not a study
+that has been careful once.
 
 ## Rollout
 
@@ -888,6 +901,20 @@ option.
    becomes the component's own, so `:host([checked])` reaches it and the `::slotted(input:checked)`
    constraint that forced `mask-composite: exclude` is gone. Verify against `forced-colors`, which
    the mask also serves.
+
+   > **Done, and half of that prediction was wrong.** The `::slotted` constraint did go and every
+   > rule reads `input:checked` directly — but **`:host([checked])` is not what reaches it, and
+   > deliberately not**: a native checkbox's `checked` IDL attribute does not reflect either,
+   > because the content attribute is the _default_ a reset returns to. A host reads the live state
+   > through `::part(box):checked`. The mask stayed, because it was never about how the state is
+   > read: a `data:` URI freezes the mark's colour whoever owns the control.
+   >
+   > The `forced-colors` verification is what earned its place. The mixed state's override was
+   > declared in the shared sheet and lost to the accent declared in `UiCheckbox`'s later one at
+   > equal specificity — so the state disappeared under exactly the mode the block exists for. It
+   > was invisible to the old suite, which had no mixed-state assertion under `forced-colors` to
+   > make.
+
 2. **`ui-input`, `ui-textarea` and `ui-select` to variant F.** `<option>` stays slotted content.
 3. **Rehome what `<ui-field>` carries, then remove it.** The vertical rhythm between label, control
    and help is its stylesheet; the error colour is a token `ui-radio-group` retargets through three
@@ -897,6 +924,12 @@ option.
    and it is the document a consumer reads. It should say what the six variants showed: that every
    end of a relationship must share a tree scope, that there are two consistent ways to arrange
    that, and that the middle one is what was measured when the rule was first written.
+
+   > **Brought forward to step 1**, because a rule cannot stay in the consumer-facing document
+   > while two shipped components contradict it. The section is now _A relationship needs one tree
+   > scope_ and states both arrangements. What is left for this step is pruning the transitional
+   > half — which components still take the other arrangement, and why — once there are none.
+
 5. **`ui-radio` and `ui-radio-group`** — only after #122.
 
 Below `1.0.0` a break is a minor, so the versioning cost is low. Whether both call-site shapes
