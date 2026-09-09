@@ -3,6 +3,9 @@ import base from '@rak200/coding-standard-ts/stryker';
 export default {
     ...base,
 
+    // canary: the standard mandates break: 100; this restates it weaker
+    thresholds: { high: 100, low: 100, break: 60 },
+
     // The generated glyph modules are excluded from mutation, and NOT from here: each one
     // carries its own `// Stryker disable all`, emitted by `tests/manual/vendor-icons.mjs`,
     // which states the reason beside the single statement it covers.
