@@ -151,9 +151,9 @@ function build(): HTMLDialogElement {
  * dismissable layers and focus trapping, and its dialog machine implements both over a
  * `<div>` — which means giving up the top layer and taking a JS focus trap in exchange for
  * one the user agent enforces. *The platform owns what the platform is good at* is the
- * older rule and the stronger one here. Zag arrives with the first component the platform
- * gives nothing for; `ARCHITECTURE.md` carries that decision for a consumer, and
- * `ROADMAP.md` names the component.
+ * older rule and the stronger one here. This was the first of five refusals and the
+ * adoption is now retired; `ARCHITECTURE.md` carries the decision for a consumer, along
+ * with what would reopen it.
  *
  * @example
  * ```html

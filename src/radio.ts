@@ -188,9 +188,17 @@ export class UiRadio extends LitElement {
  * justified Zag. Neither was needed: native radios sharing a `name` **are** that pattern,
  * and this suite measures it here rather than trusting it, wrappers and all.
  *
- * That is the test `ROADMAP.md` states, applied: Zag arrives where the platform has **no
- * element** for the pattern, not merely where the pattern has state. `ui-menu` is where
- * that question is open; a radio group is not.
+ * That is the test `ARCHITECTURE.md` states, applied: Zag arrives where the platform has
+ * **no element** for the pattern, not merely where the pattern has state.
+ *
+ * **And it survives the move this element has not made yet**, which is what closed the
+ * question for the whole package. RFC 0005 puts a control inside its own shadow root, and
+ * the reading of that was that this group would lose the pattern and have to write it by
+ * hand. It does not: a radio group is the radios sharing a `name` within one form owner,
+ * and where there is no form owner — which an `<input>` in a shadow root has not — within
+ * one **tree**. So the group is scoped by the shadow root instead, and the delegation is
+ * re-scoped rather than withdrawn. `tests/radio.test.ts` measures every part of it in that
+ * arrangement, before this element takes it.
  *
  * **What is left for this element is what the platform leaves out**: the layout, the
  * `role` that makes a set of radios a group to a screen reader, and the group-level name,

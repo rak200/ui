@@ -314,6 +314,179 @@ describe('the behaviour, which the platform already had', () => {
  * field names it by reference — and it names the *group*, never the first radio, which
  * would name one option and leave the set anonymous.
  */
+/**
+ * The same behaviour, in the arrangement RFC 0005 moves a control into — measured before
+ * the group is moved rather than after, because the answer decided #122.
+ *
+ * The expectation was that variant F **withdraws** the delegation: put the controls in a
+ * shadow root and the platform's radio group goes with them, leaving a roving tabindex to
+ * hand-roll. It does not. A radio group is the radios sharing a `name` in the same form
+ * owner — and where there is no form owner, **the same tree**. An `<input>` in a shadow
+ * root has no form owner, which is the whole premise of RFC 0005, so the fallback applies
+ * and the group is scoped by the shadow root instead. The delegation is re-scoped, not
+ * withdrawn, by the same tree-scope rule the rest of that proposal turns on.
+ *
+ * The element here is a bare `HTMLElement` rather than `<ui-radio-group>` on purpose:
+ * what is under test is the platform's rule about tree scope, and a component would put
+ * its own rendering between the measurement and the thing being measured.
+ */
+describe('the behaviour, in a shadow root with no form owner', () => {
+    class Scoped extends HTMLElement {
+        constructor() {
+            super();
+
+            this.attachShadow({
+                mode: 'open',
+                delegatesFocus: this.hasAttribute('delegates'),
+            }).innerHTML = `
+                <div role="radiogroup" aria-label="Plan">
+                    <label><input type="radio" name="plan" value="free" /> Free</label>
+                    <label><input type="radio" name="plan" value="pro" /> Pro</label>
+                    <label><input type="radio" name="plan" value="max" /> Max</label>
+                </div>
+            `;
+        }
+    }
+
+    customElements.define('scoped-radios', Scoped);
+
+    /** The three controls of one scoped group, which is what every case here reads. */
+    function controls(element: Element): [HTMLInputElement, HTMLInputElement, HTMLInputElement] {
+        const [free, pro, max] = [...(element.shadowRoot?.querySelectorAll('input') ?? [])];
+
+        if (free === undefined || pro === undefined || max === undefined) {
+            throw new Error('the scoped group rendered fewer than three options');
+        }
+
+        return [free, pro, max];
+    }
+
+    /** Mounts the markup and returns the controls of the first scoped group in it. */
+    function scoped(markup: string): [HTMLInputElement, HTMLInputElement, HTMLInputElement] {
+        const host = document.createElement('div');
+        host.innerHTML = markup;
+        document.body.append(host);
+
+        const element = host.querySelector('scoped-radios');
+
+        if (element === null) {
+            throw new Error('no scoped group in the markup');
+        }
+
+        return controls(element);
+    }
+
+    /** Where the focus actually is, which for a control in here is not `document`'s. */
+    function focused(control: HTMLInputElement): Element | null {
+        const root = control.getRootNode();
+
+        return root instanceof ShadowRoot ? root.activeElement : null;
+    }
+
+    it('is a group at all, which is what the tree fallback decides', () => {
+        const [free, pro] = scoped('<scoped-radios></scoped-radios>');
+
+        free.checked = true;
+        pro.checked = true;
+
+        expect(free.checked, 'the first went off on its own').toBe(false);
+    });
+
+    it('is one tab stop, not one per option', async () => {
+        const [free] = scoped(
+            '<button id="before">b</button><scoped-radios></scoped-radios><input name="after" />',
+        );
+
+        document.getElementById('before')?.focus();
+
+        await userEvent.tab();
+
+        expect(free.getRootNode(), 'the control really is in a shadow root').toBeInstanceOf(
+            ShadowRoot,
+        );
+        expect(focused(free), 'and tab reached it').toBe(free);
+
+        await userEvent.tab();
+
+        expect(
+            (document.activeElement as HTMLInputElement).name,
+            'the next tab left the set entirely',
+        ).toBe('after');
+    });
+
+    it('moves and selects with the arrow keys, and wraps at the end', async () => {
+        const [free, pro, max] = scoped('<scoped-radios></scoped-radios>');
+
+        free.focus();
+        free.checked = true;
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(pro.checked, 'selection followed the focus').toBe(true);
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(max.checked).toBe(true);
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(free.checked, 'and the set wraps').toBe(true);
+    });
+
+    it('swaps left and right under rtl, which a hand-rolled one has to remember to', async () => {
+        const [free, pro, max] = scoped('<scoped-radios dir="rtl"></scoped-radios>');
+
+        free.focus();
+        free.checked = true;
+
+        await userEvent.keyboard('{ArrowLeft}');
+
+        expect(pro.checked, 'left advances under rtl').toBe(true);
+
+        await userEvent.keyboard('{ArrowRight}');
+
+        expect(free.checked, 'and right goes back').toBe(true);
+        expect(max.checked).toBe(false);
+    });
+
+    it('keeps the single tab stop under delegatesFocus, which every moved control sets', async () => {
+        const [free] = scoped(
+            '<button id="before">b</button><scoped-radios delegates></scoped-radios><input name="after" />',
+        );
+
+        document.getElementById('before')?.focus();
+
+        await userEvent.tab();
+
+        expect(focused(free), 'the delegation landed on the first option, not on all three').toBe(
+            free,
+        );
+
+        await userEvent.tab();
+
+        expect((document.activeElement as HTMLInputElement).name).toBe('after');
+    });
+
+    it('scopes two same-named groups apart, which a shared form owner does not', () => {
+        const host = document.createElement('div');
+        host.innerHTML = '<scoped-radios></scoped-radios><scoped-radios></scoped-radios>';
+        document.body.append(host);
+
+        const [first, second] = [...host.querySelectorAll('scoped-radios')].map(controls);
+
+        if (first === undefined || second === undefined) {
+            throw new Error('the markup rendered fewer than two groups');
+        }
+
+        first[0].checked = true;
+        second[0].checked = true;
+
+        // Two `<ui-radio-group>`s sharing a form owner and a `name` are one group today,
+        // and a host has to keep the names apart. A tree scope does it for them.
+        expect(first[0].checked, 'the first group kept its choice').toBe(true);
+    });
+});
+
 describe('inside a field', () => {
     it('names the group rather than an option', async () => {
         const form = await mount(fixture);

@@ -84,7 +84,8 @@ export const tokens = [
     // No duration steps come with them. The scale is ordinal with gaps precisely so a step
     // can be inserted when something needs one, and the dialog needs no duration the state
     // step does not already give it — inventing `--ui-duration-200` before a component
-    // judges it against something is the claim ROADMAP.md declines to make about Zag.
+    // judges it against something is the claim that retired the Zag adoption, which
+    // ARCHITECTURE.md carries.
     '--ui-easing-enter',
     '--ui-easing-exit',
     // The icon category, arriving with `ui-icon` rather than with the twelve components

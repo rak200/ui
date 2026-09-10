@@ -130,11 +130,11 @@ explains. This file restates none of them.
   `tests/tokens.test.ts` that makes it fail rather than be remembered.
 - **Why a component never writes `var(--ui-*, …)` by hand** — `src/reference.ts`, which also says
   why the helper cannot live in `tokens.ts` and why a formula carries its grounds' own fallbacks.
-- **Why `ui-dialog` did not bring Zag, when RFC 0016 said the first stateful component would** —
-  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is adopted_, and `ROADMAP.md` names the component
-  that now carries the trigger. The local half — why `showModal()` and never the `open` attribute,
-  and why the accessible name is a copied string rather than an IDREF — is in `src/dialog.ts`
-  beside each.
+- **Why the Zag adoption RFC 0016 made was retired, and what would reopen it** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, which walks the five components
+  that declined it and ends on the decision. `ui-dialog` was the first: its local half — why
+  `showModal()` and never the `open` attribute, and why the accessible name is a copied string
+  rather than an IDREF — is in `src/dialog.ts` beside each.
 - **Why a relationship needs one tree scope, and which of the two arrangements a component
   takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
   records why the rule used to be stated as _light-DOM only_ and what that read too broadly.
@@ -163,7 +163,10 @@ explains. This file restates none of them.
 - **Why `ui-radio-group` hand-rolls no roving tabindex and brings no Zag** — the docblock on
   `UiRadioGroup` in `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform
   already had_, which measures the APG pattern on native radios through the wrappers rather than
-  citing it. The two halves a group still owns are written beside themselves: **why the field names
+  citing it. **And it survives the move RFC 0005 has left for this component**, which is what
+  retired the adoption: _the behaviour, in a shadow root with no form owner_ measures the same
+  pattern in the arrangement the group has not taken yet, because a radio group with no form owner
+  is scoped by its tree. The two halves a group still owns are written beside themselves: **why the field names
   the group and not an option** is `#name` in `src/field.ts` — a `<label for>` reaches a labelable
   element and nothing else, so the group is named by reference — and **why the error is painted by
   retargeting a token** is the last rule of `UiRadioGroup.styles`, which names the three selectors

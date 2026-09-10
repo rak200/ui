@@ -94,9 +94,10 @@ function caret(): SVGSVGElement {
  *
  * ## Why this did not bring Zag either
  *
- * RFC 0016 adopted Zag for behaviour, `ROADMAP.md` named this component as the nearest
- * candidate, and Zag ships a menu machine — so this is a refusal rather than an absence of
- * an option, and it is the fourth. `ARCHITECTURE.md` carries it; the short form is that the
+ * RFC 0016 adopted Zag for behaviour, this component was named as the nearest candidate,
+ * and Zag ships a menu machine — so this is a refusal rather than an absence of an option,
+ * and it is the fourth of the five that retired the adoption. `ARCHITECTURE.md` carries
+ * the decision and this refusal with it; the short form is that the
  * test asks where the **accessible behaviour** is the expensive part, and the measurement
  * above splits it: the layer, the dismissal, Escape and the ordering against other open
  * layers are all the platform's. What is left is a roving tabindex and four keys, which the
