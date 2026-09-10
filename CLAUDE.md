@@ -13,10 +13,9 @@ Guidance for Claude Code when working in this repository.
 
 **@rak200/ui** is a library of host-agnostic custom elements: components that work in any page and
 any framework, or none. It is the ecosystem's first non-PHP artifact and its first npm package.
-RFC 0016 decided the shape — Lit for a thin runtime, Zag state machines for behaviour, design
-tokens as the single source of truth for the visual language. The Zag half was retired after five
-components declined it. The consumer-facing half of those decisions is
-[ARCHITECTURE.md](ARCHITECTURE.md).
+RFC 0016 decided the shape — a thin runtime, how behaviour is acquired, design tokens as the
+single source of truth for the visual language. What each of those became, and what was reversed
+along the way, is [ARCHITECTURE.md](ARCHITECTURE.md), which is the consumer-facing half.
 
 ## Architecture
 
@@ -131,11 +130,10 @@ explains. This file restates none of them.
   `tests/tokens.test.ts` that makes it fail rather than be remembered.
 - **Why a component never writes `var(--ui-*, …)` by hand** — `src/reference.ts`, which also says
   why the helper cannot live in `tokens.ts` and why a formula carries its grounds' own fallbacks.
-- **Why the Zag adoption RFC 0016 made was retired, and what would reopen it** —
-  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, which walks the five components
-  that declined it and ends on the decision. `ui-dialog` was the first: its local half — why
-  `showModal()` and never the `open` attribute, and why the accessible name is a copied string
-  rather than an IDREF — is in `src/dialog.ts` beside each.
+- **Why no component here brings a state machine, and what would change that** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, which carries the whole of it.
+  `src/dialog.ts` has only its own half beside the lines it explains: why `showModal()` and never
+  the `open` attribute, and why the accessible name is a copied string rather than an IDREF.
 - **Why a relationship needs one tree scope, and which of the two arrangements a component
   takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
   records why the rule used to be stated as _light-DOM only_ and what that read too broadly.

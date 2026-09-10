@@ -65,8 +65,8 @@ while the toast is being read, which is fifteen lines and no machine.
 So the test reads, in full: Zag arrives where the **accessible behaviour** is the expensive part —
 keyboard interaction, focus management, a layer that dismisses. Where the platform supplies that,
 Zag is redundant; where there is barely any of it to supply, Zag is overhead. `<ui-dialog>` and
-`<ui-radio-group>` are the first case, `<ui-toast>` is the second, and `ROADMAP.md` names the
-component that is still expected to be neither.
+`<ui-radio-group>` are the first case and `<ui-toast>` is the second, and at this point the roadmap
+still named a component expected to be neither.
 
 **`<ui-menu>` was that component, and it declined too — which makes four, and turns a deferral
 into a question.** A menu button is the pattern the adoption was written for: a single tab stop,
@@ -255,9 +255,9 @@ nothing, from which the platform's own elements are built. That is the first tim
 added an element to say something rather than to show something, and it was the platform's refusal
 that asked for it.
 
-**`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each other,
-and there are none left to point at except `<ui-radio-group>`'s, which waits on a decision of its
-own.
+**`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each
+other, and there are none left to point at except `<ui-radio-group>`'s — which is now free to move,
+the section above having settled that a group keeps the platform's pattern inside a shadow root.
 
 ## Glyphs are adopted, the delivery is owned
 
