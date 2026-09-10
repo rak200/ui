@@ -230,9 +230,9 @@ the control stayed the host's own element, and the component was a box around it
 host's tree, so it was one end on each side — the arrangement this section names as the one that
 fails. Rendered _together_ with the control, a `<label for>` and its `aria-describedby` resolve
 cleanly, in all three engines. Every form control here now owns both ends of its own relationship:
-`<ui-checkbox>`, `<ui-switch>`, `<ui-input>`, `<ui-textarea>` and `<ui-select>` render their
-control, their label, their help and their message into one shadow root, and a host writes the tag
-and its attributes.
+`<ui-checkbox>`, `<ui-switch>`, `<ui-input>`, `<ui-textarea>`, `<ui-select>` and `<ui-radio-group>`
+render their control, their label, their help and their message into one shadow root, and a host
+writes the tag and its attributes.
 
 **What that costs is `ElementInternals`, and it is smaller than it looks.** A control in a shadow
 root has no form owner, so the element joins the form itself and answers for the value, the
@@ -259,10 +259,17 @@ added an element to say something rather than to show something, and it was the 
 that asked for it.
 
 **`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each
-other, and every control in this package now renders both of its own — `<ui-radio-group>` last,
-once the section above had settled that a group keeps the platform's pattern inside a shadow root.
-What the field is still for is a control **you** wrote, which is a smaller job than the one it was
-built for.
+other, and no control in this package has scattered ends any more. What it is still for is a
+control **you** wrote — a smaller job than the one it was built for, and one that turned out to
+have a second half nobody designed for it.
+
+**A control in the host's tree is the only one a second component can still reach.** The rule this
+section states for a component's own relationship holds just as firmly against a component
+_outside_ it: `<ui-tooltip>` writes `aria-describedby` from the host's tree, and an IDREF crosses a
+boundary in neither direction — so a tooltip on any element this package renders describes a node
+the reader never lands on. The tip appears and places itself; the announcement is what is lost. The
+field is currently the only arrangement that keeps both ends together, which is a thing to weigh
+before removing it. #156
 
 ## Glyphs are adopted, the delivery is owned
 

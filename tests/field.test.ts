@@ -466,14 +466,9 @@ describe('ui-field', () => {
     });
 
     it('wires the control below a wrapper, not the wrapper itself', async () => {
-        // `<ui-input>` is such a wrapper, and it exists because the control has to stay in
-        // the light DOM for these IDREFs to resolve at all — so the box that styles it can
-        // only ever sit around it. A `<label for>` aimed at the box labels nothing, which
-        // axe reports at critical impact.
-        //
-        // Written with a plain `<span>` rather than with `<ui-input>`: the rule is about a
-        // wrapper, and a test that imports the component would be asserting the pair
-        // instead of the rule.
+        // A host boxes their control in an element of their own and the label would point at
+        // the box, which is not what the browser focuses. A `<label for>` aimed at anything
+        // that is not labelable names nothing, which axe reports at critical impact.
         const field = await mount(`
             <ui-field>
                 <label slot="label">Amount</label>
@@ -491,8 +486,8 @@ describe('ui-field', () => {
     });
 
     it('still wires a control written as a direct child', async () => {
-        // Every call site that predates the wrapper. The descent matches nothing here and
-        // returns the child as it is.
+        // No wrapper to descend into: the query matches nothing and the child is returned as
+        // it is.
         const field = await mount(`
             <ui-field>
                 <label slot="label">Amount</label>
@@ -506,13 +501,13 @@ describe('ui-field', () => {
 });
 
 /**
- * A wrapper carrying a `role` is claiming to *be* the widget rather than to box one, and
- * the descent stops there — `<ui-radio-group>` is the first, and what a field names there
- * is the group, never the first radio inside it.
+ * A slotted element carrying a `role` is claiming to *be* the widget rather than to box
+ * one, and the descent stops there: what a field names is the group, never the first radio
+ * inside it.
  *
- * Written with a plain element rather than with the component, the same way the wrapper
- * tests above are: the rule is about a role and a labelable element, and a test that
- * imported the component would be asserting the pair instead of the rule.
+ * Written with plain elements, the same way the wrapper tests above are: the rule is about
+ * a role and a labelable element, and a test built out of this package's own components
+ * would be asserting a pair that no longer exists — every control here renders its own.
  */
 describe('a control the platform cannot label', () => {
     const group = `
