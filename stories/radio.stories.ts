@@ -4,10 +4,10 @@
  * When to reach for which is in `docs/radio.md`, which CI checks and a consumer opens
  * first. This file shows the components; it does not describe them.
  *
- * **Every story writes the native radios by hand**, and that is the demonstration rather
- * than boilerplate: the controls are the host's, they stay in the light DOM where the
- * labels can resolve against them, and the group behaviour every story exercises with the
- * arrow keys is theirs too — nothing here installs it.
+ * **No story writes a control**, and that is the demonstration rather than boilerplate: a
+ * host writes the tag and its choices, and the group renders the radios, their labels and
+ * its own name, help and message. The arrow-key behaviour every story exercises is still
+ * the platform's — the controls are native radios, sharing a name inside one tree.
  */
 
 // Two lines for one module, and the split is forced: `verbatimModuleSyntax` erases a
@@ -20,26 +20,10 @@ import type { RadioOrientation } from '@rak200/ui';
 
 interface GroupArgs {
     label: string;
+    help: string;
     orientation: RadioOrientation;
+    required: boolean;
     disabled: boolean;
-}
-
-/** One option, written the way a consumer writes it: a label wrapping the control. */
-function option(value: string, text: string, checked = false, disabled = false): TemplateResult {
-    return html`
-        <label style="display: flex; align-items: center; gap: 0.5rem">
-            <ui-radio>
-                <input
-                    type="radio"
-                    name="plan"
-                    value=${value}
-                    ?checked=${checked}
-                    ?disabled=${disabled}
-                />
-            </ui-radio>
-            ${text}
-        </label>
-    `;
 }
 
 const meta: Meta<GroupArgs> = {
@@ -50,35 +34,44 @@ const meta: Meta<GroupArgs> = {
     // surface this playground exists without.
     argTypes: {
         label: { control: 'text' },
+        help: { control: 'text' },
         orientation: { control: 'inline-radio', options: ['vertical', 'horizontal'] },
+        required: { control: 'boolean' },
         disabled: { control: 'boolean' },
     },
 
     args: {
         label: 'Plan',
+        help: '',
         orientation: 'vertical',
+        required: false,
         disabled: false,
     },
 
-    render: ({ label, orientation, disabled }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-radio-group orientation=${orientation}>
-                ${option('free', 'Free', true, disabled)} ${option('pro', 'Pro', false, disabled)}
-                ${option('max', 'Max', false, disabled)}
-            </ui-radio-group>
-        </ui-field>
+    render: ({ label, help, orientation, required, disabled }): TemplateResult => html`
+        <ui-radio-group
+            label=${label}
+            help=${help}
+            name="plan"
+            orientation=${orientation}
+            ?required=${required}
+            ?disabled=${disabled}
+        >
+            <ui-radio value="free" checked>Free</ui-radio>
+            <ui-radio value="pro">Pro</ui-radio>
+            <ui-radio value="max">Max</ui-radio>
+        </ui-radio-group>
     `,
 };
 
 export default meta;
 
 /**
- * The ordinary case: a labelled group inside the field that names it.
+ * The ordinary case: a labelled set, named as one thing.
  *
- * The name is on the group and not on an option, which is what `<label for>` could not
- * have done — so the field points `aria-labelledby` at the label instead. Tab reaches the
- * set once; the arrow keys do the rest.
+ * The name is the group's rather than an option's, which is what a `<label for>` could not
+ * have done — it reaches a labelable element and a group is not one. Tab reaches the set
+ * once; the arrow keys do the rest.
  */
 export const RadioGroup: StoryObj<GroupArgs> = {};
 
@@ -87,78 +80,59 @@ export const Horizontal: StoryObj<GroupArgs> = {
     args: { orientation: 'horizontal' },
 };
 
-/**
- * Every state side by side, which is what a person checks a drawing against.
- *
- * The disabled pair is a group of its own — a disabled option inside the group above would
- * be one the arrow keys skip, which is the platform being right and a confusing thing to
- * put in a drawing sheet.
- */
-export const States: StoryObj<GroupArgs> = {
-    render: (): TemplateResult => {
-        const row = 'display: flex; align-items: center; gap: 0.5rem';
-
-        return html`
-            <div style="display: flex; flex-direction: column; gap: 0.75rem">
-                <label style=${row}>
-                    <ui-radio><input type="radio" name="states" /></ui-radio>
-                    Unselected
-                </label>
-                <label style=${row}>
-                    <ui-radio><input type="radio" name="states" checked /></ui-radio>
-                    Selected
-                </label>
-                <label style=${row}>
-                    <ui-radio><input type="radio" name="off" disabled /></ui-radio>
-                    Disabled
-                </label>
-                <label style=${row}>
-                    <ui-radio><input type="radio" name="off-selected" checked disabled /></ui-radio>
-                    Disabled, selected
-                </label>
-            </div>
-        `;
-    },
+/** Supporting text under the set, which an error does not replace. */
+export const WithHelp: StoryObj<GroupArgs> = {
+    args: { help: 'You can change it at any time.' },
 };
 
 /**
  * In error, and nothing here says so twice.
  *
- * The red boundary is not set by this story and not by an option: `ui-field` marks the
- * *group* `aria-invalid` as part of the wiring it already owns, and the group retargets the
- * boundary token over its own subtree. What is invalid is the choice, not one radio.
+ * What is invalid is the *choice*, not one radio — so the message is the group's and the
+ * boundary is painted on every option from the one `aria-invalid` the group rendered.
  */
 export const Invalid: StoryObj<GroupArgs> = {
-    args: { label: 'Plan' },
-    render: ({ label }): TemplateResult => html`
-        <ui-field>
-            <label slot="label">${label}</label>
-            <ui-radio-group>
-                ${option('free', 'Free')} ${option('pro', 'Pro')} ${option('max', 'Max')}
-            </ui-radio-group>
-            <span slot="error">Pick a plan to continue.</span>
-        </ui-field>
+    render: (): TemplateResult => html`
+        <ui-radio-group label="Plan" name="plan" error="Pick a plan to continue.">
+            <ui-radio value="free">Free</ui-radio>
+            <ui-radio value="pro">Pro</ui-radio>
+            <ui-radio value="max">Max</ui-radio>
+        </ui-radio-group>
+    `,
+};
+
+/** The whole set unavailable, which is one attribute rather than one per option. */
+export const Disabled: StoryObj<GroupArgs> = {
+    args: { disabled: true },
+};
+
+/**
+ * One option unavailable, the rest of the set live.
+ *
+ * The arrow keys skip it, which is the platform being right rather than something this
+ * component arranges.
+ */
+export const OneOptionDisabled: StoryObj<GroupArgs> = {
+    render: (): TemplateResult => html`
+        <ui-radio-group label="Plan" name="plan">
+            <ui-radio value="free" checked>Free</ui-radio>
+            <ui-radio value="pro" disabled>Pro — sold out</ui-radio>
+            <ui-radio value="max">Max</ui-radio>
+        </ui-radio-group>
     `,
 };
 
 /**
- * A group with no field around it, which is why the role is the element's own.
+ * Right to left, where the arrow keys swap with the writing direction.
  *
- * `ui-field` is form plumbing and not everything is a form. Named here by an
- * `aria-labelledby` the host wrote, which is what the field would otherwise have written.
+ * Nothing in this component arranges that either: left advances and right goes back
+ * because the controls are native radios reading their own direction.
  */
-export const Standalone: StoryObj<GroupArgs> = {
+export const RightToLeft: StoryObj<GroupArgs> = {
     render: (): TemplateResult => html`
-        <p id="delivery-label" style="margin: 0 0 0.5rem">Delivery</p>
-        <ui-radio-group aria-labelledby="delivery-label">
-            <label style="display: flex; align-items: center; gap: 0.5rem">
-                <ui-radio><input type="radio" name="delivery" value="standard" checked /></ui-radio>
-                Standard
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem">
-                <ui-radio><input type="radio" name="delivery" value="express" /></ui-radio>
-                Express
-            </label>
+        <ui-radio-group dir="rtl" label="الخطة" name="plan" help="يمكنك تغييرها في أي وقت.">
+            <ui-radio value="free" checked>مجاني</ui-radio>
+            <ui-radio value="pro">احترافي</ui-radio>
         </ui-radio-group>
     `,
 };

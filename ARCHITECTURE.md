@@ -212,10 +212,13 @@ relationship is _expressed_: by name, or by position.
 
 **Where the platform's own association cannot reach, the ARIA one is used instead**, and
 `<ui-radio-group>` is what made that concrete. `<label for>` reaches a **labelable** element and
-nothing else, so a group — a custom element with a role — is named by `aria-labelledby` pointing at
-the same slotted label. The order is the rule rather than the mechanism: `for` wherever it works,
-because it names the control _and_ makes the label a click target for it, and a reference only
-where it cannot.
+nothing else, so a group — an element with a role — is named by `aria-labelledby` rather than by
+`for`. The order is the rule rather than the mechanism: `for` wherever it works, because it names
+the control _and_ makes the label a click target for it, and a reference only where it cannot.
+
+The group renders both ends now, so the reference resolves in one scope and the choice is visible
+in one file: **the set** is named by reference, and **each option** by containment, its label
+wrapping its control with no id anywhere.
 
 **It binds the control itself, not only the text around it**, and `<ui-input>` is what made that
 concrete — twice, in opposite directions. A styled text field is the obvious candidate for
@@ -256,8 +259,10 @@ added an element to say something rather than to show something, and it was the 
 that asked for it.
 
 **`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each
-other, and there are none left to point at except `<ui-radio-group>`'s — which is now free to move,
-the section above having settled that a group keeps the platform's pattern inside a shadow root.
+other, and every control in this package now renders both of its own — `<ui-radio-group>` last,
+once the section above had settled that a group keeps the platform's pattern inside a shadow root.
+What the field is still for is a control **you** wrote, which is a smaller job than the one it was
+built for.
 
 ## Glyphs are adopted, the delivery is owned
 

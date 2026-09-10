@@ -36,8 +36,10 @@ get one subtly wrong; written here it is one.
 `aria-invalid`, so there are no scattered ends left for this element to point at each other — put
 one inside a field and it will name a wrapper rather than a control.
 
-What is left for it is a control **you** wrote, and [`<ui-radio-group>`](radio.md), which is named
-by reference rather than by containment and has not moved.
+What is left for it is a control **you** wrote. Every element in this package has moved,
+[`<ui-radio-group>`](radio.md) included — it renders its own set, named by reference because a
+`<label for>` reaches a labelable element and a group is not one, with both ends of that reference
+in the one tree scope it renders them into.
 
 The class is exported as `UiField` for a host that needs the type; importing the package registers
 the element, so nothing has to be called.
@@ -61,8 +63,9 @@ The control is found as the one child with no `slot` attribute, so any element w
 `<input>` or `<textarea>` today, a `<ui-input>` later.
 
 **A wrapper carrying a `role` is the control**, and the search stops there rather than looking
-through it. `<ui-radio-group>` is the first: what a field names there is the group, and reaching
-the first radio inside would name one option and leave the set anonymous.
+through it: what a field names there is the widget, and reaching a control inside would name one
+part of it and leave the whole anonymous. This is for a grouping control **you** wrote — no element
+in this package needs it any more.
 
 ## What it wires
 
@@ -72,7 +75,7 @@ the first radio inside would name one option and leave the set anonymous.
   `<span slot="label">` is left alone, because `for` on it would mean nothing.
 - **`aria-labelledby` on the control instead**, when the control is not a **labelable** element —
   an `<input>`, a `<textarea>`, a `<select>`. A `<label for>` aimed anywhere else labels nothing,
-  which axe reports at critical impact, so a [`<ui-radio-group>`](radio.md) is named by reference.
+  which axe reports at critical impact, so an element with a role is named by reference.
   Which elements are labelable is asked of the platform rather than listed: they are exactly the
   ones it gives a `labels` collection to. The name is dropped again if the label slot empties,
   rather than left dangling at an element that is gone.
