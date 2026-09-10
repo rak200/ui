@@ -147,13 +147,9 @@ function build(): HTMLDialogElement {
  * than this file's. What is written here is the part the platform leaves out: the scroll
  * lock, the accessible name across the shadow boundary, and an exit that can be seen.
  *
- * **This is where RFC 0016 expected Zag to arrive, and it does not.** Zag was adopted for
- * dismissable layers and focus trapping, and its dialog machine implements both over a
- * `<div>` — which means giving up the top layer and taking a JS focus trap in exchange for
- * one the user agent enforces. *The platform owns what the platform is good at* is the
- * older rule and the stronger one here. This was the first of five refusals and the
- * adoption is now retired; `ARCHITECTURE.md` carries the decision for a consumer, along
- * with what would reopen it.
+ * A state machine over a `<div>` would mean giving up the top layer to re-acquire a focus
+ * trap the user agent already enforces — see `ARCHITECTURE.md`, *Behaviour is delegated*
+ * (#122).
  *
  * @example
  * ```html

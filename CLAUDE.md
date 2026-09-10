@@ -13,9 +13,10 @@ Guidance for Claude Code when working in this repository.
 
 **@rak200/ui** is a library of host-agnostic custom elements: components that work in any page and
 any framework, or none. It is the ecosystem's first non-PHP artifact and its first npm package.
-RFC 0016 decided the shape — Lit for a thin runtime, Zag for behaviour and accessibility when a
-component has state to model, design tokens as the single source of truth for the visual language.
-The consumer-facing half of those decisions is [ARCHITECTURE.md](ARCHITECTURE.md).
+RFC 0016 decided the shape — Lit for a thin runtime, Zag state machines for behaviour, design
+tokens as the single source of truth for the visual language. The Zag half was retired after five
+components declined it. The consumer-facing half of those decisions is
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Architecture
 
@@ -160,13 +161,11 @@ explains. This file restates none of them.
   the elevation category cannot follow the scheme and the derived boundary is what both schemes
   have; the missing role is the same rule `ui-button` states from the other side — there is no card
   element to delegate to, so what a card _means_ stays the host's.
-- **Why `ui-radio-group` hand-rolls no roving tabindex and brings no Zag** — the docblock on
-  `UiRadioGroup` in `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform
-  already had_, which measures the APG pattern on native radios through the wrappers rather than
-  citing it. **And it survives the move RFC 0005 has left for this component**, which is what
-  retired the adoption: _the behaviour, in a shadow root with no form owner_ measures the same
-  pattern in the arrangement the group has not taken yet, because a radio group with no form owner
-  is scoped by its tree. The two halves a group still owns are written beside themselves: **why the field names
+- **Why `ui-radio-group` hand-rolls no roving tabindex** — the docblock on `UiRadioGroup` in
+  `src/radio.ts`, and two describes in `tests/radio.test.ts` that measure the APG pattern rather
+  than citing it: _the behaviour, which the platform already had_ through the wrappers, and _the
+  behaviour, in a shadow root with no form owner_ in the arrangement RFC 0005 has left for this
+  component. The two halves a group still owns are written beside themselves: **why the field names
   the group and not an option** is `#name` in `src/field.ts` — a `<label for>` reaches a labelable
   element and nothing else, so the group is named by reference — and **why the error is painted by
   retargeting a token** is the last rule of `UiRadioGroup.styles`, which names the three selectors

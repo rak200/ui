@@ -109,13 +109,9 @@ this component's, and it happens only for the two ways out that leave you inside
 <kbd>Esc</kbd>, and choosing an item. A click elsewhere is the third, and it deliberately
 leaves the focus where you put it.
 
-**No Zag.** RFC 0016 adopted state machines for behaviour, this component was named as the
-nearest candidate, and Zag ships a menu machine — so this is a refusal rather than an absence of
-an option, and [ARCHITECTURE.md](../ARCHITECTURE.md) carries it along with the four others that
-retired the adoption. The short form:
-the table above splits the work, and what is left over is a roving tabindex and four keys.
-The second reason is this component's own — Zag's menu positions through Floating UI, and a
-package with two placements is a package that is wrong in one of them.
+**No state machine.** The table above splits the work, and what is left over is a roving
+tabindex and four keys. [ARCHITECTURE.md](../ARCHITECTURE.md), _Behaviour is delegated_, carries
+that decision for the whole package.
 
 ## Where the panel lands
 

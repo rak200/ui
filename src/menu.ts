@@ -92,21 +92,9 @@ function caret(): SVGSVGElement {
  * - **The single tab stop, and the keys inside it.** Every item is a real button, so
  *   without a tabindex the menu is a row of tab stops rather than an APG menu.
  *
- * ## Why this did not bring Zag either
- *
- * RFC 0016 adopted Zag for behaviour, this component was named as the nearest candidate,
- * and Zag ships a menu machine — so this is a refusal rather than an absence of an option,
- * and it is the fourth of the five that retired the adoption. `ARCHITECTURE.md` carries
- * the decision and this refusal with it; the short form is that the
- * test asks where the **accessible behaviour** is the expensive part, and the measurement
- * above splits it: the layer, the dismissal, Escape and the ordering against other open
- * layers are all the platform's. What is left is a roving tabindex and four keys, which the
- * `<ui-radio-group>` refusal already named as not the trigger.
- *
- * The second reason is the issue's own: Zag's menu positions through `@zag-js/popper`,
- * which is Floating UI. Adopting it would put a second placement in a package whose first
- * one is measured, documented and shared — and *two answers to one problem is one too
- * many* is the issue's sentence, not this file's.
+ * No state machine here either, and the measurement above is why: what a machine would
+ * have replaced is a roving tabindex and four keys. `ARCHITECTURE.md`, *Behaviour is
+ * delegated*, carries that decision for the whole package (#122).
  *
  * @example
  * ```html

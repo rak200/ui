@@ -52,9 +52,8 @@ Exported as `UiRadio`.
 
 ## The behaviour is the platform's
 
-**Nothing here installs a roving tabindex, and no state machine was added.** Issue #15 asked which
-of the two it would be, because the APG **Radio Group** pattern is the first behaviour in the v0
-surface that could have justified [Zag](https://zagjs.com). Neither was needed:
+**Nothing here installs a roving tabindex, and no state machine was added.** Neither was needed —
+native radios sharing a `name` already are the APG **Radio Group** pattern:
 
 | What the pattern asks                   | Who does it                    |
 | --------------------------------------- | ------------------------------ |
@@ -68,14 +67,9 @@ Wrapping each control in `<ui-radio>` changes none of it — a radio group is de
 the tree the controls sit in, and they never left it. This package's suite measures that rather
 than trusting it, wrappers and all.
 
-That is the test [ARCHITECTURE.md](../ARCHITECTURE.md) states, applied: **Zag arrives where the
-platform has no element for the pattern**, not merely where the pattern has state.
-
-**It also survives the shadow root**, which is what settled the question for the whole package. A
-radio group is the radios sharing a `name` within one form owner — and where there is no form
-owner, within one **tree**. A control rendered inside a component's shadow root has no form owner,
-so the group is scoped by that shadow root instead, and every row of the table above still holds.
-Measured before this component takes that arrangement, not after.
+It survives a shadow root too, which is measured rather than assumed.
+[ARCHITECTURE.md](../ARCHITECTURE.md), _Behaviour is delegated_, is where that finding and the
+decision it settled are written.
 
 **All of it is the radios', not the group's.** A `<ui-radio-group>` around controls with different
 `name` attributes is a stack with a role on it and nothing else — the platform has no set to

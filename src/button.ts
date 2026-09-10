@@ -10,8 +10,7 @@ export type ButtonVariant = 'primary' | 'secondary';
  * It delegates to a real `<button>` in its shadow root rather than reimplementing one,
  * which is what makes the keyboard behaviour, the accessible name and the disabled
  * semantics the platform's job instead of this file's. No state machine is involved
- * because a button has no state to model — and, as it turned out, none ever arrived:
- * `ARCHITECTURE.md` records the adoption being retired after five components declined it.
+ * because a button has no state to model.
  *
  * @example
  * ```html

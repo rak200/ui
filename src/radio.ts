@@ -182,23 +182,11 @@ export class UiRadio extends LitElement {
  * A set of radios, laid out and named as one thing.
  *
  * **It hand-rolls no roving tabindex and it brings no state machine**, and that is this
- * element's whole claim rather than a gap in it. Issue #15 asked which of the two it would
- * be, because the APG **Radio Group** pattern — one tab stop, arrow keys that move *and*
- * select, wrapping at the ends — is the first behaviour in the v0 cut that could have
- * justified Zag. Neither was needed: native radios sharing a `name` **are** that pattern,
- * and this suite measures it here rather than trusting it, wrappers and all.
- *
- * That is the test `ARCHITECTURE.md` states, applied: Zag arrives where the platform has
- * **no element** for the pattern, not merely where the pattern has state.
- *
- * **And it survives the move this element has not made yet**, which is what closed the
- * question for the whole package. RFC 0005 puts a control inside its own shadow root, and
- * the reading of that was that this group would lose the pattern and have to write it by
- * hand. It does not: a radio group is the radios sharing a `name` within one form owner,
- * and where there is no form owner — which an `<input>` in a shadow root has not — within
- * one **tree**. So the group is scoped by the shadow root instead, and the delegation is
- * re-scoped rather than withdrawn. `tests/radio.test.ts` measures every part of it in that
- * arrangement, before this element takes it.
+ * element's whole claim rather than a gap in it. Native radios sharing a `name` **are** the
+ * APG **Radio Group** pattern — one tab stop, arrow keys that move *and* select, wrapping
+ * at the ends — and `tests/radio.test.ts` measures that rather than trusting it, wrappers
+ * and all, in this arrangement and in the shadow-root one this element has not taken yet.
+ * `ARCHITECTURE.md`, *Behaviour is delegated*, carries why no machine arrived (#15, #122).
  *
  * **What is left for this element is what the platform leaves out**: the layout, the
  * `role` that makes a set of radios a group to a screen reader, and the group-level name,
