@@ -136,11 +136,12 @@ explains. This file restates none of them.
   the `open` attribute, and why the accessible name is a copied string rather than an IDREF.
 - **Why a relationship needs one tree scope, and which of the two arrangements a component
   takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
-  records why the rule used to be stated as _light-DOM only_ and what that read too broadly.
-  `src/input.ts` carries the slotted half beside the rule that reaches it, and `src/field.ts`'s
-  `#control()` is its other end: the field looks _through_ the wrapper, because a `<label for>`
-  aimed at a custom element labels nothing. `src/checkbox.ts` is the arrangement RFC 0005 moved to,
-  and `docs/checkbox.md` is the consumer-facing half.
+  records why the rule used to be stated as _light-DOM only_, what that read too broadly, and what
+  it costs a **second** component reaching in from outside — which is why a `<ui-tooltip>` on any
+  control here is silent. `src/checkbox.ts` is the arrangement every control moved to and
+  `docs/checkbox.md` is the consumer-facing half; the docblock on `field` in `src/input.ts` says
+  why those rules were once written with `::slotted()`. `src/field.ts`'s `#control()` is the other
+  arrangement's end, for the control a host still writes.
 - **Why a drawn control paints its own mark, and why the mark is a hole** — `src/checkbox.ts`,
   beside the mask constant. A `data:` URI would freeze the mark's colour in a package whose rule is
   that a host overrides every visual decision, which `mask-composite: exclude` avoids by making the

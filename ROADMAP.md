@@ -3,7 +3,19 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-field>` has nothing left to point at (#138)
+## A description reaches none of the controls this package renders (#156)
+
+`<ui-tooltip>` names its trigger with `aria-describedby`, and an IDREF crosses no shadow boundary —
+so on any element here that draws its own control the tip appears, places itself correctly, and is
+never announced. Seven elements are in that set now; the documentation said one, and that sentence
+was written when it was true.
+
+**The mechanism did not change, its reach did**, which is why this is the first thing to settle: a
+description that crosses has to cross as text rather than as a reference, and which of the two
+shapes does it — the control copying the text in, or `aria-description` — is a measurement nobody
+has taken.
+
+## `<ui-field>` has one job left, and #156 named it (#138)
 
 RFC 0005 decided that a form control owns **both ends of its own relationship, inside its shadow
 root**, and every control in the package has now moved: `<ui-checkbox>`, `<ui-switch>`,
@@ -16,14 +28,19 @@ control's; and the error colour no longer needs retargeting a token over a subtr
 controls are in the group's shadow root and a rule can simply name them. The comment explaining
 why no selector could reach them went with the problem.
 
-**What is left is one question rather than one task.** `<ui-field>` still does something no element
-here asks for: it wires a control **you** wrote. Removing it is a break that costs a minor below
-`1.0.0` and takes a working thing away from a host who is not using this package's controls;
-keeping it means carrying an element the package itself never reaches for. Decide before `1.0.0`,
-because after it the same removal costs a major and a deprecation window.
+**What is left is one question rather than one task**, and it is now a narrower one than it looked.
+`<ui-field>` wires a control **you** wrote — which is less than it sounds, because `<ui-input>`
+passes `type` through untouched, so `type="date"`, `type="file"`, `type="range"` and the rest are
+already elements here. What the field alone still does is keep a control in your tree, and #156 is
+what makes that worth something: it is the only arrangement in which a tooltip on a form control is
+announced.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) carries the corrected rule for a consumer, and no longer names a
-component that has not moved.
+**So the order is the rule.** Whatever answers #156 is also what answers _what is `<ui-field>`
+for_, and deciding this one first is deciding it without the thing that makes it answerable.
+Decide before `1.0.0` either way, because after it the same removal costs a major and a deprecation
+window.
+
+[ARCHITECTURE.md](ARCHITECTURE.md) carries the corrected rule for a consumer.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

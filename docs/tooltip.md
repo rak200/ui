@@ -55,13 +55,17 @@ on your trigger: `aria-describedby`, **added to** whatever was already there rat
 **A tooltip describes the element the browser actually focuses.** So the trigger should be a native
 focusable element — `<button>`, `<a href>`, an `<input>` — or something you made focusable yourself.
 
-**`<ui-button>` is the one trigger whose description does not arrive.** Its `<button>` lives in a
-shadow root, and an IDREF does not cross that boundary in either direction: measured, an element
-inside a shadow root cannot resolve an id in the document, and an `aria-describedby` on the host is
-on a different node than the one a screen reader reads when focus lands. The tip still appears and
-still positions itself; what is lost is the announcement. Where the text has to be announced, write a
-native `<button>` — and where it does not, the tip is decoration and should not be the only place the
-information exists anyway.
+**The description arrives on no element this package renders.** Every control here draws its own
+into a shadow root, and an IDREF does not cross that boundary in either direction: measured, an
+element inside a shadow root cannot resolve an id in the document, and an `aria-describedby` on the
+host sits on a different node than the one a screen reader reads when focus lands. So
+`<ui-button>`, `<ui-input>`, `<ui-textarea>`, `<ui-select>`, `<ui-checkbox>`, `<ui-switch>` and
+`<ui-radio-group>` each show the tip and place it correctly, and each loses the announcement.
+
+**Where the text has to be announced, the trigger has to be a control in your own tree** — a native
+`<button>`, or a native form control inside a [`<ui-field>`](field.md), which is the composition
+below. Where it does not, the tip is decoration and should not be the only place the information
+exists anyway.
 
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.
@@ -140,6 +144,10 @@ Both components write `aria-describedby` on the same control, and both keep what
 the tooltip adds its id to the list, and [`<ui-field>`](field.md) carries forward any id it did not
 generate when it rebuilds it. Prefer the field's `help` slot for anything a person needs before they
 start typing — a tooltip is for what they might want, not what they must have.
+
+**This is the only arrangement in which a tooltip on a form control is announced**, and the reason is
+the one above: the control is in your tree, so both ends of the reference are. A tooltip around
+[`<ui-input>`](input.md) or any other control this package draws is silent to a screen reader.
 
 ## Styling
 

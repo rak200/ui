@@ -122,23 +122,21 @@ export class UiField extends LitElement {
     /**
      * The control this field is about, which a wrapper may stand in front of.
      *
-     * `<ui-input>` is such a wrapper, and it is one because the control has to stay in the
-     * light DOM for the IDREFs below to resolve at all — so the box that styles it can
-     * only ever sit around it, never instead of it. The label points at the control and
-     * never at the box: `<label for>` aimed at a custom element labels nothing, which axe
-     * reports at critical impact.
+     * A host who boxes their control in an element of their own — a layout `<div>`, a
+     * widget from somewhere else — leaves the label pointing at the box rather than at the
+     * thing the browser focuses, and a `<label for>` aimed at anything that is not labelable
+     * names nothing, which axe reports at critical impact.
      *
-     * A control written as a direct child, which is every call site that predates the
-     * wrapper, matches nothing to descend into and is returned as it is.
+     * A control written as a direct child matches nothing to descend into and is returned
+     * as it is.
      */
     #control(): HTMLElement | undefined {
         const slotted = this.#slotted(null);
 
-        // A wrapper carrying a `role` is claiming to *be* the widget rather than to box
-        // one, and the descent stops there. `<ui-radio-group>` is the first: it sets
-        // `role="radiogroup"` on itself, and the thing this field names is that group —
-        // looking through it would reach the first radio, which names one option and
-        // leaves the group anonymous.
+        // A slotted element carrying a `role` is claiming to *be* the widget rather than to
+        // box one, and the descent stops there. `role="radiogroup"` is the case that shows
+        // why: the thing to name is the group, and looking through it would reach the first
+        // radio, naming one option and leaving the group anonymous.
         if (slotted?.hasAttribute('role') === true) {
             return slotted;
         }
@@ -227,8 +225,8 @@ export class UiField extends LitElement {
      * **`<label for>` is preferred wherever it reaches**, because it is the platform's own
      * association and it does two things `aria-labelledby` does not: it names the control
      * and it makes the label a click target for it. It only reaches a **labelable**
-     * element, though, and `<ui-radio-group>` is not one — a `<label for>` aimed at a
-     * custom element labels nothing, which axe reports at critical impact.
+     * element, though, and an element carrying a role is not one — a `<label for>` aimed at
+     * a custom element labels nothing, which axe reports at critical impact.
      *
      * Which elements are labelable is asked of the platform rather than listed here: those
      * are exactly the ones it gives a `labels` collection to. A list kept in this file
