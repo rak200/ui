@@ -18,10 +18,11 @@ is what can block the removal rather than a formality: the vertical rhythm betwe
 and help is its stylesheet, and the error colour is a token `<ui-radio-group>` retargets through
 three selectors it could not otherwise use.
 
-**`<ui-radio>` and `<ui-radio-group>` wait on nothing now.** They were held by #122, on the
-reading that moving the controls into a shadow root would cost the group the APG pattern it
+**`<ui-radio>` and `<ui-radio-group>` wait on nothing now.** They were held by the Zag question,
+on the reading that moving the controls into a shadow root would cost the group the APG pattern it
 delegates to. Measured, it does not: a radio group with no form owner is scoped by its **tree**, so
-variant F re-scopes the delegation rather than withdrawing it. What is left for the move is the
+variant F re-scopes the delegation rather than withdrawing it —
+[ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, carries the decision that closed it. What is left for the move is the
 same as for every other control here — `ElementInternals`, and the two things the field still
 carries for this one.
 
