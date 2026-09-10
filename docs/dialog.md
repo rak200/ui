@@ -108,10 +108,8 @@ a shortcut — a component that stopped calling `showModal()` would look identic
 What this element adds is the rest: the scroll lock, the accessible name across the shadow
 boundary, an exit that can be seen, and the tokens.
 
-**Zag is not involved, and RFC 0016 expected it to be.** Zag was adopted for dismissable layers
-and focus trapping, and its dialog machine implements both over a `<div>` — which means giving up
-the top layer and taking a JS focus trap in exchange for one the user agent enforces.
-[ARCHITECTURE.md](../ARCHITECTURE.md) carries that decision and what it moved.
+**No state machine is involved**, here or anywhere in this package.
+[ARCHITECTURE.md](../ARCHITECTURE.md), _Behaviour is delegated_, carries that decision.
 
 ### The scroll lock
 

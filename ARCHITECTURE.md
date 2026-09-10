@@ -19,16 +19,18 @@ Lit gives a thin runtime, no build step required of the host, and works unbundle
 path, which is PWA first and Capacitor second. The web side breaks the tie. Revisit only if the
 mobile direction becomes Ionic, or if many external framework applications consume the kit.
 
-## Behaviour is adopted, markup is owned
+## Behaviour is delegated, markup is owned
 
-For components with state to model, the state machines come from **Zag**; the markup and styling
-shell stay in this repository.
+**The state machines were going to come from [Zag](https://zagjs.com), and that adoption is now
+retired.** Five components were candidates and five declined, each on its own measurement; the
+walk-through below is how a decision taken before the first component existed was answered by the
+components themselves, and the last part of this section is where it lands.
 
-Two alternatives were rejected. Building accessible behaviour from zero re-opens every APG pattern
-and its verification cost, per component. Theming somebody else's monolith gives up the source, and
-owning the source is not negotiable here.
+Two alternatives were rejected when the adoption was made, and neither came back. Building
+accessible behaviour from zero re-opens every APG pattern and its verification cost, per component.
+Theming somebody else's monolith gives up the source, and owning the source is not negotiable here.
 
-Zag is **not a dependency yet**, deliberately. A button has no state to model, and a dependency
+Zag was **not a dependency yet**, deliberately. A button has no state to model, and a dependency
 carried before anything uses it is a claim the code does not back up.
 
 **The first component that could have brought it did not, and that is worth stating rather than
@@ -39,9 +41,9 @@ machine implements the same pattern over a `<div>`, so adopting it there would h
 the top layer in order to re-acquire in JavaScript what the top layer already grants.
 
 _The platform owns what the platform is good at_ is the older rule, and it wins where the two meet.
-Nothing about the adoption changed; what changed is which component triggers it. Zag arrives with
-the first component the platform has **no element for** — a menu with roving tabindex and
-positioning is the nearest one — and `ROADMAP.md` names it.
+Nothing about the adoption changed at that point; what changed was which component would trigger
+it. The next candidate was to be the first component the platform has **no element for** — a menu
+with roving tabindex and positioning being the nearest — and the roadmap named it.
 
 **`<ui-radio-group>` is the second component that could have brought it, and the test above is what
 sent it away.** A radio group is an APG pattern with a roving tabindex in it — one tab stop, arrow
@@ -63,8 +65,8 @@ while the toast is being read, which is fifteen lines and no machine.
 So the test reads, in full: Zag arrives where the **accessible behaviour** is the expensive part —
 keyboard interaction, focus management, a layer that dismisses. Where the platform supplies that,
 Zag is redundant; where there is barely any of it to supply, Zag is overhead. `<ui-dialog>` and
-`<ui-radio-group>` are the first case, `<ui-toast>` is the second, and `ROADMAP.md` names the
-component that is still expected to be neither.
+`<ui-radio-group>` are the first case and `<ui-toast>` is the second, and at this point the roadmap
+still named a component expected to be neither.
 
 **`<ui-menu>` was that component, and it declined too — which makes four, and turns a deferral
 into a question.** A menu button is the pattern the adoption was written for: a single tab stop,
@@ -80,10 +82,38 @@ and this package's placement is measured, documented and shared by two component
 machine would put a second answer to that question in the same package — which is the trade
 `<ui-tooltip>` already refused, from the other direction.
 
-**So the honest state of the adoption is that no component has ever met its test**, and the
-candidates are used up. `ROADMAP.md` carries that as an open question rather than as a schedule:
-the choice is between retiring the adoption and finding the component that would justify it, and
-neither is decided here.
+**The fifth candidate was expected to be the one, and it is not.** RFC 0005 moves every form
+control's own control inside its shadow root, and the reading of that was that `<ui-radio-group>`
+would lose what it delegates to and have to write the pattern by hand: a roving tabindex, arrows
+with wrap, selection following focus, the single-selection invariant across the set, and RTL, where
+left and right swap. An APG pattern with directionality and wrapping in it is this section's test
+met rather than argued — if it were true.
+
+Measured in `tests/radio.test.ts`, it is not. **A radio group is the radios sharing a `name` within
+one form owner, and where there is no form owner, within one tree.** An `<input>` in a shadow root
+has no form owner — which is the whole premise of RFC 0005 — so the fallback applies and the group
+is scoped by the shadow root instead. Every part of the pattern survives the move: the group forms
+at all, one tab stop rather than one per option, arrows that move _and_ select, wrapping at either
+end, RTL, and the single tab stop under `delegatesFocus`. The delegation is not withdrawn by
+variant F. It is **re-scoped**, by the same tree-scope rule the rest of that proposal turns on —
+and two groups carrying the same `name` stop colliding, which under a shared form owner they do.
+
+**So the adoption is retired.** Not deferred, and not rejected on principle: the test was applied
+five times and answered _no_ five times, and the fifth was the one designed to answer yes.
+
+What replaces it is the rule that was doing the work the whole time — _the platform owns what the
+platform is good at_ — with the part that makes it a test rather than a preference: where the
+platform has **no element**, what is actually left over gets measured before anything is reached
+for. Five times that leftover was three lines, fifteen lines, or four keys. The two alternatives
+rejected at the top of this section stay rejected, and neither describes this one: nothing here
+builds an APG pattern from zero, because nothing here has had to.
+
+**What would reopen it**, stated so that it stays a decision rather than becoming a habit: a
+component whose accessible behaviour the platform supplies no part of, and whose leftover is a
+pattern rather than a handful of lines — a combobox with inline autocomplete, a tree with
+typeahead, a grid with two-dimensional navigation. None is on `ROADMAP.md`. Adding one is what puts
+this question back, and the machines are a better answer then than a dependency carried for five
+components that each turned it down.
 
 ## The prefix is `ui-`
 
@@ -225,9 +255,9 @@ nothing, from which the platform's own elements are built. That is the first tim
 added an element to say something rather than to show something, and it was the platform's refusal
 that asked for it.
 
-**`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each other,
-and there are none left to point at except `<ui-radio-group>`'s, which waits on a decision of its
-own.
+**`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each
+other, and there are none left to point at except `<ui-radio-group>`'s — which is now free to move,
+the section above having settled that a group keeps the platform's pattern inside a shadow root.
 
 ## Glyphs are adopted, the delivery is owned
 

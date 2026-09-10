@@ -13,9 +13,9 @@ Guidance for Claude Code when working in this repository.
 
 **@rak200/ui** is a library of host-agnostic custom elements: components that work in any page and
 any framework, or none. It is the ecosystem's first non-PHP artifact and its first npm package.
-RFC 0016 decided the shape — Lit for a thin runtime, Zag for behaviour and accessibility when a
-component has state to model, design tokens as the single source of truth for the visual language.
-The consumer-facing half of those decisions is [ARCHITECTURE.md](ARCHITECTURE.md).
+RFC 0016 decided the shape — a thin runtime, how behaviour is acquired, design tokens as the
+single source of truth for the visual language. What each of those became, and what was reversed
+along the way, is [ARCHITECTURE.md](ARCHITECTURE.md), which is the consumer-facing half.
 
 ## Architecture
 
@@ -130,11 +130,10 @@ explains. This file restates none of them.
   `tests/tokens.test.ts` that makes it fail rather than be remembered.
 - **Why a component never writes `var(--ui-*, …)` by hand** — `src/reference.ts`, which also says
   why the helper cannot live in `tokens.ts` and why a formula carries its grounds' own fallbacks.
-- **Why `ui-dialog` did not bring Zag, when RFC 0016 said the first stateful component would** —
-  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is adopted_, and `ROADMAP.md` names the component
-  that now carries the trigger. The local half — why `showModal()` and never the `open` attribute,
-  and why the accessible name is a copied string rather than an IDREF — is in `src/dialog.ts`
-  beside each.
+- **Why no component here brings a state machine, and what would change that** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, which carries the whole of it.
+  `src/dialog.ts` has only its own half beside the lines it explains: why `showModal()` and never
+  the `open` attribute, and why the accessible name is a copied string rather than an IDREF.
 - **Why a relationship needs one tree scope, and which of the two arrangements a component
   takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
   records why the rule used to be stated as _light-DOM only_ and what that read too broadly.
@@ -160,10 +159,11 @@ explains. This file restates none of them.
   the elevation category cannot follow the scheme and the derived boundary is what both schemes
   have; the missing role is the same rule `ui-button` states from the other side — there is no card
   element to delegate to, so what a card _means_ stays the host's.
-- **Why `ui-radio-group` hand-rolls no roving tabindex and brings no Zag** — the docblock on
-  `UiRadioGroup` in `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform
-  already had_, which measures the APG pattern on native radios through the wrappers rather than
-  citing it. The two halves a group still owns are written beside themselves: **why the field names
+- **Why `ui-radio-group` hand-rolls no roving tabindex** — the docblock on `UiRadioGroup` in
+  `src/radio.ts`, and two describes in `tests/radio.test.ts` that measure the APG pattern rather
+  than citing it: _the behaviour, which the platform already had_ through the wrappers, and _the
+  behaviour, in a shadow root with no form owner_ in the arrangement RFC 0005 has left for this
+  component. The two halves a group still owns are written beside themselves: **why the field names
   the group and not an option** is `#name` in `src/field.ts` — a `<label for>` reaches a labelable
   element and nothing else, so the group is named by reference — and **why the error is painted by
   retargeting a token** is the last rule of `UiRadioGroup.styles`, which names the three selectors

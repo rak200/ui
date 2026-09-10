@@ -10,8 +10,7 @@ export type ButtonVariant = 'primary' | 'secondary';
  * It delegates to a real `<button>` in its shadow root rather than reimplementing one,
  * which is what makes the keyboard behaviour, the accessible name and the disabled
  * semantics the platform's job instead of this file's. No state machine is involved
- * because a button has no state to model — Zag arrives with the first component that
- * does.
+ * because a button has no state to model.
  *
  * @example
  * ```html

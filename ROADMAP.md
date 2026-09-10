@@ -18,9 +18,13 @@ is what can block the removal rather than a formality: the vertical rhythm betwe
 and help is its stylesheet, and the error colour is a token `<ui-radio-group>` retargets through
 three selectors it could not otherwise use.
 
-**`<ui-radio>` and `<ui-radio-group>` wait on #122**, not on this. They are the only elements here
-whose behaviour meets that issue's own test, and RFC 0005 is what makes it answerable — the
-dependency runs that way and not the reverse.
+**`<ui-radio>` and `<ui-radio-group>` wait on nothing now.** They were held by the Zag question,
+on the reading that moving the controls into a shadow root would cost the group the APG pattern it
+delegates to. Measured, it does not: a radio group with no form owner is scoped by its **tree**, so
+variant F re-scopes the delegation rather than withdrawing it —
+[ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, carries the decision that closed it. What is left for the move is the
+same as for every other control here — `ElementInternals`, and the two things the field still
+carries for this one.
 
 [ARCHITECTURE.md](ARCHITECTURE.md) carries the corrected rule for a consumer. What is left there is
 one paragraph naming the last component that has not moved, which goes when it does.
@@ -43,24 +47,6 @@ there is no `z-index` anywhere to name.
 And each shipped with its interaction states or it did not ship: a component that accepts
 interaction and shows no feedback is defective rather than incomplete.
 
-## Zag has no candidate left, and that is a decision to make (#122)
-
-RFC 0016 adopts [Zag](https://zagjs.com) state machines for behaviour and accessibility, and this
-package still does not depend on it. **Four components have now declined it**, and
-[ARCHITECTURE.md](ARCHITECTURE.md) carries all four refusals for a consumer.
-
-`ui-menu` was the one this file named, and the reason it declined is the reason the question is now
-open rather than pending: measured, `popover="auto"` supplies the layer, the light dismissal, Escape
-and the ordering against other open layers, so what a machine would have replaced is a roving
-tabindex and four keys. Zag's menu also positions through Floating UI, which would be a second
-placement in a package whose first one is measured, shared and documented.
-
-The test is stated rather than assumed: Zag arrives where the **accessible behaviour** is the
-expensive part. No component has met it, and no unwritten one is expected to — `ui-table` is static.
-So the choice is between **retiring the adoption** and naming the component that would justify it,
-and it is a decision rather than a wait. Nothing blocks on it: a dependency nobody has added costs
-nothing, and the four refusals are each written where a reader meets them.
-
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
@@ -72,8 +58,8 @@ than rediscovering: a derived token's value is a `color-mix()` expression, which
 therefore **not a value any emitter outside CSS can read**. A formula plus a concrete theme does yield
 one, so the emitter resolves derived roles at build time and emits them frozen per theme, while CSS
 keeps them live. That asymmetry is accepted, not solved — and it was accepted knowingly, because
-choosing the more expensive structure to protect a target with no consumer is the same claim this file
-already declines to make about Zag.
+choosing the more expensive structure to protect a target with no consumer is the claim that retired
+the Zag adoption, and [ARCHITECTURE.md](ARCHITECTURE.md) is where that argument now lives.
 
 **One category already cannot make the trip in the shape the others do**, and it is worth carrying
 for the same reason: elevation is a `box-shadow`, so it is neither a colour an emitter can resolve
