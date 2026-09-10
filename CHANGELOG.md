@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/rak200/ui/compare/0.3.0...0.4.0) (2026-09-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **input,select:** the field renders its own control and its own frame ([#145](https://github.com/rak200/ui/issues/145))
+
+### Features
+
+* **input,select:** the field renders its own control and its own frame ([#145](https://github.com/rak200/ui/issues/145)) ([98a95d8](https://github.com/rak200/ui/commit/98a95d83001b95607a08ad8711998d54eadcf7f8))
+
 ## [0.3.0](https://github.com/rak200/ui/compare/0.2.19...0.3.0) (2026-09-09)
 
 
