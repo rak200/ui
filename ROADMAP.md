@@ -3,31 +3,27 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-field>` has almost nothing left to do (#138)
+## `<ui-field>` has nothing left to point at (#138)
 
 RFC 0005 decided that a form control owns **both ends of its own relationship, inside its shadow
 root**, and every control in the package has now moved: `<ui-checkbox>`, `<ui-switch>`,
-`<ui-input>`, `<ui-textarea>` and `<ui-select>` each render their control, their label, their help
-and their message together.
+`<ui-input>`, `<ui-textarea>`, `<ui-select>` and `<ui-radio-group>` each render their control, their
+label, their help and their message together.
 
-**`<ui-field>` exists to point scattered ends at each other, and there are none left except
-`<ui-radio-group>`'s.** A group is named by _reference_ rather than by containment — a
-`<label for>` reaches a labelable element and nothing else — so the arrangement that emptied the
-field does not reach it. Two things the field still carries need a home before it can go, and that
-is what can block the removal rather than a formality: the vertical rhythm between label, control
-and help is its stylesheet, and the error colour is a token `<ui-radio-group>` retargets through
-three selectors it could not otherwise use.
+**The two things that could have blocked the last move did not.** The vertical rhythm between
+label, control and help was the field's stylesheet and is now the group's own, like every other
+control's; and the error colour no longer needs retargeting a token over a subtree, because the
+controls are in the group's shadow root and a rule can simply name them. The comment explaining
+why no selector could reach them went with the problem.
 
-**`<ui-radio>` and `<ui-radio-group>` wait on nothing now.** They were held by the Zag question,
-on the reading that moving the controls into a shadow root would cost the group the APG pattern it
-delegates to. Measured, it does not: a radio group with no form owner is scoped by its **tree**, so
-variant F re-scopes the delegation rather than withdrawing it —
-[ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, carries the decision that closed it. What is left for the move is the
-same as for every other control here — `ElementInternals`, and the two things the field still
-carries for this one.
+**What is left is one question rather than one task.** `<ui-field>` still does something no element
+here asks for: it wires a control **you** wrote. Removing it is a break that costs a minor below
+`1.0.0` and takes a working thing away from a host who is not using this package's controls;
+keeping it means carrying an element the package itself never reaches for. Decide before `1.0.0`,
+because after it the same removal costs a major and a deprecation window.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) carries the corrected rule for a consumer. What is left there is
-one paragraph naming the last component that has not moved, which goes when it does.
+[ARCHITECTURE.md](ARCHITECTURE.md) carries the corrected rule for a consumer, and no longer names a
+component that has not moved.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

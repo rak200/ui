@@ -13,8 +13,8 @@ import '@rak200/ui';
 - [`<ui-radio-group>`](#ui-radio-group)
 - [`<ui-radio>`](#ui-radio)
 - [The behaviour is the platform's](#the-behaviour-is-the-platforms)
-- [The controls are yours](#the-controls-are-yours)
-- [Inside a field](#inside-a-field)
+- [Why the choices are not `<input type="radio">`](#why-the-choices-are-not-input-typeradio)
+- [In a form](#in-a-form)
 - [Orientation](#orientation)
 - [Errors](#errors)
 - [Interaction states](#interaction-states)
@@ -23,32 +23,37 @@ import '@rak200/ui';
 ## `<ui-radio-group>`
 
 ```html
-<ui-radio-group>
-  <label>
-    <ui-radio><input type="radio" name="plan" value="free" /></ui-radio>
-    Free
-  </label>
-  <label>
-    <ui-radio><input type="radio" name="plan" value="pro" /></ui-radio>
-    Pro
-  </label>
+<ui-radio-group label="Plan" name="plan" help="You can change it at any time.">
+  <ui-radio value="free" checked>Free</ui-radio>
+  <ui-radio value="pro">Pro</ui-radio>
 </ui-radio-group>
 ```
 
-The set, laid out and named as one thing. It stacks the options, marks itself
-`role="radiogroup"` so a screen reader hears a set rather than three loose controls, and carries
-the group's name, description and error state.
+The set, laid out and named as one thing. It renders the controls, the label beside each one, its
+own name, help and message, and it joins the form in their place.
 
-The class is exported as `UiRadioGroup` for a host that needs the type; importing the package
-registers the element, so nothing has to be called.
+| Attribute     | Meaning                                                 |
+| ------------- | ------------------------------------------------------- |
+| `label`       | the accessible name of the set, and the text above it   |
+| `name`        | what the chosen value is submitted under                |
+| `value`       | the choice in force; empty means _the declared default_ |
+| `help`        | supporting text, which an error does not replace        |
+| `error`       | the message, which also paints the boundaries           |
+| `orientation` | `vertical` (the default) or `horizontal`                |
+| `required`    | invalid while no choice is made                         |
+| `disabled`    | the whole set refuses interaction, and submits nothing  |
+
+`form`, `validity` and `validationMessage` are readable properties, and `change` is dispatched from
+the element when a choice is made. Exported as `UiRadioGroup`; importing the package registers the
+element, so nothing has to be called.
 
 ## `<ui-radio>`
 
-A box around one radio you wrote. It carries the appearance — the size, the boundary, the circle,
-the fill, the mark, the focus ring and the interaction states — and nothing else. No `name`, no
-value, no state: those are on the `<input>` inside it.
+One choice: a `value`, whether it is `checked` by default, whether it is `disabled`, and the text
+beside it.
 
-Exported as `UiRadio`.
+**It draws nothing.** The group renders the real `<input type="radio">` and the `<label>` around
+it. Exported as `UiRadio`.
 
 ## The behaviour is the platform's
 
@@ -61,81 +66,54 @@ native radios sharing a `name` already are the APG **Radio Group** pattern:
 | arrow keys move focus **and** selection | the same                       |
 | the set wraps at either end             | the same                       |
 | entering focuses the selected option    | the same                       |
-| one value submitted for the set         | the same                       |
+| left and right swap under `dir="rtl"`   | the same                       |
 
-Wrapping each control in `<ui-radio>` changes none of it — a radio group is defined by `name` and
-the tree the controls sit in, and they never left it. This package's suite measures that rather
-than trusting it, wrappers and all.
+**And it holds inside a shadow root**, which is not obvious and is measured rather than assumed. A
+radio group is the radios sharing a `name` within one form owner — and where there is no form
+owner, within one **tree**. The controls here have no form owner, so the group is scoped by the
+shadow root the component renders into.
 
-It survives a shadow root too, which is measured rather than assumed.
-[ARCHITECTURE.md](../ARCHITECTURE.md), _Behaviour is delegated_, is where that finding and the
-decision it settled are written.
+Two consequences worth having: the internal `name` never collides, because two elements are two
+trees rather than two sets sharing one form; and none of the behaviour above had to be written.
 
-**All of it is the radios', not the group's.** A `<ui-radio-group>` around controls with different
-`name` attributes is a stack with a role on it and nothing else — the platform has no set to
-manage, so neither does this element.
+## Why the choices are not `<input type="radio">`
 
-## The controls are yours
+You used to write the controls. Now you declare the choices, and the reason is structural rather
+than stylistic: the `role="radiogroup"`, the name pointing at it and the controls it contains have
+to share **one tree scope**, or the reference resolves to nothing. Rendering them together is what
+makes that true, and a control the host wrote cannot be rendered by the component.
 
-**You write each `<input type="radio">`, and they stay in the light DOM.** This is now the only
-element in the package that asks for a control, and the reason it still does is that a group is
-named by **reference** — a `<label for>` reaches a labelable element and nothing else, so the name
-arrives as an `aria-labelledby` pointing at a label the host wrote.
+That is the same rule [`<ui-select>`](select.md) met from the other side, and
+[ARCHITECTURE.md](../ARCHITECTURE.md) states it in full.
 
-Every other form control here moved: what a relationship actually needs is for every end of it to
-share a tree scope, and [`<ui-checkbox>`](checkbox.md), [`<ui-input>`](input.md) and
-[`<ui-select>`](select.md) render both ends together. The arrangement has not reached a group
-because containment is not what names one — see `ROADMAP.md`.
+## In a form
 
-Each option is named by the `<label>` around it — implicit association, so there is no `id` to
-write and no `for` to forget:
+The element joins the form itself, so the controls do not have to:
 
 ```html
-<label>
-  <ui-radio><input type="radio" name="plan" value="free" /></ui-radio>
-  Free
-</label>
-```
-
-## Inside a field
-
-[`<ui-field>`](field.md) wires the group's label, help, error and `aria-invalid`:
-
-```html
-<ui-field>
-  <label slot="label">Plan</label>
-  <ui-radio-group>
-    <label
-      ><ui-radio><input type="radio" name="plan" value="free" /></ui-radio> Free</label
-    >
-    <label
-      ><ui-radio><input type="radio" name="plan" value="pro" /></ui-radio> Pro</label
-    >
+<form>
+  <ui-radio-group label="Plan" name="plan" required>
+    <ui-radio value="free">Free</ui-radio>
+    <ui-radio value="pro">Pro</ui-radio>
   </ui-radio-group>
-  <span slot="help">You can change this later.</span>
-</ui-field>
+</form>
 ```
 
-**The name lands on the group, and it arrives as `aria-labelledby` rather than as `for`.** A
-`<label for>` reaches only a labelable element — an `<input>`, a `<textarea>`, a `<select>` — and
-aimed at anything else it labels nothing, which axe reports at critical impact. Aimed at the first
-radio it would be worse than nothing: it would name one option and leave the set anonymous.
+One entry is submitted for the set, under the group's `name`. `required` is validated on the group
+— the platform computes it, and the message is the engine's own. A reset returns to the choice the
+declarations name, and a `<fieldset disabled>` above the element reaches it.
 
-So the field stops at any wrapper carrying a `role`, treats it as the control, and names it by
-reference. The same applies to `aria-describedby` and `aria-invalid`, which land on the group
-because the group is the thing being described and the thing that can be wrong.
+**`value` is the state, not the default.** It is not reflected, the way a native control's
+`checked` IDL attribute is not: the declared `<ui-radio checked>` is what a reset returns to, so an
+empty `value` means _whatever the declarations say_ rather than _nothing chosen_.
 
-Without a field, name the group yourself:
-
-```html
-<p id="delivery">Delivery</p>
-<ui-radio-group aria-labelledby="delivery">…</ui-radio-group>
-```
+[`<ui-field>`](field.md) is not needed here and has nothing to add: the group carries its own name,
+help, message and `aria-invalid`.
 
 ## Orientation
 
 ```html
-<ui-radio-group orientation="horizontal">…</ui-radio-group>
+<ui-radio-group label="Plan" orientation="horizontal">…</ui-radio-group>
 ```
 
 `vertical` (the default) or `horizontal`, typed as `RadioOrientation`. The attribute lays the
@@ -147,23 +125,13 @@ oriented.
 ## Errors
 
 ```html
-<ui-field>
-  <label slot="label">Plan</label>
-  <ui-radio-group>…</ui-radio-group>
-  <span slot="error">Pick a plan to continue.</span>
-</ui-field>
+<ui-radio-group label="Plan" name="plan" error="Pick a plan to continue.">…</ui-radio-group>
 ```
 
 **The error belongs to the set, not to an option** — what a radio group gets wrong is the choice.
-The field marks the group `aria-invalid`, and the group turns every option's boundary to
-`--ui-color-danger`. Nothing is written twice: there is one source, and it is the one a screen
-reader is already using.
-
-It reaches the options by **retargeting the boundary token over its own subtree**, not by naming
-them. A custom property inherits through a shadow boundary and a selector does not, so this is the
-only thing that reaches a control two elements down: `::slotted()` stops at the group's own
-children, `:host-context()` is not supported everywhere, and `:host(:has(…))` is invalid in this
-engine. A host who retunes `--ui-color-danger` retunes this with it.
+The group marks itself `aria-invalid`, announces the message with the set, and turns every option's
+boundary to `--ui-color-danger`. There is one source, and it is the one a screen reader is already
+using.
 
 ## Interaction states
 
@@ -197,16 +165,8 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the m
 | unselected boundary on hover | `--ui-color-text`                                           |
 | in error                     | `--ui-color-danger`                                         |
 | focus ring                   | `--ui-color-focus`                                          |
+| supporting text              | `--ui-text-supporting`, `--ui-color-text`                   |
 | motion                       | `--ui-duration-state`, `--ui-easing-state`                  |
 
-**The shape is the one measurement that is not a token.** The circle is what tells a radio from a
-checkbox before either is read, so it does not follow `--ui-radius` — a square radio would be a
-checkbox that behaves differently.
-
-**The mark is a hole, not a colour**, the same decision the [checkbox's tick](checkbox.md#styling)
-carries, reached here without a picture at all: a circle is a gradient with a size. It is punched
-out of the accent fill with `mask-composite: exclude`, so what shows through is whatever the
-control sits on and no colour is frozen anywhere a host could not override it.
-
-`::part()` is not exposed. There is nothing in either shadow root to aim it at — the controls and
-the labels are yours, so they are styleable directly.
+The exposed parts are `stack`, `label`, `options`, `option`, `control`, `option-label`, `help` and
+`error`.

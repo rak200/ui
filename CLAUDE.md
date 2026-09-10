@@ -160,14 +160,17 @@ explains. This file restates none of them.
   have; the missing role is the same rule `ui-button` states from the other side — there is no card
   element to delegate to, so what a card _means_ stays the host's.
 - **Why `ui-radio-group` hand-rolls no roving tabindex** — the docblock on `UiRadioGroup` in
-  `src/radio.ts`, and two describes in `tests/radio.test.ts` that measure the APG pattern rather
-  than citing it: _the behaviour, which the platform already had_ through the wrappers, and _the
-  behaviour, in a shadow root with no form owner_ in the arrangement RFC 0005 has left for this
-  component. The two halves a group still owns are written beside themselves: **why the field names
-  the group and not an option** is `#name` in `src/field.ts` — a `<label for>` reaches a labelable
-  element and nothing else, so the group is named by reference — and **why the error is painted by
-  retargeting a token** is the last rule of `UiRadioGroup.styles`, which names the three selectors
-  that cannot reach a control two elements down.
+  `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform already had_,
+  which measures the APG pattern rather than citing it — in the arrangement the controls are
+  actually in, a shadow root with no form owner, where a radio group is scoped by its tree. The
+  internal `name` the rendered controls share rides on that and says so beside itself.
+- **Why a choice is `<ui-radio>` rather than an `<input type="radio">` you wrote** — the docblock on
+  `UiRadio` in `src/radio.ts`, and `docs/radio.md`. The `role="radiogroup"`, the name pointing at it
+  and the controls it contains have to share one tree scope, and a control the host wrote cannot be
+  rendered by the component. **`.checked` is a property binding and `?checked` would be wrong**: on
+  a radio the content attribute is `defaultChecked`, so once anything has set the property the
+  attribute stops driving the live state — measured, as a reset that left the control where the
+  reader had put it.
 - **Why `ui-select` writes the box out instead of sharing `ui-input`'s** — the docblock on
   `src/select.ts`, and `tests/select.test.ts`'s _the box, against the input it has to match_, which
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same

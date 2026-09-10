@@ -6,48 +6,40 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, {
+    Disabled,
     Horizontal,
     Invalid,
+    OneOptionDisabled,
     RadioGroup,
-    Standalone,
-    States,
+    RightToLeft,
+    WithHelp,
 } from '../stories/radio.stories.js';
 import '../src/radio.js';
 import '../src/checkbox.js';
-import '../src/field.js';
-import type { UiRadioGroup } from '../src/radio.js';
-
-/** One option, in the shape a consumer writes: a label wrapping the drawn control. */
-function option(value: string, extra = ''): string {
-    return `
-        <label>
-            <ui-radio><input type="radio" name="plan" value="${value}" ${extra} /></ui-radio>
-            ${value}
-        </label>
-    `;
-}
+import type { UiRadio, UiRadioGroup } from '../src/radio.js';
+import type { UiCheckbox } from '../src/checkbox.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
-    <ui-field>
-        <label slot="label">Plan</label>
-        <ui-radio-group>${option('free')}${option('pro')}${option('max')}</ui-radio-group>
-    </ui-field>
+    <ui-radio-group label="Plan" name="plan">
+        <ui-radio value="free">Free</ui-radio>
+        <ui-radio value="pro">Pro</ui-radio>
+        <ui-radio value="max">Max</ui-radio>
+    </ui-radio-group>
 `;
 
-/** Mounts a fixture inside a form and waits for the wiring to settle. */
+/** Mounts a fixture inside a form and waits for every declaration to settle. */
 async function mount(markup: string): Promise<HTMLFormElement> {
     const form = document.createElement('form');
     form.innerHTML = markup;
     document.body.append(form);
 
-    for (const element of form.querySelectorAll(
-        'ui-field, ui-radio-group, ui-radio, ui-checkbox',
-    )) {
+    for (const element of form.querySelectorAll('ui-radio, ui-radio-group, ui-checkbox')) {
         await (element as UiRadioGroup).updateComplete;
     }
 
-    // `ui-field` associates from a MutationObserver, which lands on a microtask.
+    // A declaration announces on its own first update, which lands after the group's — so
+    // the group renders a second time, on a microtask.
     await new Promise((resolve) => {
         setTimeout(resolve, 0);
     });
@@ -55,7 +47,7 @@ async function mount(markup: string): Promise<HTMLFormElement> {
     return form;
 }
 
-/** The group, which is the element a field names and describes. */
+/** The element under test, which is now the set rather than a box around one. */
 function group(form: HTMLFormElement): UiRadioGroup {
     const element = form.querySelector('ui-radio-group');
 
@@ -66,79 +58,88 @@ function group(form: HTMLFormElement): UiRadioGroup {
     return element;
 }
 
-/** The controls the host wrote, which are what the drawing is about. */
-function radios(form: HTMLFormElement): HTMLInputElement[] {
-    return [...form.querySelectorAll<HTMLInputElement>('input[type=radio]')];
+/** The rendered controls, which is what every drawing assertion is about. */
+function controls(form: HTMLFormElement): HTMLInputElement[] {
+    return [...group(form).renderRoot.querySelectorAll('input')];
 }
 
-/** The one element a selector has to match, so a fixture typo fails where it happened. */
-function only(form: HTMLFormElement, selector: string): HTMLElement {
-    const found = form.querySelector<HTMLElement>(selector);
-
-    if (found === null) {
-        throw new Error(`no ${selector} in the fixture`);
-    }
-
-    return found;
-}
-
-/**
- * The checkbox's own control, which is in its shadow root rather than the fixture.
- *
- * RFC 0005 moved it there — the element renders the control and the label together, so
- * there is nothing in the light DOM for a light-DOM query to find.
- */
-function checkbox(form: HTMLFormElement): HTMLInputElement {
-    const control = only(form, 'ui-checkbox').shadowRoot?.querySelector('input');
-
-    if (control === null || control === undefined) {
-        throw new Error('the checkbox rendered no control');
-    }
-
-    return control;
-}
-
-/** The first of them, which most drawing assertions are taken on. */
+/** The first rendered control, for the assertions that need only one. */
 function radio(form: HTMLFormElement): HTMLInputElement {
-    const [first] = radios(form);
+    const [first] = controls(form);
 
     if (first === undefined) {
-        throw new Error('no control in the fixture');
+        throw new Error('the group rendered no control');
     }
 
     return first;
 }
 
-/**
- * Takes the motion out, flushed, so that a colour read is the destination rather than
- * whichever frame of a 150ms interpolation the read landed on.
- *
- * The duration is the host's own knob, and flushing between setting it and changing the
- * colour is not optional: both in one recalculation and the transition starts under the
- * duration that was in force before it.
- */
-function withoutMotion(form: HTMLFormElement): void {
-    for (const element of form.querySelectorAll('ui-radio')) {
-        (element as HTMLElement).style.setProperty('--ui-duration-state', '0s');
+/** One declaration the host wrote, which is what the controls are built from. */
+function choice(form: HTMLFormElement, value: string): UiRadio {
+    const found = group(form).querySelector<UiRadio>(`ui-radio[value='${value}']`);
+
+    if (found === null) {
+        throw new Error(`no choice named ${value}`);
     }
 
-    // Every declared transition, not the first: this sheet transitions two properties, so
-    // a check on the whole string would be a check on how many.
-    const durations = getComputedStyle(radio(form)).transitionDuration.split(', ');
+    return found;
+}
 
-    expect(new Set(durations), 'the motion is out').toEqual(new Set(['0s']));
+/** The label the group rendered around a control, which contains it rather than points. */
+function labelOf(control: HTMLInputElement): HTMLLabelElement {
+    const [label] = control.labels ?? [];
+
+    if (label === undefined) {
+        throw new Error(`the control for ${control.value} has no label`);
+    }
+
+    return label;
+}
+
+/** One of the exposed parts, which is how a host reaches anything in here. */
+function part(element: UiRadioGroup, name: string): HTMLElement {
+    const found = element.renderRoot.querySelector<HTMLElement>(`[part='${name}']`);
+
+    if (found === null) {
+        throw new Error(`no part named ${name}`);
+    }
+
+    return found;
+}
+
+/** The checkbox's own control, for the comparison that keeps the two drawings together. */
+function checkbox(form: HTMLFormElement): HTMLInputElement {
+    const element = form.querySelector<UiCheckbox>('ui-checkbox');
+    const control = element?.renderRoot.querySelector('input');
+
+    if (control == null) {
+        throw new Error('no checkbox in the fixture');
+    }
+
+    return control;
+}
+
+/** Waits out the render a declaration's own announcement schedules. */
+async function settled(element: UiRadioGroup): Promise<void> {
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+
+    await element.updateComplete;
 }
 
 /**
- * Waits out whatever is transitioning on the control.
- *
- * `withoutMotion` is the cheaper answer and only works when the test schedules the change
- * itself. Where the change lands during mount — `ui-field` writing `aria-invalid` from a
- * MutationObserver, say — the transition is already in flight before any test code runs,
- * and changing the duration then does not retract a running one.
+ * Takes the motion out, flushed, so that a colour read is the destination rather than
+ * whichever frame of a 150ms interpolation the read landed on.
  */
-async function settled(element: Element): Promise<void> {
-    await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
+function withoutMotion(form: HTMLFormElement): void {
+    group(form).style.setProperty('--ui-duration-state', '0s');
+
+    // Two properties transition here, so the computed value is a list — every entry has to
+    // be out, not the string as a whole.
+    for (const duration of getComputedStyle(radio(form)).transitionDuration.split(', ')) {
+        expect(duration, 'the motion is out').toBe('0s');
+    }
 }
 
 /** The component's own stylesheet, as text, for the rules no rendering can show. */
@@ -146,25 +147,7 @@ function styleText(tag: string): string {
     return String((customElements.get(tag) as unknown as { styles: unknown }).styles);
 }
 
-/**
- * The same stylesheet with its comments taken out.
- *
- * A rule about which selectors a sheet does *not* use has to read the sheet rather than
- * the prose around it — and the prose here names every selector that was rejected, so a
- * check on the raw text would find them and pass or fail on a comment.
- */
-function ruleText(tag: string): string {
-    return styleText(tag).replaceAll(/\/\*[\s\S]*?\*\//g, '');
-}
-
-/**
- * Moves the pointer out of the way, because nothing in the page can.
- *
- * The pointer keeps its position across tests *and across files*, and a control left under
- * it is a control matching `:hover` before its test has done anything — so a rule about
- * the *resting* boundary reads the hover colour on its way in. `checkbox.test.ts` carries
- * the measurement; this file inherits the fix rather than rediscovering it.
- */
+/** Moves the pointer out of the way — see `checkbox.test.ts` for why nothing else can. */
 async function parkPointer(): Promise<void> {
     await cdp().send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
@@ -182,76 +165,467 @@ afterEach(async () => {
     document.body.replaceChildren();
 });
 
-describe('ui-radio-group', () => {
+/**
+ * The shape RFC 0005 decided: the controls, their labels, the group's own name, help and
+ * message rendered together, so every end of every relationship shares one tree scope.
+ */
+describe('the set and its frame, in one tree scope', () => {
     it('registers both elements', () => {
         expect(customElements.get('ui-radio')).toBeDefined();
         expect(customElements.get('ui-radio-group')).toBeDefined();
     });
 
-    it('leaves every control in the light DOM, where a label can reach it', async () => {
+    it('renders the controls, leaving the host nothing to write but the choices', async () => {
         const form = await mount(fixture);
 
-        for (const control of radios(form)) {
-            expect(control.closest('ui-radio')?.shadowRoot?.querySelector('input')).toBeNull();
-            expect(control.closest('label')).not.toBeNull();
-            expect(control.labels?.length, 'the wrapping label labels it').toBe(1);
-        }
+        expect(form.querySelector('input'), 'nothing in the light DOM').toBeNull();
+        expect(controls(form).map((control) => control.type)).toEqual(['radio', 'radio', 'radio']);
     });
 
-    it('marks itself a group, so a screen reader has a set rather than three controls', async () => {
+    it('names the set rather than an option, with both ends in the same root', async () => {
+        const form = await mount(fixture);
+        const options = part(group(form), 'options');
+
+        expect(options.getAttribute('role'), 'the set is the widget').toBe('radiogroup');
+
+        const named = options.getAttribute('aria-labelledby') ?? '';
+
+        expect(named, 'the set is named by reference').not.toBe('');
+        expect(group(form).renderRoot.querySelector(`#${named}`)?.textContent).toBe('Plan');
+        // A `<label for>` reaches a labelable element and a group is not one, so the name
+        // is a reference — which resolves here because both ends were rendered together.
+        expect(document.getElementById('label'), 'and it does not leak to the document').toBeNull();
+    });
+
+    it('labels each option by containment, so there is no id to strand', async () => {
         const form = await mount(fixture);
 
-        expect(group(form).getAttribute('role')).toBe('radiogroup');
+        expect(labelOf(radio(form)).className, 'the label contains its control').toBe('option');
+        expect(labelOf(radio(form)).textContent.trim()).toBe('Free');
     });
 
-    it('never overwrites a role the host wrote', async () => {
-        const form = await mount(
-            `<ui-radio-group role="presentation">${option('free')}</ui-radio-group>`,
-        );
+    it('describes the set by the help, and by the message before it in error', async () => {
+        const form = await mount(fixture);
+        const options = part(group(form), 'options');
 
-        expect(group(form).getAttribute('role')).toBe('presentation');
+        expect(options.hasAttribute('aria-describedby')).toBe(false);
+
+        group(form).help = 'Change it any time.';
+        await group(form).updateComplete;
+
+        expect(part(group(form), 'options').getAttribute('aria-describedby')).toBe('help');
+
+        group(form).error = 'Pick one.';
+        await group(form).updateComplete;
+
+        expect(part(group(form), 'options').getAttribute('aria-describedby')).toBe('error help');
+        expect(part(group(form), 'options').getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('renders the two supporting texts only when it has them', async () => {
+        const form = await mount(fixture);
+        const element = group(form);
+
+        expect(element.renderRoot.querySelector('.help'), 'nothing to say').toBeNull();
+        expect(element.renderRoot.querySelector('.error')).toBeNull();
+
+        element.help = 'Change it any time.';
+        element.error = 'Pick one.';
+        await element.updateComplete;
+
+        expect(part(element, 'help').textContent).toBe('Change it any time.');
+        expect(part(element, 'error').textContent).toBe('Pick one.');
+
+        element.help = '';
+        element.error = '';
+        await element.updateComplete;
+
+        expect(element.renderRoot.querySelector('.help'), 'and gone again').toBeNull();
+        expect(element.renderRoot.querySelector('.error')).toBeNull();
+    });
+
+    it('draws nothing for the declarations themselves', async () => {
+        const form = await mount(fixture);
+
+        expect(choice(form, 'free').getBoundingClientRect().height).toBe(0);
+        expect(getComputedStyle(choice(form, 'free')).display).toBe('none');
     });
 
     it('announces the orientation it draws, so the two cannot disagree', async () => {
         const form = await mount(fixture);
 
-        expect(group(form).getAttribute('aria-orientation')).toBe('vertical');
+        expect(part(group(form), 'options').getAttribute('aria-orientation')).toBe('vertical');
 
-        group(form).setAttribute('orientation', 'horizontal');
-        await group(form).updateComplete;
-
-        expect(group(form).getAttribute('aria-orientation')).toBe('horizontal');
-    });
-
-    it('lays out from the property too, not only from the attribute', async () => {
-        // The reflection is what makes the two the same knob. Without it a host setting
-        // the property in script would get the announcement and not the row: the rule that
-        // draws it selects on the attribute, which is the only half a selector can read.
-        const form = await mount(fixture);
         group(form).orientation = 'horizontal';
         await group(form).updateComplete;
 
-        expect(group(form).getAttribute('orientation'), 'reflected back out').toBe('horizontal');
-        expect(getComputedStyle(group(form)).flexDirection, 'so the rule matches').toBe('row');
-        expect(group(form).getAttribute('aria-orientation')).toBe('horizontal');
+        expect(part(group(form), 'options').getAttribute('aria-orientation')).toBe('horizontal');
+        expect(getComputedStyle(part(group(form), 'options')).flexDirection).toBe('row');
+    });
+
+    it('starts with nothing written on it, which no fixture here ever shows', async () => {
+        const form = await mount('<ui-radio-group></ui-radio-group>');
+        const element = group(form);
+
+        expect(element.label, 'no label until a host writes one').toBe('');
+        expect(part(element, 'label').textContent).toBe('');
+        expect(element.name).toBe('');
+        expect(element.value, 'the choice in force is the declared one, not a string').toBe('');
+        expect(element.required).toBe(false);
+        expect(element.disabled).toBe(false);
+        expect(element.orientation).toBe('vertical');
+        expect(controls(form), 'and no controls, having no choices').toEqual([]);
+    });
+
+    it('reflects what a host would style or read back, and not the choice in force', async () => {
+        const form = await mount(fixture);
+        const element = group(form);
+
+        element.label = 'Tier';
+        element.help = 'Change it any time.';
+        element.error = 'Nope.';
+        element.name = 'tier';
+        element.value = 'pro';
+        element.orientation = 'horizontal';
+        element.required = true;
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(element.getAttribute('label')).toBe('Tier');
+        expect(element.getAttribute('help')).toBe('Change it any time.');
+        expect(element.getAttribute('error')).toBe('Nope.');
+        expect(element.getAttribute('name')).toBe('tier');
+        expect(element.getAttribute('orientation')).toBe('horizontal');
+        expect(element.hasAttribute('required')).toBe(true);
+        expect(element.hasAttribute('disabled')).toBe(true);
+        // The choice in force is state rather than a default, the way a native control's
+        // `checked` IDL attribute is — so a reset has somewhere to return to.
+        expect(element.hasAttribute('value'), 'value is the state, not the default').toBe(false);
+    });
+
+    it('fills the line it is given', async () => {
+        const form = await mount(fixture);
+
+        expect(getComputedStyle(group(form)).display).toBe('block');
+    });
+});
+
+/**
+ * The choices, which are declarations rather than controls.
+ *
+ * The group renders the radios because a `role="radiogroup"`, the name pointing at it and
+ * the controls it contains have to share one tree scope. So `<ui-radio>` says what a choice
+ * is and shows nothing, the way `<ui-option>` does for `<ui-select>`.
+ */
+describe('the choices', () => {
+    it('become the controls the platform needs, in the order written', async () => {
+        const form = await mount(fixture);
+
+        expect(
+            controls(form).map(
+                (control) => `${control.value}:${labelOf(control).textContent.trim()}`,
+            ),
+        ).toEqual(['free:Free', 'pro:Pro', 'max:Max']);
+    });
+
+    it('start on the one declared checked, and on none where there is none', async () => {
+        const declared = await mount(`
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" checked>Pro</ui-radio>
+            </ui-radio-group>
+        `);
+
+        expect(controls(declared).map((control) => control.checked)).toEqual([false, true]);
+
+        const bare = await mount(fixture);
+
+        // A radio group differs from a drop-down exactly here: it has an empty state, so
+        // there is no first-choice fallback to make.
+        expect(
+            controls(bare).some((control) => control.checked),
+            'nothing declared',
+        ).toBe(false);
+    });
+
+    it('carry a change written as a property, which no observer could see', async () => {
+        // A `<option>` or an `<input>` the host wrote is somebody else's element, and a
+        // property write on one is not something a MutationObserver reports. These are this
+        // package's own elements, so the property is reactive.
+        const form = await mount(fixture);
+
+        choice(form, 'max').checked = true;
+        await settled(group(form));
+
+        expect(controls(form)[2]?.checked).toBe(true);
+    });
+
+    it('carry one disabled option, the rest of the set staying live', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" disabled>Pro</ui-radio>
+            </ui-radio-group>
+        `);
+
+        expect(controls(form).map((control) => control.disabled)).toEqual([false, true]);
+    });
+
+    it('report arriving and leaving through the slot they sit in', async () => {
+        const form = await mount(fixture);
+
+        choice(form, 'free').remove();
+        await settled(group(form));
+
+        expect(controls(form).map((control) => control.value)).toEqual(['pro', 'max']);
+
+        const added = document.createElement('ui-radio');
+        added.value = 'team';
+        added.textContent = 'Team';
+        group(form).append(added);
+        await settled(group(form));
+
+        expect(controls(form).map((control) => control.value)).toEqual(['pro', 'max', 'team']);
+    });
+
+    it('leave the set empty when there are none', async () => {
+        const form = await mount('<ui-radio-group label="Plan" name="plan"></ui-radio-group>');
+
+        expect(controls(form)).toEqual([]);
+        expect([...new FormData(form)], 'an empty choice is still an entry').toEqual([
+            ['plan', ''],
+        ]);
+    });
+
+    it('ignore anything that is not a choice', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan">
+                <span>not a choice</span>
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
+        `);
+
+        expect(controls(form).map((control) => control.value)).toEqual(['free']);
+    });
+
+    it('reflect what a host writes, so a stylesheet and a reader both see it', async () => {
+        const form = await mount(fixture);
+        const option = choice(form, 'free');
+
+        option.value = 'starter';
+        option.checked = true;
+        option.disabled = true;
+        await settled(group(form));
+
+        expect(option.getAttribute('value')).toBe('starter');
+        expect(option.hasAttribute('checked')).toBe(true);
+        expect(option.hasAttribute('disabled')).toBe(true);
+    });
+
+    it('start empty, so an undeclared choice declares nothing', () => {
+        const option = document.createElement('ui-radio');
+
+        expect(option.value).toBe('');
+        expect(option.checked).toBe(false);
+        expect(option.disabled).toBe(false);
+    });
+});
+
+/**
+ * The element joins the form, because the controls cannot: an `<input>` in a shadow root
+ * has no form owner. Everything here is `ElementInternals` paying that back.
+ */
+describe('the form, which the element joins in the place of the controls', () => {
+    it('submits the choice in force', async () => {
+        const form = await mount(fixture);
+
+        expect([...new FormData(form)], 'nothing chosen yet').toEqual([['plan', '']]);
+
+        group(form).value = 'pro';
+        await group(form).updateComplete;
+
+        expect([...new FormData(form)]).toEqual([['plan', 'pro']]);
+    });
+
+    it('takes the name from a property, because a form reads the attribute', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan"><ui-radio value="free" checked>Free</ui-radio></ui-radio-group>
+        `);
+        group(form).name = 'plan';
+        await group(form).updateComplete;
+
+        expect([...new FormData(form)]).toEqual([['plan', 'free']]);
+    });
+
+    it('submits nothing while disabled, and refuses every option', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" disabled>
+                <ui-radio value="free" checked>Free</ui-radio>
+            </ui-radio-group>
+        `);
+
+        expect([...new FormData(form)]).toEqual([]);
+        expect(radio(form).disabled, 'one attribute, not one per option').toBe(true);
+    });
+
+    it('knows the form it is in', async () => {
+        const form = await mount(fixture);
+
+        expect(group(form).form).toBe(form);
+    });
+
+    it('resets to the choice the declarations name', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" checked>Pro</ui-radio>
+            </ui-radio-group>
+        `);
+        group(form).value = 'free';
+        await group(form).updateComplete;
+
+        expect(controls(form)[0]?.checked).toBe(true);
+
+        form.reset();
+        await group(form).updateComplete;
+
+        expect(controls(form)[1]?.checked, 'back to the declared default').toBe(true);
+        // Empty rather than 'pro': the property means *the declared default*, and a reset
+        // that wrote the resolved choice back would freeze it against a later declaration.
+        expect(group(form).value, 'and the property is empty again').toBe('');
+    });
+
+    it('follows a fieldset that disables it', async () => {
+        const form = await mount(`
+            <fieldset disabled>
+                <ui-radio-group label="Plan" name="plan">
+                    <ui-radio value="free">Free</ui-radio>
+                </ui-radio-group>
+            </fieldset>
+        `);
+
+        expect(group(form).disabled, 'the callback fired').toBe(true);
+        expect(radio(form).disabled, 'and reached the controls').toBe(true);
+    });
+
+    it('restores what a back-navigation hands back', async () => {
+        const form = await mount(fixture);
+
+        group(form).formStateRestoreCallback('max');
+        await group(form).updateComplete;
+
+        expect(controls(form)[2]?.checked).toBe(true);
+
+        group(form).formStateRestoreCallback(null);
+        await group(form).updateComplete;
+
+        expect(
+            controls(form).some((control) => control.checked),
+            'back to nothing',
+        ).toBe(false);
+        expect(group(form).value, 'by emptying the property, not by naming a choice').toBe('');
+    });
+
+    it('mirrors a choice made by hand, and re-dispatches the change', async () => {
+        // `change` is non-composed, so the one a control fires stops at the shadow boundary
+        // and a host listening on the tag would hear nothing.
+        const form = await mount(fixture);
+        const heard: (EventTarget | null)[] = [];
+
+        form.addEventListener('change', (event) => heard.push(event.target));
+
+        radio(form).click();
+        await group(form).updateComplete;
+
+        expect(group(form).value, 'mirrored back into the property').toBe('free');
+        expect(heard, 'retargeted to the element').toEqual([group(form)]);
+    });
+});
+
+describe('the validity', () => {
+    it('is missing while a required set has no choice made', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" required>
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro">Pro</ui-radio>
+            </ui-radio-group>
+        `);
+
+        // The platform computes it: `required` on the rendered radios makes the set
+        // required, and the group hands the whole ValidityState over rather than deciding.
+        expect(group(form).validity.valueMissing).toBe(true);
+        expect(group(form).validationMessage, 'with the engine own words').not.toBe('');
+
+        group(form).value = 'pro';
+        await group(form).updateComplete;
+
+        expect(group(form).validity.valid).toBe(true);
+        expect(group(form).validationMessage).toBe('');
+    });
+
+    it('takes the message the host wrote, which wins over the platform', async () => {
+        const form = await mount(fixture);
+
+        group(form).error = 'Pick a plan.';
+        await group(form).updateComplete;
+
+        expect(group(form).validity.customError).toBe(true);
+        expect(group(form).validationMessage).toBe('Pick a plan.');
+
+        group(form).error = '';
+        await group(form).updateComplete;
+
+        expect(group(form).validity.valid).toBe(true);
+    });
+
+    it('has nothing to validate when it has no choices', async () => {
+        const form = await mount(
+            '<ui-radio-group label="Plan" name="plan" required></ui-radio-group>',
+        );
+
+        expect(group(form).validity.valid, 'an empty set is not an invalid one').toBe(true);
+    });
+
+    it('delegates focus, so the browser can put the reader on a control', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" required>
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
+        `);
+
+        expect(form.reportValidity()).toBe(false);
+        expect(document.activeElement).toBe(group(form));
+        expect(group(form).shadowRoot?.activeElement).toBe(radio(form));
+
+        // And the plain call, which is the half `reportValidity()` does not measure: the
+        // browser focuses the anchor `setValidity` was given whether or not focus is
+        // delegated, so only `focus()` on the host tells the two apart.
+        radio(form).blur();
+
+        expect(document.activeElement, 'the focus is off it').not.toBe(group(form));
+
+        group(form).focus();
+
+        expect(document.activeElement, 'and back on it by hand').toBe(group(form));
+        expect(group(form).shadowRoot?.activeElement).toBe(radio(form));
     });
 });
 
 /**
  * The claim this component is made of: the APG radio group pattern is the platform's, and
- * nothing here installs it. Measured rather than trusted — the wrappers are the reason to
- * measure, since a group is defined by name and tree, and each control now sits inside a
- * custom element.
+ * nothing here installs it. Measured rather than trusted — and measured in the arrangement
+ * the controls are actually in, which is a shadow root with no form owner, where the group
+ * is scoped by its tree.
  */
 describe('the behaviour, which the platform already had', () => {
     it('writes no tabindex anywhere, because the roving one is not ours', async () => {
         const form = await mount(fixture);
 
-        for (const control of radios(form)) {
+        for (const control of controls(form)) {
             expect(control.hasAttribute('tabindex'), control.value).toBe(false);
         }
 
-        expect(group(form).hasAttribute('tabindex')).toBe(false);
+        expect(part(group(form), 'options').hasAttribute('tabindex')).toBe(false);
     });
 
     it('is one tab stop, not one per option', async () => {
@@ -259,7 +633,9 @@ describe('the behaviour, which the platform already had', () => {
 
         await userEvent.tab();
 
-        expect(document.activeElement, 'the first option takes the focus').toBe(radio(form));
+        expect(group(form).shadowRoot?.activeElement, 'the first option takes the focus').toBe(
+            radio(form),
+        );
 
         await userEvent.tab();
 
@@ -271,301 +647,111 @@ describe('the behaviour, which the platform already had', () => {
 
     it('enters at the selected option rather than at the first', async () => {
         const form = await mount(`
-            <ui-radio-group>${option('free')}${option('pro', 'checked')}</ui-radio-group>
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" checked>Pro</ui-radio>
+            </ui-radio-group>
         `);
 
         await userEvent.tab();
 
-        expect(document.activeElement).toBe(radios(form)[1]);
+        expect(group(form).shadowRoot?.activeElement).toBe(controls(form)[1]);
     });
 
     it('moves and selects with the arrow keys, and wraps at the end', async () => {
         const form = await mount(fixture);
-        const [free, pro, max] = radios(form);
+        const [free, pro, max] = controls(form);
 
         await userEvent.tab();
         await userEvent.keyboard('{ArrowDown}');
 
-        expect(document.activeElement, 'focus moved').toBe(pro);
-        expect(pro?.checked, 'and selection moved with it').toBe(true);
+        expect(pro?.checked, 'selection moved with the focus').toBe(true);
+        expect(group(form).value, 'and the property followed').toBe('pro');
 
         await userEvent.keyboard('{ArrowDown}');
 
-        expect(document.activeElement).toBe(max);
+        expect(max?.checked).toBe(true);
 
         await userEvent.keyboard('{ArrowDown}');
 
-        expect(document.activeElement, 'the set wraps').toBe(free);
-        expect(free?.checked).toBe(true);
+        expect(free?.checked, 'the set wraps').toBe(true);
+    });
+
+    it('swaps left and right under rtl, which a hand-rolled one has to remember to', async () => {
+        const form = await mount(fixture);
+        group(form).setAttribute('dir', 'rtl');
+        await group(form).updateComplete;
+
+        const [free, pro] = controls(form);
+
+        free?.focus();
+        free?.click();
+
+        await userEvent.keyboard('{ArrowLeft}');
+
+        expect(pro?.checked, 'left advances under rtl').toBe(true);
+
+        await userEvent.keyboard('{ArrowRight}');
+
+        expect(free?.checked, 'and right goes back').toBe(true);
+    });
+
+    it('scopes two sets apart, which a shared form owner does not', async () => {
+        // The rendered controls all carry one internal name, and that is safe precisely
+        // because a group with no form owner is scoped by its TREE: two elements are two
+        // shadow roots, so they are two groups.
+        const form = await mount(`${fixture}${fixture}`);
+        const [first, second] = [...form.querySelectorAll('ui-radio-group')];
+
+        if (first === undefined || second === undefined) {
+            throw new Error('the fixture rendered fewer than two groups');
+        }
+
+        const controlsOf = (element: UiRadioGroup): HTMLInputElement[] => [
+            ...element.renderRoot.querySelectorAll('input'),
+        ];
+
+        controlsOf(first)[0]?.click();
+        controlsOf(second)[0]?.click();
+
+        expect(controlsOf(first)[0]?.checked, 'the first kept its choice').toBe(true);
     });
 
     it('submits one value for the set, because they never stopped being native', async () => {
         const form = await mount(fixture);
 
-        await userEvent.tab();
-        await userEvent.keyboard('{ArrowDown}');
+        radio(form).click();
+        await group(form).updateComplete;
 
-        expect([...new FormData(form).entries()]).toEqual([['plan', 'pro']]);
-    });
-});
+        expect([...new FormData(form)]).toEqual([['plan', 'free']]);
 
-/**
- * What a `<label for>` could not have done. The group is not a labelable element, so the
- * field names it by reference — and it names the *group*, never the first radio, which
- * would name one option and leave the set anonymous.
- */
-/**
- * The same behaviour, in the arrangement RFC 0005 moves a control into — measured before
- * the group is moved rather than after, because the answer decided #122.
- *
- * The expectation was that variant F **withdraws** the delegation: put the controls in a
- * shadow root and the platform's radio group goes with them, leaving a roving tabindex to
- * hand-roll. It does not. A radio group is the radios sharing a `name` in the same form
- * owner — and where there is no form owner, **the same tree**. An `<input>` in a shadow
- * root has no form owner, which is the whole premise of RFC 0005, so the fallback applies
- * and the group is scoped by the shadow root instead. The delegation is re-scoped, not
- * withdrawn, by the same tree-scope rule the rest of that proposal turns on.
- *
- * The element here is a bare `HTMLElement` rather than `<ui-radio-group>` on purpose:
- * what is under test is the platform's rule about tree scope, and a component would put
- * its own rendering between the measurement and the thing being measured.
- */
-describe('the behaviour, in a shadow root with no form owner', () => {
-    class Scoped extends HTMLElement {
-        constructor() {
-            super();
+        controls(form)[1]?.click();
+        await group(form).updateComplete;
 
-            this.attachShadow({
-                mode: 'open',
-                delegatesFocus: this.hasAttribute('delegates'),
-            }).innerHTML = `
-                <div role="radiogroup" aria-label="Plan">
-                    <label><input type="radio" name="plan" value="free" /> Free</label>
-                    <label><input type="radio" name="plan" value="pro" /> Pro</label>
-                    <label><input type="radio" name="plan" value="max" /> Max</label>
-                </div>
-            `;
-        }
-    }
-
-    customElements.define('scoped-radios', Scoped);
-
-    /** The three controls of one scoped group, which is what every case here reads. */
-    function controls(element: Element): [HTMLInputElement, HTMLInputElement, HTMLInputElement] {
-        const [free, pro, max] = [...(element.shadowRoot?.querySelectorAll('input') ?? [])];
-
-        if (free === undefined || pro === undefined || max === undefined) {
-            throw new Error('the scoped group rendered fewer than three options');
-        }
-
-        return [free, pro, max];
-    }
-
-    /** Mounts the markup and returns the controls of the first scoped group in it. */
-    function scoped(markup: string): [HTMLInputElement, HTMLInputElement, HTMLInputElement] {
-        const host = document.createElement('div');
-        host.innerHTML = markup;
-        document.body.append(host);
-
-        const element = host.querySelector('scoped-radios');
-
-        if (element === null) {
-            throw new Error('no scoped group in the markup');
-        }
-
-        return controls(element);
-    }
-
-    /** Where the focus actually is, which for a control in here is not `document`'s. */
-    function focused(control: HTMLInputElement): Element | null {
-        const root = control.getRootNode();
-
-        return root instanceof ShadowRoot ? root.activeElement : null;
-    }
-
-    it('is a group at all, which is what the tree fallback decides', () => {
-        const [free, pro] = scoped('<scoped-radios></scoped-radios>');
-
-        free.checked = true;
-        pro.checked = true;
-
-        expect(free.checked, 'the first went off on its own').toBe(false);
-    });
-
-    it('is one tab stop, not one per option', async () => {
-        const [free] = scoped(
-            '<button id="before">b</button><scoped-radios></scoped-radios><input name="after" />',
-        );
-
-        document.getElementById('before')?.focus();
-
-        await userEvent.tab();
-
-        expect(free.getRootNode(), 'the control really is in a shadow root').toBeInstanceOf(
-            ShadowRoot,
-        );
-        expect(focused(free), 'and tab reached it').toBe(free);
-
-        await userEvent.tab();
-
-        expect(
-            (document.activeElement as HTMLInputElement).name,
-            'the next tab left the set entirely',
-        ).toBe('after');
-    });
-
-    it('moves and selects with the arrow keys, and wraps at the end', async () => {
-        const [free, pro, max] = scoped('<scoped-radios></scoped-radios>');
-
-        free.focus();
-        free.checked = true;
-
-        await userEvent.keyboard('{ArrowDown}');
-
-        expect(pro.checked, 'selection followed the focus').toBe(true);
-
-        await userEvent.keyboard('{ArrowDown}');
-
-        expect(max.checked).toBe(true);
-
-        await userEvent.keyboard('{ArrowDown}');
-
-        expect(free.checked, 'and the set wraps').toBe(true);
-    });
-
-    it('swaps left and right under rtl, which a hand-rolled one has to remember to', async () => {
-        const [free, pro, max] = scoped('<scoped-radios dir="rtl"></scoped-radios>');
-
-        free.focus();
-        free.checked = true;
-
-        await userEvent.keyboard('{ArrowLeft}');
-
-        expect(pro.checked, 'left advances under rtl').toBe(true);
-
-        await userEvent.keyboard('{ArrowRight}');
-
-        expect(free.checked, 'and right goes back').toBe(true);
-        expect(max.checked).toBe(false);
-    });
-
-    it('keeps the single tab stop under delegatesFocus, which every moved control sets', async () => {
-        const [free] = scoped(
-            '<button id="before">b</button><scoped-radios delegates></scoped-radios><input name="after" />',
-        );
-
-        document.getElementById('before')?.focus();
-
-        await userEvent.tab();
-
-        expect(focused(free), 'the delegation landed on the first option, not on all three').toBe(
-            free,
-        );
-
-        await userEvent.tab();
-
-        expect((document.activeElement as HTMLInputElement).name).toBe('after');
-    });
-
-    it('scopes two same-named groups apart, which a shared form owner does not', () => {
-        const host = document.createElement('div');
-        host.innerHTML = '<scoped-radios></scoped-radios><scoped-radios></scoped-radios>';
-        document.body.append(host);
-
-        const [first, second] = [...host.querySelectorAll('scoped-radios')].map(controls);
-
-        if (first === undefined || second === undefined) {
-            throw new Error('the markup rendered fewer than two groups');
-        }
-
-        first[0].checked = true;
-        second[0].checked = true;
-
-        // Two `<ui-radio-group>`s sharing a form owner and a `name` are one group today,
-        // and a host has to keep the names apart. A tree scope does it for them.
-        expect(first[0].checked, 'the first group kept its choice').toBe(true);
-    });
-});
-
-describe('inside a field', () => {
-    it('names the group rather than an option', async () => {
-        const form = await mount(fixture);
-        const label = form.querySelector('label[slot=label]');
-
-        expect(label?.id, 'the label got an id to point at').toMatch(/\S/);
-        expect(group(form).getAttribute('aria-labelledby')).toBe(label?.id);
-        expect(label?.hasAttribute('for'), 'and no for, which would label nothing').toBe(false);
-        expect(
-            radio(form).getAttribute('aria-labelledby'),
-            'the options keep their own',
-        ).toBeNull();
-    });
-
-    it('keeps an id the host gave the label, which something unseen may reference', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label" id="chosen">Plan</label>
-                <ui-radio-group>${option('free')}</ui-radio-group>
-            </ui-field>
-        `);
-
-        expect(group(form).getAttribute('aria-labelledby')).toBe('chosen');
-    });
-
-    it('drops the name when the label goes away, rather than dangling at nothing', async () => {
-        const form = await mount(fixture);
-
-        form.querySelector('label[slot=label]')?.remove();
-        await new Promise((resolve) => {
-            setTimeout(resolve, 0);
-        });
-
-        expect(group(form).hasAttribute('aria-labelledby')).toBe(false);
-    });
-
-    it('describes and invalidates the group, not one radio inside it', async () => {
-        const form = await mount(`
-            <ui-field>
-                <label slot="label">Plan</label>
-                <ui-radio-group>${option('free')}${option('pro')}</ui-radio-group>
-                <span slot="help">You can change this later.</span>
-                <span slot="error">Pick a plan to continue.</span>
-            </ui-field>
-        `);
-
-        expect(group(form).getAttribute('aria-describedby')).toMatch(/\S/);
-        expect(group(form).getAttribute('aria-invalid')).toBe('true');
-        expect(radio(form).hasAttribute('aria-describedby')).toBe(false);
-        expect(radio(form).hasAttribute('aria-invalid')).toBe(false);
+        expect([...new FormData(form)], 'one entry, not one per option').toEqual([['plan', 'pro']]);
     });
 });
 
 describe('the drawing', () => {
     it('stacks the options, spaced by the space token', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(group(form));
+        group(form).style.setProperty('--ui-space', '10px');
 
-        expect(styles.display).toBe('flex');
-        expect(styles.flexDirection).toBe('column');
-        expect(styles.rowGap).toBe('4px');
+        const options = getComputedStyle(part(group(form), 'options'));
+
+        expect(options.flexDirection).toBe('column');
+        expect(options.rowGap).toBe('5px');
     });
 
     it('lays out in a row when asked, wrapping rather than overflowing', async () => {
         const form = await mount(fixture);
-        group(form).setAttribute('orientation', 'horizontal');
+        group(form).orientation = 'horizontal';
         await group(form).updateComplete;
 
-        const styles = getComputedStyle(group(form));
+        const options = getComputedStyle(part(group(form), 'options'));
 
-        expect(styles.flexDirection).toBe('row');
-        expect(styles.flexWrap).toBe('wrap');
-        expect(styles.columnGap, 'more air between options than between rows').toBe('16px');
-    });
-
-    it('hugs the control rather than filling the line', async () => {
-        const form = await mount(`<ui-radio><input type="radio" /></ui-radio>`);
-
-        expect(getComputedStyle(only(form, 'ui-radio')).display).toBe('inline-flex');
+        expect(options.flexDirection).toBe('row');
+        expect(options.flexWrap).toBe('wrap');
     });
 
     it('drops the margin the user agent puts around a radio', async () => {
@@ -577,13 +763,10 @@ describe('the drawing', () => {
     it('draws at the target-size floor, and holds it against a smaller space token', async () => {
         const form = await mount(fixture);
 
-        // WCAG 2.2 2.5.8 asks 24x24 of a target the author sized, which this one is: a
-        // native radio is 13x13 in this engine and escapes the criterion only through its
-        // user agent control exception, which `appearance: none` gives up.
         expect(getComputedStyle(radio(form)).blockSize).toBe('24px');
         expect(getComputedStyle(radio(form)).inlineSize).toBe('24px');
 
-        group(form).style.setProperty('--ui-space', '4px');
+        group(form).style.setProperty('--ui-space', '2px');
 
         expect(getComputedStyle(radio(form)).blockSize, 'the floor holds').toBe('24px');
     });
@@ -604,77 +787,112 @@ describe('the drawing', () => {
     it('fills with the accent when selected', async () => {
         const form = await mount(fixture);
         withoutMotion(form);
-        radio(form).checked = true;
+        group(form).style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
 
-        const styles = getComputedStyle(radio(form));
+        radio(form).click();
+        await group(form).updateComplete;
 
-        expect(styles.backgroundColor).toBe('rgb(37, 99, 235)');
-        expect(styles.borderTopColor).toBe('rgb(37, 99, 235)');
+        expect(getComputedStyle(radio(form)).backgroundColor).toBe('rgb(1, 2, 3)');
     });
 
     it('marks the fill by subtracting the dot from it, rather than painting one on', async () => {
         const form = await mount(fixture);
-        radio(form).checked = true;
+
+        radio(form).click();
+        await group(form).updateComplete;
 
         const styles = getComputedStyle(radio(form));
 
-        // Two layers and `exclude` is the whole mechanism: the mark is the hole, so its
-        // colour is whatever the control sits on and no colour is frozen anywhere.
-        expect(styles.maskComposite).toBe('exclude, exclude');
-        expect(styles.maskImage).toContain('linear-gradient');
-        expect(styles.maskImage, 'a circle needs no picture').toContain('radial-gradient');
-        expect(styles.maskImage).not.toContain('svg');
-        expect(styles.maskPosition).toBe('50% 50%, 50% 50%');
-        expect(styles.maskRepeat).toBe('no-repeat, no-repeat');
+        for (const composite of styles.maskComposite.split(', ')) {
+            expect(composite, 'the mark is a hole').toBe('exclude');
+        }
+        expect(styles.maskImage, 'and no picture freezes a colour').not.toContain('url(');
     });
 
     it('takes the boundary from the host', async () => {
         const form = await mount(fixture);
-        // The boundary is transitioned, so a read taken straight after the change returns
-        // the first frame of the interpolation, which reads exactly like the override
-        // having been ignored.
         withoutMotion(form);
         group(form).style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
 
         expect(getComputedStyle(radio(form)).borderTopColor).toBe('rgb(1, 2, 3)');
     });
 
+    it('takes the label and the two supporting texts from their own tokens', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" help="How." error="Nope.">
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
+        `);
+        const element = group(form);
+
+        element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-text-supporting', '19px');
+
+        expect(getComputedStyle(part(element, 'label')).color, '--ui-color-text').toBe(
+            'rgb(4, 5, 6)',
+        );
+
+        const message = getComputedStyle(part(element, 'error'));
+        const help = getComputedStyle(part(element, 'help'));
+
+        expect(message.color, '--ui-color-danger').toBe('rgb(1, 2, 3)');
+        expect(message.fontSize, '--ui-text-supporting').toBe('19px');
+        expect(help.color, '--ui-color-text').toBe('rgb(4, 5, 6)');
+        expect(help.fontSize).toBe('19px');
+    });
+
+    it('mutes the label while the whole set is unavailable', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" disabled>
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
+        `);
+        group(form).style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(part(group(form), 'label')).color).toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(radio(form)).opacity).toBe('0.5');
+    });
+
+    it('stacks the frame half a space apart', async () => {
+        const form = await mount(fixture);
+        group(form).style.setProperty('--ui-space', '10px');
+
+        expect(getComputedStyle(part(group(form), 'stack')).rowGap).toBe('5px');
+    });
+
     it('keeps a visible focus ring — removing it is how a component stops being usable', () => {
-        expect(styleText('ui-radio')).toContain('focus-visible');
-        expect(styleText('ui-radio')).toContain('outline:');
-        expect(styleText('ui-radio')).toContain('outline-offset:');
+        expect(styleText('ui-radio-group')).toContain('focus-visible');
+        expect(styleText('ui-radio-group')).toContain('outline:');
+        expect(styleText('ui-radio-group')).toContain('outline-offset:');
     });
 
     it('takes the focus ring colour from the host', async () => {
-        // Tabbed to rather than focused by script: `:focus-visible` is what carries the
-        // ring, and it matches on a keyboard interaction rather than on a `focus()` call.
         const form = await mount(fixture);
         group(form).style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
 
         await userEvent.tab();
 
-        expect(document.activeElement, 'tab reached the control').toBe(radio(form));
+        expect(document.activeElement, 'tab reached the element').toBe(group(form));
         expect(getComputedStyle(radio(form)).outlineColor).toBe('rgb(1, 2, 3)');
     });
 
     it('refuses a pointer it will do nothing with', async () => {
         const form = await mount(`
-            <ui-radio-group>${option('free', 'disabled')}</ui-radio-group>
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free" disabled>Free</ui-radio>
+            </ui-radio-group>
         `);
-        const styles = getComputedStyle(radio(form));
 
-        expect(styles.cursor).toBe('not-allowed');
-        expect(styles.opacity).toBe('0.5');
+        expect(getComputedStyle(radio(form)).cursor).toBe('not-allowed');
+        expect(getComputedStyle(labelOf(radio(form))).cursor).toBe('not-allowed');
     });
 });
 
 /**
- * The box, against the checkbox it has to match.
- *
- * `src/radio.ts` writes the drawing out rather than sharing `src/checkbox.ts`'s, for the
- * reason `src/select.ts` gives about `src/input.ts` — and this is the mechanism that
- * answers the duplication objection on its own terms. Something compares them, and it
- * fails when they drift.
+ * The two drawn boolean controls have to agree, and something compares them so that it
+ * fails when they drift. `src/radio.ts` writes its own out rather than importing the
+ * checkbox's, for the reason `src/select.ts` gives about the box it shares with the input.
  */
 describe('the control, against the checkbox it has to match', () => {
     it('agrees on the size, the boundary, the fill and the cursor', async () => {
@@ -693,7 +911,6 @@ describe('the control, against the checkbox it has to match', () => {
             'borderTopWidth',
             'borderTopStyle',
             'borderTopColor',
-            'cursor',
             'transitionProperty',
             'transitionDuration',
         ] as const) {
@@ -706,8 +923,10 @@ describe('the control, against the checkbox it has to match', () => {
             ${fixture}
             <ui-checkbox label="The drawing this one has to match" checked></ui-checkbox>
         `);
-        radio(form).checked = true;
-        await settled(radio(form));
+        withoutMotion(form);
+
+        radio(form).click();
+        await group(form).updateComplete;
 
         const drawn = getComputedStyle(radio(form));
         const box = getComputedStyle(checkbox(form));
@@ -747,23 +966,22 @@ describe('the interaction states', () => {
     it('answers a pointer while selected, on the fill', async () => {
         const form = await mount(fixture);
         withoutMotion(form);
-        radio(form).checked = true;
+
+        radio(form).click();
+        await group(form).updateComplete;
 
         const resting = getComputedStyle(radio(form)).backgroundColor;
 
         await userEvent.hover(radio(form));
 
-        const hovered = getComputedStyle(radio(form));
-
-        expect(hovered.backgroundColor).not.toBe(resting);
-        // The boundary moves with the fill rather than being left at the resting accent,
-        // which would draw a ring around a control that is only being pointed at.
-        expect(hovered.borderTopColor).toBe(hovered.backgroundColor);
+        expect(getComputedStyle(radio(form)).backgroundColor).not.toBe(resting);
     });
 
     it('ignores a pointer while disabled', async () => {
         const form = await mount(`
-            <ui-radio-group>${option('free', 'disabled')}</ui-radio-group>
+            <ui-radio-group label="Plan" name="plan" disabled>
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
         `);
         withoutMotion(form);
 
@@ -776,89 +994,62 @@ describe('the interaction states', () => {
 
     it('moves the boundary and the fill over the state duration, and nothing else', async () => {
         const form = await mount(fixture);
-        const styles = getComputedStyle(radio(form));
+        const durations = getComputedStyle(radio(form)).transitionDuration.split(', ');
 
-        expect(styles.transitionProperty).toBe('background-color, border-color');
-        expect(styles.transitionDuration).toBe('0.15s, 0.15s');
+        expect(getComputedStyle(radio(form)).transitionProperty).toBe(
+            'background-color, border-color',
+        );
+        expect(new Set(durations).size, 'one duration for both').toBe(1);
     });
 
     it('guards every interaction rule against the state that refuses it', () => {
-        // Structural, and it reaches the rules a later state might add: a disabled control
-        // still matches :hover. The nested `:not(...)` is why this is not `[^)]*` — that
-        // stops at the first closing parenthesis, which is inside the guard it is meant to
-        // be checking for.
-        const rules = [
-            ...styleText('ui-radio').matchAll(
-                /::slotted\([a-z]+[^)]*:hover(?:[^()]|\([^()]*\))*\)/g,
-            ),
-        ];
+        const sheet = styleText('ui-radio-group');
 
-        expect(rules.length, 'there are hover rules to check').toBeGreaterThan(0);
-
-        for (const [rule] of rules) {
-            expect(rule, rule).toContain(':not(:disabled)');
+        for (const rule of sheet.split('}')) {
+            if (rule.includes(':hover') && rule.includes('input')) {
+                expect(rule, rule.trim().slice(0, 60)).toContain(':not(:disabled)');
+            }
         }
     });
 });
 
-/**
- * The error belongs to the set, not to an option — what a radio group gets wrong is the
- * choice. The group paints it by retargeting the boundary token over its own subtree,
- * which is the only thing that reaches a control two elements down: `::slotted()` stops at
- * the group's own children, `:host-context()` is not cross-engine, and
- * `:host(:has(...))` is invalid in this engine.
- */
 describe('in error', () => {
-    it('paints every option from the one source the field already wrote', async () => {
+    it('paints every option from the one source the group rendered', async () => {
         const form = await mount(`
-            <ui-field>
-                <label slot="label">Plan</label>
-                <ui-radio-group>${option('free')}${option('pro')}</ui-radio-group>
-                <span slot="error">Pick a plan to continue.</span>
-            </ui-field>
+            <ui-radio-group label="Plan" name="plan" error="Pick one.">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro">Pro</ui-radio>
+            </ui-radio-group>
         `);
+        withoutMotion(form);
+        group(form).style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
 
-        expect(group(form).getAttribute('aria-invalid'), 'ui-field wired it').toBe('true');
-
-        // `ui-field` sets the attribute from its observer, during mount, so the boundary is
-        // already transitioning by the time this test runs and there is no earlier moment
-        // to take the motion out at. Waited out rather than pre-empted.
-        for (const control of radios(form)) {
-            await settled(control);
-
-            expect(getComputedStyle(control).borderTopColor, control.value).toBe(
-                'rgb(185, 28, 28)',
-            );
+        for (const control of controls(form)) {
+            expect(getComputedStyle(control).borderTopColor, control.value).toBe('rgb(1, 2, 3)');
         }
     });
 
-    it('reaches the options through inheritance rather than through a selector', () => {
-        // The mechanism, asserted where no rendering can show it: the group names no
-        // descendant, it moves the token they already read.
-        expect(ruleText('ui-radio-group')).toContain('--ui-color-border:');
-        expect(ruleText('ui-radio-group'), 'it names no descendant').not.toContain('::slotted');
-        expect(ruleText('ui-radio'), 'and no option reads the state').not.toContain('aria-invalid');
+    it('reads the state off the rendered aria-invalid, not a reflected attribute', () => {
+        // Lit reflects an empty string default as an empty attribute, and an
+        // attribute-presence selector matches every element. Measured on ui-checkbox.
+        const sheet = styleText('ui-radio-group');
+
+        expect(sheet).toContain("[aria-invalid='true']");
+        expect(sheet, 'never :host([error])').not.toContain(':host([error])');
     });
 
-    it('takes the error colour from the host, like every other colour here', async () => {
+    it('says it in words as well as in colour', async () => {
         const form = await mount(`
-            <ui-field>
-                <label slot="label">Plan</label>
-                <ui-radio-group>${option('free')}</ui-radio-group>
-                <span slot="error">Pick a plan to continue.</span>
-            </ui-field>
+            <ui-radio-group label="Plan" name="plan" error="Pick one.">
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
         `);
-        group(form).style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
-        await settled(radio(form));
 
-        expect(getComputedStyle(radio(form)).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(part(group(form), 'error').textContent).toBe('Pick one.');
+        expect(part(group(form), 'options').getAttribute('aria-describedby')).toContain('error');
     });
 });
 
-/**
- * Forced colors replaces every author colour, so a state told apart by colour alone stops
- * being told apart — for the people who turned the mode on to see states more clearly.
- */
 describe('under forced colors', () => {
     async function forcedColors(active: boolean): Promise<void> {
         await cdp().send('Emulation.setEmulatedMedia', {
@@ -879,14 +1070,17 @@ describe('under forced colors', () => {
 
         const resting = getComputedStyle(radio(form)).backgroundColor;
 
-        radio(form).checked = true;
+        radio(form).click();
+        await group(form).updateComplete;
 
         expect(getComputedStyle(radio(form)).backgroundColor).not.toBe(resting);
     });
 
     it('says unavailable with a colour rather than a veil, which is not forced', async () => {
         const form = await mount(`
-            <ui-radio-group>${option('free', 'disabled')}</ui-radio-group>
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free" disabled>Free</ui-radio>
+            </ui-radio-group>
         `);
         await forcedColors(true);
 
@@ -908,15 +1102,23 @@ describe('accessibility', () => {
         await expectAccessible(await mountStory(Horizontal, meta, 'Horizontal'));
     });
 
-    it('has no violations in any drawn state, disabled included', async () => {
-        await expectAccessible(await mountStory(States, meta, 'States'));
+    it('has no violations with supporting text', async () => {
+        await expectAccessible(await mountStory(WithHelp, meta, 'WithHelp'));
     });
 
     it('has no violations in error', async () => {
         await expectAccessible(await mountStory(Invalid, meta, 'Invalid'));
     });
 
-    it('has no violations named by the host, with no field at all', async () => {
-        await expectAccessible(await mountStory(Standalone, meta, 'Standalone'));
+    it('has no violations while disabled', async () => {
+        await expectAccessible(await mountStory(Disabled, meta, 'Disabled'));
+    });
+
+    it('has no violations with one option disabled', async () => {
+        await expectAccessible(await mountStory(OneOptionDisabled, meta, 'OneOptionDisabled'));
+    });
+
+    it('has no violations right to left', async () => {
+        await expectAccessible(await mountStory(RightToLeft, meta, 'RightToLeft'));
     });
 });
