@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/rak200/ui/compare/0.4.0...0.5.0) (2026-09-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **radio:** the group renders its own controls and its own frame ([#154](https://github.com/rak200/ui/issues/154))
+
+### Features
+
+* **radio:** the group renders its own controls and its own frame ([#154](https://github.com/rak200/ui/issues/154)) ([c670f9e](https://github.com/rak200/ui/commit/c670f9e31d7afc29f5422ff29d4ad97ce0f23579))
+
 ## [0.4.0](https://github.com/rak200/ui/compare/0.3.0...0.4.0) (2026-09-09)
 
 
