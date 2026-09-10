@@ -360,6 +360,21 @@ describe('the choices', () => {
         expect(controls(form)[2]?.checked).toBe(true);
     });
 
+    it('carry their text through the slot they render, so a re-wording lands', async () => {
+        // The declaration renders a <slot> and listens to it, and that is the whole report a
+        // re-wording makes: text is not a reactive property, so nothing else fires.
+        const form = await mount(fixture);
+
+        choice(form, 'pro').textContent = 'Professional';
+        await settled(group(form));
+
+        expect(controls(form).map((control) => labelOf(control).textContent.trim())).toEqual([
+            'Free',
+            'Professional',
+            'Max',
+        ]);
+    });
+
     it('carry one disabled option, the rest of the set staying live', async () => {
         const form = await mount(`
             <ui-radio-group label="Plan" name="plan">
@@ -584,6 +599,22 @@ describe('the validity', () => {
         );
 
         expect(group(form).validity.valid, 'an empty set is not an invalid one').toBe(true);
+
+        // And it is *cleared* rather than never written, which is the half a fresh element
+        // cannot show: a set that was invalid and then lost its choices has nothing left to
+        // be invalid about.
+        const emptied = await mount(`
+            <ui-radio-group label="Plan" name="plan" required>
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
+        `);
+
+        expect(group(emptied).validity.valueMissing, 'invalid to begin with').toBe(true);
+
+        choice(emptied, 'free').remove();
+        await settled(group(emptied));
+
+        expect(group(emptied).validity.valid, 'and nothing to validate after').toBe(true);
     });
 
     it('delegates focus, so the browser can put the reader on a control', async () => {
@@ -745,6 +776,7 @@ describe('the drawing', () => {
 
     it('lays out in a row when asked, wrapping rather than overflowing', async () => {
         const form = await mount(fixture);
+        group(form).style.setProperty('--ui-space', '10px');
         group(form).orientation = 'horizontal';
         await group(form).updateComplete;
 
@@ -752,6 +784,14 @@ describe('the drawing', () => {
 
         expect(options.flexDirection).toBe('row');
         expect(options.flexWrap).toBe('wrap');
+        expect(options.columnGap, 'a row is spaced wider than a column').toBe('20px');
+    });
+
+    it('sets the control half a space from the text it belongs to', async () => {
+        const form = await mount(fixture);
+        group(form).style.setProperty('--ui-space', '10px');
+
+        expect(getComputedStyle(part(group(form), 'option')).columnGap).toBe('5px');
     });
 
     it('drops the margin the user agent puts around a radio', async () => {
@@ -792,7 +832,10 @@ describe('the drawing', () => {
         radio(form).click();
         await group(form).updateComplete;
 
-        expect(getComputedStyle(radio(form)).backgroundColor).toBe('rgb(1, 2, 3)');
+        const styles = getComputedStyle(radio(form));
+
+        expect(styles.backgroundColor).toBe('rgb(1, 2, 3)');
+        expect(styles.borderTopColor, 'the boundary disappears into the fill').toBe('rgb(1, 2, 3)');
     });
 
     it('marks the fill by subtracting the dot from it, rather than painting one on', async () => {
@@ -806,7 +849,20 @@ describe('the drawing', () => {
         for (const composite of styles.maskComposite.split(', ')) {
             expect(composite, 'the mark is a hole').toBe('exclude');
         }
+
+        // Two layers, and both have to be there: the whole control to subtract from, and the
+        // circle to subtract. Either one missing invalidates the declaration and the mask
+        // stops existing rather than coming out wrong.
+        expect(styles.maskImage, 'the whole control').toContain('linear-gradient');
+        expect(styles.maskImage, 'minus the circle').toContain('radial-gradient');
         expect(styles.maskImage, 'and no picture freezes a colour').not.toContain('url(');
+    });
+
+    it('takes the typeface from the host, for everything it draws', async () => {
+        const form = await mount(fixture);
+        group(form).style.setProperty('--ui-font', 'Georgia');
+
+        expect(getComputedStyle(part(group(form), 'label')).fontFamily).toBe('Georgia');
     });
 
     it('takes the boundary from the host', async () => {
@@ -840,6 +896,26 @@ describe('the drawing', () => {
         expect(message.fontSize, '--ui-text-supporting').toBe('19px');
         expect(help.color, '--ui-color-text').toBe('rgb(4, 5, 6)');
         expect(help.fontSize).toBe('19px');
+    });
+
+    it("takes an option's text from the text token, and mutes the one that is out", async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" disabled>Pro</ui-radio>
+            </ui-radio-group>
+        `);
+        const element = group(form);
+
+        element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        const options = [...element.renderRoot.querySelectorAll<HTMLElement>("[part='option']")];
+
+        expect(options.map((option) => getComputedStyle(option).color)).toEqual([
+            'rgb(4, 5, 6)',
+            'rgb(1, 2, 3)',
+        ]);
     });
 
     it('mutes the label while the whole set is unavailable', async () => {
@@ -963,18 +1039,27 @@ describe('the interaction states', () => {
         expect(getComputedStyle(radio(form)).borderColor).not.toBe(resting);
     });
 
-    it('answers a pointer while selected, on the fill', async () => {
+    it('answers a pointer while selected, on the fill, the boundary staying in it', async () => {
         const form = await mount(fixture);
         withoutMotion(form);
 
         radio(form).click();
         await group(form).updateComplete;
 
-        const resting = getComputedStyle(radio(form)).backgroundColor;
+        const fill = getComputedStyle(radio(form)).backgroundColor;
 
         await userEvent.hover(radio(form));
 
-        expect(getComputedStyle(radio(form)).backgroundColor).not.toBe(resting);
+        const hovered = getComputedStyle(radio(form));
+
+        expect(hovered.backgroundColor).not.toBe(fill);
+
+        // Not *did the boundary move* — it moves either way, because the unselected hover
+        // rule is waiting underneath and is the more specific of the two left. What the
+        // selected hover owes is that no outline comes back inside the fill.
+        expect(hovered.borderTopColor, 'the boundary stays in the fill').toBe(
+            hovered.backgroundColor,
+        );
     });
 
     it('ignores a pointer while disabled', async () => {
