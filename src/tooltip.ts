@@ -19,10 +19,9 @@ const focusable = 'a[href], button, input, select, textarea, [tabindex]';
 /**
  * Supplementary text on hover and on keyboard focus.
  *
- * **Everything is slotted**, the way `<ui-field>` slots everything and for the same
- * measured reason: an IDREF does not cross a shadow boundary, so a tip rendered in here
- * could not be the target of the trigger's `aria-describedby`. The trigger is the child
- * with no `slot`; the tip is `slot="tip"`.
+ * **Everything is slotted**, for a measured reason: an IDREF does not cross a shadow
+ * boundary, so a tip rendered in here could not be the target of the trigger's
+ * `aria-describedby`. The trigger is the child with no `slot`; the tip is `slot="tip"`.
  *
  * ## What the platform does, and what is left
  *
@@ -138,10 +137,9 @@ export class UiTooltip extends LitElement {
      * per-frame: a page holding fifty tooltips would run fifty no-op scroll handlers for
      * every frame of every scroll, and at most one tooltip is ever open.
      *
-     * Built here rather than on the first show so it is never absent — the reason
-     * `src/field.ts` builds its observer the same way: a close that has to ask whether the
-     * controller exists is a branch no test can reach, because nothing closes what was
-     * never opened.
+     * Built here rather than on the first show so it is never absent: a close that has to
+     * ask whether the controller exists is a branch no test can reach, because nothing
+     * closes what was never opened.
      */
     #watching = new AbortController();
 
@@ -234,10 +232,10 @@ export class UiTooltip extends LitElement {
      * the element rather than mutating it — and a tip that is only wired the first time is
      * one that stops being announced at a moment nothing reports.
      *
-     * A `role` or an `id` the host wrote is never overwritten, the same courtesy
-     * `<ui-field>` and `<ui-radio-group>` extend. `aria-describedby` is **added to** rather than
-     * replaced: the trigger may already be described by a field's help text, and a
-     * description that silently replaced another is the failure nobody sees.
+     * A `role` or an `id` the host wrote is never overwritten. `aria-describedby` is
+     * **added to** rather than replaced: the trigger may already be described by something
+     * this element cannot see, and a description that silently replaced another is the
+     * failure nobody sees.
      */
     readonly #associate = (): void => {
         const trigger = this.#trigger();
@@ -250,8 +248,7 @@ export class UiTooltip extends LitElement {
         if (tip.id === '') {
             // Stryker disable next-line UpdateOperator: two tooltips on one page must get
             // different ids, and a decrementing counter delivers that as well as an
-            // incrementing one. No input distinguishes them — an equivalent mutant, the
-            // same one `src/field.ts` carries beside its own counter.
+            // incrementing one. No input distinguishes them — an equivalent mutant.
             tip.id = `ui-tooltip-${String(++sequence)}`;
         }
 
@@ -295,8 +292,8 @@ export class UiTooltip extends LitElement {
         console.warn(
             `<ui-tooltip> described <${trigger.localName}>, and the description will not ` +
                 `arrive: it focuses a control inside its own shadow root, which an id in ` +
-                `your tree cannot reach. Use a control in your own tree — a native <button>, ` +
-                `or a native form control inside a <ui-field>.`,
+                `your tree cannot reach. Where the text has to be announced, the trigger has ` +
+                `to be a control you wrote — a native <button>, <a href> or form control.`,
         );
     }
 

@@ -258,12 +258,14 @@ nothing, from which the platform's own elements are built. That is the first tim
 added an element to say something rather than to show something, and it was the platform's refusal
 that asked for it.
 
-**`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each
-other, and no control in this package has scattered ends any more. What it is still for is a
-control **you** wrote, which is a smaller job than the one it was built for.
+**`<ui-field>` was what all of this left behind, and it is gone.** It existed to point scattered
+ends at each other, and no control in this package has scattered ends any more. What remained was a
+wrapper for a control **you** wrote — an element the package itself never reached for, which every
+change to the ARIA story then had to be analysed against. Keeping it cost nothing on any single
+day and something on every one of them; removing it is #138.
 
-**A control in the host's tree is the only one a second component can still reach**, and that is
-the field's neighbour rather than the field's job. The rule this section states for a component's
+**A control in the host's tree is the only one a second component can still reach.** The rule this
+section states for a component's
 own relationship holds just as firmly against a component _outside_ it: `<ui-tooltip>` writes
 `aria-describedby` from the host's tree, and an IDREF crosses a boundary in neither direction — so
 a tooltip on any element this package renders describes a node the reader never lands on. **What
@@ -377,7 +379,7 @@ before.
 
 **The type scale is the case where the rule paid off most visibly, and it did so backwards.** It
 arrived with `<ui-table>` as scheduled, and what it found on arrival was not a gap but a **defect**:
-`font-size: 0.875em` was already shipping in three places — twice in `<ui-field>`, once in
+`font-size: 0.875em` was already shipping in three places across the form wrapper of the day and
 `<ui-tooltip>` — all three agreeing, none of them compared to anything, and every one of them a
 decision a host could not override. Had the category been admitted earlier, on a schedule, those
 three would have read a token from the start and nothing would have recorded that they were once a

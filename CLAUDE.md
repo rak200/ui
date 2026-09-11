@@ -27,7 +27,6 @@ src/
 ├── card.ts          # <ui-card> — a surface, three regions, and the elevation category
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
-├── field.ts         # <ui-field> — the ARIA wiring every form control needs
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
@@ -123,8 +122,8 @@ explains. This file restates none of them.
 - **Why `accessor` and decorators are off** — the comment beside both flags in `tsconfig.json`.
   Turning either on makes the suite unable to load the code that uses it.
 - **Why a mutant on a module-level side effect cannot be killed** — the `Stryker disable next-line`
-  comments in `src/button.ts` and `src/field.ts`, each carrying its reason. Exclude at the narrowest
-  node; never widen to the file.
+  comments in `src/button.ts` and `src/tooltip.ts`, each carrying its reason. Exclude at the
+  narrowest node; never widen to the file.
 - **Why a derived token's formula must never be declared at `:root`** — the docblock on `formulas`
   in `src/tokens.ts`, which shows the broken placement rather than only naming it, and the gate in
   `tests/tokens.test.ts` that makes it fail rather than be remembered.
@@ -140,8 +139,7 @@ explains. This file restates none of them.
   it costs a **second** component reaching in from outside — which is why a `<ui-tooltip>` on any
   control here is silent. `src/checkbox.ts` is the arrangement every control moved to and
   `docs/checkbox.md` is the consumer-facing half; the docblock on `field` in `src/input.ts` says
-  why those rules were once written with `::slotted()`. `src/field.ts`'s `#control()` is the other
-  arrangement's end, for the control a host still writes.
+  why those rules were once written with `::slotted()`.
 - **Why a drawn control paints its own mark, and why the mark is a hole** — `src/checkbox.ts`,
   beside the mask constant. A `data:` URI would freeze the mark's colour in a package whose rule is
   that a host overrides every visual decision, which `mask-composite: exclude` avoids by making the
@@ -153,8 +151,8 @@ explains. This file restates none of them.
   `UiTooltip` in `src/tooltip.ts`, which records both measurements: anchor positioning works end to
   end in this engine, and an engine without it puts the popover at `inset: 0` rather than near the
   trigger. `popover="manual"` and the Escape handler carry their reasons beside them, and
-  `src/field.ts`'s `#foreign()` is the other half — two components writing one
-  `aria-describedby`, with the erasure measured on the _second_ association.
+  `#complain()` carries the one a reader hits first: a description written from out here reaches no
+  control this package draws, which #156 measured and RFC 0006 decides.
 - **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
   `UiCard` in `src/card.ts`, beside each. `light-dark()` takes colours and a shadow is not one, so
   the elevation category cannot follow the scheme and the derived boundary is what both schemes
@@ -240,7 +238,8 @@ explains. This file restates none of them.
 - **Why the type scale arrived to fix something rather than to enable something** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with the component that consumes it_, and
   the comment beside `--ui-text-100` in `src/tokens.ts`. Three hardcoded `font-size: 0.875em`
-  declarations were already shipping across `src/field.ts` and `src/tooltip.ts`, and waiting for the
+  declarations were already shipping across the form wrapper of the day and `src/tooltip.ts`, and
+  waiting for the
   component that judged them is what made the extraction a correction. `--ui-color-surface-muted`
   arrived beside it and says at its formula why it is not `--ui-color-hover`.
 - **Why the playground inserts the token sheet into each story rather than into the document

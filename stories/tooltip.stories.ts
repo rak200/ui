@@ -62,19 +62,18 @@ export default meta;
 export const Tooltip: StoryObj<TooltipArgs> = {};
 
 /**
- * A native trigger, which is the one whose description actually reaches a screen reader.
+ * A native trigger, which is the one whose description actually reaches a screen reader:
+ * the control is in the host's tree, so both ends of the reference are.
  */
-export const OnAField: StoryObj<TooltipArgs> = {
+export const OnAControlYouWrote: StoryObj<TooltipArgs> = {
     args: { label: 'Amount', tip: 'Two decimals, in BRL.' },
     render: ({ label, tip }): TemplateResult => html`
         <div style="padding-block: 6rem; max-inline-size: 20rem; margin-inline: auto">
-            <ui-field>
-                <label slot="label">${label}</label>
-                <ui-tooltip>
-                    <input type="number" name="amount" />
-                    <span slot="tip">${tip}</span>
-                </ui-tooltip>
-            </ui-field>
+            <label for="amount" style="display: block; margin-block-end: 0.5rem">${label}</label>
+            <ui-tooltip>
+                <input id="amount" type="number" name="amount" />
+                <span slot="tip">${tip}</span>
+            </ui-tooltip>
         </div>
     `,
 };

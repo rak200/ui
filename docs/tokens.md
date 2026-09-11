@@ -206,7 +206,7 @@ name is breaking. Read it as _the names that have a default_.
 `--ui-color-danger`, `--ui-color-success` and `--ui-color-warning` each clear **4.5:1 against the
 surface** in both schemes — the floor for text, not the 3:1 a coloured edge would owe. The floor a
 value has to clear is the strictest use it is put to, and nothing stops a host writing one of these as
-text; [`<ui-field>`](field.md) already writes the first one that way.
+text; every control's error message already writes the first one that way.
 
 Override one and you own that ratio. A `success` that only ever draws an edge can be lighter; one that
 also labels something cannot.

@@ -44,7 +44,7 @@ the element, so nothing has to be called.
 
 **Both stay in your tree.** An IDREF does not cross a shadow boundary, so a tip rendered inside this
 element's shadow root could not be the target of the trigger's `aria-describedby` — the same measured
-constraint that shapes [`<ui-field>`](field.md) and [`<ui-input>`](input.md).
+constraint that shapes [`<ui-input>`](input.md) and every other control here.
 
 What the element writes on your tip: an `id` (only if it has none), `role="tooltip"` (only if you
 wrote no role), `popover="manual"`, and a `data-side` saying which way it was placed. What it writes
@@ -70,10 +70,9 @@ trigger rather than counting ours.
 shadow root, naming the trigger and the way out. Nothing on the page looks wrong in that case — the
 tip shows and lands where it should — so a warning is the only thing that reports it.
 
-**Where the text has to be announced, the trigger has to be a control in your own tree** — a native
-`<button>`, or a native form control inside a [`<ui-field>`](field.md), which is the composition
-below. Where it does not, the tip is decoration and should not be the only place the information
-exists anyway.
+**Where the text has to be announced, the trigger has to be a control you wrote** — a native
+`<button>`, `<a href>` or form control, which is the composition below. Where it does not, the tip
+is decoration and should not be the only place the information exists anyway.
 
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.
@@ -135,29 +134,26 @@ continuous auto-update — none of which a tooltip against a real element needs 
 package's second runtime dependency. When anchor positioning is broadly available it replaces the
 script, and the tests stay: they assert where the tip lands, not who put it there.
 
-## Inside a field
+## On a control you wrote
 
 ```html
-<ui-field>
-  <label slot="label">Amount</label>
-  <ui-tooltip>
-    <input type="number" name="amount" />
-    <span slot="tip">Two decimals, in BRL.</span>
-  </ui-tooltip>
-  <span slot="help">Excluding tax.</span>
-</ui-field>
+<label for="amount">Amount</label>
+<ui-tooltip>
+  <input id="amount" type="number" name="amount" />
+  <span slot="tip">Two decimals, in BRL.</span>
+</ui-tooltip>
 ```
 
-Both components write `aria-describedby` on the same control, and both keep what the other wrote:
-the tooltip adds its id to the list, and [`<ui-field>`](field.md) carries forward any id it did not
-generate when it rebuilds it. Prefer the field's `help` slot for anything a person needs before they
-start typing — a tooltip is for what they might want, not what they must have.
+**What makes the description arrive is the control being yours** — measured: `aria-describedby` on
+the `<input>` carries the tip's id, and that id resolves in the control's own root, because both
+ends are in your tree.
 
-**What makes the description arrive is the control being yours**, not the field around it — measured
-on a bare `<input>` with no field anywhere, where the reference resolves exactly as it does here. The
-field is what wires the label, the help and the message; the tooltip reaches the control either way.
-A tooltip around [`<ui-input>`](input.md) or any other control this package draws is the case that is
-silent, and the reason is the one above.
+**A description this element did not write is kept.** The tip's id is added to whatever
+`aria-describedby` already held rather than replacing it, because a description that silently
+replaced another is the failure nobody sees.
+
+A tooltip around [`<ui-input>`](input.md) or any other control this package draws is the case that
+is silent, and the reason is the one above.
 
 ## Styling
 

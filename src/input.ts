@@ -20,7 +20,7 @@ const field = css`
         font-family: ${reference('--ui-font')};
     }
 
-    /* The rhythm ui-field used to own, now owned by the control it was wrapping. */
+    /* The vertical rhythm between the label, the control and whatever is under it. */
     .stack {
         display: flex;
         flex-direction: column;
@@ -89,8 +89,7 @@ const field = css`
     }
 
     /* Read off the control's own aria-invalid rather than off a host attribute: it is the
-       same source a screen reader uses, and it is the rule this file already carried when
-       ui-field was the one writing it. Not :host([error]) — a reflected string property
+       same source a screen reader uses. Not :host([error]) — a reflected string property
        whose default is empty puts an empty attribute on the host, and an
        attribute-presence selector matches every element. Measured on ui-checkbox. */
     input[aria-invalid='true'],
@@ -128,9 +127,8 @@ function attribute(value: string): string | typeof nothing {
  * A styled native form control, and the wiring that used to sit around it.
  *
  * **The control is this element's**, rendered into its shadow root together with its
- * label, its help text and its message — so the IDREFs resolve in one tree scope and
- * `<ui-field>` has nothing left to point at. What a host writes is the tag and its
- * attributes.
+ * label, its help text and its message, so every IDREF resolves in one tree scope. What a
+ * host writes is the tag and its attributes.
  *
  * **The element is the form control**, through `ElementInternals`: an `<input>` in a
  * shadow root has no form owner, so the value reaches a submit because this element passes
@@ -319,7 +317,7 @@ class UiTextField extends LitElement {
      * **The error is described before the help**, and the help is not replaced by it: a
      * screen reader announces descriptions in order, and help text is usually the format
      * requirement — which is the very suggestion a reader needs in order to recover
-     * (WCAG 3.3.3). `<ui-field>` decided that and this carries it.
+     * (WCAG 3.3.3).
      */
     protected frame(control: TemplateResult): TemplateResult {
         return html`
@@ -360,8 +358,8 @@ class UiTextField extends LitElement {
  *
  * **You write the tag, not a control.** RFC 0005 reversed the rule this element was built
  * on: the `<input>`, its `<label>`, its help text and its message are rendered together in
- * one shadow root, so the IDREFs resolve and there is nothing left for `<ui-field>` to
- * wire. The attributes below are the platform's own, and the ones it computes with —
+ * one shadow root, so every IDREF resolves and nothing is left to wire from outside. The
+ * attributes below are the platform's own, and the ones it computes with —
  * `type`, `pattern`, `min`, `max`, `step` — are handed to a real `<input>` that validates
  * them itself.
  *

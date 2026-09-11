@@ -29,7 +29,7 @@
  * Layer 1 says mutation runs over the **changed lines** of a pull request. The pipeline
  * computes `git diff --name-only` and hands over whole **files**, so a one-line change to a
  * large module re-mutates every line in it. Measured on the pull request that added
- * `ui-table`: three changed lines across `src/field.ts` and `src/tooltip.ts` cost 241 of
+ * `ui-table`: three changed lines across two modules cost 241 of
  * that run's 350 mutants — 69% of a job that then exceeded the pipeline's 20-minute
  * timeout, at 87% with zero survivors.
  *

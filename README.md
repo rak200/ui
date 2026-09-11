@@ -77,7 +77,7 @@ schemes rather than one.
 
 ## Status
 
-**v0.** Nineteen components — `<ui-button>`, `<ui-card>`, `<ui-field>`, `<ui-dialog>`, `<ui-input>`,
+**v0.** Eighteen components — `<ui-button>`, `<ui-card>`, `<ui-dialog>`, `<ui-input>`,
 `<ui-textarea>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-select>`, `<ui-option>`, `<ui-optgroup>`,
 `<ui-radio-group>`, `<ui-radio>`, `<ui-tooltip>`, `<ui-toaster>`, `<ui-toast>`, `<ui-menu>`,
 `<ui-table>` and `<ui-icon>` — the token layer

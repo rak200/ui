@@ -4,8 +4,8 @@
  * When to reach for which is in `docs/checkbox.md`, which CI checks and a consumer opens
  * first. This file shows the components; it does not describe them.
  *
- * **No story writes a control, and none reaches for `<ui-field>`.** Both elements render
- * their own `<input>` and their own `<label>` into one shadow root, so the markup is the
+ * **No story writes a control.** Both elements render their own `<input>` and their own
+ * `<label>` into one shadow root, so the markup is the
  * tag and its attributes — which is the whole of what RFC 0005 decided.
  */
 

@@ -126,8 +126,8 @@ anywhere above the element and this follows.
 
 The category that arrived with this component is the **type scale** — `--ui-text-100`, read through
 `--ui-text-supporting` — and it did not arrive for the caption alone. It replaced three hardcoded
-`font-size: 0.875em` declarations that were already shipping, in [`<ui-field>`](field.md) twice and
-in [`<ui-tooltip>`](tooltip.md) once, all three agreeing and none of them overridable.
+`font-size: 0.875em` declarations that were already shipping across the form controls and
+[`<ui-tooltip>`](tooltip.md), all three agreeing and none of them overridable.
 
 `--ui-color-surface-muted` arrived with it: a second surface tone, for the header and the stripes.
 It is deliberately lighter than `--ui-color-hover`, so a state drawn over a striped row is still a

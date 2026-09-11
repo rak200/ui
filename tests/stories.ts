@@ -34,7 +34,7 @@ import { rendered } from './a11y.js';
  * The renderer's defaults are deliberately not registered.
  * `@storybook/web-components/entry-preview` is what would supply them and it ships no type
  * declarations at all, so importing it fails `analyse`. Measured without them: args reach
- * the DOM, decorators are applied, and `<ui-field>` wires its ARIA exactly as its own test
+ * the DOM, decorators are applied, and a component wires its ARIA exactly as its own test
  * asserts. They supply `renderToCanvas`, and nothing here renders to a canvas — lit's
  * `render` puts the story where this file says, which `run()` does not: measured, it
  * ignored the element it was handed and mounted the story elsewhere in the document.

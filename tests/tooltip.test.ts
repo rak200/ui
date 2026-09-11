@@ -5,9 +5,13 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { AtTheEdge, Inside, OnAField, Tooltip } from '../stories/tooltip.stories.js';
+import meta, {
+    AtTheEdge,
+    Inside,
+    OnAControlYouWrote,
+    Tooltip,
+} from '../stories/tooltip.stories.js';
 import '../src/tooltip.js';
-import '../src/field.js';
 import '../src/input.js';
 import type { UiTooltip } from '../src/tooltip.js';
 
@@ -31,7 +35,7 @@ async function mount(markup: string, offset = '120px'): Promise<HTMLElement> {
     host.innerHTML = markup;
     document.body.append(host);
 
-    for (const element of host.querySelectorAll('ui-tooltip, ui-field, ui-input')) {
+    for (const element of host.querySelectorAll('ui-tooltip, ui-input')) {
         await (element as UiTooltip).updateComplete;
     }
 
@@ -165,7 +169,7 @@ describe('ui-tooltip', () => {
     });
 
     it('adds to a description the trigger already had, rather than replacing it', async () => {
-        // A control inside a `<ui-field>` is already described by its help text, and a
+        // A control may already be described by something this element cannot see, and a
         // description that silently replaced another is the failure nobody sees.
         const host = await mount(`
             <ui-tooltip>
@@ -195,30 +199,6 @@ describe('ui-tooltip', () => {
 
         expect(described.split(' ')).toEqual([...new Set(described.split(' '))]);
         expect(described).toContain(replacement.id);
-    });
-
-    it('survives a field re-describing the same control', async () => {
-        // Two components writing one attribute. `ui-field` rebuilds the list from what it
-        // knows about, and it carries forward what it did not write — measured here rather
-        // than trusted, because the erasure happened on the *second* association and a
-        // test that only mounted would have passed.
-        const host = await mount(`
-            <ui-field>
-                <label slot="label">Amount</label>
-                <ui-tooltip>
-                    <input type="number" />
-                    <span slot="tip">Two decimals.</span>
-                </ui-tooltip>
-                <span slot="help">In BRL.</span>
-            </ui-field>
-        `);
-
-        only(host, '[slot=help]').textContent = 'In BRL, please.';
-        await new Promise((resolve) => {
-            setTimeout(resolve, 0);
-        });
-
-        expect(trigger(host).getAttribute('aria-describedby')?.split(' ')).toContain(tip(host).id);
     });
 
     it('names the same tip once, however often it is wired again', async () => {
@@ -275,8 +255,10 @@ describe('ui-tooltip', () => {
 
         expect(message, 'names the trigger').toContain('<test-focuses-inside>');
         expect(message, 'says where the description got stranded').toContain('shadow root');
-        expect(message, 'the native way out').toContain('a native <button>');
-        expect(message, 'and the one for a form control').toContain('<ui-field>');
+        expect(message, 'and why it cannot be reached').toContain(
+            'an id in your tree cannot reach',
+        );
+        expect(message, 'and what a trigger has to be instead').toContain('a native <button>');
     });
 
     it('says nothing about a trigger in your own tree', async () => {
@@ -886,8 +868,8 @@ describe('the drawing', () => {
 
         expect(styles.backgroundColor).toBe('rgb(1, 2, 3)');
         // A tip is supporting text, and shipped as a hardcoded `0.875em` until the type
-        // scale arrived to replace it — here and twice in `ui-field`, all three agreeing
-        // and none of them read back by anything.
+        // scale arrived to replace it — three hardcoded sizes across the package, all
+        // agreeing and none of them read back by anything.
         expect(styles.fontSize).toBe('21px');
         expect(styles.borderTopColor).toBe('rgb(4, 5, 6)');
         expect(styles.borderRadius).toBe('11px');
@@ -907,7 +889,7 @@ describe('accessibility', () => {
     });
 
     it('has no violations on a field control', async () => {
-        await expectAccessible(await mountStory(OnAField, meta, 'OnAField'));
+        await expectAccessible(await mountStory(OnAControlYouWrote, meta, 'OnAControlYouWrote'));
     });
 
     it('has no violations at the edge of the viewport', async () => {
