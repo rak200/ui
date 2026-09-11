@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -41,6 +41,29 @@ async function mount(markup: string, offset = '120px'): Promise<HTMLElement> {
 
     return host;
 }
+
+/**
+ * Two shapes of custom element, because what strands a description is where focus lands
+ * rather than which component is in front of it. A test built out of `<ui-button>` would
+ * be asserting that pair; these assert the rule, and they keep meaning the same thing when
+ * a component moves.
+ */
+class FocusesInside extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<button type="button">Save</button>';
+    }
+}
+
+class DrawsInside extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<span>Save</span>';
+    }
+}
+
+customElements.define('test-focuses-inside', FocusesInside);
+customElements.define('test-draws-inside', DrawsInside);
 
 /** The one element a selector has to match, so a fixture typo fails where it happened. */
 function only(host: ParentNode, selector: string): HTMLElement {
@@ -86,6 +109,10 @@ afterEach(async () => {
     await parkPointer();
 
     document.body.replaceChildren();
+    // `vi.spyOn` hands back the spy already on a method rather than wrapping it again, so
+    // an unrestored one carries the previous test's calls into the next — measured, as two
+    // assertions of silence reading a warning neither of them provoked.
+    vi.restoreAllMocks();
 });
 
 describe('ui-tooltip', () => {
@@ -224,6 +251,76 @@ describe('ui-tooltip', () => {
         await userEvent.hover(trigger(host));
 
         expect(trigger(host).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('says out loud that a description will not arrive, rather than losing it quietly', async () => {
+        // The failure this component is most likely to produce, and the one nothing on the
+        // page reports: the tip shows, it lands where it should, and the reference points
+        // at an element the screen reader never reaches.
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount(`
+            <ui-tooltip>
+                <test-focuses-inside></test-focuses-inside>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        expect(warn).toHaveBeenCalledOnce();
+
+        // Every claim the message makes, for the reason `icon.test.ts` gives beside its own
+        // warning: naming the element without naming the way out leaves the reader where
+        // they started, and a warning nobody can act on is noise.
+        const message = String(warn.mock.calls[0]?.[0]);
+
+        expect(message, 'names the trigger').toContain('<test-focuses-inside>');
+        expect(message, 'says where the description got stranded').toContain('shadow root');
+        expect(message, 'the native way out').toContain('a native <button>');
+        expect(message, 'and the one for a form control').toContain('<ui-field>');
+    });
+
+    it('says nothing about a trigger in your own tree', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount(fixture);
+
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('hands the disconnect on to the base class, which a controller depends on', async () => {
+        // Nothing in this element uses a reactive controller, so the super call reads as
+        // free to drop — and dropping it breaks the contract every LitElement inherits, for
+        // the host and for whatever this component grows next. `addController` is public,
+        // so the contract is assertable without putting one in the component.
+        const host = await mount(fixture);
+        const element = only(host, 'ui-tooltip') as UiTooltip;
+        let told = false;
+
+        element.addController({
+            hostDisconnected: () => {
+                told = true;
+            },
+        });
+
+        element.remove();
+
+        expect(told, 'the base class was told').toBe(true);
+    });
+
+    it('says nothing about a shadow root that is only drawing', async () => {
+        // The condition is the focusable descendant and not the boundary: an element whose
+        // shadow content is decoration is named and described on the host itself, and is
+        // correct as it stands.
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount(`
+            <ui-tooltip>
+                <test-draws-inside tabindex="0"></test-draws-inside>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        expect(warn).not.toHaveBeenCalled();
     });
 });
 

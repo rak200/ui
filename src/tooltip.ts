@@ -9,6 +9,14 @@ let sequence = 0;
 const side = 'data-side';
 
 /**
+ * What makes a trigger's shadow root the thing the browser actually focuses.
+ *
+ * A tab stop the host wrote counts with the natives: what decides this is that focus lands
+ * inside the boundary, not how the element was made able to take it.
+ */
+const focusable = 'a[href], button, input, select, textarea, [tabindex]';
+
+/**
  * Supplementary text on hover and on keyboard focus.
  *
  * **Everything is slotted**, the way `<ui-field>` slots everything and for the same
@@ -260,7 +268,37 @@ export class UiTooltip extends LitElement {
         if (!described.includes(tip.id)) {
             trigger.setAttribute('aria-describedby', [...described, tip.id].join(' '));
         }
+
+        this.#complain(trigger);
     };
+
+    /**
+     * Says out loud that the description will not arrive.
+     *
+     * A trigger that focuses a control inside its own shadow root strands the reference:
+     * an IDREF resolves within one tree scope, and the tip is in the host's tree while the
+     * element a screen reader reads is not. Nothing about the page looks wrong — the tip
+     * shows and places itself correctly — which is the whole reason this is said rather
+     * than left to be found later. #156
+     *
+     * **The condition is the focusable descendant, not the shadow root.** A component
+     * whose shadow content is decoration is named and described on the host itself, and is
+     * correct as it stands.
+     */
+    #complain(trigger: HTMLElement): void {
+        const inside = trigger.shadowRoot?.querySelector(focusable) ?? null;
+
+        if (inside === null) {
+            return;
+        }
+
+        console.warn(
+            `<ui-tooltip> described <${trigger.localName}>, and the description will not ` +
+                `arrive: it focuses a control inside its own shadow root, which an id in ` +
+                `your tree cannot reach. Use a control in your own tree — a native <button>, ` +
+                `or a native form control inside a <ui-field>.`,
+        );
+    }
 
     /**
      * Shows on the pointer, except the pointer a touch screen reports.

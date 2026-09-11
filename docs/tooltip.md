@@ -62,6 +62,10 @@ host sits on a different node than the one a screen reader reads when focus land
 `<ui-button>`, `<ui-input>`, `<ui-textarea>`, `<ui-select>`, `<ui-checkbox>`, `<ui-switch>` and
 `<ui-radio-group>` each show the tip and place it correctly, and each loses the announcement.
 
+**The element says so in the console** when it describes a trigger that focuses inside its own
+shadow root, naming the trigger and the way out. Nothing on the page looks wrong in that case — the
+tip shows and lands where it should — so a warning is the only thing that reports it.
+
 **Where the text has to be announced, the trigger has to be a control in your own tree** — a native
 `<button>`, or a native form control inside a [`<ui-field>`](field.md), which is the composition
 below. Where it does not, the tip is decoration and should not be the only place the information
