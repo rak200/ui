@@ -17,3 +17,4 @@ descends from one written elsewhere, is joined to it by mother↔daughter links.
 | [0003](0003-themes.md)               | Themes               | library | Draft       |
 | [0004](0004-motion.md)               | Motion               | library | Draft       |
 | [0005](0005-form-association.md)     | Form association     | library | Accepted    |
+| [0006](0006-supplementary-text.md)   | Supplementary text   | library | Draft       |
