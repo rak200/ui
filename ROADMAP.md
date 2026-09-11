@@ -6,14 +6,17 @@ is **removed** by the pull request that delivers it, not annotated as done.
 ## A description reaches none of the controls this package renders (#156)
 
 `<ui-tooltip>` names its trigger with `aria-describedby`, and an IDREF crosses no shadow boundary —
-so on any element here that draws its own control the tip appears, places itself correctly, and is
-never announced. Seven elements are in that set now; the documentation said one, and that sentence
-was written when it was true.
+so on any element that focuses a control inside its own shadow root the tip appears, places itself
+correctly, and is never announced. That is most of this package. The documentation said it of one
+element, which was true when it was written.
 
-**The mechanism did not change, its reach did**, which is why this is the first thing to settle: a
-description that crosses has to cross as text rather than as a reference, and which of the two
-shapes does it — the control copying the text in, or `aria-description` — is a measurement nobody
-has taken.
+**The mechanism did not change, its reach did.** `<ui-tooltip>` says so in the console now, which
+settles the half that was dangerous — the failure was silent. What is left is whether a description
+should cross at all, and the answer is not a measurement: **there is no instrument here that can
+take one.** Playwright has removed its accessibility tree API and `ariaSnapshot()` carries the
+accessible name alone, so whether `aria-description` reaches a reader cannot be verified in one
+engine, let alone three. What remains is a design choice between building the crossing and declining
+it.
 
 ## `<ui-field>` has one job left, and #156 named it (#138)
 

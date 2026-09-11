@@ -55,12 +55,16 @@ on your trigger: `aria-describedby`, **added to** whatever was already there rat
 **A tooltip describes the element the browser actually focuses.** So the trigger should be a native
 focusable element — `<button>`, `<a href>`, an `<input>` — or something you made focusable yourself.
 
-**The description arrives on no element this package renders.** Every control here draws its own
-into a shadow root, and an IDREF does not cross that boundary in either direction: measured, an
-element inside a shadow root cannot resolve an id in the document, and an `aria-describedby` on the
-host sits on a different node than the one a screen reader reads when focus lands. So
-`<ui-button>`, `<ui-input>`, `<ui-textarea>`, `<ui-select>`, `<ui-checkbox>`, `<ui-switch>` and
-`<ui-radio-group>` each show the tip and place it correctly, and each loses the announcement.
+**The description does not arrive on an element that focuses inside its own shadow root**, which is
+most of this package: every control here draws its own. An IDREF does not cross that boundary in
+either direction — measured, an element inside a shadow root cannot resolve an id in the document,
+and an `aria-describedby` on the host sits on a different node than the one a screen reader reads
+when focus lands. Such a trigger shows the tip and places it correctly, and loses the announcement.
+
+**This is stated as a rule rather than as a list of tags on purpose.** The sentence it replaced
+named one element, and was true when it was written; a list of the elements that draw their own
+control is a list that goes stale the same way, and the reader who needs it is looking at their own
+trigger rather than counting ours.
 
 **The element says so in the console** when it describes a trigger that focuses inside its own
 shadow root, naming the trigger and the way out. Nothing on the page looks wrong in that case — the
