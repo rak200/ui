@@ -31,19 +31,24 @@ control's; and the error colour no longer needs retargeting a token over a subtr
 controls are in the group's shadow root and a rule can simply name them. The comment explaining
 why no selector could reach them went with the problem.
 
-**What is left is one question rather than one task**, and it is now a narrower one than it looked.
+**What is left is one question rather than one task**, and it is narrower than it looked.
 `<ui-field>` wires a control **you** wrote — which is less than it sounds, because `<ui-input>`
 passes `type` through untouched, so `type="date"`, `type="file"`, `type="range"` and the rest are
-already elements here. What the field alone still does is keep a control in your tree, and #156 is
-what makes that worth something: it is the only arrangement in which a tooltip on a form control is
-announced.
+already elements here. What is left is a control this package draws **no** element for: a widget
+from somewhere else, another library's element, something on a canvas.
 
-**So the order is the rule.** Whatever answers #156 is also what answers _what is `<ui-field>`
-for_, and deciding this one first is deciding it without the thing that makes it answerable.
-Decide before `1.0.0` either way, because after it the same removal costs a major and a deprecation
-window.
+**It is not the tooltip's escape hatch**, which is what this entry claimed and what a measurement
+retired: a `<ui-tooltip>` reaches a bare `<input>` with no field anywhere, because what puts both
+ends of the reference in one scope is the control being in your tree. The field is beside that, not
+the cause of it.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) carries the corrected rule for a consumer.
+**One thread does run into RFC 0006**, and it is not the one above. The field renders `help` of its
+own, so a proposal that discontinues visible help on the components is deciding the field's slot in
+the same breath. That is recorded there rather than left implicit here.
+
+Decide before `1.0.0`: after it the same removal costs a major and a deprecation window, and before
+it a minor either way — so the option does not expire, which is the argument for letting a consumer
+inform it rather than settling it blind.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

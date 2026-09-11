@@ -41,11 +41,6 @@ What is left for it is a control **you** wrote. Every element in this package ha
 `<label for>` reaches a labelable element and a group is not one, with both ends of that reference
 in the one tree scope it renders them into.
 
-**And one thing more, which was nobody's plan.** A control in your tree is the only one a
-[`<ui-tooltip>`](tooltip.md) can still describe — an IDREF crosses no shadow boundary, so a tooltip
-on any element this package renders shows its tip and loses the announcement. A field around a
-native control is the only arrangement in which that description arrives.
-
 The class is exported as `UiField` for a host that needs the type; importing the package registers
 the element, so nothing has to be called.
 

@@ -260,16 +260,15 @@ that asked for it.
 
 **`<ui-field>` is what all of this leaves behind.** It exists to point scattered ends at each
 other, and no control in this package has scattered ends any more. What it is still for is a
-control **you** wrote — a smaller job than the one it was built for, and one that turned out to
-have a second half nobody designed for it.
+control **you** wrote, which is a smaller job than the one it was built for.
 
-**A control in the host's tree is the only one a second component can still reach.** The rule this
-section states for a component's own relationship holds just as firmly against a component
-_outside_ it: `<ui-tooltip>` writes `aria-describedby` from the host's tree, and an IDREF crosses a
-boundary in neither direction — so a tooltip on any element this package renders describes a node
-the reader never lands on. The tip appears and places itself; the announcement is what is lost. The
-field is currently the only arrangement that keeps both ends together, which is a thing to weigh
-before removing it. #156
+**A control in the host's tree is the only one a second component can still reach**, and that is
+the field's neighbour rather than the field's job. The rule this section states for a component's
+own relationship holds just as firmly against a component _outside_ it: `<ui-tooltip>` writes
+`aria-describedby` from the host's tree, and an IDREF crosses a boundary in neither direction — so
+a tooltip on any element this package renders describes a node the reader never lands on. **What
+makes a description arrive is the control being yours**, measured, with or without a field around
+it. RFC 0006 is where that goes. #156
 
 ## Glyphs are adopted, the delivery is owned
 
