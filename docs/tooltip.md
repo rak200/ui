@@ -153,9 +153,11 @@ the tooltip adds its id to the list, and [`<ui-field>`](field.md) carries forwar
 generate when it rebuilds it. Prefer the field's `help` slot for anything a person needs before they
 start typing — a tooltip is for what they might want, not what they must have.
 
-**This is the only arrangement in which a tooltip on a form control is announced**, and the reason is
-the one above: the control is in your tree, so both ends of the reference are. A tooltip around
-[`<ui-input>`](input.md) or any other control this package draws is silent to a screen reader.
+**What makes the description arrive is the control being yours**, not the field around it — measured
+on a bare `<input>` with no field anywhere, where the reference resolves exactly as it does here. The
+field is what wires the label, the help and the message; the tooltip reaches the control either way.
+A tooltip around [`<ui-input>`](input.md) or any other control this package draws is the case that is
+silent, and the reason is the one above.
 
 ## Styling
 
