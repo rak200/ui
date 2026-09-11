@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/rak200/ui/compare/0.5.0...0.5.1) (2026-09-11)
+
+
+### Features
+
+* **tooltip:** say out loud that a description will not arrive ([#158](https://github.com/rak200/ui/issues/158)) ([6cb2834](https://github.com/rak200/ui/commit/6cb283460dd1f0603d4ccc67452fb655ca8dd8eb))
+
 ## [0.5.0](https://github.com/rak200/ui/compare/0.4.0...0.5.0) (2026-09-10)
 
 
