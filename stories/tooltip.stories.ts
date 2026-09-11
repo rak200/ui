@@ -53,11 +53,11 @@ export default meta;
 /**
  * The ordinary case: hover it, or tab to it.
  *
- * The trigger here is a `<ui-button>`, which is the one trigger whose *description* does
- * not arrive — its `<button>` lives in a shadow root, and an IDREF does not cross that
- * boundary in either direction. It is shown anyway because it is what a reader will try
- * first, and `docs/tooltip.md` says what to write instead when the text has to be
- * announced.
+ * The trigger here is a `<ui-button>`, and its *description* does not arrive — the
+ * `<button>` it focuses lives in a shadow root, and an IDREF does not cross that boundary
+ * in either direction. Every control this package draws is in that position. It is shown
+ * anyway because it is what a reader will try first, and the console says so on sight;
+ * `docs/tooltip.md` says what to write instead when the text has to be announced.
  */
 export const Tooltip: StoryObj<TooltipArgs> = {};
 
