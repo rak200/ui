@@ -80,8 +80,8 @@ appearance would be one component with a `variant`.
 
 ## The element is the control
 
-**You write the tag and its attributes. There is no `<input>` to supply and no `<ui-field>` to wrap
-it in.** The `<input type="checkbox">` and the `<label>` around it are rendered together into this
+**You write the tag and its attributes. There is no `<input>` to supply and nothing to wrap it
+in.** The `<input type="checkbox">` and the `<label>` around it are rendered together into this
 element's shadow root, which is what makes every behaviour below the platform's rather than this
 package's: the toggle, <kbd>Space</kbd>, the click target over the label text, and the rule that a
 link inside a label follows the link instead of toggling.

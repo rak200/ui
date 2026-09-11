@@ -140,8 +140,7 @@ const toggle = css`
     }
 
     /* Read off the control's own aria-invalid rather than off a host attribute, which is
-       the same source a screen reader uses and the same rule this file carried when
-       ui-field was the one writing it. One property now feeds all three — the boundary,
+       the same source a screen reader uses. One property now feeds all three — the boundary,
        the message and setValidity — so they cannot disagree. Only the boundary moves; a
        red fill on a switch would read as *on*.
 

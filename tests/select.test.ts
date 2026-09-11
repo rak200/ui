@@ -651,7 +651,7 @@ describe('the box, against the input it has to match', () => {
         }
     });
 
-    it('agrees on the frame around it, which ui-field used to own', async () => {
+    it('agrees on the frame around it, which both write out themselves', async () => {
         const [drop, text] = await pair();
         const stack = getComputedStyle(part(drop, 'stack'));
         const beside = getComputedStyle(part(text, 'stack'));

@@ -5,8 +5,8 @@ import { reference } from './reference.js';
 /**
  * The panel's id, and it needs no counter behind it.
  *
- * `src/tooltip.ts` and `src/field.ts` both number theirs, because the elements they point
- * at are the host's and share the document's tree scope. Both ends of this reference are
+ * `src/tooltip.ts` numbers its own, because the element it points at is the host's and
+ * shares the document's tree scope. Both ends of this reference are
  * rendered here, so the id is scoped to one shadow root and two menus on a page cannot
  * collide — which is the same property that lets `aria-controls` resolve at all.
  */

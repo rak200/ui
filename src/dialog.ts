@@ -451,10 +451,10 @@ export class UiDialog extends LitElement {
      * **A copy of the text rather than a reference to the element, and that is forced.**
      * APG names a modal with `aria-labelledby` pointing at its heading, and an IDREF does
      * not cross a shadow boundary — so a `<dialog>` in this shadow root cannot point at a
-     * heading in the host's tree. `ui-field` answers the same constraint by leaving every
-     * associated element in the light DOM; a dialog cannot, because the element that has
-     * to reach the top layer is the one this component renders. What does cross is a
-     * string, so the name is copied and the observer above keeps the copy honest.
+     * heading in the host's tree. Every other component answers that by rendering both ends
+     * itself; a dialog cannot, because the element that has to reach the top layer is the
+     * one this component renders. What does cross is a string, so the name is copied and
+     * the observer above keeps the copy honest.
      */
     #label(): void {
         const title = this.querySelector(':scope > [slot="title"]');

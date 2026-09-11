@@ -214,12 +214,12 @@ function panel(scheme: 'light' | 'dark'): TemplateResult {
                 <ui-button>Save</ui-button>
                 <ui-button variant="secondary">Cancel</ui-button>
             </div>
-            <ui-field>
-                <label slot="label">Amount</label>
-                <input type="number" />
-                <span slot="help">In BRL, two decimals.</span>
-                <span slot="error">Amount is required.</span>
-            </ui-field>
+            <ui-input
+                label="Amount"
+                type="number"
+                help="In BRL, two decimals."
+                error="Amount is required."
+            ></ui-input>
             <div class="row">
                 ${derivedTokens
                     .filter((token) => token.startsWith('--ui-color-'))

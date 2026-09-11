@@ -107,9 +107,6 @@ declarations name, and a `<fieldset disabled>` above the element reaches it.
 `checked` IDL attribute is not: the declared `<ui-radio checked>` is what a reset returns to, so an
 empty `value` means _whatever the declarations say_ rather than _nothing chosen_.
 
-[`<ui-field>`](field.md) is not needed here and has nothing to add: the group carries its own name,
-help, message and `aria-invalid`.
-
 ## Orientation
 
 ```html

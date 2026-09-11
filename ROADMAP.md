@@ -18,38 +18,6 @@ accessible name alone, so whether `aria-description` reaches a reader cannot be 
 engine, let alone three. What remains is a design choice between building the crossing and declining
 it.
 
-## `<ui-field>` has one job left, and #156 named it (#138)
-
-RFC 0005 decided that a form control owns **both ends of its own relationship, inside its shadow
-root**, and every control in the package has now moved: `<ui-checkbox>`, `<ui-switch>`,
-`<ui-input>`, `<ui-textarea>`, `<ui-select>` and `<ui-radio-group>` each render their control, their
-label, their help and their message together.
-
-**The two things that could have blocked the last move did not.** The vertical rhythm between
-label, control and help was the field's stylesheet and is now the group's own, like every other
-control's; and the error colour no longer needs retargeting a token over a subtree, because the
-controls are in the group's shadow root and a rule can simply name them. The comment explaining
-why no selector could reach them went with the problem.
-
-**What is left is one question rather than one task**, and it is narrower than it looked.
-`<ui-field>` wires a control **you** wrote — which is less than it sounds, because `<ui-input>`
-passes `type` through untouched, so `type="date"`, `type="file"`, `type="range"` and the rest are
-already elements here. What is left is a control this package draws **no** element for: a widget
-from somewhere else, another library's element, something on a canvas.
-
-**It is not the tooltip's escape hatch**, which is what this entry claimed and what a measurement
-retired: a `<ui-tooltip>` reaches a bare `<input>` with no field anywhere, because what puts both
-ends of the reference in one scope is the control being in your tree. The field is beside that, not
-the cause of it.
-
-**One thread does run into RFC 0006**, and it is not the one above. The field renders `help` of its
-own, so a proposal that discontinues visible help on the components is deciding the field's slot in
-the same breath. That is recorded there rather than left implicit here.
-
-Decide before `1.0.0`: after it the same removal costs a major and a deprecation window, and before
-it a minor either way — so the option does not expire, which is the argument for letting a consumer
-inform it rather than settling it blind.
-
 ## The listbox deferral, which has an expiry date rather than a reason
 
 RFC 0016 put a custom listbox off because a native `<select>` is accessible for free on every

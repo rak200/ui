@@ -278,9 +278,9 @@ export class UiSelect extends LitElement {
             border-color: ${reference('--ui-color-danger')};
         }
 
-        /* The rhythm ui-field used to own, written out here rather than shared with
-           src/input.ts for the reason the docblock above gives about the box — and
-           compared by tests/select.test.ts on the same terms. */
+        /* The vertical rhythm, written out here rather than shared with src/input.ts for
+           the reason the docblock above gives about the box — and compared by
+           tests/select.test.ts on the same terms. */
         .stack {
             display: flex;
             flex-direction: column;

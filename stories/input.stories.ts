@@ -4,9 +4,9 @@
  * What each attribute does is in `docs/input.md`, which CI checks and a consumer opens
  * first. This file shows the components; it does not describe them.
  *
- * **No story writes a control, and none reaches for `<ui-field>`.** Both elements render
- * their own control, their own label, their own help and their own message into one shadow
- * root, which is what RFC 0005 decided.
+ * **No story writes a control.** Both elements render their own control, their own label,
+ * their own help and their own message into one shadow root, which is what RFC 0005
+ * decided.
  */
 
 // Two lines for one module, and the split is forced: `verbatimModuleSyntax` erases a

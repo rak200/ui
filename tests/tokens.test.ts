@@ -24,7 +24,6 @@ import { UiButton } from '../src/button.js';
 import { UiCard } from '../src/card.js';
 import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { UiDialog } from '../src/dialog.js';
-import { UiField } from '../src/field.js';
 import { UiIcon } from '../src/icon.js';
 import { UiInput, UiTextarea } from '../src/input.js';
 import { UiMenu } from '../src/menu.js';
@@ -445,7 +444,6 @@ describe('the references components write', () => {
         UiCard.styles,
         UiCheckbox.styles,
         UiDialog.styles,
-        UiField.styles,
         UiIcon.styles,
         UiInput.styles,
         UiMenu.styles,
@@ -640,7 +638,7 @@ describe('the contrast floors', () => {
     // The two outcomes that arrived with `ui-toast`, held to the text floor rather than to
     // the 3:1 a coloured edge would owe. The floor a value has to clear is the strictest
     // use it is put to, and nothing stops a host writing one as text — `--ui-color-danger`
-    // is that use, in `ui-field`, today.
+    // is that use, in every control's message, today.
     it.each(['--ui-color-success', '--ui-color-warning'] as const)(
         'keeps %s at 4.5:1 against the surface',
         (token) => {

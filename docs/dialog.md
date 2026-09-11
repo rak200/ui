@@ -142,10 +142,9 @@ a reference to the element.
 
 That is forced rather than chosen. The APG pattern names a modal with `aria-labelledby` pointing at
 its heading, and an IDREF does not cross a shadow boundary — so the `<dialog>` in this element's
-shadow root cannot point at a heading in your tree. [`<ui-field>`](field.md) answers the same
-constraint by leaving every associated element in the light DOM; a dialog cannot, because the
-element that has to reach the top layer is the one this component renders. What does cross is a
-string.
+shadow root cannot point at a heading in your tree. Every other component answers that constraint
+by rendering both ends itself; a dialog cannot, because the element that has to reach the top layer
+is the one this component renders. What does cross is a string.
 
 The copy is kept current: rewriting the title's text, with no element changing, updates the name.
 

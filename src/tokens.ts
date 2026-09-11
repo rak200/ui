@@ -120,8 +120,8 @@ export const tokens = [
     '--ui-elevation-100',
     // The type scale, arriving with `ui-table` — the category `ROADMAP.md` said would, and
     // the last one the v0 surface expects. It arrives to fix a defect rather than to
-    // anticipate one: `src/field.ts` wrote `font-size: 0.875em` twice and `src/tooltip.ts`
-    // a third time, all three agreeing and nothing comparing them — the shape
+    // anticipate one: `font-size: 0.875em` was written out in three places across the form
+    // controls and `src/tooltip.ts`, all three agreeing and nothing comparing them — the shape
     // `src/reference.ts` records finding in thirteen hand-copied fallbacks, and the thing
     // `ARCHITECTURE.md` forbids in writing, since a hardcoded value is a decision a host
     // cannot override.
@@ -230,7 +230,7 @@ export const defaults: Readonly<Record<Token, string>> = {
     // hue. Both clear **4.5:1** against the surface rather than the 3:1 a coloured edge
     // would owe, because the floor a value has to clear is the strictest use it is put to
     // and nothing stops a host using one as text — `--ui-color-danger` was chosen the same
-    // way and is text in `ui-field` today.
+    // way and is text in every control's message today.
     //
     // The warning is the same amber as `--ui-color-focus`, and the two arrived at it
     // independently: both are *the darkest amber that clears its floor in both schemes*,

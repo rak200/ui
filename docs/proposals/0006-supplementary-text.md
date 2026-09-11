@@ -105,7 +105,8 @@ tapped, so on touch the tip of a field is reachable — the objection that a too
 affordance does not hold for the elements that have `help` today.
 
 **One case is not covered by that, and it is written down in this repository already.**
-`src/field.ts` records why the error supplements the help rather than replacing it:
+`src/input.ts` records why the error supplements the help rather than replacing it — a rule
+`<ui-field>` wrote first and every control inherited when #138 removed it:
 
 > Help text is usually the format requirement, which is exactly the error suggestion the user needs
 > in order to recover (WCAG 3.3.3) — dropping it at the moment it becomes useful is the opposite of
@@ -163,8 +164,9 @@ platform catches up. An internal protocol between two components is a deletion.
 ### The rule, which the library already applies elsewhere
 
 **A reference wherever it resolves, and text only where it cannot.** This is the same order
-`src/field.ts` takes between `<label for>` and `aria-labelledby` — the platform's own association
-first, because it does more, and the fallback only where the platform's refuses to reach.
+every form control here takes between `<label for>` and `aria-labelledby` — the platform's own
+association first, because it does more, and the fallback only where the platform's refuses to
+reach.
 
 Applied to `<ui-tooltip>`, that is two paths and one rule:
 

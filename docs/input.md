@@ -79,8 +79,8 @@ Exported as `UiTextarea`.
 
 ## The element is the control
 
-**You write the tag and its attributes. There is no `<input>` to supply and no `<ui-field>` to wrap
-it in.** The control, its `<label for>`, its help text and its message are rendered together into
+**You write the tag and its attributes. There is no `<input>` to supply and nothing to wrap it
+in.** The control, its `<label for>`, its help text and its message are rendered together into
 this element's shadow root, so every IDREF resolves in one tree scope.
 
 > **This changed.** These elements used to take a control you wrote, in the light DOM, because an

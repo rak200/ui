@@ -141,7 +141,7 @@ export class UiRadioGroup extends LitElement {
             font-family: ${reference('--ui-font')};
         }
 
-        /* The rhythm ui-field used to own, now owned by the control it was wrapping. */
+        /* The vertical rhythm between the label, the set and whatever is under it. */
         .stack {
             display: flex;
             flex-direction: column;

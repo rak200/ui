@@ -45,9 +45,9 @@ registers the element, so nothing has to be called.
 ## Items are yours; the trigger is not
 
 **This is the one component in the kit that renders its own trigger**, and that is deliberate
-rather than an inconsistency. Everywhere else — [`<ui-field>`](field.md),
-[`<ui-input>`](input.md), [`<ui-tooltip>`](tooltip.md) — the elements in an ARIA relationship
-stay in your tree, because an IDREF does not cross a shadow boundary. Here **both** ends are
+rather than an inconsistency. [`<ui-tooltip>`](tooltip.md) is the other side of it: there the
+elements in an ARIA relationship stay in your tree, because an IDREF does not cross a shadow
+boundary. Here **both** ends are
 rendered inside one shadow root, so the reference resolves and there is nothing for a
 consumer to get wrong: `aria-haspopup`, `aria-expanded` and `aria-controls` are written on an
 element you never see.
