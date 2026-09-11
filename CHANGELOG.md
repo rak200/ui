@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.0](https://github.com/rak200/ui/compare/0.5.1...0.6.0) (2026-09-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove <ui-field>, which the package never reached for ([#162](https://github.com/rak200/ui/issues/162))
+
+### Features
+
+* remove &lt;ui-field&gt;, which the package never reached for ([#162](https://github.com/rak200/ui/issues/162)) ([968c028](https://github.com/rak200/ui/commit/968c028778e23911dc6ec8b84b5ca895b6211466))
+
 ## [0.5.1](https://github.com/rak200/ui/compare/0.5.0...0.5.1) (2026-09-11)
 
 
