@@ -117,6 +117,81 @@ sent them looking for it. That is the strongest argument against making a tip th
 supplementary text, and `docs/tooltip.md` states the general form of it in as many words:
 **never make the tip the only place information exists.**
 
+### Question 1, and the criterion it was aimed at does not say what I said
+
+The objection this proposal opened with was that discontinuing visible `help` moves the format
+requirement behind an interaction, against **WCAG 3.3.3 Error Suggestion**. Read normatively, that
+is the wrong criterion and the objection is overstated.
+
+**3.3.3 is silent on presentation.** _"If an input error is automatically detected and suggestions
+for correction are known, then the suggestions are provided to the user."_ Its Understanding
+document addresses the existence and the content of a suggestion, and says nothing about duration,
+persistence, or where it sits relative to the error.
+
+**The criterion that governs an instruction is 3.3.2 Labels or Instructions**, and its Understanding
+document permits this design in as many words:
+
+> Content authors may choose to make such instructions available to users only when the individual
+> control has focus especially when instructions are long and verbose.
+
+So focus-revealed instruction is a named, sanctioned pattern rather than a tolerated one.
+
+**What 3.3.2 does impose is the constraint that matters here**, and it is not about visibility over
+time but about audience:
+
+> It is possible for controls and inputs to have an appropriate accessible name or description
+> (e.g. using `aria-label="..."`) and therefore pass Success Criterion 4.1.2, but to still fail this
+> success criterion (if the labels or instructions aren't presented to all users, not just those
+> using assistive technologies).
+
+An instruction carried **only** as an accessible description fails. It has to be presented visually
+too — which the tip does, and which is the half of this design that has to keep working.
+
+### Measured: the affordance is not a flash
+
+|                                      |         |
+| ------------------------------------ | ------- |
+| tip open before focus                | no      |
+| tip open on focus                    | **yes** |
+| tip open while typing into the field | **yes** |
+| tip open after blur                  | no      |
+
+Focus opens it, and it **stays open for as long as the control is in use** — the instruction is in
+view for the whole time the reader is acting on it, not for the moment they arrive. That is the
+fact the objection assumed away.
+
+### Measured: and it lands on the neighbour
+
+Two `<ui-input>`s stacked, the lower one wrapped in a `<ui-tooltip>`, the lower one focused:
+
+|                               |                                   |
+| ----------------------------- | --------------------------------- |
+| placed                        | `block-start` — above the trigger |
+| covers its own label          | no                                |
+| **covers the field above it** | **yes**                           |
+
+The tip is a popover in the top layer, so while it persists it sits over the layout — and in a
+stacked form what is above a field is the previous field, its message included. The cost of making
+the tooltip the sole carrier is therefore **geometric rather than normative**: a form that needs
+two instructions read together cannot have them, and a form that needs one while the field above it
+is in error obscures the error to show the instruction.
+
+**This is the finding that decides the middle position**, which the Decision below no longer records
+as unstudied. An instruction a form needs _in view alongside others_ wants to be in flow; an
+instruction a reader needs _while acting on one control_ is better as a tip, and measurably so.
+
+### What has to be restated, and why it is not a quiet drop
+
+`docs/tooltip.md` says **never make the tip the only place information exists**. This proposal makes
+it exactly that, so the rule is contradicted unless it is rewritten — and the rewrite is not a
+weakening.
+
+That rule was written about a **decorative** tip: text with no relationship to the control, present
+only while a pointer happens to rest somewhere. Under this proposal the text stops being decoration.
+It becomes the control's **description** — in the accessibility tree at all times, announced on
+focus, and visually present whenever the control is in use. The rule has to name which of the two it
+governs, because the two are not the same object any more.
+
 ### What the platform offers, and what each costs
 
 - **`aria-describedby`** — an IDREF, so one tree scope, so the failure this proposal starts from.
@@ -192,15 +267,20 @@ deletion when Reference Target arrives, not a deprecation. A component that acce
 text advertises it; a component that does not is left alone and the warning from #158 still fires.
 Whether that advertisement is a property, a symbol or `ElementInternals` is an open question below.
 
-### `help` is discontinued
+### `help` stops being the default, and stays a capability
 
 This is the objective rather than a consequence, and it is the part of this proposal that is not
-forced by #156.
+forced by #156. It is also the part the study narrowed.
 
 A permanent block of text under every control is a layout decision the library makes on the host's
-behalf, and it is the wrong default: it is always visible whether or not it is wanted, it pushes
+behalf, and it is the wrong **default**: it is always visible whether or not it is wanted, it pushes
 every field apart, and it exists in four elements and not in the other three, so the library is
 already inconsistent about it. Supplementary text becomes the tooltip's, uniformly, for all eight.
+
+**Discontinuing it outright is what the measurement retired.** A persistent tip covers the field
+above it, so a form that needs two instructions read together, or one read beside a neighbour's
+error, cannot have them from a popover. `help` stays available for that; it stops being what a
+control renders because it has the attribute.
 
 **`error` stays visible and is not touched.** WCAG 3.3.1 asks for the error to be identified in
 text, and an error behind a hover is not identified.
@@ -220,21 +300,39 @@ text, and an error behind a hover is not identified.
 
 ## Decision
 
-**Not reached.** Three questions have to be answered before it can be.
+**Not reached**, and one of the three questions is now answered.
 
-1. **Does discontinuing visible `help` hold against WCAG 3.3.3?** The format requirement is what a
-   reader needs while recovering from an error, and this proposal moves it behind an interaction.
-   `docs/tooltip.md`'s own rule — _never make the tip the only place information exists_ — is
-   either restated with its reasoning intact or it is contradicted; it must not be quietly dropped.
-   A middle position exists and is not yet studied: `help` discontinued as a **default** while
-   remaining available for the instruction a form genuinely needs in view.
+**Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
+objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
+document explicitly permits an instruction available only on focus. The tip is not a flash either:
+measured, it opens on focus and stays open for as long as the control is in use.
 
-2. **What shape is the handoff?** A public property, a documented protocol, or `ElementInternals`.
+**What blocks it is geometry rather than WCAG.** The tip is a popover in the top layer and places
+`block-start`, so a persistent one covers the field above it — measured, on two stacked controls,
+where what it covered was the previous field's own message. That retires the **all-or-nothing**
+form of this proposal and promotes the middle position from unstudied to recommended:
+
+- `help` **discontinued as the default**, because a permanent block of text under every control is a
+  layout decision the library should not make on the host's behalf;
+- `help` **kept as a capability**, because a form that needs two instructions read together, or one
+  read beside a neighbour's error, cannot have them from a popover.
+
+That is a smaller change than the one this proposal opened with, and it is the one the measurements
+support.
+
+**Two questions remain, and the second measurement added a third.**
+
+1. **What shape is the handoff?** A public property, a documented protocol, or `ElementInternals`.
    The constraint is that it must be deletable rather than deprecable.
 
-3. **Does the redesigned `<ui-tooltip>` still meet 1.4.13?** Dismissible, hoverable and persistent
-   are measured today against the current design; a component that becomes the sole carrier of
+2. **Does the redesigned `<ui-tooltip>` still meet 1.4.13?** Dismissible, hoverable and persistent
+   are measured today against the current design; a component that becomes a carrier of
    supplementary text is held to that bar harder, not softer.
+
+3. **Does a tip that carries an instruction place differently from one that carries decoration?**
+   Covering the neighbour is tolerable for text a reader summoned and is not for text that arrives
+   with focus. Whether the answer is a placement rule, a gutter, or leaving it to the host is not
+   studied.
 
 ## Rollout
 
