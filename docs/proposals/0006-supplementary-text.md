@@ -1,6 +1,6 @@
 # RFC 0006 — Supplementary text, and where it is allowed to live
 
-- **Status**: Draft
+- **Status**: Exploring
 - **Scope**: library
 - **Created**: 2026-09-11
 
@@ -234,6 +234,122 @@ starts working with no change at this library's call sites at all.
 retire**. A public `description` attribute on eight elements is a deprecation cycle when the
 platform catches up. An internal protocol between two components is a deletion.
 
+### Measured: a reference is live, and a copy is not
+
+All three candidates hand over **text**, and what decides between them turns out to sit underneath
+all three rather than between them. The tip's sentence, changed three ways with both elements
+settled:
+
+| The sentence is…               | `aria-describedby` | the id resolves to | `slotchange`  |
+| ------------------------------ | ------------------ | ------------------ | ------------- |
+| edited through `textContent`   | unchanged          | **the new text**   | **not fired** |
+| grown by a node appended to it | unchanged          | **the new text**   | **not fired** |
+| replaced, element and all      | unchanged          | the new text       | fired         |
+
+A reference costs nothing to keep fresh because there is nothing to keep: the id points at the
+sentence, and the sentence is the one the host edited. A copy is fresh only until the original is
+touched — and the signal this element already listens to reports **neither** in-place edit. So a
+handoff carrying text owes a `MutationObserver` over the tip, `characterData` and `childList`
+through the subtree, and owes it whatever shape it takes.
+
+**That reframes the objection to the bridge, and the correction belongs here rather than quietly.**
+The Motivation rejected the bridge for holding a copy together with an observer; this measurement
+says every design that leaves the reference behind does exactly that, this proposal's included.
+What separates them is **where the observer lives**. The bridge put one in every control, watching a
+node in a tree that control had to resolve an id in first. Here there is one per tooltip, watching
+its own slotted child, and it is gone when the tooltip is.
+
+### Measured: `ElementInternals` is refused by six of the eight
+
+It is on the candidate list, and it answers a different question from the other two — internals are
+how an element says something about itself, not how something reaches it from outside. That is a
+reason to be suspicious of it rather than a reason to strike it. The measurement is the reason.
+`attachInternals()`, called from outside the element:
+
+| Element                                                                                          | From outside                     |
+| ------------------------------------------------------------------------------------------------ | -------------------------------- |
+| `<ui-button>`, `<ui-menu>`                                                                       | **attaches**                     |
+| `<ui-input>`, `<ui-textarea>`, `<ui-select>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-radio-group>` | **refused**, `NotSupportedError` |
+| a custom element not yet upgraded                                                                | refused, `NotSupportedError`     |
+| a native `<div>`                                                                                 | refused, `NotSupportedError`     |
+
+The first row is worth naming on its own: an outsider really can claim the internals of a custom
+element that never claimed its own, and write `ariaDescription` on it without that element knowing.
+What rules the mechanism out here is the second row. Every form-associated control already holds its
+internals and `attachInternals()` throws on the second call, so the mechanism is available on exactly
+the two elements that do not need it and refused by the six that do. A uniform answer for eight
+elements cannot be built on a call six of them refuse.
+
+### Measured: reaching into the trigger's root works until the trigger disagrees
+
+`#complain()` already queries `trigger.shadowRoot`, so the cheapest-looking shape is the one with no
+handoff at all: the tooltip appends the sentence into the trigger's own root and points the inner
+control at it. Both ends in one scope, no cooperation required, nothing to delete later. Measured on
+`<ui-input>`:
+
+|                                             |                                |
+| ------------------------------------------- | ------------------------------ |
+| the appended node resolves inside the root  | yes                            |
+| `aria-describedby` right after the write    | the carried id                 |
+| after a re-render that changes nothing else | the carried id — **survives**  |
+| after `error` arrives                       | **`error`**                    |
+| after `error` clears                        | **`null`**                     |
+| the carried node, throughout                | still there, describing nobody |
+
+It survives the re-render for a reason that is not reassuring: Lit writes an attribute only when the
+bound value changed, and the component's own description list was empty both times. The moment that
+list changes, the component writes its own answer over the top — with no error, and with the carried
+node still sitting in the root.
+
+**So it fails at the worst available moment**, which `src/input.ts` already named from the other
+direction: help text is usually the format requirement, which is exactly what the reader needs once
+the error arrives. This shape carries the instruction right up until the error appears, and then
+takes it away.
+
+### What decides between the two that are left
+
+A public `description` property and a protocol. Two measurements separate them, and the third thing
+is not a measurement at all.
+
+**A property write is silent when nobody takes it.** Written before the element's definition is
+registered:
+
+|                                      | a plain `HTMLElement`  | a `LitElement`   |
+| ------------------------------------ | ---------------------- | ---------------- |
+| the accessor sees the early write    | **no**                 | yes              |
+| an own property shadows the accessor | **yes, permanently**   | no               |
+| reading the property back            | **the shadowed value** | the stored value |
+
+Lit recovers it, so nothing in this package would break. A control someone else wrote does not, and
+its failure is the one this proposal exists to remove: the write appears to land, reads back
+correctly, and reaches nothing. Publishing a property publishes that failure mode to everyone who
+implements it without Lit.
+
+**A dispatch reports whether anyone took it, in the same call.**
+
+|                                                            |             |
+| ---------------------------------------------------------- | ----------- |
+| `dispatchEvent` with nobody listening                      | **`true`**  |
+| `dispatchEvent` where a listener called `preventDefault()` | **`false`** |
+
+That is the whole of the advertisement this design asked for, and it arrives with no registry, no
+capability list and no roster — which matters, because this proposal already recorded that **a roster
+ages exactly like the sentence it replaced**. `#complain()` narrows to one condition: the dispatch
+came back uncancelled.
+
+**And the third thing is not a measurement.** A public `description` property is option three from
+the Motivation, re-created as a side effect. That option was rejected for making the host write the
+same sentence twice, and a property that exists publicly is one a host will write to directly — the
+duplication arriving through the back door. A protocol that cannot be reached from a template cannot
+be used that way.
+
+**What the protocol costs, stated here rather than discovered later.** A trigger someone else wrote
+cannot opt in without reading this package's source, and #158's warning fires at it forever. That is
+deliberate, and it is the same answer `src/reference.ts` gives about a helper kept internal on
+purpose; if it ever needs to change, naming the event publicly is additive and costs no deprecation
+cycle. A host can also listen for the event and cancel it, which would break the handoff silently —
+nothing prevents that, and it is the exposure every custom event has.
+
 ## Proposed design
 
 ### The rule, which the library already applies elsewhere
@@ -265,7 +381,16 @@ and points its control at it. Both ends in one scope, by the same mechanism `hel
 **The handoff is a protocol rather than public API**, for the reason the study ends on: it is a
 deletion when Reference Target arrives, not a deprecation. A component that accepts supplementary
 text advertises it; a component that does not is left alone and the warning from #158 still fires.
-Whether that advertisement is a property, a symbol or `ElementInternals` is an open question below.
+**The advertisement is the dispatch's own return value.** The handoff is a **cancelable event**
+carrying the sentence, dispatched at the trigger; a control that accepts it renders the text into
+its own shadow root, points its control at it, and calls `preventDefault()`. The study measures why
+it is that and not the alternatives: it is the only candidate that reports its own failure, the
+only one that is a string in two files rather than a symbol in a published type, and the only one
+available on all eight elements.
+
+**The tooltip owns a `MutationObserver` over the tip**, because the sentence it hands over is a
+copy and `slotchange` reports an in-place edit to neither the text nor the children. One per
+tooltip, watching its own slotted child, gone when the element is.
 
 ### `help` stops being the default, and stays a capability
 
@@ -294,13 +419,19 @@ text, and an error behind a hover is not identified.
   refused ARIA that only one engine can confirm.
 - **Status quo**, rejected as incomplete rather than wrong: it leaves `<ui-button>`,
   `<ui-checkbox>` and `<ui-switch>` with nowhere to put supplementary text at all.
+- **Reaching into the trigger's shadow root**, rejected on measurement: it needs no cooperation and
+  no API at all, and it is silently overwritten the moment the component writes its own
+  `aria-describedby` — which is when an error arrives, the moment the instruction is most needed.
+- **A public `description` property**, rejected twice over: it is the Motivation's third option
+  arriving through the back door, and it publishes a failure mode to any implementer not using
+  Lit.
 - **Waiting for Reference Target**, rejected on timing alone: behind a flag in one engine is not
   something to ship a library's accessibility story on. It is, however, the reason the handoff is
   designed to be deleted rather than deprecated.
 
 ## Decision
 
-**Not reached**, and one of the three questions is now answered.
+**Not reached**, and two of the four questions are now answered.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
 objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
@@ -320,16 +451,37 @@ form of this proposal and promotes the middle position from unstudied to recomme
 That is a smaller change than the one this proposal opened with, and it is the one the measurements
 support.
 
-**Two questions remain, and the second measurement added a third.**
+**Question 2 — what shape is the handoff?** A **cancelable event** carrying the sentence, dispatched
+at the trigger and accepted with `preventDefault()`. Three candidates went in, and the measurements
+took two off the table before the third had to be argued with:
 
-1. **What shape is the handoff?** A public property, a documented protocol, or `ElementInternals`.
-   The constraint is that it must be deletable rather than deprecable.
+- **`ElementInternals` is refused by six of the eight.** Every form-associated control here already
+  holds its own internals and a second `attachInternals()` throws, so the mechanism is available on
+  `<ui-button>` and `<ui-menu>` and on nothing else that needs it.
+- **Reaching into the trigger's root is overwritten by the trigger**, silently, the moment the
+  component writes its own `aria-describedby` — which is when an error arrives.
+- **A public property fails quietly and duplicates loudly.** Written before an element upgrades, it
+  shadows the accessor permanently on anything not built on Lit, reading back a value it never
+  delivered; and a `description` a host can write directly is the Motivation's third option, which
+  this proposal rejected for making the host write the sentence twice.
 
-2. **Does the redesigned `<ui-tooltip>` still meet 1.4.13?** Dismissible, hoverable and persistent
+The event answers both halves in one call: `dispatchEvent` returns `false` exactly when someone took
+it, so the advertisement needs no roster — and this proposal already recorded that a roster ages
+exactly like the sentence it replaced.
+
+**What the answer costs, which is not nothing.** The sentence crosses as a copy, so the tooltip owes
+a `MutationObserver` over its own tip: `slotchange` fires for a replaced element and for **neither**
+in-place edit, measured. That is the machinery the Motivation held against the bridge, and the honest
+form of that objection is not that the bridge kept an observer but that it kept one **per control**,
+watching a node it had to resolve an id in first.
+
+**Two questions remain.**
+
+1. **Does the redesigned `<ui-tooltip>` still meet 1.4.13?** Dismissible, hoverable and persistent
    are measured today against the current design; a component that becomes a carrier of
    supplementary text is held to that bar harder, not softer.
 
-3. **Does a tip that carries an instruction place differently from one that carries decoration?**
+2. **Does a tip that carries an instruction place differently from one that carries decoration?**
    Covering the neighbour is tolerable for text a reader summoned and is not for text that arrives
    with focus. Whether the answer is a placement rule, a gutter, or leaving it to the host is not
    studied.
@@ -338,16 +490,15 @@ support.
 
 Ordered, each step making the next possible.
 
-1. **Answer question 1**, because it decides whether the rest is a redesign or an addition. It is a
-   study, not an implementation.
-2. **Fix the handoff's shape**, and prove it on one element end to end — `<ui-button>`, being the
-   one with no supplementary text of any kind today and therefore the case with nothing to
-   regress.
-3. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
+1. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
+   no supplementary text of any kind today and therefore the case with nothing to regress. The
+   tooltip's observer arrives with it: an unsynchronised copy is a defect, not a later refinement.
+2. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
    it should fire only for a trigger that accepts no text.
-4. **Discontinue `help`** on the four elements that have it, if question 1 says so — a minor below
-   `1.0.0`, and the deprecation and its replacement must coexist in one release.
-5. **Prune the transitional half** of `docs/tooltip.md` and
+3. **Discontinue `help` as a default** on the four elements that have it, keeping it as a
+   capability — a minor below `1.0.0`, and the deprecation and its replacement must coexist in one
+   release.
+4. **Prune the transitional half** of `docs/tooltip.md` and
    [ARCHITECTURE.md](../../ARCHITECTURE.md), and close #156 pointing here.
 
 **What is verified, and how.** Every step is gated by the suite that already exists: the
