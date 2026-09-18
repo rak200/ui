@@ -822,7 +822,14 @@ describe('ui-switch', () => {
         const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.backgroundImage).toContain('radial-gradient');
-        expect(styles.backgroundSize).toBe('16px');
+
+        // The width alone, because `background-size` takes one value and the engine decides
+        // whether to serialise the elided height. Chromium 151 answers `16px` and Chromium
+        // 153 answers `16px auto` for the same declaration — measured, on the same code. What
+        // this asserts is the thumb's size, not how the engine writes it down.
+        const [thumb] = styles.backgroundSize.split(' ');
+
+        expect(thumb).toBe('16px');
         expect(styles.backgroundRepeat, 'one thumb, not a row of them').toBe('no-repeat');
     });
 
