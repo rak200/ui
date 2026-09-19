@@ -3,6 +3,12 @@ import base from '@rak200/coding-standard-ts/stryker';
 export default {
     ...base,
 
+    // Nothing here pins the test runner, and one pin outside this file decides whether any
+    // of it works: `@vitest/browser-playwright` is held below 5 because the Stryker runner
+    // cannot drive `vitest@5`, and its way of failing is a score of 0.00 rather than an
+    // error. `.github/dependabot.yml` carries the measurement and the condition for lifting
+    // it, beside the line that would.
+
     // The generated glyph modules are excluded from mutation, and NOT from here: each one
     // carries its own `// Stryker disable all`, emitted by `tests/manual/vendor-icons.mjs`,
     // which states the reason beside the single statement it covers.

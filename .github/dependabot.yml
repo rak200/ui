@@ -100,3 +100,23 @@ updates:
         dependency-type: "production"
       dev:
         dependency-type: "development"
+    # `@vitest/browser-playwright@5` drags `vitest@5`, and `@stryker-mutator/vitest-runner`
+    # cannot drive it — the mutation floor reports **0.00 with 0.00 tests run per mutant**,
+    # every mutant marked survived, and nothing in the log says why. `package.json` cannot
+    # carry the reason, so it is here, beside the line that would undo it.
+    #
+    # The runner's peer range is `vitest: ">=2.0.0"`, unbounded above, so the resolver never
+    # refuses the pairing. 10.0.0 is the newest published; there is no version to move to.
+    #
+    # Measured on rak200/ui#172, the first pull request to touch `src/` after the bump:
+    # 23 mutants, 0 killed, 0.00 tests per mutant, against 57.77 on #158 and 72.01 on the
+    # same file locally under vitest 4. The bump that introduced it — #167 — passed green,
+    # because a pull request that changes no mutable source short-circuits this gate before
+    # it runs: `no mutable source changed — nothing to mutate`.
+    #
+    # Lift this when the runner declares a bounded range that includes vitest 5, not when
+    # vitest 5 merely looks stable. rak200/coding-standard-ts owns the durable fix, since it
+    # is the package that brings both halves of the pairing.
+    ignore:
+      - dependency-name: "@vitest/browser-playwright"
+        versions: [">=5"]
