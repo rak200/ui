@@ -3,11 +3,23 @@ import base from '@rak200/coding-standard-ts/stryker';
 export default {
     ...base,
 
-    // Nothing here pins the test runner, and one pin outside this file decides whether any
-    // of it works: `@vitest/browser-playwright` is held below 5 because the Stryker runner
-    // cannot drive `vitest@5`, and its way of failing is a score of 0.00 rather than an
-    // error. `.github/dependabot.yml` carries the measurement and the condition for lifting
-    // it, beside the line that would.
+    // Nothing here pins the test runner, and one line in `package.json` decides whether any
+    // of this works: `@vitest/browser-playwright` is held at `^4.0.0` because
+    // `@stryker-mutator/vitest-runner` cannot drive `vitest@5`. It does not error — it stops
+    // associating tests with mutants, so the floor reports a score of 0.00 with **0.00 tests
+    // run per mutant**, every mutant marked survived, and nothing in the log saying why.
+    //
+    // Measured over the same file and the same mechanism: 57.77 tests per mutant on vitest 4,
+    // 0.00 on vitest 5. The runner's peer range is `vitest: ">=2.0.0"`, unbounded above, so
+    // the resolver never refuses the pairing, and 10.0.0 is the newest published.
+    //
+    // The reason is here because `package.json` takes no comment and `.github/dependabot.yml`
+    // is a byte-compared seed — an `ignore` there is a variant decision and not this
+    // repository's to make. **So nothing stops the bot re-proposing vitest 5**, and nothing
+    // stops that pull request passing: a bump changes no mutable source, so this gate
+    // short-circuits before it runs. That is how the pairing arrived in the first place, and
+    // refusing the next one is a person's job until `@rak200/coding-standard-ts` caps vitest
+    // — which would make the bump fail to resolve instead. rak200/coding-standard-ts#92.
 
     // The generated glyph modules are excluded from mutation, and NOT from here: each one
     // carries its own `// Stryker disable all`, emitted by `tests/manual/vendor-icons.mjs`,
