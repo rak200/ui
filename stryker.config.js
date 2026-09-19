@@ -3,6 +3,18 @@ import base from '@rak200/coding-standard-ts/stryker';
 export default {
     ...base,
 
+    // Two lines in `package.json` decide whether any of this runs, and both are here rather
+    // than inherited: `@vitest/browser-playwright` is held at `^4.0.0` and `overrides` pins
+    // `vitest` to 4, because `@stryker-mutator/vitest-runner` cannot drive Vitest 5 — it runs
+    // zero tests per mutant and calls every one of them survived, so the floor reads 0.00 and
+    // nothing errors. The measurement and the condition for lifting the pin are upstream, in
+    // the standard's `stryker.base.js`, beside the gate they protect.
+    //
+    // **The standard's `overrides` does not reach here**, which is the part worth writing down:
+    // npm applies them at the root only, so a consumer that omits its own gets the runner's
+    // unbounded `vitest: ">=2.0.0"` peer resolved to 5 and npm crashes outright — measured,
+    // `Cannot read properties of null (reading 'edgesOut')`. The pin alone is not enough.
+
     // The generated glyph modules are excluded from mutation, and NOT from here: each one
     // carries its own `// Stryker disable all`, emitted by `tests/manual/vendor-icons.mjs`,
     // which states the reason beside the single statement it covers.

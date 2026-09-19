@@ -43,7 +43,7 @@
     "fix": "prettier --write . && eslint --fix .",
     "analyse": "tsc --noEmit && eslint .",
     "test": "vitest run",
-    "coverage": "coverage-floor",
+    "coverage": "coverage-floor --drop-prefix src/icons/",
     "scan": "rak200-scan",
     "mutation": "rak200-mutate --drop-prefix src/icons/",
     "build": "tsc -p tsconfig.icons.json && tsc -p tsconfig.build.json",
@@ -54,12 +54,15 @@
     "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.9",
+    "@rak200/coding-standard-ts": "github:rak200/coding-standard-ts#0.4.13",
     "@storybook/addon-a11y": "^10.5.8",
     "@storybook/web-components-vite": "^10.5.8",
     "@types/node": "^26.1.2",
-    "@vitest/browser-playwright": "^5.0.0",
+    "@vitest/browser-playwright": "^4.0.0",
     "axe-core": "^4.13.0",
     "storybook": "^10.5.8"
+  },
+  "overrides": {
+    "vitest": "^4.1.10"
   }
 }
