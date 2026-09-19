@@ -61,7 +61,6 @@ tests/               # mirrors src/, one test file per unit
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 ├── manual/          # steps a person runs, collected by nothing — see each file's own header
-├── tooling/         # a step the pipeline runs — the `mutation` verb's binding
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
@@ -87,13 +86,15 @@ export-ignore` in the seeded `.gitattributes` has always been written for. The t
 `contrast.ts` and `stories.ts` are the exception the mirror does not cover: they are the suite's own
 scaffolding rather than units, so none has a counterpart in `src/`.
 
-**`tests/manual/` and `tests/tooling/` are a second kind of exception**, and neither is the suite at
-all: they hold scripts rather than units — `manual/` the steps a person runs, collected by nothing
-and gating nothing, `tooling/` the one the pipeline runs. Both sit here because `/tests/` is already
-`export-ignore`d, so a development script does not ride along in a consumer's `git archive`, and the
-alternative was editing a seed the conformance check compares byte for byte — `.gitattributes` is
-`form: exact` in `scaffold/seeds.tsv`, so it cannot grow a line for a new path.
-`eslint.config.js` ignores both and says why.
+**`tests/manual/` is a second kind of exception**, and it is not the suite at all: it holds scripts
+rather than units — the steps a person runs, collected by nothing and gating nothing. It sits here
+because `/tests/` is already `export-ignore`d, so a development script does not ride along in a
+consumer's `git archive`, and the alternative was editing a seed the conformance check compares byte
+for byte — `.gitattributes` is `form: exact` in `scaffold/seeds.tsv`, so it cannot grow a line for a
+new path. `eslint.config.js` ignores it and says why.
+
+**`tests/tooling/` was the other half of that exception and is gone**: the `mutation` verb's binding
+moved into `@rak200/coding-standard-ts`, which now ships `rak200-mutate`.
 
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
@@ -217,8 +218,9 @@ explains. This file restates none of them.
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three
   places for one reason**: a pull request runs `--mutate` over the changed files and that argument
   replaces the config's list, so each generated module carries its own `// Stryker disable all`
-  (emitted by the script), and `tests/tooling/mutate-changed.mjs` — the `mutation` verb's binding —
-  drops the generated tree from the list before Stryker creates the mutants it would then ignore. `tsc` is what covers the generated half:
+  (emitted by the script), and the `mutation` verb passes `--drop-prefix src/icons/` to
+  `rak200-mutate`, which drops the generated tree from the list before Stryker creates the mutants it
+  would then ignore. `tsc` is what covers the generated half:
   `tsconfig.json` includes `src`, so all two thousand modules and the barrel are typechecked by
   `analyse`. **Never hand-edit a file under `src/icons/`** — re-run the script.
 - **Why the build is two `tsc` passes, and why the order matters** — `tsconfig.icons.json` runs
