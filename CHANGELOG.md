@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/rak200/ui/compare/0.6.0...0.6.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* **tooltip:** remember a dismissal, and claim the key that made it ([#172](https://github.com/rak200/ui/issues/172)) ([12894a9](https://github.com/rak200/ui/commit/12894a9e3ea5b5f36b863de589555da209e199ee))
+
 ## [0.6.0](https://github.com/rak200/ui/compare/0.5.1...0.6.0) (2026-09-11)
 
 
