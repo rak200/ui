@@ -131,6 +131,17 @@ export class UiTooltip extends LitElement {
     #shown = false;
 
     /**
+     * Whether the reader dismissed the tip and has not left the trigger since.
+     *
+     * Separate from {@link UiTooltip.#shown}, because hidden and dismissed are not the same
+     * state and 1.4.13 only asks about the second. Without it a dismissal survives exactly
+     * as long as nothing moves focus — measured on `<ui-menu>`, where Escape closes the menu,
+     * the component restores focus to the trigger it rendered, and the tip came back in the
+     * same turn as the key that shut it. #169
+     */
+    #dismissed = false;
+
+    /**
      * What is watching while the tip is open, dropped in one call when it closes.
      *
      * These three are added on show rather than on connection because two of them are
@@ -154,11 +165,30 @@ export class UiTooltip extends LitElement {
      * On the document rather than on this element: a tip shown by the pointer leaves the
      * focus wherever it was, so a key listener bound here would never hear the key that is
      * supposed to dismiss it.
+     *
+     * **The key is claimed when it dismissed something, and left alone when it did not.**
+     * One Escape reaches every layer at once: unclaimed, it shut the tip and closed the
+     * `<ui-dialog>` around it in the same press — and 1.4.13 wants a dismissal that does
+     * *not* move focus, where closing a modal returns focus to whatever opened it. Claiming
+     * it gives the reader the convention they already have, the topmost thing closing
+     * first, and the next press reaching the next layer down. **Nothing tests whether there
+     * was something to dismiss**, because this listener only exists while there is: it is
+     * added on show and dropped on hide, so an Escape with no tip open never reaches here.
+     *
+     * `preventDefault()` and nothing else: the close request is the key's default action,
+     * so cancelling it here is enough — measured, against both a modal `<dialog>` and a
+     * `popover="auto"`, from this listener's own bubble phase. `stopPropagation()` would
+     * add nothing at the document and would take the key from anything else listening.
      */
     readonly #dismiss = (event: KeyboardEvent): void => {
-        if (event.key === 'Escape') {
-            this.#hide();
+        if (event.key !== 'Escape') {
+            return;
         }
+
+        event.preventDefault();
+
+        this.#dismissed = true;
+        this.#hide();
     };
 
     /**
@@ -314,15 +344,38 @@ export class UiTooltip extends LitElement {
         this.#show();
     };
 
-    readonly #onLeave = (): void => {
+    /**
+     * Closes when the reader really leaves, and only then.
+     *
+     * **A `focusout` here does not mean focus left.** It also fires when focus moves between
+     * two nodes inside this element that retarget differently — `<ui-menu>` opening its own
+     * slotted items is the case in this package — and treating that as a departure closed
+     * and reopened the tip on one keystroke. `relatedTarget` is where focus went, so a node
+     * this element still contains means nothing left. A `pointerleave` never fires with the
+     * pointer still inside, so the same guard is simply true there.
+     *
+     * A departure is also what clears the dismissal: 1.4.13 asks that dismissed content stay
+     * dismissed until the trigger is left, not until the next event of any kind.
+     */
+    readonly #onLeave = (event: FocusEvent | PointerEvent): void => {
+        if (this.#holds(event.relatedTarget)) {
+            return;
+        }
+
+        this.#dismissed = false;
         this.#hide();
     };
+
+    /** Whether a node focus or the pointer moved to is still inside this element. */
+    #holds(node: EventTarget | null): boolean {
+        return node instanceof Node && this.contains(node);
+    }
 
     /** Opens the tip and starts watching whatever can move its trigger. */
     #show(): void {
         const tip = this.#tip();
 
-        if (tip === undefined || this.#shown) {
+        if (tip === undefined || this.#shown || this.#dismissed) {
             return;
         }
 

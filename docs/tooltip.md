@@ -84,13 +84,22 @@ anything a person must have in order to complete the task belongs in the page, n
 | shows on | pointer entering the trigger, and keyboard focus reaching it |
 | hides on | the pointer leaving, focus leaving, and **Escape**           |
 
+**Focus leaving means leaving.** Focus moving between two things inside the trigger — a component
+that renders its own button and slots its items, say — is not a departure and does not close the
+tip.
+
 WCAG 2.2's **1.4.13 Content on Hover or Focus** asks for three things, and the shape of the component
 answers all three:
 
-- **Dismissible** — Escape closes it without moving your focus. The tip is a `popover="manual"`,
-  which is deliberate: an `auto` popover light-dismisses, and dismissing one closes the others, so a
-  tooltip appearing over an open menu would close the menu. What `manual` costs is Escape, which it
-  does not handle — measured — so this element wires it.
+- **Dismissible** — Escape closes it without moving your focus, and **stops there**: one press
+  reaches every open layer at once, so a tip inside a dialog would otherwise take the dialog with
+  it. The tip claims the key when it had something to dismiss and leaves it alone when it did not,
+  which is the order you already expect — the topmost thing closes, and the next press reaches the
+  next. A dismissed tip stays dismissed until you leave the trigger, so nothing the component does
+  with focus brings it back. The tip is a `popover="manual"`, which is deliberate: an `auto` popover
+  light-dismisses, and dismissing one closes the others, so a tooltip appearing over an open menu
+  would close the menu. What `manual` costs is Escape, which it does not handle — measured — so this
+  element wires it.
 - **Hoverable** — the pointer can travel onto the tip and it stays open, because the tip is a DOM
   child of `<ui-tooltip>`: moving into it never leaves the element that is listening. The gap between
   trigger and tip is `--ui-space` ÷ 2, small enough that a pointer crossing it does not leave first.
