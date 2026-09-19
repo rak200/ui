@@ -3,22 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A tooltip's Escape is claimed by nobody (#169)
-
-`<ui-tooltip>` dismisses on Escape, which is 1.4.13's first requirement, and it neither remembers
-the dismissal nor claims the key. Both gaps are only reachable through a compound trigger, which is
-why a suite written against a native `<button>` reports three green requirements.
-
-**Inside a `<ui-dialog>` the same Escape closes the dialog** — so the only mechanism available moves
-focus, which is the one thing 1.4.13 asks a dismissal not to do. **On a `<ui-menu>` the tip cannot
-be dismissed at all**: the items are slotted, so the menu's own focus restoration crosses back into
-the tooltip and re-opens the tip in the same turn as the key that shut it. A dismissal does survive
-on the six form controls, because focus moving within one shadow tree fires nothing at an ancestor.
-
-Measured: a `keydown` claimed in the capture phase stops the modal and the `popover="auto"` alike,
-so the fix is a remembered dismissal and a claimed key — no new API. RFC 0006 waits on it, because a
-tip that cannot be dismissed must not become the only home for an instruction.
-
 ## A description reaches none of the controls this package renders (#156)
 
 `<ui-tooltip>` names its trigger with `aria-describedby`, and an IDREF crosses no shadow boundary —

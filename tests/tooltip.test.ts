@@ -52,6 +52,22 @@ async function mount(markup: string, offset = '120px'): Promise<HTMLElement> {
  * be asserting that pair; these assert the rule, and they keep meaning the same thing when
  * a component moves.
  */
+/**
+ * A trigger that hands focus from inside its shadow root out to a child in the light DOM.
+ *
+ * That is `<ui-menu>`'s shape — it renders its own button and leaves the items slotted —
+ * and it is what made a `focusout` at this element mean nothing on its own. Written as a
+ * fixture for the reason the two below give: the rule is about where focus goes, not about
+ * which component happens to be in front of it.
+ */
+class HandsFocusOn extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML =
+            '<button type="button" class="own">More</button><slot></slot>';
+    }
+}
+
 class FocusesInside extends HTMLElement {
     constructor() {
         super();
@@ -66,6 +82,7 @@ class DrawsInside extends HTMLElement {
     }
 }
 
+customElements.define('test-hands-focus-on', HandsFocusOn);
 customElements.define('test-focuses-inside', FocusesInside);
 customElements.define('test-draws-inside', DrawsInside);
 
@@ -605,6 +622,139 @@ describe('when it shows', () => {
 
         expect(thrown, 'nothing is still placing a detached element').toEqual([]);
         expect(shown.matches(':popover-open')).toBe(false);
+    });
+});
+
+describe('the dismissal, which 1.4.13 asks to hold', () => {
+    /** The trigger that hands focus on, with a tip about it. */
+    const handing = `
+        <ui-tooltip>
+            <test-hands-focus-on>
+                <button type="button" class="item">One</button>
+            </test-hands-focus-on>
+            <span slot="tip">Everything else lives here.</span>
+        </ui-tooltip>
+    `;
+
+    /** The button inside the trigger's shadow root, which is where focus starts. */
+    function own(host: ParentNode): HTMLElement {
+        const root = only(host, 'test-hands-focus-on').shadowRoot;
+
+        if (root === null) {
+            throw new Error('the handing trigger has no shadow root');
+        }
+
+        return only(root, 'button.own');
+    }
+
+    it('does not close when focus moves to something it still contains', async () => {
+        // Not *is it still open* — it is open either way, because the old code closed it and
+        // reopened it on the same keystroke and the end state cannot tell the two apart.
+        // What this asserts is that nothing happened at all: `beforetoggle` is dispatched
+        // synchronously on each transition, so a hidden count of them is not available to
+        // hide in.
+        const host = await mount(handing);
+        const transitions: string[] = [];
+
+        own(host).focus();
+
+        expect(tip(host).matches(':popover-open')).toBe(true);
+
+        tip(host).addEventListener('beforetoggle', (event) => {
+            transitions.push(event.newState);
+        });
+
+        only(host, 'button.item').focus();
+
+        expect(
+            transitions,
+            'focus went from a shadow root to a slotted sibling, which is not leaving',
+        ).toEqual([]);
+        expect(tip(host).matches(':popover-open')).toBe(true);
+    });
+
+    it('stays dismissed when the trigger hands focus back to itself', async () => {
+        // The failure this was written for: Escape shut the tip, the trigger restored focus
+        // to its own button, and the tip came back in the same turn as the key. Hidden and
+        // dismissed have to be two states for this to hold.
+        const host = await mount(handing);
+
+        only(host, 'button.item').focus();
+        await userEvent.keyboard('{Escape}');
+
+        expect(tip(host).matches(':popover-open')).toBe(false);
+
+        own(host).focus();
+
+        expect(tip(host).matches(':popover-open'), 'a dismissal is not undone by focus').toBe(
+            false,
+        );
+    });
+
+    it('shows again once the reader has left and come back', async () => {
+        // The other half: dismissed until the trigger is left, and no longer than that.
+        const host = await mount(handing);
+        const elsewhere = document.createElement('button');
+
+        document.body.append(elsewhere);
+
+        own(host).focus();
+        await userEvent.keyboard('{Escape}');
+        elsewhere.focus();
+        own(host).focus();
+
+        expect(tip(host).matches(':popover-open')).toBe(true);
+    });
+
+    it('closes when focus goes nowhere at all', async () => {
+        // `relatedTarget` is null when nothing receives the focus, which is a departure and
+        // the branch a leave to another element does not reach.
+        const host = await mount(handing);
+
+        own(host).focus();
+
+        expect(tip(host).matches(':popover-open')).toBe(true);
+
+        own(host).blur();
+
+        expect(tip(host).matches(':popover-open')).toBe(false);
+    });
+
+    it('claims the Escape it acted on, so the modal around it stays open', async () => {
+        // A native `<dialog>`, because what is at stake is the platform's close request —
+        // `<ui-dialog>` delegates to exactly this and would only put a component in front
+        // of the mechanism under test. Unclaimed, one press shut the tip and closed the
+        // dialog together, and 1.4.13 wants a dismissal that does not move focus.
+        const host = await mount(`<dialog>${handing}</dialog>`);
+        const modal = only(host, 'dialog') as HTMLDialogElement;
+
+        modal.showModal();
+        own(host).focus();
+
+        expect(tip(host).matches(':popover-open')).toBe(true);
+
+        await userEvent.keyboard('{Escape}');
+
+        expect(tip(host).matches(':popover-open')).toBe(false);
+        expect(modal.open, 'the key stopped at the topmost thing').toBe(true);
+
+        modal.close();
+    });
+
+    it('leaves an Escape alone when it has no tip open', async () => {
+        // The other side of the same claim, and what keeps it from being a key this element
+        // simply swallows: the listener exists only while the tip does.
+        const host = await mount(`<dialog><button type="button">x</button>${handing}</dialog>`);
+        const modal = only(host, 'dialog') as HTMLDialogElement;
+
+        modal.showModal();
+        only(host, 'dialog > button').focus();
+
+        expect(tip(host).matches(':popover-open')).toBe(false);
+
+        await userEvent.keyboard('{Escape}');
+
+        expect(modal.open, 'nothing was dismissed, so the modal answered').toBe(false);
     });
 });
 

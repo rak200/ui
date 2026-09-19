@@ -573,8 +573,8 @@ other content, and the tip covers the field above its trigger.
 
 **The answer is therefore conditional rather than negative.** A claimed key stops both layers below
 — measured on the modal and on the `popover="auto"` alike — so remembering the dismissal and
-claiming the key when there was something to dismiss restores all three requirements. That is one
-flag and no new API, and it is owed before the tip carries anything.
+claiming the key when there was something to dismiss restores all three requirements. That was one
+flag and no new API, and it shipped as #169 ahead of this proposal rather than inside it.
 
 **One question remains.**
 
@@ -587,17 +587,15 @@ flag and no new API, and it is owed before the tip carries anything.
 
 Ordered, each step making the next possible.
 
-1. **Close #169**, because a tip that cannot be dismissed must not become the only home for an
-   instruction. It stands on its own and does not wait on this proposal.
-2. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
+1. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
    no supplementary text of any kind today and therefore the case with nothing to regress. The
    tooltip's observer arrives with it: an unsynchronised copy is a defect, not a later refinement.
-3. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
+2. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
    it should fire only for a trigger that accepts no text.
-4. **Discontinue `help` as a default** on the four elements that have it, keeping it as a
+3. **Discontinue `help` as a default** on the four elements that have it, keeping it as a
    capability — a minor below `1.0.0`, and the deprecation and its replacement must coexist in one
    release.
-5. **Prune the transitional half** of `docs/tooltip.md` and
+4. **Prune the transitional half** of `docs/tooltip.md` and
    [ARCHITECTURE.md](../../ARCHITECTURE.md), and close #156 pointing here.
 
 **What is verified, and how.** Every step is gated by the suite that already exists: the
