@@ -53,6 +53,15 @@ export default mergeConfig(
                 // them and costs 9.4 seconds of import on every run, measured. That buys
                 // *registers without throwing* over what the compiler already says, which
                 // is not worth doubling the suite for.
+                //
+                // **The coverage floor has to be told the same thing**, and that is the
+                // second half of this line rather than a separate decision: it checks the
+                // report against `src/` on disk and would refuse one that never measured
+                // the two thousand modules excluded here. `package.json` passes it
+                // `--drop-prefix src/icons/` — the option carries no comment there, which
+                // is why the reason is written at the exclusion it mirrors. Its own
+                // failure mode is covered upstream: a prefix that stops matching fails the
+                // step rather than quietly excluding nothing.
                 exclude: [...(base.test?.coverage?.exclude ?? []), 'src/icons/**'],
             },
 

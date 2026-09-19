@@ -220,7 +220,9 @@ explains. This file restates none of them.
   replaces the config's list, so each generated module carries its own `// Stryker disable all`
   (emitted by the script), and the `mutation` verb passes `--drop-prefix src/icons/` to
   `rak200-mutate`, which drops the generated tree from the list before Stryker creates the mutants it
-  would then ignore. `tsc` is what covers the generated half:
+  would then ignore. **The coverage half is written in two**, and for the mirror-image reason: the
+  floor checks the report against `src/` on disk, so the `coverage` verb passes it the same
+  `--drop-prefix src/icons/` the `mutation` verb passes. `tsc` is what covers the generated half:
   `tsconfig.json` includes `src`, so all two thousand modules and the barrel are typechecked by
   `analyse`. **Never hand-edit a file under `src/icons/`** — re-run the script.
 - **Why the build is two `tsc` passes, and why the order matters** — `tsconfig.icons.json` runs
