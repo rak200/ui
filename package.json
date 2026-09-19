@@ -45,7 +45,7 @@
     "test": "vitest run",
     "coverage": "coverage-floor",
     "scan": "rak200-scan",
-    "mutation": "node tests/tooling/mutate-changed.mjs",
+    "mutation": "rak200-mutate --drop-prefix src/icons/",
     "build": "tsc -p tsconfig.icons.json && tsc -p tsconfig.build.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

@@ -17,12 +17,12 @@ export default {
     // `--mutate` at all, so it reads this list — and without the negation it would
     // instrument 2052 files to create four thousand mutants it then ignores. The pull
     // request path cannot be served from here, because its `--mutate` replaces this list;
-    // `tests/tooling/mutate-changed.mjs`, the `mutation` verb's binding, takes the
-    // generated tree out of that argument instead.
+    // the `mutation` verb passes `--drop-prefix src/icons/` to `rak200-mutate`, which takes
+    // the generated tree out of that argument instead.
     //
     // So the rule is written three times, and none of the three is redundant: here for a
-    // full run, in the verb's wrapper for a diff run, and in each generated module for
-    // whatever reaches Stryker anyway. The first two are speed; the third is the floor.
+    // full run, in the verb's `--drop-prefix` for a diff run, and in each generated module
+    // for whatever reaches Stryker anyway. The first two are speed; the third is the floor.
     mutate: [...base.mutate, '!src/icons/**'],
 
     //
