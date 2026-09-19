@@ -350,6 +350,80 @@ purpose; if it ever needs to change, naming the event publicly is additive and c
 cycle. A host can also listen for the event and cancel it, which would break the handoff silently —
 nothing prevents that, and it is the exposure every custom event has.
 
+### Measured: 1.4.13's three requirements are gated on the one trigger the redesign removes
+
+Dismissible, Hoverable and Persistent each have a test today, and all three run against a native
+`<button>`. That was the right fixture while a tip was decoration. Under this proposal the trigger is
+one of the eight, and the two that hold more than one focusable node answer differently.
+
+**Dismissal is not remembered. It is a state that any focus crossing resets** — `#hide()` clears the
+shown flag and the next `focusin` shows the tip again. So whether Escape works at all depends on
+something the tooltip never asks about: whether focus subsequently leaves its subtree and comes back.
+
+| Focus moves…                                                 | at the tooltip        | the dismissal |
+| ------------------------------------------------------------ | --------------------- | ------------- |
+| between two radios inside one shadow root                    | nothing fires         | **holds**     |
+| into a field, and the reader types                           | nothing fires         | **holds**     |
+| out of the trigger and back, because a component put it back | `focusout`, `focusin` | **undone**    |
+
+The first row is the one worth measuring rather than assuming: focus really moved — radio 0 to radio
+1 — and in the whole exchange `focusin` fired **once** and `focusout` **never**. The platform fires
+no focus event at an ancestor when focus moves within a single shadow tree, so a dismissed tip stays
+dismissed on `<ui-input>`, `<ui-textarea>`, `<ui-select>`, `<ui-checkbox>`, `<ui-switch>` and
+`<ui-radio-group>`.
+
+### Measured: on `<ui-menu>` the tip cannot be dismissed at all
+
+`<ui-menu>` renders its trigger into its shadow root and leaves the items slotted, so opening it
+moves focus **out** of the menu's root and into the tooltip's own subtree — a crossing in each
+direction. The timeline, with a tip open and the menu opened from the keyboard:
+
+```
+focusin → [tip open] → focusout → focusin → [tip open] → keydown → focusout → focusin → [tip open]
+```
+
+The `keydown` is the Escape. It hides the tip; the platform then closes the menu; `#give()` returns
+focus to the trigger it rendered, and that restoration re-opens the tip **in the same turn as the
+key that dismissed it**. There is no sequence of keys that leaves the tip shut while the reader is
+still on the control.
+
+### Measured: and inside a dialog, the same key takes the dialog with it
+
+|                                                    |                 |
+| -------------------------------------------------- | --------------- |
+| a tip open on a field inside an open `<ui-dialog>` | shown           |
+| after one Escape — the tip                         | dismissed       |
+| after the same Escape — the dialog                 | **also closed** |
+
+1.4.13 asks for a mechanism that dismisses the additional content **without moving pointer hover or
+keyboard focus**. Closing a modal returns focus to whatever opened it, so the only mechanism
+available moves focus — and takes the form with it. The requirement is not met, and the reader pays
+for reading an instruction by losing the dialog.
+
+**The two failures are one defect seen from opposite ends.** `#dismiss` hides the tip without
+claiming the key, so Escape is owned by nobody: on `<ui-menu>` the layer below acts and undoes the
+dismissal, and inside `<ui-dialog>` the layer below acts and destroys the context. Neither is
+created by this proposal — both are in the component today. What the proposal changes is the cost: a
+decoration that overstays is untidy, and an instruction that cannot be moved is the field above it
+obscured with no way out.
+
+**The exemption that could have excused all of it is already closed.** Dismissible does not apply to
+content that "does not obscure or replace other content" — and the measurement above records that
+the tip covers the field above its trigger. There is no path here that avoids owing a dismissal.
+
+### Measured: the key can be claimed, on both layers
+
+A `keydown` taken in the capture phase, `preventDefault()` and `stopPropagation()` together:
+
+| The layer below                   | key claimed    | key left alone |
+| --------------------------------- | -------------- | -------------- |
+| `<ui-dialog>`, a modal `<dialog>` | **stays open** | closes         |
+| `<ui-menu>`, a `popover="auto"`   | **stays open** | closes         |
+
+So the tooltip can take Escape when it actually had something to dismiss and leave it for the layer
+below when it did not, which is the layered convention readers already have: the topmost thing
+closes first, and the next key reaches the next thing down. It costs one flag and no new API.
+
 ## Proposed design
 
 ### The rule, which the library already applies elsewhere
@@ -431,7 +505,7 @@ text, and an error behind a hover is not identified.
 
 ## Decision
 
-**Not reached**, and two of the four questions are now answered.
+**Not reached**, and three of the four questions are now answered.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
 objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
@@ -475,13 +549,36 @@ in-place edit, measured. That is the machinery the Motivation held against the b
 form of that objection is not that the bridge kept an observer but that it kept one **per control**,
 watching a node it had to resolve an id in first.
 
-**Two questions remain.**
+**Question 3 — does the redesigned `<ui-tooltip>` still meet 1.4.13?** **Not as it stands**, and the
+gap is in Dismissible. Hoverable and Persistent survive; what does not is the dismissal itself,
+because it is not remembered and the key is not claimed.
 
-1. **Does the redesigned `<ui-tooltip>` still meet 1.4.13?** Dismissible, hoverable and persistent
-   are measured today against the current design; a component that becomes a carrier of
-   supplementary text is held to that bar harder, not softer.
+The three requirements are gated today against a native `<button>`, which is the one trigger this
+proposal removes from the picture. Against the eight:
 
-2. **Does a tip that carries an instruction place differently from one that carries decoration?**
+- **A dismissal survives on the six form controls**, measured — focus moving within one shadow tree
+  fires nothing at an ancestor, so an Escape on `<ui-radio-group>` holds while the reader arrows
+  between radios.
+- **On `<ui-menu>` a tip cannot be dismissed at all.** The items are slotted, so opening the menu
+  moves focus out of its root and back into the tooltip's subtree; Escape closes the menu, the
+  component returns focus to the trigger it rendered, and the tip re-opens in the same turn as the
+  key that dismissed it.
+- **Inside a `<ui-dialog>` the same key closes the dialog.** 1.4.13 wants a dismissal that does not
+  move focus, and closing a modal returns focus to whatever opened it.
+
+**Neither failure is created by this proposal** — both are in the component today, and they are
+#169. What the proposal changes is the cost, and the exemption that might have excused them is
+already closed by the measurement above: Dismissible does not apply to content that does not obscure
+other content, and the tip covers the field above its trigger.
+
+**The answer is therefore conditional rather than negative.** A claimed key stops both layers below
+— measured on the modal and on the `popover="auto"` alike — so remembering the dismissal and
+claiming the key when there was something to dismiss restores all three requirements. That is one
+flag and no new API, and it is owed before the tip carries anything.
+
+**One question remains.**
+
+1. **Does a tip that carries an instruction place differently from one that carries decoration?**
    Covering the neighbour is tolerable for text a reader summoned and is not for text that arrives
    with focus. Whether the answer is a placement rule, a gutter, or leaving it to the host is not
    studied.
@@ -490,15 +587,17 @@ watching a node it had to resolve an id in first.
 
 Ordered, each step making the next possible.
 
-1. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
+1. **Close #169**, because a tip that cannot be dismissed must not become the only home for an
+   instruction. It stands on its own and does not wait on this proposal.
+2. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
    no supplementary text of any kind today and therefore the case with nothing to regress. The
    tooltip's observer arrives with it: an unsynchronised copy is a defect, not a later refinement.
-2. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
+3. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
    it should fire only for a trigger that accepts no text.
-3. **Discontinue `help` as a default** on the four elements that have it, keeping it as a
+4. **Discontinue `help` as a default** on the four elements that have it, keeping it as a
    capability — a minor below `1.0.0`, and the deprecation and its replacement must coexist in one
    release.
-4. **Prune the transitional half** of `docs/tooltip.md` and
+5. **Prune the transitional half** of `docs/tooltip.md` and
    [ARCHITECTURE.md](../../ARCHITECTURE.md), and close #156 pointing here.
 
 **What is verified, and how.** Every step is gated by the suite that already exists: the
