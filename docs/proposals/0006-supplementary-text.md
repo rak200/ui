@@ -424,6 +424,65 @@ So the tooltip can take Escape when it actually had something to dismiss and lea
 below when it did not, which is the layered convention readers already have: the topmost thing
 closes first, and the next key reaches the next thing down. It costs one flag and no new API.
 
+### Measured: how much it covers, and what each reader has to do about it
+
+Three stacked fields, the tip on the middle one, opened by focus. The viewport is the suite's own —
+414 × 896, which is the narrow end and therefore the unkind one:
+
+| the tip                         | height | covers the neighbour       | covers its own trigger |
+| ------------------------------- | ------ | -------------------------- | ---------------------- |
+| one line, placed `block-start`  | 29px   | **70%** of the field above | **0%**                 |
+| one line, flipped `block-end`   | 29px   | **77%** of the field below | **0%**                 |
+| three lines, a real instruction | 86px   | **81%** of the field above | **0%**                 |
+
+**It never covers the trigger**, on either side and at any height, because `place()` puts the box
+flush against the anchor's edge and the gap rule translates it further away. That is the measurement
+that matters most and it is the one nobody asked for: SC 2.4.11 is about the focused component being
+hidden, and the focused component is the one thing here that cannot be.
+
+**What it does cover is the neighbour, and by most of the neighbour.** With the tip open,
+`elementFromPoint` at the covered field's own centre returns the tip.
+
+**Both readers can clear it, by different mechanisms.** A pointer reader clears it on the way:
+
+```
+tip:open
+tip<-pointerenter   tip<-pointerleave   tip:closed
+a<-pointerenter     a<-pointerdown      b:focusout->input     a<-click
+```
+
+The travel toward the covered field is itself what closes the tip, so the obstruction is gone before
+the click lands — `elementFromPoint` returns the field again, and focus ends on it.
+
+A keyboard reader has no travel, and Escape is what they have instead:
+
+|              | tip            | `elementFromPoint` at the covered field | focus                 |
+| ------------ | -------------- | --------------------------------------- | --------------------- |
+| on focus     | open, 188..217 | the tip                                 | the trigger           |
+| after Escape | closed         | **the field**                           | **still the trigger** |
+
+**That is 1.4.13's Dismissible doing exactly the job it is written for**, and it is worth noting
+that it did not exist when this question was asked: the dismissal was neither remembered nor
+survivable until #169.
+
+### Measured: there is no third side to place it on
+
+The candidate that would avoid the neighbour entirely is an inline placement — the tip beside the
+field rather than over the one above or below it. At this viewport there is no room for it:
+
+|                         | px      |
+| ----------------------- | ------- |
+| viewport width          | 414     |
+| the trigger occupies    | 65..250 |
+| the tip needs           | 281     |
+| room after the trigger  | 164     |
+| room before the trigger | 65      |
+
+`place()` would pull it back inside the viewport and it would land over the field again, wider than
+before. A wide screen has the room; making the side depend on the width is a conditional placement,
+which is the one thing `src/placement.ts` was written not to have — it takes four boxes and returns
+one answer, and a component with two placements is wrong in one of them.
+
 ## Proposed design
 
 ### The rule, which the library already applies elsewhere
@@ -505,7 +564,7 @@ text, and an error behind a hover is not identified.
 
 ## Decision
 
-**Not reached**, and three of the four questions are now answered.
+**Not reached**, and all four questions are now answered.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
 objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
@@ -576,12 +635,36 @@ other content, and the tip covers the field above its trigger.
 claiming the key when there was something to dismiss restores all three requirements. That was one
 flag and no new API, and it shipped as #169 ahead of this proposal rather than inside it.
 
-**One question remains.**
+**Question 4 — does a tip carrying an instruction place differently from one carrying
+decoration?** **No**, and the premise did not survive being measured. The question assumed an
+asymmetry between the two readers: covering the neighbour is tolerable for text a reader summoned
+and not for text that arrives with focus, because the pointer reader can move away and the keyboard
+reader cannot. Both can, by different mechanisms — the pointer reader's travel toward the covered
+field closes the tip before the click lands, and Escape closes it without moving focus. **The second
+half of that is #169**, which did not exist when the question was written; the asymmetry was real
+and it was closed by a dismissal rather than by a placement.
 
-1. **Does a tip that carries an instruction place differently from one that carries decoration?**
-   Covering the neighbour is tolerable for text a reader summoned and is not for text that arrives
-   with focus. Whether the answer is a placement rule, a gutter, or leaving it to the host is not
-   studied.
+What is left is the covering itself, which is substantial and stays: 70% of the field above, 77% of
+the one below when it flips, 81% for an instruction long enough to wrap. **The trigger is never
+covered**, at any height or on either side, which is the one figure that would have forced a change
+— a tip that hid the control it describes would fail 2.4.11 and no dismissal would excuse it.
+
+The three candidates the question named all lose to a measurement rather than to an argument:
+
+- **A placement rule** — prefer the side with no control — has no side to prefer. In a stacked form
+  both sides hold one, which is what 70% above and 77% below say.
+- **A gutter** costs the host's layout, and not placing into the host's layout is the whole reason
+  the tip is a popover in the top layer. Reserving space for it would reintroduce exactly the
+  permanent block of text that Question 1 discontinued.
+- **An inline placement** does not fit: 281px of tip against 164px of room, so `place()` pulls it
+  back over the field. Making it conditional on the viewport is the second placement
+  `src/placement.ts` exists to not have.
+
+**So it stays with the host**, which is where `place()` already leaves it by taking boxes rather
+than elements — and the obligation this proposal adds is on the text rather than the geometry: an
+instruction goes in a tip because the tip can be dismissed and re-summoned, and a form that needs
+two instructions read together keeps `help`, which is the capability Question 1 kept for exactly
+this.
 
 ## Rollout
 
