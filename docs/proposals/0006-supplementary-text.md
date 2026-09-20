@@ -603,9 +603,11 @@ the module names it. **This one is the opposite case.** A trigger someone else w
 literal, so the name is a contract with code the suite cannot see, and a shared constant would make
 every mutant on it equivalent _by construction_ — earning that same disable, and taking the one
 string in this package that must not drift out of the floor's reach. Written at each end, a mutant
-on either breaks the handoff and the test that exercises it kills it. It costs nine literals that
-have to agree; it buys nine the suite pins, and they are the same nine an outside implementer
-writes. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
+on either breaks the handoff and the test that exercises it kills it. It costs **seven** literals
+that have to agree — one dispatch and six listeners, because the eight triggers are six classes:
+`UiTextField` is `<ui-input>` and `<ui-textarea>`, and `UiToggle` is `<ui-checkbox>` and
+`<ui-switch>`. It buys seven the suite pins, and the listener's is the same literal an outside
+implementer writes. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
 `ui-dismiss` report.
 
 **The payload is a `CustomEvent<string>`, and the sentence is `detail`.** An `Event` subclass has to
