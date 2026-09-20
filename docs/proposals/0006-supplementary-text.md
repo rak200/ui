@@ -580,10 +580,47 @@ text, and an error behind a hover is not identified.
   something to ship a library's accessibility story on. It is, however, the reason the handoff is
   designed to be deleted rather than deprecated.
 
+### What step 2 is actually extending
+
+The eight triggers differ by **whether they compose an `aria-describedby` list today**, and that is
+three categories rather than seven shapes:
+
+|                                    | element                        | the node that carries the description                                                                 | what the handoff costs there                                                   |
+| ---------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **has a composer**                 | `<ui-input>`, `<ui-textarea>`  | the rendered control, via `described()` — `protected` and shared by both                              | one id, in one method                                                          |
+|                                    | `<ui-select>`                  | the rendered box, via `#described()`; the slotted choices are not described                           | one id                                                                         |
+|                                    | `<ui-radio-group>`             | **the `<div role="radiogroup">`**, via `#described()` — not each radio                                | one id                                                                         |
+| **has the attribute, no composer** | `<ui-checkbox>`, `<ui-switch>` | the rendered input, inline: `error === '' ? nothing : 'error'`                                        | **a composer first** — there is no `help` here, so nothing ever had to compose |
+| **has neither**                    | `<ui-button>`                  | the rendered `<button>` carries no `aria-describedby` at all                                          | the path itself, which is step 1                                               |
+|                                    | `<ui-menu>`                    | its rendered trigger carries `aria-haspopup`, `aria-expanded` and `aria-controls`, and no description | the path, again                                                                |
+
+**So `<ui-menu>` is step 1's twin and not one of step 2's seven.** It stays in step 2 anyway: step 1
+exists to prove the protocol with the fewest confounders, and `<ui-menu>` renders its own trigger,
+drives a popover, holds an `aria-controls` reference and hand-writes the focus return across a
+shadow boundary. A protocol that fails there first would not say whether the protocol or the menu
+was at fault. `<ui-button>` has none of that, which is the reason this proposal already gives for
+choosing it.
+
+**Step 2 therefore has an order, from the most exposed to the cheapest**, rather than a list:
+
+1. `<ui-menu>`, which reuses step 1's new path on the hardest element — if the menu's complexity
+   breaks the protocol, that is worth learning at the start of step 2 rather than at the end;
+2. `<ui-checkbox>` and `<ui-switch>`, the only real refactor here;
+3. the four with a composer, where each addition is one id — and `<ui-input>` and `<ui-textarea>`
+   are one edit, because `described()` is shared.
+
+**Naming the second of those now is what this table is for.** It is the one item that is not "add an
+id", and an item like that discovered mid-step is what tempts someone into writing the handed
+sentence straight into the attribute instead of into the list — at which point `error` and the
+instruction overwrite each other rather than coexisting, which is the failure `#described()` exists
+to prevent everywhere else.
+
 ### What this design does not yet say
 
 Seven things, and they are not research: six are blanks where a choice goes, and the seventh was a
-sentence that contradicted the code it described. Seven is closed; six remain. They are numbered so each can be closed on its
+sentence that contradicted the code it described. **Six and seven are closed; the first five
+remain** — and both of the closed ones changed the rollout rather than filling a blank in it, which
+is why they were taken first. They are numbered so each can be closed on its
 own, and **the proposal is not implementable until they are** — the rollout's first step needs the
 first two before a line of it can be written.
 
@@ -611,24 +648,25 @@ first two before a line of it can be written.
    filtering the empty ones. The handed-over sentence goes where? The order is what a reader hears,
    so this is a decision rather than an implementation detail.
 
-6. **Step 2 of the rollout treats seven different shapes as one.** "Extend to the remaining seven"
-   reads as repetition, and each element points at something different: which control does
-   `<ui-radio-group>` describe — the group, or each radio? What does `<ui-select>` do, whose
-   choices are slotted? A per-element answer is either a table here or six surprises later.
+6. ~~**Step 2 of the rollout treats seven different shapes as one.**~~ **Closed**, and the code had
+   already answered most of it — including both questions asked here. `<ui-radio-group>` describes
+   the `<div role="radiogroup">` and not each radio, decided when the component was written;
+   `<ui-select>` describes the box, and its slotted choices are not described at all. What the
+   elements differ by is not their shape but **whether they compose an id list today**, which is
+   three categories rather than seven shapes. _What step 2 is actually extending_ below carries it.
 
 7. ~~**`help` has no default to discontinue.**~~ **Closed.** There was never a default: `help = ''`
    and the span is rendered only when it is not, so a control draws it because the host wrote it.
    The step is a change of documentation — no `minor`, no deprecation cycle, no line of `src/`.
    _`help` stops being the recommendation_ above carries it now, and the rollout has one step fewer.
 
-Points 1 to 5 need a decision rather than a measurement, and belong in one pass. **Point 6 comes
-first of what is left**, because it is the other one that changes what the rollout is rather than
-filling a blank in it.
+**Points 1 to 5 are what is left**, they need a decision rather than a measurement, and they belong
+in one pass — the two that changed the shape of the rollout are both closed.
 
 ## Decision
 
 **Not reached**, and all four questions are now answered — but _Proposed design_ closes on things
-the design does not yet say, six of them still open, and the first two block the rollout's first
+the design does not yet say, five of them still open, and the first two block the rollout's first
 step. Answering the
 four made this decidable; it did not make it buildable.
 
@@ -739,8 +777,11 @@ Ordered, each step making the next possible.
 1. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
    no supplementary text of any kind today and therefore the case with nothing to regress. The
    tooltip's observer arrives with it: an unsynchronised copy is a defect, not a later refinement.
-2. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
-   it should fire only for a trigger that accepts no text.
+2. **Extend to the remaining seven, in the order _What step 2 is actually extending_ sets** —
+   `<ui-menu>` first, because it reuses step 1's new path on the hardest element; then
+   `<ui-checkbox>` and `<ui-switch>`, which need a composer before they can hold a second id; then
+   the four that already have one. The warning from #158 narrows as each is covered: it should fire
+   only for a trigger that accepts no text.
 3. **Move the recommendation, and prune the transitional half** — `docs/` stops sending a consumer
    to `help` for supplementary text and sends them to the tip; `help`'s own page keeps it for the
    two cases a popover cannot serve; the transitional half of `docs/tooltip.md` and
