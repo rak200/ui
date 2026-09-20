@@ -350,6 +350,70 @@ purpose; if it ever needs to change, naming the event publicly is additive and c
 cycle. A host can also listen for the event and cancel it, which would break the handoff silently —
 nothing prevents that, and it is the exposure every custom event has.
 
+### Measured: the dispatch inherits the property's timing problem, and has no signal to recover
+
+The case against a public property is that a write before the element upgrades is silent. A
+dispatch before the element upgrades is silent in the same way, and it is worse here, because the
+design reads the return value as an answer. Dispatched at an element whose definition has not
+arrived:
+
+|                                                 |                                |
+| ----------------------------------------------- | ------------------------------ |
+| the element, before its definition              | an `HTMLElement`               |
+| the dispatch returns                            | **`true`**                     |
+| the upgraded element hears the earlier dispatch | **no**                         |
+| a dispatch after the upgrade returns            | `false` — the listener took it |
+
+`true` is what an element that accepts no text returns, so the two are indistinguishable and
+`#complain()` warns at a trigger that would have accepted. **That is the property's failure mode
+arriving at the protocol**, and it has to be answered here rather than assumed away.
+
+**What decides the answer is that no slotchange reports the upgrade.** The same fixture, watched
+from a tooltip's own hooks:
+
+| the trigger's definition | at `connectedCallback` | at either `slotchange` | when the definition lands |
+| ------------------------ | ---------------------- | ---------------------- | ------------------------- |
+| already registered       | **upgraded**           | upgraded               | —                         |
+| arriving later           | `HTMLElement`          | `HTMLElement`          | **nothing fires**         |
+
+The ordinary case — a host importing this package, so both definitions are registered before the
+markup is parsed — is already safe at the earliest hook there is. The late case has no recovery at
+all: no event fires, so a cadence built only on `slotchange` loses the handoff permanently and
+leaves a warning saying the trigger refused it. `customElements.whenDefined()` is the only signal,
+and it is a requirement rather than a refinement.
+
+### Measured: the trigger's own slot reports a replacement, and nothing listens to it
+
+`#associate` is wired to the tip's slot alone. The default slot fires too:
+
+| what changed                      | default slot | tip slot  |
+| --------------------------------- | ------------ | --------- |
+| first assignment                  | **fires**    | **fires** |
+| the **trigger** is replaced       | **fires**    | silent    |
+| the tip's text is edited in place | silent       | silent    |
+| the tip is removed                | silent       | **fires** |
+
+So a trigger a framework re-renders is announced, and this element hears none of it — which is the
+same sentence `#associate`'s own docblock already makes about the tip: a tip that is only wired the
+first time is one that stops being announced at a moment nothing reports. The third row is the
+in-place edit this proposal already measured, restated here because the four rows are one decision.
+
+### Measured: the reference is already left behind when the tip goes
+
+Before any protocol exists. A native trigger, described, with the tip then removed:
+
+|                                           |                    |
+| ----------------------------------------- | ------------------ |
+| `aria-describedby` while the tip is there | `ui-tooltip-1`     |
+| after the tip is removed                  | **`ui-tooltip-1`** |
+| that id resolves to anything              | **no**             |
+
+`#associate` returns at its guard when there is no tip, so the attribute it wrote is never unwritten
+and the trigger is left describing nothing. **This is the fifth blank's failure arriving a step
+early**, on the path this proposal was not going to touch: a control that keeps pointing at text the
+reader can no longer summon reads as current. A withdrawal is therefore owed on both paths, and the
+protocol is not what introduces the obligation — it is what makes it visible.
+
 ### Measured: 1.4.13's three requirements are gated on the one trigger the redesign removes
 
 Dismissible, Hoverable and Persistent each have a test today, and all three run against a native
@@ -525,6 +589,67 @@ available on all eight elements.
 copy and `slotchange` reports an in-place edit to neither the text nor the children. One per
 tooltip, watching its own slotted child, gone when the element is.
 
+### The handoff, written down
+
+Five blanks, and they turn out to be one decision rather than five. The payload is what ties them:
+once the sentence is a string whose empty value means _absent_, the withdrawal needs no second
+event and the cadence needs no accumulation rule.
+
+**The name is `ui-describe`, and it is written as a literal in every file that names it.** The two
+internal event names this package already has — `ui-radio-changed` and `ui-option-changed` — are
+module-level constants read by both ends in one file, and each carries a
+`Stryker disable next-line StringLiteral` saying the mutant is equivalent because nothing outside
+the module names it. **This one is the opposite case.** A trigger someone else wrote matches the
+literal, so the name is a contract with code the suite cannot see, and a shared constant would make
+every mutant on it equivalent _by construction_ — earning that same disable, and taking the one
+string in this package that must not drift out of the floor's reach. Written at each end, a mutant
+on either breaks the handoff and the test that exercises it kills it. It costs nine literals that
+have to agree; it buys nine the suite pins, and they are the same nine an outside implementer
+writes. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
+`ui-dismiss` report.
+
+**The payload is a `CustomEvent<string>`, and the sentence is `detail`.** An `Event` subclass has to
+be exported to be typed where it is read, which is the published symbol point 1 exists to avoid; a
+`CustomEvent` is constructible from platform primitives alone, so an outside implementer can
+exercise their own trigger without importing anything from here. And `detail` is a bare string
+rather than an object because `help` and `error` are both `= ''` already, and `described()` already
+drops the empty ones — the handed sentence is a third field of that shape, so `''` is the
+withdrawal and no new vocabulary enters. An object would need a second decision, whether
+`{ text: '' }`, an absent field and an absent `detail` mean the same thing, to say what one
+character already says.
+
+**The most recent dispatch wins, and a trigger never accumulates.** A tooltip has one tip, so this
+is a value being written and not an item being added — and accumulation would owe a withdrawal per
+sentence, which a tooltip has nothing to identify one by. It is dispatched at four points, and the
+fourth is not a refinement:
+
+1. **every `#associate`** — first assignment and the tip slot's `slotchange`, both wired today;
+2. **the default slot's `slotchange`, which is not wired today** — measured, a replaced trigger
+   fires it and this element hears nothing;
+3. **every `MutationObserver` callback**, which is where the in-place edits arrive, neither of them
+   firing a `slotchange`;
+4. **`customElements.whenDefined(trigger.localName)`**, where the trigger's name carries a hyphen
+   and no definition has arrived — measured, the upgrade fires nothing and there is no other
+   signal, so a cadence built on `slotchange` alone loses the handoff permanently. **`#complain()`
+   waits on the same promise**, because until the definition lands an uncancelled dispatch does not
+   mean refusal.
+
+**A withdrawal is `detail: ''` on the same event**, dispatched when the tip is removed or emptied
+and at `disconnectedCallback`, with the next `connectedCallback` re-dispatching — the arrangement
+`#listeners` already takes in this file, and for the same reason: a tooltip a framework moves in the
+tree has to come back able to do its job. **The reference owes the same withdrawal and does not make
+it today**, measured above, so step 1 carries both halves: a protocol that withdraws correctly
+beside an IDREF that does not is a component that is right in one half.
+
+**The sentence is described last — `error`, `help`, then it** — rendered under `id="description"`
+and composed **into the list**, never written into the attribute. The order already in the code is
+urgency and is deliberately not the visual order: `frame()` renders `help` above `error`, and
+`described()` announces `error` first, because the error is what sent the reader looking. The
+handed sentence is supplementary by construction, which is what this study establishes before it
+starts, so it follows both. Under the recommendation `help` is empty and the tip lands exactly
+where `help` would have; the two coexist only in the case Question 1 kept `help` for, and there the
+one already in flow is announced first.
+
 ### `help` stops being the recommendation, and stays a capability
 
 This is the objective rather than a consequence, and it is the part of this proposal that is not
@@ -615,60 +740,68 @@ sentence straight into the attribute instead of into the list — at which point
 instruction overwrite each other rather than coexisting, which is the failure `#described()` exists
 to prevent everywhere else.
 
-### What this design does not yet say
+### What this design did not yet say
 
-Seven things, and they are not research: six are blanks where a choice goes, and the seventh was a
-sentence that contradicted the code it described. **Six and seven are closed; the first five
-remain** — and both of the closed ones changed the rollout rather than filling a blank in it, which
-is why they were taken first. They are numbered so each can be closed on its
-own, and **the proposal is not implementable until they are** — the rollout's first step needs the
-first two before a line of it can be written.
+Seven things, and they were not research: six were blanks where a choice goes, and the seventh was
+a sentence that contradicted the code it described. **All seven are closed.** They were numbered so
+each could be taken on its own, and the last five were taken together because they are one
+decision — _The handoff, written down_ above carries them, and the paragraph there says why they do
+not separate.
 
-1. **The event has no name.** The case for a protocol over a property rests on it being "a string
-   in two files rather than a symbol in a published type", and the string is never given. It is
-   also the one decision that is awkward to change later: a name is what a trigger someone else
-   wrote would have to match.
+1. ~~**The event has no name.**~~ **Closed: `ui-describe`, as a literal at each end.** The two
+   internal event names here are shared constants carrying a `Stryker disable` for being equivalent
+   by construction, and this name is the opposite case — a trigger someone else wrote matches the
+   literal, so it is the one string in this package that has to stay inside the mutation floor's
+   reach.
 
-2. **Nor a payload shape.** `CustomEvent` with the sentence in `detail`, or an `Event` subclass
-   carrying its own field? This is not cosmetic, because the argument in point 1 is about which of
-   the two this is.
+2. ~~**Nor a payload shape.**~~ **Closed: a `CustomEvent<string>`, the sentence in `detail`.** A
+   subclass has to be exported to be typed where it is read, which is the published symbol point 1
+   exists to avoid. The string is bare rather than wrapped because `help` and `error` are already
+   `= ''` and `described()` already drops the empty ones.
 
-3. **When it is dispatched, and re-dispatched.** The `MutationObserver` exists because the sentence
-   crosses as a copy, so there is more than one dispatch — but the cadence is unwritten. At
-   `connectedCallback`, at every `slotchange`, at every observer callback? And is the contract that
-   the most recent dispatch wins, or that a trigger accumulates?
+3. ~~**When it is dispatched, and re-dispatched.**~~ **Closed: the most recent wins, at four
+   points.** A tooltip has one tip, so this is a value written rather than an item added. Two of
+   the four are wired today; the third is the observer; **the fourth is
+   `customElements.whenDefined()`**, and it is the one the measurement added — a trigger whose
+   definition arrives late fires no `slotchange`, so a cadence built on those alone loses the
+   handoff permanently while warning that the trigger refused it.
 
-4. **How a description is withdrawn.** The tooltip is removed, or its tip slot is emptied. Nothing
-   here says what the trigger is told. Without it, a control keeps pointing at text that describes
-   a tip the reader can no longer summon — which is worse than never having had it, because it
-   reads as current.
+4. ~~**How a description is withdrawn.**~~ **Closed: `detail: ''` on the same event**, at the tip's
+   removal and at `disconnectedCallback`. The measurement moved this one out of the protocol: the
+   IDREF path already leaves a removed tip's id on the trigger today, so the withdrawal is owed on
+   both halves and step 1 carries both.
 
-5. **Where the sentence lands in `aria-describedby`.** Every control here already composes that
-   list and the order is deliberate: `#described()` in `src/radio.ts` puts `error` before `help`,
-   filtering the empty ones. The handed-over sentence goes where? The order is what a reader hears,
-   so this is a decision rather than an implementation detail.
+5. ~~**Where the sentence lands in `aria-describedby`.**~~ **Closed: last — `error`, `help`, then
+   it**, composed into the list and never written into the attribute. The order in the code is
+   urgency rather than visual order, and a sentence that is supplementary by construction follows
+   both.
 
 6. ~~**Step 2 of the rollout treats seven different shapes as one.**~~ **Closed**, and the code had
    already answered most of it — including both questions asked here. `<ui-radio-group>` describes
    the `<div role="radiogroup">` and not each radio, decided when the component was written;
    `<ui-select>` describes the box, and its slotted choices are not described at all. What the
    elements differ by is not their shape but **whether they compose an id list today**, which is
-   three categories rather than seven shapes. _What step 2 is actually extending_ below carries it.
+   three categories rather than seven shapes. _What step 2 is actually extending_ above carries it.
 
 7. ~~**`help` has no default to discontinue.**~~ **Closed.** There was never a default: `help = ''`
    and the span is rendered only when it is not, so a control draws it because the host wrote it.
    The step is a change of documentation — no `minor`, no deprecation cycle, no line of `src/`.
    _`help` stops being the recommendation_ above carries it now, and the rollout has one step fewer.
 
-**Points 1 to 5 are what is left**, they need a decision rather than a measurement, and they belong
-in one pass — the two that changed the shape of the rollout are both closed.
+**Nothing here is left open**, and the rollout's first step can now be written. What the five
+changed in it is one line and one obligation: the trigger's own slot has to be listened to, and the
+withdrawal is owed on the reference as well as on the protocol.
 
 ## Decision
 
-**Not reached**, and all four questions are now answered — but _Proposed design_ closes on things
-the design does not yet say, five of them still open, and the first two block the rollout's first
-step. Answering the
-four made this decidable; it did not make it buildable.
+**Not reached, and nothing is left to answer.** The four questions are answered below, and the
+seven blanks _Proposed design_ used to close on are all filled — the last five in one pass, because
+they were one decision rather than five. What that changed is this document's standing rather than
+its content: answering the four made it decidable, and filling the seven makes it **buildable**.
+The rollout's first step can be written from what is here.
+
+**What is left is the act rather than the work.** Whether the library wants this design is a
+decision, and no measurement in this study settles that one.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
 objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
@@ -775,8 +908,13 @@ this.
 Ordered, each step making the next possible.
 
 1. **Build the handoff and prove it on one element end to end** — `<ui-button>`, being the one with
-   no supplementary text of any kind today and therefore the case with nothing to regress. The
-   tooltip's observer arrives with it: an unsynchronised copy is a defect, not a later refinement.
+   no supplementary text of any kind today and therefore the case with nothing to regress. Three
+   things arrive with it rather than after it, each because the half-built form is a defect and not
+   a rough edge: the tooltip's **observer**, since an unsynchronised copy is wrong rather than
+   stale; a `slotchange` listener on the **default slot**, since a replaced trigger is announced
+   and currently heard by nobody; and the **withdrawal on both paths**, since the IDREF already
+   leaves a removed tip's id behind and a protocol that withdraws correctly beside one that does
+   not is a component right in one half.
 2. **Extend to the remaining seven, in the order _What step 2 is actually extending_ sets** —
    `<ui-menu>` first, because it reuses step 1's new path on the hardest element; then
    `<ui-checkbox>` and `<ui-switch>`, which need a composer before they can hold a second id; then
