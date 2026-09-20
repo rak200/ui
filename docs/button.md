@@ -14,6 +14,7 @@ import '@rak200/ui';
 - [`variant`](#variant)
 - [`disabled`](#disabled)
 - [`ButtonVariant`](#buttonvariant)
+- [Supplementary text](#supplementary-text)
 - [Interaction states](#interaction-states)
 - [Styling](#styling)
 
@@ -57,6 +58,25 @@ so a host stylesheet can select on it.
 ## `ButtonVariant`
 
 The union of accepted `variant` values: `'primary' | 'secondary'`.
+
+## Supplementary text
+
+Wrap it in a [`<ui-tooltip>`](tooltip.md) and write the sentence once, where you already write it:
+
+```html
+<ui-tooltip>
+  <ui-button>Save</ui-button>
+  <span slot="tip">Saves without closing the dialog.</span>
+</ui-tooltip>
+```
+
+The tooltip cannot point at anything in this element's shadow root — an IDREF resolves in one tree
+scope — so it **hands the text over** and `<ui-button>` renders it into its own root, where its
+`<button>` can be described by it. Nothing at the call site says so, and there is no attribute or
+property to write: the sentence lives in the tip, and editing the tip changes what is announced.
+
+The copy in here is **not painted**, because the tip is already showing it. Take the tip away and
+the description goes with it.
 
 ## Interaction states
 

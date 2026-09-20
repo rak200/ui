@@ -1,4 +1,4 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
 
 /** How much visual weight a button carries. */
@@ -95,6 +95,31 @@ export class UiButton extends LitElement {
             background: ${reference('--ui-color-pressed')};
             transition-duration: 0s;
         }
+
+        /* The sentence a tooltip handed over: present to a screen reader and absent to
+       everybody else. It is already on screen — in the tip, which is the whole point of
+       the handoff — so drawing it again would show it twice.
+
+       display:none would be the shorter way and it is the one this package will not take.
+       The accessible description of a hidden element that is DIRECTLY referenced is
+       computed anyway, by specification; whether every engine does it is a claim this
+       toolchain cannot check, because no instrument here reads an accessibility tree.
+       docs/select.md already settles what to do with a feature that cannot be verified,
+       and the clip below has nothing left to disagree about: the node is in the tree in
+       every engine, and painted in none.
+
+       No offsets with the absolute, deliberately: an out-of-flow box with none stays at
+       its static position, so it neither travels nor grows the scrollable area. */
+        #description {
+            position: absolute;
+            inline-size: 1px;
+            block-size: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
     `;
 
     static override readonly properties = {
@@ -116,11 +141,70 @@ export class UiButton extends LitElement {
     /** Whether the button rejects interaction. Reflected, so CSS can select on it. */
     disabled = false;
 
+    /**
+     * The sentence a `<ui-tooltip>` handed over, empty until one does.
+     *
+     * **Private, and the update is asked for by hand rather than declared.** A declared
+     * reactive property is one a host can write, and a writable `description` is the
+     * option RFC 0006 rejected twice over: it makes the host write the same sentence a
+     * tooltip is already holding, and a property written before an element upgrades
+     * shadows its accessor permanently on anything not built on Lit — reading back a
+     * value it never delivered. What is public here is the event, which reports whether
+     * anyone took it.
+     */
+    #description = '';
+
+    constructor() {
+        super();
+
+        // In the constructor rather than on connection, because the listener has to exist
+        // by the time an upgrade is observable: the tooltip waits on
+        // `customElements.whenDefined`, which resolves after this has run.
+        this.addEventListener('ui-describe', this.#describe);
+    }
+
+    /**
+     * Takes the tip's sentence and renders it where an IDREF can reach it.
+     *
+     * An `aria-describedby` written in the host's tree cannot name a node in here — one
+     * IDREF, one tree scope — which is the failure #156 measured and this is the answer
+     * RFC 0006 chose. `preventDefault()` is the whole of the acknowledgement: the
+     * dispatch's return value is what tells the tooltip whether to warn, so a malformed
+     * payload is left unclaimed on purpose rather than accepted and ignored.
+     */
+    readonly #describe = (event: Event): void => {
+        // The payload is tested and the event's class is not, which is narrower than it
+        // looks: a plain `Event` carries no `detail` at all, so the type test below stops
+        // one as surely as an `instanceof` would. The guard that used to be here is gone
+        // because the mutation floor could not kill it — nothing reached it that the next
+        // line did not already turn away, which makes it dead weight rather than defence.
+        const handed: unknown = (event as CustomEvent<unknown>).detail;
+
+        if (typeof handed !== 'string') {
+            return;
+        }
+
+        event.preventDefault();
+
+        this.#description = handed;
+        this.requestUpdate();
+    };
+
     override render(): TemplateResult {
         return html`
-            <button class=${this.variant} ?disabled=${this.disabled} part="button">
+            <button
+                class=${this.variant}
+                ?disabled=${this.disabled}
+                aria-describedby=${this.#description === '' ? nothing : 'description'}
+                part="button"
+            >
                 <slot></slot>
             </button>
+            ${
+                this.#description === ''
+                    ? nothing
+                    : html`<span id="description">${this.#description}</span>`
+            }
         `;
     }
 }

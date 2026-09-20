@@ -53,17 +53,21 @@ export default meta;
 /**
  * The ordinary case: hover it, or tab to it.
  *
- * The trigger here is a `<ui-button>`, and its *description* does not arrive — the
- * `<button>` it focuses lives in a shadow root, and an IDREF does not cross that boundary
- * in either direction. Every control this package draws is in that position. It is shown
- * anyway because it is what a reader will try first, and the console says so on sight;
- * `docs/tooltip.md` says what to write instead when the text has to be announced.
+ * The trigger is a `<ui-button>`, which focuses a `<button>` in its own shadow root — so
+ * the `aria-describedby` this element writes reaches it in neither direction. **The
+ * sentence is handed over instead**, and `<ui-button>` renders it where its own control
+ * can be described by it, which is RFC 0006's first rollout step. Nothing here says so:
+ * the composition is the same one that did not work before.
+ *
+ * The other seven controls arrive in order; until each does, the console says so on sight
+ * and `docs/tooltip.md` says what to write in the meantime.
  */
 export const Tooltip: StoryObj<TooltipArgs> = {};
 
 /**
- * A native trigger, which is the one whose description actually reaches a screen reader:
- * the control is in the host's tree, so both ends of the reference are.
+ * A native trigger, which needs no handoff at all: the control is in the host's tree, so
+ * both ends of the reference already are. This is the path that never broke, and the one
+ * the whole package returns to the day Reference Target lands.
  */
 export const OnAControlYouWrote: StoryObj<TooltipArgs> = {
     args: { label: 'Amount', tip: 'Two decimals, in BRL.' },

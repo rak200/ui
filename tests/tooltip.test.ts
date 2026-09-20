@@ -82,6 +82,29 @@ class DrawsInside extends HTMLElement {
     }
 }
 
+/**
+ * A trigger that accepts the handoff, which is what `<ui-button>` became in RFC 0006's
+ * first rollout step. Written here rather than reaching for `<ui-button>` for the reason
+ * the three above give: these tests are about the protocol, not about which component
+ * happens to implement it.
+ */
+class TakesTheText extends HTMLElement {
+    /** Every sentence it was handed, in order, so the cadence can be asserted and not only the last. */
+    readonly handed: string[] = [];
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<button type="button">Save</button>';
+        this.addEventListener('ui-describe', (event) => {
+            if (event instanceof CustomEvent && typeof event.detail === 'string') {
+                this.handed.push(event.detail);
+                event.preventDefault();
+            }
+        });
+    }
+}
+
+customElements.define('test-takes-the-text', TakesTheText);
 customElements.define('test-hands-focus-on', HandsFocusOn);
 customElements.define('test-focuses-inside', FocusesInside);
 customElements.define('test-draws-inside', DrawsInside);
@@ -337,6 +360,295 @@ describe('ui-tooltip', () => {
         await userEvent.hover(trigger(host));
 
         expect(trigger(host).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('hands it the moment it is wired, when the definition has already arrived', () => {
+        // Synchronously, and nothing is awaited here on purpose. A registry that already
+        // holds the name needs no waiting, and waiting anyway would put every description
+        // in this package a turn behind for the sake of the one case it cannot help.
+        const element = document.createElement('ui-tooltip');
+        const taker = document.createElement('test-takes-the-text') as TakesTheText;
+        const tip = document.createElement('span');
+
+        tip.slot = 'tip';
+        tip.textContent = 'Saves.';
+        element.append(taker, tip);
+
+        document.body.append(element);
+
+        expect(taker.handed).toEqual(['Saves.']);
+    });
+
+    it('stops watching a tip it has let go of', async () => {
+        // The observer rides in the wiring, so letting go has to take it with it —
+        // otherwise a tip removed from the page goes on describing the trigger it left.
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+        const gone = tip(host);
+
+        gone.remove();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed).toEqual(['Saves.', '']);
+
+        gone.textContent = 'Edited after it left.';
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed, 'a tip it let go of says nothing more').toEqual(['Saves.', '']);
+    });
+
+    it('hands the sentence to a trigger that takes it', async () => {
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves without closing the dialog.</span>
+            </ui-tooltip>
+        `);
+
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+
+        expect(taker.handed).toEqual(['Saves without closing the dialog.']);
+    });
+
+    it('says nothing when the sentence was taken', async () => {
+        // The warning is #158's and it narrows as each element is covered: an uncancelled
+        // dispatch is the only condition, so a trigger that accepts needs no roster entry.
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('hands it again when the tip is rewritten in place', async () => {
+        // `slotchange` reports neither in-place edit — measured — so the observer is what
+        // keeps the copy fresh, and the most recent dispatch is the one that counts.
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+
+        tip(host).textContent = 'Saves without closing the dialog.';
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed.at(-1)).toBe('Saves without closing the dialog.');
+    });
+
+    it('hands it again when a node is appended to the tip', async () => {
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+
+        tip(host).append(' Twice.');
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed.at(-1)).toBe('Saves. Twice.');
+    });
+
+    it('hands over the sentence and not the markup around it', async () => {
+        // A tip written across lines carries the indentation into its text, and what the
+        // trigger renders is announced rather than laid out — so the whitespace is not
+        // cosmetic there, it is the sentence.
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">
+                    Saves without closing the dialog.
+                </span>
+            </ui-tooltip>
+        `);
+
+        expect((only(host, 'test-takes-the-text') as TakesTheText).handed).toEqual([
+            'Saves without closing the dialog.',
+        ]);
+    });
+
+    it('hands it again when the edit lands on a node inside the tip', async () => {
+        // The tip is one element to `slotchange` and a subtree to everything else: an edit
+        // can land on a descendant as readily as on the tip itself, and a host writing
+        // emphasis into a sentence is the ordinary way that happens.
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves <em>quickly</em>.</span>
+            </ui-tooltip>
+        `);
+
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+        const inner = only(host, 'em').firstChild;
+
+        if (!(inner instanceof Text)) {
+            throw new Error('the fixture lost its text node');
+        }
+
+        inner.data = 'slowly';
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed.at(-1)).toBe('Saves slowly.');
+    });
+
+    it('speaks for the pair it is wired to now, not the one it was waiting on', async () => {
+        // The definition can arrive after the trigger it was being waited on for is gone.
+        // Handing over then would describe the element that replaced it a second time,
+        // with a sentence nobody asked to be re-sent.
+        const tag = `test-abandoned-${String(Date.now())}`;
+
+        const host = await mount(`
+            <ui-tooltip>
+                <${tag}></${tag}>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const abandoned = only(host, tag);
+        const replacement = document.createElement('test-takes-the-text') as TakesTheText;
+        const heard: unknown[] = [];
+
+        // Listened to from out here rather than through the class, because an element
+        // taken out of the document is never upgraded — so once it is replaced, its own
+        // definition arriving gives it nothing to hear with.
+        abandoned.addEventListener('ui-describe', (event) => {
+            if (event instanceof CustomEvent) {
+                heard.push(event.detail);
+            }
+        });
+
+        abandoned.replaceWith(replacement);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(replacement.handed, 'wired, and handed once').toEqual(['Saves.']);
+        expect(heard, 'and the one it replaced was let go of').toEqual(['']);
+
+        customElements.define(tag, class extends TakesTheText {});
+        await customElements.whenDefined(tag);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(heard, 'the one it was waiting on is never handed to').toEqual(['']);
+        expect(replacement.handed, 'and the one it holds is not told twice').toEqual(['Saves.']);
+    });
+
+    it('withdraws with an empty sentence when the tip goes', async () => {
+        // Without it a control keeps pointing at text describing a tip the reader can no
+        // longer summon, which reads as current and is worse than never having had it.
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+
+        tip(host).remove();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed.at(-1)).toBe('');
+    });
+
+    it('withdraws when the tooltip itself is taken out of the document', async () => {
+        // The trigger is the tooltip's own child and usually leaves with it. This is the
+        // host that moves the trigger out first, and the framework that unmounts one side.
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const element = only(host, 'ui-tooltip');
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+
+        element.remove();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed.at(-1)).toBe('');
+    });
+
+    it('hands it again when a tooltip a framework moved comes back', async () => {
+        const host = await mount(`
+            <ui-tooltip>
+                <test-takes-the-text></test-takes-the-text>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        const element = only(host, 'ui-tooltip');
+        const taker = only(host, 'test-takes-the-text') as TakesTheText;
+
+        element.remove();
+        host.append(element);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(taker.handed.at(-1)).toBe('Saves.');
+    });
+
+    it('waits for a trigger whose definition has not arrived yet', async () => {
+        // Measured: a dispatch before the upgrade is heard by nobody and comes back
+        // uncancelled, which is what a trigger that accepts no text returns — and the
+        // upgrade itself fires no slotchange, so this promise is the only signal there is.
+        const tag = `test-late-${String(Date.now())}`;
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        const host = await mount(`
+            <ui-tooltip>
+                <${tag}></${tag}>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        expect(
+            warn,
+            'nothing is said while refusal cannot be told from absence',
+        ).not.toHaveBeenCalled();
+
+        customElements.define(tag, class extends TakesTheText {});
+        await customElements.whenDefined(tag);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect((only(host, tag) as TakesTheText).handed).toEqual(['Saves.']);
+        expect(warn).not.toHaveBeenCalled();
     });
 
     it('says out loud that a description will not arrive, rather than losing it quietly', async () => {

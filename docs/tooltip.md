@@ -60,24 +60,27 @@ removes is the one it wrote.
 **A tooltip describes the element the browser actually focuses.** So the trigger should be a native
 focusable element — `<button>`, `<a href>`, an `<input>` — or something you made focusable yourself.
 
-**The description does not arrive on an element that focuses inside its own shadow root**, which is
-most of this package: every control here draws its own. An IDREF does not cross that boundary in
-either direction — measured, an element inside a shadow root cannot resolve an id in the document,
-and an `aria-describedby` on the host sits on a different node than the one a screen reader reads
-when focus lands. Such a trigger shows the tip and places it correctly, and loses the announcement.
+**A reference does not reach into a shadow root**, in either direction — measured: an element
+inside one cannot resolve an id in the document, and an `aria-describedby` on the host sits on a
+different node than the one a screen reader reads when focus lands. Every control in this package
+draws its own, so for most of it the reference alone announces nothing.
 
-**This is stated as a rule rather than as a list of tags on purpose.** The sentence it replaced
-named one element, and was true when it was written; a list of the elements that draw their own
-control is a list that goes stale the same way, and the reader who needs it is looking at their own
-trigger rather than counting ours.
+**So the text is handed over instead of pointed at.** The tooltip dispatches the tip's sentence at
+its trigger; a component that accepts it renders the text into its own shadow root and points its
+own control at it, which puts both ends in one scope. Nothing at the call site changes, there is no
+attribute or property to write, and editing the tip changes what is announced.
 
-**The element says so in the console** when it describes a trigger that focuses inside its own
-shadow root, naming the trigger and the way out. Nothing on the page looks wrong in that case — the
-tip shows and lands where it should — so a warning is the only thing that reports it.
+**The test is the console, not a list of tags.** A component that does not accept the sentence is
+told about in a warning naming the trigger and the way out — nothing on the page looks wrong
+otherwise, because the tip shows and lands where it should. So the question _will my trigger be
+announced?_ is answered by opening the console rather than by counting elements here: a roster of
+tags goes stale the way the sentence it replaced did, which named one element and was true when it
+was written.
 
-**Where the text has to be announced, the trigger has to be a control you wrote** — a native
-`<button>`, `<a href>` or form control, which is the composition below. Where it does not, the tip
-is decoration and should not be the only place the information exists anyway.
+**Today `<ui-button>` accepts it**, and the rest of the package arrives in order. Until each does,
+a trigger that draws its own control and is not on that list needs the description to come from a
+control you wrote — a native `<button>`, `<a href>` or form control, which is the composition
+below.
 
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.
