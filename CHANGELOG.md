@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/rak200/ui/compare/0.6.1...0.6.2) (2026-09-20)
+
+
+### Bug Fixes
+
+* **toast:** the two survivors the diff-narrowed floor could not see ([#184](https://github.com/rak200/ui/issues/184)) ([d57ad34](https://github.com/rak200/ui/commit/d57ad34815555d4ef8177d1db6afd7e1a2088085))
+
 ## [0.6.1](https://github.com/rak200/ui/compare/0.6.0...0.6.1) (2026-09-19)
 
 
