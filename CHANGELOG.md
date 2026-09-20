@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/rak200/ui/compare/0.6.3...0.6.4) (2026-09-20)
+
+
+### Features
+
+* **tooltip:** the handoff, proved on ui-button ([#195](https://github.com/rak200/ui/issues/195)) ([211867c](https://github.com/rak200/ui/commit/211867c59e290bf734052e8eb99b424328619b9d))
+
 ## [0.6.3](https://github.com/rak200/ui/compare/0.6.2...0.6.3) (2026-09-20)
 
 
