@@ -402,6 +402,14 @@ export class UiToast extends LitElement {
         this.#stop();
         this.#listeners.abort();
 
+        // Stryker disable next-line CallExpression: this reaches exactly two things in Lit
+        // and this element has neither — `__controllers` is empty, because nothing here
+        // registers a reactive controller, and `__childPart.setConnected(false)` speaks only
+        // to async directives, which this template does not use. Read from `lit-element` and
+        // `reactive-element` rather than assumed, so no input distinguishes the call from its
+        // absence. It stays because Lit documents the super call as the extension point it
+        // reserves for later additions: the day this element grows a controller or an async
+        // directive, the mutant stops being equivalent and nothing else would say so.
         super.disconnectedCallback();
     }
 
@@ -482,11 +490,17 @@ export class UiToast extends LitElement {
         // Dismissed twice — the button clicked while the clock was already up, say — is one
         // dismissal. Without this the second pass fires a second `ui-dismiss` for a toast
         // that has already left.
+        //
+        // **It is also why no `#stop()` belongs here**, which is worth writing down because
+        // one used to be. A clock still running when a dismissal starts fires into this very
+        // guard — the class goes on the next line with no await between, so there is no
+        // window — and the removal below runs `disconnectedCallback`, which stops it anyway.
+        // The call was unobservable on every input, which mutation testing reports as a
+        // survivor rather than as the dead line it was.
         if (this.classList.contains(closing)) {
             return;
         }
 
-        this.#stop();
         this.classList.add(closing);
 
         // `finished` rejects when an animation is cancelled, so what this waits for is
