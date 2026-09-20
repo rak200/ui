@@ -11,12 +11,18 @@ correctly, and is never announced. That is most of this package. The documentati
 element, which was true when it was written.
 
 **The mechanism did not change, its reach did.** `<ui-tooltip>` says so in the console now, which
-settles the half that was dangerous — the failure was silent. What is left is whether a description
-should cross at all, and the answer is not a measurement: **there is no instrument here that can
-take one.** Playwright has removed its accessibility tree API and `ariaSnapshot()` carries the
-accessible name alone, so whether `aria-description` reaches a reader cannot be verified in one
-engine, let alone three. What remains is a design choice between building the crossing and declining
-it.
+settles the half that was dangerous — the failure was silent.
+
+**The design choice is made.** [RFC 0006](docs/proposals/0006-supplementary-text.md) is
+accepted: the tooltip hands its sentence to the trigger through a cancelable event, and the
+trigger renders it into its own shadow root where an IDREF resolves. `aria-description` was not the answer and could not have
+been — Playwright has removed its accessibility tree API and `ariaSnapshot()` carries the accessible
+name alone, so whether a copied description reaches a reader cannot be verified in one engine, let
+alone three, and a feature that cannot be verified is not adopted here.
+
+What is left is building it, in three ordered steps: the handoff proved on `<ui-button>`, then the
+remaining seven starting with `<ui-menu>`, then the documentation moving the recommendation off
+`help`. This entry goes when the third lands.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

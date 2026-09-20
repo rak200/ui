@@ -1,6 +1,6 @@
 # RFC 0006 — Supplementary text, and where it is allowed to live
 
-- **Status**: Exploring
+- **Status**: Accepted
 - **Scope**: library
 - **Created**: 2026-09-11
 
@@ -603,9 +603,11 @@ the module names it. **This one is the opposite case.** A trigger someone else w
 literal, so the name is a contract with code the suite cannot see, and a shared constant would make
 every mutant on it equivalent _by construction_ — earning that same disable, and taking the one
 string in this package that must not drift out of the floor's reach. Written at each end, a mutant
-on either breaks the handoff and the test that exercises it kills it. It costs nine literals that
-have to agree; it buys nine the suite pins, and they are the same nine an outside implementer
-writes. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
+on either breaks the handoff and the test that exercises it kills it. It costs **seven** literals
+that have to agree — one dispatch and six listeners, because the eight triggers are six classes:
+`UiTextField` is `<ui-input>` and `<ui-textarea>`, and `UiToggle` is `<ui-checkbox>` and
+`<ui-switch>`. It buys seven the suite pins, and the listener's is the same literal an outside
+implementer writes. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
 `ui-dismiss` report.
 
 **The payload is a `CustomEvent<string>`, and the sentence is `detail`.** An `Event` subclass has to
@@ -794,14 +796,30 @@ withdrawal is owed on the reference as well as on the protocol.
 
 ## Decision
 
-**Not reached, and nothing is left to answer.** The four questions are answered below, and the
-seven blanks _Proposed design_ used to close on are all filled — the last five in one pass, because
-they were one decision rather than five. What that changed is this document's standing rather than
-its content: answering the four made it decidable, and filling the seven makes it **buildable**.
-The rollout's first step can be written from what is here.
+**Accepted**, and what it commits to is narrower than what this proposal opened with. The four
+questions are answered below and the seven blanks _Proposed design_ used to close on are all
+filled — the last five in one pass, because they were one decision rather than five.
 
-**What is left is the act rather than the work.** Whether the library wants this design is a
-decision, and no measurement in this study settles that one.
+**What is built** is the handoff: a cancelable `ui-describe` carrying the tip's sentence, dispatched
+at the trigger, accepted by a control that renders the text into its own shadow root and calls
+`preventDefault()`. The tooltip owns a `MutationObserver` over its own tip, because the sentence
+crosses as a copy. `help` stops being what a consumer is told to reach for and stays available for
+the two cases a popover measurably cannot serve.
+
+**What is not built** is most of what was considered. No public `description` property, so no API
+surface and no deprecation cycle. No `aria-description`, which no instrument in this toolchain can
+verify. No bridge, no reach into the trigger's root, and no waiting for Reference Target. And no
+release: the `help` step turned out to be documentation, so nothing here cuts a version on its own.
+
+**What it costs, named here rather than discovered in the rollout.** This is machinery with a known
+expiry — the day Reference Target lands, the tooltip's existing `aria-describedby` starts working
+and the handoff becomes deletable. That is not an argument against building it, and it is the
+argument that chose its shape: a protocol is a deletion where a published property would have been
+a deprecation. The other cost is that a trigger someone else wrote cannot opt in without reading
+this package's source, and #158's warning fires at it until it does.
+
+**What this does not decide** is when any of it is built. The rollout below is ordered and each step
+makes the next possible; none of them is scheduled here.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
 objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
