@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/rak200/ui/compare/0.6.2...0.6.3) (2026-09-20)
+
+
+### Bug Fixes
+
+* **tooltip:** the tip takes its id back out when it goes ([#191](https://github.com/rak200/ui/issues/191)) ([6aa6fbb](https://github.com/rak200/ui/commit/6aa6fbbb0a6d042ddd152ac228858fe959ed8cfc))
+
 ## [0.6.2](https://github.com/rak200/ui/compare/0.6.1...0.6.2) (2026-09-20)
 
 
