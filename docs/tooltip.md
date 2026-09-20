@@ -50,6 +50,11 @@ What the element writes on your tip: an `id` (only if it has none), `role="toolt
 wrote no role), `popover="manual"`, and a `data-side` saying which way it was placed. What it writes
 on your trigger: `aria-describedby`, **added to** whatever was already there rather than replacing it.
 
+**And it takes that one entry back out when it lets go.** Replace either child and the wiring
+follows: a new tip is described and the old id is removed, a new trigger is described and the old
+one is left bare. Whatever else was in `aria-describedby` stays, because the entry this element
+removes is the one it wrote.
+
 ## The trigger has to be focusable, and in your tree
 
 **A tooltip describes the element the browser actually focuses.** So the trigger should be a native

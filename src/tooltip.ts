@@ -17,6 +17,18 @@ const side = 'data-side';
 const focusable = 'a[href], button, input, select, textarea, [tabindex]';
 
 /**
+ * The ids already describing a trigger, as a list rather than the attribute's string.
+ *
+ * Both halves of the wiring read it — one to add an id, the other to take the same one
+ * back out — and they have to agree about what the string means. The empty filter is what
+ * makes an absent attribute an empty list: `''.split(' ')` is `['']`, and a list with one
+ * empty entry joins back with a leading space.
+ */
+function describing(trigger: HTMLElement): string[] {
+    return (trigger.getAttribute('aria-describedby') ?? '').split(' ').filter((id) => id !== '');
+}
+
+/**
  * Supplementary text on hover and on keyboard focus.
  *
  * **Everything is slotted**, for a measured reason: an IDREF does not cross a shadow
@@ -131,6 +143,17 @@ export class UiTooltip extends LitElement {
     #shown = false;
 
     /**
+     * The pair this element last wired, so a change can be told from a re-notification.
+     *
+     * Both slots report, and at first assignment both report the same pair — so without
+     * this the wiring would run twice and the warning would be said twice for one trigger.
+     * It is also what makes the reference removable: an id can only be taken back out of a
+     * list the element does not own if the element remembers which id was its own, and
+     * which trigger it put there. #189
+     */
+    #wired: { trigger: HTMLElement; tip: HTMLElement } | undefined;
+
+    /**
      * Whether the reader dismissed the tip and has not left the trigger since.
      *
      * Separate from {@link UiTooltip.#shown}, because hidden and dismissed are not the same
@@ -236,7 +259,7 @@ export class UiTooltip extends LitElement {
 
     override render(): TemplateResult {
         return html`
-            <slot></slot>
+            <slot @slotchange=${this.#associate}></slot>
             <slot name="tip" @slotchange=${this.#associate}></slot>
         `;
     }
@@ -258,9 +281,19 @@ export class UiTooltip extends LitElement {
     /**
      * Makes the tip a popover, names it, and points the trigger at it.
      *
-     * On `slotchange` as well as at first render, because a framework re-render replaces
-     * the element rather than mutating it — and a tip that is only wired the first time is
-     * one that stops being announced at a moment nothing reports.
+     * **Both slots report**, because a framework re-render replaces an element rather than
+     * mutating it and either end can be the one replaced — a tip that is only wired the
+     * first time stops being announced at a moment nothing reports, and a trigger that is
+     * only described the first time is a *new* trigger nothing describes at all. The
+     * second half was measured: replacing the trigger fires the default slot, which this
+     * element did not listen to. #189
+     *
+     * **The previous wiring is undone before the next one is made**, and that is the whole
+     * of the removal: the guard below returns when there is nothing to wire, so before
+     * {@link UiTooltip.#unwire} existed the one code path that knew the tip was gone was
+     * the path that did nothing about it — leaving the trigger pointing at an id that
+     * resolves to nothing, and leaving this element believing it owned an entry a later
+     * render would append beside.
      *
      * A `role` or an `id` the host wrote is never overwritten. `aria-describedby` is
      * **added to** rather than replaced: the trigger may already be described by something
@@ -270,6 +303,13 @@ export class UiTooltip extends LitElement {
     readonly #associate = (): void => {
         const trigger = this.#trigger();
         const tip = this.#tip();
+        const wired = this.#wired;
+
+        if (wired !== undefined && wired.trigger === trigger && wired.tip === tip) {
+            return;
+        }
+
+        this.#unwire();
 
         if (trigger === undefined || tip === undefined) {
             return;
@@ -288,16 +328,44 @@ export class UiTooltip extends LitElement {
 
         tip.setAttribute('popover', 'manual');
 
-        const described = (trigger.getAttribute('aria-describedby') ?? '')
-            .split(' ')
-            .filter((id) => id !== '');
+        const described = describing(trigger);
 
         if (!described.includes(tip.id)) {
             trigger.setAttribute('aria-describedby', [...described, tip.id].join(' '));
         }
 
+        this.#wired = { trigger, tip };
+
         this.#complain(trigger);
     };
+
+    /**
+     * Takes back the one id this element wrote, and leaves every other one alone.
+     *
+     * The attribute is removed rather than left empty when nothing else was in it, because
+     * an empty `aria-describedby` is not the same shape as an absent one — `src/input.ts`
+     * keeps a whole helper for that distinction — and a trigger this element found bare
+     * should be bare again when it lets go.
+     */
+    #unwire(): void {
+        const wired = this.#wired;
+
+        if (wired === undefined) {
+            return;
+        }
+
+        this.#wired = undefined;
+
+        const remaining = describing(wired.trigger).filter((id) => id !== wired.tip.id);
+
+        if (remaining.length === 0) {
+            wired.trigger.removeAttribute('aria-describedby');
+
+            return;
+        }
+
+        wired.trigger.setAttribute('aria-describedby', remaining.join(' '));
+    }
 
     /**
      * Says out loud that the description will not arrive.

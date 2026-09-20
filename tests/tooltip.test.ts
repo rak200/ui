@@ -235,6 +235,95 @@ describe('ui-tooltip', () => {
         expect(trigger(host).getAttribute('aria-describedby')).toBe(same.id);
     });
 
+    it('names a tip the trigger was already pointing at only once', async () => {
+        // The pair wired by hand and then wrapped, which is the case that still reaches
+        // the guard. The test above stopped reaching it once the element began comparing
+        // the pair it last wired: taking the same tip out and putting it back is now a
+        // re-notification rather than a change, so it returns before the list is read.
+        // The end state it asserts is unchanged; what it no longer exercises is this.
+        const host = await mount(`
+            <ui-tooltip>
+                <button type="button" aria-describedby="chosen">Save</button>
+                <span slot="tip" id="chosen">Saves.</span>
+            </ui-tooltip>
+        `);
+
+        expect(trigger(host).getAttribute('aria-describedby')).toBe('chosen');
+    });
+
+    it('takes its id back out when the tip goes, rather than pointing at nothing', async () => {
+        // A dangling IDREF is not a missing description. The platform resolves the
+        // attribute when it is read, so this render costs the reader nothing — the damage
+        // is that the element still believes it owns an entry, and the next tip is
+        // appended beside the dead one. #189
+        const host = await mount(fixture);
+        const gone = tip(host).id;
+
+        tip(host).remove();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(document.getElementById(gone), 'the id resolves to nothing').toBeNull();
+        expect(trigger(host).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('leaves the description the host wrote when it takes its own back out', async () => {
+        // The mirror of adding to a list rather than replacing it: taking one entry out
+        // must not take the neighbours with it.
+        const host = await mount(`
+            <ui-tooltip>
+                <button type="button" aria-describedby="elsewhere">Save</button>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+            <span id="elsewhere">Something else</span>
+        `);
+
+        tip(host).remove();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(trigger(host).getAttribute('aria-describedby')).toBe('elsewhere');
+    });
+
+    it('keeps the ids it leaves behind apart from each other', async () => {
+        // Two of them, because one cannot tell a separator from no separator.
+        const host = await mount(`
+            <ui-tooltip>
+                <button type="button" aria-describedby="first second">Save</button>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+            <span id="first">One</span>
+            <span id="second">Two</span>
+        `);
+
+        tip(host).remove();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(trigger(host).getAttribute('aria-describedby')).toBe('first second');
+    });
+
+    it('describes a trigger that replaced the one it was wired to', async () => {
+        // The default slot reports a replacement and this element did not listen to it,
+        // so a framework re-rendering the trigger left the new one undescribed. #189
+        const host = await mount(fixture);
+        const first = trigger(host);
+        const replacement = document.createElement('button');
+        replacement.type = 'button';
+        replacement.textContent = 'Save';
+
+        first.replaceWith(replacement);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(replacement.getAttribute('aria-describedby')).toBe(tip(host).id);
+        expect(first.hasAttribute('aria-describedby'), 'the old one let go').toBe(false);
+    });
+
     it('does nothing at all when there is no trigger to describe', async () => {
         const host = await mount('<ui-tooltip><span slot="tip">Saves.</span></ui-tooltip>');
 
