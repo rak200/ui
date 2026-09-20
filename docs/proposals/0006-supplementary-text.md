@@ -525,23 +525,38 @@ available on all eight elements.
 copy and `slotchange` reports an in-place edit to neither the text nor the children. One per
 tooltip, watching its own slotted child, gone when the element is.
 
-### `help` stops being the default, and stays a capability
+### `help` stops being the recommendation, and stays a capability
 
 This is the objective rather than a consequence, and it is the part of this proposal that is not
-forced by #156. It is also the part the study narrowed.
+forced by #156. It is also the part the study narrowed twice.
 
 A permanent block of text under every control is a layout decision the library makes on the host's
-behalf, and it is the wrong **default**: it is always visible whether or not it is wanted, it pushes
-every field apart, and it exists in four elements and not in the other three, so the library is
-already inconsistent about it. Supplementary text becomes the tooltip's, uniformly, for all eight.
+behalf, and it is the wrong thing to **recommend**: it is always visible whether or not it is
+wanted, it pushes every field apart, and it exists in four elements and not in the other three, so
+the library is already inconsistent about it. Supplementary text becomes the tooltip's, uniformly,
+for all eight.
 
 **Discontinuing it outright is what the measurement retired.** A persistent tip covers the field
 above it, so a form that needs two instructions read together, or one read beside a neighbour's
-error, cannot have them from a popover. `help` stays available for that; it stops being what a
-control renders because it has the attribute.
+error, cannot have them from a popover. `help` stays available for exactly that.
 
-> **That last sentence does not survive being read against the code** — open question 7 below, and
-> the only one of the seven that changes the shape of the rollout rather than filling a blank in it.
+**And there is no default to discontinue**, which this proposal said there was for as long as it
+went unread against the code:
+
+```ts
+help = '';
+…
+this.help === '' ? nothing : html`<span class="help" id="help" part="help">${this.help}</span>`
+```
+
+The property defaults to the empty string and the span is rendered only when it is not — and the
+`aria-describedby` list is composed the same way, from the ids that are non-empty. **A control draws
+`help` because the host wrote it, and never on its own.** An `<ui-input>` with no `help` renders no
+block and points at nothing, today.
+
+So what changes is which of the two a consumer is told to reach for, and nothing else. It is a
+change of documentation: **no `minor`, no deprecation cycle, no line of `src/`.** The rollout
+carried it as a release-shaped step and no longer does.
 
 **`error` stays visible and is not touched.** WCAG 3.3.1 asks for the error to be identified in
 text, and an error behind a hover is not identified.
@@ -567,8 +582,8 @@ text, and an error behind a hover is not identified.
 
 ### What this design does not yet say
 
-Seven things, and they are not research: six are blanks where a choice goes, and the seventh is a
-sentence that contradicts the code it describes. They are numbered so each can be closed on its
+Seven things, and they are not research: six are blanks where a choice goes, and the seventh was a
+sentence that contradicted the code it described. Seven is closed; six remain. They are numbered so each can be closed on its
 own, and **the proposal is not implementable until they are** — the rollout's first step needs the
 first two before a line of it can be written.
 
@@ -601,20 +616,20 @@ first two before a line of it can be written.
    `<ui-radio-group>` describe — the group, or each radio? What does `<ui-select>` do, whose
    choices are slotted? A per-element answer is either a table here or six surprises later.
 
-7. **`help` has no default to discontinue.** `help = ''` and the template renders the span only
-   when it is non-empty, so a control draws it **because the host wrote it** and never on its own.
-   So either this step is a change of documentation — in which case it is not a `minor`, needs no
-   deprecation cycle, and the rollout mislabels it — or `help` is to change behaviour, and this
-   proposal does not say into what. It is the only step that touches something already published,
-   and it is the least specified of the four.
+7. ~~**`help` has no default to discontinue.**~~ **Closed.** There was never a default: `help = ''`
+   and the span is rendered only when it is not, so a control draws it because the host wrote it.
+   The step is a change of documentation — no `minor`, no deprecation cycle, no line of `src/`.
+   _`help` stops being the recommendation_ above carries it now, and the rollout has one step fewer.
 
-Points 1 to 5 need a decision rather than a measurement, and belong in one pass. Points 6 and 7
-come first, because they change what the rollout is.
+Points 1 to 5 need a decision rather than a measurement, and belong in one pass. **Point 6 comes
+first of what is left**, because it is the other one that changes what the rollout is rather than
+filling a blank in it.
 
 ## Decision
 
-**Not reached**, and all four questions are now answered — but _Proposed design_ closes on seven
-things the design does not yet say, and the first two block the rollout's first step. Answering the
+**Not reached**, and all four questions are now answered — but _Proposed design_ closes on things
+the design does not yet say, six of them still open, and the first two block the rollout's first
+step. Answering the
 four made this decidable; it did not make it buildable.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
@@ -726,11 +741,15 @@ Ordered, each step making the next possible.
    tooltip's observer arrives with it: an unsynchronised copy is a defect, not a later refinement.
 2. **Extend to the remaining seven**, with the warning from #158 narrowing as each is covered:
    it should fire only for a trigger that accepts no text.
-3. **Discontinue `help` as a default** on the four elements that have it, keeping it as a
-   capability — a minor below `1.0.0`, and the deprecation and its replacement must coexist in one
-   release.
-4. **Prune the transitional half** of `docs/tooltip.md` and
-   [ARCHITECTURE.md](../../ARCHITECTURE.md), and close #156 pointing here.
+3. **Move the recommendation, and prune the transitional half** — `docs/` stops sending a consumer
+   to `help` for supplementary text and sends them to the tip; `help`'s own page keeps it for the
+   two cases a popover cannot serve; the transitional half of `docs/tooltip.md` and
+   [ARCHITECTURE.md](../../ARCHITECTURE.md) goes; #156 closes pointing here.
+
+**There were four, and the third was _discontinue `help` as a default_ — a minor below `1.0.0`,
+with the deprecation and its replacement required to coexist in one release.** There is no default
+to discontinue, so nothing is deprecated and nothing is released, and what remains is documentation
+the last step was always going to touch. The step did not shrink; it was never a step.
 
 **What is verified, and how.** Every step is gated by the suite that already exists: the
 `aria-describedby` written by a component resolves in its own root, axe reports no violation at
