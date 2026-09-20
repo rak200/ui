@@ -540,6 +540,9 @@ above it, so a form that needs two instructions read together, or one read besid
 error, cannot have them from a popover. `help` stays available for that; it stops being what a
 control renders because it has the attribute.
 
+> **That last sentence does not survive being read against the code** — open question 7 below, and
+> the only one of the seven that changes the shape of the rollout rather than filling a blank in it.
+
 **`error` stays visible and is not touched.** WCAG 3.3.1 asks for the error to be identified in
 text, and an error behind a hover is not identified.
 
@@ -562,9 +565,57 @@ text, and an error behind a hover is not identified.
   something to ship a library's accessibility story on. It is, however, the reason the handoff is
   designed to be deleted rather than deprecated.
 
+### What this design does not yet say
+
+Seven things, and they are not research: six are blanks where a choice goes, and the seventh is a
+sentence that contradicts the code it describes. They are numbered so each can be closed on its
+own, and **the proposal is not implementable until they are** — the rollout's first step needs the
+first two before a line of it can be written.
+
+1. **The event has no name.** The case for a protocol over a property rests on it being "a string
+   in two files rather than a symbol in a published type", and the string is never given. It is
+   also the one decision that is awkward to change later: a name is what a trigger someone else
+   wrote would have to match.
+
+2. **Nor a payload shape.** `CustomEvent` with the sentence in `detail`, or an `Event` subclass
+   carrying its own field? This is not cosmetic, because the argument in point 1 is about which of
+   the two this is.
+
+3. **When it is dispatched, and re-dispatched.** The `MutationObserver` exists because the sentence
+   crosses as a copy, so there is more than one dispatch — but the cadence is unwritten. At
+   `connectedCallback`, at every `slotchange`, at every observer callback? And is the contract that
+   the most recent dispatch wins, or that a trigger accumulates?
+
+4. **How a description is withdrawn.** The tooltip is removed, or its tip slot is emptied. Nothing
+   here says what the trigger is told. Without it, a control keeps pointing at text that describes
+   a tip the reader can no longer summon — which is worse than never having had it, because it
+   reads as current.
+
+5. **Where the sentence lands in `aria-describedby`.** Every control here already composes that
+   list and the order is deliberate: `#described()` in `src/radio.ts` puts `error` before `help`,
+   filtering the empty ones. The handed-over sentence goes where? The order is what a reader hears,
+   so this is a decision rather than an implementation detail.
+
+6. **Step 2 of the rollout treats seven different shapes as one.** "Extend to the remaining seven"
+   reads as repetition, and each element points at something different: which control does
+   `<ui-radio-group>` describe — the group, or each radio? What does `<ui-select>` do, whose
+   choices are slotted? A per-element answer is either a table here or six surprises later.
+
+7. **`help` has no default to discontinue.** `help = ''` and the template renders the span only
+   when it is non-empty, so a control draws it **because the host wrote it** and never on its own.
+   So either this step is a change of documentation — in which case it is not a `minor`, needs no
+   deprecation cycle, and the rollout mislabels it — or `help` is to change behaviour, and this
+   proposal does not say into what. It is the only step that touches something already published,
+   and it is the least specified of the four.
+
+Points 1 to 5 need a decision rather than a measurement, and belong in one pass. Points 6 and 7
+come first, because they change what the rollout is.
+
 ## Decision
 
-**Not reached**, and all four questions are now answered.
+**Not reached**, and all four questions are now answered — but _Proposed design_ closes on seven
+things the design does not yet say, and the first two block the rollout's first step. Answering the
+four made this decidable; it did not make it buildable.
 
 **Question 1 — does discontinuing visible `help` hold?** Normatively, yes, and the criterion the
 objection named was the wrong one. 3.3.3 says nothing about presentation; 3.3.2's Understanding
