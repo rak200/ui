@@ -7,6 +7,7 @@ import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Disabled, Primary, Secondary, States } from '../stories/button.stories.js';
 import '../src/button.js';
+import '../src/tooltip.js';
 import type { UiButton } from '../src/button.js';
 
 /** Mounts a `<ui-button>` and waits for its first render. */
@@ -368,6 +369,112 @@ describe('the interaction states', () => {
  * The playground's gate. A story that stops compiling or stops rendering fails here rather
  * than on the deploy, which runs after the required check.
  */
+/**
+ * RFC 0006's first rollout step. An `aria-describedby` written in the host's tree cannot
+ * name a node in this shadow root — one IDREF, one tree scope — so `<ui-tooltip>` hands the
+ * sentence over instead and this element renders it where the reference resolves.
+ *
+ * `<ui-button>` is the element the proposal chose to prove it on: it is the one with no
+ * supplementary text of any kind today, so there is nothing here to regress.
+ */
+describe('the description a tooltip hands over', () => {
+    /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
+    function hand(element: UiButton, detail: unknown): boolean {
+        return !element.dispatchEvent(new CustomEvent('ui-describe', { detail, cancelable: true }));
+    }
+
+    it('renders the sentence where its own control can reach it', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        expect(inner(element).hasAttribute('aria-describedby'), 'bare until handed').toBe(false);
+
+        expect(hand(element, 'Saves without closing the dialog.'), 'taken').toBe(true);
+        await element.updateComplete;
+
+        const described = inner(element).getAttribute('aria-describedby');
+        const carrier = element.shadowRoot?.getElementById(String(described));
+
+        expect(described).toBe('description');
+        expect(carrier?.textContent).toBe('Saves without closing the dialog.');
+    });
+
+    it('does not paint the sentence, because the tip is already showing it', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        const before = element.getBoundingClientRect().width;
+
+        hand(element, 'Saves without closing the dialog, which is a long sentence.');
+        await element.updateComplete;
+
+        const carrier = element.shadowRoot?.getElementById('description');
+
+        expect(carrier?.getBoundingClientRect().width).toBeLessThanOrEqual(1);
+        expect(element.getBoundingClientRect().width, 'the button did not grow').toBe(before);
+    });
+
+    it('takes the description away when the sentence is withdrawn', async () => {
+        // The withdrawal is the same event carrying the empty string, because `detail` is
+        // a string whose empty value means absent — the shape `help` and `error` have.
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        hand(element, 'Saves.');
+        await element.updateComplete;
+
+        expect(hand(element, ''), 'the withdrawal is taken too').toBe(true);
+        await element.updateComplete;
+
+        expect(inner(element).hasAttribute('aria-describedby')).toBe(false);
+        expect(element.shadowRoot?.getElementById('description')).toBeNull();
+    });
+
+    it('leaves a payload that is not a sentence unclaimed', async () => {
+        // Unclaimed rather than accepted and ignored: the dispatch's return value is the
+        // whole of the advertisement, so a malformed handoff has to read as a refusal.
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        expect(hand(element, 42)).toBe(false);
+        await element.updateComplete;
+
+        expect(inner(element).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('leaves a plain event of the same name unclaimed', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        expect(element.dispatchEvent(new Event('ui-describe', { cancelable: true }))).toBe(true);
+        await element.updateComplete;
+
+        expect(inner(element).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('arrives from a real tooltip, and is announced from inside this root', async () => {
+        const host = document.createElement('div');
+        host.style.marginBlockStart = '120px';
+        host.innerHTML = `
+            <ui-tooltip>
+                <ui-button>Save</ui-button>
+                <span slot="tip">Saves without closing the dialog.</span>
+            </ui-tooltip>
+        `;
+        document.body.append(host);
+
+        const element = only(host);
+        await element.updateComplete;
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        await element.updateComplete;
+
+        const described = inner(element).getAttribute('aria-describedby');
+
+        expect(described).toBe('description');
+        expect(element.shadowRoot?.getElementById(String(described))?.textContent).toBe(
+            'Saves without closing the dialog.',
+        );
+
+        await expectAccessible(host);
+    });
+});
+
 describe('ui-button stories', () => {
     it.each([
         ['Primary', Primary],

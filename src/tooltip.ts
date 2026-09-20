@@ -24,6 +24,20 @@ const focusable = 'a[href], button, input, select, textarea, [tabindex]';
  * makes an absent attribute an empty list: `''.split(' ')` is `['']`, and a list with one
  * empty entry joins back with a leading space.
  */
+/**
+ * One trigger, one tip, and the observer that keeps the copy fresh between them.
+ *
+ * Named so the three can be **compared as one thing**. What a deferred handoff has to ask
+ * is *am I still the current wiring?*, and asking it of the object rather than of a field
+ * of the object is both the honest question and the one with no absent case: a cleared
+ * wiring is unequal to this one, where reading a field of it has to be guarded first.
+ */
+interface Wiring {
+    readonly trigger: HTMLElement;
+    readonly tip: HTMLElement;
+    readonly observer: MutationObserver;
+}
+
 function describing(trigger: HTMLElement): string[] {
     return (trigger.getAttribute('aria-describedby') ?? '').split(' ').filter((id) => id !== '');
 }
@@ -151,7 +165,7 @@ export class UiTooltip extends LitElement {
      * list the element does not own if the element remembers which id was its own, and
      * which trigger it put there. #189
      */
-    #wired: { trigger: HTMLElement; tip: HTMLElement } | undefined;
+    #wired: Wiring | undefined;
 
     /**
      * Whether the reader dismissed the tip and has not left the trigger since.
@@ -245,6 +259,11 @@ export class UiTooltip extends LitElement {
         this.addEventListener('pointerleave', this.#onLeave, watched);
         this.addEventListener('focusin', this.#onFocus, watched);
         this.addEventListener('focusout', this.#onLeave, watched);
+
+        // A tooltip a framework moved in the tree comes back wired. `disconnectedCallback`
+        // withdraws the description, and nothing fires a `slotchange` on reconnection to
+        // put it back — the same argument the fresh `AbortController` above is here for.
+        this.#associate();
     }
 
     override disconnectedCallback(): void {
@@ -253,6 +272,11 @@ export class UiTooltip extends LitElement {
         // is no longer in a document.
         this.#hide();
         this.#listeners.abort();
+
+        // The trigger is this element's own child, so it usually leaves with it and has
+        // nobody left to describe. What this is for is the host that moves the trigger out
+        // first, and the framework that unmounts this element alone.
+        this.#unwire();
 
         super.disconnectedCallback();
     }
@@ -334,10 +358,105 @@ export class UiTooltip extends LitElement {
             trigger.setAttribute('aria-describedby', [...described, tip.id].join(' '));
         }
 
-        this.#wired = { trigger, tip };
+        // The sentence crosses to the trigger as a **copy**, so unlike the IDREF beside it
+        // it goes stale the moment the host touches the original — and `slotchange` fires
+        // when the tip element is *replaced* and for **neither** in-place edit, measured:
+        // not text rewritten through `textContent`, not a node appended to it. The three
+        // options are one decision: an edit can land on a descendant as readily as on the
+        // tip itself.
+        //
+        // It rides in the wiring rather than beside it so there is one thing to be absent
+        // rather than two — and the pair is what it speaks for, so a disconnected observer
+        // and a cleared pair cannot come apart. One per tooltip, over this element's own
+        // slotted child: the bridge this proposal rejected owed one observer **per
+        // control**, over a node each control had to resolve an id in first. RFC 0006
+        const observer = new MutationObserver((): void => {
+            this.#hand(wiring);
+        });
 
-        this.#complain(trigger);
+        const wiring: Wiring = { trigger, tip, observer };
+
+        observer.observe(tip, { characterData: true, childList: true, subtree: true });
+
+        this.#wired = wiring;
+
+        this.#offer(wiring);
     };
+
+    /**
+     * Hands the sentence over, once the trigger is in a state where refusal means refusal.
+     *
+     * A dispatch at an element whose definition has not arrived is heard by nobody and
+     * comes back **uncancelled** — which is exactly what a trigger that accepts no text
+     * returns. The two are indistinguishable, so warning on that answer would warn at an
+     * element that would have accepted. Measured, and measured again for the recovery:
+     * the upgrade fires no `slotchange`, no hook and no event at all, so this promise is
+     * the only signal there is and waiting on it is a requirement rather than a
+     * refinement. RFC 0006
+     *
+     * **The hyphen test is load-bearing rather than a shortcut**: `whenDefined` throws on
+     * a name that could never be a custom element, so `<button>` has to be answered
+     * before the registry is asked about it.
+     */
+    #offer(wiring: Wiring): void {
+        const name = wiring.trigger.localName;
+
+        if (name.includes('-') && customElements.get(name) === undefined) {
+            void customElements.whenDefined(name).then((): void => {
+                // The wiring can have moved on while the definition was travelling, and
+                // this element only ever speaks for the one it is holding now.
+                if (this.#wired === wiring) {
+                    this.#hand(wiring);
+                }
+            });
+
+            return;
+        }
+
+        this.#hand(wiring);
+    }
+
+    /**
+     * The dispatch itself, carrying whatever the tip says right now.
+     *
+     * **The most recent dispatch wins and a trigger never accumulates**: a tooltip has one
+     * tip, so this is a value being written rather than an item being added — and
+     * accumulation would owe a withdrawal per sentence, which this element has nothing to
+     * identify one by.
+     *
+     * **The advertisement is the return value.** A control that takes the text calls
+     * `preventDefault()`, so `dispatchEvent` comes back `false` exactly when someone
+     * accepted — which is why the warning below needs no roster of elements, and this
+     * proposal already recorded that a roster ages exactly like the sentence it replaced.
+     */
+    #hand(wiring: Wiring): void {
+        // The markup around the sentence is not the sentence: a tip written across lines
+        // carries its indentation into `textContent`, and what the trigger renders is
+        // announced rather than laid out.
+        if (!this.#say(wiring.trigger, wiring.tip.textContent.trim())) {
+            this.#complain(wiring.trigger);
+        }
+    }
+
+    /**
+     * The dispatch, which is the entire protocol.
+     *
+     * **One site for both directions**, the sentence and its withdrawal, and that is not
+     * only tidiness: the flags are the contract, and written twice only one copy would be
+     * read back. `cancelable` is what lets a control answer at all — without it
+     * `preventDefault()` does nothing and every trigger reads as refusing — so it belongs
+     * where the answer is consumed rather than beside a call that ignores it.
+     *
+     * @returns whether a control took it, which is the whole of the advertisement: the
+     *   acknowledgement is `preventDefault()`, so no roster of elements is needed — and
+     *   this proposal already recorded that a roster ages exactly like the sentence it
+     *   replaced. RFC 0006
+     */
+    #say(trigger: HTMLElement, sentence: string): boolean {
+        return !trigger.dispatchEvent(
+            new CustomEvent('ui-describe', { detail: sentence, cancelable: true }),
+        );
+    }
 
     /**
      * Takes back the one id this element wrote, and leaves every other one alone.
@@ -355,6 +474,18 @@ export class UiTooltip extends LitElement {
         }
 
         this.#wired = undefined;
+        wired.observer.disconnect();
+
+        // The withdrawal, on the same event rather than a second name: `detail` is a
+        // string whose empty value means *absent*, which is the shape `help` and `error`
+        // already have everywhere else in this package. Without it a control keeps
+        // pointing at text describing a tip the reader can no longer summon, which is
+        // worse than never having had it because it reads as current.
+        //
+        // The answer is not read here, and that is deliberate: a trigger that refuses to
+        // let go is not a trigger the description failed to reach, so {@link
+        // UiTooltip.#complain} has nothing to say about it. RFC 0006
+        this.#say(wired.trigger, '');
 
         const remaining = describing(wired.trigger).filter((id) => id !== wired.tip.id);
 

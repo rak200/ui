@@ -264,13 +264,25 @@ wrapper for a control **you** wrote — an element the package itself never reac
 change to the ARIA story then had to be analysed against. Keeping it cost nothing on any single
 day and something on every one of them; removing it is #138.
 
-**A control in the host's tree is the only one a second component can still reach.** The rule this
-section states for a component's
-own relationship holds just as firmly against a component _outside_ it: `<ui-tooltip>` writes
-`aria-describedby` from the host's tree, and an IDREF crosses a boundary in neither direction — so
-a tooltip on any element this package renders describes a node the reader never lands on. **What
-makes a description arrive is the control being yours**, measured, with or without a field around
-it. RFC 0006 is where that goes. #156
+**A reference cannot reach in, so the text is handed over instead.** The rule this section states
+for a component's own relationship holds just as firmly against a component _outside_ it:
+`<ui-tooltip>` writes `aria-describedby` from the host's tree, and an IDREF crosses a boundary in
+neither direction — so a tooltip on an element that draws its own control used to describe a node
+the reader never lands on.
+
+**RFC 0006 answered it by moving the sentence rather than the reference.** The tooltip dispatches a
+cancelable event at its trigger carrying the tip's text; a component that accepts it renders the
+text into its own shadow root and points its own control at it, which puts both ends of the
+reference in one scope by the mechanism `help` already uses. A component that does not accept it is
+left alone and says so in the console.
+
+**The handoff is deliberately not public API.** The platform is solving this — Reference Target
+would let a component nominate the node a reference aimed at its host resolves to, at which point
+the tooltip's existing `aria-describedby` starts working and the handoff becomes deletable. An
+internal protocol is a deletion where a published property would have been a deprecation cycle.
+
+`<ui-button>` carries it today; the other seven arrive in order. Until each does, **what makes a
+description arrive is the control being yours** — measured, with or without a field around it. #156
 
 ## Glyphs are adopted, the delivery is owned
 
