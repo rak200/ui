@@ -27,8 +27,25 @@ const brief = 120;
  * Hovering is a round trip out to the driver and back, and a toast that expired during it
  * is a toast the hover then retries against forever — measured, as a fifteen-second
  * timeout. {@link brief} is not long enough to survive one.
+ *
+ * **1000 was not long enough either**, and the arithmetic is why rather than a hunch.
+ * `hover` refuses to act until the element is *stable*, and a toast's entrance is an
+ * animation — so the driver waits, and a toast that expires meanwhile is one it then
+ * retries against until it gives up. Settling the entrance first is what bounds that, and
+ * the two together were still measured at **871 ms of the 1000** under a 10x CPU throttle:
+ *
+ * | throttle | entrance | hover | setup |
+ * | -------- | -------- | ----- | ----- |
+ * | 1x       | 159 ms   | 400   | 559   |
+ * | 10x      | 225 ms   | 307   | 532   |
+ * | 20x      | 229 ms   | 642   | **871** |
+ *
+ * A dwell the setup wins by 129 ms is a dwell the setup loses on a busy CI runner. This one
+ * leaves it 1.6 s. The cost is paid back at the other end: a held toast has its dwell cut to
+ * {@link brief} before the reader leaves, so only the *hold* is measured at this length and
+ * the resume stays quick enough to keep both tests inside the runner's timeout. #177
  */
-const patient = 1000;
+const patient = 2500;
 
 /** Longer than {@link brief} plus the exit, so *nothing happened* is a settled answer. */
 const settled = 400;
@@ -803,6 +820,14 @@ describe('the clock', () => {
         );
         const element = toast(host);
 
+        // **Settled before the pointer is sent**, and that ordering is the whole of #177:
+        // `hover` waits for the element to be stable and the entrance is an animation, so a
+        // driver sent at a still-animating toast waits — and on a slow machine the dwell it
+        // was racing ran out underneath it. Measured at a 10x CPU throttle, verbatim:
+        // `element is not stable, retrying hover action`, then `element was detached from
+        // the DOM`. {@link patient} carries what that costs and why it is now what it is.
+        await still(element);
+
         // The real pointer, through the driver, because this is the one place the suite's
         // own shortcut cannot go: `Input.dispatchMouseEvent` takes coordinates in the top
         // page and the suite runs in a frame, so a point near the block-end corner — which
@@ -813,6 +838,12 @@ describe('the clock', () => {
         await wait(patient + settled);
 
         expect(element.isConnected, 'held while it is being read').toBe(true);
+
+        // Cut short before the reader leaves, because the dwell is only long for the half
+        // above: `duration` is read where the clock STARTS, and a held toast starts none, so
+        // this is what the resume picks up. Waiting {@link patient} out twice would put the
+        // test over the runner's timeout.
+        element.duration = brief;
 
         const announced = dismissed(element);
         await parkPointer();
@@ -831,6 +862,11 @@ describe('the clock', () => {
         await wait(patient + settled);
 
         expect(element.isConnected, 'held while it has the focus').toBe(true);
+
+        // As above, and only for the timeout: `focus()` lands in this frame, so this twin
+        // never raced the dwell and needs no `still()` — it just cannot afford to wait the
+        // long one out twice either.
+        element.duration = brief;
 
         const announced = dismissed(element);
         dismisser(element).blur();
