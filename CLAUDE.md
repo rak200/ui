@@ -48,7 +48,6 @@ tests/               # mirrors src/, one test file per unit
 ├── checkbox.test.ts
 ├── description.test.ts
 ├── dialog.test.ts
-├── field.test.ts
 ├── icon.test.ts
 ├── input.test.ts
 ├── menu.test.ts
@@ -69,7 +68,6 @@ stories/             # mirrors src/ too — what the playground shows
 ├── card.stories.ts
 ├── checkbox.stories.ts
 ├── dialog.stories.ts
-├── field.stories.ts
 ├── icon.stories.ts
 ├── input.stories.ts
 ├── menu.stories.ts
@@ -222,7 +220,9 @@ explains. This file restates none of them.
   each component has to remember to adopt — measured, as 363px of text nobody asked to see on the
   first host that consumed it without one. **The `aria-describedby` list is composed there too**,
   so _the handed sentence goes last_ is one decision rather than six components' to remember —
-  `src/checkbox.ts` is what asked for it, having had the attribute and no composer at all.
+  `src/checkbox.ts` is what asked for it, having had the attribute and no composer at all, and
+  `src/input.ts` is where the composition this package was writing three times started collapsing
+  back onto one.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three
