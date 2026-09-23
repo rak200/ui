@@ -7,6 +7,7 @@ import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Checkbox, Invalid, Markup, States, Switch } from '../stories/checkbox.stories.js';
 import '../src/checkbox.js';
+import '../src/tooltip.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
@@ -983,6 +984,116 @@ describe('under forced colors', () => {
         expect(getComputedStyle(box(toggle(form))).borderTopColor, 'GrayText').not.toBe(
             'rgb(255, 255, 255)',
         );
+    });
+});
+
+/**
+ * RFC 0006's handoff, on the pair that had the attribute and no composer. The protocol
+ * itself is graded in `description.test.ts`; what these are about is the composition —
+ * `error` and the handed sentence coexisting on one control, in the order a reader needs.
+ */
+describe('the description a tooltip hands over', () => {
+    /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
+    function hand(element: Toggle, detail: unknown): boolean {
+        return !element.dispatchEvent(new CustomEvent('ui-describe', { detail, cancelable: true }));
+    }
+
+    /** The clipped node the control's `aria-describedby` has to resolve to. */
+    function carrier(element: Toggle): HTMLElement | null {
+        return element.renderRoot.querySelector<HTMLElement>('#description');
+    }
+
+    const sentence = 'Ticking this is how a receipt is sent.';
+
+    it('renders the sentence where its own control can reach it', async () => {
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        expect(box(element).hasAttribute('aria-describedby'), 'bare until handed').toBe(false);
+
+        expect(hand(element, sentence), 'taken').toBe(true);
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('description');
+        expect(carrier(element)?.textContent).toBe(sentence);
+    });
+
+    it('composes the message and the sentence instead of one replacing the other', async () => {
+        // The refactor this element needed, and the reason RFC 0006 named it before the
+        // rollout started: `error` used to be written straight into the attribute, so a
+        // second description had nowhere to go that did not overwrite the first.
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        element.error = 'The terms have to be accepted.';
+        hand(element, sentence);
+        await element.updateComplete;
+
+        // The error is announced first because it is what sent the reader looking; the
+        // handed sentence is supplementary by construction and follows it.
+        expect(box(element).getAttribute('aria-describedby')).toBe('error description');
+        expect(part(element, 'error').id, 'and both resolve in this root').toBe('error');
+        expect(carrier(element)?.textContent).toBe(sentence);
+    });
+
+    it('keeps the message when the sentence is withdrawn', async () => {
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        element.error = 'The terms have to be accepted.';
+        hand(element, sentence);
+        await element.updateComplete;
+
+        expect(hand(element, ''), 'the withdrawal is taken too').toBe(true);
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('error');
+        expect(carrier(element), 'and the carrier goes with it').toBeNull();
+    });
+
+    it('leaves a payload that is not a sentence unclaimed', async () => {
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        expect(hand(element, 42)).toBe(false);
+        await element.updateComplete;
+
+        expect(box(element).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('reaches ui-switch too, which shares the composition rather than repeating it', async () => {
+        const form = await mount(
+            '<ui-switch label="Email notifications" name="notify"></ui-switch>',
+        );
+        const element = toggle(form);
+
+        element.error = 'Pick a channel first.';
+        hand(element, 'Sent the moment anything changes.');
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('role'), 'and is still announced as a switch').toBe(
+            'switch',
+        );
+        expect(box(element).getAttribute('aria-describedby')).toBe('error description');
+        expect(carrier(element)?.textContent).toBe('Sent the moment anything changes.');
+    });
+
+    it('arrives from a real tooltip, and is not painted beside the tip', async () => {
+        const form = await mount(`
+            <ui-tooltip>
+                <ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>
+                <span slot="tip">Ticking this is how a receipt is sent.</span>
+            </ui-tooltip>
+        `);
+        const element = toggle(form);
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('description');
+
+        const clip = carrier(element)?.getBoundingClientRect();
+
+        expect(clip?.width, 'the tip is already showing it').toBeLessThanOrEqual(1);
+
+        await expectAccessible(form);
     });
 });
 

@@ -15,7 +15,7 @@
  *
  * **What it does not own is the rendering.** `<ui-button>` draws its control from a
  * template and `<ui-menu>` builds one imperatively, so each points its own control at
- * {@link Description.reference} and places {@link Description.carrier} where that control
+ * {@link Description.described} and places {@link Description.carrier} where that control
  * can resolve it. What is shared is the part that is identical wherever it goes: the
  * listener, the sentence, and the rule that an empty one is no description at all.
  *
@@ -129,17 +129,34 @@ export class Description {
     };
 
     /**
-     * What the control's `aria-describedby` is bound to, or `nothing` when there is no
-     * description — an empty attribute is not the same shape as an absent one.
+     * The whole `aria-describedby` a control writes, with the handed sentence **last**.
+     *
+     * A caller passes the ids it composes already — `error`, `help` — and gets back the
+     * attribute's value, or `nothing` when there is nothing to describe: an empty
+     * `aria-describedby` is not the same shape as an absent one, which `src/input.ts`
+     * measured from the other side. An empty id is dropped, which is how a caller says
+     * *that one is not rendered*.
+     *
+     * **The composition is here rather than at each call site so the order is decided
+     * once.** RFC 0006 put the handed sentence after `error` and `help`: it is
+     * supplementary by construction, where an error is what sent the reader looking and
+     * help was already in flow. Six classes will carry this, and *put it last* is not a
+     * rule six of them should each be remembering — the failure that shape invites is
+     * writing the sentence **into** the attribute rather than into the list, at which
+     * point the instruction and the error overwrite each other.
+     *
+     * @param before - The ids announced ahead of it, in the order a reader needs them.
      */
-    reference(): string | typeof nothing {
-        return this.#sentence === '' ? nothing : id;
+    described(...before: string[]): string | typeof nothing {
+        const ids = [...before, this.#sentence === '' ? '' : id].filter((each) => each !== '');
+
+        return ids.length === 0 ? nothing : ids.join(' ');
     }
 
     /**
      * Points a control built by hand at the carrier, or stops pointing it.
      *
-     * The imperative half of {@link Description.reference}, and both exist because the
+     * The imperative half of {@link Description.described}, and both exist because the
      * controls do: `<ui-button>` draws its `<button>` from a template and `<ui-menu>`
      * builds one with `document.createElement`, so the same rule has to be expressible
      * twice. It lives here rather than at each call site so *empty means absent* is
@@ -147,7 +164,7 @@ export class Description {
      * a control that wrote one would be describing nothing rather than nothing at all.
      */
     point(control: Element): void {
-        const described = this.reference();
+        const described = this.described();
 
         if (described === nothing) {
             control.removeAttribute('aria-describedby');

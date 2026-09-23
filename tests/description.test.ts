@@ -22,7 +22,7 @@ class Host extends LitElement {
     }
 
     override render(): TemplateResult {
-        return html`<button aria-describedby=${this.description.reference()}>Save</button>
+        return html`<button aria-describedby=${this.description.described()}>Save</button>
             ${this.description.carrier()}`;
     }
 }
@@ -62,7 +62,8 @@ describe('Description', () => {
     it('describes nothing until a sentence arrives', async () => {
         const element = await mount();
 
-        expect(element.description.reference()).toBe(nothing);
+        expect(element.description.described()).toBe(nothing);
+        expect(element.description.described(''), 'nor when the caller renders none').toBe(nothing);
         expect(element.description.carrier()).toBe(nothing);
         expect(control(element).hasAttribute('aria-describedby'), 'absent, not empty').toBe(false);
     });
@@ -104,6 +105,28 @@ describe('Description', () => {
         expect(element.dispatchEvent(new Event('ui-describe', { cancelable: true }))).toBe(true);
 
         expect(element.redraws).toBe(0);
+    });
+
+    it('announces the handed sentence after the ids the control composes', async () => {
+        // RFC 0006 put it last because it is supplementary by construction: the error is
+        // what sent the reader looking, and help was already in flow.
+        const element = await mount();
+
+        expect(element.description.described('error'), "the caller's alone, so far").toBe('error');
+
+        hand(element, 'Ticking this is how a receipt is sent.');
+
+        expect(element.description.described('error')).toBe('error description');
+    });
+
+    it('drops an id the control did not render, rather than composing a blank', async () => {
+        // An empty id is how a caller says *that one is not on the page* — `error` and
+        // `help` are rendered only when their property is non-empty.
+        const element = await mount();
+
+        hand(element, 'Ticking this is how a receipt is sent.');
+
+        expect(element.description.described('', 'help')).toBe('help description');
     });
 
     it('points a control built by hand at the carrier, and stops pointing it', async () => {

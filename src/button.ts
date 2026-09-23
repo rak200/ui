@@ -138,7 +138,7 @@ export class UiButton extends LitElement {
             <button
                 class=${this.variant}
                 ?disabled=${this.disabled}
-                aria-describedby=${this.#description.reference()}
+                aria-describedby=${this.#description.described()}
                 part="button"
             >
                 <slot></slot>
