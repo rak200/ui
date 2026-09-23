@@ -81,10 +81,9 @@ announced?_ is answered by opening the console rather than by counting elements 
 tags goes stale the way the sentence it replaced did, which named one element and was true when it
 was written.
 
-**Today every element here accepts it except `<ui-radio-group>`**, which arrives next. Until it
-does, a trigger that draws its own control and is not on that list needs the description to come
-from a control you wrote — a native `<button>`, `<a href>` or form control, which is the
-composition below.
+**Every element in this package accepts it**, which is the whole of RFC 0006's rollout spent. What
+still needs a control you wrote is a trigger of your own that draws one inside a shadow root — the
+composition below is how a plain page has always done it, and it is unchanged.
 
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.

@@ -281,9 +281,9 @@ would let a component nominate the node a reference aimed at its host resolves t
 the tooltip's existing `aria-describedby` starts working and the handoff becomes deletable. An
 internal protocol is a deletion where a published property would have been a deprecation cycle.
 
-Seven of the eight carry it today, `<ui-radio-group>` being what is left. Until it arrives, **what
-makes a description arrive is the control being yours** — measured, with or without a field around
-it. #156
+**All eight carry it.** What remains of #156 is the documentation: `help` stops being what a
+consumer is sent to for supplementary text, and stays available for the two cases a popover cannot
+serve.
 
 ## Glyphs are adopted, the delivery is owned
 

@@ -16,6 +16,7 @@ import meta, {
 } from '../stories/radio.stories.js';
 import '../src/radio.js';
 import '../src/checkbox.js';
+import '../src/tooltip.js';
 import type { UiRadio, UiRadioGroup } from '../src/radio.js';
 import type { UiCheckbox } from '../src/checkbox.js';
 
@@ -1178,6 +1179,107 @@ describe('under forced colors', () => {
  * `expectAccessible` is called per state rather than once, because a horizontal group, a
  * disabled option and a group in error are different markup and each can fail on its own.
  */
+/**
+ * RFC 0006's handoff, on the last of the eight and the one whose control is a set. The
+ * protocol is graded in `description.test.ts` and the composition in `src/description.ts`;
+ * what these are about is that the group takes the sentence and each radio does not.
+ */
+describe('the description a tooltip hands over', () => {
+    /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
+    function hand(element: UiRadioGroup, detail: unknown): boolean {
+        return !element.dispatchEvent(new CustomEvent('ui-describe', { detail, cancelable: true }));
+    }
+
+    /** The clipped node the group's `aria-describedby` has to resolve to. */
+    function carrier(element: UiRadioGroup): HTMLElement | null {
+        return element.renderRoot.querySelector<HTMLElement>('#description');
+    }
+
+    const sentence = 'You can change it whenever you like.';
+
+    it('describes the group, and announces the three in the order a reader needs', async () => {
+        const form = await mount(fixture);
+        const element = group(form);
+
+        element.help = 'Change it any time.';
+        await settled(element);
+
+        expect(part(element, 'options').getAttribute('aria-describedby'), 'the help').toBe('help');
+
+        expect(hand(element, sentence), 'taken').toBe(true);
+        await settled(element);
+
+        expect(part(element, 'options').getAttribute('aria-describedby')).toBe('help description');
+
+        element.error = 'Pick one.';
+        await settled(element);
+
+        expect(part(element, 'options').getAttribute('aria-describedby')).toBe(
+            'error help description',
+        );
+        expect(carrier(element)?.textContent).toBe(sentence);
+    });
+
+    it('describes the set rather than each choice in it', async () => {
+        // The description is about the question, and the group is the node the label and
+        // the message already point at. Per radio it would be read three times over.
+        const form = await mount(fixture);
+        const element = group(form);
+
+        hand(element, sentence);
+        await settled(element);
+
+        for (const control of controls(form)) {
+            expect(control.hasAttribute('aria-describedby'), control.value).toBe(false);
+        }
+    });
+
+    it('takes the description away when the sentence is withdrawn', async () => {
+        const form = await mount(fixture);
+        const element = group(form);
+
+        hand(element, sentence);
+        await settled(element);
+
+        expect(hand(element, ''), 'the withdrawal is taken too').toBe(true);
+        await settled(element);
+
+        expect(part(element, 'options').hasAttribute('aria-describedby')).toBe(false);
+        expect(carrier(element)).toBeNull();
+    });
+
+    it('leaves a payload that is not a sentence unclaimed', async () => {
+        const form = await mount(fixture);
+        const element = group(form);
+
+        expect(hand(element, 42)).toBe(false);
+        await settled(element);
+
+        expect(part(element, 'options').hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('arrives from a real tooltip, and is not painted beside the tip', async () => {
+        const form = await mount(`
+            <ui-tooltip>
+                <ui-radio-group label="Plan" name="plan">
+                    <ui-radio value="free">Free</ui-radio>
+                    <ui-radio value="pro">Pro</ui-radio>
+                </ui-radio-group>
+                <span slot="tip">You can change it whenever you like.</span>
+            </ui-tooltip>
+        `);
+        const element = group(form);
+
+        expect(part(element, 'options').getAttribute('aria-describedby')).toBe('description');
+
+        const clip = carrier(element)?.getBoundingClientRect();
+
+        expect(clip?.width, 'the tip is already showing it').toBeLessThanOrEqual(1);
+
+        await expectAccessible(form);
+    });
+});
+
 describe('accessibility', () => {
     it('has no violations as a labelled group', async () => {
         await expectAccessible(await mountStory(RadioGroup, meta, 'RadioGroup'));
