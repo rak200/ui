@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.8](https://github.com/rak200/ui/compare/0.6.7...0.6.8) (2026-09-23)
+
+
+### Features
+
+* **select:** the handoff reaches ui-select ([#203](https://github.com/rak200/ui/issues/203)) ([a124db4](https://github.com/rak200/ui/commit/a124db40626b92de104091a36cbc91e4216e8274))
+
 ## [0.6.7](https://github.com/rak200/ui/compare/0.6.6...0.6.7) (2026-09-23)
 
 
