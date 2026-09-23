@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.6](https://github.com/rak200/ui/compare/0.6.5...0.6.6) (2026-09-23)
+
+
+### Features
+
+* **checkbox:** the handoff reaches ui-checkbox and ui-switch ([#199](https://github.com/rak200/ui/issues/199)) ([afc8acf](https://github.com/rak200/ui/commit/afc8acfe523d6f3f10f5ca528cc9ae4fb5d28263))
+
 ## [0.6.5](https://github.com/rak200/ui/compare/0.6.4...0.6.5) (2026-09-23)
 
 
