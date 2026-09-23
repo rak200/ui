@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
+import { Description } from './description.js';
 
 /**
  * What a styled native control looks like, which both elements share.
@@ -226,6 +227,13 @@ class UiTextField extends LitElement {
 
     readonly #internals = this.attachInternals();
 
+    /**
+     * The sentence a `<ui-tooltip>` hands over, which this element renders into its own
+     * root — an IDREF written out there reaches nothing in here. `src/description.ts`
+     * carries the whole of it, and the constructor is where it has to be built.
+     */
+    readonly #description = new Description(this);
+
     /** The validity, taken from the control that computed it. */
     #publish(control: HTMLInputElement | HTMLTextAreaElement): void {
         if (this.error !== '') {
@@ -334,16 +342,24 @@ class UiTextField extends LitElement {
                         ? nothing
                         : html`<span class="error" id="error" part="error">${this.error}</span>`
                 }
+                ${this.#description.carrier()}
             </div>
         `;
     }
 
-    /** The ids describing the control, in the order a reader needs them. */
+    /**
+     * The ids describing the control, in the order a reader needs them.
+     *
+     * **A sentence handed over by a `<ui-tooltip>` follows both of them**, and where it
+     * goes is `src/description.ts`'s to say rather than this file's — decided once for
+     * every element that takes the handoff instead of restated in each. The composition
+     * itself moved there with it, which is why this no longer joins a list by hand:
+     * `<ui-checkbox>` needed the same one, and two answers to one problem is one too many.
+     */
     protected described(): string | typeof nothing {
-        return attribute(
-            [this.error === '' ? '' : 'error', this.help === '' ? '' : 'help']
-                .filter((id) => id !== '')
-                .join(' '),
+        return this.#description.described(
+            this.error === '' ? '' : 'error',
+            this.help === '' ? '' : 'help',
         );
     }
 

@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [In a form](#in-a-form)
 - [Validation](#validation)
 - [In error](#in-error)
+- [Supplementary text](#supplementary-text)
 - [Events](#events)
 - [Selecting on state](#selecting-on-state)
 - [Styling](#styling)
@@ -141,6 +142,31 @@ A message you write wins over the one the platform would have written.
 **The help text stays.** It is usually the format requirement, which is exactly the suggestion a
 reader needs in order to recover (WCAG 3.3.3) — so the message is announced _before_ it rather than
 instead of it.
+
+## Supplementary text
+
+`help` puts a permanent line under the control. Where the instruction is worth reading once rather
+than always, wrap the field in a [`<ui-tooltip>`](tooltip.md) and write it in the tip:
+
+```html
+<ui-tooltip>
+  <ui-input label="Amount" name="amount"></ui-input>
+  <span slot="tip">Two decimals, and a comma between them.</span>
+</ui-tooltip>
+```
+
+The tooltip cannot point at the control in this element's shadow root — an IDREF resolves in one
+tree scope — so it **hands the text over** and the element renders it into its own root, where the
+control it draws can be described by it. There is no attribute or property to write; the sentence
+lives in the tip, and editing the tip changes what is announced. It works the same on
+`<ui-textarea>`.
+
+**It does not compete with `help` or `error`.** All three are announced, in that order — the
+message first, because it is what sent the reader looking; the help second, because it is usually
+the way out; the handed sentence last.
+
+The copy in here is not painted, because the tip is already showing it. Take the tip away and the
+description goes with it.
 
 ## Events
 

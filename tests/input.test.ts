@@ -7,6 +7,7 @@ import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Constrained, Disabled, Invalid, Multiline, Text } from '../stories/input.stories.js';
 import '../src/input.js';
+import '../src/tooltip.js';
 import type { UiInput, UiTextarea } from '../src/input.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
@@ -732,6 +733,103 @@ describe('the interaction states', () => {
             expect(rule, rule).toContain(':not(:disabled)');
             expect(rule, rule).toContain(':not([readonly])');
         }
+    });
+});
+
+/**
+ * RFC 0006's handoff, on the pair that already composed a list. The protocol is graded in
+ * `description.test.ts` and the composition in `src/description.ts`; what these are about
+ * is that a third id joins the two this element has always had, at the end.
+ */
+describe('the description a tooltip hands over', () => {
+    /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
+    function hand(element: Field, detail: unknown): boolean {
+        return !element.dispatchEvent(new CustomEvent('ui-describe', { detail, cancelable: true }));
+    }
+
+    /** The clipped node the control's `aria-describedby` has to resolve to. */
+    function carrier(element: Field): HTMLElement | null {
+        return element.renderRoot.querySelector<HTMLElement>('#description');
+    }
+
+    const sentence = 'Two decimals, and a comma between them.';
+
+    it('announces the three in the order a reader needs them', async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+
+        expect(box(element).getAttribute('aria-describedby'), 'the help alone').toBe('help');
+
+        expect(hand(element, sentence), 'taken').toBe(true);
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('help description');
+
+        element.error = 'Amount is required.';
+        await element.updateComplete;
+
+        // The error first, because it is what sent the reader looking; the help second,
+        // because it is usually the format requirement and therefore the way out; the
+        // handed sentence last, being supplementary by construction.
+        expect(box(element).getAttribute('aria-describedby')).toBe('error help description');
+        expect(carrier(element)?.textContent).toBe(sentence);
+    });
+
+    it('keeps the help and the message when the sentence is withdrawn', async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+
+        element.error = 'Amount is required.';
+        hand(element, sentence);
+        await element.updateComplete;
+
+        expect(hand(element, ''), 'the withdrawal is taken too').toBe(true);
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('error help');
+        expect(carrier(element), 'and the carrier goes with it').toBeNull();
+    });
+
+    it('leaves a payload that is not a sentence unclaimed', async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+
+        expect(hand(element, 42)).toBe(false);
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby'), 'unchanged').toBe('help');
+    });
+
+    it('reaches ui-textarea too, which shares the frame rather than repeating it', async () => {
+        const form = await mount('<ui-textarea label="Notes" name="notes" rows="4"></ui-textarea>');
+        const element = field(form);
+
+        hand(element, 'Anything the reader should know before writing.');
+        await element.updateComplete;
+
+        expect(box(element).tagName).toBe('TEXTAREA');
+        expect(box(element).getAttribute('aria-describedby')).toBe('description');
+        expect(carrier(element)?.textContent).toBe(
+            'Anything the reader should know before writing.',
+        );
+    });
+
+    it('arrives from a real tooltip, and is not painted beside the tip', async () => {
+        const form = await mount(`
+            <ui-tooltip>
+                <ui-input label="Amount" help="In BRL, two decimals." name="amount"></ui-input>
+                <span slot="tip">Two decimals, and a comma between them.</span>
+            </ui-tooltip>
+        `);
+        const element = field(form);
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('help description');
+
+        const clip = carrier(element)?.getBoundingClientRect();
+
+        expect(clip?.width, 'the tip is already showing it').toBeLessThanOrEqual(1);
+
+        await expectAccessible(form);
     });
 });
 
