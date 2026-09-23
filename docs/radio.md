@@ -17,6 +17,7 @@ import '@rak200/ui';
 - [In a form](#in-a-form)
 - [Orientation](#orientation)
 - [Errors](#errors)
+- [Supplementary text](#supplementary-text)
 - [Interaction states](#interaction-states)
 - [Styling](#styling)
 
@@ -129,6 +130,36 @@ oriented.
 The group marks itself `aria-invalid`, announces the message with the set, and turns every option's
 boundary to `--ui-color-danger`. There is one source, and it is the one a screen reader is already
 using.
+
+## Supplementary text
+
+`help` puts a permanent line under the set. Where the instruction is worth reading once rather than
+always, wrap the group in a [`<ui-tooltip>`](tooltip.md) and write it in the tip:
+
+```html
+<ui-tooltip>
+  <ui-radio-group label="Plan" name="plan">
+    <ui-radio value="free">Free</ui-radio>
+    <ui-radio value="pro">Pro</ui-radio>
+  </ui-radio-group>
+  <span slot="tip">You can change it whenever you like.</span>
+</ui-tooltip>
+```
+
+The tooltip cannot point at anything in this element's shadow root — an IDREF resolves in one tree
+scope — so it **hands the text over** and the group renders it into its own root, where the
+`role="radiogroup"` it draws can be described by it. There is no attribute or property to write;
+the sentence lives in the tip, and editing the tip changes what is announced.
+
+**It describes the set, not an option** — the same rule the error above follows, for the same
+reason: the description is about the question. Per option it would be read once per choice.
+
+**It does not compete with `help` or `error`.** All three are announced, in that order — the
+message first, because it is what sent the reader looking; the help second; the handed sentence
+last.
+
+The copy in here is not painted, because the tip is already showing it. Take the tip away and the
+description goes with it.
 
 ## Interaction states
 

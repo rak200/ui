@@ -20,9 +20,10 @@ been — Playwright has removed its accessibility tree API and `ariaSnapshot()` 
 name alone, so whether a copied description reaches a reader cannot be verified in one engine, let
 alone three, and a feature that cannot be verified is not adopted here.
 
-**The handoff is built, and seven of the eight elements carry it.** `<ui-radio-group>` is what is
-left, and it is one composer replaced by a call to the shared one. Then the documentation moves the
-recommendation off `help`, and this entry goes with it.
+**The handoff is built and all eight elements carry it.** What is left is documentation and
+nothing else: `docs/` stops sending a consumer to `help` for supplementary text and sends them to
+the tip, `help`'s own page keeps it for the two cases a popover cannot serve, and the transitional
+half of `docs/tooltip.md` and [ARCHITECTURE.md](ARCHITECTURE.md) goes. This entry goes with it.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

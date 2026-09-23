@@ -137,8 +137,8 @@ explains. This file restates none of them.
 - **Why a relationship needs one tree scope, and which of the two arrangements a component
   takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
   records why the rule used to be stated as _light-DOM only_, what that read too broadly, and what
-  it costs a **second** component reaching in from outside — which is why a `<ui-tooltip>` on any
-  control here is silent. `src/checkbox.ts` is the arrangement every control moved to and
+  it costs a **second** component reaching in from outside, which is what RFC 0006 answered by
+  handing the text over. `src/checkbox.ts` is the arrangement every control moved to and
   `docs/checkbox.md` is the consumer-facing half; the docblock on `field` in `src/input.ts` says
   why those rules were once written with `::slotted()`.
 - **Why a drawn control paints its own mark, and why the mark is a hole** — `src/checkbox.ts`,
@@ -152,8 +152,9 @@ explains. This file restates none of them.
   `UiTooltip` in `src/tooltip.ts`, which records both measurements: anchor positioning works end to
   end in this engine, and an engine without it puts the popover at `inset: 0` rather than near the
   trigger. `popover="manual"` and the Escape handler carry their reasons beside them, and
-  `#complain()` carries the one a reader hits first: a description written from out here reaches no
-  control this package draws, which #156 measured and RFC 0006 decides.
+  `#complain()` carries the one a reader hits first: a reference written from out here reaches no
+  control drawn inside a shadow root, which #156 measured and RFC 0006 answered — so what the
+  warning is left pointing at is a trigger **someone else** wrote that does not take the handoff.
 - **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
   `UiCard` in `src/card.ts`, beside each. `light-dark()` takes colours and a shadow is not one, so
   the elevation category cannot follow the scheme and the derived boundary is what both schemes
@@ -221,8 +222,8 @@ explains. This file restates none of them.
   first host that consumed it without one. **The `aria-describedby` list is composed there too**,
   so _the handed sentence goes last_ is one decision rather than six components' to remember —
   `src/checkbox.ts` is what asked for it, having had the attribute and no composer at all, and
-  `src/input.ts` and `src/select.ts` are where the composition this package was writing three times
-  started collapsing back onto one — `src/radio.ts` still carries the third.
+  `src/input.ts`, `src/select.ts` and `src/radio.ts` each carried a copy of that composition before
+  the handoff gave them a second thing to compose; all three now call the one.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three

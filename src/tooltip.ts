@@ -507,6 +507,11 @@ export class UiTooltip extends LitElement {
      * shows and places itself correctly — which is the whole reason this is said rather
      * than left to be found later. #156
      *
+     * **Every element in this package now takes the handoff**, so what is left for this to
+     * reach is a trigger someone else wrote — and that is the shape it was always built
+     * for: the answer is the dispatch's return value rather than a roster of tags, which
+     * is why the rollout closing changed nothing here.
+     *
      * **The condition is the focusable descendant, not the shadow root.** A component
      * whose shadow content is decoration is named and described on the host itself, and is
      * correct as it stands.
