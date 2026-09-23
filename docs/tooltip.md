@@ -70,6 +70,10 @@ its trigger; a component that accepts it renders the text into its own shadow ro
 own control at it, which puts both ends in one scope. Nothing at the call site changes, there is no
 attribute or property to write, and editing the tip changes what is announced.
 
+The receiving half is one internal helper, `Description`, shared by every control that takes the
+handoff — so what a component adds is the two lines that point its own control at the carrier, and
+never a second copy of the protocol.
+
 **The test is the console, not a list of tags.** A component that does not accept the sentence is
 told about in a warning naming the trigger and the way out — nothing on the page looks wrong
 otherwise, because the tip shows and lands where it should. So the question _will my trigger be
@@ -77,7 +81,7 @@ announced?_ is answered by opening the console rather than by counting elements 
 tags goes stale the way the sentence it replaced did, which named one element and was true when it
 was written.
 
-**Today `<ui-button>` accepts it**, and the rest of the package arrives in order. Until each does,
+**Today `<ui-button>` and `<ui-menu>` accept it**, and the rest arrives in order. Until each does,
 a trigger that draws its own control and is not on that list needs the description to come from a
 control you wrote — a native `<button>`, `<a href>` or form control, which is the composition
 below.
