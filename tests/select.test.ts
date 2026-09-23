@@ -16,6 +16,7 @@ import meta, {
 } from '../stories/select.stories.js';
 import '../src/select.js';
 import '../src/input.js';
+import '../src/tooltip.js';
 import type { UiOption, UiSelect } from '../src/select.js';
 import type { UiInput } from '../src/input.js';
 
@@ -858,6 +859,120 @@ describe('the interaction states', () => {
         for (const [rule] of rules) {
             expect(rule, rule).toContain(':not(:disabled)');
         }
+    });
+});
+
+/**
+ * RFC 0006's handoff, on the element whose choices are the host's own declarations. The
+ * protocol is graded in `description.test.ts` and the composition in `src/description.ts`;
+ * what these are about is that the box takes the sentence and the choices do not.
+ */
+describe('the description a tooltip hands over', () => {
+    /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
+    function hand(element: UiSelect, detail: unknown): boolean {
+        return !element.dispatchEvent(new CustomEvent('ui-describe', { detail, cancelable: true }));
+    }
+
+    /** The clipped node the control's `aria-describedby` has to resolve to. */
+    function carrier(element: UiSelect): HTMLElement | null {
+        return element.renderRoot.querySelector<HTMLElement>('#description');
+    }
+
+    const sentence = 'What the amounts below are quoted in.';
+
+    it('describes the box, and announces the three in the order a reader needs them', async () => {
+        const form = await mount(`
+            <ui-select label="Currency" name="currency" help="Affects every total.">
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+        const element = select(form);
+
+        expect(box(element).getAttribute('aria-describedby'), 'the help alone').toBe('help');
+
+        expect(hand(element, sentence), 'taken').toBe(true);
+        await settled(element);
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('help description');
+
+        element.error = 'Pick a currency.';
+        await settled(element);
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('error help description');
+        expect(carrier(element)?.textContent).toBe(sentence);
+    });
+
+    it('leaves the choices undescribed, which is where a reader is not', async () => {
+        // A description on an `<option>` is announced only while that option is the one
+        // under the cursor. The instruction is about the field, so it rides on the box.
+        const form = await mount(fixture);
+        const element = select(form);
+
+        hand(element, sentence);
+        await settled(element);
+
+        for (const option of element.renderRoot.querySelectorAll('option')) {
+            expect(option.hasAttribute('aria-describedby'), option.value).toBe(false);
+        }
+    });
+
+    it('keeps the carrier out of the control, which takes options and nothing else', async () => {
+        // A `<slot>` inside a `<select>` assigns its nodes and the select sees none of
+        // them, measured — so anything in there is a node the platform would ignore.
+        const form = await mount(fixture);
+        const element = select(form);
+
+        hand(element, sentence);
+        await settled(element);
+
+        const node = carrier(element);
+
+        expect(node).not.toBeNull();
+        expect(box(element).contains(node), 'beside the box, not inside it').toBe(false);
+    });
+
+    it('takes the description away when the sentence is withdrawn', async () => {
+        const form = await mount(fixture);
+        const element = select(form);
+
+        hand(element, sentence);
+        await settled(element);
+
+        expect(hand(element, ''), 'the withdrawal is taken too').toBe(true);
+        await settled(element);
+
+        expect(box(element).hasAttribute('aria-describedby')).toBe(false);
+        expect(carrier(element)).toBeNull();
+    });
+
+    it('leaves a payload that is not a sentence unclaimed', async () => {
+        const form = await mount(fixture);
+        const element = select(form);
+
+        expect(hand(element, 42)).toBe(false);
+        await settled(element);
+
+        expect(box(element).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('arrives from a real tooltip, and is not painted beside the tip', async () => {
+        const form = await mount(`
+            <ui-tooltip>
+                <ui-select label="Currency" name="currency">
+                    <ui-option value="brl">Real</ui-option>
+                </ui-select>
+                <span slot="tip">What the amounts below are quoted in.</span>
+            </ui-tooltip>
+        `);
+        const element = select(form);
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('description');
+
+        const clip = carrier(element)?.getBoundingClientRect();
+
+        expect(clip?.width, 'the tip is already showing it').toBeLessThanOrEqual(1);
+
+        await expectAccessible(form);
     });
 });
 

@@ -221,8 +221,8 @@ explains. This file restates none of them.
   first host that consumed it without one. **The `aria-describedby` list is composed there too**,
   so _the handed sentence goes last_ is one decision rather than six components' to remember —
   `src/checkbox.ts` is what asked for it, having had the attribute and no composer at all, and
-  `src/input.ts` is where the composition this package was writing three times started collapsing
-  back onto one.
+  `src/input.ts` and `src/select.ts` are where the composition this package was writing three times
+  started collapsing back onto one — `src/radio.ts` still carries the third.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three
