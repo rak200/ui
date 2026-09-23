@@ -26,6 +26,7 @@ src/
 ├── button.ts        # <ui-button>
 ├── card.ts          # <ui-card> — a surface, three regions, and the elevation category
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
+├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
@@ -45,6 +46,7 @@ tests/               # mirrors src/, one test file per unit
 ├── button.test.ts
 ├── card.test.ts
 ├── checkbox.test.ts
+├── description.test.ts
 ├── dialog.test.ts
 ├── field.test.ts
 ├── icon.test.ts
@@ -213,6 +215,13 @@ explains. This file restates none of them.
   asked for in as many words. `ui-tooltip` wrote it first and `ui-menu` needed it pointing the
   other way; it takes boxes rather than elements for the reason `reservedGutter` in
   `src/dialog.ts` takes numbers, so the viewport edges are checked directly.
+- **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
+  lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
+  `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided
+  the shape; the module says why the clip travels **inline on the node** rather than in a stylesheet
+  each component has to remember to adopt — measured, as 363px of text nobody asked to see on the
+  first host that consumed it without one. `<ui-button>` proved the protocol and `<ui-menu>` is the
+  second to carry it.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three

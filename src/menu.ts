@@ -1,5 +1,6 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
 import { place } from './placement.js';
+import { Description } from './description.js';
 import { reference } from './reference.js';
 
 /**
@@ -279,6 +280,20 @@ export class UiMenu extends LitElement {
     /** The button this component owns, so the relationship below cannot be miswired. */
     readonly #trigger = document.createElement('button');
 
+    /**
+     * The sentence a `<ui-tooltip>` hands over, and the node the trigger points at.
+     *
+     * This element is the hardest place the protocol goes and it is taken second on
+     * purpose: it renders its own trigger, drives a popover, already holds an
+     * `aria-controls` reference and hand-writes the focus return across a shadow
+     * boundary. A protocol that broke here first would not say whether the protocol or
+     * the menu was at fault — so `<ui-button>`, which has none of that, proved it. RFC 0006
+     *
+     * The trigger is built with `document.createElement`, so the reference is written in
+     * {@link UiMenu.updated} beside `aria-expanded` rather than bound in the template.
+     */
+    readonly #description = new Description(this);
+
     /** The menu itself, in the same tree scope as the trigger that names it. */
     readonly #panel = document.createElement('div');
 
@@ -350,11 +365,22 @@ export class UiMenu extends LitElement {
         // in a document.
         this.#watching.abort();
 
+        // Stryker disable next-line CallExpression: this reaches exactly two things in Lit
+        // and this element has neither — `__controllers` is empty, because nothing here
+        // registers a reactive controller, and `__childPart.setConnected(false)` speaks
+        // only to async directives, which this template does not use. `Description` is a
+        // plain object rather than a `ReactiveController` for precisely that reason: it
+        // needs `requestUpdate` and no lifecycle hook, so it adds nothing here to
+        // disconnect. The same annotation is in `src/toast.ts` with the same reading, and
+        // the call stays for the same reason: Lit documents it as the extension point it
+        // reserves for later additions, so the day this element grows a controller the
+        // mutant stops being equivalent and nothing else would say so.
         super.disconnectedCallback();
     }
 
     override updated(): void {
         this.#trigger.setAttribute('aria-expanded', String(this.open));
+        this.#description.point(this.#trigger);
 
         // Compared against the platform's own state rather than against Lit's changed
         // properties, and it has to be: on the first update Lit reports every initialised
@@ -382,7 +408,10 @@ export class UiMenu extends LitElement {
     }
 
     override render(): TemplateResult {
-        return html`${this.#trigger}${this.#panel}`;
+        // The carrier sits beside the trigger rather than inside the panel: the panel is a
+        // popover and the reference has to resolve from where the reader's focus lands,
+        // which is the trigger's own tree scope and not the layer above it.
+        return html`${this.#trigger}${this.#panel}${this.#description.carrier()}`;
     }
 
     /** The items, which are the host's own controls rather than anything rendered here. */

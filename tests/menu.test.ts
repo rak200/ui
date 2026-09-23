@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -8,6 +8,7 @@ import { mountStory } from './stories.js';
 import meta, { AtTheEdge, Disabled, Links, Menu } from '../stories/menu.stories.js';
 import '../src/menu.js';
 import '../src/button.js';
+import '../src/tooltip.js';
 import { reference } from '../src/reference.js';
 import type { DerivedToken, Token } from '../src/tokens.js';
 import type { UiMenu } from '../src/menu.js';
@@ -26,6 +27,9 @@ const fixture = `
 
 /** Long enough for the typeahead buffer to be forgotten, which is half a second. */
 const forgotten = 700;
+
+/** The component's own forgetting interval, which one test has to straddle rather than clear. */
+const rhythm = 500;
 
 async function mount(markup: string): Promise<HTMLElement> {
     const host = document.createElement('div');
@@ -476,6 +480,49 @@ describe('opening and closing', () => {
     });
 });
 
+describe('the keys the trigger takes', () => {
+    it('opens on an arrow without letting the page move under it', async () => {
+        // The key opens the menu AND is the page's own scroll key, so leaving it
+        // unclaimed opens a panel over content that has just slid out from under it.
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        // After the menu, so the page can scroll and the trigger is already at the top —
+        // focusing something below the fold would scroll on its own and say nothing.
+        const tall = document.createElement('div');
+        tall.style.blockSize = '400vh';
+        document.body.append(tall);
+
+        trigger(element).focus();
+        const before = window.scrollY;
+
+        // Through CDP rather than `userEvent`, and that is the difference between a test
+        // and a test-shaped assertion: the driver's synthetic key runs the listeners and
+        // performs no default action at all, so this assertion held with
+        // `preventDefault()` taken out. Measured, by doing exactly that.
+        for (const type of ['rawKeyDown', 'keyUp'] as const) {
+            await cdp().send('Input.dispatchKeyEvent', {
+                type,
+                key: 'ArrowDown',
+                code: 'ArrowDown',
+                windowsVirtualKeyCode: 40,
+                nativeVirtualKeyCode: 40,
+            });
+        }
+
+        await element.updateComplete;
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+
+        expect(element.open, 'it opened').toBe(true);
+        expect(window.scrollY, 'and the page stayed where it was').toBe(before);
+
+        tall.remove();
+        window.scrollTo(0, 0);
+    });
+});
+
 describe('the keys inside it', () => {
     it('moves down and up', async () => {
         const host = await mount(fixture);
@@ -591,6 +638,46 @@ describe('the keys inside it', () => {
         await userEvent.keyboard('du');
 
         expect(focused(), 'and comes back round to one it has already passed').toBe('Duplicate');
+    });
+
+    it('keeps the buffer alive while the reader is still typing', async () => {
+        // The clock is restarted on every keystroke, not set once on the first. Without
+        // that, the timer from the first letter fires mid-word and the buffer the reader
+        // is still building is thrown away underneath them.
+        //
+        // Driven with the synchronous helper and fake timers, deliberately: the real
+        // window between "the first clock would have fired" and "the current one has not"
+        // is 200ms wide, and a test that has to land inside it is a test that races the
+        // thing it measures. `toast.test.ts` carries what that costs.
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">Actions</span>
+                <button type="button">Export</button>
+                <button type="button">Pin</button>
+            </ui-menu>
+        `);
+
+        const element = menu(host);
+        await open(element);
+
+        const panelOf = panel(element);
+        vi.useFakeTimers();
+
+        try {
+            keydown(panelOf, 'e');
+            vi.advanceTimersByTime(rhythm - 200);
+
+            keydown(panelOf, 'x');
+            vi.advanceTimersByTime(rhythm - 200);
+
+            // Past the first keystroke's clock and short of this one's, which is the only
+            // window where restarting it and setting it once tell different stories.
+            keydown(panelOf, 'p');
+
+            expect(focused(), 'the whole word, not the last letter of it').toBe('Export');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('forgets what was typed after a pause', async () => {
@@ -1063,6 +1150,130 @@ describe('the values, all of which come from the token layer', () => {
 
         expect(trigger(menu(host)).getAttribute('part')).toBe('trigger');
         expect(panel(menu(host)).getAttribute('part')).toBe('menu');
+    });
+});
+
+/**
+ * RFC 0006's second rollout step, first element. `<ui-menu>` renders its own trigger, so an
+ * `aria-describedby` written in the host's tree names a node the trigger cannot resolve —
+ * the tooltip hands the sentence over and this element renders it where the reference does.
+ *
+ * It is taken first in step 2 because it is the hardest place the protocol goes: a popover,
+ * an `aria-controls` reference of its own, and a focus return written by hand across the
+ * shadow boundary. Anything the protocol breaks here is worth learning at the start.
+ */
+describe('the description a tooltip hands over', () => {
+    /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
+    function hand(element: UiMenu, detail: unknown): boolean {
+        return !element.dispatchEvent(new CustomEvent('ui-describe', { detail, cancelable: true }));
+    }
+
+    it('renders the sentence where its own trigger can reach it', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        expect(trigger(element).hasAttribute('aria-describedby'), 'bare until handed').toBe(false);
+
+        expect(hand(element, 'Everything you can do to this file.'), 'taken').toBe(true);
+        await element.updateComplete;
+
+        const described = trigger(element).getAttribute('aria-describedby');
+        const carrier = element.shadowRoot?.getElementById(String(described));
+
+        expect(described).toBe('description');
+        expect(carrier?.textContent).toBe('Everything you can do to this file.');
+    });
+
+    it('keeps the carrier out of the panel, which is a layer of its own', async () => {
+        // The reference has to resolve from where the reader's focus lands. The panel is a
+        // popover in the top layer and the trigger is not, so a carrier rendered inside it
+        // would describe from the wrong side of the thing that opens and closes.
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        hand(element, 'Everything you can do to this file.');
+        await element.updateComplete;
+
+        const carrier = element.shadowRoot?.getElementById('description');
+
+        expect(carrier).not.toBeNull();
+        expect(panel(element).contains(carrier ?? null), 'not inside the popover').toBe(false);
+    });
+
+    it('does not disturb the references the trigger already carries', async () => {
+        // This element holds `aria-controls` and `aria-expanded` on the same node, and the
+        // description is written beside them on every update.
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        hand(element, 'Everything you can do to this file.');
+        await element.updateComplete;
+
+        const button = trigger(element);
+
+        expect(button.getAttribute('aria-haspopup')).toBe('menu');
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+        expect(button.getAttribute('aria-controls')).toBe(panel(element).id);
+    });
+
+    it('takes the description away when the sentence is withdrawn', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        hand(element, 'Everything you can do to this file.');
+        await element.updateComplete;
+
+        expect(hand(element, ''), 'the withdrawal is taken too').toBe(true);
+        await element.updateComplete;
+
+        expect(trigger(element).hasAttribute('aria-describedby')).toBe(false);
+        expect(element.shadowRoot?.getElementById('description')).toBeNull();
+    });
+
+    it('leaves a payload that is not a sentence unclaimed', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        expect(hand(element, 42)).toBe(false);
+        await element.updateComplete;
+
+        expect(trigger(element).hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('arrives from a real tooltip, and survives the menu being opened', async () => {
+        // The measurement RFC 0006 took on this element: opening it moves focus out of the
+        // menu's root and back into the tooltip's subtree. What that costs the dismissal is
+        // #169's problem; what it must not cost is the description.
+        const host = await mount(`
+            <div style="padding-block: 6rem">
+                <ui-tooltip>
+                    <ui-menu>
+                        <span slot="trigger">Actions</span>
+                        <button type="button">Rename</button>
+                    </ui-menu>
+                    <span slot="tip">Everything you can do to this file.</span>
+                </ui-tooltip>
+            </div>
+        `);
+
+        const element = menu(host);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        await element.updateComplete;
+
+        expect(trigger(element).getAttribute('aria-describedby')).toBe('description');
+
+        await userEvent.click(trigger(element));
+        await element.updateComplete;
+
+        expect(element.open, 'it still opens').toBe(true);
+        expect(trigger(element).getAttribute('aria-describedby')).toBe('description');
+        expect(element.shadowRoot?.getElementById('description')?.textContent).toBe(
+            'Everything you can do to this file.',
+        );
+
+        await expectAccessible(host);
     });
 });
 

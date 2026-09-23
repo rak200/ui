@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [What the platform does, and what is left](#what-the-platform-does-and-what-is-left)
 - [Where the panel lands](#where-the-panel-lands)
 - [Submenus](#submenus)
+- [Supplementary text](#supplementary-text)
 - [Styling](#styling)
 
 ## `<ui-menu>`
@@ -136,6 +137,32 @@ carries that whole argument, and it did not change.
 ordering, its own placement against a moving parent, and <kbd>→</kbd>/<kbd>←</kbd> on top of
 everything above — it is a component, not an option. Nest a second `<ui-menu>` inside an item
 and you will get two triggers rather than a submenu.
+
+## Supplementary text
+
+Wrap it in a [`<ui-tooltip>`](tooltip.md) and write the sentence once, in the tip:
+
+```html
+<ui-tooltip>
+  <ui-menu>
+    <span slot="trigger">Actions</span>
+    <button type="button">Rename</button>
+  </ui-menu>
+  <span slot="tip">Everything you can do to this file.</span>
+</ui-tooltip>
+```
+
+The tooltip cannot point at anything in this element's shadow root — an IDREF resolves in one tree
+scope — so it **hands the text over** and `<ui-menu>` renders it into its own root, where the
+trigger it owns can be described by it. There is no attribute or property to write; the sentence
+lives in the tip, and editing the tip changes what is announced.
+
+**The carrier sits beside the trigger, never inside the panel.** The panel is a popover in a layer
+of its own that opens and closes; the reference has to resolve from where the reader's focus is,
+which is the trigger. Opening the menu does not disturb it.
+
+The copy in here is not painted, because the tip is already showing it. Take the tip away and the
+description goes with it.
 
 ## Styling
 

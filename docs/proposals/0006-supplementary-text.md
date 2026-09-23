@@ -603,11 +603,15 @@ the module names it. **This one is the opposite case.** A trigger someone else w
 literal, so the name is a contract with code the suite cannot see, and a shared constant would make
 every mutant on it equivalent _by construction_ — earning that same disable, and taking the one
 string in this package that must not drift out of the floor's reach. Written at each end, a mutant
-on either breaks the handoff and the test that exercises it kills it. It costs **seven** literals
-that have to agree — one dispatch and six listeners, because the eight triggers are six classes:
-`UiTextField` is `<ui-input>` and `<ui-textarea>`, and `UiToggle` is `<ui-checkbox>` and
-`<ui-switch>`. It buys seven the suite pins, and the listener's is the same literal an outside
-implementer writes. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
+on either breaks the handoff and the test that exercises it kills it.
+
+**The build made that cheaper than this paragraph predicted, and the argument is unchanged.** It
+was written expecting one literal per element — seven, the eight triggers being six classes. The
+second element to take the handoff showed the listener is identical wherever it goes, so it moved
+into `src/description.ts` and the package now names the event **twice**: once where the tooltip
+dispatches it and once where the carrier listens. Two independent literals, each still graded,
+because neither is a constant the other reads — which was the whole of the objection to sharing one.
+And the literal an outside implementer writes is the same one either way. The verb is imperative because the event is cancelable: this one asks, where `ui-close` and
 `ui-dismiss` report.
 
 **The payload is a `CustomEvent<string>`, and the sentence is `detail`.** An `Event` subclass has to
