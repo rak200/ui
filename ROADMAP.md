@@ -20,9 +20,9 @@ been — Playwright has removed its accessibility tree API and `ariaSnapshot()` 
 name alone, so whether a copied description reaches a reader cannot be verified in one engine, let
 alone three, and a feature that cannot be verified is not adopted here.
 
-**The handoff is built, and six of the eight elements carry it.** `<ui-select>` and
-`<ui-radio-group>` are what is left, and each is one composer replaced by a call to the shared one.
-Then the documentation moves the recommendation off `help`, and this entry goes with it.
+**The handoff is built, and seven of the eight elements carry it.** `<ui-radio-group>` is what is
+left, and it is one composer replaced by a call to the shared one. Then the documentation moves the
+recommendation off `help`, and this entry goes with it.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

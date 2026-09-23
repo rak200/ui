@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
+import { Description } from './description.js';
 
 /**
  * One arm of the caret, and the gap it keeps from the edge.
@@ -378,6 +379,17 @@ export class UiSelect extends LitElement {
 
     readonly #internals = this.attachInternals();
 
+    /**
+     * The sentence a `<ui-tooltip>` hands over, which this element renders into its own
+     * root — an IDREF written out there reaches nothing in here. `src/description.ts`
+     * carries the whole of it, and the constructor is where it has to be built.
+     *
+     * **The box is what it describes, not the choices.** A reader lands on the `<select>`,
+     * and a description on an `<option>` is announced only while that option is the one
+     * under the cursor — which is the wrong moment for an instruction about the field.
+     */
+    readonly #description = new Description(this);
+
     readonly #redraw = (): void => {
         this.requestUpdate();
     };
@@ -486,13 +498,20 @@ export class UiSelect extends LitElement {
         return this.#internals.validationMessage;
     }
 
-    /** The ids describing the control, in the order a reader needs them. */
+    /**
+     * The ids describing the control, in the order a reader needs them.
+     *
+     * **A sentence handed over by a `<ui-tooltip>` follows both of them**, and where it
+     * goes is `src/description.ts`'s to say rather than this file's. The composition moved
+     * there with it, which is why this no longer joins a list by hand — `src/input.ts` and
+     * `src/radio.ts` each carried the same one, and three answers to one problem is two
+     * too many.
+     */
     #described(): string | typeof nothing {
-        const ids = [this.error === '' ? '' : 'error', this.help === '' ? '' : 'help'].filter(
-            (id) => id !== '',
+        return this.#description.described(
+            this.error === '' ? '' : 'error',
+            this.help === '' ? '' : 'help',
         );
-
-        return ids.length === 0 ? nothing : ids.join(' ');
     }
 
     /** One declaration, as the element the platform needs. */
@@ -545,6 +564,7 @@ export class UiSelect extends LitElement {
                         ? nothing
                         : html`<span class="error" id="error" part="error">${this.error}</span>`
                 }
+                ${this.#description.carrier()}
                 <!-- The structural half, which slotchange reports and no observer has to.
                      What it holds draws nothing: a declaration is display: none. -->
                 <slot @slotchange=${this.#redraw}></slot>

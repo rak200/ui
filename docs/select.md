@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [The element is the control](#the-element-is-the-control)
 - [In a form](#in-a-form)
 - [In error](#in-error)
+- [Supplementary text](#supplementary-text)
 - [What the platform still refuses](#what-the-platform-still-refuses)
 - [Styling](#styling)
 
@@ -138,6 +139,37 @@ are all still the platform's.
 One property renders the message, marks the control `aria-invalid`, points `aria-describedby` at it,
 paints the boundary and reaches `setValidity` — the same shape [`<ui-input>`](input.md#in-error)
 has, and the same warning applies: select on `:invalid`, never on `[error]`.
+
+## Supplementary text
+
+`help` puts a permanent line under the box. Where the instruction is worth reading once rather than
+always, wrap the element in a [`<ui-tooltip>`](tooltip.md) and write it in the tip:
+
+```html
+<ui-tooltip>
+  <ui-select label="Currency" name="currency">
+    <ui-option value="brl">Real</ui-option>
+    <ui-option value="usd">Dollar</ui-option>
+  </ui-select>
+  <span slot="tip">What the amounts below are quoted in.</span>
+</ui-tooltip>
+```
+
+The tooltip cannot point at the `<select>` in this element's shadow root — an IDREF resolves in one
+tree scope — so it **hands the text over** and the element renders it into its own root, where the
+box it draws can be described by it. There is no attribute or property to write; the sentence lives
+in the tip, and editing the tip changes what is announced.
+
+**The box is what is described, and the choices are not.** A description on an `<option>` is
+announced only while that option is the one under the cursor, which is the wrong moment for an
+instruction about the field.
+
+**It does not compete with `help` or `error`.** All three are announced, in that order — the
+message first, because it is what sent the reader looking; the help second; the handed sentence
+last.
+
+The copy in here is not painted, because the tip is already showing it. Take the tip away and the
+description goes with it.
 
 ## What the platform still refuses
 
