@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.7](https://github.com/rak200/ui/compare/0.6.6...0.6.7) (2026-09-23)
+
+
+### Features
+
+* **input:** the handoff reaches ui-input and ui-textarea ([#201](https://github.com/rak200/ui/issues/201)) ([a0a8d4b](https://github.com/rak200/ui/commit/a0a8d4b65e5beae97555e2eb289e61d7be577e47))
+
 ## [0.6.6](https://github.com/rak200/ui/compare/0.6.5...0.6.6) (2026-09-23)
 
 
