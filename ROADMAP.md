@@ -20,10 +20,10 @@ been — Playwright has removed its accessibility tree API and `ariaSnapshot()` 
 name alone, so whether a copied description reaches a reader cannot be verified in one engine, let
 alone three, and a feature that cannot be verified is not adopted here.
 
-**The handoff is built, and `<ui-button>` and `<ui-menu>` carry it.** What is left is the other
-six, in the order the proposal sets — `<ui-checkbox>` and `<ui-switch>` next, which need a composer
-before they can hold a second id, then the four that already have one — and then the documentation
-moving the recommendation off `help`. This entry goes when that last step lands.
+**The handoff is built, and four elements carry it** — `<ui-button>`, `<ui-menu>`, `<ui-checkbox>`
+and `<ui-switch>`. The refactor the proposal set aside is spent: the composition lives in the
+carrier, so the four that are left add an id each rather than a rule each. Then the documentation
+moves the recommendation off `help`, and this entry goes with it.
 
 ## The listbox deferral, which has an expiry date rather than a reason
 

@@ -220,8 +220,9 @@ explains. This file restates none of them.
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided
   the shape; the module says why the clip travels **inline on the node** rather than in a stylesheet
   each component has to remember to adopt — measured, as 363px of text nobody asked to see on the
-  first host that consumed it without one. `<ui-button>` proved the protocol and `<ui-menu>` is the
-  second to carry it.
+  first host that consumed it without one. **The `aria-describedby` list is composed there too**,
+  so _the handed sentence goes last_ is one decision rather than six components' to remember —
+  `src/checkbox.ts` is what asked for it, having had the attribute and no composer at all.
 - **Why `src/icons/` is generated, excluded from mutation and excluded from coverage** —
   `tests/manual/vendor-icons.mjs` emits it from a pinned Lucide, and the two exclusions carry their
   reasons at `stryker.config.js` and `vitest.config.js`. **The mutation half is written in three

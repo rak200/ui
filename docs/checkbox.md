@@ -17,6 +17,7 @@ import '@rak200/ui';
 - [Naming it](#naming-it)
 - [In a form](#in-a-form)
 - [In error](#in-error)
+- [Supplementary text](#supplementary-text)
 - [The mixed state](#the-mixed-state)
 - [Events](#events)
 - [Interaction states](#interaction-states)
@@ -158,6 +159,30 @@ past a message the reader can see, and nothing the reader sees can disagree with
 thinks. Clear it by setting `error` to the empty string.
 
 A custom message wins over the one `required` writes for itself.
+
+## Supplementary text
+
+Wrap it in a [`<ui-tooltip>`](tooltip.md) and write the sentence once, in the tip:
+
+```html
+<ui-tooltip>
+  <ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>
+  <span slot="tip">Ticking this is how a receipt is sent.</span>
+</ui-tooltip>
+```
+
+The tooltip cannot point at the control in this element's shadow root — an IDREF resolves in one
+tree scope — so it **hands the text over** and the element renders it into its own root, where the
+control it draws can be described by it. There is no attribute or property to write; the sentence
+lives in the tip, and editing the tip changes what is announced. It works the same on
+`<ui-switch>`.
+
+**It does not compete with `error`.** Both are announced, in that order — the message first,
+because it is what sent the reader looking, then the instruction. Neither replaces the other, and
+clearing `error` leaves the tip's sentence where it was.
+
+The copy in here is not painted, because the tip is already showing it. Take the tip away and the
+description goes with it.
 
 ## The mixed state
 

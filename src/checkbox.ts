@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
+import { Description } from './description.js';
 
 /**
  * The size both controls are drawn at, and a floor rather than a preference.
@@ -271,6 +272,34 @@ class UiToggle extends LitElement {
 
     readonly #internals = this.attachInternals();
 
+    /**
+     * The sentence a `<ui-tooltip>` hands over, which this element renders into its own
+     * root — an IDREF written out there reaches nothing in here.
+     *
+     * Built in the field initialiser, which runs in the constructor: the tooltip waits on
+     * `customElements.whenDefined` before handing anything over, and that resolves after
+     * the constructor has run. `src/description.ts` carries the rest, and `src/button.ts`
+     * says why there is no public `description` property to write instead.
+     */
+    readonly #description = new Description(this);
+
+    /**
+     * The ids describing the control, in the order a reader needs them.
+     *
+     * **This pair had the attribute and no composer**, which RFC 0006 named before the
+     * rollout started as the one step that is not *add an id*: `error` was written
+     * straight into `aria-describedby`, so a second description had nowhere to go that did
+     * not overwrite the first. The order — the error that sent the reader looking, then
+     * the supplementary sentence — is `src/description.ts`'s to decide rather than this
+     * file's, so the elements still to come replace the composer they already have with a
+     * call to that one instead of each restating where the handed id goes.
+     *
+     * There is no `help` here, which is why nothing ever had to compose.
+     */
+    #described(): string | typeof nothing {
+        return this.#description.described(this.error === '' ? '' : 'error');
+    }
+
     /** The form value and the validity, which move together here or disagree anywhere. */
     #publish(): void {
         this.#internals.setFormValue(this.checked ? this.value : null);
@@ -423,7 +452,7 @@ class UiToggle extends LitElement {
                     ?disabled=${this.disabled}
                     ?required=${this.required}
                     aria-invalid=${this.error === '' ? nothing : 'true'}
-                    aria-describedby=${this.error === '' ? nothing : 'error'}
+                    aria-describedby=${this.#described()}
                     @change=${this.changed}
                 />
                 <span part="text"><slot name="label">${this.label}</slot></span>
@@ -433,6 +462,7 @@ class UiToggle extends LitElement {
                     ? nothing
                     : html`<span class="error" id="error" part="error">${this.error}</span>`
             }
+            ${this.#description.carrier()}
         `;
     }
 }

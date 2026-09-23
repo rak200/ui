@@ -281,9 +281,9 @@ would let a component nominate the node a reference aimed at its host resolves t
 the tooltip's existing `aria-describedby` starts working and the handoff becomes deletable. An
 internal protocol is a deletion where a published property would have been a deprecation cycle.
 
-`<ui-button>` and `<ui-menu>` carry it today; the other six arrive in order. Until each does,
-**what makes a description arrive is the control being yours** — measured, with or without a field
-around it. #156
+`<ui-button>`, `<ui-menu>`, `<ui-checkbox>` and `<ui-switch>` carry it today; the other four arrive
+in order. Until each does, **what makes a description arrive is the control being yours** —
+measured, with or without a field around it. #156
 
 ## Glyphs are adopted, the delivery is owned
 

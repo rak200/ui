@@ -746,6 +746,13 @@ sentence straight into the attribute instead of into the list — at which point
 instruction overwrite each other rather than coexisting, which is the failure `#described()` exists
 to prevent everywhere else.
 
+**Built, and the second item turned out to pay for the third.** The composer `<ui-checkbox>` needed
+went into `src/description.ts` rather than into the element, so _the handed sentence is announced
+last_ is decided once for all six rather than restated in each. What item 3 costs is therefore not
+an id added to a composer but a composer **replaced** by a call to that one — and this package was
+already writing the same list-composition three times over, in `src/input.ts`, `src/select.ts` and
+`src/radio.ts`, before the handoff gave it a second thing to compose.
+
 ### What this design did not yet say
 
 Seven things, and they were not research: six were blanks where a choice goes, and the seventh was
