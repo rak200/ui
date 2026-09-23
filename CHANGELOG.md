@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5](https://github.com/rak200/ui/compare/0.6.4...0.6.5) (2026-09-23)
+
+
+### Features
+
+* **menu:** the handoff reaches ui-menu, through a carrier both share ([#197](https://github.com/rak200/ui/issues/197)) ([813f8bb](https://github.com/rak200/ui/commit/813f8bb1feb1d92b0650b3d0145882a1749dead2))
+
 ## [0.6.4](https://github.com/rak200/ui/compare/0.6.3...0.6.4) (2026-09-20)
 
 
