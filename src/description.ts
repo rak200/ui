@@ -9,9 +9,9 @@
  *
  * **This module exists because `<ui-menu>` is the second element to need it**, which is
  * the same moment and the same reason `src/placement.ts` was extracted: two answers to one
- * problem is one too many. Six classes carry the protocol when the rollout is done, and a
- * copy in each is six chances for one of them to drift into accepting text it never
- * renders.
+ * problem is one too many. Six classes carry the protocol — the eight elements are six
+ * classes — and a copy in each would have been six chances for one of them to drift into
+ * accepting text it never renders.
  *
  * **What it does not own is the rendering.** `<ui-button>` draws its control from a
  * template and `<ui-menu>` builds one imperatively, so each points its own control at
@@ -140,8 +140,8 @@ export class Description {
      * **The composition is here rather than at each call site so the order is decided
      * once.** RFC 0006 put the handed sentence after `error` and `help`: it is
      * supplementary by construction, where an error is what sent the reader looking and
-     * help was already in flow. Six classes will carry this, and *put it last* is not a
-     * rule six of them should each be remembering — the failure that shape invites is
+     * help was already in flow. Six classes carry this, and *put it last* is not a rule
+     * six of them should each be remembering — the failure that shape invites is
      * writing the sentence **into** the attribute rather than into the list, at which
      * point the instruction and the error overwrite each other.
      *

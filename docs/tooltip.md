@@ -16,7 +16,7 @@ import '@rak200/ui';
 - [What it shows and what dismisses it](#what-it-shows-and-what-dismisses-it)
 - [Touch](#touch)
 - [Where it lands, and who put it there](#where-it-lands-and-who-put-it-there)
-- [Inside a field](#inside-a-field)
+- [On a control you wrote](#on-a-control-you-wrote)
 - [Styling](#styling)
 
 ## `<ui-tooltip>`
@@ -81,9 +81,9 @@ announced?_ is answered by opening the console rather than by counting elements 
 tags goes stale the way the sentence it replaced did, which named one element and was true when it
 was written.
 
-**Every element in this package accepts it**, which is the whole of RFC 0006's rollout spent. What
-still needs a control you wrote is a trigger of your own that draws one inside a shadow root — the
-composition below is how a plain page has always done it, and it is unchanged.
+**Every control in this package takes it**, so wrapping one is the whole of what you write. What
+the warning is left for is a trigger of your **own** that draws a control inside a shadow root:
+there the description has to come from a control you wrote, which is the composition below.
 
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.
@@ -172,8 +172,9 @@ ends are in your tree.
 `aria-describedby` already held rather than replacing it, because a description that silently
 replaced another is the failure nobody sees.
 
-A tooltip around [`<ui-input>`](input.md) or any other control this package draws is the case that
-is silent, and the reason is the one above.
+A tooltip around [`<ui-input>`](input.md) or any other control this package draws needs none of
+this. Those take the sentence rather than the reference, and render it where their own control can
+resolve it — so the composition above is for a control of yours, not for one of theirs.
 
 ## Styling
 

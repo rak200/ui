@@ -3,28 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A description reaches none of the controls this package renders (#156)
-
-`<ui-tooltip>` names its trigger with `aria-describedby`, and an IDREF crosses no shadow boundary —
-so on any element that focuses a control inside its own shadow root the tip appears, places itself
-correctly, and is never announced. That is most of this package. The documentation said it of one
-element, which was true when it was written.
-
-**The mechanism did not change, its reach did.** `<ui-tooltip>` says so in the console now, which
-settles the half that was dangerous — the failure was silent.
-
-**The design choice is made.** [RFC 0006](docs/proposals/0006-supplementary-text.md) is
-accepted: the tooltip hands its sentence to the trigger through a cancelable event, and the
-trigger renders it into its own shadow root where an IDREF resolves. `aria-description` was not the answer and could not have
-been — Playwright has removed its accessibility tree API and `ariaSnapshot()` carries the accessible
-name alone, so whether a copied description reaches a reader cannot be verified in one engine, let
-alone three, and a feature that cannot be verified is not adopted here.
-
-**The handoff is built and all eight elements carry it.** What is left is documentation and
-nothing else: `docs/` stops sending a consumer to `help` for supplementary text and sends them to
-the tip, `help`'s own page keeps it for the two cases a popover cannot serve, and the transitional
-half of `docs/tooltip.md` and [ARCHITECTURE.md](ARCHITECTURE.md) goes. This entry goes with it.
-
 ## The listbox deferral, which has an expiry date rather than a reason
 
 RFC 0016 put a custom listbox off because a native `<select>` is accessible for free on every

@@ -145,8 +145,8 @@ instead of it.
 
 ## Supplementary text
 
-`help` puts a permanent line under the control. Where the instruction is worth reading once rather
-than always, wrap the field in a [`<ui-tooltip>`](tooltip.md) and write it in the tip:
+**Write it in a tip rather than in `help`.** Wrap the field in a [`<ui-tooltip>`](tooltip.md) and
+the sentence lives in one place:
 
 ```html
 <ui-tooltip>
@@ -161,9 +161,18 @@ control it draws can be described by it. There is no attribute or property to wr
 lives in the tip, and editing the tip changes what is announced. It works the same on
 `<ui-textarea>`.
 
-**It does not compete with `help` or `error`.** All three are announced, in that order — the
-message first, because it is what sent the reader looking; the help second, because it is usually
-the way out; the handed sentence last.
+**Why the tip rather than `help`.** A line under every control is a layout decision this library
+would be making for you: it is there whether or not it is wanted, it pushes the fields apart, and
+only some of these elements have one at all. The tip is the same sentence read when it is asked
+for, and every element here accepts it.
+
+**`help` is not deprecated, and here is what it is for.** A popover covers the field above it, so
+two instructions that have to be read _together_ — or one read beside a neighbour's error — cannot
+come from one. That is the case it stays available for.
+
+**The three do not compete.** All of them are announced, in that order — the message first,
+because it is what sent the reader looking; the help second, because it is usually the way out; the
+handed sentence last.
 
 The copy in here is not painted, because the tip is already showing it. Take the tip away and the
 description goes with it.

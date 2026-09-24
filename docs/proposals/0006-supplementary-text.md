@@ -1,6 +1,6 @@
 # RFC 0006 — Supplementary text, and where it is allowed to live
 
-- **Status**: Accepted
+- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-09-11
 
@@ -958,6 +958,34 @@ Ordered, each step making the next possible.
 with the deprecation and its replacement required to coexist in one release.** There is no default
 to discontinue, so nothing is deprecated and nothing is released, and what remains is documentation
 the last step was always going to touch. The step did not shrink; it was never a step.
+
+### Built
+
+| Step | Pull request                                  | What landed                                                                                                                      |
+| ---- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| —    | [#191](https://github.com/rak200/ui/pull/191) | the dangling IDREF this study measured on the way in, fixed before the protocol was built on top of it                           |
+| 1    | [#195](https://github.com/rak200/ui/pull/195) | the handoff itself, proved on `<ui-button>`, with the observer, the default slot's `slotchange` and the withdrawal on both paths |
+| 2    | [#197](https://github.com/rak200/ui/pull/197) | `<ui-menu>`, and `src/description.ts` extracted at the second consumer                                                           |
+| 2    | [#199](https://github.com/rak200/ui/pull/199) | `<ui-checkbox>` and `<ui-switch>`, and the composer, which went into the carrier                                                 |
+| 2    | [#201](https://github.com/rak200/ui/pull/201) | `<ui-input>` and `<ui-textarea>`, one edit for both                                                                              |
+| 2    | [#203](https://github.com/rak200/ui/pull/203) | `<ui-select>`, the box described and the choices not                                                                             |
+| 2    | [#205](https://github.com/rak200/ui/pull/205) | `<ui-radio-group>`, the last of the eight                                                                                        |
+| 3    | this one                                      | the recommendation moved off `help`, the transitional half pruned, #156 closed                                                   |
+
+**Two predictions this proposal made were wrong in the same direction, and both are corrected
+above** — it costed the protocol at seven copies of the event-name literal and the package names it
+**twice**; it costed step 2's last four items at _one id added to a composer each_, and putting the
+composition in the carrier turned them into _one composer replaced by a call_. Both errors came
+from assuming the receiving half would be written per element. It is one module.
+
+**One thing it predicted exactly.** `<ui-checkbox>` and `<ui-switch>` were named, before the rollout
+began, as the only real refactor — the pair with the attribute and no composer. That is what they
+were, and naming it early is what kept the handed sentence out of the attribute.
+
+**What the three hand-written list compositions cost, discovered rather than planned.**
+`src/input.ts`, `src/select.ts` and `src/radio.ts` each carried the same eight lines. Nothing was
+wrong with that while each had one thing to compose; the handoff gave them a second, and all three
+now call the one place that decides the order.
 
 **What is verified, and how.** Every step is gated by the suite that already exists: the
 `aria-describedby` written by a component resolves in its own root, axe reports no violation at
