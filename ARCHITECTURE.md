@@ -281,9 +281,12 @@ would let a component nominate the node a reference aimed at its host resolves t
 the tooltip's existing `aria-describedby` starts working and the handoff becomes deletable. An
 internal protocol is a deletion where a published property would have been a deprecation cycle.
 
-**All eight carry it.** What remains of #156 is the documentation: `help` stops being what a
-consumer is sent to for supplementary text, and stays available for the two cases a popover cannot
-serve.
+**Every control here takes it**, which is what made `help` stop being the answer to _where does
+supplementary text go_. A line under every control is a layout decision this library was making on
+a host's behalf, in four elements and not the other four; a tip is the same sentence, read when it
+is asked for, available on all eight. `help` stays for the case a popover cannot serve — two
+instructions read together, or one read beside a neighbour's error — and that is a capability
+rather than a recommendation. #156
 
 ## Glyphs are adopted, the delivery is owned
 
