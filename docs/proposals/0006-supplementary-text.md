@@ -970,7 +970,7 @@ the last step was always going to touch. The step did not shrink; it was never a
 | 2    | [#201](https://github.com/rak200/ui/pull/201) | `<ui-input>` and `<ui-textarea>`, one edit for both                                                                              |
 | 2    | [#203](https://github.com/rak200/ui/pull/203) | `<ui-select>`, the box described and the choices not                                                                             |
 | 2    | [#205](https://github.com/rak200/ui/pull/205) | `<ui-radio-group>`, the last of the eight                                                                                        |
-| 3    | this one                                      | the recommendation moved off `help`, the transitional half pruned, #156 closed                                                   |
+| 3    | [#208](https://github.com/rak200/ui/pull/208) | the recommendation moved off `help`, the transitional half pruned, #156 closed                                                   |
 
 **Two predictions this proposal made were wrong in the same direction, and both are corrected
 above** — it costed the protocol at seven copies of the event-name literal and the package names it
