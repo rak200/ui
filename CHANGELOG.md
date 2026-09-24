@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.9](https://github.com/rak200/ui/compare/0.6.8...0.6.9) (2026-09-23)
+
+
+### Features
+
+* **radio:** the handoff reaches ui-radio-group, and the rollout closes ([#205](https://github.com/rak200/ui/issues/205)) ([c6cab2b](https://github.com/rak200/ui/commit/c6cab2bef02147ccb91b74c78b78bba09e10b289))
+
 ## [0.6.8](https://github.com/rak200/ui/compare/0.6.7...0.6.8) (2026-09-23)
 
 
