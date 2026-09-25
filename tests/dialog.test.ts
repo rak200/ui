@@ -649,6 +649,40 @@ describe('the lifecycle', () => {
 
         expect(root.style.overflow, 'given back, with nothing awaited').toBe('');
     });
+
+    it('stops watching the title once it is out of the document', async () => {
+        // A `MutationObserver` is not detached by removal: it holds its own reference to
+        // the node it watches and goes on firing, in a subtree no longer in a document.
+        // Left connected, a removed dialog keeps recomputing an accessible name nobody can
+        // reach, and cannot be collected while it does.
+        //
+        // The full mutation run found this — `disconnect()` deleted, and every test still
+        // green. It is in `disconnectedCallback` beside the scroll release, which the test
+        // above measures, and beside it the observer had nothing measuring it at all.
+        const element = await mount(fixture);
+        const title = element.querySelector('h2');
+
+        if (title === null) {
+            throw new Error('no title in the fixture');
+        }
+
+        expect(inner(element).getAttribute('aria-label'), 'named to begin with').toBe(
+            'Delete account',
+        );
+
+        element.remove();
+
+        // The same rewrite the name-following test uses, which is what makes this one
+        // about the disconnect rather than about the observer working at all.
+        title.textContent = 'Delete workspace';
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(inner(element).getAttribute('aria-label'), 'and the name never moved').toBe(
+            'Delete account',
+        );
+    });
 });
 
 /**
