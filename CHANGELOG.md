@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.10](https://github.com/rak200/ui/compare/0.6.9...0.6.10) (2026-09-25)
+
+
+### Bug Fixes
+
+* **dialog:** the title observer is released when the element leaves ([#211](https://github.com/rak200/ui/issues/211)) ([4afc81d](https://github.com/rak200/ui/commit/4afc81da000e5207113a0ca159f3ff12b9d41e57))
+
 ## [0.6.9](https://github.com/rak200/ui/compare/0.6.8...0.6.9) (2026-09-23)
 
 
