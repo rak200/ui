@@ -141,6 +141,16 @@ export class UiIcon extends LitElement {
 
     override disconnectedCallback(): void {
         pending.delete(this);
+
+        // Stryker disable next-line CallExpression: the reading `src/toast.ts` carries at
+        // its own, verified again here rather than inherited. In Lit this reaches exactly
+        // two things — `__controllers`, and `__childPart.setConnected(false)`, which speaks
+        // only to async directives — and this element has neither: nothing registers a
+        // reactive controller and the template uses no async directive. So no input
+        // distinguishes the call from its absence. It stays because Lit documents the super
+        // call as the extension point it reserves for later additions: the day this element
+        // grows a controller or an async directive the mutant stops being equivalent, and
+        // nothing else would say so.
         super.disconnectedCallback();
     }
 
