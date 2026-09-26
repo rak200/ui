@@ -132,6 +132,60 @@ async function painted(): Promise<void> {
     });
 }
 
+/**
+ * Runs something and hands back every error that escaped into a listener.
+ *
+ * **An exception thrown inside an event listener reaches nobody.** It does not propagate to
+ * whatever dispatched the event — the platform reports it on the window instead. So a
+ * component that throws where it should have returned leaves every assertion in this file
+ * passing, and the mutation floor does not catch it either: Stryker sees a run that
+ * *errored* rather than a test that *failed*, records `RuntimeError`, and **leaves the
+ * mutant out of the score entirely**. Eight mutants on this element's handoff, show and
+ * hide paths came back that way from the full run — ungraded, and with nothing complaining
+ * that they had not been graded.
+ *
+ * The idiom is not new: two placement tests below already captured errors exactly this way,
+ * inline. What the floor showed is that the paths needing it are six rather than two.
+ */
+async function escaped(run: () => Promise<void> | void): Promise<string[]> {
+    const thrown: string[] = [];
+
+    const caught = (event: ErrorEvent): void => {
+        thrown.push(event.message);
+        // Handled, because this is what is handling it: the assertion below is the
+        // treatment. Left uncancelled the runner also reports it as an unhandled error,
+        // and a run that errors is classified ahead of a run that merely fails.
+        event.preventDefault();
+    };
+
+    // **Both channels, and the second is not symmetry for its own sake.** A synchronous
+    // throw inside a listener arrives as `error`; a rejected promise nobody awaited arrives
+    // as `unhandledrejection` and nowhere else. `customElements.whenDefined` on a name that
+    // could never be a custom element *rejects* rather than throws — measured, as a mutant
+    // that produced 55 errors in this file and failed no test that was only watching the
+    // first channel.
+    const rejected = (event: PromiseRejectionEvent): void => {
+        thrown.push(String(event.reason));
+    };
+
+    window.addEventListener('error', caught);
+    window.addEventListener('unhandledrejection', rejected);
+
+    try {
+        await run();
+        // A rejection is delivered on a later turn than the call that made it, so a check
+        // that ran straight after `run()` would read an empty list and call it silence.
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+    } finally {
+        window.removeEventListener('error', caught);
+        window.removeEventListener('unhandledrejection', rejected);
+    }
+
+    return thrown;
+}
+
 /** The component's own stylesheet, as text, for the rules no rendering can show. */
 function styleText(): string {
     return String((customElements.get('ui-tooltip') as unknown as { styles: unknown }).styles);
@@ -352,14 +406,30 @@ describe('ui-tooltip', () => {
 
         expect(tip(host).hasAttribute('popover'), 'nothing was wired').toBe(false);
         expect(tip(host).id).toBe('');
+
+        // And the way out is a return rather than a throw. `disconnectedCallback` hides on
+        // the way out, and here there is a tip the element never made a popover — so
+        // `hidePopover()` on it is `NotSupportedError`, thrown inside a lifecycle callback
+        // where no assertion was looking. Taken out here rather than left to the teardown,
+        // because a disconnect the teardown performs happens outside every test: the throw
+        // is then reported against the run instead of against this assertion, and a run
+        // that errors is graded ahead of a run that fails.
+        const thrown = await escaped(() => {
+            only(host, 'ui-tooltip').remove();
+        });
+
+        expect(thrown).toEqual([]);
     });
 
     it('does nothing at all when there is no tip to show', async () => {
         const host = await mount('<ui-tooltip><button type="button">Save</button></ui-tooltip>');
 
-        await userEvent.hover(trigger(host));
+        const thrown = await escaped(async () => {
+            await userEvent.hover(trigger(host));
+        });
 
         expect(trigger(host).hasAttribute('aria-describedby')).toBe(false);
+        expect(thrown, 'and nothing threw on the way').toEqual([]);
     });
 
     it('hands it the moment it is wired, when the definition has already arrived', () => {
@@ -1426,6 +1496,77 @@ describe('the drawing', () => {
         expect(styles.borderRadius).toBe('11px');
         expect(styles.padding).toBe('5px 10px');
         expect(styles.maxInlineSize).toBe('400px');
+    });
+});
+
+/**
+ * The paths whose failure is a throw rather than a wrong answer.
+ *
+ * Each of these guards a state the element can legitimately reach — a trigger the registry
+ * will never define, a second pointer enter, a leave with nothing open, a tip a framework
+ * removed while it was on screen. Remove any of those guards and the platform throws, in a
+ * listener, where no assertion in this file was looking. `escaped` above is what looks.
+ */
+describe('the paths that must not throw', () => {
+    it('answers a hyphenless trigger without asking the registry about it', async () => {
+        // Two guards at once, and both were ungraded. `whenDefined` rejects on a name
+        // that could never be a custom element, so the hyphen test has to answer
+        // `<button>` before the registry is asked — and `#complain` then reads a `shadowRoot` that a
+        // native control does not have.
+        const thrown = await escaped(async () => {
+            await mount(fixture);
+        });
+
+        expect(thrown).toEqual([]);
+    });
+
+    it('shows once, so a second pointer enter is a return rather than a throw', async () => {
+        const host = await mount(fixture);
+
+        const thrown = await escaped(async () => {
+            // Twice, because the guard is what the second one meets. Dispatched at the
+            // element rather than at the trigger: `pointerenter` does not bubble, and the
+            // listeners are this element's own.
+            for (const round of ['first', 'second']) {
+                only(host, 'ui-tooltip').dispatchEvent(new PointerEvent('pointerenter'));
+                await painted();
+
+                expect(tip(host).matches(':popover-open'), round).toBe(true);
+            }
+        });
+
+        // `showPopover()` on a popover that is already open throws `InvalidStateError`, so
+        // the guard is what keeps a repeated enter from being an error rather than a no-op.
+        expect(thrown).toEqual([]);
+        expect(tip(host).matches(':popover-open'), 'and it is open once').toBe(true);
+    });
+
+    it('hides once, so a leave with nothing open is a return rather than a throw', async () => {
+        const host = await mount(fixture);
+
+        const thrown = await escaped(() => {
+            only(host, 'ui-tooltip').dispatchEvent(new PointerEvent('pointerleave'));
+        });
+
+        // `hidePopover()` on a popover that is not showing throws the same way.
+        expect(thrown).toEqual([]);
+        expect(tip(host).matches(':popover-open')).toBe(false);
+    });
+
+    it('leaves without throwing when the tip was taken away while it was open', async () => {
+        // The window a framework opens by re-rendering the tip away mid-hover, which the
+        // placement tests below already cover for a scroll and nobody covered for a leave.
+        const host = await mount(fixture);
+
+        await userEvent.hover(trigger(host));
+        await painted();
+
+        const thrown = await escaped(() => {
+            tip(host).remove();
+            only(host, 'ui-tooltip').dispatchEvent(new PointerEvent('pointerleave'));
+        });
+
+        expect(thrown).toEqual([]);
     });
 });
 
