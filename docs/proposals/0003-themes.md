@@ -159,10 +159,20 @@ before the design.
   failed at. _Steps_: declare a `box-shadow` ground through `light-dark()` and read it back.
   _Expectation_: refused, matching the elevation finding — which would mean the glow needs either a
   colour token the shadow reads, or two declarations under a scheme selector.
+
+  > **Run, and refuted where it matters.** The whole shadow is refused, as expected — and the
+  > first alternative the expectation names is not a workaround but the answer: the colour inside a
+  > shadow is a colour, and `light-dark()` carries it. _What S2 and S3 measured_, below.
+
 - **S3 — what is a glass surface's contrast?** _Claim_: no fixed ratio can be asserted for it.
   _Steps_: render one panel over a spread of backdrop luminances and measure the text ratio at each.
   _Expectation_: the range crosses 4.5:1, which would force the theme either to constrain what may
   sit behind it or to drop the translucency under `prefers-contrast: more`.
+
+  > **Run, and there is a third option the expectation did not list: constrain the opacity, not
+  > the backdrop.** Below a measured opacity the range does cross 4.5:1; above it, no backdrop can
+  > pull the ratio under. _What S2 and S3 measured_, below.
+
 - **S4 — can the suite emulate the two contrast settings?** _Claim_: it can. `tests/tokens.test.ts`
   already emulates `prefers-color-scheme` through CDP, so the instrument exists; whether it reaches
   `prefers-contrast` and `forced-colors` is unmeasured. A gate that cannot be written changes what
@@ -254,6 +264,77 @@ already knows the colours meet. It does not come alone: `--ui-color-accent-hover
 pole_. And **the gate that reads today's pair cannot read tomorrow's**: `tests/tokens.test.ts`
 measures hex defaults as strings, and a derived pole has no string to measure — it would have to be
 resolved in the engine, the way this study resolved it.
+
+### What S2 and S3 measured
+
+Same engine and instrument as S1. The S3 sweep is the same 4096 colours, used as **backdrops**; the
+panel is composited over each one as a browser composites a translucent box — source-over, in sRGB —
+by painting both into one canvas pixel. axe computes the same stack and agrees with it: over black,
+white glass at 0.3 opacity is `#4d4d4d` in both.
+
+**S2 — a glow is geometry and a colour, and only the geometry is stuck.**
+
+| declaration                                                         | light                 | dark            |
+| ------------------------------------------------------------------- | --------------------- | --------------- |
+| a whole shadow in `light-dark()`                                    | refused by the parser | refused         |
+| the same, through a custom property                                 | `none`                | `none`          |
+| `box-shadow: 0 0 8px light-dark(…)`                                 | the light colour      | the dark colour |
+| the same colour through `var()`                                     | the light colour      | the dark colour |
+| `text-shadow` and `filter: drop-shadow()`, colour in `light-dark()` | the light colour      | the dark colour |
+
+So the whole shadow cannot be one `light-dark()` value, which is what `src/tokens.ts` records beside
+`--ui-elevation-100` — and the part of it that has to follow the scheme **can**, because it is a
+colour, and a colour is exactly what the emitter already carries through `light-dark()`. The shipped
+elevation, with only its colour made a pair, reads `rgba(0, 0, 0, 0.1)` in the light scheme and
+`rgba(0, 0, 0, 0.5)` in the dark. What stays one value is the geometry — the offsets and the blur —
+and a glow's geometry has no reason to differ by scheme.
+
+**This bears on a published reason, not only on Matrix.** `ARCHITECTURE.md`, _One value cannot
+follow the scheme_, says a scheme-aware shadow _"would mean a second axis in the emitter for one
+category"_. Measured, it would mean a **colour ground the shadow reads**, and no second axis. The
+section's conclusion — the card's derived boundary is what both schemes have — does not rest on that
+sentence and is not contradicted; the sentence itself is. And it narrows question 2: what a glow
+needs from the scheme is a colour, which is a category that exists. What would be new is a shadow's
+geometry, and whether a theme may bring that is the question left.
+
+**S3 — below a measured opacity the text can fail, and above it nothing behind the panel can make
+it fail.** Default grounds, panel at the surface colour, text at the text colour:
+
+| opacity                                   | light, backdrops under 4.5:1 | range        | dark, backdrops under 4.5:1 | range        |
+| ----------------------------------------- | ---------------------------- | ------------ | --------------------------- | ------------ |
+| 0.3                                       | 1112 / 4096                  | 1.74 … 14.68 | 2000 / 4096                 | 1.59 … 16.28 |
+| 0.5                                       | 110                          | 3.72 … 14.68 | 1024                        | 2.75 … 15.79 |
+| 0.6                                       | **0**                        | 5.15 … 14.68 | 215                         | 3.78 … 15.59 |
+| 0.7                                       | 0                            | 7.00 … 14.68 | **0**                       | 5.34 … 15.26 |
+| **least opacity clearing every backdrop** | **0.56**                     |              | **0.66**                    |              |
+
+**The worst backdrop is an extreme, not a sample**: black under the light panel and white under the
+dark one. Compositing is monotonic in every channel of what is behind, and nothing behind a panel —
+blurred or not, image or not — is darker than black or lighter than white. So the two floors hold
+for **any** backdrop, not only for the sweep, and the claim that _no fixed ratio can be asserted_ is
+true only below them. The floors belong to the default grounds; a theme that moves the surface or the
+text moves them, and they are computable from the pair alone.
+
+**What the gate sees today, and why that is not enough.** `expectAccessible` reads axe's
+`violations` and nothing else, so what matters is which verdict axe returns:
+
+| white glass at 0.3 over                        | axe's `color-contrast`                                        |
+| ---------------------------------------------- | ------------------------------------------------------------- |
+| a solid colour                                 | **violation**, 1.73:1                                         |
+| a solid colour, with `backdrop-filter: blur()` | **violation**, 1.73:1                                         |
+| an absolutely placed layer                     | **violation**, 1.73:1                                         |
+| a gradient                                     | **`incomplete`** — _background color could not be determined_ |
+
+axe follows translucency and ignores the blur, which is right, since a blur changes no colour in a
+uniform backdrop. But it gives up on a gradient, and **an `incomplete` is invisible to this suite**.
+A glass story over an image would pass the gate however unreadable it was. A story over a solid
+colour is measured correctly — against that colour only. The measurement a glass theme needs is the
+one above: the composite over the two extremes, asserted in the suite, where a story's choice of
+backdrop cannot reach it.
+
+`prefers-reduced-transparency` would be the natural second line, and S4 found it in Chromium only.
+Contrast is also necessary rather than sufficient: a blurred, busy backdrop costs legibility no
+ratio measures, which is what the specification of `contrast-color()` says of its own guarantee.
 
 ## Proposed design
 
