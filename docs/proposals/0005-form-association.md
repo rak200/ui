@@ -991,6 +991,7 @@ they should.
 | 5    | [#154](https://github.com/rak200/ui/pull/154) | `<ui-radio-group>` renders its own controls and frame, and `<ui-radio>` declares one choice                                                                                                |
 | 4    | [#157](https://github.com/rak200/ui/pull/157) | `ARCHITECTURE.md`'s list of controls in the second arrangement, which had left the group out                                                                                               |
 | 3    | [#162](https://github.com/rak200/ui/pull/162) | `<ui-field>` removed, closing #138                                                                                                                                                         |
+| 4    | [#219](https://github.com/rak200/ui/pull/219) | the last sentence that still described the move as the boolean controls' alone, and this status                                                                                            |
 
 ## Related
 
