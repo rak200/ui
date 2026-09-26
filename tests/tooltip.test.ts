@@ -144,8 +144,9 @@ async function painted(): Promise<void> {
  * hide paths came back that way from the full run — ungraded, and with nothing complaining
  * that they had not been graded.
  *
- * The idiom is not new: two placement tests below already captured errors exactly this way,
- * inline. What the floor showed is that the paths needing it are six rather than two.
+ * **Every capture in this file goes through here**, so each one watches both channels and
+ * waits the turn a rejection needs. Six tests captured `error` inline before this existed,
+ * and none of them was watching the second.
  */
 async function escaped(run: () => Promise<void> | void): Promise<string[]> {
     const thrown: string[] = [];
@@ -877,19 +878,10 @@ describe('when it shows', () => {
         // event listener where nothing would report it — so the guard is asserted through
         // the error it prevents rather than through a state nobody can see.
         const host = await mount(fixture);
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
-
-        window.addEventListener('error', capture);
-
-        try {
+        const thrown = await escaped(async () => {
             await userEvent.hover(trigger(host));
             await userEvent.tab();
-        } finally {
-            window.removeEventListener('error', capture);
-        }
+        });
 
         expect(thrown, 'the second request was refused rather than thrown').toEqual([]);
         expect(tip(host).matches(':popover-open')).toBe(true);
@@ -973,25 +965,18 @@ describe('when it shows', () => {
         const element = only(host, 'ui-tooltip');
         const button = trigger(host);
         const shown = tip(host);
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
 
         await userEvent.hover(trigger(host));
         element.remove();
-        window.addEventListener('error', capture);
 
-        try {
+        const thrown = await escaped(async () => {
             element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
             element.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
             button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
             element.dispatchEvent(new PointerEvent('pointerleave'));
             element.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
             await painted();
-        } finally {
-            window.removeEventListener('error', capture);
-        }
+        });
 
         expect(thrown).toEqual([]);
         expect(shown.matches(':popover-open')).toBe(false);
@@ -1050,21 +1035,14 @@ describe('when it shows', () => {
         // `hidePopover()` on a popover that is not showing throws, and leaving the trigger
         // after dismissing it is the ordinary way to arrive there.
         const host = await mount(fixture);
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
 
         await userEvent.hover(trigger(host));
         await userEvent.keyboard('{Escape}');
-        window.addEventListener('error', capture);
 
-        try {
+        const thrown = await escaped(async () => {
             await userEvent.unhover(trigger(host));
             await painted();
-        } finally {
-            window.removeEventListener('error', capture);
-        }
+        });
 
         expect(thrown, 'the second dismissal was refused rather than thrown').toEqual([]);
     });
@@ -1078,20 +1056,11 @@ describe('when it shows', () => {
         // Held before the removal takes it out of the fixture: what is asserted is the
         // state of the element that *was* shown, not the absence of a lookup.
         const shown = tip(host);
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
-
-        window.addEventListener('error', capture);
-
-        try {
+        const thrown = await escaped(async () => {
             element.remove();
             window.dispatchEvent(new Event('resize'));
             await painted();
-        } finally {
-            window.removeEventListener('error', capture);
-        }
+        });
 
         expect(thrown, 'nothing is still placing a detached element').toEqual([]);
         expect(shown.matches(':popover-open')).toBe(false);
@@ -1386,20 +1355,11 @@ describe('where it lands', () => {
         await userEvent.hover(trigger(host));
         await painted();
 
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
-
-        window.addEventListener('error', capture);
-
-        try {
+        const thrown = await escaped(async () => {
             tip(host).remove();
             window.dispatchEvent(new Event('resize'));
             await painted();
-        } finally {
-            window.removeEventListener('error', capture);
-        }
+        });
 
         expect(thrown).toEqual([]);
     });
@@ -1410,20 +1370,11 @@ describe('where it lands', () => {
         await userEvent.hover(trigger(host));
         await painted();
 
-        const thrown: string[] = [];
-        const capture = (event: ErrorEvent): void => {
-            thrown.push(event.message);
-        };
-
-        window.addEventListener('error', capture);
-
-        try {
+        const thrown = await escaped(async () => {
             trigger(host).remove();
             window.dispatchEvent(new Event('resize'));
             await painted();
-        } finally {
-            window.removeEventListener('error', capture);
-        }
+        });
 
         expect(thrown).toEqual([]);
     });
