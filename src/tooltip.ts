@@ -394,9 +394,16 @@ export class UiTooltip extends LitElement {
      * the only signal there is and waiting on it is a requirement rather than a
      * refinement. RFC 0006
      *
-     * **The hyphen test is load-bearing rather than a shortcut**: `whenDefined` throws on
-     * a name that could never be a custom element, so `<button>` has to be answered
-     * before the registry is asked about it.
+     * **The hyphen test is load-bearing rather than a shortcut**: `whenDefined` refuses a
+     * name that could never be a custom element, so `<button>` has to be answered before
+     * the registry is asked about it.
+     *
+     * **It refuses by rejecting rather than by throwing**, which is the part that decides
+     * where the failure lands. The promise is voided here, so a rejection surfaces as an
+     * `unhandledrejection` on the window and through no other channel — not as an
+     * exception this call could catch, and not in anything watching for `error`. Measured,
+     * as a mutant on the hyphen that produced 55 errors in `tests/tooltip.test.ts` and
+     * failed no test that was only listening to the first channel.
      */
     #offer(wiring: Wiring): void {
         const name = wiring.trigger.localName;
