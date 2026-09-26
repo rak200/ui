@@ -193,6 +193,26 @@ before the design.
   > [RFC 0004](0004-motion.md)'s S1. `prefers-reduced-transparency` emulates too, and is the
   > Chromium-only hook the Glass paragraph above now says it is.
 
+- **S5 — do the derivations keep their floors when a theme moves the grounds?** Added after S1–S4,
+  because question 3 was still unmeasured for everything but the accent. _Claim_: there is a least
+  ratio between text and surface above which the border (3:1), the muted text (4.5:1) and the hover
+  and pressed surfaces (visible, over 1.05:1) always hold. _Steps_: every legal pair on a 6-level
+  sRGB grid and on a grey ramp in steps of 5, each derivation resolved in the engine. _Expectation_:
+  the least ratio is above 4.5:1, so a theme would owe a stronger pair than the text floor asks.
+
+  > **Run, and refuted: no ratio predicts the floors.** Grey pairs on a light surface fail the
+  > border and the muted text up to 11.9:1; on a dark surface, up to 16.83:1. _What S5 and S6
+  > measured_, below.
+
+- **S6 — may a theme decline a scheme, mechanically?** Added with S5, for question 5. _Claim_:
+  `color-scheme: only dark` on a themed subtree fixes every `light-dark()` ground and every system
+  colour in it to dark, whatever the host declared and whatever the reader prefers. _Steps_: a themed
+  subtree under hosts declaring `light`, `dark` and `light dark`, the reader's preference emulated
+  both ways. _Expectation_: dark throughout, with the playground's scheme control no longer reaching
+  that subtree as the cost.
+
+  > **Run, and it holds — with `only` doing nothing measurable.** _What S5 and S6 measured_, below.
+
 ### What S1 measured
 
 Every number here is Chromium 153, read by the suite's own `contrastRatio()` after painting each
@@ -261,9 +281,14 @@ shipped defaults the hover barely moves: `#255cd4` becomes `#1d52c6` in the ligh
 derivation without lowering the floor, which answers question 3 for the one pair where the package
 already knows the colours meet. It does not come alone: `--ui-color-accent-hover` and
 `--ui-color-accent-pressed` change direction with it, from _toward the text_ to _away from the
-pole_. And **the gate that reads today's pair cannot read tomorrow's**: `tests/tokens.test.ts`
-measures hex defaults as strings, and a derived pole has no string to measure — it would have to be
-resolved in the engine, the way this study resolved it.
+pole_. And the gate already reads a derived pole the way it would have to: `tests/tokens.test.ts`
+resolves every derived colour in the engine through `painted()`, and already asserts the label over
+`--ui-color-accent-hover` and `--ui-color-accent-pressed` for the shipped accent — which is this
+finding, held for one accent. A derived pole would be read by the same function.
+
+> **Corrected after S5.** This paragraph first said the suite measures hex defaults as strings and
+> would have to learn to resolve a derived pole. It already resolves every derived colour, and the
+> sentence was written without reading how.
 
 ### What S2 and S3 measured
 
@@ -335,6 +360,64 @@ backdrop cannot reach it.
 `prefers-reduced-transparency` would be the natural second line, and S4 found it in Chromium only.
 Contrast is also necessary rather than sufficient: a blurred, busy backdrop costs legibility no
 ratio measures, which is what the specification of `contrast-color()` says of its own guarantee.
+
+### What S5 and S6 measured
+
+**S5 — the floors belong to the formula _and_ the grounds, and no ratio between the two grounds
+predicts them.** Every pair on the grids whose text clears 4.5:1 on its surface, each derivation
+resolved in Chromium 153 and measured against its own floor:
+
+| pairs                              | legal | border under 3:1 | muted under 4.5:1 | hover or pressed invisible | highest ratio that still failed    |
+| ---------------------------------- | ----- | ---------------- | ----------------- | -------------------------- | ---------------------------------- |
+| greys, light surface               | 421   | 256              | 269               | 0                          | 11.9                               |
+| greys, dark surface                | 421   | 248              | 272               | 36 / 32                    | 16.83 for the border, 21 for hover |
+| 6-level colour grid, light surface | 4031  | 3431             | 3504              | 0                          | 12.5                               |
+| 6-level colour grid, dark surface  | 4031  | 2777             | 3150              | 142 / 141                  | 16.89 for the border, 21 for hover |
+
+The shipped pairs pass — 14.68:1 in the light scheme, 14.33:1 in the dark — and **the dark one passes
+because of the surface it is, not because of its ratio**: grey pairs above 14.33:1 on a dark surface
+fail the border. Two mechanisms, neither one a percentage chosen badly:
+
+- **WCAG's ratio compresses the dark end.** Its `+ 0.05` term dominates near black, so a step that
+  looks the same size in OKLab is almost no ratio at all there. An 8% mix toward white over pure black
+  is `#020202`, **1.01:1** — hover and pressed stop being visible. With white text on the grey ramp, pure black is the one surface where hover disappears; `#050505`, the next step, already passes.
+- **A 50% or 65% mix lands where the two grounds put it.** On a light surface it takes a grey pair above 11.9:1 to carry the midpoint past 3:1 and 4.5:1. On a dark one the same mix lands lower in
+  luminance, and pairs up to 16.83:1 still fail.
+
+**So question 3 is answered by elimination.** _A rule that a shipped theme may not move the grounds_
+is too strong — the grounds are what a theme is. _Per-theme formulas_ may be needed, but only where a
+theme's grounds break the default ones. What works for every theme is **per-theme measured floors**:
+resolve the theme's derived colours in the engine and assert each floor, which is what `painted()`
+already does for the default palette in both schemes. **A black-surface theme — Matrix, most
+plausibly — is the case that fails today**, on hover and pressed rather than on text.
+
+**S6 — a theme declines a scheme by declaring its own.** A subtree with `color-scheme: dark` or
+`only dark`, a `light-dark(#ffffff, #000000)` ground inside it, and system colours read beside it:
+
+| reader prefers | host declares                   | theme declares | ground    | `Canvas` / `CanvasText` |
+| -------------- | ------------------------------- | -------------- | --------- | ----------------------- |
+| light or dark  | `light`, `dark` or `light dark` | `only dark`    | `#000000` | `#121212` / `#ffffff`   |
+| light or dark  | `light`, `dark` or `light dark` | `dark`         | `#000000` | `#121212` / `#ffffff`   |
+| light or dark  | `light`, `dark` or `light dark` | `normal`       | `#ffffff` | `#ffffff` / `#000000`   |
+
+All eighteen combinations resolve the same way for each declaration, so neither the host's scheme nor
+the reader's preference reaches a subtree that declares its own, and the system colours follow it — which is what the platform paints its own parts with, a rendered `<input>` or a scrollbar among them. **`only` changed nothing measurable here.** What it exists for, per the specification, is refusing a browser's own forced darkening, which this study did not emulate. And `normal` is not a
+pass-through: it is a declaration of its own, and resolves light under a dark host.
+
+**The reader keeps one lever.** Under emulated `forced-colors: active` the same `only dark` subtree
+reads `Canvas` as `#ffffff`: the forced palette overrides the theme's scheme, as it overrides every
+author colour. What declining costs is the host's and the playground's scheme control, which stop
+reaching that subtree — the expected cost, now measured.
+
+### Where the five questions stand
+
+| question                                         | what the study settled                                                                                                    | what is left                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                          | a decision                                                                         |
+| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2)                                                         | whether shadow geometry, or a filter, may enter with a theme                       |
+| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5) | whether the derived pole is adopted, and what a black-surface theme does for hover |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4)                                                                                | a decision                                                                         |
+| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6)                                      | a decision                                                                         |
 
 ## Proposed design
 
