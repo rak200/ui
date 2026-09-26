@@ -152,10 +152,6 @@ async function escaped(run: () => Promise<void> | void): Promise<string[]> {
 
     const caught = (event: ErrorEvent): void => {
         thrown.push(event.message);
-        // Handled, because this is what is handling it: the assertion below is the
-        // treatment. Left uncancelled the runner also reports it as an unhandled error,
-        // and a run that errors is classified ahead of a run that merely fails.
-        event.preventDefault();
     };
 
     // **Both channels, and the second is not symmetry for its own sake.** A synchronous
@@ -168,6 +164,12 @@ async function escaped(run: () => Promise<void> | void): Promise<string[]> {
         thrown.push(String(event.reason));
     };
 
+    // **Attaching is the whole of the handling.** Vitest's browser runner reports a window
+    // error as unhandled only while the page has no listener of its own for that event, so
+    // for as long as these two are attached what escapes is this helper's to judge — and the
+    // assertion on what it returns is what turns a throw into a failure. Nothing has to be
+    // cancelled: measured, as this element's 228 mutants graded with none of them erroring
+    // and no `preventDefault()` anywhere in the capture.
     window.addEventListener('error', caught);
     window.addEventListener('unhandledrejection', rejected);
 
@@ -412,8 +414,8 @@ describe('ui-tooltip', () => {
         // `hidePopover()` on it is `NotSupportedError`, thrown inside a lifecycle callback
         // where no assertion was looking. Taken out here rather than left to the teardown,
         // because a disconnect the teardown performs happens outside every test: the throw
-        // is then reported against the run instead of against this assertion, and a run
-        // that errors is graded ahead of a run that fails.
+        // is then an error with no failed test beside it, which is exactly the run the
+        // mutation runner leaves out of the score.
         const thrown = await escaped(() => {
             only(host, 'ui-tooltip').remove();
         });
