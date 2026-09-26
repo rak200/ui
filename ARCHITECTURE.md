@@ -183,8 +183,8 @@ together. What fails is one of each.
 
 This section used to say _ARIA association is light-DOM only_, which was the middle arrangement
 measured correctly and read too broadly: what strands a slotted control is the label staying
-outside, not the control being inside. RFC 0005 measured the other shapes and moved the drawn
-boolean controls to the second arrangement.
+outside, not the control being inside. RFC 0005 measured the other shapes and moved every form
+control here to the second arrangement.
 
 **Where a component owns _both_ ends, the relationship goes inside**, and `<ui-menu>` is the one
 that does. A menu button's `aria-haspopup`, `aria-expanded` and `aria-controls` all point from a

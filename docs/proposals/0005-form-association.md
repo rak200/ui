@@ -1,6 +1,6 @@
 # RFC 0005 — The control the host writes, and whether it still has to
 
-- **Status**: Accepted
+- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-09-07
 
@@ -860,6 +860,8 @@ own test — a roving tabindex, arrows with wrap, selection following focus, Hom
 single-selection invariant, and RTL. This proposal is what makes that issue answerable; it does not
 answer it.
 
+> **No longer deferred.** #122 closed on 2026-09-10, and rollout step 5 records how.
+
 ### Alternatives rejected, each with the argument that retired it
 
 - **G — both ends in the host's tree**, the component creating the label as a light-DOM child.
@@ -943,6 +945,13 @@ option.
    and help is its stylesheet; the error colour is a token `ui-radio-group` retargets through three
    selectors it could not otherwise use. Both need a home first — this is S5, and it is the step
    that can block the removal.
+
+   > **Done in [#162](https://github.com/rak200/ui/pull/162), and S5 did not block it.** The rehoming
+   > happened on the way rather than as a step: steps 2 and 5 each gave the control its own frame —
+   > label, control, help and error in one rhythm, the error colour included — so by the time the
+   > field went, its stylesheet had no consumer left. What the removal measured instead was the tax
+   > of keeping it: 36 files named the element, and 4 of them were the element itself.
+
 4. **Update `ARCHITECTURE.md`.** _ARIA association is light-DOM only_ is no longer true as stated,
    and it is the document a consumer reads. It should say what the six variants showed: that every
    end of a relationship must share a tree scope, that there are two consistent ways to arrange
@@ -952,12 +961,36 @@ option.
    > while two shipped components contradict it. The section is now _A relationship needs one tree
    > scope_ and states both arrangements. What is left for this step is pruning the transitional
    > half — which components still take the other arrangement, and why — once there are none.
+   >
+   > **Done, in two corrections rather than one prune.** There was never a list of holdouts to
+   > remove; there were sentences that had not followed the move. [#157](https://github.com/rak200/ui/pull/157)
+   > fixed the list that left `<ui-radio-group>` out after it moved, and the pull request that marks
+   > this proposal implemented fixed the last one, which still described the move as the boolean
+   > controls' alone. No component takes the other arrangement now.
 
 5. **`ui-radio` and `ui-radio-group`** — only after #122.
+
+   > **Done.** #122 closed by retiring the Zag adoption ([#152](https://github.com/rak200/ui/pull/152)):
+   > a radio group is the radios sharing a `name` within one tree, so the rendered controls are
+   > scoped by the shadow root they sit in, and every part of the APG pattern stays the platform's.
+   > [#154](https://github.com/rak200/ui/pull/154) then moved the group, and `<ui-radio>` became the
+   > declaration of one choice, the way `<ui-option>` had in step 2 and for the same structural
+   > reason.
 
 Below `1.0.0` a break is a minor, so the versioning cost is low. Whether both call-site shapes
 coexist for a release is S6; `<ui-icon>` already dispatches on two shapes and is the precedent if
 they should.
+
+### Built
+
+| Step | Pull request                                  | What landed                                                                                                                                                                                |
+| ---- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | [#140](https://github.com/rak200/ui/pull/140) | `<ui-checkbox>` and `<ui-switch>` render their own control inside their own label — and `ARCHITECTURE.md`'s rule became _A relationship needs one tree scope_, brought forward from step 4 |
+| 2    | [#145](https://github.com/rak200/ui/pull/145) | `<ui-input>`, `<ui-textarea>` and `<ui-select>` render their own control and frame, and the choices became `<ui-option>` and `<ui-optgroup>`                                               |
+| 5    | [#152](https://github.com/rak200/ui/pull/152) | the Zag adoption retired, which answered #122 and unblocked the radios                                                                                                                     |
+| 5    | [#154](https://github.com/rak200/ui/pull/154) | `<ui-radio-group>` renders its own controls and frame, and `<ui-radio>` declares one choice                                                                                                |
+| 4    | [#157](https://github.com/rak200/ui/pull/157) | `ARCHITECTURE.md`'s list of controls in the second arrangement, which had left the group out                                                                                               |
+| 3    | [#162](https://github.com/rak200/ui/pull/162) | `<ui-field>` removed, closing #138                                                                                                                                                         |
 
 ## Related
 
