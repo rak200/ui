@@ -1,6 +1,6 @@
 # RFC 0003 — Themes: what the package ships, and what a theme may be made of
 
-- **Status**: Draft
+- **Status**: Exploring
 - **Scope**: library
 - **Created**: 2026-09-05
 
@@ -112,7 +112,8 @@ accessibility problem rather than a stylistic one: **the contrast of a transluce
 what is behind it**, which is unknowable when the token is defined. The measured-ratio gate in
 `tests/tokens.test.ts` structurally cannot cover it, and `expectAccessible` measures only against
 whatever a story happened to put behind the panel. `prefers-reduced-transparency` exists and is the
-platform's own hook for the reader who cannot read through glass.
+platform's own hook for the reader who cannot read through glass — **in Chromium only**: web-features
+3.40.0 lists no Firefox or Safari support, so a theme cannot rest on it everywhere.
 
 ### The questions the four force
 
@@ -148,6 +149,12 @@ before the design.
   read `color-contrast()`'s Baseline status; if usable, express the ground as a formula and run the
   existing contrast assertions across a spread of accents. _Expectation_: unknown, which is why it is
   first.
+
+  > **Run, and the claim holds only in a shape it did not name.** `color-contrast()` exists in no
+  > engine; the function that shipped cannot carry a 4.5:1 floor; a formula can — and it cannot stay
+  > on its own, because the pole is painted on three shades rather than one. _What S1 measured_,
+  > below, has the numbers.
+
 - **S2 — can a glow carry two schemes?** _Claim_: it cannot, by the same mechanism a shadow already
   failed at. _Steps_: declare a `box-shadow` ground through `light-dark()` and read it back.
   _Expectation_: refused, matching the elevation finding — which would mean the glow needs either a
@@ -160,6 +167,93 @@ before the design.
   already emulates `prefers-color-scheme` through CDP, so the instrument exists; whether it reaches
   `prefers-contrast` and `forced-colors` is unmeasured. A gate that cannot be written changes what
   the design may promise.
+
+  > **Run: it can, and more of it was already there than this item assumed.** `forced-colors` is
+  > emulated through `Emulation.setEmulatedMedia` in `tests/checkbox.test.ts` and
+  > `tests/radio.test.ts`. `prefers-contrast` had never been tried, and emulates in all four values
+  > in Chromium 153 — `more`, `less`, `custom`, `no-preference` — with a stylesheet rule following
+  > and returning on reset. **The two are set independently**: `forced-colors: active` alone leaves
+  > `prefers-contrast` at `no-preference`, and both can be set in one call, so every combination
+  > question 4 names can be asserted. What a real operating system's high-contrast mode sets
+  > _together_ is not something emulation can answer, and is not measured.
+  >
+  > **One premise above was wrong.** `tests/tokens.test.ts` does not emulate
+  > `prefers-color-scheme`: the scheme is set by writing `color-scheme` on the element. What it
+  > emulates through CDP is `prefers-reduced-motion` — which answers
+  > [RFC 0004](0004-motion.md)'s S1. `prefers-reduced-transparency` emulates too, and is the
+  > Chromium-only hook the Glass paragraph above now says it is.
+
+### What S1 measured
+
+Every number here is Chromium 153, read by the suite's own `contrastRatio()` after painting each
+computed colour into one canvas pixel. **The sweep** is every sRGB colour on a 17-step grid — 16
+levels per channel, 4096 accents. **The crossover sample** is the 5230 colours on a 3-step grid whose
+WCAG luminance sits within 0.002 of 0.1791, where white and black give the same ratio and where any
+switch is most likely to misfire. Support is web-features 3.40.0, read rather than recalled.
+
+**The function this item named does not exist, and the one that shipped cannot carry the floor.**
+`color-contrast()` has no support in any engine. `contrast-color()` is Baseline newly available since
+2026-04-10 — Chrome 147, Firefox 146, Safari 26 — and its specification says the algorithm is
+_"UA-defined at this level"_, advises engines **not** to use the WCAG 2.1 ratio, and guarantees only
+AA for **large** text, which is 3:1. In Chromium 153 it happens to choose as WCAG 2 would: 0 of 4096
+below 4.5:1. That is one engine's choice today, and this package's floor is 4.5:1 in every engine.
+
+**A formula can, and it is WCAG 2 by construction.** Relative colour syntax exposes the channels in
+`srgb-linear`, so the luminance WCAG defines is a `calc()`:
+
+```css
+/* white when the accent's luminance is under the crossover, black otherwise */
+color(
+  from var(--ui-color-accent) srgb-linear
+  clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
+  clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
+  clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
+)
+```
+
+| switch                                       | sweep, below 4.5:1 | crossover sample, below 4.5:1 | worst    |
+| -------------------------------------------- | ------------------ | ----------------------------- | -------- |
+| **luminance in `srgb-linear`, `* infinity`** | **0 / 4096**       | **0 / 5230**                  | **4.58** |
+| the same, `* 100000`                         | 0 / 4096           | 12 / 5230, as greys           | 1.08     |
+| OKLCH `l` under 0.55 … 0.65                  | 78 … 592 / 4096    | —                             | 2.19     |
+| `contrast-color()`, Chromium 153             | 0 / 4096           | 0 / 5230                      | 4.58     |
+
+4.58:1 is the ceiling rather than a result: it is what the better of white and black gives at the
+crossover, so no pole choice can do better for the worst accent. **The multiplier has to be
+`infinity`** — any finite one leaves a band where the clamp lands between 0 and 1 and the pole is a
+grey, measured at 1.08:1. And **OKLCH lightness is the wrong axis**: it is close to luminance and not
+equal to it, and no threshold between 0.55 and 0.65 clears the sweep.
+
+It resolves through `var()` and from a `light-dark()` origin, so a ground carrying both schemes gets
+a pole per scheme with no second declaration: white on `#2563eb` at 5.17:1, as today, and **black**
+on `#60a5fa` at 8.26:1 — where the shipped `#111827` is 6.98. **The pole is always pure white or
+black**, never a palette colour. Relative colour is Baseline newly available since 2024-09-16, the
+tier `light-dark()` has been at since 2024-05-13 and the token layer already rests on; `infinity`
+in `calc()` is widely available. No new support floor.
+
+**But the pair is three pairs, and one pole fails the other two.** `<ui-button>` paints the pole on
+`--ui-color-accent`, `--ui-color-accent-hover` and `--ui-color-accent-pressed`, and both derived
+shades mix **toward the text** — 12% and 22% in OKLab. When the pole has the text's polarity, black
+in the light scheme or white in the dark, that mix moves the shade toward the pole:
+
+| shape                                   | light, below 4.5:1 | dark, below 4.5:1 | worst    | text changes colour between states |
+| --------------------------------------- | ------------------ | ----------------- | -------- | ---------------------------------- |
+| one pole, from the accent               | 629 / 4096         | 662 / 4096        | 3.27     | 0                                  |
+| a pole per shade                        | 0                  | 0                 | 4.58     | 667 and 698 accents                |
+| **one pole, shades mixed away from it** | **0**              | **0**             | **4.58** | **0**                              |
+
+The third shape mixes each shade toward the opposite pole — the same formula with the comparison
+reversed — so every state moves _away_ from the text on it and the ratio can only rise. On the
+shipped defaults the hover barely moves: `#255cd4` becomes `#1d52c6` in the light scheme, and
+`#71aef9` becomes `#74b0fc` in the dark.
+
+**What this settles, and what it leaves to the design.** `--ui-color-accent-contrast` can become a
+derivation without lowering the floor, which answers question 3 for the one pair where the package
+already knows the colours meet. It does not come alone: `--ui-color-accent-hover` and
+`--ui-color-accent-pressed` change direction with it, from _toward the text_ to _away from the
+pole_. And **the gate that reads today's pair cannot read tomorrow's**: `tests/tokens.test.ts`
+measures hex defaults as strings, and a derived pole has no string to measure — it would have to be
+resolved in the engine, the way this study resolved it.
 
 ## Proposed design
 

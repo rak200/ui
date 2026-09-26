@@ -162,6 +162,15 @@ Hypotheses, each unrun until it is run.
   instrument `tests/tokens.test.ts` already uses for `prefers-color-scheme`. _Why it comes first_:
   every shape below is unbuildable if the collapse cannot be asserted per effect. Shares its answer
   with RFC 0003's S4.
+
+  > **Answered by [RFC 0003](0003-themes.md)'s S4: it already is.** `tests/tokens.test.ts` emulates
+  > `prefers-reduced-motion: reduce` through CDP and asserts that the browser collapses a
+  > component-facing duration, and that the collapsed transition still fires its end event; that
+  > every duration token, ground and derived, sits inside the collapse is asserted on the rule
+  > itself. What stays open is _per effect_, which is S2's question. The premise carried the same
+  > error RFC 0003's did: that file does not emulate `prefers-color-scheme` at all — the scheme is
+  > written as `color-scheme` on the element — and what it emulates through CDP is this very feature.
+
 - **S2 — what does a keyframed animation do under the collapse?** _Claim_: `animation-duration`
   reads no `--ui-duration-*` unless it is written to, so a `@keyframes` effect survives reduced
   motion untouched. _Steps_: declare one, collapse the tokens, read it back. _Expected_: it keeps
