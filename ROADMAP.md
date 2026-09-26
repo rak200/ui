@@ -3,24 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The listbox deferral, which has an expiry date rather than a reason
-
-RFC 0016 put a custom listbox off because a native `<select>` is accessible for free on every
-platform and a listbox is an accessibility project of its own. That still holds — and Chromium now
-ships `appearance: base-select` with `::picker(select)` and `::checkmark`, measured as supported in
-the engine this suite runs. What reopens the question is that feature arriving broadly, not a
-decision here; `docs/select.md` carries it for a consumer.
-
-**The v0 component surface is delivered**, and both halves of the token schedule closed with it.
-The type scale arrived with `ui-table`, which was the last category the surface expected — and it
-arrived to replace three hardcoded sizes rather than to anticipate a need, which is the schedule
-working. **Layering never arrived at all**, and that is the rule cutting the other way: four
-overlays came, a modal `<dialog>` and three `popover`s, every one promoted to the top layer, so
-there is no `z-index` anywhere to name.
-
-And each shipped with its interaction states or it did not ship: a component that accepts
-interaction and shows no feedback is defective rather than incomplete.
-
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
