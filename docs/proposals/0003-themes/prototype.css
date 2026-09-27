@@ -1,0 +1,174 @@
+/*
+ * The frame around the prototypes, and nothing a theme would ship. It stays neutral and keeps
+ * its own names, so no --ui-* value a page is judging comes from here.
+ */
+:root {
+    --frame-ground: light-dark(#dedee3, #232329);
+    --frame-ink: light-dark(#1b1b1f, #e7e7ea);
+    --frame-quiet: light-dark(#55555e, #a3a3ad);
+    --frame-rule: light-dark(#c4c4cc, #3a3a42);
+    --frame-pass: light-dark(#166534, #86efac);
+    --frame-fail: light-dark(#b91c1c, #fca5a5);
+}
+
+body {
+    margin: 0;
+    background: var(--frame-ground);
+    color: var(--frame-ink);
+    font:
+        15px/1.5 system-ui,
+        sans-serif;
+}
+
+header {
+    display: grid;
+    gap: 0.75rem;
+    padding: 2rem 1.5rem 0.5rem;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    line-height: 1.2;
+    text-wrap: balance;
+}
+
+header p {
+    max-inline-size: 72ch;
+    margin: 0;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    font-size: 0.875rem;
+}
+
+nav a {
+    color: inherit;
+}
+
+nav a[aria-current='page'] {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    padding: 0.75rem 0;
+    border-block: 1px solid var(--frame-rule);
+    font-size: 0.875rem;
+}
+
+.controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.controls button {
+    font: inherit;
+}
+
+main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 40rem), 1fr));
+    gap: 2rem 1.5rem;
+    padding: 1.5rem;
+}
+
+figure {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    min-inline-size: 0;
+    margin: 0;
+}
+
+figcaption {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--frame-quiet);
+}
+
+/* The host's page: a host paints its own ground with the surface, and so does this. */
+[data-specimen] {
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    background: var(--ui-color-surface);
+    color: var(--ui-color-text);
+    font-family: var(--ui-font);
+}
+
+.specimen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+}
+
+.specimen .wide {
+    grid-column: 1 / -1;
+}
+
+.specimen h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.specimen .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.specimen .toasts {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.specimen .amount {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+/* What the floors read, beside what they read it from. */
+[data-floors] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 0.125rem 1.5rem;
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+[data-floors] div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.125rem;
+    border-block-end: 1px solid var(--frame-rule);
+}
+
+[data-floors] dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+[data-floors] [data-pass='true'] dd {
+    color: var(--frame-pass);
+}
+
+[data-floors] [data-pass='false'] {
+    color: var(--frame-fail);
+    font-weight: 600;
+}
+
+[data-floors] [data-pass='false'] dd::before {
+    content: 'fails · ';
+}

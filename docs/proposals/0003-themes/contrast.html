@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>High contrast, as a setting</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <style>
+            /* What would ship in tokenStyleSheet() — question 4. The block moves one ground:
+               the text, to its pole. Every neutral derivation mixes toward the text, so each
+               one follows it, and no formula is declared at :root. */
+            @media (prefers-contrast: more) {
+                :root {
+                    --ui-color-text: light-dark(#000000, #ffffff);
+                }
+            }
+
+            /* The prototype's stand-in, so both states sit side by side without emulating the
+               setting: the same declaration, on the panel rather than on :root. */
+            [data-more] {
+                --ui-color-text: light-dark(#000000, #ffffff);
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Prototypes">
+                <a href="index.html">All four</a>
+                <a href="default.html">Default</a>
+                <a href="contrast.html" aria-current="page">High contrast</a>
+                <a href="matrix.html">Matrix</a>
+                <a href="glass.html">Glass</a>
+            </nav>
+            <h1>High contrast: the reader's setting, not a theme</h1>
+            <p>
+                Question 4's recommendation. When the reader's system asks for more contrast, the
+                default palette moves its text to the pole — black in the light scheme, white in the
+                dark — and nothing else. The border, the muted text, the hover and the striped row
+                all mix toward the text, so each rises with it. The surface stays where it is, so
+                the dark scheme keeps a visible hover.
+            </p>
+            <p>
+                <strong>What does not rise</strong> is every colour that is a ground of its own: the
+                label on the accent and the three outcome colours. The floors below show both.
+            </p>
+            <p>
+                The right-hand panels are a stand-in. To try the media query itself, open DevTools →
+                Rendering → <em>Emulate CSS media feature prefers-contrast</em> → <code>more</code>:
+                the left-hand panels then become the right-hand ones.
+            </p>
+        </header>
+        <main>
+            <figure>
+                <figcaption>As your system asks · light</figcaption>
+                <div data-specimen style="color-scheme: light"></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>prefers-contrast: more · light</figcaption>
+                <div data-specimen data-more style="color-scheme: light"></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>As your system asks · dark</figcaption>
+                <div data-specimen style="color-scheme: dark"></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>prefers-contrast: more · dark</figcaption>
+                <div data-specimen data-more style="color-scheme: dark"></div>
+                <dl data-floors></dl>
+            </figure>
+        </main>
+        <script type="module">
+            import { measureAll } from './specimen.ts';
+
+            // The emulated setting moves the left-hand panels, so they are measured again.
+            matchMedia('(prefers-contrast: more)').addEventListener('change', measureAll);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Default, derived label</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <link rel="stylesheet" href="proposal.css" />
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Prototypes">
+                <a href="index.html">All four</a>
+                <a href="default.html" aria-current="page">Default</a>
+                <a href="contrast.html">High contrast</a>
+                <a href="matrix.html">Matrix</a>
+                <a href="glass.html">Glass</a>
+            </nav>
+            <h1>Default: the accent a host picks, and the label that follows it</h1>
+            <p>
+                Pick an accent. <strong>Today</strong> the label on it is a ground of its own —
+                white in the light scheme, <code>#111827</code> in the dark — so a host who moves
+                the accent has to move the label as well, and nothing reads the pair.
+                <strong>Proposed</strong> is question 3: the label is the WCAG pole of the accent,
+                and the hover and pressed shades mix away from it. The same accent goes to both
+                schemes, as it would from a host setting one value.
+            </p>
+            <p>
+                Hover and press the primary buttons to see the shades. The floors under each panel
+                are read in this browser with the suite's own ratio — and they show what the
+                proposal does not solve:
+                <strong
+                    >the label holds on every accent, but the accent's own hover and pressed states
+                    can stop being visible</strong
+                >. Yellow shows it in both columns: a very bright accent has no room left toward
+                white, and a very dark one none toward black.
+            </p>
+            <div class="controls">
+                <label>Accent <input type="color" id="accent" value="#facc15" /></label>
+                <span>Try</span>
+                <button type="button" data-accent="">Shipped</button>
+                <button type="button" data-accent="#facc15">Yellow</button>
+                <button type="button" data-accent="#f97316">Orange</button>
+                <button type="button" data-accent="#a3e635">Lime</button>
+                <button type="button" data-accent="#06b6d4">Cyan</button>
+                <button type="button" data-accent="#7e22ce">Purple</button>
+                <button type="button" data-accent="#dc2626">Red</button>
+            </div>
+        </header>
+        <main>
+            <figure>
+                <figcaption>Today · light</figcaption>
+                <div data-specimen style="color-scheme: light"></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>Proposed · light</figcaption>
+                <div data-specimen data-proposed style="color-scheme: light"></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>Today · dark</figcaption>
+                <div data-specimen style="color-scheme: dark"></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>Proposed · dark</figcaption>
+                <div data-specimen data-proposed style="color-scheme: dark"></div>
+                <dl data-floors></dl>
+            </figure>
+        </main>
+        <script type="module">
+            import { measureAll } from './specimen.ts';
+
+            const picker = document.querySelector('#accent');
+            const panels = document.querySelectorAll('[data-specimen]');
+
+            // An empty accent is the shipped one: the override goes, and :root's light-dark()
+            // pair is what the panels inherit again.
+            function accent(value) {
+                for (const panel of panels) {
+                    if (value === '') {
+                        panel.style.removeProperty('--ui-color-accent');
+                    } else {
+                        panel.style.setProperty('--ui-color-accent', value);
+                    }
+                }
+
+                measureAll();
+            }
+
+            picker.addEventListener('input', () => accent(picker.value));
+
+            for (const button of document.querySelectorAll('[data-accent]')) {
+                button.addEventListener('click', () => {
+                    if (button.dataset.accent !== '') {
+                        picker.value = button.dataset.accent;
+                    }
+
+                    accent(button.dataset.accent);
+                });
+            }
+
+            accent(picker.value);
+        </script>
+    </body>
+</html>

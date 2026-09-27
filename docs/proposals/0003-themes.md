@@ -139,6 +139,10 @@ account finds a 404 where the reasoning should be. So the effects are described 
 do, and the source is not cited. Anything from it that this proposal needs to _rest_ on gets
 reproduced here, in the open, or it does not count.
 
+**[The prototypes](0003-themes/README.md) are that reproduction**: one page per wanted theme,
+rendering the real components under the CSS the theme would ship, with the floors measured again
+under every panel. Matrix and Glass take the reference's values wherever a floor allows them.
+
 ### Simulation plan
 
 Every claim below is a **hypothesis until it is run**, which is the whole point of writing them down

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Matrix theme</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <link rel="stylesheet" href="proposal.css" />
+        <style>
+            /* What the theme would ship — questions 1, 2 and 5. One scheme, declared, so neither
+               the host's scheme nor the reader's preference reaches it (S6). The values are the
+               visual reference's wherever the floors allow them: its green on its #050505
+               ground, its monospace face, its 8px corner. */
+            [data-ui-theme='matrix'] {
+                color-scheme: dark;
+                --ui-color-surface: #050505;
+                --ui-color-text: #00ff00;
+                --ui-color-accent: #00ff00;
+                --ui-color-focus: #ccffcc;
+                --ui-font: 'Courier New', Courier, ui-monospace, monospace;
+                --ui-radius: 0.5rem;
+                /* The glow, through the elevation step the raised surfaces already read — so
+                   the card, the menu, the toast and the tip glow, and no name is added. */
+                --ui-elevation-100: 0 0 0 1px rgb(0 255 0 / 0.25), 0 0 18px rgb(0 255 0 / 0.3);
+            }
+
+            /* Its answer to prefers-contrast: more. The green stays on the accent and the text
+               goes white: muted text over this ground reaches 7.33:1 from white, and a tinted
+               #ecffec gives 7.06, a rounding error from 7. */
+            @media (prefers-contrast: more) {
+                [data-ui-theme='matrix'] {
+                    --ui-color-text: #ffffff;
+                }
+            }
+
+            [data-ui-theme='matrix'][data-more] {
+                --ui-color-text: #ffffff;
+            }
+
+            /* Not tokens, and the open half of question 2. A property that inherits, set on the
+               theme's own element, reaches inside every component's shadow root, because
+               inheritance crosses it — which is how the reference's glow on text gets onto a
+               label no selector here can reach. currentColor makes each text glow in its own
+               colour, the danger message red. */
+            [data-ui-theme='matrix'][data-inherited] {
+                font-weight: bold;
+                text-shadow: 0 0 8px currentColor;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Prototypes">
+                <a href="index.html">All four</a>
+                <a href="default.html">Default</a>
+                <a href="contrast.html">High contrast</a>
+                <a href="matrix.html" aria-current="page">Matrix</a>
+                <a href="glass.html">Glass</a>
+            </nav>
+            <h1>Matrix: one scheme, a green that glows</h1>
+            <p>
+                A dark-only theme (question 5). The first two panels sit under a host that declares
+                <code>light</code> and one that declares <code>dark</code>, and render the same: the
+                theme's own <code>color-scheme</code> wins. The glow on the raised surfaces is the
+                elevation step set to a glow, with no new name (question 2).
+            </p>
+            <p>
+                <strong>Where the reference loses to a floor.</strong> It draws its boundary at
+                <code>#003300</code>, which is 1.43:1 against the ground; the derived border
+                replaces it, because a control's boundary owes 3:1. The glow on text is not a token
+                at all — toggle it below and decide whether a theme may carry it.
+            </p>
+            <p>
+                <strong>Where the proposal itself fails.</strong> The last panel is the same theme
+                under today's formulas: its accent is the text's own green, and today the accent's
+                hover mixes toward the text, so the hover does not move at all — 1.00. The proposed
+                formulas move it away from the black label instead, toward white, and a green this
+                bright has almost no room left there: 1.03, still under the 1.05 the suite asks. The
+                label is solved; the accent's own states are not.
+            </p>
+            <div class="controls">
+                <label
+                    ><input type="checkbox" id="inherited" checked /> Glow and weight on text
+                    (inherited, not tokens)</label
+                >
+            </div>
+        </header>
+        <main>
+            <figure>
+                <figcaption>Under a light host</figcaption>
+                <div style="color-scheme: light">
+                    <div data-specimen data-ui-theme="matrix" data-proposed data-inherited></div>
+                </div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>Under a dark host</figcaption>
+                <div style="color-scheme: dark">
+                    <div data-specimen data-ui-theme="matrix" data-proposed data-inherited></div>
+                </div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>prefers-contrast: more</figcaption>
+                <div
+                    data-specimen
+                    data-ui-theme="matrix"
+                    data-proposed
+                    data-inherited
+                    data-more
+                ></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>Today's formulas</figcaption>
+                <div data-specimen data-ui-theme="matrix" data-inherited></div>
+                <dl data-floors></dl>
+            </figure>
+        </main>
+        <script type="module">
+            import './specimen.ts';
+
+            const toggle = document.querySelector('#inherited');
+
+            toggle.addEventListener('change', () => {
+                for (const panel of document.querySelectorAll('[data-specimen]')) {
+                    panel.toggleAttribute('data-inherited', toggle.checked);
+                }
+            });
+        </script>
+    </body>
+</html>

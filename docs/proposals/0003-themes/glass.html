@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Glass theme</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <link rel="stylesheet" href="proposal.css" />
+        <style>
+            /* What the theme would ship — questions 1 and 2. Two names the package does not have,
+               both placeholders: the raised surfaces' colour, which is a colour and so carries
+               both schemes in light-dark() (S2), and their backdrop filter, one value in both.
+               The default of each would be the identity — the surface itself, and none — so
+               the default palette renders as it does today.
+
+               The opacities sit just above S3's floors for this pair, 0.56 and 0.66. The
+               surface itself stays opaque, so every field keeps the floors S5 measured. */
+            [data-ui-theme='glass'] {
+                --ui-color-surface-raised: light-dark(
+                    rgb(from var(--ui-color-surface) r g b / 0.6),
+                    rgb(from var(--ui-color-surface) r g b / 0.7)
+                );
+                --ui-backdrop-raised: blur(12px) saturate(1.7);
+            }
+
+            /* Its answer to prefers-contrast: more, and to reduced transparency in the engine
+               that has it (S4: Chromium only): glass stops being glass. */
+            @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+                [data-ui-theme='glass'] {
+                    --ui-color-surface-raised: var(--ui-color-surface);
+                    --ui-backdrop-raised: none;
+                }
+            }
+
+            [data-ui-theme='glass'][data-more] {
+                --ui-color-text: light-dark(#000000, #ffffff);
+                --ui-color-surface-raised: var(--ui-color-surface);
+                --ui-backdrop-raised: none;
+            }
+
+            /* Stand-in for the component change: the raised surfaces read the pair. A card, a
+               toast and a tip paint on their own host or on an element in the light DOM, and the
+               dialog exposes a part, so all four are reachable from here. The menu's panel sits
+               in its shadow root with no part, so it stays opaque in this prototype; it would
+               read the pair once the names exist. */
+            [data-ui-theme='glass'] :is(ui-card, ui-toast, [slot='tip']),
+            [data-ui-theme='glass'] ui-dialog::part(dialog) {
+                background: var(--ui-color-surface-raised);
+                backdrop-filter: var(--ui-backdrop-raised);
+            }
+
+            /* The scene is the host's page, not the theme. Glass over a flat colour proves
+               nothing, so it has large colour, hard edges and small text — and the two extremes
+               S3 found bound every backdrop, pure black and pure white. */
+            [data-ui-theme='glass'][data-specimen] {
+                position: relative;
+                overflow: hidden;
+                background:
+                    radial-gradient(circle at 12% 16%, #f97316 0 5.5rem, transparent 5.6rem),
+                    radial-gradient(circle at 88% 10%, #000000 0 6.5rem, transparent 6.6rem),
+                    radial-gradient(circle at 72% 56%, #2563eb 0 7rem, transparent 7.1rem),
+                    radial-gradient(circle at 18% 68%, #ffffff 0 6.5rem, transparent 6.6rem),
+                    radial-gradient(circle at 46% 96%, #22c55e 0 5rem, transparent 5.1rem),
+                    repeating-linear-gradient(48deg, #1c1c24 0 11px, #2e2e3a 11px 22px);
+            }
+
+            [data-ui-theme='glass'][data-specimen]::before {
+                content: 'NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00';
+                position: absolute;
+                inset: 0;
+                padding: 1rem;
+                font:
+                    600 12px/2.4 ui-monospace,
+                    monospace;
+                letter-spacing: 0.12em;
+                color: #ffffffcc;
+                pointer-events: none;
+            }
+
+            [data-ui-theme='glass'] .specimen {
+                position: relative;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Prototypes">
+                <a href="index.html">All four</a>
+                <a href="default.html">Default</a>
+                <a href="contrast.html">High contrast</a>
+                <a href="matrix.html">Matrix</a>
+                <a href="glass.html" aria-current="page">Glass</a>
+            </nav>
+            <h1>Glass: translucent raised surfaces, over a page that is not flat</h1>
+            <p>
+                Question 2's recommendation. The raised surfaces — the cards, the toasts, the tip
+                and the dialog — read a translucent colour and a backdrop filter; the surface itself
+                stays opaque, so the fields inside a card are as legible as anywhere else. The scene
+                behind is the host's page, with pure black and pure white in it on purpose.
+            </p>
+            <p>
+                <strong>Move the opacity below the floor and watch the text.</strong> The last row
+                under each panel is S3's measurement: the text over the glass, composited on black
+                and on white, which bound every backdrop there can be. The visual reference tints at
+                about 0.06, which no text colour survives.
+            </p>
+            <div class="controls">
+                <label
+                    >Light opacity
+                    <input type="range" id="light" min="0" max="1" step="0.01" value="0.6" />
+                    <output for="light">0.60</output></label
+                >
+                <label
+                    >Dark opacity
+                    <input type="range" id="dark" min="0" max="1" step="0.01" value="0.7" />
+                    <output for="dark">0.70</output></label
+                >
+                <label
+                    >Blur
+                    <input type="range" id="blur" min="0" max="30" step="1" value="12" />
+                    <output for="blur">12px</output></label
+                >
+                <label><input type="checkbox" id="more" /> prefers-contrast: more</label>
+            </div>
+        </header>
+        <main>
+            <figure>
+                <figcaption>Light</figcaption>
+                <div
+                    data-specimen
+                    data-ui-theme="glass"
+                    data-proposed
+                    data-raised
+                    style="color-scheme: light"
+                ></div>
+                <dl data-floors></dl>
+            </figure>
+            <figure>
+                <figcaption>Dark</figcaption>
+                <div
+                    data-specimen
+                    data-ui-theme="glass"
+                    data-proposed
+                    data-raised
+                    style="color-scheme: dark"
+                ></div>
+                <dl data-floors></dl>
+            </figure>
+        </main>
+        <script type="module">
+            import { measureAll } from './specimen.ts';
+
+            const panels = document.querySelectorAll('[data-specimen]');
+            const [light, dark, blur, more] = ['light', 'dark', 'blur', 'more'].map((id) =>
+                document.getElementById(id),
+            );
+            const quiet = matchMedia(
+                '(prefers-contrast: more), (prefers-reduced-transparency: reduce)',
+            );
+
+            // The sliders write the pair on each panel, and an inline declaration outranks both
+            // contrast answers in the sheet — so while either applies, the sliders stand down.
+            function tune() {
+                const off = more.checked || quiet.matches;
+
+                for (const input of [light, dark, blur]) {
+                    input.nextElementSibling.value =
+                        input === blur ? `${input.value}px` : Number(input.value).toFixed(2);
+                }
+
+                for (const panel of panels) {
+                    panel.toggleAttribute('data-more', more.checked);
+
+                    if (off) {
+                        panel.style.removeProperty('--ui-color-surface-raised');
+                        panel.style.removeProperty('--ui-backdrop-raised');
+                    } else {
+                        panel.style.setProperty(
+                            '--ui-color-surface-raised',
+                            `light-dark(rgb(from var(--ui-color-surface) r g b / ${light.value}), rgb(from var(--ui-color-surface) r g b / ${dark.value}))`,
+                        );
+                        panel.style.setProperty(
+                            '--ui-backdrop-raised',
+                            `blur(${blur.value}px) saturate(1.7)`,
+                        );
+                    }
+                }
+
+                measureAll();
+            }
+
+            for (const input of [light, dark, blur, more]) {
+                input.addEventListener('input', tune);
+            }
+
+            quiet.addEventListener('change', tune);
+            tune();
+        </script>
+    </body>
+</html>
