@@ -40,6 +40,16 @@
     </head>
     <body>
         <header>
+            <div class="top">
+                <nav aria-label="Prototypes">
+                    <a href="index.html" aria-current="page">All four</a>
+                    <a href="default.html">Default</a>
+                    <a href="contrast.html">High contrast</a>
+                    <a href="matrix.html">Matrix</a>
+                    <a href="glass.html">Glass</a>
+                </nav>
+                <div data-scheme-control></div>
+            </div>
             <h1>RFC 0003 — the four themes, as the proposed design leaves them</h1>
             <p>
                 Each page renders the real components from <code>src/</code> under the CSS a theme
@@ -71,5 +81,8 @@
                 <p>Translucent raised surfaces, and the opacity floor the text sets. Question 2.</p>
             </a>
         </main>
+        <script type="module">
+            import './scheme.ts';
+        </script>
     </body>
 </html>

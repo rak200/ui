@@ -3,6 +3,9 @@
  * its own names, so no --ui-* value a page is judging comes from here.
  */
 :root {
+    /* Both, so the frame follows the reader until the scheme control says otherwise. The
+       token sheet declares the same at :root; the index page has no token sheet. */
+    color-scheme: light dark;
     --frame-ground: light-dark(#dedee3, #232329);
     --frame-ink: light-dark(#1b1b1f, #e7e7ea);
     --frame-quiet: light-dark(#55555e, #a3a3ad);
@@ -38,11 +41,40 @@ header p {
     margin: 0;
 }
 
+.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+}
+
 nav {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
     font-size: 0.875rem;
+}
+
+.scheme {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 0.875rem;
+}
+
+.scheme legend {
+    float: inline-start;
+    margin-inline-end: 0.25rem;
+    color: var(--frame-quiet);
+}
+
+.scheme label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 nav a {

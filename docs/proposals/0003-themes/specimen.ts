@@ -8,6 +8,7 @@
  * `tests/tokens.test.ts` would compute for the same palette. **What a page proposes is the
  * `<style>` in its own head**; nothing in this file is themed.
  */
+import './scheme.js';
 import '../../../src/index.js';
 
 import { html, render, type TemplateResult } from 'lit';
@@ -96,12 +97,32 @@ function over(top: Colour, backdrop: Colour): Colour {
     };
 }
 
-/** The worse of the two extremes nothing behind a panel can be darker or lighter than. */
-function worst(text: string, glass: Colour): number {
+/**
+ * The least ratio `text` keeps over `glass` composited on each of `backdrops` — by default the
+ * two extremes nothing behind a panel can be darker or lighter than.
+ */
+function worst(text: string, glass: Colour, backdrops: readonly Colour[] = [black, white]): number {
     return Math.min(
-        contrastRatio(text, hex(over(glass, black))),
-        contrastRatio(text, hex(over(glass, white))),
+        ...backdrops.map((backdrop) => contrastRatio(text, hex(over(glass, backdrop)))),
     );
+}
+
+/** The least opacity at which `glass` keeps `text` at 4.5:1 over every one of `backdrops`. */
+function least(text: string, glass: Colour, backdrops?: readonly Colour[]): string {
+    const alpha = Array.from({ length: 101 }, (_, step) => step / 100).find(
+        (candidate) => worst(text, { ...glass, alpha: candidate }, backdrops) >= 4.5,
+    );
+
+    return alpha === undefined ? 'at no opacity' : `from ${alpha.toFixed(2)}`;
+}
+
+/** `#rrggbb`, opaque. */
+function parsed(value: string): Colour {
+    const [red = 0, green = 0, blue = 0] = [1, 3, 5].map((offset) =>
+        Number.parseInt(value.slice(offset, offset + 2), 16),
+    );
+
+    return { red, green, blue, alpha: 1 };
 }
 
 /** A token as a component writes it, resolved inside `panel`. */
@@ -176,25 +197,44 @@ function floors(panel: HTMLElement): Floor[] {
  * A translucent raised surface, measured the way S3 found it has to be: over black and over
  * white, which bound every backdrop there can be. Only a panel that declares `data-raised`
  * has one, because only Glass proposes the pair of names it reads.
+ *
+ * A panel that also lists its page's own colours in `data-backdrops` gets a second row: the
+ * same text over only those, which is what a theme could promise if it constrained what may
+ * sit behind it instead of holding for any page.
  */
 function raised(panel: HTMLElement, text: string): Floor[] {
     if (!panel.hasAttribute('data-raised')) {
         return [];
     }
 
-    const glass = resolved(panel, 'var(--ui-color-surface-raised)');
-    const least = Array.from({ length: 101 }, (_, step) => step / 100).find(
-        (alpha) => worst(text, { ...glass, alpha }) >= 4.5,
-    );
-    const clears = least === undefined ? 'at no opacity' : `from ${least.toFixed(2)}`;
-
-    return [
+    // The channels are read from the colour made opaque, and only the opacity from the
+    // translucent one: a pixel at 0.06 keeps too little of its colour to un-premultiply, and
+    // read whole it moved the least opacity by 0.02.
+    const glass = {
+        ...resolved(panel, 'rgb(from var(--ui-color-surface-raised) r g b / 1)'),
+        alpha: resolved(panel, 'var(--ui-color-surface-raised)').alpha,
+    };
+    const opacity = glass.alpha.toFixed(2);
+    const rows: Floor[] = [
         {
-            name: `text on the glass at ${glass.alpha.toFixed(2)}, worst backdrop — clears ${clears}`,
+            name: `text on the glass at ${opacity}, any page — clears ${least(text, glass)}`,
             value: worst(text, glass),
             floor: 4.5,
         },
     ];
+    const listed = panel.dataset['backdrops'];
+
+    if (listed !== undefined && listed !== '') {
+        const backdrops = listed.split(' ').map(parsed);
+
+        rows.push({
+            name: `text on the glass at ${opacity}, this page's colours — clears ${least(text, glass, backdrops)}`,
+            value: worst(text, glass, backdrops),
+            floor: 4.5,
+        });
+    }
+
+    return rows;
 }
 
 /** Writes `panel`'s floors into the list beside it. */
@@ -229,6 +269,8 @@ export function measureAll(): void {
         report(panel);
     }
 }
+
+document.addEventListener('schemechange', measureAll);
 
 /** The same small billing screen in every panel, so the themes differ and nothing else does. */
 function specimen(index: number): TemplateResult {

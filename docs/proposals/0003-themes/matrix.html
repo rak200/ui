@@ -50,19 +50,23 @@
     </head>
     <body>
         <header>
-            <nav aria-label="Prototypes">
-                <a href="index.html">All four</a>
-                <a href="default.html">Default</a>
-                <a href="contrast.html">High contrast</a>
-                <a href="matrix.html" aria-current="page">Matrix</a>
-                <a href="glass.html">Glass</a>
-            </nav>
+            <div class="top">
+                <nav aria-label="Prototypes">
+                    <a href="index.html">All four</a>
+                    <a href="default.html">Default</a>
+                    <a href="contrast.html">High contrast</a>
+                    <a href="matrix.html" aria-current="page">Matrix</a>
+                    <a href="glass.html">Glass</a>
+                </nav>
+                <div data-scheme-control></div>
+            </div>
             <h1>Matrix: one scheme, a green that glows</h1>
             <p>
-                A dark-only theme (question 5). The first two panels sit under a host that declares
-                <code>light</code> and one that declares <code>dark</code>, and render the same: the
-                theme's own <code>color-scheme</code> wins. The glow on the raised surfaces is the
-                elevation step set to a glow, with no new name (question 2).
+                A dark-only theme (question 5).
+                <strong>Switch the scheme at the top to light</strong>: the frame follows and the
+                panels do not, because the theme declares its own <code>color-scheme</code> and a
+                host's cannot reach under it. The glow on the raised surfaces is the elevation step
+                set to a glow, with no new name (question 2).
             </p>
             <p>
                 <strong>Where the reference loses to a floor.</strong> It draws its boundary at
@@ -87,17 +91,8 @@
         </header>
         <main>
             <figure>
-                <figcaption>Under a light host</figcaption>
-                <div style="color-scheme: light">
-                    <div data-specimen data-ui-theme="matrix" data-proposed data-inherited></div>
-                </div>
-                <dl data-floors></dl>
-            </figure>
-            <figure>
-                <figcaption>Under a dark host</figcaption>
-                <div style="color-scheme: dark">
-                    <div data-specimen data-ui-theme="matrix" data-proposed data-inherited></div>
-                </div>
+                <figcaption>As shipped</figcaption>
+                <div data-specimen data-ui-theme="matrix" data-proposed data-inherited></div>
                 <dl data-floors></dl>
             </figure>
             <figure>

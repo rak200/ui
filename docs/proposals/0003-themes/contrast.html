@@ -24,13 +24,16 @@
     </head>
     <body>
         <header>
-            <nav aria-label="Prototypes">
-                <a href="index.html">All four</a>
-                <a href="default.html">Default</a>
-                <a href="contrast.html" aria-current="page">High contrast</a>
-                <a href="matrix.html">Matrix</a>
-                <a href="glass.html">Glass</a>
-            </nav>
+            <div class="top">
+                <nav aria-label="Prototypes">
+                    <a href="index.html">All four</a>
+                    <a href="default.html">Default</a>
+                    <a href="contrast.html" aria-current="page">High contrast</a>
+                    <a href="matrix.html">Matrix</a>
+                    <a href="glass.html">Glass</a>
+                </nav>
+                <div data-scheme-control></div>
+            </div>
             <h1>High contrast: the reader's setting, not a theme</h1>
             <p>
                 Question 4's recommendation. When the reader's system asks for more contrast, the
@@ -44,30 +47,20 @@
                 label on the accent and the three outcome colours. The floors below show both.
             </p>
             <p>
-                The right-hand panels are a stand-in. To try the media query itself, open DevTools →
+                The right-hand panel is a stand-in. To try the media query itself, open DevTools →
                 Rendering → <em>Emulate CSS media feature prefers-contrast</em> → <code>more</code>:
-                the left-hand panels then become the right-hand ones.
+                the left-hand panel then becomes the right-hand one.
             </p>
         </header>
         <main>
             <figure>
-                <figcaption>As your system asks · light</figcaption>
-                <div data-specimen style="color-scheme: light"></div>
+                <figcaption>As your system asks</figcaption>
+                <div data-specimen></div>
                 <dl data-floors></dl>
             </figure>
             <figure>
-                <figcaption>prefers-contrast: more · light</figcaption>
-                <div data-specimen data-more style="color-scheme: light"></div>
-                <dl data-floors></dl>
-            </figure>
-            <figure>
-                <figcaption>As your system asks · dark</figcaption>
-                <div data-specimen style="color-scheme: dark"></div>
-                <dl data-floors></dl>
-            </figure>
-            <figure>
-                <figcaption>prefers-contrast: more · dark</figcaption>
-                <div data-specimen data-more style="color-scheme: dark"></div>
+                <figcaption>prefers-contrast: more</figcaption>
+                <div data-specimen data-more></div>
                 <dl data-floors></dl>
             </figure>
         </main>
