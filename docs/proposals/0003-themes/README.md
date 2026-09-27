@@ -16,7 +16,7 @@ Then open the address Vite prints. The dev server compiles `src/` directly, so n
 | --------------- | ------------------------------------------------------------------------------------------------- |
 | `default.html`  | an accent picker, with today's label beside the derived one — question 3                          |
 | `contrast.html` | the default palette under `prefers-contrast: more` — question 4                                   |
-| `matrix.html`   | a dark-only theme that stays dark whatever the page's scheme, and under today's formulas          |
+| `matrix.html`   | green on black and on white, a glow through elevation, and under today's formulas                 |
 | `glass.html`    | translucent raised surfaces over two pages, with opacity, blur, the reference's edge and its look |
 
 **Every page has a scheme control** — system, light, dark — which writes `color-scheme` on the root

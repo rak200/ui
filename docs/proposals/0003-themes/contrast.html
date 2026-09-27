@@ -5,22 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>High contrast, as a setting</title>
         <link rel="stylesheet" href="prototype.css" />
-        <style>
-            /* What would ship in tokenStyleSheet() — question 4. The block moves one ground:
-               the text, to its pole. Every neutral derivation mixes toward the text, so each
-               one follows it, and no formula is declared at :root. */
-            @media (prefers-contrast: more) {
-                :root {
-                    --ui-color-text: light-dark(#000000, #ffffff);
-                }
-            }
-
-            /* The prototype's stand-in, so both states sit side by side without emulating the
-               setting: the same declaration, on the panel rather than on :root. */
-            [data-more] {
-                --ui-color-text: light-dark(#000000, #ffffff);
-            }
-        </style>
+        <link rel="stylesheet" href="contrast.css" />
     </head>
     <body>
         <header>
@@ -37,14 +22,17 @@
             <h1>High contrast: the reader's setting, not a theme</h1>
             <p>
                 Question 4's recommendation. When the reader's system asks for more contrast, the
-                default palette moves its text to the pole — black in the light scheme, white in the
-                dark — and nothing else. The border, the muted text, the hover and the striped row
-                all mix toward the text, so each rises with it. The surface stays where it is, so
-                the dark scheme keeps a visible hover.
+                default palette goes black and white: the text, the surface, the accent and the
+                focus ring move to the poles, and the dark scheme sits on pure black. The border and
+                the muted text follow on their own, because both mix toward the text. The outcome
+                colours keep their hue — an error still says so in red.
             </p>
             <p>
-                <strong>What does not rise</strong> is every colour that is a ground of its own: the
-                label on the accent and the three outcome colours. The floors below show both.
+                <strong>The states are written out, not derived.</strong> Over pure black an 8% mix
+                is <code>#020202</code>, 1.01:1 — the hover S5 found vanishing — and a black or
+                white accent has no shade to move away from its label toward. A palette that is only
+                black and white is fully known, so <code>contrast.css</code> gives its hover,
+                pressed and striped greys as values, and says beside them what that costs a theme.
             </p>
             <p>
                 The right-hand panel is a stand-in. To try the media query itself, open DevTools →

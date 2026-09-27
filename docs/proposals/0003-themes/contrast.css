@@ -1,0 +1,44 @@
+/*
+ * The default palette's answer to prefers-contrast: more — question 4 — in black and white
+ * only: text, surface, accent and focus ring at the poles, and the dark scheme on pure black.
+ * The outcome colours keep their hue, because a message that is an error still says so in red.
+ *
+ * Border and muted text stay derived: both mix toward the text, so the poles carry them up.
+ * The states cannot stay derived, and that is S5's finding arriving here. Over pure black an 8%
+ * mix is #020202, 1.01:1, and a black or white accent has no shade to move away from its label
+ * toward. So a black-and-white palette, being fully known, writes its states out.
+ *
+ * What that costs in the real sheet: these are derived names declared at :root, and a
+ * declaration at :root reaches every themed subtree below it — a theme under `more` would
+ * inherit these greys unless its own answer declares its states or resets them with `initial`,
+ * which hands them back to the formula.
+ */
+@media (prefers-contrast: more) {
+    :root {
+        --ui-color-text: light-dark(#000000, #ffffff);
+        --ui-color-surface: light-dark(#ffffff, #000000);
+        --ui-color-accent: light-dark(#000000, #ffffff);
+        --ui-color-accent-contrast: light-dark(#ffffff, #000000);
+        --ui-color-focus: light-dark(#000000, #ffffff);
+        --ui-color-hover: light-dark(#ebebeb, #1f1f1f);
+        --ui-color-pressed: light-dark(#d6d6d6, #333333);
+        --ui-color-surface-muted: light-dark(#f2f2f2, #141414);
+        --ui-color-accent-hover: light-dark(#333333, #d6d6d6);
+        --ui-color-accent-pressed: light-dark(#4d4d4d, #b3b3b3);
+    }
+}
+
+/* The prototype's stand-in, so both states sit side by side without emulating the setting:
+   the same declarations, on the panel rather than on :root. */
+[data-more] {
+    --ui-color-text: light-dark(#000000, #ffffff);
+    --ui-color-surface: light-dark(#ffffff, #000000);
+    --ui-color-accent: light-dark(#000000, #ffffff);
+    --ui-color-accent-contrast: light-dark(#ffffff, #000000);
+    --ui-color-focus: light-dark(#000000, #ffffff);
+    --ui-color-hover: light-dark(#ebebeb, #1f1f1f);
+    --ui-color-pressed: light-dark(#d6d6d6, #333333);
+    --ui-color-surface-muted: light-dark(#f2f2f2, #141414);
+    --ui-color-accent-hover: light-dark(#333333, #d6d6d6);
+    --ui-color-accent-pressed: light-dark(#4d4d4d, #b3b3b3);
+}

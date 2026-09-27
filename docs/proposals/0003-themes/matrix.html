@@ -7,44 +7,50 @@
         <link rel="stylesheet" href="prototype.css" />
         <link rel="stylesheet" href="proposal.css" />
         <style>
-            /* What the theme would ship — questions 1, 2 and 5. One scheme, declared, so neither
-               the host's scheme nor the reader's preference reaches it (S6). The values are the
-               visual reference's wherever the floors allow them: its green on its #050505
-               ground, its monospace face, its 8px corner. */
+            /* What the theme would ship — questions 1 and 2, in both schemes. The dark one is the
+               visual reference's wherever the floors allow it: its green on its #050505 ground,
+               its monospace face, its 8px corner. The light one is the same idea on white: the
+               reference's green is 1.37:1 there, so the text is a dark green and the accent a
+               middle one, which keeps a black label legible on it. */
             [data-ui-theme='matrix'] {
-                color-scheme: dark;
-                --ui-color-surface: #050505;
-                --ui-color-text: #00ff00;
-                --ui-color-accent: #00ff00;
-                --ui-color-focus: #ccffcc;
+                --ui-color-surface: light-dark(#ffffff, #050505);
+                --ui-color-text: light-dark(#003b00, #00ff00);
+                --ui-color-accent: light-dark(#008f11, #00ff00);
+                --ui-color-focus: light-dark(#008f11, #ccffcc);
                 --ui-font: 'Courier New', Courier, ui-monospace, monospace;
                 --ui-radius: 0.5rem;
-                /* The glow, through the elevation step the raised surfaces already read — so
-                   the card, the menu, the toast and the tip glow, and no name is added. */
-                --ui-elevation-100: 0 0 0 1px rgb(0 255 0 / 0.25), 0 0 18px rgb(0 255 0 / 0.3);
+                /* The glow, through the elevation step the raised surfaces already read — so the
+                   card, the menu, the toast and the tip glow, and no name is added. Only its
+                   colour follows the scheme, which is S2: a shadow's colour can be light-dark()
+                   and the shadow cannot. */
+                --ui-elevation-100:
+                    0 0 0 1px light-dark(rgb(0 143 17 / 0.3), rgb(0 255 0 / 0.25)),
+                    0 0 18px light-dark(rgb(0 143 17 / 0.25), rgb(0 255 0 / 0.3));
             }
 
             /* Its answer to prefers-contrast: more. The green stays on the accent and the text
-               goes white: muted text over this ground reaches 7.33:1 from white, and a tinted
-               #ecffec gives 7.06, a rounding error from 7. */
+               goes to its pole: in the dark, muted text over this ground reaches 7.33:1 from
+               white, and a tinted #ecffec gives 7.06, a rounding error from 7. */
             @media (prefers-contrast: more) {
                 [data-ui-theme='matrix'] {
-                    --ui-color-text: #ffffff;
+                    --ui-color-text: light-dark(#000000, #ffffff);
                 }
             }
 
             [data-ui-theme='matrix'][data-more] {
-                --ui-color-text: #ffffff;
+                --ui-color-text: light-dark(#000000, #ffffff);
             }
 
             /* Not tokens, and the open half of question 2. A property that inherits, set on the
                theme's own element, reaches inside every component's shadow root, because
                inheritance crosses it — which is how the reference's glow on text gets onto a
-               label no selector here can reach. currentColor makes each text glow in its own
-               colour, the danger message red. */
+               label no selector here can reach. In the dark, currentColor makes each text glow
+               in its own colour, the danger message red. */
             [data-ui-theme='matrix'][data-inherited] {
                 font-weight: bold;
-                text-shadow: 0 0 8px currentColor;
+                /* On white a halo in the text's own dark green reads as a smudge, so the light
+                   scheme glows in the reference's green instead. */
+                text-shadow: 0 0 8px light-dark(rgb(0 255 65 / 0.45), currentColor);
             }
         </style>
     </head>
@@ -60,13 +66,13 @@
                 </nav>
                 <div data-scheme-control></div>
             </div>
-            <h1>Matrix: one scheme, a green that glows</h1>
+            <h1>Matrix: a green that glows, on black and on white</h1>
             <p>
-                A dark-only theme (question 5).
-                <strong>Switch the scheme at the top to light</strong>: the frame follows and the
-                panels do not, because the theme declares its own <code>color-scheme</code> and a
-                host's cannot reach under it. The glow on the raised surfaces is the elevation step
-                set to a glow, with no new name (question 2).
+                Both schemes: the reference's bright green on black, and a dark green on white —
+                switch between them at the top. The glow on the raised surfaces is the elevation
+                step set to a glow, with no new name (question 2); only its colour changes with the
+                scheme. Matrix used to be the one theme that declined a scheme, so question 5 no
+                longer has a case among the four.
             </p>
             <p>
                 <strong>Where the reference loses to a floor.</strong> It draws its boundary at
@@ -78,9 +84,9 @@
                 <strong>Where the proposal itself fails.</strong> The last panel is the same theme
                 under today's formulas: its accent is the text's own green, and today the accent's
                 hover mixes toward the text, so the hover does not move at all — 1.00. The proposed
-                formulas move it away from the black label instead, toward white, and a green this
-                bright has almost no room left there: 1.03, still under the 1.05 the suite asks. The
-                label is solved; the accent's own states are not.
+                formulas move it away from the black label instead, toward white, and in the dark
+                scheme a green this bright has almost no room left there: 1.03, still under the 1.05
+                the suite asks. The label is solved; the accent's own states are not.
             </p>
             <div class="controls">
                 <label
