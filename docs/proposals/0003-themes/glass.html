@@ -15,19 +15,21 @@
                the surface itself, none, and the derived border — so the default palette renders
                as it does today.
 
-               The opacities sit just above S3's floors, 0.56 and 0.66 for the default pair. The
+               The opacities sit just above the floors for this theme's pair, 0.46 and 0.60 — S3's 0.56
+               and 0.66 were the default pair's, and pure text lowers both. The
                surface itself stays opaque, so every field keeps the floors S5 measured.
 
-               Two grounds move as well. The light text goes a step darker, because text over
-               frosted glass reads as washed out long before it measures as failing. And the
-               accent goes neutral — slate, in both schemes — since a saturated hue on the
-               controls fights whatever colour the page behind throws through the glass. */
+               Two grounds move as well. The text goes to its pole in both schemes, pure black and
+               pure white, because text over frosted glass reads as washed out long before it
+               measures as failing. And the accent goes neutral — slate, in both schemes — since a
+               saturated hue on the controls fights whatever colour the page behind throws through
+               the glass. */
             [data-ui-theme='glass'] {
-                --ui-color-text: light-dark(#111827, #e5e7eb);
+                --ui-color-text: light-dark(#000000, #ffffff);
                 --ui-color-accent: light-dark(#334155, #94a3b8);
                 --ui-color-surface-raised: light-dark(
-                    rgb(from var(--ui-color-surface) r g b / 0.6),
-                    rgb(from var(--ui-color-surface) r g b / 0.7)
+                    rgb(from var(--ui-color-surface) r g b / 0.5),
+                    rgb(from var(--ui-color-surface) r g b / 0.65)
                 );
                 --ui-backdrop-raised: blur(12px) saturate(1.7);
                 /* White at 0.45 on light glass rather than the reference's 0.16, which only ever
@@ -201,12 +203,12 @@
                 Question 2's recommendation. The raised surfaces — the cards, the toasts, the tip
                 and the dialog — read a translucent colour and a backdrop filter; the surface itself
                 stays opaque, so the fields inside a card are as legible as anywhere else. The theme
-                also moves two grounds: a neutral slate accent, and a darker text in the light
-                scheme. The page behind follows the scheme, as a host's would.
+                also moves two grounds: a neutral slate accent, and the text in pure black and pure
+                white. The page behind follows the scheme, as a host's would.
             </p>
             <p>
                 <strong>Why the reference looks clearer.</strong> It lets 94% of the page through
-                where this lets 30 to 40% through, and it can, because it does not hold 4.5:1: its
+                where this lets 35 to 50% through, and it can, because it does not hold 4.5:1: its
                 white text is 17:1 over its dark ground and 2.0:1 where a green blob passes under
                 it. Try <em>The reference's look</em> below in the dark scheme — the closest to it,
                 light text over a faint tint — then read the last rows under the panel.
@@ -221,13 +223,13 @@
             <div class="controls">
                 <label
                     >Light opacity
-                    <input type="range" id="light" min="0" max="1" step="0.01" value="0.6" />
-                    <output for="light">0.60</output></label
+                    <input type="range" id="light" min="0" max="1" step="0.01" value="0.5" />
+                    <output for="light">0.50</output></label
                 >
                 <label
                     >Dark opacity
-                    <input type="range" id="dark" min="0" max="1" step="0.01" value="0.7" />
-                    <output for="dark">0.70</output></label
+                    <input type="range" id="dark" min="0" max="1" step="0.01" value="0.65" />
+                    <output for="dark">0.65</output></label
                 >
                 <label
                     >Blur
@@ -351,8 +353,8 @@
             // what the theme would ship and keeps the page, so the two can be compared over the
             // same backdrop. Both keep the edge, which the theme now ships too.
             function preset(reference) {
-                light.value = reference ? '0.06' : '0.6';
-                dark.value = reference ? '0.06' : '0.7';
+                light.value = reference ? '0.06' : '0.5';
+                dark.value = reference ? '0.06' : '0.65';
                 blur.value = '12';
                 tint.value = reference ? 'white' : 'surface';
                 edge.checked = true;
