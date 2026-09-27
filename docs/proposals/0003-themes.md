@@ -409,26 +409,257 @@ reads `Canvas` as `#ffffff`: the forced palette overrides the theme's scheme, as
 author colour. What declining costs is the host's and the playground's scheme control, which stop
 reaching that subtree — the expected cost, now measured.
 
+### Two readings the design needed
+
+Taken while sketching the design below, to choose between two shapes each, and **with no claim
+written first** — so they are recorded as readings rather than as hypotheses confirmed. Same engine
+and instrument as S1.
+
+**A translucent surface makes its derivations translucent.** `color-mix()` interpolates alpha, and
+every neutral derivation mixes the surface. The opacity each one resolves to, identical in both
+schemes:
+
+| surface opacity | border | muted text | hover | pressed | striped row |
+| --------------- | ------ | ---------- | ----- | ------- | ----------- |
+| 0.3             | 0.65   | 0.755      | 0.356 | 0.398   | 0.335       |
+| 0.6             | 0.8    | 0.86       | 0.632 | 0.656   | 0.62        |
+| 1               | 1      | 1          | 1     | 1       | 1           |
+
+So an alpha on `--ui-color-surface` would make the muted text a colour read through the backdrop,
+in every control that has a field, and S3's composite would have to be taken twice — the text
+through the panel, and the panel through what is behind it.
+
+**Moving the text to its pole raises every pair that mixes toward it.** `--ui-color-text` set to
+`light-dark(#000000, #ffffff)`, and nothing else moved:
+
+| pair                      | light, shipped | light, text at the pole | dark, shipped | dark, text at the pole |
+| ------------------------- | -------------- | ----------------------- | ------------- | ---------------------- |
+| text                      | 14.68          | 21.00                   | 14.33         | 17.74                  |
+| border                    | 3.39           | 6.01                    | 3.96          | 4.60                   |
+| muted text                | 5.24           | 11.37                   | 6.07          | 7.26                   |
+| text on hover             | 12.41          | 16.52                   | 12.23         | 14.95                  |
+| hover against the surface | 1.18           | 1.27                    | 1.17          | 1.19                   |
+| label on the accent       | 5.17           | 5.17                    | 6.98          | 6.98                   |
+
+A text further from the surface carries every mix toward it along, and the surface does not move,
+so the dark end keeps the room S5 showed a black surface losing. **The label on the resting accent
+is the pair that does not rise**: it mixes nothing toward the text.
+
 ### Where the five questions stand
 
 | question                                         | what the study settled                                                                                                    | what is left                                                                       |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                          | a decision                                                                         |
-| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2)                                                         | whether shadow geometry, or a filter, may enter with a theme                       |
+| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above)        | whether shadow geometry, or a filter, may enter with a theme                       |
 | 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5) | whether the derived pole is adopted, and what a black-surface theme does for hover |
-| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4)                                                                                | a decision                                                                         |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair (above)                       | a decision                                                                         |
 | 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6)                                      | a decision                                                                         |
 
 ## Proposed design
 
-**Not written.** The proposal is `Draft`, and the questions above are what the Study has to answer
-first. What is already fixed is the set of properties any answer has to hold:
+**A sketch, with one recommendation per question**, written so the decisions have something
+concrete to be made against. Where a sentence rests on a measurement it names it; the rest is
+proposal, and nothing here is decided until the Decision says so. What was fixed before the Study
+began still binds every answer:
 
 - A theme is selected the way item 2 resolved and no other way.
 - A shipped theme carries a story, because that is what puts it inside the advertised bar.
 - No theme lowers a floor the default palette clears.
 - A host's own theme stays as cheap as it is today. Shipping four must not make the fifth harder to
   write than the `Theme` story is now.
+
+### The four, as the recommendations leave them
+
+| wanted                       | becomes                                                 | questions |
+| ---------------------------- | ------------------------------------------------------- | --------- |
+| Default, configurable accent | the default palette, with the accent's label derived    | 3         |
+| High contrast                | every shipped palette's answer to `prefers-contrast`    | 4         |
+| Matrix                       | a shipped theme, dark only                              | 1, 2, 5   |
+| Glass                        | a shipped theme in both schemes, and the last one built | 1, 2      |
+
+**Two named themes, and the other two are not dropped.** Each becomes something a palette does,
+which is a stronger place for it than a name to select: the derived label follows every accent a
+host sets, including in a host's own theme, and the contrast answer reaches every reader whose
+system asks, under every palette this package ships.
+
+### 1 — The package ships themes, as data a host opts into
+
+**Ship, because only a shipped theme is measured.** RFC 0002's obligation puts a theme inside the
+bar only where this suite renders it, and S5 is what the outside looks like: a palette whose text
+clears 4.5:1 by a wide margin still loses its border at 11.9:1, and a black surface loses its hover,
+with nothing to notice either. A Matrix a host writes from a description is exactly that palette.
+
+**Data first, CSS second**, because #24's constraint binds a theme as much as a default: whatever
+second format arrives reads the source, and CSS is one output of it. A theme is the object
+`defaults` and `darkScheme` already are — a partial map of grounds and the dark values beside it —
+plus the one scheme it keeps when it declines the other, and its answer to the reader's contrast
+setting. One function renders it to a `[data-ui-theme='…']` block, as `tokenStyleSheet()` renders
+the defaults to `:root`:
+
+```ts
+// The names are placeholders; the shape is the proposal.
+export interface Theme {
+  readonly name: string;
+  readonly grounds: Readonly<Partial<Record<Token, string>>>;
+  readonly dark?: Readonly<Partial<Record<Token, string>>>; // absent when `scheme` is set
+  readonly scheme?: 'light' | 'dark'; // question 5
+  readonly more?: Readonly<Partial<Record<Token, string>>>; // question 4
+}
+
+export function themeStyleSheet(theme: Theme): string;
+```
+
+**Opt-in, not emitted by `tokenStyleSheet()`.** A host inserts the block for a theme it uses, and
+selecting it stays the attribute. Emitting every shipped theme into the default sheet would charge
+every host for themes it never selects, to save one call.
+
+**A host's own theme is written the way the `Theme` story writes it**, by hand and unchanged. The
+data shape is what lets the suite iterate over the shipped ones (question 3); a host may hand
+`themeStyleSheet()` its own for the same rendering, and it is never the only way in.
+
+**What it costs is permanent.** Every component and every ground that arrives later is measured
+under every shipped palette, and a theme that stops clearing a floor blocks the pull request that
+broke it, not a pull request about the theme.
+
+**Set aside:**
+
+- _Enabling only_ — nothing would measure the four, and S5 says that is not a neutral choice.
+- _Stylesheets rather than data_ — a second format would have to parse the CSS back into values,
+  which is what #24 records as the thing to avoid.
+
+### 2 — A category may arrive with a shipped theme, when its default changes nothing
+
+**The rule gains a second clause and keeps its reason.** _A category arrives with the component that
+consumes it_ exists because a value chosen with nothing to judge it against gets corrected when
+something arrives, and correcting a published default silently moves every host that did not
+override it. A category a theme brings keeps that reason whole on one condition: **its default is
+the identity** — `none`, transparent, zero — so the default palette renders exactly as before and
+there is no default to correct later. The value that is not the identity is the theme's, judged in
+the theme's story, and the components that read the new name change in the same pull request.
+
+**Matrix may not need it.** S2 found that the part of a glow that follows a scheme is a colour, and
+Matrix keeps one scheme, so even that part is one value. A glow is a shadow at zero offset, and
+`--ui-elevation-100` is already a shadow the raised surfaces read — the card, the menu, the toast and
+the tooltip. The theme sets that step to a glow first; a name of its own follows only if its story
+shows the glow wanted where elevation is not read, on text or on a control's boundary.
+
+**Glass does, and the first reading above says where it goes.** Its translucency and its blur are a
+category read by the raised surfaces and the dialog, and **not an alpha on `--ui-color-surface`**:
+every derivation mixes the surface, so a translucent one takes the muted text, the border and the
+hover translucent with it — muted text at 0.755 opacity over a surface at 0.3. Leaving the surface
+opaque keeps every field where S5 measured it, and keeps S3's floors computable from one pair and one
+layer.
+
+**Set aside:**
+
+- _A theme styling components directly_, through `::part()` or selectors of its own — a second
+  styling surface beside the tokens, holding values a host cannot override.
+- _No new category at all_ — Matrix and Glass without the one thing each is named for.
+
+### 3 — Every shipped palette is measured, and the accent's label is derived
+
+**The floors run per palette.** _The contrast floors_ in `tests/tokens.test.ts` stop being a list
+over `defaults` and `darkScheme` and run over every palette this package ships, in each scheme it
+keeps: the theme's block inserted, and `data-ui-theme` on the element `painted()` resolves under.
+That is S5's answer — no rule about the grounds predicts the floors, so the engine measures each
+palette — and it turns the third property above from a promise into a check. Glass adds S3's two
+extremes: its text over its surface, composited on black and on white.
+
+**The accent's label becomes a derivation**, in S1's third shape: `--ui-color-accent-contrast` is the
+WCAG pole of the accent, and the accent's hover and pressed shades mix away from that pole instead of
+toward the text. This is what makes a configurable accent a property of the default palette rather
+than a theme: a host moves one ground and the label follows, in both schemes — 0 of 4096 accents
+under 4.5:1, measured. It is the one answer here that reaches a host's own theme, which no floor in
+this suite can.
+
+What it costs:
+
+- `--ui-color-accent-contrast` moves from `tokens` to `derivedTokens`, so `defaults` and
+  `darkScheme` lose a key and `Token` loses a member. Code that reads
+  `defaults['--ui-color-accent-contrast']` breaks, which below `1.0.0` is a minor. A host that sets
+  the name keeps working: a derived name still takes an override.
+- The dark scheme's label goes from `#111827` to black, 8.26:1 where it was 6.98, because the pole
+  is always pure white or black.
+- The accent's shades move a little: `#255cd4` becomes `#1d52c6` in the light scheme.
+
+**A black surface gets no rule of its own.** Its hover is `#020202` at 1.01:1 (S5), and the
+per-palette floor already refuses it. A theme answers with a surface whose hover the floor accepts —
+under white text, `#050505` already is one — or declares its own hover and pressed, an override
+every host already has, which the floor then measures.
+
+**Set aside:**
+
+- _A rule that a theme may not move the grounds_ — the grounds are what a theme is.
+- _A least ratio between text and surface_ — S5 refuted the premise: no ratio predicts the floors.
+- _Per-theme formulas as a mechanism_ — a theme that needs a different mix overrides the derived
+  name, and the floor measures what it wrote. It needs nothing of its own.
+
+### 4 — High contrast is the reader's setting, answered by every palette
+
+**`prefers-contrast: more`, answered in the token layer as reduced motion is, and not a theme.** A
+host chooses a theme; a reader's system asks for contrast, and a reader who needs it should not
+depend on a host having shipped a picker. It also composes where a theme cannot: Glass under `more`
+stops being glass, which is one theme answering a setting rather than two themes selected at once.
+
+**The block moves one ground: the text, to its pole.** Every neutral derivation mixes toward the
+text, so the second reading above is the whole mechanism — muted text at 11.37:1 in the light scheme
+and 7.26:1 in the dark, the border at 6.01 and 4.60, and the hover still visible because the surface
+does not move. Every text pair made of the text and the surface then clears 7:1, WCAG's enhanced
+level. No formula is declared at `:root`, so nothing freezes. **What it does not raise is every
+colour that is a ground of its own**: the labels on the accent — 5.17 on the resting accent in the
+light scheme — and the three outcome colours, which were chosen against 4.5:1. Raising those would
+mean the reader's setting moving a host's brand and status colours, and whether it should is left
+open here.
+
+**A theme answers it too, in its own data** — the `more` map in the shape above — because a theme's
+grounds are declared on its own element and a `:root` block cannot reach under them, which is the
+reason the derivations live in the fallback. Glass's answer is opaque and unblurred, and the same
+answer serves `prefers-reduced-transparency: reduce` in the engine that has it (S4). A host's own
+theme answers only if it writes the block, which the documentation says. **The floors run again
+under emulated `more`**, for every shipped palette — S4 measured that the suite can.
+
+`forced-colors` stays the platform's, answered per component where a drawing needs it, as today.
+
+**Set aside:**
+
+- _A named high-contrast theme_ — a reader would depend on the host exposing it, and choosing it
+  would exclude every other theme instead of composing with them. A switch for readers whose system
+  cannot ask stays a host's to add, and a theme later would be additive.
+- _A third attribute beside `data-ui-theme`_ — a third axis to RFC 0002's two, for a signal the
+  platform already carries.
+
+### 5 — A shipped theme may keep one scheme, by declaring it
+
+**Yes, for Matrix, with `color-scheme: dark`.** A light Matrix is not Matrix. S6 measured that the
+declaration on the themed element is the whole mechanism: neither the host's scheme nor the
+reader's preference reaches the subtree, the grounds the theme does not move resolve to their dark
+values, the system colours follow, and forced colours still win. **`dark` rather than `only dark`**:
+`only` changed nothing S6 could measure, and what the specification says it is for — refusing a
+browser's own forced darkening — was not emulated. It is one word to add once something shows it
+matters.
+
+The cost is S6's: the host's scheme control and the playground's stop reaching that subtree. It is
+documented with the theme, and the floors run in the one scheme it keeps.
+
+**Set aside:** _every shipped theme in both schemes_ — a light Matrix would be a second theme under
+the first one's name, built for a symmetry nobody asked for.
+
+### The order the recommendations imply
+
+Not a Rollout, which waits for a Decision — only the sequence these answers would put the work in,
+each step shippable alone:
+
+1. **The per-palette floors**, over the default palette alone. Nothing renders differently, and every
+   later step lands inside the gate.
+2. **The derived label**, with the accent's shades turned away from it — the breaking step, alone so
+   its changelog entry says only that.
+3. **`prefers-contrast: more`** in `tokenStyleSheet()`, with the floors run under emulation.
+4. **The theme shape, `themeStyleSheet()` and Matrix** — dark only, its glow through elevation first,
+   and a theme control in the playground beside the scheme control #120 put there. `ARCHITECTURE.md`
+   loses the elevation sentence S2 contradicts, and gains the second clause of _A category arrives…_
+   if the glow turns out to need a name.
+5. **Glass**, last: the raised surfaces' translucency and blur, its opacity floors from its own
+   pair, and opaque under `more` and under reduced transparency.
 
 ## Decision
 
@@ -443,7 +674,7 @@ One piece of bookkeeping is already known. **No `ROADMAP.md` entry precedes acce
 records that both of its own obligations, the tracking issue and the roadmap entry, followed
 acceptance rather than preceding it. This file is the register until then.
 
-**One dependency is already visible**: four themes cannot be judged in a playground that renders one
-scheme. [#120](https://github.com/rak200/ui/issues/120) inserts the token sheet into the Storybook
-preview and puts a scheme control in the toolbar; the theme axis is the second control that would
-live beside it, and that issue should not close off the room for it.
+**One dependency is already met**: four themes cannot be judged in a playground that renders one
+scheme, and [#120](https://github.com/rak200/ui/issues/120) inserted the token sheet into the
+Storybook preview and put a scheme control in the toolbar. The theme axis is the second control that
+would live beside it.
