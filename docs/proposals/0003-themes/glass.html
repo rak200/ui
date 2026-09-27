@@ -8,20 +8,35 @@
         <link rel="stylesheet" href="proposal.css" />
         <link rel="stylesheet" href="contrast.css" />
         <style>
-            /* What the theme would ship — questions 1 and 2. Two names the package does not have,
-               both placeholders: the raised surfaces' colour, which is a colour and so carries
-               both schemes in light-dark() (S2), and their backdrop filter, one value in both.
-               The default of each would be the identity — the surface itself, and none — so
-               the default palette renders as it does today.
+            /* What the theme would ship — questions 1 and 2. Three names the package does not
+               have, all placeholders: the raised surfaces' colour, which is a colour and so
+               carries both schemes in light-dark() (S2); their backdrop filter, one value in
+               both; and their edge, a colour again. The default of each would be the identity —
+               the surface itself, none, and the derived border — so the default palette renders
+               as it does today.
 
-               The opacities sit just above S3's floors for this pair, 0.56 and 0.66. The
-               surface itself stays opaque, so every field keeps the floors S5 measured. */
+               The opacities sit just above S3's floors, 0.56 and 0.66 for the default pair. The
+               surface itself stays opaque, so every field keeps the floors S5 measured.
+
+               Two grounds move as well. The light text goes a step darker, because text over
+               frosted glass reads as washed out long before it measures as failing. And the
+               accent goes neutral — slate, in both schemes — since a saturated hue on the
+               controls fights whatever colour the page behind throws through the glass. */
             [data-ui-theme='glass'] {
+                --ui-color-text: light-dark(#111827, #e5e7eb);
+                --ui-color-accent: light-dark(#334155, #94a3b8);
                 --ui-color-surface-raised: light-dark(
                     rgb(from var(--ui-color-surface) r g b / 0.6),
                     rgb(from var(--ui-color-surface) r g b / 0.7)
                 );
                 --ui-backdrop-raised: blur(12px) saturate(1.7);
+                /* White at 0.45 on light glass rather than the reference's 0.16, which only ever
+                   drew dark glass and would vanish into a white panel; softer than a line, which
+                   is what the derived border drew. */
+                --ui-color-border-raised: light-dark(
+                    rgb(255 255 255 / 0.45),
+                    rgb(255 255 255 / 0.16)
+                );
             }
 
             /* Its answer to prefers-contrast: more, and to reduced transparency in the engine
@@ -50,18 +65,9 @@
                 backdrop-filter: var(--ui-backdrop-raised);
             }
 
-            /* The reference's edge, as an option: a translucent white line and a highlight along
-               the top, in place of the derived boundary and the elevation. A card's edge is not a
-               control's boundary, so it owes no 3:1 — what it would need is a third name, read by
-               the raised surfaces, and this one is a placeholder like the other two. The light
-               scheme's line is stronger than the reference's, which only ever drew dark glass. */
-            [data-ui-theme='glass'][data-edge] {
-                --ui-color-border-raised: light-dark(
-                    rgb(255 255 255 / 0.7),
-                    rgb(255 255 255 / 0.16)
-                );
-            }
-
+            /* Stand-in for the edge, which a toggle turns off to compare: a translucent white line
+               and a highlight along the top, in place of the derived boundary and the elevation.
+               A card's edge is not a control's boundary, so it owes no 3:1. */
             [data-ui-theme='glass'][data-edge] :is(ui-card, [slot='tip']) {
                 border-color: var(--ui-color-border-raised);
             }
@@ -79,11 +85,13 @@
             [data-ui-theme='glass'][data-edge] :is(ui-card, ui-toast, [slot='tip']),
             [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog) {
                 box-shadow:
-                    inset 0 1px 0 rgb(255 255 255 / 0.2),
-                    0 8px 24px rgb(0 0 0 / 0.33);
+                    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
+                    0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
             }
 
-            /* The page behind is the host's, not the theme's — two of them, to choose from. */
+            /* The page behind is the host's, not the theme's — two of them, to choose from, and
+               each follows the scheme the way a host's page would: light glass over a dark page
+               is grey, which is a page nobody would put it on. */
             [data-ui-theme='glass'][data-specimen] {
                 position: relative;
                 overflow: hidden;
@@ -97,8 +105,8 @@
             }
 
             /* Hard: glass over a flat colour proves nothing, so this one has large colour, hard
-               edges and small text — and the two extremes S3 found bound every backdrop, pure
-               black and pure white. */
+               edges and small text — and, in both schemes, the two extremes S3 found bound every
+               backdrop, pure black and pure white. */
             [data-scene='hard'] {
                 background:
                     radial-gradient(circle at 12% 16%, #f97316 0 5.5rem, transparent 5.6rem),
@@ -106,7 +114,11 @@
                     radial-gradient(circle at 72% 56%, #2563eb 0 7rem, transparent 7.1rem),
                     radial-gradient(circle at 18% 68%, #ffffff 0 6.5rem, transparent 6.6rem),
                     radial-gradient(circle at 46% 96%, #22c55e 0 5rem, transparent 5.1rem),
-                    repeating-linear-gradient(48deg, #1c1c24 0 11px, #2e2e3a 11px 22px);
+                    repeating-linear-gradient(
+                        48deg,
+                        light-dark(#e4e4ea, #1c1c24) 0 11px,
+                        light-dark(#d2d2da, #2e2e3a) 11px 22px
+                    );
             }
 
             [data-scene='hard']::before {
@@ -118,15 +130,16 @@
                     600 12px/2.4 ui-monospace,
                     monospace;
                 letter-spacing: 0.12em;
-                color: #ffffffcc;
+                color: light-dark(rgb(0 0 0 / 0.6), rgb(255 255 255 / 0.8));
                 pointer-events: none;
             }
 
             /* The reference's: its near-black ground and its three colours, softened the way its
                own blobs are, drifting the way they drift. Nothing on it is white and nothing is
-               hard-edged, which is most of why any glass looks clean over it. */
+               hard-edged, which is most of why any glass looks clean over it. The light scheme's
+               ground is this prototype's: the reference only drew a dark page. */
             [data-scene='reference'] {
-                background: #0b0b0f;
+                background: light-dark(#eef0f5, #0b0b0f);
             }
 
             [data-scene='reference']::before,
@@ -187,7 +200,9 @@
             <p>
                 Question 2's recommendation. The raised surfaces — the cards, the toasts, the tip
                 and the dialog — read a translucent colour and a backdrop filter; the surface itself
-                stays opaque, so the fields inside a card are as legible as anywhere else.
+                stays opaque, so the fields inside a card are as legible as anywhere else. The theme
+                also moves two grounds: a neutral slate accent, and a darker text in the light
+                scheme. The page behind follows the scheme, as a host's would.
             </p>
             <p>
                 <strong>Why the reference looks clearer.</strong> It lets 94% of the page through
@@ -235,7 +250,7 @@
                         <option value="white">White, as the reference</option>
                     </select></label
                 >
-                <label><input type="checkbox" id="edge" /> Glass edge</label>
+                <label><input type="checkbox" id="edge" checked /> Glass edge</label>
                 <label><input type="checkbox" id="more" /> prefers-contrast: more</label>
                 <button type="button" id="reference">The reference's look</button>
                 <button type="button" id="theme">Back to the theme</button>
@@ -249,6 +264,7 @@
                     data-ui-theme="glass"
                     data-proposed
                     data-raised
+                    data-edge
                     data-scene="hard"
                 ></div>
                 <dl data-floors></dl>
@@ -272,13 +288,19 @@
                 '(prefers-contrast: more), (prefers-reduced-transparency: reduce)',
             );
 
-            // The reference's page, listed for the second reading: its ground and its three
-            // colours, before the filter's saturate(), which keeps their luminance.
-            const referencePage = '#0b0b0f #3498db #e67e22 #2ecc71';
+            // The reference's page, listed for the second reading: the ground the panel paints in
+            // the scheme in force, and the three colours, before the filter's saturate(), which
+            // keeps their luminance.
+            function referencePage() {
+                const channels = getComputedStyle(panel).backgroundColor.match(/\d+/g) ?? [];
+                const ground = channels
+                    .slice(0, 3)
+                    .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+                    .join('');
 
-            // The sliders write the pair on the panel, and an inline declaration outranks both
-            // contrast answers in the sheet — so while either applies, the sliders and the edge
-            // stand down.
+                return `#${ground} #3498db #e67e22 #2ecc71`;
+            }
+
             // The theme tints with its own surface, so the light glass is white and the dark
             // glass is the dark surface. The reference tints white in its one, dark, scheme.
             function tinted(opacity) {
@@ -287,6 +309,9 @@
                     : `rgb(from var(--ui-color-surface) r g b / ${opacity})`;
             }
 
+            // The sliders write the pair on the panel, and an inline declaration outranks both
+            // contrast answers in the sheet — so while either applies, the sliders and the edge
+            // stand down.
             function tune() {
                 const off = more.checked || quiet.matches;
 
@@ -300,7 +325,7 @@
                 panel.toggleAttribute('data-edge', edge.checked && !off);
 
                 if (scene.value === 'reference') {
-                    panel.dataset.backdrops = referencePage;
+                    panel.dataset.backdrops = referencePage();
                 } else {
                     delete panel.dataset.backdrops;
                 }
@@ -322,15 +347,15 @@
                 measureAll();
             }
 
-            // The reference's look: its tint, its opacity, its edge and its page. Back to the
-            // theme restores what the theme would ship and keeps the page, so the two can be
-            // compared over the same backdrop.
+            // The reference's look: its tint, its opacity and its page. Back to the theme restores
+            // what the theme would ship and keeps the page, so the two can be compared over the
+            // same backdrop. Both keep the edge, which the theme now ships too.
             function preset(reference) {
                 light.value = reference ? '0.06' : '0.6';
                 dark.value = reference ? '0.06' : '0.7';
                 blur.value = '12';
                 tint.value = reference ? 'white' : 'surface';
-                edge.checked = reference;
+                edge.checked = true;
                 more.checked = false;
 
                 if (reference) {
@@ -349,6 +374,8 @@
             control('theme').addEventListener('click', () => preset(false));
 
             quiet.addEventListener('change', tune);
+            // The reference's ground follows the scheme, so its listed colours do too.
+            document.addEventListener('schemechange', tune);
             tune();
         </script>
     </body>
