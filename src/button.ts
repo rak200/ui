@@ -135,7 +135,6 @@ export class UiButton extends LitElement {
      */
     readonly #description = new Description(this);
 
-    /** A native `<button>` around the default slot, described by what a tooltip hands it. */
     override render(): TemplateResult {
         return html`
             <button
