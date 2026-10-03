@@ -92,6 +92,82 @@
                     0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
             }
 
+            /* Being tried: the controls' own fills at an opacity, over the glass they sit on. Each
+               keeps its colour and gives up only its opacity — the field, an empty box and a
+               secondary button the surface, the stripe and the header the muted surface, a filled
+               control the accent — and every edge stays opaque, so each boundary keeps the 3:1
+               the derived border was chosen for. No backdrop filter of their own: the card's
+               already blurs what is behind them.
+
+               The fills are reached through the parts the components already expose, and a
+               declaration from outside a shadow root beats the one inside it whatever the
+               specificity — so each state the component paints is written again here, or it
+               would stop showing. The menu's trigger has no part and stays opaque, as its
+               panel does. */
+            [data-ui-theme='glass'][data-fields] :is(ui-input, ui-select)::part(control),
+            [data-ui-theme='glass'][data-checks] ui-checkbox::part(box),
+            [data-ui-theme='glass'][data-checks] ui-radio-group::part(control),
+            [data-ui-theme='glass'][data-buttons] ui-button[variant='secondary']::part(button) {
+                background-color: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button[variant='secondary']::part(button):hover:not(:disabled) {
+                background-color: rgb(
+                    from color-mix(in oklab, var(--ui-color-text) 8%, var(--ui-color-surface)) r g
+                        b / var(--proposal-fill)
+                );
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button[variant='secondary']::part(button):active:not(:disabled) {
+                background-color: rgb(
+                    from color-mix(in oklab, var(--ui-color-text) 14%, var(--ui-color-surface)) r g
+                        b / var(--proposal-fill)
+                );
+            }
+
+            [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):checked,
+            [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):indeterminate,
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked,
+            [data-ui-theme='glass'][data-checks] ui-radio-group::part(control):checked,
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button) {
+                background-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-accent));
+                border-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-accent));
+            }
+
+            [data-ui-theme='glass'][data-checks]
+                ui-checkbox::part(box):checked:hover:not(:disabled),
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked:hover:not(:disabled),
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button):hover:not(:disabled) {
+                background-color: rgb(
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-accent)
+                );
+                border-color: rgb(from var(--ui-color-accent-hover) r g b / var(--proposal-accent));
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button):active:not(:disabled) {
+                background-color: rgb(
+                    from var(--ui-color-accent-pressed) r g b / var(--proposal-accent)
+                );
+            }
+
+            /* The table's rules live in the page's own tree, so plain selectors reach them. */
+            [data-ui-theme='glass'][data-table] ui-table table {
+                background: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
+            }
+
+            [data-ui-theme='glass'][data-table] ui-table thead th,
+            [data-ui-theme='glass'][data-table] ui-table tbody tr:nth-child(even) {
+                background: rgb(
+                    from color-mix(in oklab, var(--ui-color-text) 5%, var(--ui-color-surface)) r g
+                        b / var(--proposal-fill)
+                );
+            }
+
             /* The page behind is the host's, not the theme's — three of them, to choose from. The
                first two follow the scheme the way a host's page would: light glass over a dark
                page is grey, which is a page nobody would put it on. The third is whatever is
@@ -234,6 +310,14 @@
                 behind light — is not measured, because no host following the scheme draws one.
             </p>
             <p>
+                <strong>The controls can be made translucent too</strong>, each group on its own:
+                their fills at an opacity, the neutral ones and the accent ones apart, every edge
+                still opaque. A neutral fill only adds to the glass beneath it, so text on a field,
+                a secondary button or a row reads at least as well as on the glass or the surface,
+                whichever is worse — the rows above bound it. An accent fill is different: the label
+                on a button and a checked box are read against it, and both have rows of their own.
+            </p>
+            <p>
                 <strong>To see a reading rather than read it</strong>, put one colour behind every
                 card: the limit itself, or one of the reference's colours. The rows under the panel
                 then measure each of the five over exactly that page. Around 3:1 many readers still
@@ -256,6 +340,22 @@
                     <input type="range" id="blur" min="0" max="30" step="1" value="10" />
                     <output for="blur">10px</output></label
                 >
+            </div>
+            <div class="controls">
+                <label
+                    >Fill opacity
+                    <input type="range" id="fill" min="0" max="1" step="0.01" value="0.2" />
+                    <output for="fill">0.20</output></label
+                >
+                <label
+                    >Accent opacity
+                    <input type="range" id="accent" min="0" max="1" step="0.01" value="1" />
+                    <output for="accent">1.00</output></label
+                >
+                <label><input type="checkbox" id="fields" checked /> Fields</label>
+                <label><input type="checkbox" id="checks" checked /> Checks</label>
+                <label><input type="checkbox" id="buttons" checked /> Buttons</label>
+                <label><input type="checkbox" id="table" checked /> Table</label>
             </div>
             <div class="controls">
                 <label
@@ -289,6 +389,10 @@
                     data-proposed
                     data-raised
                     data-edge
+                    data-fields
+                    data-checks
+                    data-buttons
+                    data-table
                     data-scene="hard"
                 ></div>
                 <dl data-floors></dl>
@@ -299,15 +403,18 @@
 
             const panel = document.querySelector('[data-specimen]');
             const control = (id) => document.getElementById(id);
-            const [light, dark, blur, scene, edge, more, colour] = [
+            const [light, dark, blur, fill, accent, scene, edge, more, colour] = [
                 'light',
                 'dark',
                 'blur',
+                'fill',
+                'accent',
                 'scene',
                 'edge',
                 'more',
                 'colour',
             ].map(control);
+            const groups = ['fields', 'checks', 'buttons', 'table'].map(control);
             const quiet = matchMedia(
                 '(prefers-contrast: more), (prefers-reduced-transparency: reduce)',
             );
@@ -326,12 +433,12 @@
             }
 
             // The sliders write the pair on the panel, and an inline declaration outranks both
-            // contrast answers in the sheet — so while either applies, the sliders and the edge
-            // stand down.
+            // contrast answers in the sheet — so while either applies, the sliders, the edge and
+            // the controls' fills stand down.
             function tune() {
                 const off = more.checked || quiet.matches;
 
-                for (const input of [light, dark, blur]) {
+                for (const input of [light, dark, blur, fill, accent]) {
                     input.nextElementSibling.value =
                         input === blur ? `${input.value}px` : Number(input.value).toFixed(2);
                 }
@@ -339,6 +446,13 @@
                 panel.dataset.scene = scene.value;
                 panel.toggleAttribute('data-more', more.checked);
                 panel.toggleAttribute('data-edge', edge.checked && !off);
+
+                for (const group of groups) {
+                    panel.toggleAttribute(`data-${group.id}`, group.checked && !off);
+                }
+
+                panel.style.setProperty('--proposal-fill', fill.value);
+                panel.style.setProperty('--proposal-accent', accent.value);
 
                 panel.style.setProperty('--proposal-page', colour.value);
 
@@ -369,7 +483,8 @@
                 control('limit').disabled = panel.dataset.limit === undefined;
             }
 
-            // Back to what the theme would ship, keeping the page behind.
+            // Back to what the theme would ship, keeping the page behind and the controls, which
+            // the theme does not ship yet.
             function reset() {
                 light.value = '0.2';
                 dark.value = '0.2';
@@ -379,7 +494,7 @@
                 tune();
             }
 
-            for (const input of [light, dark, blur, scene, edge, more]) {
+            for (const input of [light, dark, blur, fill, accent, scene, edge, more, ...groups]) {
                 input.addEventListener('input', tune);
             }
 

@@ -100,17 +100,23 @@ function over(top: Colour, backdrop: Colour): Colour {
     };
 }
 
-/** The least ratio `colour` keeps over `glass` composited on each of `backdrops`. */
-function worst(colour: string, glass: Colour, backdrops: readonly Colour[]): number {
-    return Math.min(
-        ...backdrops.map((backdrop) => contrastRatio(colour, hex(over(glass, backdrop)))),
-    );
+/** Something that rests directly on a raised surface, and the floor it owes there. */
+interface Resting {
+    readonly name: string;
+    readonly floor: number;
+    /** The ratio it keeps over `ground`: the glass, already composited on the page. */
+    readonly against: (ground: Colour) => number;
 }
 
-/** The least opacity at which `glass` keeps `colour` at `floor` over every one of `backdrops`. */
-function least(colour: string, floor: number, glass: Colour, backdrops: readonly Colour[]): string {
+/** The least ratio `on` keeps over `glass` composited on each of `backdrops`. */
+function worst(on: Resting, glass: Colour, backdrops: readonly Colour[]): number {
+    return Math.min(...backdrops.map((backdrop) => on.against(over(glass, backdrop))));
+}
+
+/** The least opacity at which `glass` keeps `on` at its floor over every one of `backdrops`. */
+function least(on: Resting, glass: Colour, backdrops: readonly Colour[]): string {
     const alpha = Array.from({ length: 101 }, (_, step) => step / 100).find(
-        (candidate) => worst(colour, { ...glass, alpha: candidate }, backdrops) >= floor,
+        (candidate) => worst(on, { ...glass, alpha: candidate }, backdrops) >= on.floor,
     );
 
     return alpha === undefined ? 'at no opacity' : `from ${alpha.toFixed(2)}`;
@@ -198,13 +204,6 @@ function floors(panel: HTMLElement): (Floor | Reading)[] {
     ];
 }
 
-/** A colour that rests directly on a raised surface, and the floor it owes against it. */
-interface Resting {
-    readonly name: string;
-    readonly colour: string;
-    readonly floor: number;
-}
-
 /**
  * A translucent raised surface, measured with everything that rests on it rather than the text
  * alone: the error message, a checked box, the track of a switch that is off and the focus
@@ -216,6 +215,10 @@ interface Resting {
  * is not white, nor one that follows the light scheme black. So what the glass holds is stated
  * as the page it can take: the lightest grey under it in the dark scheme, the darkest in the
  * light — kept on the panel as `data-limit`, for the page to paint.
+ *
+ * A panel whose controls fill with the accent at an opacity — `data-checks`, `data-buttons`,
+ * and `--proposal-accent` — has a checked box and a button's label read against that fill.
+ * A neutral fill needs no row: it only adds to the glass beneath it.
  *
  * A panel that lists its page's own colours in `data-backdrops` gets each of them measured
  * over only those.
@@ -234,29 +237,50 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
         alpha: resolved(panel, 'var(--ui-color-surface-raised)').alpha,
     };
     const opacity = glass.alpha.toFixed(2);
+    const accent = parsed(read('--ui-color-accent'));
+    const label = read('--ui-color-accent-contrast');
+    const translucent = resolved(panel, 'rgb(0 0 0 / var(--proposal-accent, 1))').alpha;
+    const box = { ...accent, alpha: panel.hasAttribute('data-checks') ? translucent : 1 };
+    const button = { ...accent, alpha: panel.hasAttribute('data-buttons') ? translucent : 1 };
+    const solid =
+        (colour: string) =>
+        (ground: Colour): number =>
+            contrastRatio(colour, hex(ground));
     const resting: Resting[] = [
-        { name: 'text', colour: read('--ui-color-text'), floor: 4.5 },
-        { name: 'the error message', colour: read('--ui-color-danger'), floor: 4.5 },
-        { name: 'a checked box', colour: read('--ui-color-accent'), floor: 3 },
-        { name: 'a switch that is off', colour: read('--ui-color-border'), floor: 3 },
-        { name: 'the focus ring', colour: read('--ui-color-focus'), floor: 3 },
+        { name: 'text', floor: 4.5, against: solid(read('--ui-color-text')) },
+        { name: 'the error message', floor: 4.5, against: solid(read('--ui-color-danger')) },
+        {
+            name: 'a checked box',
+            floor: 3,
+            against: (ground) => contrastRatio(hex(over(box, ground)), hex(ground)),
+        },
+        {
+            name: 'the label on a button',
+            floor: 4.5,
+            against: (ground) => contrastRatio(label, hex(over(button, ground))),
+        },
+        { name: 'a switch that is off', floor: 3, against: solid(read('--ui-color-border')) },
+        { name: 'the focus ring', floor: 3, against: solid(read('--ui-color-focus')) },
     ];
-    const ratio = (on: Resting, backdrop: Colour): number =>
-        contrastRatio(on.colour, hex(over(glass, backdrop)));
+    const ratio = (on: Resting, backdrop: Colour): number => on.against(over(glass, backdrop));
     const failing = (level: number): Resting | undefined =>
         resting.find((on) => ratio(on, grey(level)) < on.floor);
 
-    const [onBlack, onWhite] = [failing(0), failing(255)];
+    // The scheme's own end is the pole its surface sits at: white under the light scheme,
+    // black under the dark. The search runs from there toward the other.
+    const surface = read('--ui-color-surface');
+    const own = contrastRatio(surface, '#000000') > contrastRatio(surface, '#ffffff') ? 255 : 0;
+    const [atOwn, atOther] = [failing(own), failing(255 - own)];
     let says = 'any';
 
     panel.removeAttribute('data-limit');
 
-    if (onBlack !== undefined && onWhite !== undefined) {
-        says = `none — ${onBlack.name} fails on either`;
-    } else if (onBlack !== undefined || onWhite !== undefined) {
-        // From the end that holds toward the one that does not, halving the grey levels left.
-        let held = onBlack === undefined ? 0 : 255;
-        let lost = 255 - held;
+    if (atOwn !== undefined) {
+        says = `none — ${atOwn.name} fails even over ${own === 255 ? 'white' : 'black'}`;
+    } else if (atOther !== undefined) {
+        // Halving the grey levels left between the end that holds and the one that does not.
+        let held = own;
+        let lost = 255 - own;
 
         while (Math.abs(lost - held) > 1) {
             const middle = Math.round((held + lost) / 2);
@@ -282,7 +306,7 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
 
     for (const on of backdrops.length > 0 ? resting : []) {
         rows.push({
-            name: `${on.name} on the glass at ${opacity}, this page — clears ${least(on.colour, on.floor, glass, backdrops)}`,
+            name: `${on.name} on the glass at ${opacity}, this page — clears ${least(on, glass, backdrops)}`,
             value: Math.min(...backdrops.map((backdrop) => ratio(on, backdrop))),
             floor: on.floor,
         });
