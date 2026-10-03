@@ -59,11 +59,11 @@
 
             /* Stand-in for the component change: the raised surfaces read the pair. A card, a
                toast and a tip paint on their own host or on an element in the light DOM, and the
-               dialog exposes a part, so all four are reachable from here. The menu's panel sits
-               in its shadow root with no part, so it stays opaque in this prototype; it would
-               read the pair once the names exist. */
+               dialog exposes a part, so all four are reachable from here. The menu names no part,
+               so specimen.ts names its panel and its trigger for this prototype. */
             [data-ui-theme='glass'] :is(ui-card, ui-toast, [slot='tip']),
-            [data-ui-theme='glass'] ui-dialog::part(dialog) {
+            [data-ui-theme='glass'] ui-dialog::part(dialog),
+            [data-ui-theme='glass'] ui-menu::part(panel) {
                 background: var(--ui-color-surface-raised);
                 backdrop-filter: var(--ui-backdrop-raised);
             }
@@ -81,12 +81,14 @@
                 border-inline-end-color: var(--ui-color-border-raised);
             }
 
-            [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog) {
+            [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(panel) {
                 border: 1px solid var(--ui-color-border-raised);
             }
 
             [data-ui-theme='glass'][data-edge] :is(ui-card, ui-toast, [slot='tip']),
-            [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog) {
+            [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(panel) {
                 box-shadow:
                     inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
                     0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
@@ -99,20 +101,21 @@
                the derived border was chosen for. No backdrop filter of their own: the card's
                already blurs what is behind them.
 
-               The fills are reached through the parts the components already expose, and a
-               declaration from outside a shadow root beats the one inside it whatever the
-               specificity — so each state the component paints is written again here, or it
-               would stop showing. The menu's trigger has no part and stays opaque, as its
-               panel does. */
+               The fills are reached through the parts the components expose — the menu's trigger
+               through the one specimen.ts names — and a declaration from outside a shadow root
+               beats the one inside it whatever the specificity, so each state the component
+               paints is written again here, or it would stop showing. */
             [data-ui-theme='glass'][data-fields] :is(ui-input, ui-select)::part(control),
             [data-ui-theme='glass'][data-checks] ui-checkbox::part(box),
             [data-ui-theme='glass'][data-checks] ui-radio-group::part(control),
-            [data-ui-theme='glass'][data-buttons] ui-button[variant='secondary']::part(button) {
+            [data-ui-theme='glass'][data-buttons] ui-button[variant='secondary']::part(button),
+            [data-ui-theme='glass'][data-buttons] ui-menu::part(trigger) {
                 background-color: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
             }
 
             [data-ui-theme='glass'][data-buttons]
-                ui-button[variant='secondary']::part(button):hover:not(:disabled) {
+                ui-button[variant='secondary']::part(button):hover:not(:disabled),
+            [data-ui-theme='glass'][data-buttons] ui-menu::part(trigger):hover {
                 background-color: rgb(
                     from color-mix(in oklab, var(--ui-color-text) 8%, var(--ui-color-surface)) r g
                         b / var(--proposal-fill)
@@ -120,7 +123,8 @@
             }
 
             [data-ui-theme='glass'][data-buttons]
-                ui-button[variant='secondary']::part(button):active:not(:disabled) {
+                ui-button[variant='secondary']::part(button):active:not(:disabled),
+            [data-ui-theme='glass'][data-buttons] ui-menu::part(trigger):active {
                 background-color: rgb(
                     from color-mix(in oklab, var(--ui-color-text) 14%, var(--ui-color-surface)) r g
                         b / var(--proposal-fill)
