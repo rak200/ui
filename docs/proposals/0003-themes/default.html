@@ -34,6 +34,15 @@
             [data-proposed] ui-switch::part(box):checked:hover:not(:disabled) {
                 background-color: var(--ui-color-accent-hover);
             }
+
+            /* The dialog draws the card's derived border. It draws none today and leans on its
+               scrim, black at 0.5, which sets it apart from the page by 3.95:1 in the light
+               scheme and 1.10 in the dark — the component's own boundary question 2 proposes,
+               stood in through the part on the proposed panel. */
+            [data-proposed] ui-dialog::part(dialog) {
+                border: 1px solid
+                    color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface));
+            }
         </style>
     </head>
     <body>
