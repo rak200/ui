@@ -257,12 +257,20 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
         ...parsed(painted(primary, '--ui-color-accent-hover')),
         alpha: button.alpha,
     };
+    // A primary button with the glass edge hovers on the edge, which goes to the text's colour
+    // from the edge's own, laid over the button's fill.
+    const edged = panel.hasAttribute('data-edge') && panel.hasAttribute('data-primary-edge');
+    const rim = {
+        ...resolved(panel, 'rgb(from var(--ui-color-border-raised) r g b / 1)'),
+        alpha: resolved(panel, 'var(--ui-color-border-raised)').alpha,
+    };
+    const text = read('--ui-color-text');
     const solid =
         (colour: string) =>
         (ground: Colour): number =>
             contrastRatio(colour, hex(ground));
     const resting: Resting[] = [
-        { name: 'text', floor: 4.5, against: solid(read('--ui-color-text')) },
+        { name: 'text', floor: 4.5, against: solid(text) },
         { name: 'the error message', floor: 4.5, against: solid(read('--ui-color-danger')) },
         {
             name: 'a checked box',
@@ -274,12 +282,18 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
             floor: 4.5,
             against: (ground) => contrastRatio(label, hex(over(button, ground))),
         },
-        {
-            name: "a button's hover, against resting",
-            floor: 1.05,
-            against: (ground) =>
-                contrastRatio(hex(over(hovered, ground)), hex(over(button, ground))),
-        },
+        edged
+            ? {
+                  name: "a button's hover, on its edge",
+                  floor: 1.05,
+                  against: (ground) => contrastRatio(text, hex(over(rim, over(button, ground)))),
+              }
+            : {
+                  name: "a button's hover, against resting",
+                  floor: 1.05,
+                  against: (ground) =>
+                      contrastRatio(hex(over(hovered, ground)), hex(over(button, ground))),
+              },
         { name: 'a switch that is off', floor: 3, against: solid(read('--ui-color-border')) },
         { name: 'the focus ring', floor: 3, against: solid(read('--ui-color-focus')) },
     ];

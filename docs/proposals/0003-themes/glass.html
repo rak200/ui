@@ -117,6 +117,18 @@
                     0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
             }
 
+            /* Being tried: the hover drawn on the edge. A translucent fill's hover is a mix of a
+               fill that is mostly glass, so it barely moves; the edge going to the text's own
+               colour is a change a reader sees, and the one a field and an empty box already
+               make on hover. The primary takes it only with its edge. */
+            [data-ui-theme='glass'][data-edge]
+                ui-button[variant='secondary']::part(button):hover:not(:disabled),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(trigger):hover,
+            [data-ui-theme='glass'][data-edge][data-primary-edge]
+                ui-button:not([variant='secondary'])::part(button):hover:not(:disabled) {
+                border-color: var(--ui-color-text);
+            }
+
             /* Being tried: the controls' own fills at an opacity, over the glass they sit on. Each
                keeps its colour and gives up only its opacity — the field, an empty box and a
                secondary button the surface, the stripe and the header the muted surface, a filled
