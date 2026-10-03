@@ -633,9 +633,10 @@ The select's options painting their own surface needs no name: it is a fix to `s
 any translucent field needs it.
 
 **That is as far into the open list as a theme reaches.** The highlight on the option under the
-pointer is the platform's, in every theme, and [docs/select.md](../select.md) already publishes the
-list as unstyleable. `appearance: base-select` would hand it over, and `ARCHITECTURE.md` declines
-that while one engine has it, so no name is proposed for it here.
+pointer is the platform's, in every theme, as
+[docs/select.md](../select.md#what-the-platform-still-refuses) already publishes for the popup.
+`appearance: base-select` would hand it over, and `ARCHITECTURE.md` declines that while one engine
+has it, so no name is proposed for it here.
 
 **Set aside:**
 
