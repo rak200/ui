@@ -22,6 +22,9 @@
                    as a second one; on white it is a step darker than the accent, which is 4.25:1
                    there and under the 4.5 an outcome colour is chosen against. */
                 --ui-color-success: light-dark(#00850f, #00ff00);
+                /* Info is the brighter cyan of a terminal, where the default palette's would sit
+                   dull beside this green. */
+                --ui-color-info: light-dark(#00778a, #00e5ff);
                 --ui-font: 'Courier New', Courier, ui-monospace, monospace;
                 --ui-radius: 0.5rem;
                 /* The page's intensity slider, at the 1.8 chosen unless moved: every glow below
@@ -160,13 +163,6 @@
                 );
                 --ui-elevation-100:
                     0 0 0 1px var(--proposal-ring-colour), 0 0 18px var(--proposal-glow-colour);
-            }
-
-            /* Info is cyan, a terminal's colour for a notice, where the accent would make it a
-               second success. It has no name to set: the toast reads the accent for info, so this
-               is question 2's case for one, defaulting to that accent. */
-            [data-ui-theme='matrix'] ui-toast[variant='info'] {
-                --proposal-toast-tone: light-dark(#00778a, #00e5ff);
             }
 
             [data-ui-theme='matrix'][data-glow-gap] ui-toast {

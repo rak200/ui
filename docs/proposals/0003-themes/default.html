@@ -46,20 +46,15 @@
             }
 
             /* The toast edged all round in its variant's colour, so two colours no longer meet
-               at its corners — save info, which stops following the accent and takes the derived
-               border a card has, its stripe included, with its icon in the text's colour. A rule
-               on the host from out here outranks the component's :host rules. */
+               at its corners. A rule on the host from out here outranks the component's :host
+               rules. */
             [data-proposed] ui-toast {
                 border-color: var(--proposal-toast-tone);
             }
 
-            [data-proposed] ui-toast[variant='info'] {
-                --proposal-toast-tone: currentcolor;
-                border-color: color-mix(
-                    in oklab,
-                    var(--ui-color-text) 50%,
-                    var(--ui-color-surface)
-                );
+            /* Today info reads the accent, so on today's panel its icon follows its stripe. */
+            [data-specimen]:not([data-proposed]) ui-toast[variant='info'] {
+                --proposal-toast-tone: var(--ui-color-accent);
             }
         </style>
     </head>

@@ -200,6 +200,13 @@ function floors(panel: HTMLElement): (Floor | Reading)[] {
         { name: 'danger', value: contrastRatio(read('--ui-color-danger'), surface), floor: 4.5 },
         { name: 'success', value: contrastRatio(read('--ui-color-success'), surface), floor: 4.5 },
         { name: 'warning', value: contrastRatio(read('--ui-color-warning'), surface), floor: 4.5 },
+        // Not a token yet: the name toast.css stands in for, chosen against the floor the other
+        // three outcome colours are.
+        {
+            name: 'info',
+            value: contrastRatio(hex(resolved(panel, 'var(--ui-color-info)')), surface),
+            floor: 4.5,
+        },
         ...raised(panel),
         ...glowing(panel),
     ];
