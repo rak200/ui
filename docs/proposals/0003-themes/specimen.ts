@@ -405,10 +405,15 @@ function glowing(panel: HTMLElement): Floor[] {
         });
     }
 
+    // A boundary owes 3:1 on either side of it, RFC 0003 decided: against the glow beside it, or
+    // against the field it closes in, which is filled with the surface.
     if (fields || checks) {
         rows.push({
-            name: "a control's edge, against its glow",
-            value: contrastRatio(read('--ui-color-border'), beside),
+            name: "a control's edge, on either side",
+            value: Math.max(
+                contrastRatio(read('--ui-color-border'), beside),
+                contrastRatio(read('--ui-color-border'), hex(surface)),
+            ),
             floor: 3,
         });
     }
@@ -418,10 +423,13 @@ function glowing(panel: HTMLElement): Floor[] {
         const red = (alpha: number): Colour => ({ ...parsed(danger), alpha });
 
         rows.push({
-            name: "an invalid field's edge, against its glow",
-            value: contrastRatio(
-                danger,
-                hex(gap ? surface : over(red(ring.alpha), over(red(glow.alpha), surface))),
+            name: "an invalid field's edge, on either side",
+            value: Math.max(
+                contrastRatio(
+                    danger,
+                    hex(gap ? surface : over(red(ring.alpha), over(red(glow.alpha), surface))),
+                ),
+                contrastRatio(danger, hex(surface)),
             ),
             floor: 3,
         });
@@ -429,8 +437,14 @@ function glowing(panel: HTMLElement): Floor[] {
 
     if (checks) {
         rows.push({
-            name: 'a checked box, against its glow',
-            value: contrastRatio(read('--ui-color-accent'), beside),
+            // Filled with the accent, a checked box's edge is its fill's own colour, with a glow
+            // outside it — so what it owes may be met by its content instead, the mark against
+            // the fill, as RFC 0003 decided.
+            name: 'a checked box, against its glow or its mark',
+            value: Math.max(
+                contrastRatio(read('--ui-color-accent'), beside),
+                contrastRatio(read('--ui-color-accent-contrast'), read('--ui-color-accent')),
+            ),
             floor: 3,
         });
     }

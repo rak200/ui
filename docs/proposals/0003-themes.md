@@ -1,6 +1,5 @@
 # RFC 0003 — Themes: what the package ships, and what a theme may be made of
 
-- **Status**: Exploring
 - **Scope**: library
 - **Created**: 2026-09-05
 
@@ -456,19 +455,27 @@ accents it read what S1 did not: the accent's own hover against the resting acce
 against the hover, each against the 1.05 the suite asks. S1 read the label alone. Same engine and
 instrument as S1:
 
-| shape                                               | hover at 1.05 or under | pressed | either      |
-| --------------------------------------------------- | ---------------------- | ------- | ----------- |
-| today, light scheme — toward the text, `#1f2937`    | 373                    | 435     | 436 / 4096  |
-| today, dark scheme — toward the text, `#e5e7eb`     | 913                    | 1046    | 1047 / 4096 |
-| derived — away from the label's pole, either scheme | 501                    | 697     | 697 / 4096  |
+| shape                                                   | hover at 1.05 or under | pressed | either      |
+| ------------------------------------------------------- | ---------------------- | ------- | ----------- |
+| today, light scheme — toward the text, `#1f2937`        | 373                    | 435     | 436 / 4096  |
+| today, dark scheme — toward the text, `#e5e7eb`         | 913                    | 1046    | 1047 / 4096 |
+| derived — away from the label's pole, either scheme     | 501                    | 697     | 697 / 4096  |
+| derived — toward whichever pole has room, either scheme | 1                      | 0       | 1 / 4096    |
 
-**The derived shape fixes the label and not the states.** It fails fewer accents than today's dark
-scheme and more than today's light one, for one reason in every case: a mix toward an end has no
-room once the accent is already there. A very light accent cannot lighten, a very dark one cannot
-darken, and black fails under every shape. Matrix's green is one of them, at 1.03.
+**Away from the label, the derived shape fixes the label and not the states.** It fails fewer
+accents than today's dark scheme and more than today's light one, for one reason in every case: a
+mix toward an end has no room once the accent is already there. A very light accent cannot lighten,
+a very dark one cannot darken, and Matrix's green was one of them, at 1.03.
 
-**One shape is not measured yet**: the states moving whichever way has room, rather than always away
-from the label.
+**Toward whichever pole has room, the states hold.** The pole the label is not is the near one, and
+it runs out of room exactly where the label has the most to spare. So the states move away from the
+label while it has little to give, and toward it once it stands at 10:1 or more — in the accent's
+luminance, lighten at or under 0.055 or between the crossover and 0.45, darken otherwise, which
+relative colour syntax writes the way it writes the label. Moving toward the label always takes it
+under 4.5:1 on 1978 accents; with the turn anywhere from 8.5:1 to 12:1, only black fails, its hover
+at 1.03 under every shape. Measured as a CSS formula, not chosen per accent in script: yellow and
+lime go from 1.06 and 1.04 to 1.42 and 1.37, their labels never under 7.06, and Matrix's green in
+the dark scheme to 1.43 and 1.38.
 
 ### What the Glass prototype settled
 
@@ -570,13 +577,12 @@ reads it, or either side. Held off the edge, it ships under both readings.
 **An invalid control glows in the danger**, with its ring, and a field writes its value in the
 danger too — 6.47:1 and 7.37:1 on the field's surface. **What cannot be used does not glow.**
 
-**A button lights up under the pointer.** The fills' own hovers barely move in this green — the
-neutral's 1.17 and 1.08, the accent's 1.23 and 1.03 — so the hover is the glow's: the ring goes
-solid and the glow doubles, which moves the ring 1.70:1 in the light scheme and 2.69:1 in the dark.
-**The accent's own hover still fails in the dark**, at 1.03, and the checked switch reads it, so
-Matrix still has to declare its accent's hover and pressed, as question 3 says a black-surface theme
-does. Under today's formulas the light scheme's label on the accent is 4.25:1 and the dark hover
-1.00; the derived label lifts the first to 4.94.
+**A button lights up under the pointer.** The fills' own hovers barely moved in this green when the
+page was built — the neutral's 1.17 and 1.08, the accent's 1.23 and 1.03 — so the hover is the
+glow's: the ring goes solid and the glow doubles, which moves the ring 1.70:1 in the light scheme
+and 2.69:1 in the dark. The accent's own states have room since, at 1.43 and 1.38 in the dark, once
+they move toward whichever pole has it (question 3). Under today's formulas the light scheme's label
+on the accent is 4.25:1 and the dark hover 1.00; the derived label lifts the first to 4.94.
 
 **The dialog needs a boundary of its own.** It draws none and leans on its scrim, black at 0.5: over
 `#050505` that leaves the page at `#020202` beside the dialog, 1.02:1. The default palette's dark
@@ -668,13 +674,13 @@ quiet outline.
 
 ### Where the five questions stand
 
-| question                                         | what the study settled                                                                                                                                                                                                                                                                        | what is left                                                                                                                                                     |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                                                                              | a decision                                                                                                                                                       |
-| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, Matrix one for its controls' glow, and the toast an edge, an icon and an info colour (above) | whether shadow geometry, or a filter, may enter with a theme                                                                                                     |
-| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5), and the accent's own states still fail on 697 of 4096 accents (above)                                                                                              | whether the derived pole is adopted, how the accent's states keep room to move, what a black-surface theme does for hover, and which side of a boundary owes 3:1 |
-| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair, and the answer chosen is black and white with its states written out (above)                                                                                                                     | a decision                                                                                                                                                       |
-| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                                                                   | nothing, until a theme asks                                                                                                                                      |
+| question                                         | what the study settled                                                                                                                                                                                                                                                                        | what is left                                                               |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                                                                              | a decision                                                                 |
+| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, Matrix one for its controls' glow, and the toast an edge, an icon and an info colour (above) | whether shadow geometry, or a filter, may enter with a theme               |
+| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5), and its states keep room on every accent but black when they move toward whichever pole has it (above)                                                             | whether the derived pole is adopted, and which side of a boundary owes 3:1 |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair, and the answer chosen is black and white with its states written out (above)                                                                                                                     | a decision                                                                 |
+| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                                                                   | nothing, until a theme asks                                                |
 
 ## Proposed design
 
@@ -821,17 +827,25 @@ palette — and it turns the third property above from a promise into a check. G
 that rests on its glass, composited on the grey at the page limit it documents: S3's black and white
 bound a page that does not follow the scheme, which is no page a host draws.
 
-**The accent's label becomes a derivation**, in S1's third shape: `--ui-color-accent-contrast` is the
-WCAG pole of the accent, and the accent's hover and pressed shades mix away from that pole instead of
-toward the text. This is what makes a configurable accent a property of the default palette rather
-than a theme: a host moves one ground and the label follows, in both schemes — 0 of 4096 accents
-under 4.5:1, measured. It is the one answer here that reaches a host's own theme, which no floor in
-this suite can.
+**The accent's label becomes a derivation**, in S1's third shape: `--ui-color-accent-contrast` is
+the WCAG pole of the accent, and the accent's hover and pressed shades mix toward whichever pole
+leaves them room, instead of toward the text. This is what makes a configurable accent a property of
+the default palette rather than a theme: a host moves one ground and the label follows, in both
+schemes — 0 of 4096 accents under 4.5:1, measured. It is the one answer here that reaches a host's
+own theme, which no floor in this suite can.
 
-**It does not reach the accent's own states.** The picker found them at or under 1.05 on 697
-accents under this shape. In a shipped palette the per-palette floor refuses such an accent; a
-host's own accent gets no check at all. The shape that would close it — the states moving whichever
-way has room — is the measurement this question still owes.
+**Its states keep room to move**, by the same means: they leave the label while it has little to
+spare and approach it once it stands at 10:1, which holds every state on every accent but black,
+whose hover is 1.03 under every shape (above). So a host's own accent gets visible states as it gets
+a legible label, with no floor to catch it.
+
+**What sits on the accent takes the label** — a checked control's mark as much as a button's text:
+the tick, the dash, the radio's dot and the switch's thumb. Today the mark is a hole that shows the
+surface, which is the label only while the accent is far from the surface; a black accent in the
+dark scheme leaves a tick the colour of the fill around it. Drawn over the fill in the label's
+colour, through a mask on a layer of its own, the colour stays a token as the hole kept it one, and
+the mark reads what the label reads against the fill. That gives up the hole `src/checkbox.ts` and
+`src/radio.ts` are built on, and the forced-colors block the hole served is measured again with it.
 
 What it costs:
 
@@ -847,6 +861,14 @@ What it costs:
 per-palette floor already refuses it. A theme answers with a surface whose hover the floor accepts —
 under white text, `#050505` already is one — or declares its own hover and pressed, an override
 every host already has, which the floor then measures.
+
+**A boundary owes 3:1 on one side of it, either side.** A field's border is read against the glow
+or shadow beside it, or against the field it closes in, and either reaching 3:1 is enough — the eye
+takes a border and a ring laid against it for one line. **Where the boundary is its fill's own
+colour, or near it, and a shadow or a glow lies outside, its content may meet the floor instead**: a
+checked box filled with the accent is identified by its mark against the fill. Matrix's choice is
+what put the question, and under this rule it ships as chosen — a field's edge at 3.15 and 3.46, an
+invalid one at 6.47 and 7.37, a checked box's mark at 4.94 and 15.30.
 
 **Set aside:**
 
@@ -914,37 +936,72 @@ guess about what a light one would be.
 
 ### The order the recommendations imply
 
-Not a Rollout, which waits for a Decision — only the sequence these answers would put the work in,
-each step shippable alone:
-
-1. **The per-palette floors**, over the default palette alone. Nothing renders differently, and every
-   later step lands inside the gate.
-2. **The derived label**, with the accent's shades turned away from it — the breaking step, alone so
-   its changelog entry says only that.
-3. **`prefers-contrast: more`** in `tokenStyleSheet()`, black and white with its states written out,
-   and the floors run under emulation.
-4. **The theme shape, `themeStyleSheet()` and Matrix** — in both schemes, its glow through elevation
-   and through the controls' name, and a theme control in the playground beside the scheme control
-   #120 put there. `ARCHITECTURE.md` loses the elevation sentence S2 contradicts, and gains the
-   second clause of _A category arrives…_. The switch's empty track, the dialog's border, and the
-   toast's icon, edge and info colour can go first, since none of them waits on a theme.
-5. **Glass**, last: the raised surfaces, the controls' fills and the primary button's own fill, its
-   floors measured over the page limit it documents, and opaque under `more` and under reduced
-   transparency. The select's options painting their own surface can go first, since it changes
-   nothing in an opaque palette.
+The Rollout below is this order, decided, with the drawings no theme waits on put first.
 
 ## Decision
 
-**Not reached.**
+**Accepted** on 2026-10-03, with every recommendation above taken as written and two rules added in
+the taking. The four prototypes are closed at what their pages render, and what each settled is in
+the Study.
+
+- **Question 1 — the package ships themes**, as data a host opts into: Matrix and Glass, each a
+  `Theme` rendered by `themeStyleSheet()`, never emitted by `tokenStyleSheet()`. The default
+  palette's configurable accent and high contrast are not themes; each became something every
+  palette does.
+- **Question 2 — a category may arrive with a shipped theme when its default is the identity**,
+  which is the second clause `ARCHITECTURE.md`'s rule gains. The names it brings are the ones
+  listed there, each defaulting to what renders today, and five changes need none because they are
+  components' own drawings or a ground in a category that exists: the select's options, the
+  switch's empty track, the dialog's border, the toast's icon, and `--ui-color-info`.
+- **Question 3 — every shipped palette is measured, in each scheme it keeps, under emulated `more`
+  as well.** The accent's label is derived, its states move toward whichever pole has room, and
+  what sits on the accent takes the label, marks included. **A boundary owes 3:1 on either side**,
+  and where it is its fill's own colour with a shadow or glow outside, its content may meet the
+  floor — the two rules the taking added, both put by Matrix.
+- **Question 4 — high contrast is `prefers-contrast: more`, answered in the token layer**, black and
+  white with its states written out, the accent moved and the outcome colours kept, and what floats
+  over the page edged in the text. `themeStyleSheet()` resets the written states for a theme whose
+  answer leaves them out.
+- **Question 5 — no shipped theme declines a scheme**, so the shape carries no `scheme`.
+
+**What it costs, named here rather than discovered in the rollout.**
+
+- **One break**: `--ui-color-accent-contrast` moves from a ground to a derivation, so `defaults`
+  and `darkScheme` lose a key and `Token` a member — a minor below `1.0.0`. The dark scheme's label
+  goes from `#111827` to black.
+- **Measuring every palette, permanently**: every component and ground that arrives later is
+  measured under Matrix and Glass as well, in both schemes and under `more`.
+- **Glass's condition on the host's page**, documented with the theme: no darker than `#cecece` in
+  the light scheme, no lighter than `#303030` in the dark.
+- **The mark stops being a hole**, which `src/checkbox.ts` and `src/radio.ts` explain at length;
+  the reason they give — a colour frozen in a `data:` URI — is kept by a mask on a layer, and the
+  forced-colors behaviour the hole gave for free is measured again.
+
+**What this does not decide** is when any step is built. The rollout is ordered and each step makes
+the next possible; none is scheduled here.
 
 ## Rollout
 
-**Not written**, and deliberately: the Rollout describes what must happen for an accepted design to
-exist, and there is no accepted design yet.
+Tracked in [#233](https://github.com/rak200/ui/issues/233). Ordered, each step shippable alone. Verification is not listed per step: the floors already require
+it of every commit here.
 
-One piece of bookkeeping is already known. **No `ROADMAP.md` entry precedes acceptance** — RFC 0002
-records that both of its own obligations, the tracking issue and the roadmap entry, followed
-acceptance rather than preceding it. This file is the register until then.
+1. **The drawings no theme waits on** — the switch's empty track and the marks taking the accent's
+   label in `src/checkbox.ts` and `src/radio.ts`, the dialog's border in `src/dialog.ts`, the
+   select's options painting their own surface in `src/select.ts`, and the toast's icon, its edge
+   in one colour and `--ui-color-info` in `src/toast.ts` and `src/tokens.ts`. Each changes the
+   default palette's look and none its contract, so each can be its own pull request.
+2. **The per-palette floors**, over the default palette alone, with the boundary rule above.
+   Nothing renders differently, and every later step lands inside the gate.
+3. **The derived label and the states with room** — the breaking step, alone so its changelog entry
+   says only that.
+4. **`prefers-contrast: more`** in `tokenStyleSheet()`, black and white with its states written
+   out, and the floors run under emulation.
+5. **The theme shape, `themeStyleSheet()` and Matrix**, in both schemes, with the names question 2
+   lists for it and a theme control in the playground beside the scheme control #120 put there.
+   `ARCHITECTURE.md` loses the elevation sentence S2 contradicts, and gains the second clause of
+   _A category arrives…_.
+6. **Glass**, last: its names, its floors measured over the page limit it documents, and opaque
+   under `more` and under reduced transparency.
 
 **One dependency is already met**: four themes cannot be judged in a playground that renders one
 scheme, and [#120](https://github.com/rak200/ui/issues/120) inserted the token sheet into the

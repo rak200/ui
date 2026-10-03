@@ -216,7 +216,7 @@
                where it had been a track filled with the border's own colour — a middle green
                that read as on. Its thumb takes the border's colour in place of the surface's, so
                it still stands apart from the track; on, the track is the accent again and the
-               thumb the surface. A rule from out here outranks every state the component paints,
+               thumb the accent's label, as every mark on the accent is. A rule from out here outranks every state the component paints,
                so the on state and its hover are written again. */
             [data-ui-theme='matrix'] ui-switch::part(box) {
                 background-color: var(--ui-color-surface);
@@ -231,7 +231,7 @@
                 background-color: var(--ui-color-accent);
                 background-image: radial-gradient(
                     circle closest-side,
-                    var(--ui-color-surface) 100%,
+                    var(--ui-color-accent-contrast) 100%,
                     transparent 100%
                 );
             }
@@ -299,9 +299,9 @@
                 <strong>Where the proposal itself fails.</strong> The last panel is the same theme
                 under today's formulas: its accent is the text's own green, and today the accent's
                 hover mixes toward the text, so the hover does not move at all — 1.00. The proposed
-                formulas move it away from the black label instead, toward white, and in the dark
-                scheme a green this bright has almost no room left there: 1.03, still under the 1.05
-                the suite asks. The label is solved; the accent's own states are not.
+                formulas move it toward whichever pole has room: a green this bright has almost none
+                left toward white, so it darkens, toward its black label, which has room to spare —
+                1.43 in the dark scheme, where moving away from the label gave 1.03.
             </p>
             <p>
                 <strong>The glow can reach the controls too</strong> — buttons, fields and checks,

@@ -1,7 +1,7 @@
 /*
  * What question 3 would change in src/tokens.ts: the accent's label becomes the WCAG pole of
- * the accent, and the accent's hover and pressed shades mix away from that pole instead of
- * toward the text — S1's third shape, 0 of 4096 accents under 4.5:1.
+ * the accent, 0 of 4096 accents under 4.5:1, and the accent's hover and pressed shades mix
+ * toward whichever pole leaves them room instead of toward the text.
  *
  * The proposal puts these formulas in the var() fallback, where every derivation lives. This
  * prototype declares them on the themed element instead, which freezes them there — the
@@ -17,18 +17,86 @@
             clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
     );
 
-    /* The comparison reversed: the pole the label is not. Mixing toward it moves every state
-       away from the text on it, so the ratio can only rise. */
-    --proposal-away: color(
+    /* The pole the states move toward. Away from the label while the label has little to
+       spare, toward it once the label stands at 10:1 or more: lighten while the luminance is
+       at or under 0.055 (a white label at 10:1 and up) or between the crossover and 0.45 (a
+       black label under 10:1), darken otherwise. Away from the label always is what left a
+       very light or very dark accent with no room to move — 697 of 4096 — and toward it
+       always took the label under 4.5:1 on 1978. Between 8.5:1 and 12:1 only black fails,
+       its hover at 1.03; 10 sits in the middle. */
+    --proposal-room: color(
         from var(--ui-color-accent) srgb-linear
-            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
-            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
-            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
+            clamp(
+                0,
+                clamp(0, (0.055 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1) +
+                    clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1) *
+                    clamp(0, (0.45 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1),
+                1
+            )
+            clamp(
+                0,
+                clamp(0, (0.055 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1) +
+                    clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1) *
+                    clamp(0, (0.45 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1),
+                1
+            )
+            clamp(
+                0,
+                clamp(0, (0.055 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1) +
+                    clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1) *
+                    clamp(0, (0.45 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1),
+                1
+            )
     );
-    --ui-color-accent-hover: color-mix(in oklab, var(--proposal-away) 12%, var(--ui-color-accent));
+    --ui-color-accent-hover: color-mix(in oklab, var(--proposal-room) 12%, var(--ui-color-accent));
     --ui-color-accent-pressed: color-mix(
         in oklab,
-        var(--proposal-away) 22%,
+        var(--proposal-room) 22%,
         var(--ui-color-accent)
     );
+}
+
+/*
+ * What sits on the accent takes the accent's label — a checked control's mark as much as a
+ * button's text. Today the mark is a hole that shows the surface, which is the label only while
+ * the accent is far from the surface: a black accent in the dark scheme leaves a tick the colour
+ * of the fill around it. Drawn over the fill instead, in the label's colour, through a mask on a
+ * layer, so the colour stays a token as the hole kept it one.
+ *
+ * Stood in through the parts: the box drops its hole, and a part's ::before — which this engine
+ * paints on a checkbox drawn with appearance: none — carries the tick or the dash. The radio's dot
+ * is a gradient, so it needs no layer of its own.
+ */
+[data-proposed] ui-checkbox::part(box):checked,
+[data-proposed] ui-checkbox::part(box):indeterminate {
+    position: relative;
+    mask: none;
+}
+
+[data-proposed] ui-checkbox::part(box):checked::before,
+[data-proposed] ui-checkbox::part(box):indeterminate::before {
+    content: '';
+    position: absolute;
+    /* The border box, which is what the hole was cut from. */
+    inset: -1px;
+    background-color: var(--ui-color-accent-contrast);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E")
+        center / 100% 100% no-repeat;
+}
+
+[data-proposed] ui-checkbox::part(box):indeterminate::before {
+    mask: linear-gradient(#000, #000) center / 50% calc(100% / 12) no-repeat;
+}
+
+[data-proposed] ui-radio-group::part(control):checked {
+    mask: none;
+    background-image: radial-gradient(
+        circle closest-side,
+        var(--ui-color-accent-contrast) 100%,
+        transparent 100%
+    );
+    background-origin: border-box;
+    background-size: 50% 50%;
+    background-position: center;
+    background-repeat: no-repeat;
 }

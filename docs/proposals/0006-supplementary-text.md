@@ -1,6 +1,5 @@
 # RFC 0006 — Supplementary text, and where it is allowed to live
 
-- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-09-11
 
