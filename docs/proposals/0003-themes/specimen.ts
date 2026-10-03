@@ -35,6 +35,12 @@ interface Floor {
     readonly strict?: boolean;
 }
 
+/** A reading that is no floor: what a setting allows, stated rather than passed or failed. */
+interface Reading {
+    readonly name: string;
+    readonly says: string;
+}
+
 // First in the head, so a page's own `:root` rule follows it in the cascade the way it would
 // follow it inside the one sheet the proposal would ship.
 const sheet = document.createElement('style');
@@ -45,9 +51,6 @@ const canvas = document.createElement('canvas');
 canvas.width = 1;
 canvas.height = 1;
 const context = canvas.getContext('2d', { willReadFrequently: true });
-
-const black: Colour = { red: 0, green: 0, blue: 0, alpha: 1 };
-const white: Colour = { red: 255, green: 255, blue: 255, alpha: 1 };
 
 /**
  * A colour as the browser resolves it inside `within`, painted into one canvas pixel — the
@@ -97,23 +100,25 @@ function over(top: Colour, backdrop: Colour): Colour {
     };
 }
 
-/**
- * The least ratio `text` keeps over `glass` composited on each of `backdrops` — by default the
- * two extremes nothing behind a panel can be darker or lighter than.
- */
-function worst(text: string, glass: Colour, backdrops: readonly Colour[] = [black, white]): number {
+/** The least ratio `colour` keeps over `glass` composited on each of `backdrops`. */
+function worst(colour: string, glass: Colour, backdrops: readonly Colour[]): number {
     return Math.min(
-        ...backdrops.map((backdrop) => contrastRatio(text, hex(over(glass, backdrop)))),
+        ...backdrops.map((backdrop) => contrastRatio(colour, hex(over(glass, backdrop)))),
     );
 }
 
-/** The least opacity at which `glass` keeps `text` at 4.5:1 over every one of `backdrops`. */
-function least(text: string, glass: Colour, backdrops?: readonly Colour[]): string {
+/** The least opacity at which `glass` keeps `colour` at `floor` over every one of `backdrops`. */
+function least(colour: string, floor: number, glass: Colour, backdrops: readonly Colour[]): string {
     const alpha = Array.from({ length: 101 }, (_, step) => step / 100).find(
-        (candidate) => worst(text, { ...glass, alpha: candidate }, backdrops) >= 4.5,
+        (candidate) => worst(colour, { ...glass, alpha: candidate }, backdrops) >= floor,
     );
 
     return alpha === undefined ? 'at no opacity' : `from ${alpha.toFixed(2)}`;
+}
+
+/** An opaque grey, `level` from 0 to 255 in every channel. */
+function grey(level: number): Colour {
+    return { red: level, green: level, blue: level, alpha: 1 };
 }
 
 /** `#rrggbb`, opaque. */
@@ -134,7 +139,7 @@ function painted(panel: Element, token: Token | DerivedToken): string {
  * The floors `tests/tokens.test.ts` holds for the default palette, taken over whatever
  * palette is in force inside `panel` — question 3's per-palette floors, in miniature.
  */
-function floors(panel: HTMLElement): Floor[] {
+function floors(panel: HTMLElement): (Floor | Reading)[] {
     const read = (token: Token | DerivedToken): string => painted(panel, token);
 
     const surface = read('--ui-color-surface');
@@ -189,7 +194,7 @@ function floors(panel: HTMLElement): Floor[] {
         { name: 'danger', value: contrastRatio(read('--ui-color-danger'), surface), floor: 4.5 },
         { name: 'success', value: contrastRatio(read('--ui-color-success'), surface), floor: 4.5 },
         { name: 'warning', value: contrastRatio(read('--ui-color-warning'), surface), floor: 4.5 },
-        ...raised(panel, text),
+        ...raised(panel),
     ];
 }
 
@@ -321,23 +326,37 @@ function onHalo(raised: Element, text: string, glass: Colour, backdrop: Colour):
     return least;
 }
 
+/** A colour that rests directly on a raised surface, and the floor it owes against it. */
+interface Resting {
+    readonly name: string;
+    readonly colour: string;
+    readonly floor: number;
+    /** Text, which a halo can carry. A filled box, a track and a ring keep the glass behind. */
+    readonly text: boolean;
+}
+
 /**
- * A translucent raised surface, measured the way S3 found it has to be: over black and over
- * white, which bound every backdrop there can be. Only a panel that declares `data-raised`
- * has one, because only Glass proposes the pair of names it reads.
+ * A translucent raised surface, measured with everything that rests on it rather than the text
+ * alone: the error message, a checked box, the track of a switch that is off and the focus
+ * ring each owe their floor against the glass too, and have less room to give than the text.
+ * Only a panel that declares `data-raised` has one, because only Glass proposes the pair of
+ * names it reads.
  *
- * A panel that also lists its page's own colours in `data-backdrops` gets a second row: the
- * same text over only those, which is what a theme could promise if it constrained what may
- * sit behind it instead of holding for any page.
+ * Black and white bound every backdrop there can be, but a page that follows the dark scheme
+ * is not white, nor one that follows the light scheme black. So what the glass holds is stated
+ * as the page it can take: the lightest grey under it in the dark scheme, the darkest in the
+ * light — kept on the panel as `data-limit`, for the page to paint.
  *
- * A panel whose `data-halo` names one gets the same two readings again, taken against the
- * halo around each letter instead of the glass behind it.
+ * A panel that lists its page's own colours in `data-backdrops` gets each of them measured
+ * over only those. A panel whose `data-halo` names one has its text measured against the halo
+ * around each letter instead of the glass behind it.
  */
-function raised(panel: HTMLElement, text: string): Floor[] {
+function raised(panel: HTMLElement): (Floor | Reading)[] {
     if (!panel.hasAttribute('data-raised')) {
         return [];
     }
 
+    const read = (token: Token | DerivedToken): string => painted(panel, token);
     // The channels are read from the colour made opaque, and only the opacity from the
     // translucent one: a pixel at 0.06 keeps too little of its colour to un-premultiply, and
     // read whole it moved the least opacity by 0.02.
@@ -346,45 +365,65 @@ function raised(panel: HTMLElement, text: string): Floor[] {
         alpha: resolved(panel, 'var(--ui-color-surface-raised)').alpha,
     };
     const opacity = glass.alpha.toFixed(2);
-    const rows: Floor[] = [
-        {
-            name: `text on the glass at ${opacity}, any page — clears ${least(text, glass)}`,
-            value: worst(text, glass),
-            floor: 4.5,
-        },
+    const resting: Resting[] = [
+        { name: 'text', colour: read('--ui-color-text'), floor: 4.5, text: true },
+        { name: 'the error message', colour: read('--ui-color-danger'), floor: 4.5, text: true },
+        { name: 'a checked box', colour: read('--ui-color-accent'), floor: 3, text: false },
+        { name: 'a switch that is off', colour: read('--ui-color-border'), floor: 3, text: false },
+        { name: 'the focus ring', colour: read('--ui-color-focus'), floor: 3, text: false },
+    ];
+    const halo = panel.dataset['halo'] ?? 'none';
+    const carrier = halo === 'none' ? null : panel.querySelector('ui-card');
+    const ratio = (on: Resting, backdrop: Colour): number =>
+        on.text && carrier !== null
+            ? onHalo(carrier, on.colour, glass, backdrop)
+            : contrastRatio(on.colour, hex(over(glass, backdrop)));
+    const failing = (level: number): Resting | undefined =>
+        resting.find((on) => ratio(on, grey(level)) < on.floor);
+
+    const [onBlack, onWhite] = [failing(0), failing(255)];
+    let says = 'any';
+
+    panel.removeAttribute('data-limit');
+
+    if (onBlack !== undefined && onWhite !== undefined) {
+        says = `none — ${onBlack.name} fails on either`;
+    } else if (onBlack !== undefined || onWhite !== undefined) {
+        // From the end that holds toward the one that does not, halving the grey levels left.
+        let held = onBlack === undefined ? 0 : 255;
+        let lost = 255 - held;
+
+        while (Math.abs(lost - held) > 1) {
+            const middle = Math.round((held + lost) / 2);
+
+            if (failing(middle) === undefined) {
+                held = middle;
+            } else {
+                lost = middle;
+            }
+        }
+
+        const page = hex(grey(held));
+
+        panel.dataset['limit'] = page;
+        says = `${held < lost ? 'as light as' : 'as dark as'} ${page}, then ${failing(lost)?.name ?? ''} fails`;
+    }
+
+    const rows: (Floor | Reading)[] = [
+        { name: `the page the glass at ${opacity} holds all of it over`, says },
     ];
     const listed = panel.dataset['backdrops'];
     const backdrops = listed === undefined || listed === '' ? [] : listed.split(' ').map(parsed);
 
-    if (backdrops.length > 0) {
+    for (const on of backdrops.length > 0 ? resting : []) {
+        const carried = on.text && carrier !== null;
+        const ground = carried ? `its ${halo} halo` : 'the glass';
+        const clears = carried ? '' : ` — clears ${least(on.colour, on.floor, glass, backdrops)}`;
+
         rows.push({
-            name: `text on the glass at ${opacity}, this page's colours — clears ${least(text, glass, backdrops)}`,
-            value: worst(text, glass, backdrops),
-            floor: 4.5,
-        });
-    }
-
-    const halo = panel.dataset['halo'];
-    const surface = panel.querySelector('ui-card');
-
-    if (halo === undefined || halo === 'none' || surface === null) {
-        return rows;
-    }
-
-    const haloed = (behind: readonly Colour[]): number =>
-        Math.min(...behind.map((backdrop) => onHalo(surface, text, glass, backdrop)));
-
-    rows.push({
-        name: `text on its ${halo} halo at ${opacity}, any page`,
-        value: haloed([black, white]),
-        floor: 4.5,
-    });
-
-    if (backdrops.length > 0) {
-        rows.push({
-            name: `text on its ${halo} halo at ${opacity}, this page's colours`,
-            value: haloed(backdrops),
-            floor: 4.5,
+            name: `${on.name} on ${ground} at ${opacity}, this page${clears}`,
+            value: Math.min(...backdrops.map((backdrop) => ratio(on, backdrop))),
+            floor: on.floor,
         });
     }
 
@@ -401,15 +440,22 @@ function report(panel: HTMLElement): void {
 
     list.replaceChildren(
         ...floors(panel).map((floor) => {
-            const passes =
-                floor.strict === true ? floor.value > floor.floor : floor.value >= floor.floor;
             const row = document.createElement('div');
             const name = document.createElement('dt');
             const value = document.createElement('dd');
 
-            row.dataset['pass'] = String(passes);
             name.textContent = floor.name;
-            value.textContent = `${floor.value.toFixed(2)} ${floor.strict === true ? '>' : '≥'} ${String(floor.floor)}`;
+
+            if ('says' in floor) {
+                value.textContent = floor.says;
+            } else {
+                const passes =
+                    floor.strict === true ? floor.value > floor.floor : floor.value >= floor.floor;
+
+                row.dataset['pass'] = String(passes);
+                value.textContent = `${floor.value.toFixed(2)} ${floor.strict === true ? '>' : '≥'} ${String(floor.floor)}`;
+            }
+
             row.append(name, value);
 
             return row;

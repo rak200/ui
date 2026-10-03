@@ -15,10 +15,10 @@
                the surface itself, none, and the derived border — so the default palette renders
                as it does today.
 
-               The opacities and the blur are the ones chosen by eye — 0.06 and 0.20, 6px — and they
-               sit far below the floors for this theme's pair, 0.46 and 0.60: over the wrong page
-               the glass alone puts the text under 4.5:1. What is being tried to carry the text
-               instead is the halo below, which is not part of the theme until its readings hold.
+               The opacities and the blur are the ones chosen by eye — 0.06 and 0.20, 6px. What they
+               cost is how far the page behind may stray from the surface before something resting
+               on the glass falls under its floor, which the panel reads out. The halo below is
+               being tried for the text; it is not part of the theme until its readings hold.
                The surface itself stays opaque, so every field keeps the floors S5 measured.
 
                Two grounds move as well. The text goes to its pole in both schemes, pure black and
@@ -152,14 +152,18 @@
             }
 
             /* Hard: glass over a flat colour proves nothing, so this one has large colour, hard
-               edges and small text — and, in both schemes, the two extremes S3 found bound every
-               backdrop, pure black and pure white. */
+               edges and small text, and the scheme's own pole. Not the other pole: white behind
+               dark glass is no page a host following the scheme draws, so how light a page the
+               glass can take is a reading under the panel instead. */
             [data-scene='hard'] {
                 background:
                     radial-gradient(circle at 12% 16%, #f97316 0 5.5rem, transparent 5.6rem),
-                    radial-gradient(circle at 88% 10%, #000000 0 6.5rem, transparent 6.6rem),
+                    radial-gradient(
+                        circle at 88% 10%,
+                        light-dark(#ffffff, #000000) 0 6.5rem,
+                        transparent 6.6rem
+                    ),
                     radial-gradient(circle at 72% 56%, #2563eb 0 7rem, transparent 7.1rem),
-                    radial-gradient(circle at 18% 68%, #ffffff 0 6.5rem, transparent 6.6rem),
                     radial-gradient(circle at 46% 96%, #22c55e 0 5rem, transparent 5.1rem),
                     repeating-linear-gradient(
                         48deg,
@@ -261,24 +265,30 @@
             </p>
             <p>
                 <strong>The glass here is chosen by eye</strong> — 0.06 and 0.20, a 6px blur — and
-                it lets 80 to 94% of the page through, which is what makes it look like glass. It
-                also puts the text under 4.5:1 over the wrong page: the rows
-                <em>text on the glass</em> under the panel say how far, over black and white for
-                <strong>any page</strong>, and over the reference's own colours when it is behind.
+                it lets 80 to 94% of the page through, which is what makes it look like glass. What
+                it lets through is what everything resting on it is read against: not the text
+                alone, but the error message, a checked box, a switch that is off and the focus
+                ring, which have less room to give than the text has.
+            </p>
+            <p>
+                <strong>The first row on the glass is the page it can take</strong>: the lightest
+                grey behind it in the dark scheme, the darkest in the light, before one of the five
+                fails. A page that does not follow the scheme — white behind dark glass, black
+                behind light — is not measured, because no host following the scheme draws one.
             </p>
             <p>
                 <strong>To see a reading rather than read it</strong>, put one colour behind every
-                card. Black in the light scheme and white in the dark are the any-page case, and
-                there the glass alone loses the text entirely. The reference's green, in the dark,
-                is its own worst colour — about 3:1, which many readers still read comfortably;
-                4.5:1 is the margin kept for those who cannot, and for glare and poor screens.
+                card: the limit itself, or one of the reference's colours. The rows under the panel
+                then measure each of the five over exactly that page. Around 3:1 many readers still
+                read comfortably; 4.5:1 is the margin kept for those who cannot, and for glare and
+                poor screens.
             </p>
             <p>
-                <strong>The halo is what is being tried to carry the text instead.</strong> Turn it
-                on below. The rows <em>text on its halo</em> measure the text against the pixels
-                touching each letter — drawn with the halo the page actually computes, over the same
-                backdrops — which is where the halo, if it is wide enough, becomes the letter's
-                background.
+                <strong>The halo carries text, and only text.</strong> Turned on, it has the text
+                and the error message measured against the pixels touching each letter — drawn with
+                the halo the page actually computes — which is where the halo, if it is wide enough,
+                becomes the letter's background. A checked box, a track and a ring have no letter to
+                put one around, and stay on the glass.
             </p>
             <div class="controls">
                 <label
@@ -301,7 +311,7 @@
                 <label
                     >Page behind
                     <select id="scene">
-                        <option value="hard" selected>Hard: black, white, stripes and text</option>
+                        <option value="hard" selected>Hard: colour, stripes and text</option>
                         <option value="reference">The reference's: near-black, soft colour</option>
                         <option value="colour">One colour, behind every card</option>
                     </select></label
@@ -328,10 +338,9 @@
             </div>
             <div class="controls">
                 <label
-                    >One colour behind every card <input type="color" id="colour" value="#000000"
+                    >One colour behind every card <input type="color" id="colour" value="#2ecc71"
                 /></label>
-                <button type="button" data-colour="#000000">Black</button>
-                <button type="button" data-colour="#ffffff">White</button>
+                <button type="button" id="limit">The limit it holds</button>
                 <button type="button" data-colour="#3498db">The reference's blue</button>
                 <button type="button" data-colour="#e67e22">Its orange</button>
                 <button type="button" data-colour="#2ecc71">Its green</button>
@@ -434,6 +443,8 @@
                 }
 
                 measureAll();
+                // No limit when the glass holds over every page in the scheme, or over none.
+                control('limit').disabled = panel.dataset.limit === undefined;
             }
 
             // The reference's look: its tint, its opacity and its page. Back to the theme restores
@@ -474,6 +485,8 @@
             for (const swatch of document.querySelectorAll('[data-colour]')) {
                 swatch.addEventListener('click', () => paint(swatch.dataset.colour));
             }
+
+            control('limit').addEventListener('click', () => paint(panel.dataset.limit));
 
             quiet.addEventListener('change', tune);
             // The reference's ground follows the scheme, so its listed colours do too.
