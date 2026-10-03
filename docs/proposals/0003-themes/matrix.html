@@ -38,9 +38,10 @@
                    menu, the toast and the tip glow, and no name is added. */
                 --ui-elevation-100:
                     0 0 0 1px var(--proposal-ring-colour), 0 0 18px var(--proposal-glow-colour);
-                /* Being tried: the same glow on the controls, where elevation is not read —
-                   question 2's case for a name of its own. */
+                /* Being tried: the same glow and ring on the controls, where elevation is not
+                   read — question 2's case for a name of its own. */
                 --proposal-control-glow: var(--proposal-glow-colour);
+                --proposal-control-ring: var(--proposal-ring-colour);
             }
 
             /* Its answer to prefers-contrast: more. The green stays on the accent and the text
@@ -82,8 +83,9 @@
                 box-shadow: var(--proposal-glow-shadow);
             }
 
-            /* Declared on each control rather than on the theme's element, so it reads that
-               control's own glow colour — which an invalid one turns red, below. */
+            /* The raised surfaces' shape, ring and glow, in the control's colours. Declared on each
+               control rather than on the theme's element, so it reads that control's own — which
+               an invalid one turns red, below. */
             [data-ui-theme='matrix']
                 :is(
                     ui-button,
@@ -94,7 +96,8 @@
                     ui-switch,
                     ui-radio-group
                 ) {
-                --proposal-glow-shadow: 0 0 18px var(--proposal-control-glow);
+                --proposal-glow-shadow:
+                    0 0 0 1px var(--proposal-control-ring), 0 0 18px var(--proposal-control-glow);
             }
 
             /* The glow held 2px off the edge by a ring in the surface's own colour, and pushed
@@ -111,7 +114,8 @@
                     ui-radio-group
                 ) {
                 --proposal-glow-shadow:
-                    0 0 0 2px var(--ui-color-surface), 0 0 18px 2px var(--proposal-control-glow);
+                    0 0 0 2px var(--ui-color-surface), 0 0 0 3px var(--proposal-control-ring),
+                    0 0 18px 2px var(--proposal-control-glow);
             }
 
             [data-ui-theme='matrix'][data-glow-gap] {
@@ -127,6 +131,10 @@
                 --proposal-control-glow: light-dark(
                     rgb(from var(--ui-color-danger) r g b / calc(0.25 * var(--proposal-glow))),
                     rgb(from var(--ui-color-danger) r g b / calc(0.3 * var(--proposal-glow)))
+                );
+                --proposal-control-ring: light-dark(
+                    rgb(from var(--ui-color-danger) r g b / calc(0.3 * var(--proposal-glow))),
+                    rgb(from var(--ui-color-danger) r g b / calc(0.25 * var(--proposal-glow)))
                 );
             }
 
@@ -235,12 +243,12 @@
             <p>
                 <strong>The glow can reach the controls too</strong> — buttons, fields and checks,
                 each on its own toggle — which is where elevation is not read, and so where question
-                2 would need a name of its own, though not a value: it is the raised surfaces' glow,
-                the same colour at the same blur. A glow lights what sits beside a boundary, so the
-                rows under each panel read a field's edge and a checked box against it: laid right
-                against the edge, the glow takes a field's boundary under 3:1 at the strength the
-                slider starts at. Held 2px off the edge, it leaves the boundary on the surface it
-                was chosen against. The slider sets the strength of every glow at once.
+                2 would need a name of its own, though not a value: it is the raised surfaces' ring
+                and glow, the same colour at the same blur. A glow lights what sits beside a
+                boundary, so the rows under each panel read a field's edge and a checked box against
+                it: laid right against the edge, the glow takes a field's boundary under 3:1 at the
+                strength the slider starts at. Held 2px off the edge, it leaves the boundary on the
+                surface it was chosen against. The slider sets the strength of every glow at once.
             </p>
             <div class="controls">
                 <label

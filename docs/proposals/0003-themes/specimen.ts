@@ -375,8 +375,12 @@ function glowing(panel: HTMLElement): Floor[] {
         ...resolved(panel, 'rgb(from var(--proposal-control-glow) r g b / 1)'),
         alpha: resolved(panel, 'var(--proposal-control-glow)').alpha / 2,
     };
+    const ring = resolved(panel, 'var(--proposal-control-ring)');
     const surface = parsed(read('--ui-color-surface'));
-    const beside = hex(panel.hasAttribute('data-glow-gap') ? surface : over(glow, surface));
+    // Held off the edge, the edge has the surface beside it; laid against it, the ring, over the
+    // glow it is drawn on.
+    const gap = panel.hasAttribute('data-glow-gap');
+    const beside = hex(gap ? surface : over(ring, over(glow, surface)));
     const rows: Floor[] = [
         {
             name: "a control's edge, against its glow",
@@ -387,13 +391,13 @@ function glowing(panel: HTMLElement): Floor[] {
 
     if (fields) {
         const danger = read('--ui-color-danger');
-        const red = { ...parsed(danger), alpha: glow.alpha };
+        const red = (alpha: number): Colour => ({ ...parsed(danger), alpha });
 
         rows.push({
             name: "an invalid field's edge, against its glow",
             value: contrastRatio(
                 danger,
-                hex(panel.hasAttribute('data-glow-gap') ? surface : over(red, surface)),
+                hex(gap ? surface : over(red(ring.alpha), over(red(glow.alpha), surface))),
             ),
             floor: 3,
         });
