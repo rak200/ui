@@ -70,12 +70,23 @@
     background-color: var(--ui-color-accent-hover);
 }
 
-/* The dialog draws no boundary and leans on its scrim, black at 0.5, which over the dark
-   scheme's pure black leaves the page as black as the dialog, 1.00:1. Here it takes the text's
-   own colour, black in the light scheme and white in the dark, so the edge stands apart from the
-   dialog and from the page under the scrim alike: 21:1 and 5.32 in the light scheme, 21:1 to both
-   in the dark. It stands in, through the part, for the boundary question 2 proposes the
-   component draws in every palette — at the strength this setting asks for. */
+/* What floats over the page is edged in the text's own colour, black in the light scheme and
+   white in the dark: the dialog, the tip and the open menu. Each lies over content that is not its
+   own, so its edge has to stand apart from whatever is under it, and the text's colour is the far
+   pole from the surface under it in this palette. The dialog needs it most: it draws no boundary
+   and leans on its scrim, black at 0.5, which over the dark scheme's pure black leaves the page
+   as black as the dialog, 1.00:1. Its edge reads 21:1 to the dialog and 5.32 to the page under
+   the scrim in the light scheme, 21:1 to both in the dark.
+
+   The dialog's edge stands in, through the part, for the boundary question 2 proposes the
+   component draws in every palette; the other two already draw the derived border, and only
+   its colour changes, at the strength this setting asks for. The tip is the host's own element,
+   so a rule from out here reaches it without a part. */
 [data-more] ui-dialog::part(dialog) {
     border: 1px solid var(--ui-color-text);
+}
+
+[data-more] ui-tooltip > [slot='tip'],
+[data-more] ui-menu::part(menu) {
+    border-color: var(--ui-color-text);
 }
