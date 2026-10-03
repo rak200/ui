@@ -69,3 +69,11 @@
 [data-more] ui-switch::part(box):checked:hover:not(:disabled) {
     background-color: var(--ui-color-accent-hover);
 }
+
+/* The dialog draws no boundary and leans on its scrim, black at 0.5, which over the dark
+   scheme's pure black leaves the page as black as the dialog. It takes what a card has, the
+   derived border — the component's own drawing question 2 proposes for every palette, stood in
+   through the part. */
+[data-more] ui-dialog::part(dialog) {
+    border: 1px solid color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface));
+}
