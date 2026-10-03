@@ -135,9 +135,10 @@
                 -webkit-text-stroke: 0;
             }
 
-            /* The page behind is the host's, not the theme's — two of them, to choose from, and
-               each follows the scheme the way a host's page would: light glass over a dark page
-               is grey, which is a page nobody would put it on. */
+            /* The page behind is the host's, not the theme's — three of them, to choose from. The
+               first two follow the scheme the way a host's page would: light glass over a dark
+               page is grey, which is a page nobody would put it on. The third is whatever is
+               chosen. */
             [data-ui-theme='glass'][data-specimen] {
                 position: relative;
                 overflow: hidden;
@@ -216,6 +217,14 @@
                 animation-direction: alternate-reverse;
             }
 
+            /* One colour behind every card, so that what the readings measure is what the eye
+               gets: in the other two the worst colour may sit where no text does, and the
+               reference's blobs drift past the text rather than under it. Black in the light
+               scheme and white in the dark are the any-page reading itself. */
+            [data-scene='colour'] {
+                background: var(--proposal-page);
+            }
+
             @keyframes drift {
                 to {
                     translate: 34px 26px;
@@ -258,6 +267,13 @@
                 <strong>any page</strong>, and over the reference's own colours when it is behind.
             </p>
             <p>
+                <strong>To see a reading rather than read it</strong>, put one colour behind every
+                card. Black in the light scheme and white in the dark are the any-page case, and
+                there the glass alone loses the text entirely. The reference's green, in the dark,
+                is its own worst colour — about 3:1, which many readers still read comfortably;
+                4.5:1 is the margin kept for those who cannot, and for glare and poor screens.
+            </p>
+            <p>
                 <strong>The halo is what is being tried to carry the text instead.</strong> Turn it
                 on below. The rows <em>text on its halo</em> measure the text against the pixels
                 touching each letter — drawn with the halo the page actually computes, over the same
@@ -287,6 +303,7 @@
                     <select id="scene">
                         <option value="hard" selected>Hard: black, white, stripes and text</option>
                         <option value="reference">The reference's: near-black, soft colour</option>
+                        <option value="colour">One colour, behind every card</option>
                     </select></label
                 >
                 <label
@@ -309,6 +326,16 @@
                 <button type="button" id="reference">The reference's look</button>
                 <button type="button" id="theme">Back to the theme</button>
             </div>
+            <div class="controls">
+                <label
+                    >One colour behind every card <input type="color" id="colour" value="#000000"
+                /></label>
+                <button type="button" data-colour="#000000">Black</button>
+                <button type="button" data-colour="#ffffff">White</button>
+                <button type="button" data-colour="#3498db">The reference's blue</button>
+                <button type="button" data-colour="#e67e22">Its orange</button>
+                <button type="button" data-colour="#2ecc71">Its green</button>
+            </div>
         </header>
         <main>
             <figure>
@@ -330,7 +357,7 @@
 
             const panel = document.querySelector('[data-specimen]');
             const control = (id) => document.getElementById(id);
-            const [light, dark, blur, scene, tint, halo, edge, more] = [
+            const [light, dark, blur, scene, tint, halo, edge, more, colour] = [
                 'light',
                 'dark',
                 'blur',
@@ -339,6 +366,7 @@
                 'halo',
                 'edge',
                 'more',
+                'colour',
             ].map(control);
             const quiet = matchMedia(
                 '(prefers-contrast: more), (prefers-reduced-transparency: reduce)',
@@ -381,8 +409,12 @@
                 panel.toggleAttribute('data-more', more.checked);
                 panel.toggleAttribute('data-edge', edge.checked && !off);
 
+                panel.style.setProperty('--proposal-page', colour.value);
+
                 if (scene.value === 'reference') {
                     panel.dataset.backdrops = referencePage();
+                } else if (scene.value === 'colour') {
+                    panel.dataset.backdrops = colour.value;
                 } else {
                     delete panel.dataset.backdrops;
                 }
@@ -429,6 +461,19 @@
             // The reference tints at #ffffff10: 16 of 255.
             control('reference').addEventListener('click', () => preset(true));
             control('theme').addEventListener('click', () => preset(false));
+
+            // Choosing a colour is choosing that page.
+            function paint(value) {
+                colour.value = value;
+                scene.value = 'colour';
+                tune();
+            }
+
+            colour.addEventListener('input', () => paint(colour.value));
+
+            for (const swatch of document.querySelectorAll('[data-colour]')) {
+                swatch.addEventListener('click', () => paint(swatch.dataset.colour));
+            }
 
             quiet.addEventListener('change', tune);
             // The reference's ground follows the scheme, so its listed colours do too.
