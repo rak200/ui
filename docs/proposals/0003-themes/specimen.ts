@@ -239,12 +239,24 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
     };
     const opacity = glass.alpha.toFixed(2);
     const accent = parsed(read('--ui-color-accent'));
-    const label = read('--ui-color-accent-contrast');
+    // A primary button's own colours, read inside it: a page may give the button an accent of
+    // its own, apart from the one the checked controls read.
+    const primary =
+        panel
+            .querySelector("ui-button:not([variant='secondary'])")
+            ?.shadowRoot?.querySelector('[part~="button"]') ?? panel;
+    const label = painted(primary, '--ui-color-accent-contrast');
     const translucent = (name: string, group: string): number =>
         panel.hasAttribute(group) ? resolved(panel, `rgb(0 0 0 / var(${name}, 1))`).alpha : 1;
     const box = { ...accent, alpha: translucent('--proposal-checked', 'data-checks') };
-    const button = { ...accent, alpha: translucent('--proposal-primary', 'data-buttons') };
-    const hovered = { ...parsed(read('--ui-color-accent-hover')), alpha: button.alpha };
+    const button = {
+        ...parsed(painted(primary, '--ui-color-accent')),
+        alpha: translucent('--proposal-primary', 'data-buttons'),
+    };
+    const hovered = {
+        ...parsed(painted(primary, '--ui-color-accent-hover')),
+        alpha: button.alpha,
+    };
     const solid =
         (colour: string) =>
         (ground: Colour): number =>

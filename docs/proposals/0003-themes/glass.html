@@ -148,6 +148,35 @@
                 );
             }
 
+            /* Being tried: the accent inverted, light in the light scheme and dark in the dark. The
+               theme's accent sits at the far pole from the glass, so its label is the glass's own
+               pole, and a translucent fill moves toward the label; inverted, the label is the far
+               pole and the fill moves away from it.
+
+               Everywhere, the inversion is a ground the theme sets, and the proposal's formulas
+               re-derive the label and the states from it. On the primary button alone it needs a
+               name the package does not have — the button's fill, apart from the accent — so the
+               stand-in writes what the formulas give for that pair: a black label on the light
+               slate and a white one on the dark, each state mixed toward the other pole. */
+            [data-ui-theme='glass'][data-invert='all'] {
+                --ui-color-accent: light-dark(#94a3b8, #334155);
+            }
+
+            [data-ui-theme='glass'][data-invert='buttons'] ui-button:not([variant='secondary']) {
+                --ui-color-accent: light-dark(#94a3b8, #334155);
+                --ui-color-accent-contrast: light-dark(#000000, #ffffff);
+                --ui-color-accent-hover: color-mix(
+                    in oklab,
+                    light-dark(#ffffff, #000000) 12%,
+                    var(--ui-color-accent)
+                );
+                --ui-color-accent-pressed: color-mix(
+                    in oklab,
+                    light-dark(#ffffff, #000000) 22%,
+                    var(--ui-color-accent)
+                );
+            }
+
             /* The primary button on its own opacity, apart from the checked controls: its label
                is read against the fill, and the fill is what the opacity gives away. */
             [data-ui-theme='glass'][data-buttons]
@@ -373,6 +402,14 @@
                     <input type="range" id="primary" min="0" max="1" step="0.01" value="1" />
                     <output for="primary">1.00</output></label
                 >
+                <label
+                    >Accent
+                    <select id="invert">
+                        <option value="none" selected>Dark on light, as shipped</option>
+                        <option value="buttons">Inverted, on primary buttons</option>
+                        <option value="all">Inverted, everywhere</option>
+                    </select></label
+                >
                 <label><input type="checkbox" id="fields" checked /> Fields</label>
                 <label><input type="checkbox" id="checks" checked /> Checks</label>
                 <label><input type="checkbox" id="buttons" checked /> Buttons</label>
@@ -414,6 +451,7 @@
                     data-checks
                     data-buttons
                     data-table
+                    data-invert="none"
                     data-scene="hard"
                 ></div>
                 <dl data-floors></dl>
@@ -424,13 +462,14 @@
 
             const panel = document.querySelector('[data-specimen]');
             const control = (id) => document.getElementById(id);
-            const [light, dark, blur, fill, checked, primary, scene, edge, more, colour] = [
+            const [light, dark, blur, fill, checked, primary, invert, scene, edge, more, colour] = [
                 'light',
                 'dark',
                 'blur',
                 'fill',
                 'checked',
                 'primary',
+                'invert',
                 'scene',
                 'edge',
                 'more',
@@ -467,6 +506,8 @@
 
                 panel.dataset.scene = scene.value;
                 panel.toggleAttribute('data-more', more.checked);
+                // The contrast answer sets its own accent, so the inversion stands down under it.
+                panel.dataset.invert = more.checked ? 'none' : invert.value;
                 panel.toggleAttribute('data-edge', edge.checked && !off);
 
                 for (const group of groups) {
@@ -524,6 +565,7 @@
                 fill,
                 checked,
                 primary,
+                invert,
                 scene,
                 edge,
                 more,
