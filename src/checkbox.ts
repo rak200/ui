@@ -494,6 +494,7 @@ class UiToggle extends LitElement {
  * ```
  */
 export class UiCheckbox extends UiToggle {
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         ...UiToggle.properties,
         indeterminate: { type: Boolean },
@@ -508,6 +509,7 @@ export class UiCheckbox extends UiToggle {
      */
     indeterminate = false;
 
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult[] = [
         toggle,
         css`
@@ -555,10 +557,15 @@ export class UiCheckbox extends UiToggle {
         `,
     ];
 
+    /** The shared drawing, showing the mixed state while `indeterminate` is set. */
     override render(): TemplateResult {
         return this.template(this.indeterminate);
     }
 
+    /**
+     * Publishes as the base does, then exposes `indeterminate` where a host stylesheet can select
+     * on it.
+     */
     override updated(): void {
         super.updated();
         this.expose('indeterminate', this.indeterminate);
@@ -595,6 +602,7 @@ export class UiCheckbox extends UiToggle {
  * ```
  */
 export class UiSwitch extends UiToggle {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult[] = [
         toggle,
         css`

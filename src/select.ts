@@ -91,6 +91,7 @@ class UiDeclaration extends LitElement {
  * ```
  */
 export class UiOption extends UiDeclaration {
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         value: { type: String, reflect: true },
         selected: { type: Boolean, reflect: true },
@@ -123,6 +124,7 @@ export class UiOption extends UiDeclaration {
  * ```
  */
 export class UiOptgroup extends UiDeclaration {
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         label: { type: String, reflect: true },
         disabled: { type: Boolean, reflect: true },
@@ -182,6 +184,7 @@ export class UiOptgroup extends UiDeclaration {
  * ```
  */
 export class UiSelect extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult = css`
         :host {
             display: block;
@@ -309,6 +312,7 @@ export class UiSelect extends LitElement {
         }
     `;
 
+    /** Takes part in the form it sits in. */
     static readonly formAssociated = true;
 
     /**
@@ -321,6 +325,7 @@ export class UiSelect extends LitElement {
         delegatesFocus: true,
     };
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         label: { type: String, reflect: true },
         help: { type: String, reflect: true },
@@ -394,6 +399,7 @@ export class UiSelect extends LitElement {
         this.requestUpdate();
     };
 
+    /** Redraws when a choice's properties change, which a slot cannot report. */
     override connectedCallback(): void {
         super.connectedCallback();
 
@@ -535,6 +541,10 @@ export class UiSelect extends LitElement {
         return html``;
     }
 
+    /**
+     * The label, a native `<select>` built from the choices, and the help, the error and the
+     * description beside it.
+     */
     override render(): TemplateResult {
         const chosen = this.#chosen();
 

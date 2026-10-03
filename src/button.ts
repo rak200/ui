@@ -19,6 +19,7 @@ export type ButtonVariant = 'primary' | 'secondary';
  * ```
  */
 export class UiButton extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         :host {
             display: inline-block;
@@ -98,6 +99,7 @@ export class UiButton extends LitElement {
         }
     `;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         variant: { type: String, reflect: true },
         disabled: { type: Boolean, reflect: true },
@@ -133,6 +135,7 @@ export class UiButton extends LitElement {
      */
     readonly #description = new Description(this);
 
+    /** A native `<button>` around the default slot, described by what a tooltip hands it. */
     override render(): TemplateResult {
         return html`
             <button

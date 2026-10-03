@@ -85,6 +85,7 @@ const clipped = [
     'clip-path:inset(50%)',
 ].join(';');
 
+/** The sentence a `<ui-tooltip>` hands over, and the node a control points at. */
 export class Description {
     #sentence = '';
 

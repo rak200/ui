@@ -108,6 +108,7 @@ function caret(): SVGSVGElement {
  * ```
  */
 export class UiMenu extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         :host {
             display: inline-block;
@@ -260,6 +261,7 @@ export class UiMenu extends LitElement {
         }
     `;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         open: { type: Boolean, reflect: true },
     };
@@ -323,6 +325,7 @@ export class UiMenu extends LitElement {
     /** What is watching while the menu is open, dropped in one call when it closes. */
     #watching = new AbortController();
 
+    /** Builds the trigger and the panel, and wires the one to the other as a menu button. */
     constructor() {
         super();
 
@@ -359,6 +362,7 @@ export class UiMenu extends LitElement {
         panel.append(items);
     }
 
+    /** Drops the listeners an open panel holds on the window. */
     override disconnectedCallback(): void {
         // Removed while open, the panel takes the window listeners with it. A menu a
         // framework unmounted would otherwise keep re-placing an element that is no longer
@@ -378,6 +382,7 @@ export class UiMenu extends LitElement {
         super.disconnectedCallback();
     }
 
+    /** Mirrors `open` onto the trigger, and shows or hides the panel when the two disagree. */
     override updated(): void {
         this.#trigger.setAttribute('aria-expanded', String(this.open));
         this.#description.point(this.#trigger);
@@ -407,6 +412,7 @@ export class UiMenu extends LitElement {
         }
     }
 
+    /** The trigger, the panel, and the description the trigger points at. */
     override render(): TemplateResult {
         // The carrier sits beside the trigger rather than inside the panel: the panel is a
         // popover and the reference has to resolve from where the reader's focus lands,

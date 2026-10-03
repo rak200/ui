@@ -80,6 +80,7 @@ export function register(name: string, glyph: SVGTemplateResult): void {
  * ```
  */
 export class UiIcon extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         :host {
             display: inline-flex;
@@ -112,6 +113,7 @@ export class UiIcon extends LitElement {
         }
     `;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         name: { type: String, reflect: true },
         label: { type: String, reflect: true },
@@ -134,11 +136,13 @@ export class UiIcon extends LitElement {
      */
     label = '';
 
+    /** Joins the icons that are redrawn when a glyph is registered. */
     override connectedCallback(): void {
         super.connectedCallback();
         pending.add(this);
     }
 
+    /** Leaves the icons that are redrawn when a glyph is registered. */
     override disconnectedCallback(): void {
         pending.delete(this);
 
@@ -181,6 +185,7 @@ export class UiIcon extends LitElement {
         this.setAttribute('aria-label', this.label);
     }
 
+    /** The registered glyph `name` resolves to, or the mark slotted in its place. */
     override render(): TemplateResult {
         const glyph = glyphs.get(this.name);
 
@@ -206,6 +211,7 @@ export class UiIcon extends LitElement {
               `;
     }
 
+    /** Warns when `name` resolves to nothing and nothing was slotted in its place. */
     override updated(): void {
         this.#complain();
     }
