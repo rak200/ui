@@ -17,11 +17,11 @@
 
                The glass is the scheme's pole at an opacity: white in the light, black in the dark,
                rather than the dark surface's blue-black, which leaves less of the page through
-               for the same look. The opacities and the blur are the ones chosen by eye — 0.06 and
-               0.20, 6px. What they cost is how far the page behind may stray from the surface before something resting
-               on the glass falls under its floor, which the panel reads out. The halo below is
-               being tried for the text; it is not part of the theme until its readings hold.
-               The surface itself stays opaque, so every field keeps the floors S5 measured.
+               for the same look. The opacity and the blur are the ones chosen by eye — 0.20 in
+               both schemes, 10px. What they cost is how far the page behind may stray from the
+               surface before something resting on the glass falls under its floor, which the
+               panel reads out. The surface itself stays opaque, so every field keeps the floors
+               S5 measured.
 
                Two grounds move as well. The text goes to its pole in both schemes, pure black and
                pure white, because text over frosted glass reads as washed out long before it
@@ -31,8 +31,8 @@
             [data-ui-theme='glass'] {
                 --ui-color-text: light-dark(#000000, #ffffff);
                 --ui-color-accent: light-dark(#334155, #94a3b8);
-                --ui-color-surface-raised: light-dark(rgb(255 255 255 / 0.06), rgb(0 0 0 / 0.2));
-                --ui-backdrop-raised: blur(6px) saturate(1.7);
+                --ui-color-surface-raised: light-dark(rgb(255 255 255 / 0.2), rgb(0 0 0 / 0.2));
+                --ui-backdrop-raised: blur(10px) saturate(1.7);
                 /* White at 0.45 on light glass rather than the reference's 0.16, which only ever
                    drew dark glass and would vanish into a white panel; softer than a line, which
                    is what the derived border drew. */
@@ -90,48 +90,6 @@
                 box-shadow:
                     inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
                     0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
-            }
-
-            /* Question 2's third path, being measured: a halo around each letter on the glass, in
-               the surface's own colour, wide enough that WCAG's understanding of 1.4.3 treats it
-               as the letter's background rather than as part of the letter. Two shapes of it: a
-               glow of stacked shadows — the densest tried, sixteen of them — and a solid stroke
-               painted under the fill, 4px so that 2px of it lies outside the letter.
-
-               Both properties inherit, so set on a raised surface they reach every label inside
-               it, shadow roots included. A button's label sits on the accent rather than on the
-               glass, so buttons take it off — a halo the surface's colour around a label meant
-               for the accent would be the label's background instead. */
-            [data-ui-theme='glass'][data-halo='glow'] :is(ui-card, ui-toast, [slot='tip']),
-            [data-ui-theme='glass'][data-halo='glow'] ui-dialog::part(dialog) {
-                text-shadow:
-                    0 0 1px var(--ui-color-surface),
-                    0 0 1px var(--ui-color-surface),
-                    0 0 1px var(--ui-color-surface),
-                    0 0 1px var(--ui-color-surface),
-                    0 0 1px var(--ui-color-surface),
-                    0 0 1px var(--ui-color-surface),
-                    0 0 2px var(--ui-color-surface),
-                    0 0 2px var(--ui-color-surface),
-                    0 0 2px var(--ui-color-surface),
-                    0 0 2px var(--ui-color-surface),
-                    0 0 2px var(--ui-color-surface),
-                    0 0 2px var(--ui-color-surface),
-                    0 0 3px var(--ui-color-surface),
-                    0 0 3px var(--ui-color-surface),
-                    0 0 3px var(--ui-color-surface),
-                    0 0 3px var(--ui-color-surface);
-            }
-
-            [data-ui-theme='glass'][data-halo='solid'] :is(ui-card, ui-toast, [slot='tip']),
-            [data-ui-theme='glass'][data-halo='solid'] ui-dialog::part(dialog) {
-                paint-order: stroke fill;
-                -webkit-text-stroke: 4px var(--ui-color-surface);
-            }
-
-            [data-ui-theme='glass'][data-halo] ui-button {
-                text-shadow: none;
-                -webkit-text-stroke: 0;
             }
 
             /* The page behind is the host's, not the theme's — three of them, to choose from. The
@@ -263,11 +221,11 @@
                 white. The page behind follows the scheme, as a host's would.
             </p>
             <p>
-                <strong>The glass here is chosen by eye</strong> — 0.06 and 0.20, a 6px blur — and
-                it lets 80 to 94% of the page through, which is what makes it look like glass. What
-                it lets through is what everything resting on it is read against: not the text
-                alone, but the error message, a checked box, a switch that is off and the focus
-                ring, which have less room to give than the text has.
+                <strong>The glass here is chosen by eye</strong> — white in the light, black in the
+                dark, both at 0.20, and a 10px blur — so 80% of the page comes through. What it lets
+                through is what everything resting on it is read against: not the text alone, but
+                the error message, a checked box, a switch that is off and the focus ring, which
+                have less room to give than the text has.
             </p>
             <p>
                 <strong>The first row on the glass is the page it can take</strong>: the lightest
@@ -282,18 +240,11 @@
                 read comfortably; 4.5:1 is the margin kept for those who cannot, and for glare and
                 poor screens.
             </p>
-            <p>
-                <strong>The halo carries text, and only text.</strong> Turned on, it has the text
-                and the error message measured against the pixels touching each letter — drawn with
-                the halo the page actually computes — which is where the halo, if it is wide enough,
-                becomes the letter's background. A checked box, a track and a ring have no letter to
-                put one around, and stay on the glass.
-            </p>
             <div class="controls">
                 <label
                     >Light opacity
-                    <input type="range" id="light" min="0" max="1" step="0.01" value="0.06" />
-                    <output for="light">0.06</output></label
+                    <input type="range" id="light" min="0" max="1" step="0.01" value="0.2" />
+                    <output for="light">0.20</output></label
                 >
                 <label
                     >Dark opacity
@@ -302,8 +253,8 @@
                 >
                 <label
                     >Blur
-                    <input type="range" id="blur" min="0" max="30" step="1" value="6" />
-                    <output for="blur">6px</output></label
+                    <input type="range" id="blur" min="0" max="30" step="1" value="10" />
+                    <output for="blur">10px</output></label
                 >
             </div>
             <div class="controls">
@@ -315,27 +266,8 @@
                         <option value="colour">One colour, behind every card</option>
                     </select></label
                 >
-                <label
-                    >Tint, which tells only the dark scheme apart
-                    <select id="tint">
-                        <!-- The light surface is white, so in the light scheme all three are
-                             the same white and only the dark one tells them apart. -->
-                        <option value="surface">The surface's: white, and the dark surface</option>
-                        <option value="pole" selected>The pole: white, and black</option>
-                        <option value="white">White in both, as the reference</option>
-                    </select></label
-                >
-                <label
-                    >Text halo
-                    <select id="halo">
-                        <option value="none" selected>None</option>
-                        <option value="glow">Glow</option>
-                        <option value="solid">Solid</option>
-                    </select></label
-                >
                 <label><input type="checkbox" id="edge" checked /> Glass edge</label>
                 <label><input type="checkbox" id="more" /> prefers-contrast: more</label>
-                <button type="button" id="reference">The reference's look</button>
                 <button type="button" id="theme">Back to the theme</button>
             </div>
             <div class="controls">
@@ -357,7 +289,6 @@
                     data-proposed
                     data-raised
                     data-edge
-                    data-halo="none"
                     data-scene="hard"
                 ></div>
                 <dl data-floors></dl>
@@ -368,13 +299,11 @@
 
             const panel = document.querySelector('[data-specimen]');
             const control = (id) => document.getElementById(id);
-            const [light, dark, blur, scene, tint, halo, edge, more, colour] = [
+            const [light, dark, blur, scene, edge, more, colour] = [
                 'light',
                 'dark',
                 'blur',
                 'scene',
-                'tint',
-                'halo',
                 'edge',
                 'more',
                 'colour',
@@ -396,19 +325,6 @@
                 return `#${ground} #3498db #e67e22 #2ecc71`;
             }
 
-            // The theme tints with the scheme's pole, white and black. The surface is what it
-            // tinted with first, the same white in the light and a blue-black in the dark. The
-            // reference tints white in its one, dark, scheme.
-            function tinted(opacity, pole) {
-                if (tint.value === 'white') {
-                    return `rgb(255 255 255 / ${opacity})`;
-                }
-
-                return tint.value === 'pole'
-                    ? `rgb(${pole} / ${opacity})`
-                    : `rgb(from var(--ui-color-surface) r g b / ${opacity})`;
-            }
-
             // The sliders write the pair on the panel, and an inline declaration outranks both
             // contrast answers in the sheet — so while either applies, the sliders and the edge
             // stand down.
@@ -421,7 +337,6 @@
                 }
 
                 panel.dataset.scene = scene.value;
-                panel.dataset.halo = halo.value;
                 panel.toggleAttribute('data-more', more.checked);
                 panel.toggleAttribute('data-edge', edge.checked && !off);
 
@@ -441,7 +356,7 @@
                 } else {
                     panel.style.setProperty(
                         '--ui-color-surface-raised',
-                        `light-dark(${tinted(light.value, '255 255 255')}, ${tinted(dark.value, '0 0 0')})`,
+                        `light-dark(rgb(255 255 255 / ${light.value}), rgb(0 0 0 / ${dark.value}))`,
                     );
                     panel.style.setProperty(
                         '--ui-backdrop-raised',
@@ -454,31 +369,21 @@
                 control('limit').disabled = panel.dataset.limit === undefined;
             }
 
-            // The reference's look: its tint, its opacity and its page. Back to the theme restores
-            // what the theme would ship and keeps the page, so the two can be compared over the
-            // same backdrop. Both keep the edge, which the theme now ships too.
-            function preset(reference) {
-                light.value = '0.06';
-                dark.value = reference ? '0.06' : '0.2';
-                blur.value = reference ? '12' : '6';
-                tint.value = reference ? 'white' : 'pole';
+            // Back to what the theme would ship, keeping the page behind.
+            function reset() {
+                light.value = '0.2';
+                dark.value = '0.2';
+                blur.value = '10';
                 edge.checked = true;
                 more.checked = false;
-
-                if (reference) {
-                    scene.value = 'reference';
-                }
-
                 tune();
             }
 
-            for (const input of [light, dark, blur, scene, tint, halo, edge, more]) {
+            for (const input of [light, dark, blur, scene, edge, more]) {
                 input.addEventListener('input', tune);
             }
 
-            // The reference tints at #ffffff10: 16 of 255.
-            control('reference').addEventListener('click', () => preset(true));
-            control('theme').addEventListener('click', () => preset(false));
+            control('theme').addEventListener('click', reset);
 
             // Choosing a colour is choosing that page.
             function paint(value) {

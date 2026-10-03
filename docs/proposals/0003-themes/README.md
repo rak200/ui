@@ -12,12 +12,12 @@ npx vite docs/proposals/0003-themes
 
 Then open the address Vite prints. The dev server compiles `src/` directly, so no build runs first.
 
-| Page            | Shows                                                                                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `default.html`  | an accent picker, with today's label beside the derived one — question 3                                                                                |
-| `contrast.html` | the default palette under `prefers-contrast: more` — question 4                                                                                         |
-| `matrix.html`   | green on black and on white, a glow through elevation, and under today's formulas                                                                       |
-| `glass.html`    | translucent raised surfaces over three pages — one of them a colour you choose — with opacity, blur, the reference's edge and its look, and a text halo |
+| Page            | Shows                                                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `default.html`  | an accent picker, with today's label beside the derived one — question 3                                                     |
+| `contrast.html` | the default palette under `prefers-contrast: more` — question 4                                                              |
+| `matrix.html`   | green on black and on white, a glow through elevation, and under today's formulas                                            |
+| `glass.html`    | translucent raised surfaces over three pages — one of them a colour you choose — with opacity, blur and the reference's edge |
 
 **Every page has a scheme control** — system, light, dark — which writes `color-scheme` on the root
 element the way the playground's toolbar does, and remembers the choice from page to page.

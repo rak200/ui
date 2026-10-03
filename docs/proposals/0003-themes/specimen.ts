@@ -198,141 +198,11 @@ function floors(panel: HTMLElement): (Floor | Reading)[] {
     ];
 }
 
-/** One text shadow, as the computed style serialises it. */
-interface Shadow {
-    readonly colour: string;
-    readonly x: number;
-    readonly y: number;
-    readonly blur: number;
-}
-
-/** The shadows in a computed `text-shadow`, which Chrome writes colour first, in pixels. */
-function shadows(value: string): Shadow[] {
-    const found: Shadow[] = [];
-
-    for (const match of value.matchAll(
-        /([a-z]+\([^)]*\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px/g,
-    )) {
-        const [, colour = 'transparent', x = '0', y = '0', blur = '0'] = match;
-
-        found.push({ colour, x: Number(x), y: Number(y), blur: Number(blur) });
-    }
-
-    return found;
-}
-
-// The halo is measured on its own canvas, a line of text long enough to hold every shape a
-// glyph's counter can take.
-const sample = 'Printed on every invoice — 0142, 0143.';
-const stage = document.createElement('canvas');
-stage.width = 360;
-stage.height = 40;
-const staged = stage.getContext('2d', { willReadFrequently: true });
-
-/**
- * The text against the halo around it, over one backdrop: the worst pixel touching a glyph
- * that no glyph covers at all — what sits against the letter, with its antialiased edge, part
- * letter and part background, left out.
- *
- * Drawn in a canvas with the halo `raised` actually computes, read back from its style: the
- * text shadows one by one, and the text stroke if there is one. A canvas shadow and a CSS text
- * shadow blur by the same Gaussian, half the radius as its deviation. The size is the
- * supporting text's, the smallest set on the glass.
- */
-function onHalo(raised: Element, text: string, glass: Colour, backdrop: Colour): number {
-    if (staged === null) {
-        throw new Error('no 2d context, so no halo can be drawn');
-    }
-
-    const style = getComputedStyle(raised);
-    const size = Number.parseFloat(style.fontSize) * 0.875;
-    const { width, height } = stage;
-    const [left, middle, far] = [8, height / 2, 10000];
-
-    staged.font = `${style.fontWeight} ${String(size)}px ${style.fontFamily}`;
-    staged.textBaseline = 'middle';
-
-    staged.clearRect(0, 0, width, height);
-    staged.fillStyle = '#ffffff';
-    staged.fillText(sample, left, middle);
-
-    const glyphs = staged.getImageData(0, 0, width, height).data;
-
-    staged.fillStyle = hex(over(glass, backdrop));
-    staged.fillRect(0, 0, width, height);
-
-    const stroke = Number.parseFloat(style.getPropertyValue('-webkit-text-stroke-width'));
-
-    // Up to 4px this matches the page; past it the canvas stroker leaves pixels unfilled that
-    // the page fills, so a wider stroke reads worse here than it renders there.
-    if (stroke > 0) {
-        staged.lineWidth = stroke;
-        // Mitred, as Chrome strokes text: a round join drew holes the page never shows.
-        staged.lineJoin = 'miter';
-        staged.strokeStyle = style.getPropertyValue('-webkit-text-stroke-color');
-        staged.strokeText(sample, left, middle);
-    }
-
-    // Drawn far off the canvas and cast back onto it, so only the shadow lands.
-    for (const shadow of shadows(style.textShadow)) {
-        staged.save();
-        staged.shadowColor = shadow.colour;
-        staged.shadowBlur = shadow.blur;
-        staged.shadowOffsetX = shadow.x - far;
-        staged.shadowOffsetY = shadow.y;
-        staged.fillStyle = shadow.colour;
-        staged.fillText(sample, left + far, middle);
-        staged.restore();
-    }
-
-    staged.fillStyle = text;
-    staged.fillText(sample, left, middle);
-
-    const scene = staged.getImageData(0, 0, width, height).data;
-    const alpha = (column: number, row: number): number =>
-        glyphs[(row * width + column) * 4 + 3] ?? 0;
-    const nearGlyph = (column: number, row: number): boolean => {
-        for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-                if (alpha(column + dx, row + dy) > 127) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    };
-
-    let least = Number.POSITIVE_INFINITY;
-
-    for (let row = 2; row < height - 2; row++) {
-        for (let column = 2; column < width - 2; column++) {
-            if (alpha(column, row) !== 0 || !nearGlyph(column, row)) {
-                continue;
-            }
-
-            const at = (row * width + column) * 4;
-            const pixel = hex({
-                red: scene[at] ?? 0,
-                green: scene[at + 1] ?? 0,
-                blue: scene[at + 2] ?? 0,
-                alpha: 1,
-            });
-
-            least = Math.min(least, contrastRatio(text, pixel));
-        }
-    }
-
-    return least;
-}
-
 /** A colour that rests directly on a raised surface, and the floor it owes against it. */
 interface Resting {
     readonly name: string;
     readonly colour: string;
     readonly floor: number;
-    /** Text, which a halo can carry. A filled box, a track and a ring keep the glass behind. */
-    readonly text: boolean;
 }
 
 /**
@@ -348,8 +218,7 @@ interface Resting {
  * light — kept on the panel as `data-limit`, for the page to paint.
  *
  * A panel that lists its page's own colours in `data-backdrops` gets each of them measured
- * over only those. A panel whose `data-halo` names one has its text measured against the halo
- * around each letter instead of the glass behind it.
+ * over only those.
  */
 function raised(panel: HTMLElement): (Floor | Reading)[] {
     if (!panel.hasAttribute('data-raised')) {
@@ -366,18 +235,14 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
     };
     const opacity = glass.alpha.toFixed(2);
     const resting: Resting[] = [
-        { name: 'text', colour: read('--ui-color-text'), floor: 4.5, text: true },
-        { name: 'the error message', colour: read('--ui-color-danger'), floor: 4.5, text: true },
-        { name: 'a checked box', colour: read('--ui-color-accent'), floor: 3, text: false },
-        { name: 'a switch that is off', colour: read('--ui-color-border'), floor: 3, text: false },
-        { name: 'the focus ring', colour: read('--ui-color-focus'), floor: 3, text: false },
+        { name: 'text', colour: read('--ui-color-text'), floor: 4.5 },
+        { name: 'the error message', colour: read('--ui-color-danger'), floor: 4.5 },
+        { name: 'a checked box', colour: read('--ui-color-accent'), floor: 3 },
+        { name: 'a switch that is off', colour: read('--ui-color-border'), floor: 3 },
+        { name: 'the focus ring', colour: read('--ui-color-focus'), floor: 3 },
     ];
-    const halo = panel.dataset['halo'] ?? 'none';
-    const carrier = halo === 'none' ? null : panel.querySelector('ui-card');
     const ratio = (on: Resting, backdrop: Colour): number =>
-        on.text && carrier !== null
-            ? onHalo(carrier, on.colour, glass, backdrop)
-            : contrastRatio(on.colour, hex(over(glass, backdrop)));
+        contrastRatio(on.colour, hex(over(glass, backdrop)));
     const failing = (level: number): Resting | undefined =>
         resting.find((on) => ratio(on, grey(level)) < on.floor);
 
@@ -416,12 +281,8 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
     const backdrops = listed === undefined || listed === '' ? [] : listed.split(' ').map(parsed);
 
     for (const on of backdrops.length > 0 ? resting : []) {
-        const carried = on.text && carrier !== null;
-        const ground = carried ? `its ${halo} halo` : 'the glass';
-        const clears = carried ? '' : ` — clears ${least(on.colour, on.floor, glass, backdrops)}`;
-
         rows.push({
-            name: `${on.name} on ${ground} at ${opacity}, this page${clears}`,
+            name: `${on.name} on the glass at ${opacity}, this page — clears ${least(on.colour, on.floor, glass, backdrops)}`,
             value: Math.min(...backdrops.map((backdrop) => ratio(on, backdrop))),
             floor: on.floor,
         });

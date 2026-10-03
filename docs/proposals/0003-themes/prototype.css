@@ -192,6 +192,12 @@ figcaption {
     white-space: nowrap;
 }
 
+/* A reading rather than a floor answers in words, which have to wrap. */
+[data-floors] div:not([data-pass]) dd {
+    white-space: normal;
+    text-align: end;
+}
+
 [data-floors] [data-pass='true'] dd {
     color: var(--frame-pass);
 }
