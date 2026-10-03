@@ -385,8 +385,10 @@ class UiTextField extends LitElement {
  * ```
  */
 export class UiInput extends UiTextField {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult = field;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         ...UiTextField.properties,
         type: { type: String, reflect: true },
@@ -415,6 +417,7 @@ export class UiInput extends UiTextField {
     /** The granularity the value must fall on, likewise. */
     step = '';
 
+    /** A native `<input>`, in the frame every text control shares. */
     override render(): TemplateResult {
         return this.frame(html`
             <input
@@ -458,6 +461,7 @@ export class UiInput extends UiTextField {
  * ```
  */
 export class UiTextarea extends UiTextField {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult[] = [
         field,
         css`
@@ -468,6 +472,7 @@ export class UiTextarea extends UiTextField {
         `,
     ];
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         ...UiTextField.properties,
         rows: { type: String, reflect: true },
@@ -476,6 +481,7 @@ export class UiTextarea extends UiTextField {
     /** How many lines the control starts at. Empty leaves the platform's own default. */
     rows = '';
 
+    /** A native `<textarea>`, in the frame every text control shares. */
     override render(): TemplateResult {
         return this.frame(html`
             <textarea

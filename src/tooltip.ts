@@ -101,6 +101,7 @@ function describing(trigger: HTMLElement): string[] {
  * ```
  */
 export class UiTooltip extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         /* No box of its own: a wrapper that laid something out would move the trigger it
            wraps, and every call site would have to undo it. */
@@ -240,6 +241,7 @@ export class UiTooltip extends LitElement {
      */
     #listeners = new AbortController();
 
+    /** Listens for the pointer and the focus, and wires the trigger to the tip. */
     override connectedCallback(): void {
         super.connectedCallback();
 
@@ -266,6 +268,7 @@ export class UiTooltip extends LitElement {
         this.#associate();
     }
 
+    /** Hides the tip, drops its listeners, and stops describing the trigger. */
     override disconnectedCallback(): void {
         // Removed while shown, the tip takes the window listeners with it. A tooltip that
         // a framework unmounted mid-hover would otherwise keep re-placing an element that
@@ -281,6 +284,7 @@ export class UiTooltip extends LitElement {
         super.disconnectedCallback();
     }
 
+    /** The trigger, from the default slot, and the tip, from `tip`. */
     override render(): TemplateResult {
         return html`
             <slot @slotchange=${this.#associate}></slot>

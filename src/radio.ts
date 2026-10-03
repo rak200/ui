@@ -69,12 +69,14 @@ const mark = css`radial-gradient(circle closest-side, #000 100%, transparent 100
  * ```
  */
 export class UiRadio extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult = css`
         :host {
             display: none;
         }
     `;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         value: { type: String, reflect: true },
         checked: { type: Boolean, reflect: true },
@@ -107,6 +109,7 @@ export class UiRadio extends LitElement {
         this.dispatchEvent(new Event(announcement, { bubbles: true }));
     };
 
+    /** The slot its text arrives in, which tells the group when the text changes. */
     override render(): TemplateResult {
         return html`<slot @slotchange=${this.#announce}></slot>`;
     }
@@ -136,6 +139,7 @@ export class UiRadio extends LitElement {
  * ```
  */
 export class UiRadioGroup extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult = css`
         :host {
             display: block;
@@ -315,6 +319,7 @@ export class UiRadioGroup extends LitElement {
         }
     `;
 
+    /** Takes part in the form it sits in. */
     static readonly formAssociated = true;
 
     /**
@@ -328,6 +333,7 @@ export class UiRadioGroup extends LitElement {
         delegatesFocus: true,
     };
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         label: { type: String, reflect: true },
         help: { type: String, reflect: true },
@@ -401,6 +407,7 @@ export class UiRadioGroup extends LitElement {
         this.requestUpdate();
     };
 
+    /** Redraws when a choice's properties change, which a slot cannot report. */
     override connectedCallback(): void {
         super.connectedCallback();
 
@@ -546,6 +553,10 @@ export class UiRadioGroup extends LitElement {
         </label>`;
     }
 
+    /**
+     * The label, the choices as one radio group, and the help, the error and the description beside
+     * them.
+     */
     override render(): TemplateResult {
         const chosen = this.#chosen();
 

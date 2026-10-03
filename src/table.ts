@@ -119,6 +119,7 @@ sheet.replaceSync(rules.cssText);
  * ```
  */
 export class UiTable extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles: CSSResult = css`
         :host {
             display: block;
@@ -139,6 +140,10 @@ export class UiTable extends LitElement {
         }
     `;
 
+    /**
+     * Styles the table in the tree it joined, and puts it in the tab order unless the host chose
+     * otherwise.
+     */
     override connectedCallback(): void {
         super.connectedCallback();
         this.#adopt();
@@ -171,6 +176,7 @@ export class UiTable extends LitElement {
         }
     }
 
+    /** The default slot, where the host's own `<table>` goes. */
     override render(): TemplateResult {
         return html`<slot></slot>`;
     }

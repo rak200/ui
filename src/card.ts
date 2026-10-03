@@ -32,6 +32,7 @@ import { reference } from './reference.js';
  * ```
  */
 export class UiCard extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         /* A column rather than a block, and the footer below is why: margin-block-start:
            auto needs a flex line to push against. That is what makes a row of cards in a
@@ -74,6 +75,7 @@ export class UiCard extends LitElement {
         }
     `;
 
+    /** The three slots: `header`, the default one, and `footer`. */
     override render(): TemplateResult {
         return html`
             <slot name="header"></slot>
