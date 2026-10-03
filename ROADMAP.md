@@ -20,6 +20,15 @@ and in this engine it does. The custom states keep a reason, a different one: th
 host, where a part reaches only the box. The fix is the three sentences, and a test that fails when
 the engine changes rather than a re-dated measurement.
 
+## Themes, as RFC 0003 accepted them (#233)
+
+The package ships themes as data a host opts into — Matrix and Glass, each rendered by
+`themeStyleSheet()` — and the other two wanted ones become things every palette does: the accent's
+label derived from the accent, and `prefers-contrast: more` answered in the token layer. Six steps,
+in an order that is the rule: the drawings no theme waits on, the per-palette floors, the derived
+label (the one break), the contrast setting, then Matrix, then Glass. The prototypes under
+`docs/proposals/0003-themes/` render every decision against the real components.
+
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by

@@ -839,6 +839,14 @@ spare and approach it once it stands at 10:1, which holds every state on every a
 whose hover is 1.03 under every shape (above). So a host's own accent gets visible states as it gets
 a legible label, with no floor to catch it.
 
+**What sits on the accent takes the label** — a checked control's mark as much as a button's text:
+the tick, the dash, the radio's dot and the switch's thumb. Today the mark is a hole that shows the
+surface, which is the label only while the accent is far from the surface; a black accent in the
+dark scheme leaves a tick the colour of the fill around it. Drawn over the fill in the label's
+colour, through a mask on a layer of its own, the colour stays a token as the hole kept it one, and
+the mark reads what the label reads against the fill. That gives up the hole `src/checkbox.ts` and
+`src/radio.ts` are built on, and the forced-colors block the hole served is measured again with it.
+
 What it costs:
 
 - `--ui-color-accent-contrast` moves from `tokens` to `derivedTokens`, so `defaults` and
@@ -853,6 +861,14 @@ What it costs:
 per-palette floor already refuses it. A theme answers with a surface whose hover the floor accepts —
 under white text, `#050505` already is one — or declares its own hover and pressed, an override
 every host already has, which the floor then measures.
+
+**A boundary owes 3:1 on one side of it, either side.** A field's border is read against the glow
+or shadow beside it, or against the field it closes in, and either reaching 3:1 is enough — the eye
+takes a border and a ring laid against it for one line. **Where the boundary is its fill's own
+colour, or near it, and a shadow or a glow lies outside, its content may meet the floor instead**: a
+checked box filled with the accent is identified by its mark against the fill. Matrix's choice is
+what put the question, and under this rule it ships as chosen — a field's edge at 3.15 and 3.46, an
+invalid one at 6.47 and 7.37, a checked box's mark at 4.94 and 15.30.
 
 **Set aside:**
 
@@ -920,37 +936,72 @@ guess about what a light one would be.
 
 ### The order the recommendations imply
 
-Not a Rollout, which waits for a Decision — only the sequence these answers would put the work in,
-each step shippable alone:
-
-1. **The per-palette floors**, over the default palette alone. Nothing renders differently, and every
-   later step lands inside the gate.
-2. **The derived label**, with the accent's shades turned away from it — the breaking step, alone so
-   its changelog entry says only that.
-3. **`prefers-contrast: more`** in `tokenStyleSheet()`, black and white with its states written out,
-   and the floors run under emulation.
-4. **The theme shape, `themeStyleSheet()` and Matrix** — in both schemes, its glow through elevation
-   and through the controls' name, and a theme control in the playground beside the scheme control
-   #120 put there. `ARCHITECTURE.md` loses the elevation sentence S2 contradicts, and gains the
-   second clause of _A category arrives…_. The switch's empty track, the dialog's border, and the
-   toast's icon, edge and info colour can go first, since none of them waits on a theme.
-5. **Glass**, last: the raised surfaces, the controls' fills and the primary button's own fill, its
-   floors measured over the page limit it documents, and opaque under `more` and under reduced
-   transparency. The select's options painting their own surface can go first, since it changes
-   nothing in an opaque palette.
+The Rollout below is this order, decided, with the drawings no theme waits on put first.
 
 ## Decision
 
-**Not reached.**
+**Accepted** on 2026-10-03, with every recommendation above taken as written and two rules added in
+the taking. The four prototypes are closed at what their pages render, and what each settled is in
+the Study.
+
+- **Question 1 — the package ships themes**, as data a host opts into: Matrix and Glass, each a
+  `Theme` rendered by `themeStyleSheet()`, never emitted by `tokenStyleSheet()`. The default
+  palette's configurable accent and high contrast are not themes; each became something every
+  palette does.
+- **Question 2 — a category may arrive with a shipped theme when its default is the identity**,
+  which is the second clause `ARCHITECTURE.md`'s rule gains. The names it brings are the ones
+  listed there, each defaulting to what renders today, and five changes need none because they are
+  components' own drawings or a ground in a category that exists: the select's options, the
+  switch's empty track, the dialog's border, the toast's icon, and `--ui-color-info`.
+- **Question 3 — every shipped palette is measured, in each scheme it keeps, under emulated `more`
+  as well.** The accent's label is derived, its states move toward whichever pole has room, and
+  what sits on the accent takes the label, marks included. **A boundary owes 3:1 on either side**,
+  and where it is its fill's own colour with a shadow or glow outside, its content may meet the
+  floor — the two rules the taking added, both put by Matrix.
+- **Question 4 — high contrast is `prefers-contrast: more`, answered in the token layer**, black and
+  white with its states written out, the accent moved and the outcome colours kept, and what floats
+  over the page edged in the text. `themeStyleSheet()` resets the written states for a theme whose
+  answer leaves them out.
+- **Question 5 — no shipped theme declines a scheme**, so the shape carries no `scheme`.
+
+**What it costs, named here rather than discovered in the rollout.**
+
+- **One break**: `--ui-color-accent-contrast` moves from a ground to a derivation, so `defaults`
+  and `darkScheme` lose a key and `Token` a member — a minor below `1.0.0`. The dark scheme's label
+  goes from `#111827` to black.
+- **Measuring every palette, permanently**: every component and ground that arrives later is
+  measured under Matrix and Glass as well, in both schemes and under `more`.
+- **Glass's condition on the host's page**, documented with the theme: no darker than `#cecece` in
+  the light scheme, no lighter than `#303030` in the dark.
+- **The mark stops being a hole**, which `src/checkbox.ts` and `src/radio.ts` explain at length;
+  the reason they give — a colour frozen in a `data:` URI — is kept by a mask on a layer, and the
+  forced-colors behaviour the hole gave for free is measured again.
+
+**What this does not decide** is when any step is built. The rollout is ordered and each step makes
+the next possible; none is scheduled here.
 
 ## Rollout
 
-**Not written**, and deliberately: the Rollout describes what must happen for an accepted design to
-exist, and there is no accepted design yet.
+Tracked in [#233](https://github.com/rak200/ui/issues/233). Ordered, each step shippable alone. Verification is not listed per step: the floors already require
+it of every commit here.
 
-One piece of bookkeeping is already known. **No `ROADMAP.md` entry precedes acceptance** — RFC 0002
-records that both of its own obligations, the tracking issue and the roadmap entry, followed
-acceptance rather than preceding it. This file is the register until then.
+1. **The drawings no theme waits on** — the switch's empty track and the marks taking the accent's
+   label in `src/checkbox.ts` and `src/radio.ts`, the dialog's border in `src/dialog.ts`, the
+   select's options painting their own surface in `src/select.ts`, and the toast's icon, its edge
+   in one colour and `--ui-color-info` in `src/toast.ts` and `src/tokens.ts`. Each changes the
+   default palette's look and none its contract, so each can be its own pull request.
+2. **The per-palette floors**, over the default palette alone, with the boundary rule above.
+   Nothing renders differently, and every later step lands inside the gate.
+3. **The derived label and the states with room** — the breaking step, alone so its changelog entry
+   says only that.
+4. **`prefers-contrast: more`** in `tokenStyleSheet()`, black and white with its states written
+   out, and the floors run under emulation.
+5. **The theme shape, `themeStyleSheet()` and Matrix**, in both schemes, with the names question 2
+   lists for it and a theme control in the playground beside the scheme control #120 put there.
+   `ARCHITECTURE.md` loses the elevation sentence S2 contradicts, and gains the second clause of
+   _A category arrives…_.
+6. **Glass**, last: its names, its floors measured over the page limit it documents, and opaque
+   under `more` and under reduced transparency.
 
 **One dependency is already met**: four themes cannot be judged in a playground that renders one
 scheme, and [#120](https://github.com/rak200/ui/issues/120) inserted the token sheet into the
