@@ -93,11 +93,24 @@
                     0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
             }
 
+            /* The secondary button and the menu's trigger take the edge too: drawn in the text's
+               own colour, theirs was the hardest line on the glass. A button's border owes no 3:1
+               — WCAG 1.4.11 asks for a boundary only where it is what identifies the control, and
+               a button's label does that — so it can soften as a card's does. A field's cannot:
+               an empty field has nothing else to show where it is, and keeps the derived border. */
+            [data-ui-theme='glass'][data-edge] ui-button[variant='secondary']::part(button),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(trigger) {
+                border-color: var(--ui-color-border-raised);
+                box-shadow:
+                    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
+                    0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
+            }
+
             /* Being tried: the controls' own fills at an opacity, over the glass they sit on. Each
                keeps its colour and gives up only its opacity — the field, an empty box and a
                secondary button the surface, the stripe and the header the muted surface, a filled
-               control the accent — and every edge stays opaque, so each boundary keeps the 3:1
-               the derived border was chosen for. No backdrop filter of their own: the card's
+               control the accent — and every edge but a button's stays opaque, so each boundary
+               keeps the 3:1 the derived border was chosen for. No backdrop filter of their own: the card's
                already blurs what is behind them.
 
                The fills are reached through the parts the components expose, and a declaration
@@ -405,8 +418,8 @@
                 <label
                     >Accent
                     <select id="invert">
-                        <option value="none" selected>Dark on light, as shipped</option>
-                        <option value="buttons">Inverted, on primary buttons</option>
+                        <option value="none">Dark on light, as shipped</option>
+                        <option value="buttons" selected>Inverted, on primary buttons</option>
                         <option value="all">Inverted, everywhere</option>
                     </select></label
                 >
@@ -451,7 +464,7 @@
                     data-checks
                     data-buttons
                     data-table
-                    data-invert="none"
+                    data-invert="buttons"
                     data-scene="hard"
                 ></div>
                 <dl data-floors></dl>
