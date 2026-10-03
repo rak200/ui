@@ -61,7 +61,7 @@
     background-color: var(--ui-color-accent);
     background-image: radial-gradient(
         circle closest-side,
-        var(--ui-color-surface) 100%,
+        var(--ui-color-accent-contrast) 100%,
         transparent 100%
     );
 }
