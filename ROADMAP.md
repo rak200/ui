@@ -3,6 +3,23 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
+## A neutral hover a reader can see (#228)
+
+`--ui-color-hover` mixes 8% of the text into the surface, and in the dark scheme that is a step most
+readers do not notice — a menu item under the pointer looks like the ones beside it. The suite's
+1.05 floor is a floor for _renders as different_, so 1.17 clears it while the defect stands. The fix
+raises the floor and the mix together, and the number wants a look in both schemes rather than a
+guess. A palette whose text is far from neutral cannot reach it by the shared formula; that half is
+RFC 0003's question 3.
+
+## `::part(box):checked` matches (#229)
+
+Three places — `docs/checkbox.md`, the docblock on `expose()` in `src/checkbox.ts`, and the comment
+above the custom-state assertions in `tests/checkbox.test.ts` — say the selector does not match,
+and in this engine it does. The custom states keep a reason, a different one: they select the
+host, where a part reaches only the box. The fix is the three sentences, and a test that fails when
+the engine changes rather than a re-dated measurement.
+
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by

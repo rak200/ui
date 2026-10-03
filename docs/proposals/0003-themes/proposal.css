@@ -1,7 +1,7 @@
 /*
  * What question 3 would change in src/tokens.ts: the accent's label becomes the WCAG pole of
- * the accent, and the accent's hover and pressed shades mix away from that pole instead of
- * toward the text — S1's third shape, 0 of 4096 accents under 4.5:1.
+ * the accent, 0 of 4096 accents under 4.5:1, and the accent's hover and pressed shades mix
+ * toward whichever pole leaves them room instead of toward the text.
  *
  * The proposal puts these formulas in the var() fallback, where every derivation lives. This
  * prototype declares them on the themed element instead, which freezes them there — the
@@ -17,18 +17,41 @@
             clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
     );
 
-    /* The comparison reversed: the pole the label is not. Mixing toward it moves every state
-       away from the text on it, so the ratio can only rise. */
-    --proposal-away: color(
+    /* The pole the states move toward. Away from the label while the label has little to
+       spare, toward it once the label stands at 10:1 or more: lighten while the luminance is
+       at or under 0.055 (a white label at 10:1 and up) or between the crossover and 0.45 (a
+       black label under 10:1), darken otherwise. Away from the label always is what left a
+       very light or very dark accent with no room to move — 697 of 4096 — and toward it
+       always took the label under 4.5:1 on 1978. Between 8.5:1 and 12:1 only black fails,
+       its hover at 1.03; 10 sits in the middle. */
+    --proposal-room: color(
         from var(--ui-color-accent) srgb-linear
-            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
-            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
-            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
+            clamp(
+                0,
+                clamp(0, (0.055 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1) +
+                    clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1) *
+                    clamp(0, (0.45 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1),
+                1
+            )
+            clamp(
+                0,
+                clamp(0, (0.055 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1) +
+                    clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1) *
+                    clamp(0, (0.45 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1),
+                1
+            )
+            clamp(
+                0,
+                clamp(0, (0.055 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1) +
+                    clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1) *
+                    clamp(0, (0.45 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1),
+                1
+            )
     );
-    --ui-color-accent-hover: color-mix(in oklab, var(--proposal-away) 12%, var(--ui-color-accent));
+    --ui-color-accent-hover: color-mix(in oklab, var(--proposal-room) 12%, var(--ui-color-accent));
     --ui-color-accent-pressed: color-mix(
         in oklab,
-        var(--proposal-away) 22%,
+        var(--proposal-room) 22%,
         var(--ui-color-accent)
     );
 }

@@ -76,18 +76,15 @@
                 white in the light scheme, <code>#111827</code> in the dark — so a host who moves
                 the accent has to move the label as well, and nothing reads the pair.
                 <strong>Proposed</strong> is question 3: the label is the WCAG pole of the accent,
-                and the hover and pressed shades mix away from it. Switch the scheme at the top: the
-                same accent goes to both, as it would from a host setting one value.
+                and the hover and pressed shades mix toward whichever pole leaves them room. Switch
+                the scheme at the top: the same accent goes to both, as it would from a host setting
+                one value.
             </p>
             <p>
                 Hover and press the primary buttons to see the shades. The floors under each panel
-                are read in this browser with the suite's own ratio — and they show what the
-                proposal does not solve:
-                <strong
-                    >the label holds on every accent, but the accent's own hover and pressed states
-                    can stop being visible</strong
-                >. Yellow shows it: a very bright accent has no room left toward white, and a very
-                dark one none toward black.
+                are read in this browser with the suite's own ratio. Yellow is where moving away
+                from the label failed: a very bright accent has no room left toward white, so its
+                states now darken toward the black label instead, which has room to spare.
             </p>
             <div class="controls">
                 <label>Accent <input type="color" id="accent" value="#facc15" /></label>
