@@ -6,6 +6,7 @@
         <title>Matrix theme</title>
         <link rel="stylesheet" href="prototype.css" />
         <link rel="stylesheet" href="proposal.css" />
+        <link rel="stylesheet" href="toast.css" />
         <style>
             /* What the theme would ship — questions 1 and 2, in both schemes. The dark one is the
                visual reference's wherever the floors allow it: its green on its #050505 ground,
@@ -134,6 +135,30 @@
                 --proposal-hover-shadow:
                     0 0 0 2px var(--ui-color-surface), 0 0 0 3px var(--proposal-hover-ring),
                     0 0 18px 2px var(--proposal-hover-glow);
+                --ui-elevation-100:
+                    0 0 0 2px var(--ui-color-surface), 0 0 0 3px var(--proposal-ring-colour),
+                    0 0 18px 2px var(--proposal-glow-colour);
+            }
+
+            /* The toast edged all round in its variant's colour, and glowing in it — its ring and
+               its glow, as an invalid control glows in the danger. The raised surfaces' geometry is
+               declared again on the toast, so it reads the toast's colours rather than the theme
+               element's. */
+            [data-ui-theme='matrix'] ui-toast {
+                border-color: var(--proposal-toast-tone);
+                --proposal-glow-colour: light-dark(
+                    rgb(from var(--proposal-toast-tone) r g b / calc(0.25 * var(--proposal-glow))),
+                    rgb(from var(--proposal-toast-tone) r g b / calc(0.3 * var(--proposal-glow)))
+                );
+                --proposal-ring-colour: light-dark(
+                    rgb(from var(--proposal-toast-tone) r g b / calc(0.3 * var(--proposal-glow))),
+                    rgb(from var(--proposal-toast-tone) r g b / calc(0.25 * var(--proposal-glow)))
+                );
+                --ui-elevation-100:
+                    0 0 0 1px var(--proposal-ring-colour), 0 0 18px var(--proposal-glow-colour);
+            }
+
+            [data-ui-theme='matrix'][data-glow-gap] ui-toast {
                 --ui-elevation-100:
                     0 0 0 2px var(--ui-color-surface), 0 0 0 3px var(--proposal-ring-colour),
                     0 0 18px 2px var(--proposal-glow-colour);

@@ -90,3 +90,10 @@
 [data-more] ui-menu::part(menu) {
     border-color: var(--ui-color-text);
 }
+
+/* The toast stays black and white: its edge all round, stripe included, and its icon in the
+   text's own colour, so the variant is told by the icon and the words rather than by a hue. */
+[data-more] ui-toast[variant] {
+    --proposal-toast-tone: currentcolor;
+    border-color: var(--ui-color-text);
+}

@@ -6,6 +6,7 @@
         <title>Glass theme</title>
         <link rel="stylesheet" href="prototype.css" />
         <link rel="stylesheet" href="proposal.css" />
+        <link rel="stylesheet" href="toast.css" />
         <link rel="stylesheet" href="contrast.css" />
         <style>
             /* What the theme would ship — questions 1 and 2. Three names the package does not
@@ -74,10 +75,11 @@
                 border-color: var(--ui-color-border-raised);
             }
 
-            /* The toast's inline-start edge is its variant colour, so only the other three move. */
-            [data-ui-theme='glass'][data-edge] ui-toast {
-                border-block-color: var(--ui-color-border-raised);
-                border-inline-end-color: var(--ui-color-border-raised);
+            /* The toast is edged all round in its variant's colour at 0.8, the opacity a filled
+               control takes on the glass, where only its stripe was and the glass's edge took the
+               other three sides. */
+            [data-ui-theme='glass'] ui-toast {
+                border-color: rgb(from var(--proposal-toast-tone) r g b / 0.8);
             }
 
             [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog),
