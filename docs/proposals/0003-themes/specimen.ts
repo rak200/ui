@@ -11,7 +11,7 @@
 import './scheme.js';
 import '../../../src/index.js';
 
-import { html, render, type TemplateResult } from 'lit';
+import { css, html, render, type TemplateResult } from 'lit';
 
 import type { UiDialog } from '../../../src/dialog.js';
 import { reference } from '../../../src/reference.js';
@@ -503,6 +503,26 @@ function specimen(index: number): TemplateResult {
 
 for (const [index, panel] of document.querySelectorAll<HTMLElement>('[data-specimen]').entries()) {
     render(specimen(index), panel);
+}
+
+// Stand-in for a component change a translucent field asks of the select. The platform's
+// picker takes its colours from the select unless an option brings its own, so a select
+// filled at an opacity hands that fill to a list that has no page behind it. Each option paints
+// the surface and the text itself — what every palette's picker showed until the fill could be
+// translucent — and src/select.ts would write the same rule once the field's fill is a name of
+// its own. Reached through the open shadow root, since an option is no part.
+const options = css`
+    option,
+    optgroup {
+        background-color: ${reference('--ui-color-surface')};
+        color: ${reference('--ui-color-text')};
+    }
+`.styleSheet;
+
+for (const select of document.querySelectorAll('ui-select')) {
+    if (select.shadowRoot !== null && options !== undefined) {
+        select.shadowRoot.adoptedStyleSheets = [...select.shadowRoot.adoptedStyleSheets, options];
+    }
 }
 
 measureAll();
