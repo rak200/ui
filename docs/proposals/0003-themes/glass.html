@@ -132,28 +132,40 @@
             [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):checked,
             [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):indeterminate,
             [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked,
-            [data-ui-theme='glass'][data-checks] ui-radio-group::part(control):checked,
-            [data-ui-theme='glass'][data-buttons]
-                ui-button:not([variant='secondary'])::part(button) {
-                background-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-accent));
-                border-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-accent));
+            [data-ui-theme='glass'][data-checks] ui-radio-group::part(control):checked {
+                background-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-checked));
+                border-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-checked));
             }
 
             [data-ui-theme='glass'][data-checks]
                 ui-checkbox::part(box):checked:hover:not(:disabled),
-            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked:hover:not(:disabled),
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked:hover:not(:disabled) {
+                background-color: rgb(
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-checked)
+                );
+                border-color: rgb(
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-checked)
+                );
+            }
+
+            /* The primary button on its own opacity, apart from the checked controls: its label
+               is read against the fill, and the fill is what the opacity gives away. */
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button) {
+                background-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-primary));
+            }
+
             [data-ui-theme='glass'][data-buttons]
                 ui-button:not([variant='secondary'])::part(button):hover:not(:disabled) {
                 background-color: rgb(
-                    from var(--ui-color-accent-hover) r g b / var(--proposal-accent)
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-primary)
                 );
-                border-color: rgb(from var(--ui-color-accent-hover) r g b / var(--proposal-accent));
             }
 
             [data-ui-theme='glass'][data-buttons]
                 ui-button:not([variant='secondary'])::part(button):active:not(:disabled) {
                 background-color: rgb(
-                    from var(--ui-color-accent-pressed) r g b / var(--proposal-accent)
+                    from var(--ui-color-accent-pressed) r g b / var(--proposal-primary)
                 );
             }
 
@@ -316,8 +328,10 @@
                 their fills at an opacity, the neutral ones and the accent ones apart, every edge
                 still opaque. A neutral fill only adds to the glass beneath it, so text on a field,
                 a secondary button or a row reads at least as well as on the glass or the surface,
-                whichever is worse — the rows above bound it. An accent fill is different: the label
-                on a button and a checked box are read against it, and both have rows of their own.
+                whichever is worse — the rows above bound it. An accent fill is different, and the
+                checked controls and the primary button each have their own opacity: a checked box
+                is read against the glass around it, and a button's label and its hover against the
+                fill itself.
             </p>
             <p>
                 <strong>To see a reading rather than read it</strong>, put one colour behind every
@@ -350,9 +364,14 @@
                     <output for="fill">0.20</output></label
                 >
                 <label
-                    >Accent opacity
-                    <input type="range" id="accent" min="0" max="1" step="0.01" value="1" />
-                    <output for="accent">1.00</output></label
+                    >Checked opacity
+                    <input type="range" id="checked" min="0" max="1" step="0.01" value="1" />
+                    <output for="checked">1.00</output></label
+                >
+                <label
+                    >Primary opacity
+                    <input type="range" id="primary" min="0" max="1" step="0.01" value="1" />
+                    <output for="primary">1.00</output></label
                 >
                 <label><input type="checkbox" id="fields" checked /> Fields</label>
                 <label><input type="checkbox" id="checks" checked /> Checks</label>
@@ -405,12 +424,13 @@
 
             const panel = document.querySelector('[data-specimen]');
             const control = (id) => document.getElementById(id);
-            const [light, dark, blur, fill, accent, scene, edge, more, colour] = [
+            const [light, dark, blur, fill, checked, primary, scene, edge, more, colour] = [
                 'light',
                 'dark',
                 'blur',
                 'fill',
-                'accent',
+                'checked',
+                'primary',
                 'scene',
                 'edge',
                 'more',
@@ -440,7 +460,7 @@
             function tune() {
                 const off = more.checked || quiet.matches;
 
-                for (const input of [light, dark, blur, fill, accent]) {
+                for (const input of [light, dark, blur, fill, checked, primary]) {
                     input.nextElementSibling.value =
                         input === blur ? `${input.value}px` : Number(input.value).toFixed(2);
                 }
@@ -454,7 +474,8 @@
                 }
 
                 panel.style.setProperty('--proposal-fill', fill.value);
-                panel.style.setProperty('--proposal-accent', accent.value);
+                panel.style.setProperty('--proposal-checked', checked.value);
+                panel.style.setProperty('--proposal-primary', primary.value);
 
                 panel.style.setProperty('--proposal-page', colour.value);
 
@@ -496,7 +517,18 @@
                 tune();
             }
 
-            for (const input of [light, dark, blur, fill, accent, scene, edge, more, ...groups]) {
+            for (const input of [
+                light,
+                dark,
+                blur,
+                fill,
+                checked,
+                primary,
+                scene,
+                edge,
+                more,
+                ...groups,
+            ]) {
                 input.addEventListener('input', tune);
             }
 

@@ -216,8 +216,9 @@ function floors(panel: HTMLElement): (Floor | Reading)[] {
  * as the page it can take: the lightest grey under it in the dark scheme, the darkest in the
  * light — kept on the panel as `data-limit`, for the page to paint.
  *
- * A panel whose controls fill with the accent at an opacity — `data-checks`, `data-buttons`,
- * and `--proposal-accent` — has a checked box and a button's label read against that fill.
+ * A panel whose controls fill with the accent at an opacity has them read against that fill:
+ * a checked box at `--proposal-checked` under `data-checks`, and a primary button's label and
+ * its hover at `--proposal-primary` under `data-buttons`.
  * A neutral fill needs no row: it only adds to the glass beneath it.
  *
  * A panel that lists its page's own colours in `data-backdrops` gets each of them measured
@@ -239,9 +240,11 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
     const opacity = glass.alpha.toFixed(2);
     const accent = parsed(read('--ui-color-accent'));
     const label = read('--ui-color-accent-contrast');
-    const translucent = resolved(panel, 'rgb(0 0 0 / var(--proposal-accent, 1))').alpha;
-    const box = { ...accent, alpha: panel.hasAttribute('data-checks') ? translucent : 1 };
-    const button = { ...accent, alpha: panel.hasAttribute('data-buttons') ? translucent : 1 };
+    const translucent = (name: string, group: string): number =>
+        panel.hasAttribute(group) ? resolved(panel, `rgb(0 0 0 / var(${name}, 1))`).alpha : 1;
+    const box = { ...accent, alpha: translucent('--proposal-checked', 'data-checks') };
+    const button = { ...accent, alpha: translucent('--proposal-primary', 'data-buttons') };
+    const hovered = { ...parsed(read('--ui-color-accent-hover')), alpha: button.alpha };
     const solid =
         (colour: string) =>
         (ground: Colour): number =>
@@ -258,6 +261,12 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
             name: 'the label on a button',
             floor: 4.5,
             against: (ground) => contrastRatio(label, hex(over(button, ground))),
+        },
+        {
+            name: "a button's hover, against resting",
+            floor: 1.05,
+            against: (ground) =>
+                contrastRatio(hex(over(hovered, ground)), hex(over(button, ground))),
         },
         { name: 'a switch that is off', floor: 3, against: solid(read('--ui-color-border')) },
         { name: 'the focus ring', floor: 3, against: solid(read('--ui-color-focus')) },
