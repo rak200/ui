@@ -14,7 +14,6 @@ import '../../../src/index.js';
 import { html, render, type TemplateResult } from 'lit';
 
 import type { UiDialog } from '../../../src/dialog.js';
-import type { UiMenu } from '../../../src/menu.js';
 import { reference } from '../../../src/reference.js';
 import { tokenStyleSheet, type DerivedToken, type Token } from '../../../src/tokens.js';
 import { contrastRatio } from '../../../tests/contrast.js';
@@ -469,18 +468,6 @@ function specimen(index: number): TemplateResult {
 
 for (const [index, panel] of document.querySelectorAll<HTMLElement>('[data-specimen]').entries()) {
     render(specimen(index), panel);
-}
-
-// The menu names no part, where every other control here names the box a page would style, so
-// a page reaches neither its trigger nor its panel from outside, and a theme tried through
-// parts would pass it by. A theme that ships needs no part — it reaches a component through
-// the tokens the component reads, which cross a shadow root — so this is the prototype's gap
-// rather than the proposal's, and the stand-in closes it: it names the menu's two boxes.
-for (const menu of document.querySelectorAll<UiMenu>('ui-menu')) {
-    void menu.updateComplete.then(() => {
-        menu.shadowRoot?.querySelector('button')?.setAttribute('part', 'trigger');
-        menu.shadowRoot?.querySelector('[popover]')?.setAttribute('part', 'panel');
-    });
 }
 
 measureAll();
