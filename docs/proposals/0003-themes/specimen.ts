@@ -193,6 +193,134 @@ function floors(panel: HTMLElement): Floor[] {
     ];
 }
 
+/** One text shadow, as the computed style serialises it. */
+interface Shadow {
+    readonly colour: string;
+    readonly x: number;
+    readonly y: number;
+    readonly blur: number;
+}
+
+/** The shadows in a computed `text-shadow`, which Chrome writes colour first, in pixels. */
+function shadows(value: string): Shadow[] {
+    const found: Shadow[] = [];
+
+    for (const match of value.matchAll(
+        /([a-z]+\([^)]*\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px/g,
+    )) {
+        const [, colour = 'transparent', x = '0', y = '0', blur = '0'] = match;
+
+        found.push({ colour, x: Number(x), y: Number(y), blur: Number(blur) });
+    }
+
+    return found;
+}
+
+// The halo is measured on its own canvas, a line of text long enough to hold every shape a
+// glyph's counter can take.
+const sample = 'Printed on every invoice — 0142, 0143.';
+const stage = document.createElement('canvas');
+stage.width = 360;
+stage.height = 40;
+const staged = stage.getContext('2d', { willReadFrequently: true });
+
+/**
+ * The text against the halo around it, over one backdrop: the worst pixel touching a glyph
+ * that no glyph covers at all — what sits against the letter, with its antialiased edge, part
+ * letter and part background, left out.
+ *
+ * Drawn in a canvas with the halo `raised` actually computes, read back from its style: the
+ * text shadows one by one, and the text stroke if there is one. A canvas shadow and a CSS text
+ * shadow blur by the same Gaussian, half the radius as its deviation. The size is the
+ * supporting text's, the smallest set on the glass.
+ */
+function onHalo(raised: Element, text: string, glass: Colour, backdrop: Colour): number {
+    if (staged === null) {
+        throw new Error('no 2d context, so no halo can be drawn');
+    }
+
+    const style = getComputedStyle(raised);
+    const size = Number.parseFloat(style.fontSize) * 0.875;
+    const { width, height } = stage;
+    const [left, middle, far] = [8, height / 2, 10000];
+
+    staged.font = `${style.fontWeight} ${String(size)}px ${style.fontFamily}`;
+    staged.textBaseline = 'middle';
+
+    staged.clearRect(0, 0, width, height);
+    staged.fillStyle = '#ffffff';
+    staged.fillText(sample, left, middle);
+
+    const glyphs = staged.getImageData(0, 0, width, height).data;
+
+    staged.fillStyle = hex(over(glass, backdrop));
+    staged.fillRect(0, 0, width, height);
+
+    const stroke = Number.parseFloat(style.getPropertyValue('-webkit-text-stroke-width'));
+
+    // Up to 4px this matches the page; past it the canvas stroker leaves pixels unfilled that
+    // the page fills, so a wider stroke reads worse here than it renders there.
+    if (stroke > 0) {
+        staged.lineWidth = stroke;
+        // Mitred, as Chrome strokes text: a round join drew holes the page never shows.
+        staged.lineJoin = 'miter';
+        staged.strokeStyle = style.getPropertyValue('-webkit-text-stroke-color');
+        staged.strokeText(sample, left, middle);
+    }
+
+    // Drawn far off the canvas and cast back onto it, so only the shadow lands.
+    for (const shadow of shadows(style.textShadow)) {
+        staged.save();
+        staged.shadowColor = shadow.colour;
+        staged.shadowBlur = shadow.blur;
+        staged.shadowOffsetX = shadow.x - far;
+        staged.shadowOffsetY = shadow.y;
+        staged.fillStyle = shadow.colour;
+        staged.fillText(sample, left + far, middle);
+        staged.restore();
+    }
+
+    staged.fillStyle = text;
+    staged.fillText(sample, left, middle);
+
+    const scene = staged.getImageData(0, 0, width, height).data;
+    const alpha = (column: number, row: number): number =>
+        glyphs[(row * width + column) * 4 + 3] ?? 0;
+    const nearGlyph = (column: number, row: number): boolean => {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (alpha(column + dx, row + dy) > 127) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+
+    let least = Number.POSITIVE_INFINITY;
+
+    for (let row = 2; row < height - 2; row++) {
+        for (let column = 2; column < width - 2; column++) {
+            if (alpha(column, row) !== 0 || !nearGlyph(column, row)) {
+                continue;
+            }
+
+            const at = (row * width + column) * 4;
+            const pixel = hex({
+                red: scene[at] ?? 0,
+                green: scene[at + 1] ?? 0,
+                blue: scene[at + 2] ?? 0,
+                alpha: 1,
+            });
+
+            least = Math.min(least, contrastRatio(text, pixel));
+        }
+    }
+
+    return least;
+}
+
 /**
  * A translucent raised surface, measured the way S3 found it has to be: over black and over
  * white, which bound every backdrop there can be. Only a panel that declares `data-raised`
@@ -201,6 +329,9 @@ function floors(panel: HTMLElement): Floor[] {
  * A panel that also lists its page's own colours in `data-backdrops` gets a second row: the
  * same text over only those, which is what a theme could promise if it constrained what may
  * sit behind it instead of holding for any page.
+ *
+ * A panel whose `data-halo` names one gets the same two readings again, taken against the
+ * halo around each letter instead of the glass behind it.
  */
 function raised(panel: HTMLElement, text: string): Floor[] {
     if (!panel.hasAttribute('data-raised')) {
@@ -223,13 +354,36 @@ function raised(panel: HTMLElement, text: string): Floor[] {
         },
     ];
     const listed = panel.dataset['backdrops'];
+    const backdrops = listed === undefined || listed === '' ? [] : listed.split(' ').map(parsed);
 
-    if (listed !== undefined && listed !== '') {
-        const backdrops = listed.split(' ').map(parsed);
-
+    if (backdrops.length > 0) {
         rows.push({
             name: `text on the glass at ${opacity}, this page's colours — clears ${least(text, glass, backdrops)}`,
             value: worst(text, glass, backdrops),
+            floor: 4.5,
+        });
+    }
+
+    const halo = panel.dataset['halo'];
+    const surface = panel.querySelector('ui-card');
+
+    if (halo === undefined || halo === 'none' || surface === null) {
+        return rows;
+    }
+
+    const haloed = (behind: readonly Colour[]): number =>
+        Math.min(...behind.map((backdrop) => onHalo(surface, text, glass, backdrop)));
+
+    rows.push({
+        name: `text on its ${halo} halo at ${opacity}, any page`,
+        value: haloed([black, white]),
+        floor: 4.5,
+    });
+
+    if (backdrops.length > 0) {
+        rows.push({
+            name: `text on its ${halo} halo at ${opacity}, this page's colours`,
+            value: haloed(backdrops),
             floor: 4.5,
         });
     }
