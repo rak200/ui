@@ -165,6 +165,28 @@
                 );
             }
 
+            /* The switch, off, is drawn as an empty box is: the surface at the fill's opacity
+               inside the derived border, where it had been a track filled with the border's own
+               colour — the one opaque fill left on the glass. Its thumb takes the border's
+               colour in place of the surface's, so it still stands apart from the track; on, the
+               track is the accent and the thumb goes back to the surface. */
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box) {
+                background-color: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
+                background-image: radial-gradient(
+                    circle closest-side,
+                    color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface)) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked {
+                background-image: radial-gradient(
+                    circle closest-side,
+                    var(--ui-color-surface) 100%,
+                    transparent 100%
+                );
+            }
+
             [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):checked,
             [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):indeterminate,
             [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked,
