@@ -452,13 +452,13 @@
                 >
                 <label
                     >Checked opacity
-                    <input type="range" id="checked" min="0" max="1" step="0.01" value="1" />
-                    <output for="checked">1.00</output></label
+                    <input type="range" id="checked" min="0" max="1" step="0.01" value="0.8" />
+                    <output for="checked">0.80</output></label
                 >
                 <label
                     >Primary opacity
-                    <input type="range" id="primary" min="0" max="1" step="0.01" value="1" />
-                    <output for="primary">1.00</output></label
+                    <input type="range" id="primary" min="0" max="1" step="0.01" value="0.8" />
+                    <output for="primary">0.80</output></label
                 >
                 <label
                     >Accent
@@ -609,14 +609,23 @@
                 control('limit').disabled = panel.dataset.limit === undefined;
             }
 
-            // Back to what the theme would ship, keeping the page behind and the controls, which
-            // the theme does not ship yet.
+            // Back to what the theme would ship, keeping the page behind.
             function reset() {
                 light.value = '0.2';
                 dark.value = '0.2';
                 blur.value = '10';
+                fill.value = '0.2';
+                checked.value = '0.8';
+                primary.value = '0.8';
+                invert.value = 'buttons';
                 edge.checked = true;
+                primaryEdge.checked = true;
                 more.checked = false;
+
+                for (const group of groups) {
+                    group.checked = true;
+                }
+
                 tune();
             }
 

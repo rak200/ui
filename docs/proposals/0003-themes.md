@@ -462,8 +462,8 @@ menu's panel — are the scheme's pole at 0.20, white in the light scheme and bl
 rather than the dark surface's blue-black, because at the same opacity it takes a lighter page:
 `#303030` against `#2a2a2a`. The text goes to its pole and the accent to slate, `#334155` and
 `#94a3b8`. The controls are translucent too — a field, a select, an empty box and radio, the switch
-when off, a secondary button and the table each take their own fill at 0.20 — while a filled
-control keeps the accent opaque.
+when off, a secondary button and the table each take their own fill at 0.20 — and a filled
+control takes the accent at 0.80.
 
 **The floor is a page, not an opacity.** S3 bounded the backdrop by black and white, and over those
 the glass needs 0.46 and 0.60 even with the text at its pole. But a page that follows the dark
@@ -495,7 +495,7 @@ alone** — a light slate under a black label in the light scheme, a dark one un
 the dark — the fill moves away from the label instead, and the label never binds. Inverted
 everywhere, a checked box falls under 3:1 against the glass even when opaque. So the primary
 button wants a fill of its own, apart from the accent the checked controls read. The theme keeps it
-inverted and opaque.
+inverted, at 0.80 like the checked controls.
 
 **A button's edge may soften; a field's may not.** WCAG 1.4.11 asks for a boundary only where the
 boundary is what identifies the control, and a button's label already does — so the buttons, primary
