@@ -81,15 +81,105 @@
             [data-ui-theme='matrix'][data-glow-checks] ui-checkbox::part(box),
             [data-ui-theme='matrix'][data-glow-checks] ui-switch::part(box),
             [data-ui-theme='matrix'][data-glow-checks] ui-radio-group::part(control) {
-                box-shadow: var(--proposal-glow-shadow, 0 0 10px var(--proposal-control-glow));
+                box-shadow: var(--proposal-glow-shadow);
+            }
+
+            /* Declared on each control rather than on the theme's element, so it reads that
+               control's own glow colour — which an invalid one turns red, below. */
+            [data-ui-theme='matrix']
+                :is(
+                    ui-button,
+                    ui-menu,
+                    ui-input,
+                    ui-select,
+                    ui-checkbox,
+                    ui-switch,
+                    ui-radio-group
+                ) {
+                --proposal-glow-shadow: 0 0 10px var(--proposal-control-glow);
             }
 
             /* The glow held 2px off the edge by a ring in the surface's own colour, and pushed
                out by as much, so what lies against a boundary is the surface it was chosen
-               against rather than the glow. */
-            [data-ui-theme='matrix'][data-glow-gap] {
+               against rather than the glow — on the controls and on the raised surfaces alike. */
+            [data-ui-theme='matrix'][data-glow-gap]
+                :is(
+                    ui-button,
+                    ui-menu,
+                    ui-input,
+                    ui-select,
+                    ui-checkbox,
+                    ui-switch,
+                    ui-radio-group
+                ) {
                 --proposal-glow-shadow:
                     0 0 0 2px var(--ui-color-surface), 0 0 10px 2px var(--proposal-control-glow);
+            }
+
+            [data-ui-theme='matrix'][data-glow-gap] {
+                --ui-elevation-100:
+                    0 0 0 2px var(--ui-color-surface),
+                    0 0 0 3px
+                        light-dark(
+                            rgb(0 143 17 / calc(0.3 * var(--proposal-glow))),
+                            rgb(0 255 0 / calc(0.25 * var(--proposal-glow)))
+                        ),
+                    0 0 18px 2px
+                        light-dark(
+                            rgb(0 143 17 / calc(0.25 * var(--proposal-glow))),
+                            rgb(0 255 0 / calc(0.3 * var(--proposal-glow)))
+                        );
+            }
+
+            /* An invalid control glows in the colour of its own boundary, the danger. Its error
+               reflects, so a control with none still carries the attribute, empty. */
+            [data-ui-theme='matrix']
+                :is(ui-input, ui-select, ui-checkbox, ui-radio-group)[error]:not([error='']) {
+                --proposal-control-glow: rgb(
+                    from var(--ui-color-danger) r g b / calc(0.35 * var(--proposal-glow))
+                );
+            }
+
+            /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
+            [data-ui-theme='matrix'] ui-button::part(button):disabled,
+            [data-ui-theme='matrix'] ui-input::part(control):disabled,
+            [data-ui-theme='matrix'] ui-select::part(control):disabled,
+            [data-ui-theme='matrix'] ui-checkbox::part(box):disabled,
+            [data-ui-theme='matrix'] ui-switch::part(box):disabled,
+            [data-ui-theme='matrix'] ui-radio-group::part(control):disabled {
+                box-shadow: none;
+                text-shadow: none;
+            }
+
+            /* The switch, off, drawn as an empty box is: the surface inside the derived border,
+               where it had been a track filled with the border's own colour — a middle green
+               that read as on. Its thumb takes the border's colour in place of the surface's, so
+               it still stands apart from the track; on, the track is the accent again and the
+               thumb the surface. A rule from out here outranks every state the component paints,
+               so the on state and its hover are written again. */
+            [data-ui-theme='matrix'] ui-switch::part(box) {
+                background-color: var(--ui-color-surface);
+                background-image: radial-gradient(
+                    circle closest-side,
+                    color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface)) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-ui-theme='matrix'] ui-switch::part(box):checked {
+                background-color: var(--ui-color-accent);
+                background-image: radial-gradient(
+                    circle closest-side,
+                    var(--ui-color-surface) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-ui-theme='matrix'] ui-switch::part(box):checked:hover:not(:disabled) {
+                background-color: var(
+                    --ui-color-accent-hover,
+                    color-mix(in oklab, var(--ui-color-text) 12%, var(--ui-color-accent))
+                );
             }
 
             /* A checked box and radio draw their mark as a hole in a mask the size of the box,

@@ -359,7 +359,8 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
  * A shadow at zero offset is the box's shape blurred, and along a straight edge a blur keeps
  * half of what it spreads: the pixel beside the boundary is the glow at half its opacity over
  * the surface, and nothing beside it is brighter. A panel that declares `data-glow-gap` holds
- * the glow off the edge with a ring of the surface, so the surface is what lies beside it.
+ * the glow off the edge with a ring of the surface, so the surface is what lies beside it. An
+ * invalid field glows in the danger colour at the same strength.
  */
 function glowing(panel: HTMLElement): Floor[] {
     const fields = panel.hasAttribute('data-glow-fields');
@@ -383,6 +384,20 @@ function glowing(panel: HTMLElement): Floor[] {
             floor: 3,
         },
     ];
+
+    if (fields) {
+        const danger = read('--ui-color-danger');
+        const red = { ...parsed(danger), alpha: glow.alpha };
+
+        rows.push({
+            name: "an invalid field's edge, against its glow",
+            value: contrastRatio(
+                danger,
+                hex(panel.hasAttribute('data-glow-gap') ? surface : over(red, surface)),
+            ),
+            floor: 3,
+        });
+    }
 
     if (checks) {
         rows.push({
