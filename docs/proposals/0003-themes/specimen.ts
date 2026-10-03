@@ -201,6 +201,7 @@ function floors(panel: HTMLElement): (Floor | Reading)[] {
         { name: 'success', value: contrastRatio(read('--ui-color-success'), surface), floor: 4.5 },
         { name: 'warning', value: contrastRatio(read('--ui-color-warning'), surface), floor: 4.5 },
         ...raised(panel),
+        ...glowing(panel),
     ];
 }
 
@@ -344,6 +345,50 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
             name: `${on.name} on the glass at ${opacity}, this page — clears ${least(on, glass, backdrops)}`,
             value: Math.min(...backdrops.map((backdrop) => ratio(on, backdrop))),
             floor: on.floor,
+        });
+    }
+
+    return rows;
+}
+
+/**
+ * A control's glow, against the boundary it surrounds. Only a panel that declares
+ * `data-glow-fields` or `data-glow-checks` has one, at the colour `--proposal-control-glow`
+ * resolves to — the controls whose edge a reader needs.
+ *
+ * A shadow at zero offset is the box's shape blurred, and along a straight edge a blur keeps
+ * half of what it spreads: the pixel beside the boundary is the glow at half its opacity over
+ * the surface, and nothing beside it is brighter. A panel that declares `data-glow-gap` holds
+ * the glow off the edge with a ring of the surface, so the surface is what lies beside it.
+ */
+function glowing(panel: HTMLElement): Floor[] {
+    const fields = panel.hasAttribute('data-glow-fields');
+    const checks = panel.hasAttribute('data-glow-checks');
+
+    if (!fields && !checks) {
+        return [];
+    }
+
+    const read = (token: Token | DerivedToken): string => painted(panel, token);
+    const glow = {
+        ...resolved(panel, 'rgb(from var(--proposal-control-glow) r g b / 1)'),
+        alpha: resolved(panel, 'var(--proposal-control-glow)').alpha / 2,
+    };
+    const surface = parsed(read('--ui-color-surface'));
+    const beside = hex(panel.hasAttribute('data-glow-gap') ? surface : over(glow, surface));
+    const rows: Floor[] = [
+        {
+            name: "a control's edge, against its glow",
+            value: contrastRatio(read('--ui-color-border'), beside),
+            floor: 3,
+        },
+    ];
+
+    if (checks) {
+        rows.push({
+            name: 'a checked box, against its glow',
+            value: contrastRatio(read('--ui-color-accent'), beside),
+            floor: 3,
         });
     }
 

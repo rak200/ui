@@ -19,13 +19,30 @@
                 --ui-color-focus: light-dark(#008f11, #ccffcc);
                 --ui-font: 'Courier New', Courier, ui-monospace, monospace;
                 --ui-radius: 0.5rem;
+                /* The page's intensity slider, 1 unless moved: every glow below multiplies its
+                   opacity by it. What ships is the strength chosen, folded into the values. */
+                --proposal-glow: 1;
                 /* The glow, through the elevation step the raised surfaces already read — so the
                    card, the menu, the toast and the tip glow, and no name is added. Only its
                    colour follows the scheme, which is S2: a shadow's colour can be light-dark()
                    and the shadow cannot. */
                 --ui-elevation-100:
-                    0 0 0 1px light-dark(rgb(0 143 17 / 0.3), rgb(0 255 0 / 0.25)),
-                    0 0 18px light-dark(rgb(0 143 17 / 0.25), rgb(0 255 0 / 0.3));
+                    0 0 0 1px
+                        light-dark(
+                            rgb(0 143 17 / calc(0.3 * var(--proposal-glow))),
+                            rgb(0 255 0 / calc(0.25 * var(--proposal-glow)))
+                        ),
+                    0 0 18px
+                        light-dark(
+                            rgb(0 143 17 / calc(0.25 * var(--proposal-glow))),
+                            rgb(0 255 0 / calc(0.3 * var(--proposal-glow)))
+                        );
+                /* Being tried: the glow on the controls, where elevation is not read — question
+                   2's case for a name of its own. One colour, at the slider's strength. */
+                --proposal-control-glow: light-dark(
+                    rgb(0 143 17 / calc(0.35 * var(--proposal-glow))),
+                    rgb(0 255 0 / calc(0.35 * var(--proposal-glow)))
+                );
             }
 
             /* Its answer to prefers-contrast: more. The green stays on the accent and the text
@@ -41,16 +58,63 @@
                 --ui-color-text: light-dark(#000000, #ffffff);
             }
 
+            /* The dialog draws no boundary: the component counts on its scrim, black at 0.5, to
+               set it apart from the page. Over this theme's #050505 that leaves the page at
+               #020202 beside a dialog at #050505, 1.02:1 — no separation at all — so the dialog
+               takes what a card has, the derived border and the glow. The default palette's dark
+               scheme is 1.10 by the same measure, and its light one 3.95. */
+            [data-ui-theme='matrix'] ui-dialog::part(dialog) {
+                border: 1px solid
+                    color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface));
+                box-shadow: var(--ui-elevation-100);
+            }
+
+            /* Being tried: the control glow, on each group the toggles below name. The control's
+               own boundary stays the derived border, and the rows under each panel read it
+               against the glow beside it — a field's edge and a check's are boundaries a reader
+               needs, and a glow lights what is next to them. A button's label identifies it, so
+               its edge owes nothing. */
+            [data-ui-theme='matrix'][data-glow-buttons] ui-button::part(button),
+            [data-ui-theme='matrix'][data-glow-buttons] ui-menu::part(trigger),
+            [data-ui-theme='matrix'][data-glow-fields] ui-input::part(control),
+            [data-ui-theme='matrix'][data-glow-fields] ui-select::part(control),
+            [data-ui-theme='matrix'][data-glow-checks] ui-checkbox::part(box),
+            [data-ui-theme='matrix'][data-glow-checks] ui-switch::part(box),
+            [data-ui-theme='matrix'][data-glow-checks] ui-radio-group::part(control) {
+                box-shadow: var(--proposal-glow-shadow, 0 0 10px var(--proposal-control-glow));
+            }
+
+            /* The glow held 2px off the edge by a ring in the surface's own colour, and pushed
+               out by as much, so what lies against a boundary is the surface it was chosen
+               against rather than the glow. */
+            [data-ui-theme='matrix'][data-glow-gap] {
+                --proposal-glow-shadow:
+                    0 0 0 2px var(--ui-color-surface), 0 0 10px 2px var(--proposal-control-glow);
+            }
+
+            /* A checked box and radio draw their mark as a hole in a mask the size of the box,
+               and a mask hides whatever it does not cover, the glow included. Repeating the
+               mask's whole layer past the box, unclipped, uncovers the glow and leaves the hole
+               where it was. */
+            [data-ui-theme='matrix'][data-glow-checks] ui-checkbox::part(box):checked,
+            [data-ui-theme='matrix'][data-glow-checks] ui-checkbox::part(box):indeterminate,
+            [data-ui-theme='matrix'][data-glow-checks] ui-radio-group::part(control):checked {
+                mask-repeat: repeat, no-repeat;
+                mask-clip: no-clip;
+            }
+
             /* Not tokens, and the open half of question 2. A property that inherits, set on the
                theme's own element, reaches inside every component's shadow root, because
                inheritance crosses it — which is how the reference's glow on text gets onto a
                label no selector here can reach. In the dark, currentColor makes each text glow
-               in its own colour, the danger message red. */
+               in its own colour, the danger message red; the slider widens it rather than
+               thinning it, since a colour that is currentColor has no opacity of its own. */
             [data-ui-theme='matrix'][data-inherited] {
                 font-weight: bold;
                 /* On white a halo in the text's own dark green reads as a smudge, so the light
                    scheme glows in the reference's green instead. */
-                text-shadow: 0 0 8px light-dark(rgb(0 255 65 / 0.45), currentColor);
+                text-shadow: 0 0 calc(8px * var(--proposal-glow))
+                    light-dark(rgb(0 255 65 / 0.45), currentColor);
             }
         </style>
     </head>
@@ -88,7 +152,27 @@
                 scheme a green this bright has almost no room left there: 1.03, still under the 1.05
                 the suite asks. The label is solved; the accent's own states are not.
             </p>
+            <p>
+                <strong>The glow can reach the controls too</strong> — buttons, fields and checks,
+                each on its own toggle — which is where elevation is not read, and so where question
+                2 would need a name of its own. A glow lights what sits beside a boundary, so the
+                rows under each panel read a field's edge and a checked box against it: laid right
+                against the edge, the glow takes a field's boundary under 3:1 at the strength the
+                slider starts at. Held 2px off the edge, it leaves the boundary on the surface it
+                was chosen against. The slider sets the strength of every glow at once.
+            </p>
             <div class="controls">
+                <label
+                    >Glow intensity
+                    <input type="range" id="glow" min="0" max="2" step="0.05" value="1" />
+                    <output for="glow">1.00</output></label
+                >
+                <label><input type="checkbox" id="glow-buttons" checked /> Glow on buttons</label>
+                <label><input type="checkbox" id="glow-fields" checked /> Glow on fields</label>
+                <label><input type="checkbox" id="glow-checks" checked /> Glow on checks</label>
+                <label
+                    ><input type="checkbox" id="glow-gap" checked /> Glow held off the edge</label
+                >
                 <label
                     ><input type="checkbox" id="inherited" checked /> Glow and weight on text
                     (inherited, not tokens)</label
@@ -119,15 +203,38 @@
             </figure>
         </main>
         <script type="module">
-            import './specimen.ts';
+            import { measureAll } from './specimen.ts';
 
-            const toggle = document.querySelector('#inherited');
+            const control = (id) => document.getElementById(id);
+            const glow = control('glow');
+            const toggles = [
+                'glow-buttons',
+                'glow-fields',
+                'glow-checks',
+                'glow-gap',
+                'inherited',
+            ].map(control);
 
-            toggle.addEventListener('change', () => {
+            // Every panel takes the same settings, so the three still differ in nothing else.
+            function tune() {
+                glow.nextElementSibling.value = Number(glow.value).toFixed(2);
+
                 for (const panel of document.querySelectorAll('[data-specimen]')) {
-                    panel.toggleAttribute('data-inherited', toggle.checked);
+                    panel.style.setProperty('--proposal-glow', glow.value);
+
+                    for (const toggle of toggles) {
+                        panel.toggleAttribute(`data-${toggle.id}`, toggle.checked);
+                    }
                 }
-            });
+
+                measureAll();
+            }
+
+            for (const input of [glow, ...toggles]) {
+                input.addEventListener('input', tune);
+            }
+
+            tune();
         </script>
     </body>
 </html>
