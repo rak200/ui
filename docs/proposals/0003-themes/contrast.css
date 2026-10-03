@@ -28,8 +28,8 @@
     }
 }
 
-/* The prototype's stand-in, so both states sit side by side without emulating the setting:
-   the same declarations, on the panel rather than on :root. */
+/* The prototype's stand-in, so the answer shows without emulating the setting: the same
+   declarations, on the panel rather than on :root. */
 [data-more] {
     --ui-color-text: light-dark(#000000, #ffffff);
     --ui-color-surface: light-dark(#ffffff, #000000);

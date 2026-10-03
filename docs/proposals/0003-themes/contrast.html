@@ -35,17 +35,11 @@
                 pressed and striped greys as values, and says beside them what that costs a theme.
             </p>
             <p>
-                The right-hand panel is a stand-in. To try the media query itself, open DevTools →
-                Rendering → <em>Emulate CSS media feature prefers-contrast</em> → <code>more</code>:
-                the left-hand panel then becomes the right-hand one.
+                The panel is a stand-in: it carries the declarations the media query in
+                <code>contrast.css</code> does, so the answer shows without the reader's setting.
             </p>
         </header>
         <main>
-            <figure>
-                <figcaption>As your system asks</figcaption>
-                <div data-specimen></div>
-                <dl data-floors></dl>
-            </figure>
             <figure>
                 <figcaption>prefers-contrast: more</figcaption>
                 <div data-specimen data-more></div>
@@ -53,10 +47,7 @@
             </figure>
         </main>
         <script type="module">
-            import { measureAll } from './specimen.ts';
-
-            // The emulated setting moves the left-hand panels, so they are measured again.
-            matchMedia('(prefers-contrast: more)').addEventListener('change', measureAll);
+            import './specimen.ts';
         </script>
     </body>
 </html>

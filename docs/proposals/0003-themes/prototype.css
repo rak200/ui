@@ -113,6 +113,12 @@ main {
     padding: 1.5rem;
 }
 
+/* A page with one panel keeps the width a panel has beside another, so its cards sit as they
+   do on every other page. */
+main:has(> figure:only-child) {
+    grid-template-columns: minmax(min(100%, 40rem), 45rem);
+}
+
 figure {
     display: grid;
     align-content: start;
