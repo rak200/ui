@@ -6,6 +6,35 @@
         <title>Default, derived label</title>
         <link rel="stylesheet" href="prototype.css" />
         <link rel="stylesheet" href="proposal.css" />
+        <style>
+            /* The switch, off, drawn as an empty box is: the surface inside the border, and the
+               thumb in the border's colour, where today the track is filled with the border and
+               the thumb is the surface. It is the component's own drawing question 2 proposes for
+               every palette, stood in through the part on the proposed panel. A rule from out here
+               outranks every state the component paints, so the on state and its hover are
+               written again. */
+            [data-proposed] ui-switch::part(box) {
+                background-color: var(--ui-color-surface);
+                background-image: radial-gradient(
+                    circle closest-side,
+                    color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface)) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-proposed] ui-switch::part(box):checked {
+                background-color: var(--ui-color-accent);
+                background-image: radial-gradient(
+                    circle closest-side,
+                    var(--ui-color-surface) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-proposed] ui-switch::part(box):checked:hover:not(:disabled) {
+                background-color: var(--ui-color-accent-hover);
+            }
+        </style>
     </head>
     <body>
         <header>
