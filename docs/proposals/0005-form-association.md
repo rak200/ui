@@ -1,6 +1,5 @@
 # RFC 0005 — The control the host writes, and whether it still has to
 
-- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-09-07
 

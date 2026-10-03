@@ -1,6 +1,5 @@
 # RFC 0004 — Motion: who owns a component's, and what a catalogue would cost
 
-- **Status**: Draft
 - **Scope**: library
 - **Created**: 2026-09-05
 

@@ -1,6 +1,5 @@
 # RFC 0001 — Component playground
 
-- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-08-08
 

@@ -1,6 +1,5 @@
 # RFC 0003 — Themes: what the package ships, and what a theme may be made of
 
-- **Status**: Exploring
 - **Scope**: library
 - **Created**: 2026-09-05
 

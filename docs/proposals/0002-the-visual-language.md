@@ -1,6 +1,5 @@
 # RFC 0002 — The visual language: token structure, motion and themes
 
-- **Status**: Implemented
 - **Scope**: library
 - **Created**: 2026-08-09
 
