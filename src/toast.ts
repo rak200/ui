@@ -67,6 +67,7 @@ const dwell = 5000;
  * ```
  */
 export class UiToaster extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         :host {
             /* The user agent's own popover box is a centred panel with a border and a
@@ -118,6 +119,7 @@ export class UiToaster extends LitElement {
         }
     `;
 
+    /** Becomes a manual popover and shows itself, so the stack sits above the page. */
     override connectedCallback(): void {
         super.connectedCallback();
 
@@ -131,6 +133,7 @@ export class UiToaster extends LitElement {
         this.showPopover();
     }
 
+    /** The two live regions, polite and assertive, that a toast is announced through. */
     override render(): TemplateResult {
         return html`
             <div aria-live="polite" part="polite"><slot name="polite"></slot></div>
@@ -184,6 +187,7 @@ export class UiToaster extends LitElement {
  * ```
  */
 export class UiToast extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         :host {
             display: flex;
@@ -303,6 +307,7 @@ export class UiToast extends LitElement {
         }
     `;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         variant: { type: String, reflect: true },
         duration: { type: Number },
@@ -374,6 +379,7 @@ export class UiToast extends LitElement {
         }
     };
 
+    /** Moves into the region its variant names, listens for a reader, and starts its clock. */
     override connectedCallback(): void {
         super.connectedCallback();
 
@@ -398,6 +404,7 @@ export class UiToast extends LitElement {
         this.#start();
     }
 
+    /** Stops its clock and its listeners. */
     override disconnectedCallback(): void {
         this.#stop();
         this.#listeners.abort();
@@ -413,6 +420,7 @@ export class UiToast extends LitElement {
         super.disconnectedCallback();
     }
 
+    /** Moves into the region its variant names, before every render. */
     override willUpdate(): void {
         // Unconditionally rather than on a change to `variant`: routing is writing the
         // value the variant already implies, so doing it every update and doing it only
@@ -421,6 +429,7 @@ export class UiToast extends LitElement {
         this.#route();
     }
 
+    /** The message, and a button that dismisses it. */
     override render(): TemplateResult {
         return html`
             <div part="message"><slot></slot></div>

@@ -162,6 +162,7 @@ function build(): HTMLDialogElement {
  * ```
  */
 export class UiDialog extends LitElement {
+    /** The styles its shadow root adopts. */
     static override readonly styles = css`
         /* The dialog is promoted to the top layer, so the host must take no space of its
            own: a <ui-dialog> laid out in the flow would leave a gap on every page where
@@ -268,6 +269,7 @@ export class UiDialog extends LitElement {
         }
     `;
 
+    /** The properties Lit observes on this element. */
     static override readonly properties = {
         open: { type: Boolean, reflect: true },
     };
@@ -298,6 +300,7 @@ export class UiDialog extends LitElement {
         this.#label();
     });
 
+    /** Builds the dialog, and routes Esc and every close through `open`, announcing `ui-close`. */
     constructor() {
         super();
 
@@ -324,6 +327,7 @@ export class UiDialog extends LitElement {
         });
     }
 
+    /** Starts watching the title, so a rewritten one renames the dialog. */
     override connectedCallback(): void {
         super.connectedCallback();
 
@@ -333,6 +337,7 @@ export class UiDialog extends LitElement {
         this.#observer.observe(this, { childList: true, characterData: true, subtree: true });
     }
 
+    /** Stops watching the title, and gives the page back if the dialog was open. */
     override disconnectedCallback(): void {
         this.#observer.disconnect();
 
@@ -352,10 +357,12 @@ export class UiDialog extends LitElement {
         super.disconnectedCallback();
     }
 
+    /** Names the dialog after its title, the first time it renders. */
     override firstUpdated(): void {
         this.#label();
     }
 
+    /** Opens or closes the real `<dialog>` when `open` disagrees with it. */
     override updated(): void {
         // Compared against the platform's own state rather than against Lit's changed
         // properties, and it has to be: on the first update Lit reports every initialised
@@ -373,6 +380,7 @@ export class UiDialog extends LitElement {
         }
     }
 
+    /** The real `<dialog>` this element is a shell around. */
     override render(): TemplateResult {
         return html`${this.#dialog}`;
     }

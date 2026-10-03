@@ -27,16 +27,23 @@ export type Align = 'center' | 'inline-start';
 
 /** As much of a box as a placement needs, which is what makes this checkable without one. */
 export interface Box {
+    /** Its top edge. */
     readonly top: number;
+    /** Its left edge. */
     readonly left: number;
+    /** How wide it is. */
     readonly width: number;
+    /** How tall it is. */
     readonly height: number;
 }
 
 /** Where the overlay goes: the side it took, and the two insets to write. */
 export interface Placement {
+    /** The side of the anchor the overlay took. */
     readonly side: Side;
+    /** The inset to write on the block axis. */
     readonly blockStart: number;
+    /** The inset to write on the inline axis. */
     readonly inlineStart: number;
 }
 
