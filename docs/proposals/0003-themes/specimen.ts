@@ -363,31 +363,48 @@ function raised(panel: HTMLElement): (Floor | Reading)[] {
  * invalid field glows in the danger colour at the same strength.
  */
 function glowing(panel: HTMLElement): Floor[] {
+    const buttons = panel.hasAttribute('data-glow-buttons');
     const fields = panel.hasAttribute('data-glow-fields');
     const checks = panel.hasAttribute('data-glow-checks');
+    const read = (token: Token | DerivedToken): string => painted(panel, token);
+    // Read opaque and given its opacity apart, so the canvas's premultiplying rounds no channel
+    // of a faint colour away; `share` is how much of it lies beside the edge.
+    const translucent = (name: string, share = 1): Colour => ({
+        ...resolved(panel, `rgb(from var(${name}) r g b / 1)`),
+        alpha: resolved(panel, `var(${name})`).alpha * share,
+    });
+    const glow = translucent('--proposal-control-glow', 1 / 2);
+    const ring = translucent('--proposal-control-ring');
+    const surface = parsed(read('--ui-color-surface'));
+    // The ring as drawn, over the glow it is drawn on.
+    const lit = (top: Colour, under: Colour): string => hex(over(top, over(under, surface)));
+    // Held off the edge, the edge has the surface beside it; laid against it, the ring.
+    const gap = panel.hasAttribute('data-glow-gap');
+    const beside = gap ? hex(surface) : lit(ring, glow);
+    const rows: Floor[] = [];
 
-    if (!fields && !checks) {
-        return [];
+    if (buttons) {
+        rows.push({
+            name: "a button's hover, on its ring",
+            value: contrastRatio(
+                lit(
+                    translucent('--proposal-hover-ring'),
+                    translucent('--proposal-hover-glow', 1 / 2),
+                ),
+                lit(ring, glow),
+            ),
+            floor: 1.05,
+            strict: true,
+        });
     }
 
-    const read = (token: Token | DerivedToken): string => painted(panel, token);
-    const glow = {
-        ...resolved(panel, 'rgb(from var(--proposal-control-glow) r g b / 1)'),
-        alpha: resolved(panel, 'var(--proposal-control-glow)').alpha / 2,
-    };
-    const ring = resolved(panel, 'var(--proposal-control-ring)');
-    const surface = parsed(read('--ui-color-surface'));
-    // Held off the edge, the edge has the surface beside it; laid against it, the ring, over the
-    // glow it is drawn on.
-    const gap = panel.hasAttribute('data-glow-gap');
-    const beside = hex(gap ? surface : over(ring, over(glow, surface)));
-    const rows: Floor[] = [
-        {
+    if (fields || checks) {
+        rows.push({
             name: "a control's edge, against its glow",
             value: contrastRatio(read('--ui-color-border'), beside),
             floor: 3,
-        },
-    ];
+        });
+    }
 
     if (fields) {
         const danger = read('--ui-color-danger');
