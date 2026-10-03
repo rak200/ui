@@ -106,7 +106,7 @@
                     0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
             }
 
-            /* Being tried: the same edge on the primary button, which draws its border
+            /* The same edge on the primary button, which draws its border
                transparent, so its fill is the whole of its extent. A translucent fill fades that
                extent with it, and the edge is what keeps it. */
             [data-ui-theme='glass'][data-edge][data-primary-edge]
@@ -117,7 +117,7 @@
                     0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
             }
 
-            /* Being tried: the hover drawn on the edge. A translucent fill's hover is a mix of a
+            /* The hover, drawn on the edge. A translucent fill's hover is a mix of a
                fill that is mostly glass, so it barely moves; the edge going to the text's own
                colour is a change a reader sees, and the one a field and an empty box already
                make on hover. The primary takes it only with its edge. */
@@ -129,7 +129,7 @@
                 border-color: var(--ui-color-text);
             }
 
-            /* Being tried: the controls' own fills at an opacity, over the glass they sit on. Each
+            /* The controls' own fills at an opacity, over the glass they sit on. Each
                keeps its colour and gives up only its opacity — the field, an empty box and a
                secondary button the surface, the stripe and the header the muted surface, a filled
                control the accent — and every edge but a button's stays opaque, so each boundary
@@ -206,7 +206,7 @@
                 );
             }
 
-            /* Being tried: the accent inverted, light in the light scheme and dark in the dark. The
+            /* The accent inverted, light in the light scheme and dark in the dark. The
                theme's accent sits at the far pole from the glass, so its label is the glass's own
                pole, and a translucent fill moves toward the label; inverted, the label is the far
                pole and the fill moves away from it.

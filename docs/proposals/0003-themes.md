@@ -449,15 +449,80 @@ A text further from the surface carries every mix toward it along, and the surfa
 so the dark end keeps the room S5 showed a black surface losing. **The label on the resting accent
 is the pair that does not rise**: it mixes nothing toward the text.
 
+### What the Glass prototype settled
+
+[`glass.html`](0003-themes/glass.html) is where this theme's values were chosen — by eye, over the
+reference's page and harder ones, with every floor read out under the panel — and **Glass is closed
+at what that page renders by default**. The readings that shaped it, same engine and instrument as
+S1:
+
+**What the theme sets.** The raised surfaces — the card, the toast, the tip, the dialog and the
+menu's panel — are the scheme's pole at 0.20, white in the light scheme and black in the dark, behind
+`blur(10px) saturate(1.7)`, edged in white at 0.45 and 0.16 with a highlight along the top. Black
+rather than the dark surface's blue-black, because at the same opacity it takes a lighter page:
+`#303030` against `#2a2a2a`. The text goes to its pole and the accent to slate, `#334155` and
+`#94a3b8`. The controls are translucent too — a field, a select, an empty box and radio, the switch
+when off, a secondary button and the table each take their own fill at 0.20 — while a filled
+control keeps the accent opaque.
+
+**The floor is a page, not an opacity.** S3 bounded the backdrop by black and white, and over those
+the glass needs 0.46 and 0.60 even with the text at its pole. But a page that follows the dark
+scheme is not white, nor one that follows the light scheme black. So the floor is stated as the page
+the glass can take — the darkest grey behind it in the light scheme, the lightest in the dark —
+before anything resting on it falls under its own floor:
+
+| scheme | the page it can take, at 0.20 | what fails first  | what the reference's page needs |
+| ------ | ----------------------------- | ----------------- | ------------------------------- |
+| light  | no darker than `#cecece`      | the error message | 0.66                            |
+| dark   | no lighter than `#303030`     | the focus ring    | 0.79                            |
+
+**That is a condition on the host's page, and the theme documents it.** Raising the opacity until
+the reference's colourful page passes leaves 21 to 34% of it showing, which reads as milk rather
+than glass.
+
+**What fails first is never the text.** Text at its pole has the most room of anything on the glass,
+which is why the glass looked fine while it was the only thing measured. The error message, a
+checked box, a switch's track and the focus ring have far less: over the reference's page in the
+dark scheme the text reads 3.25 and the focus ring 1.08. **A halo carries text and only text** — a
+4px stroke in the surface's colour under each letter held 4.5:1 over black and over white — and the
+box, the track and the ring have no letter to put one around, so with the halo on the dark limit did
+not move. It was dropped.
+
+**A translucent accent moves toward its own label.** Glass's accent sits at the far pole from the
+glass, so its label is the glass's own pole, and a primary button at an opacity loses its label
+first: under 4.5:1 below 0.72, over the scheme's own background. **Inverted on the primary button
+alone** — a light slate under a black label in the light scheme, a dark one under a white label in
+the dark — the fill moves away from the label instead, and the label never binds. Inverted
+everywhere, a checked box falls under 3:1 against the glass even when opaque. So the primary
+button wants a fill of its own, apart from the accent the checked controls read. The theme keeps it
+inverted and opaque.
+
+**A button's edge may soften; a field's may not.** WCAG 1.4.11 asks for a boundary only where the
+boundary is what identifies the control, and a button's label already does — so the buttons, primary
+included, take the glass's edge, while a field and an empty box keep the derived border. A
+translucent fill's own hover barely moves, so a button hovers on its edge instead, which goes to the
+text's colour — the hover a field already has. [#228](https://github.com/rak200/ui/issues/228) is
+the same faint hover in the default palette.
+
+**Two drawings a translucent fill breaks.** The platform's picker takes its colours from the select
+unless an option brings its own, so a translucent select opened a list that was unreadable in the
+dark scheme: each option has to paint the surface and the text itself, which renders identically in
+every opaque palette. And the switch's track when off is filled with the border's colour, the one
+opaque fill left on the glass: Glass draws it as an empty box is drawn, the fill inside the border,
+with the thumb in the border's colour.
+
+**Under `prefers-contrast: more` and reduced transparency, glass stops being glass** — opaque and
+unblurred, as question 4 has it.
+
 ### Where the five questions stand
 
-| question                                         | what the study settled                                                                                                    | what is left                                                                       |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                          | a decision                                                                         |
-| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above)        | whether shadow geometry, or a filter, may enter with a theme                       |
-| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5) | whether the derived pole is adopted, and what a black-surface theme does for hover |
-| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair (above)                       | a decision                                                                         |
-| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6)                                      | a decision                                                                         |
+| question                                         | what the study settled                                                                                                                                                                                  | what is left                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                        | a decision                                                                         |
+| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button (above) | whether shadow geometry, or a filter, may enter with a theme                       |
+| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5)                                                                               | whether the derived pole is adopted, and what a black-surface theme does for hover |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair (above)                                                                                                     | a decision                                                                         |
+| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6)                                                                                                                    | a decision                                                                         |
 
 ## Proposed design
 
@@ -474,12 +539,12 @@ began still binds every answer:
 
 ### The four, as the recommendations leave them
 
-| wanted                       | becomes                                                 | questions |
-| ---------------------------- | ------------------------------------------------------- | --------- |
-| Default, configurable accent | the default palette, with the accent's label derived    | 3         |
-| High contrast                | every shipped palette's answer to `prefers-contrast`    | 4         |
-| Matrix                       | a shipped theme, dark only                              | 1, 2, 5   |
-| Glass                        | a shipped theme in both schemes, and the last one built | 1, 2      |
+| wanted                       | becomes                                                                              | questions |
+| ---------------------------- | ------------------------------------------------------------------------------------ | --------- |
+| Default, configurable accent | the default palette, with the accent's label derived                                 | 3         |
+| High contrast                | every shipped palette's answer to `prefers-contrast`                                 | 4         |
+| Matrix                       | a shipped theme, dark only                                                           | 1, 2, 5   |
+| Glass                        | a shipped theme in both schemes, for a page near its surface, and the last one built | 1, 2, 3   |
 
 **Two named themes, and the other two are not dropped.** Each becomes something a palette does,
 which is a stronger place for it than a name to select: the derived label follows every accent a
@@ -554,6 +619,19 @@ hover translucent with it — muted text at 0.755 opacity over a surface at 0.3.
 opaque keeps every field where S5 measured it, and keeps S3's floors computable from one pair and one
 layer.
 
+**The prototype says how far it reaches**, and it is further than the raised surfaces. Every name
+below has the identity as its default, so each meets the condition above:
+
+- the raised surfaces' colour, backdrop filter and edge — the three placeholders `glass.html`
+  declares;
+- the controls' neutral fill, defaulting to the surface;
+- the primary button's fill and its label, defaulting to the accent and the accent's label;
+- a button's edge and the edge it hovers to, defaulting to what each variant draws today;
+- the switch's track and thumb when off, defaulting to the border and the surface.
+
+The select's options painting their own surface needs no name: it is a fix to `src/select.ts`, and
+any translucent field needs it.
+
 **Set aside:**
 
 - _A theme styling components directly_, through `::part()` or selectors of its own — a second
@@ -566,8 +644,9 @@ layer.
 over `defaults` and `darkScheme` and run over every palette this package ships, in each scheme it
 keeps: the theme's block inserted, and `data-ui-theme` on the element `painted()` resolves under.
 That is S5's answer — no rule about the grounds predicts the floors, so the engine measures each
-palette — and it turns the third property above from a promise into a check. Glass adds S3's two
-extremes: its text over its surface, composited on black and on white.
+palette — and it turns the third property above from a promise into a check. Glass adds everything
+that rests on its glass, composited on the grey at the page limit it documents: S3's black and white
+bound a page that does not follow the scheme, which is no page a host draws.
 
 **The accent's label becomes a derivation**, in S1's third shape: `--ui-color-accent-contrast` is the
 WCAG pole of the accent, and the accent's hover and pressed shades mix away from that pole instead of
@@ -662,8 +741,10 @@ each step shippable alone:
    and a theme control in the playground beside the scheme control #120 put there. `ARCHITECTURE.md`
    loses the elevation sentence S2 contradicts, and gains the second clause of _A category arrives…_
    if the glow turns out to need a name.
-5. **Glass**, last: the raised surfaces' translucency and blur, its opacity floors from its own
-   pair, and opaque under `more` and under reduced transparency.
+5. **Glass**, last: the raised surfaces, the controls' fills and the primary button's own fill, its
+   floors measured over the page limit it documents, and opaque under `more` and under reduced
+   transparency. The select's options painting their own surface can go first, since it changes
+   nothing in an opaque palette.
 
 ## Decision
 
