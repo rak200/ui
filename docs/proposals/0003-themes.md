@@ -449,6 +449,27 @@ A text further from the surface carries every mix toward it along, and the surfa
 so the dark end keeps the room S5 showed a black surface losing. **The label on the resting accent
 is the pair that does not rise**: it mixes nothing toward the text.
 
+### What the accent picker found
+
+[`default.html`](0003-themes/default.html) measures the accent a host picks, and over S1's 4096
+accents it read what S1 did not: the accent's own hover against the resting accent, and its pressed
+against the hover, each against the 1.05 the suite asks. S1 read the label alone. Same engine and
+instrument as S1:
+
+| shape                                               | hover at 1.05 or under | pressed | either      |
+| --------------------------------------------------- | ---------------------- | ------- | ----------- |
+| today, light scheme — toward the text, `#1f2937`    | 373                    | 435     | 436 / 4096  |
+| today, dark scheme — toward the text, `#e5e7eb`     | 913                    | 1046    | 1047 / 4096 |
+| derived — away from the label's pole, either scheme | 501                    | 697     | 697 / 4096  |
+
+**The derived shape fixes the label and not the states.** It fails fewer accents than today's dark
+scheme and more than today's light one, for one reason in every case: a mix toward an end has no
+room once the accent is already there. A very light accent cannot lighten, a very dark one cannot
+darken, and black fails under every shape. Matrix's green is one of them, at 1.03.
+
+**One shape is not measured yet**: the states moving whichever way has room, rather than always away
+from the label.
+
 ### What the Glass prototype settled
 
 [`glass.html`](0003-themes/glass.html) is where this theme's values were chosen — by eye, over the
@@ -576,13 +597,13 @@ stays on the accent: in the dark, the muted text reaches 7.33:1 from white, wher
 
 ### Where the five questions stand
 
-| question                                         | what the study settled                                                                                                                                                                                                                         | what is left                                                                                                          |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                               | a decision                                                                                                            |
-| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, and Matrix one for its controls' glow (above) | whether shadow geometry, or a filter, may enter with a theme                                                          |
-| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5)                                                                                                                      | whether the derived pole is adopted, what a black-surface theme does for hover, and which side of a boundary owes 3:1 |
-| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair (above)                                                                                                                                            | a decision                                                                                                            |
-| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                    | nothing, until a theme asks                                                                                           |
+| question                                         | what the study settled                                                                                                                                                                                                                         | what is left                                                                                                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                               | a decision                                                                                                                                                       |
+| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, and Matrix one for its controls' glow (above) | whether shadow geometry, or a filter, may enter with a theme                                                                                                     |
+| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5), and the accent's own states still fail on 697 of 4096 accents (above)                                               | whether the derived pole is adopted, how the accent's states keep room to move, what a black-surface theme does for hover, and which side of a boundary owes 3:1 |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair (above)                                                                                                                                            | a decision                                                                                                                                                       |
+| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                    | nothing, until a theme asks                                                                                                                                      |
 
 ## Proposed design
 
@@ -724,6 +745,11 @@ toward the text. This is what makes a configurable accent a property of the defa
 than a theme: a host moves one ground and the label follows, in both schemes — 0 of 4096 accents
 under 4.5:1, measured. It is the one answer here that reaches a host's own theme, which no floor in
 this suite can.
+
+**It does not reach the accent's own states.** The picker found them at or under 1.05 on 697
+accents under this shape. In a shipped palette the per-palette floor refuses such an accent; a
+host's own accent gets no check at all. The shape that would close it — the states moving whichever
+way has room — is the measurement this question still owes.
 
 What it costs:
 
