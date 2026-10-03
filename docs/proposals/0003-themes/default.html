@@ -43,6 +43,25 @@
                 border: 1px solid
                     color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface));
             }
+
+            /* Being tried: the toast edged all round in its variant's colour, where today only
+               the stripe is and the rest is the derived border, so two colours meet at each
+               corner. A rule on the host from out here outranks the component's :host rules. */
+            [data-proposed] ui-toast {
+                border-color: var(--ui-color-accent);
+            }
+
+            [data-proposed] ui-toast[variant='success'] {
+                border-color: var(--ui-color-success);
+            }
+
+            [data-proposed] ui-toast[variant='warning'] {
+                border-color: var(--ui-color-warning);
+            }
+
+            [data-proposed] ui-toast[variant='danger'] {
+                border-color: var(--ui-color-danger);
+            }
         </style>
     </head>
     <body>
