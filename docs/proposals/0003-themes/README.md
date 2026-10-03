@@ -15,7 +15,7 @@ Then open the address Vite prints. The dev server compiles `src/` directly, so n
 | Page            | Shows                                                                                                                                                    |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `default.html`  | an accent picker, with today's label beside the derived one — question 3                                                                                 |
-| `contrast.html` | the default palette under `prefers-contrast: more` — question 4                                                                                          |
+| `contrast.html` | the default palette under `prefers-contrast: more`, in black and white — question 4; closed at its defaults                                              |
 | `matrix.html`   | green on black and on white, glowing on the raised surfaces and the controls, and under today's formulas; closed at its defaults                         |
 | `glass.html`    | translucent raised surfaces and controls over three pages — one of them a colour you choose — and the page each setting can take; closed at its defaults |
 

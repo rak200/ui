@@ -595,6 +595,48 @@ nothing on text asks for a name. And the highlight in the select's open list, wh
 stays on the accent: in the dark, the muted text reaches 7.33:1 from white, where a green-tinted
 `#ecffec` gives 7.06.
 
+### What the contrast prototype settled
+
+[`contrast.html`](0003-themes/contrast.html) is where the default palette's answer to
+`prefers-contrast: more` was chosen, and **it is closed at what that page renders**. Same engine and
+instrument as S1.
+
+**Black and white, and the dark scheme on pure black.** The text, the surface, the accent, its label
+and the focus ring go to the poles; moving the text alone, as the second reading above did, had left
+the accent blue and the dark surface blue-black. The border and the muted text stay derived, since
+both mix toward the text, and the outcome colours keep their hue, because an error still says so in
+red:
+
+| pair                       | light              | dark                 |
+| -------------------------- | ------------------ | -------------------- |
+| text                       | 21.00              | 21.00                |
+| muted text                 | 11.37              | 6.49                 |
+| border                     | 6.01               | 3.50                 |
+| label on the accent        | 21.00              | 21.00                |
+| danger / success / warning | 6.47 / 5.02 / 5.02 | 7.59 / 12.05 / 12.58 |
+
+**Pure black costs the dark scheme what the text alone kept**: the border falls from 4.60 to 3.50,
+and the muted text from 7.26 to 6.49, under WCAG's enhanced 7:1.
+
+**The states are written out, not derived.** Over pure black an 8% mix is `#020202`, 1.01:1 — S5's
+vanishing hover — and a black or white accent has no shade to move away from its label toward. A
+palette that is only black and white is fully known, so the hover, the pressed, the striped row and
+the accent's hover and pressed are given as greys. The hover reads 1.19 against the resting state in
+the light scheme and 1.27 in the dark, the pressed 1.22 and 1.30 against the hover, and the accent's
+hover and pressed 1.66 and 1.49 in the light scheme, 1.45 and 1.44 in the dark.
+
+**Writing them out costs a leak.** They are derived names, and declared at `:root` they reach every
+themed subtree below it: a theme under `more` inherits the default palette's greys unless its own
+answer declares its states, or resets them with `initial`, which hands them back to the formula.
+
+**What floats over the page is edged in the text's own colour** — the dialog, the tip and the open
+menu, each lying over content that is not its own. The dialog needs it most: its scrim over pure
+black leaves the page as black as the dialog, 1.00:1, and the edge reads 21:1 to both. In the light
+scheme it reads 21:1 to the dialog and 5.32 to the page under the scrim. Cards, fields and toasts
+keep the derived border.
+
+**And the switch, off, is an empty box here too**, the third page to draw it that way.
+
 ### Where the five questions stand
 
 | question                                         | what the study settled                                                                                                                                                                                                                         | what is left                                                                                                                                                     |
@@ -602,7 +644,7 @@ stays on the accent: in the dark, the muted text reaches 7.33:1 from white, wher
 | 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                               | a decision                                                                                                                                                       |
 | 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, and Matrix one for its controls' glow (above) | whether shadow geometry, or a filter, may enter with a theme                                                                                                     |
 | 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5), and the accent's own states still fail on 697 of 4096 accents (above)                                               | whether the derived pole is adopted, how the accent's states keep room to move, what a black-surface theme does for hover, and which side of a boundary owes 3:1 |
-| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair (above)                                                                                                                                            | a decision                                                                                                                                                       |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair, and the answer chosen is black and white with its states written out (above)                                                                      | a decision                                                                                                                                                       |
 | 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                    | nothing, until a theme asks                                                                                                                                      |
 
 ## Proposed design
@@ -708,7 +750,10 @@ below has the identity as its default, so each meets the condition above:
 - a button's edge and the edge it hovers to, defaulting to what each variant draws today;
 - a control's glow, and the glow a button lights to under the pointer, defaulting to none. An
   invalid control wears the same glow in the danger, so its colour is read apart from its geometry —
-  which is the half S2 says can follow the scheme anyway.
+  which is the half S2 says can follow the scheme anyway;
+- the edge of what floats over the page — the dialog, the tip and the open menu — defaulting to the
+  derived border, which the answer to `more` sets to the text. Glass's raised edge also covers the
+  card and the toast, which keep the derived border under `more`, so the two are separate names.
 
 **Three changes need no name, because each is a component's own drawing and every palette gains
 from it.** The select's options paint their own surface, in `src/select.ts`, which any translucent
@@ -780,15 +825,22 @@ host chooses a theme; a reader's system asks for contrast, and a reader who need
 depend on a host having shipped a picker. It also composes where a theme cannot: Glass under `more`
 stops being glass, which is one theme answering a setting rather than two themes selected at once.
 
-**The block moves one ground: the text, to its pole.** Every neutral derivation mixes toward the
-text, so the second reading above is the whole mechanism — muted text at 11.37:1 in the light scheme
-and 7.26:1 in the dark, the border at 6.01 and 4.60, and the hover still visible because the surface
-does not move. Every text pair made of the text and the surface then clears 7:1, WCAG's enhanced
-level. No formula is declared at `:root`, so nothing freezes. **What it does not raise is every
-colour that is a ground of its own**: the labels on the accent — 5.17 on the resting accent in the
-light scheme — and the three outcome colours, which were chosen against 4.5:1. Raising those would
-mean the reader's setting moving a host's brand and status colours, and whether it should is left
-open here.
+**The block moves the grounds to the poles and writes the states out.** The text, the surface, the
+accent, its label and the focus ring go black and white, with the dark scheme on pure black (above).
+The border and the muted text follow on their own, because both mix toward the text; the hover, the
+pressed, the striped row and the accent's two states cannot, so the block gives them as values —
+values rather than formulas, so nothing freezes. Every text pair made of the text and the surface
+clears 7:1, WCAG's enhanced level, except the muted text in the dark scheme at 6.49, which is what
+pure black costs. And what floats over the page is edged in the text, through question 2's name.
+
+**The reader's setting moves the accent, and not the outcome colours.** The accent at the pole puts
+the buttons and the checked controls in black and white, under a label at 21:1; an error that turns
+grey stops saying it is an error. The outcome colours stay at what they were chosen against, 4.5:1.
+
+**The states it writes reach under every theme**, being derived names declared at `:root`. So a
+theme's `more` map declares its own states or resets them with `initial`, which hands them back to
+the formula — and `themeStyleSheet()` can write that reset for any theme whose map leaves them out,
+so a theme that does not answer is handed its formula rather than the default palette's greys.
 
 **A theme answers it too, in its own data** — the `more` map in the shape above — because a theme's
 grounds are declared on its own element and a `:root` block cannot reach under them, which is the
@@ -832,7 +884,8 @@ each step shippable alone:
    later step lands inside the gate.
 2. **The derived label**, with the accent's shades turned away from it — the breaking step, alone so
    its changelog entry says only that.
-3. **`prefers-contrast: more`** in `tokenStyleSheet()`, with the floors run under emulation.
+3. **`prefers-contrast: more`** in `tokenStyleSheet()`, black and white with its states written out,
+   and the floors run under emulation.
 4. **The theme shape, `themeStyleSheet()` and Matrix** — in both schemes, its glow through elevation
    and through the controls' name, and a theme control in the playground beside the scheme control
    #120 put there. `ARCHITECTURE.md` loses the elevation sentence S2 contradicts, and gains the
