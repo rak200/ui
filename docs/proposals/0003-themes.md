@@ -637,15 +637,44 @@ keep the derived border.
 
 **And the switch, off, is an empty box here too**, the third page to draw it that way.
 
+### What the default prototype settled
+
+[`default.html`](0003-themes/default.html) shows the default palette under the derived label beside
+today's, and **it is closed at what that page renders by default**. Besides the label, which is
+question 3's, it settled three drawings every page now shares. Same engine and instrument as S1.
+
+**The switch, off, is an empty box on all four pages**, each arrived at on its own.
+
+**The dialog draws the card's derived border.** Its scrim alone leaves it 1.10:1 from the page in
+the dark scheme, and the border stands 4.36:1 from the page under the scrim and 3.95 from the
+dialog. In the light scheme the dialog already stands 3.95 from the page, and the border shows as a
+quiet outline.
+
+**The toast is redrawn, in three parts, and each theme takes the first its own way.**
+
+- **Its edge goes all the way round in one colour.** Today the stripe is the variant's colour and
+  the other three sides the derived border, and the two meet at the corners as a break. The default
+  palette edges it in the variant's colour, Glass in the variant's colour at 0.80, Matrix in it with
+  its ring and glow, and the answer to `more` in the text's colour, black and white.
+- **It carries an icon for its variant**, beside the stripe: Lucide's `info`, `circle-check`,
+  `triangle-alert` and `circle-x`, which the package already vendors. Until now the variant was told
+  apart by its colour alone, which WCAG 1.4.1 asks a page not to rely on. The icon takes the edge's
+  colour and carries no text, so it changes nothing that is announced.
+- **Info gets a colour of its own, cyan.** It read the accent, which made it the buttons' blue in
+  the default palette and a second green beside success in Matrix. Cyan-700 on the light surface and
+  cyan-400 on the dark, the steps the other outcome colours take, read 5.36:1 and 9.82. Matrix takes
+  a brighter cyan, 5.24 and 13.25, and its success takes the theme's own green, `#00850f` and
+  `#00ff00` at 4.81 and 14.85, where the default palette's would sit beside it as a second one.
+
 ### Where the five questions stand
 
-| question                                         | what the study settled                                                                                                                                                                                                                         | what is left                                                                                                                                                     |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                               | a decision                                                                                                                                                       |
-| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, and Matrix one for its controls' glow (above) | whether shadow geometry, or a filter, may enter with a theme                                                                                                     |
-| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5), and the accent's own states still fail on 697 of 4096 accents (above)                                               | whether the derived pole is adopted, how the accent's states keep room to move, what a black-surface theme does for hover, and which side of a boundary owes 3:1 |
-| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair, and the answer chosen is black and white with its states written out (above)                                                                      | a decision                                                                                                                                                       |
-| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                    | nothing, until a theme asks                                                                                                                                      |
+| question                                         | what the study settled                                                                                                                                                                                                                                                                        | what is left                                                                                                                                                     |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — ship themes, or only enable them?            | nothing; it is not a measurement                                                                                                                                                                                                                                                              | a decision                                                                                                                                                       |
+| 2 — may a theme add a token category?            | a glow's scheme-bound part is a colour, an existing category (S2); translucency cannot ride on the surface (above); Glass needs names for its glass, its controls' fills and its primary button, Matrix one for its controls' glow, and the toast an edge, an icon and an info colour (above) | whether shadow geometry, or a filter, may enter with a theme                                                                                                     |
+| 3 — what carries contrast when the grounds move? | per-theme measured floors, resolved in the engine; the accent pole can be derived if its shades change direction (S1, S5), and the accent's own states still fail on 697 of 4096 accents (above)                                                                                              | whether the derived pole is adopted, how the accent's states keep room to move, what a black-surface theme does for hover, and which side of a boundary owes 3:1 |
+| 4 — is high contrast a theme or a media query?   | both are testable, alone and together (S4); moving the text alone raises every derived pair, and the answer chosen is black and white with its states written out (above)                                                                                                                     | a decision                                                                                                                                                       |
+| 5 — may a theme decline a scheme?                | mechanically yes, by declaring its own `color-scheme`; forced colors still wins (S6); none of the four declines one (above)                                                                                                                                                                   | nothing, until a theme asks                                                                                                                                      |
 
 ## Proposed design
 
@@ -753,14 +782,22 @@ below has the identity as its default, so each meets the condition above:
   which is the half S2 says can follow the scheme anyway;
 - the edge of what floats over the page — the dialog, the tip and the open menu — defaulting to the
   derived border, which the answer to `more` sets to the text. Glass's raised edge also covers the
-  card and the toast, which keep the derived border under `more`, so the two are separate names.
+  card and the toast, and neither takes that edge under `more`, so the two are separate names;
+- a toast's edge, defaulting to its variant's colour all the way round, which Glass sets at 0.80
+  and the answer to `more` to the text. Matrix's ring and glow take the same colour, as an invalid
+  control's take the danger.
 
-**Three changes need no name, because each is a component's own drawing and every palette gains
+**Four changes need no name, because each is a component's own drawing and every palette gains
 from it.** The select's options paint their own surface, in `src/select.ts`, which any translucent
 field needs. The switch's track when off is drawn as an empty box is, in `src/checkbox.ts`: Glass
 and Matrix each redrew it that way, and two themes wanting one drawing is a case for the drawing
 rather than for a name. And the dialog draws the card's derived border, in `src/dialog.ts`: its
-scrim alone leaves 1.02:1 in Matrix's dark scheme, and 1.10 in the default's.
+scrim alone leaves 1.02:1 in Matrix's dark scheme, and 1.10 in the default's. And the toast carries
+an icon for its variant, in `src/toast.ts`, so the variant is not told by its colour alone.
+
+**Info gets an outcome colour of its own**, `--ui-color-info`, beside the other three: cyan, in the
+steps they take, where today info reads the accent. It is a ground in a category that exists, so
+the condition above does not bind it, and the toast is what reads it.
 
 **That is as far into the open list as a theme reaches.** The highlight on the option under the
 pointer is the platform's, in every theme, as
@@ -889,8 +926,8 @@ each step shippable alone:
 4. **The theme shape, `themeStyleSheet()` and Matrix** — in both schemes, its glow through elevation
    and through the controls' name, and a theme control in the playground beside the scheme control
    #120 put there. `ARCHITECTURE.md` loses the elevation sentence S2 contradicts, and gains the
-   second clause of _A category arrives…_. The switch's empty track and the dialog's border can go
-   first, since each is a component's own drawing.
+   second clause of _A category arrives…_. The switch's empty track, the dialog's border, and the
+   toast's icon, edge and info colour can go first, since none of them waits on a theme.
 5. **Glass**, last: the raised surfaces, the controls' fills and the primary button's own fill, its
    floors measured over the page limit it documents, and opaque under `more` and under reduced
    transparency. The select's options painting their own surface can go first, since it changes

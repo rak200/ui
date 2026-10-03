@@ -14,7 +14,7 @@ Then open the address Vite prints. The dev server compiles `src/` directly, so n
 
 | Page            | Shows                                                                                                                                                    |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `default.html`  | an accent picker, with today's label beside the derived one — question 3                                                                                 |
+| `default.html`  | an accent picker, with today's label beside the derived one — question 3; closed at its defaults                                                         |
 | `contrast.html` | the default palette under `prefers-contrast: more`, in black and white — question 4; closed at its defaults                                              |
 | `matrix.html`   | green on black and on white, glowing on the raised surfaces and the controls, and under today's formulas; closed at its defaults                         |
 | `glass.html`    | translucent raised surfaces and controls over three pages — one of them a colour you choose — and the page each setting can take; closed at its defaults |
@@ -22,10 +22,12 @@ Then open the address Vite prints. The dev server compiles `src/` directly, so n
 **Every page has a scheme control** — system, light, dark — which writes `color-scheme` on the root
 element the way the playground's toolbar does, and remembers the choice from page to page.
 
-**What a theme would ship is the `<style>` in each page's head.** Two changes the proposal makes
+**What a theme would ship is the `<style>` in each page's head.** The changes the proposal makes
 outside a theme are stood in for here, and each says so beside itself: the derived label, in
-`proposal.css`, which the proposal would put in `src/tokens.ts`; and the raised surfaces reading
-Glass's two names, at the top of `glass.html`, which the proposal would put in the components.
+`proposal.css`, and the info colour, in `toast.css`, both of which the proposal would put in
+`src/tokens.ts`; the toast's icon, also in `toast.css`; and the components reading a theme's names,
+or drawing what question 2 proposes, through the parts they already expose, in each page's own
+sheet.
 
 **Under every panel, the floors are measured again** — the ones `tests/tokens.test.ts` holds for
 the default palette, read in the browser with the suite's own `contrastRatio()`, over whatever
