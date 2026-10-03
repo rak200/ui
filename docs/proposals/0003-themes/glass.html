@@ -317,11 +317,15 @@
                     </select></label
                 >
                 <label
-                    >Tint
+                    >Tint, which tells only the dark scheme apart
                     <select id="tint">
-                        <option value="surface" selected>The surface's colour</option>
+                        <!-- The light surface is white, so in the light scheme all three are
+                             the same white and only the dark one tells them apart. -->
+                        <option value="surface" selected>
+                            The surface's: white, and the dark surface
+                        </option>
                         <option value="pole">The pole: white, and black</option>
-                        <option value="white">White, as the reference</option>
+                        <option value="white">White in both, as the reference</option>
                     </select></label
                 >
                 <label
