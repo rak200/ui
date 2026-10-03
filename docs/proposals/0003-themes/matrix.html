@@ -153,6 +153,14 @@
                 );
             }
 
+            /* Being tried: an invalid field writes its value in the danger as well, inside its red
+               edge. The field is filled with the surface, so the danger row under each panel is
+               already this pair. */
+            [data-ui-theme='matrix'][data-invalid-text]
+                :is(ui-input, ui-select)[error]:not([error=''])::part(control) {
+                color: var(--ui-color-danger);
+            }
+
             /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
             [data-ui-theme='matrix'] ui-button::part(button):disabled,
             [data-ui-theme='matrix'] ui-input::part(control):disabled,
@@ -279,6 +287,11 @@
                 glow doubles, where the fills' own hovers barely move in this green. The row under
                 each panel reads the ring at rest against the ring under the pointer.
             </p>
+            <p>
+                <strong>An invalid field can write its value in red too</strong>, inside its red
+                edge and glow; the danger row is that pair, since the field is filled with the
+                surface.
+            </p>
             <div class="controls">
                 <label
                     >Glow intensity
@@ -289,6 +302,10 @@
                 <label><input type="checkbox" id="glow-fields" checked /> Glow on fields</label>
                 <label><input type="checkbox" id="glow-checks" checked /> Glow on checks</label>
                 <label><input type="checkbox" id="glow-gap" /> Glow held off the edge</label>
+                <label
+                    ><input type="checkbox" id="invalid-text" checked /> Red text in an invalid
+                    field</label
+                >
                 <label
                     ><input type="checkbox" id="inherited" /> Glow and weight on text (inherited,
                     not tokens)</label
@@ -322,6 +339,7 @@
                 'glow-fields',
                 'glow-checks',
                 'glow-gap',
+                'invalid-text',
                 'inherited',
             ].map(control);
 
