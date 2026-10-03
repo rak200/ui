@@ -320,6 +320,7 @@
                     >Tint
                     <select id="tint">
                         <option value="surface" selected>The surface's colour</option>
+                        <option value="pole">The pole: white, and black</option>
                         <option value="white">White, as the reference</option>
                     </select></label
                 >
@@ -395,10 +396,15 @@
             }
 
             // The theme tints with its own surface, so the light glass is white and the dark
-            // glass is the dark surface. The reference tints white in its one, dark, scheme.
-            function tinted(opacity) {
-                return tint.value === 'white'
-                    ? `rgb(255 255 255 / ${opacity})`
+            // glass is the dark surface. The reference tints white in its one, dark, scheme. The
+            // pole is the scheme's own extreme, white and black, past the dark surface's blue.
+            function tinted(opacity, pole) {
+                if (tint.value === 'white') {
+                    return `rgb(255 255 255 / ${opacity})`;
+                }
+
+                return tint.value === 'pole'
+                    ? `rgb(${pole} / ${opacity})`
                     : `rgb(from var(--ui-color-surface) r g b / ${opacity})`;
             }
 
@@ -434,7 +440,7 @@
                 } else {
                     panel.style.setProperty(
                         '--ui-color-surface-raised',
-                        `light-dark(${tinted(light.value)}, ${tinted(dark.value)})`,
+                        `light-dark(${tinted(light.value, '255 255 255')}, ${tinted(dark.value, '0 0 0')})`,
                     );
                     panel.style.setProperty(
                         '--ui-backdrop-raised',
