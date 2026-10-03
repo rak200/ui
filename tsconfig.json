@@ -32,5 +32,9 @@
   // The last entry is a glob rather than a directory name, and that is not a style
   // choice: expanding a directory drops anything under a dotted path, so `".storybook"`
   // put NOTHING in the program — `tsc` passed by not looking, and only ESLint said so.
-  "include": ["src", "tests", "stories", ".storybook/**/*.ts"]
+  //
+  // `docs/proposals` is here for the prototypes a proposal keeps beside itself: they import
+  // `src/` directly, so a rename there has to fail `analyse` rather than leave a page that
+  // silently stops rendering.
+  "include": ["src", "tests", "stories", ".storybook/**/*.ts", "docs/proposals/**/*.ts"]
 }

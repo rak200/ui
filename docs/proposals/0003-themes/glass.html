@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Glass theme</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <link rel="stylesheet" href="proposal.css" />
+        <link rel="stylesheet" href="toast.css" />
+        <link rel="stylesheet" href="contrast.css" />
+        <style>
+            /* What the theme would ship — questions 1 and 2. Three names the package does not
+               have, all placeholders: the raised surfaces' colour, which is a colour and so
+               carries both schemes in light-dark() (S2); their backdrop filter, one value in
+               both; and their edge, a colour again. The default of each would be the identity —
+               the surface itself, none, and the derived border — so the default palette renders
+               as it does today.
+
+               The glass is the scheme's pole at an opacity: white in the light, black in the dark,
+               rather than the dark surface's blue-black, which leaves less of the page through
+               for the same look. The opacity and the blur are the ones chosen by eye — 0.20 in
+               both schemes, 10px. What they cost is how far the page behind may stray from the
+               surface before something resting on the glass falls under its floor, which the
+               panel reads out. The surface itself stays opaque, so every field keeps the floors
+               S5 measured.
+
+               Two grounds move as well. The text goes to its pole in both schemes, pure black and
+               pure white, because text over frosted glass reads as washed out long before it
+               measures as failing. And the accent goes neutral — slate, in both schemes — since a
+               saturated hue on the controls fights whatever colour the page behind throws through
+               the glass. */
+            [data-ui-theme='glass'] {
+                --ui-color-text: light-dark(#000000, #ffffff);
+                --ui-color-accent: light-dark(#334155, #94a3b8);
+                --ui-color-surface-raised: light-dark(rgb(255 255 255 / 0.2), rgb(0 0 0 / 0.2));
+                --ui-backdrop-raised: blur(10px) saturate(1.7);
+                /* White at 0.45 on light glass rather than the reference's 0.16, which only ever
+                   drew dark glass and would vanish into a white panel; softer than a line, which
+                   is what the derived border drew. */
+                --ui-color-border-raised: light-dark(
+                    rgb(255 255 255 / 0.45),
+                    rgb(255 255 255 / 0.16)
+                );
+            }
+
+            /* Its answer to prefers-contrast: more, and to reduced transparency in the engine
+               that has it (S4: Chromium only): glass stops being glass. */
+            @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+                [data-ui-theme='glass'] {
+                    --ui-color-surface-raised: var(--ui-color-surface);
+                    --ui-backdrop-raised: none;
+                }
+            }
+
+            /* The palette's own answer comes from contrast.css; the theme's is only this. */
+            [data-ui-theme='glass'][data-more] {
+                --ui-color-surface-raised: var(--ui-color-surface);
+                --ui-backdrop-raised: none;
+            }
+
+            /* Stand-in for the component change: the raised surfaces read the pair. A card, a
+               toast and a tip paint on their own host or on an element in the light DOM, and the
+               dialog and the menu's panel expose parts, so all five are reachable from here. */
+            [data-ui-theme='glass'] :is(ui-card, ui-toast, [slot='tip']),
+            [data-ui-theme='glass'] ui-dialog::part(dialog),
+            [data-ui-theme='glass'] ui-menu::part(menu) {
+                background: var(--ui-color-surface-raised);
+                backdrop-filter: var(--ui-backdrop-raised);
+            }
+
+            /* Stand-in for the edge, which a toggle turns off to compare: a translucent white line
+               and a highlight along the top, in place of the derived boundary and the elevation.
+               A card's edge is not a control's boundary, so it owes no 3:1. */
+            [data-ui-theme='glass'][data-edge] :is(ui-card, [slot='tip']) {
+                border-color: var(--ui-color-border-raised);
+            }
+
+            /* The toast is edged all round in its variant's colour at 0.8, the opacity a filled
+               control takes on the glass, where only its stripe was and the glass's edge took the
+               other three sides. */
+            [data-ui-theme='glass'] ui-toast {
+                border-color: rgb(from var(--proposal-toast-tone) r g b / 0.8);
+            }
+
+            [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(menu) {
+                border: 1px solid var(--ui-color-border-raised);
+            }
+
+            [data-ui-theme='glass'][data-edge] :is(ui-card, ui-toast, [slot='tip']),
+            [data-ui-theme='glass'][data-edge] ui-dialog::part(dialog),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(menu) {
+                box-shadow:
+                    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
+                    0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
+            }
+
+            /* The secondary button and the menu's trigger take the edge too: drawn in the text's
+               own colour, theirs was the hardest line on the glass. A button's border owes no 3:1
+               — WCAG 1.4.11 asks for a boundary only where it is what identifies the control, and
+               a button's label does that — so it can soften as a card's does. A field's cannot:
+               an empty field has nothing else to show where it is, and keeps the derived border. */
+            [data-ui-theme='glass'][data-edge] ui-button[variant='secondary']::part(button),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(trigger) {
+                border-color: var(--ui-color-border-raised);
+                box-shadow:
+                    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
+                    0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
+            }
+
+            /* The same edge on the primary button, which draws its border
+               transparent, so its fill is the whole of its extent. A translucent fill fades that
+               extent with it, and the edge is what keeps it. */
+            [data-ui-theme='glass'][data-edge][data-primary-edge]
+                ui-button:not([variant='secondary'])::part(button) {
+                border-color: var(--ui-color-border-raised);
+                box-shadow:
+                    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)),
+                    0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33));
+            }
+
+            /* The hover, drawn on the edge. A translucent fill's hover is a mix of a
+               fill that is mostly glass, so it barely moves; the edge going to the text's own
+               colour is a change a reader sees, and the one a field and an empty box already
+               make on hover. The primary takes it only with its edge. */
+            [data-ui-theme='glass'][data-edge]
+                ui-button[variant='secondary']::part(button):hover:not(:disabled),
+            [data-ui-theme='glass'][data-edge] ui-menu::part(trigger):hover,
+            [data-ui-theme='glass'][data-edge][data-primary-edge]
+                ui-button:not([variant='secondary'])::part(button):hover:not(:disabled) {
+                border-color: var(--ui-color-text);
+            }
+
+            /* The controls' own fills at an opacity, over the glass they sit on. Each
+               keeps its colour and gives up only its opacity — the field, an empty box and a
+               secondary button the surface, the stripe and the header the muted surface, a filled
+               control the accent — and every edge but a button's stays opaque, so each boundary
+               keeps the 3:1 the derived border was chosen for. No backdrop filter of their own: the card's
+               already blurs what is behind them.
+
+               The fills are reached through the parts the components expose, and a declaration
+               from outside a shadow root beats the one inside it whatever the specificity — so
+               each state the component paints is written again here, or it would stop showing. */
+            [data-ui-theme='glass'][data-fields] :is(ui-input, ui-select)::part(control),
+            [data-ui-theme='glass'][data-checks] ui-checkbox::part(box),
+            [data-ui-theme='glass'][data-checks] ui-radio-group::part(control),
+            [data-ui-theme='glass'][data-buttons] ui-button[variant='secondary']::part(button),
+            [data-ui-theme='glass'][data-buttons] ui-menu::part(trigger) {
+                background-color: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button[variant='secondary']::part(button):hover:not(:disabled),
+            [data-ui-theme='glass'][data-buttons] ui-menu::part(trigger):hover {
+                background-color: rgb(
+                    from color-mix(in oklab, var(--ui-color-text) 8%, var(--ui-color-surface)) r g
+                        b / var(--proposal-fill)
+                );
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button[variant='secondary']::part(button):active:not(:disabled),
+            [data-ui-theme='glass'][data-buttons] ui-menu::part(trigger):active {
+                background-color: rgb(
+                    from color-mix(in oklab, var(--ui-color-text) 14%, var(--ui-color-surface)) r g
+                        b / var(--proposal-fill)
+                );
+            }
+
+            /* The switch, off, is drawn as an empty box is: the surface at the fill's opacity
+               inside the derived border, where it had been a track filled with the border's own
+               colour — the one opaque fill left on the glass. Its thumb takes the border's
+               colour in place of the surface's, so it still stands apart from the track; on, the
+               track is the accent and the thumb goes back to the surface. */
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box) {
+                background-color: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
+                background-image: radial-gradient(
+                    circle closest-side,
+                    color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface)) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked {
+                background-image: radial-gradient(
+                    circle closest-side,
+                    var(--ui-color-surface) 100%,
+                    transparent 100%
+                );
+            }
+
+            [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):checked,
+            [data-ui-theme='glass'][data-checks] ui-checkbox::part(box):indeterminate,
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked,
+            [data-ui-theme='glass'][data-checks] ui-radio-group::part(control):checked {
+                background-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-checked));
+                border-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-checked));
+            }
+
+            [data-ui-theme='glass'][data-checks]
+                ui-checkbox::part(box):checked:hover:not(:disabled),
+            [data-ui-theme='glass'][data-checks] ui-switch::part(box):checked:hover:not(:disabled) {
+                background-color: rgb(
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-checked)
+                );
+                border-color: rgb(
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-checked)
+                );
+            }
+
+            /* The accent inverted, light in the light scheme and dark in the dark. The
+               theme's accent sits at the far pole from the glass, so its label is the glass's own
+               pole, and a translucent fill moves toward the label; inverted, the label is the far
+               pole and the fill moves away from it.
+
+               Everywhere, the inversion is a ground the theme sets, and the proposal's formulas
+               re-derive the label and the states from it. On the primary button alone it needs a
+               name the package does not have — the button's fill, apart from the accent — so the
+               stand-in writes what the formulas give for that pair: a black label on the light
+               slate and a white one on the dark, each state mixed toward the other pole. */
+            [data-ui-theme='glass'][data-invert='all'] {
+                --ui-color-accent: light-dark(#94a3b8, #334155);
+            }
+
+            [data-ui-theme='glass'][data-invert='buttons'] ui-button:not([variant='secondary']) {
+                --ui-color-accent: light-dark(#94a3b8, #334155);
+                --ui-color-accent-contrast: light-dark(#000000, #ffffff);
+                --ui-color-accent-hover: color-mix(
+                    in oklab,
+                    light-dark(#ffffff, #000000) 12%,
+                    var(--ui-color-accent)
+                );
+                --ui-color-accent-pressed: color-mix(
+                    in oklab,
+                    light-dark(#ffffff, #000000) 22%,
+                    var(--ui-color-accent)
+                );
+            }
+
+            /* The primary button on its own opacity, apart from the checked controls: its label
+               is read against the fill, and the fill is what the opacity gives away. */
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button) {
+                background-color: rgb(from var(--ui-color-accent) r g b / var(--proposal-primary));
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button):hover:not(:disabled) {
+                background-color: rgb(
+                    from var(--ui-color-accent-hover) r g b / var(--proposal-primary)
+                );
+            }
+
+            [data-ui-theme='glass'][data-buttons]
+                ui-button:not([variant='secondary'])::part(button):active:not(:disabled) {
+                background-color: rgb(
+                    from var(--ui-color-accent-pressed) r g b / var(--proposal-primary)
+                );
+            }
+
+            /* The table's rules live in the page's own tree, so plain selectors reach them. */
+            [data-ui-theme='glass'][data-table] ui-table table {
+                background: rgb(from var(--ui-color-surface) r g b / var(--proposal-fill));
+            }
+
+            [data-ui-theme='glass'][data-table] ui-table thead th,
+            [data-ui-theme='glass'][data-table] ui-table tbody tr:nth-child(even) {
+                background: rgb(
+                    from color-mix(in oklab, var(--ui-color-text) 5%, var(--ui-color-surface)) r g
+                        b / var(--proposal-fill)
+                );
+            }
+
+            /* The page behind is the host's, not the theme's — three of them, to choose from. The
+               first two follow the scheme the way a host's page would: light glass over a dark
+               page is grey, which is a page nobody would put it on. The third is whatever is
+               chosen. */
+            [data-ui-theme='glass'][data-specimen] {
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Above both pseudo-elements: the scene's ::after comes after the content in tree
+               order, and would otherwise paint over the cards rather than behind them. */
+            [data-ui-theme='glass'] .specimen {
+                position: relative;
+                z-index: 1;
+            }
+
+            /* Hard: glass over a flat colour proves nothing, so this one has large colour, hard
+               edges and small text, and the scheme's own pole. Not the other pole: white behind
+               dark glass is no page a host following the scheme draws, so how light a page the
+               glass can take is a reading under the panel instead. */
+            [data-scene='hard'] {
+                background:
+                    radial-gradient(circle at 12% 16%, #f97316 0 5.5rem, transparent 5.6rem),
+                    radial-gradient(
+                        circle at 88% 10%,
+                        light-dark(#ffffff, #000000) 0 6.5rem,
+                        transparent 6.6rem
+                    ),
+                    radial-gradient(circle at 72% 56%, #2563eb 0 7rem, transparent 7.1rem),
+                    radial-gradient(circle at 46% 96%, #22c55e 0 5rem, transparent 5.1rem),
+                    repeating-linear-gradient(
+                        48deg,
+                        light-dark(#e4e4ea, #1c1c24) 0 11px,
+                        light-dark(#d2d2da, #2e2e3a) 11px 22px
+                    );
+            }
+
+            [data-scene='hard']::before {
+                content: 'NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00 · NORTHWIND 0142 · CONTOSO 0143 · FABRIKAM 0144 · R$ 1.200,00 · R$ 860,50 · R$ 4.075,00';
+                position: absolute;
+                inset: 0;
+                padding: 1rem;
+                font:
+                    600 12px/2.4 ui-monospace,
+                    monospace;
+                letter-spacing: 0.12em;
+                color: light-dark(rgb(0 0 0 / 0.6), rgb(255 255 255 / 0.8));
+                pointer-events: none;
+            }
+
+            /* The reference's: its near-black ground and its three colours, softened the way its
+               own blobs are, drifting the way they drift. Nothing on it is white and nothing is
+               hard-edged, which is most of why any glass looks clean over it. The light scheme's
+               ground is this prototype's: the reference only drew a dark page. */
+            [data-scene='reference'] {
+                background: light-dark(#eef0f5, #0b0b0f);
+            }
+
+            [data-scene='reference']::before,
+            [data-scene='reference']::after {
+                content: '';
+                position: absolute;
+                inset: -3rem;
+                pointer-events: none;
+                animation: drift 7s ease-in-out infinite alternate;
+            }
+
+            [data-scene='reference']::before {
+                background:
+                    radial-gradient(circle at 10% 10%, #3498db 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 48% 34%, #e67e22 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 82% 8%, #2ecc71 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 24% 62%, #2ecc71 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 70% 70%, #3498db 0 3.6rem, transparent 4.4rem);
+            }
+
+            [data-scene='reference']::after {
+                background:
+                    radial-gradient(circle at 30% 30%, #e67e22 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 90% 44%, #3498db 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 8% 88%, #e67e22 0 3.6rem, transparent 4.4rem),
+                    radial-gradient(circle at 52% 92%, #2ecc71 0 3.6rem, transparent 4.4rem);
+                animation-delay: -3.5s;
+                animation-direction: alternate-reverse;
+            }
+
+            /* One colour behind every card, so that what the readings measure is what the eye
+               gets: in the other two the worst colour may sit where no text does, and the
+               reference's blobs drift past the text rather than under it. Black in the light
+               scheme and white in the dark are the any-page reading itself. */
+            [data-scene='colour'] {
+                background: var(--proposal-page);
+            }
+
+            @keyframes drift {
+                to {
+                    translate: 34px 26px;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                [data-scene='reference']::before,
+                [data-scene='reference']::after {
+                    animation: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="top">
+                <nav aria-label="Prototypes">
+                    <a href="index.html">All four</a>
+                    <a href="default.html">Default</a>
+                    <a href="contrast.html">High contrast</a>
+                    <a href="matrix.html">Matrix</a>
+                    <a href="glass.html" aria-current="page">Glass</a>
+                </nav>
+                <div data-scheme-control></div>
+            </div>
+            <h1>Glass: translucent raised surfaces, over a page that is not flat</h1>
+            <p>
+                Question 2's recommendation. The raised surfaces — the cards, the toasts, the tip
+                and the dialog — read a translucent colour and a backdrop filter; the surface itself
+                stays opaque, so the fields inside a card are as legible as anywhere else. The theme
+                also moves two grounds: a neutral slate accent, and the text in pure black and pure
+                white. The page behind follows the scheme, as a host's would.
+            </p>
+            <p>
+                <strong>The glass here is chosen by eye</strong> — white in the light, black in the
+                dark, both at 0.20, and a 10px blur — so 80% of the page comes through. What it lets
+                through is what everything resting on it is read against: not the text alone, but
+                the error message, a checked box, a switch that is off and the focus ring, which
+                have less room to give than the text has.
+            </p>
+            <p>
+                <strong>The first row on the glass is the page it can take</strong>: the lightest
+                grey behind it in the dark scheme, the darkest in the light, before one of the five
+                fails. A page that does not follow the scheme — white behind dark glass, black
+                behind light — is not measured, because no host following the scheme draws one.
+            </p>
+            <p>
+                <strong>The controls can be made translucent too</strong>, each group on its own:
+                their fills at an opacity, the neutral ones and the accent ones apart, every edge
+                still opaque. A neutral fill only adds to the glass beneath it, so text on a field,
+                a secondary button or a row reads at least as well as on the glass or the surface,
+                whichever is worse — the rows above bound it. An accent fill is different, and the
+                checked controls and the primary button each have their own opacity: a checked box
+                is read against the glass around it, and a button's label and its hover against the
+                fill itself.
+            </p>
+            <p>
+                <strong>To see a reading rather than read it</strong>, put one colour behind every
+                card: the limit itself, or one of the reference's colours. The rows under the panel
+                then measure each of the five over exactly that page. Around 3:1 many readers still
+                read comfortably; 4.5:1 is the margin kept for those who cannot, and for glare and
+                poor screens.
+            </p>
+            <div class="controls">
+                <label
+                    >Light opacity
+                    <input type="range" id="light" min="0" max="1" step="0.01" value="0.2" />
+                    <output for="light">0.20</output></label
+                >
+                <label
+                    >Dark opacity
+                    <input type="range" id="dark" min="0" max="1" step="0.01" value="0.2" />
+                    <output for="dark">0.20</output></label
+                >
+                <label
+                    >Blur
+                    <input type="range" id="blur" min="0" max="30" step="1" value="10" />
+                    <output for="blur">10px</output></label
+                >
+            </div>
+            <div class="controls">
+                <label
+                    >Fill opacity
+                    <input type="range" id="fill" min="0" max="1" step="0.01" value="0.2" />
+                    <output for="fill">0.20</output></label
+                >
+                <label
+                    >Checked opacity
+                    <input type="range" id="checked" min="0" max="1" step="0.01" value="0.8" />
+                    <output for="checked">0.80</output></label
+                >
+                <label
+                    >Primary opacity
+                    <input type="range" id="primary" min="0" max="1" step="0.01" value="0.8" />
+                    <output for="primary">0.80</output></label
+                >
+                <label
+                    >Accent
+                    <select id="invert">
+                        <option value="none">Dark on light, as shipped</option>
+                        <option value="buttons" selected>Inverted, on primary buttons</option>
+                        <option value="all">Inverted, everywhere</option>
+                    </select></label
+                >
+                <label><input type="checkbox" id="primary-edge" checked /> Primary edge</label>
+                <label><input type="checkbox" id="fields" checked /> Fields</label>
+                <label><input type="checkbox" id="checks" checked /> Checks</label>
+                <label><input type="checkbox" id="buttons" checked /> Buttons</label>
+                <label><input type="checkbox" id="table" checked /> Table</label>
+            </div>
+            <div class="controls">
+                <label
+                    >Page behind
+                    <select id="scene">
+                        <option value="hard" selected>Hard: colour, stripes and text</option>
+                        <option value="reference">The reference's: near-black, soft colour</option>
+                        <option value="colour">One colour, behind every card</option>
+                    </select></label
+                >
+                <label><input type="checkbox" id="edge" checked /> Glass edge</label>
+                <label><input type="checkbox" id="more" /> prefers-contrast: more</label>
+                <button type="button" id="theme">Back to the theme</button>
+            </div>
+            <div class="controls">
+                <label
+                    >One colour behind every card <input type="color" id="colour" value="#2ecc71"
+                /></label>
+                <button type="button" id="limit">The limit it holds</button>
+                <button type="button" data-colour="#3498db">The reference's blue</button>
+                <button type="button" data-colour="#e67e22">Its orange</button>
+                <button type="button" data-colour="#2ecc71">Its green</button>
+            </div>
+        </header>
+        <main>
+            <figure>
+                <figcaption>Glass</figcaption>
+                <div
+                    data-specimen
+                    data-ui-theme="glass"
+                    data-proposed
+                    data-raised
+                    data-edge
+                    data-fields
+                    data-checks
+                    data-buttons
+                    data-table
+                    data-invert="buttons"
+                    data-primary-edge
+                    data-scene="hard"
+                ></div>
+                <dl data-floors></dl>
+            </figure>
+        </main>
+        <script type="module">
+            import { measureAll } from './specimen.ts';
+
+            const panel = document.querySelector('[data-specimen]');
+            const control = (id) => document.getElementById(id);
+            const [light, dark, blur, fill, checked, primary, invert, scene, edge, more, colour] = [
+                'light',
+                'dark',
+                'blur',
+                'fill',
+                'checked',
+                'primary',
+                'invert',
+                'scene',
+                'edge',
+                'more',
+                'colour',
+            ].map(control);
+            const groups = ['fields', 'checks', 'buttons', 'table'].map(control);
+            const primaryEdge = control('primary-edge');
+            const quiet = matchMedia(
+                '(prefers-contrast: more), (prefers-reduced-transparency: reduce)',
+            );
+
+            // The reference's page, listed for the second reading: the ground the panel paints in
+            // the scheme in force, and the three colours, before the filter's saturate(), which
+            // keeps their luminance.
+            function referencePage() {
+                const channels = getComputedStyle(panel).backgroundColor.match(/\d+/g) ?? [];
+                const ground = channels
+                    .slice(0, 3)
+                    .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+                    .join('');
+
+                return `#${ground} #3498db #e67e22 #2ecc71`;
+            }
+
+            // The sliders write the pair on the panel, and an inline declaration outranks both
+            // contrast answers in the sheet — so while either applies, the sliders, the edge and
+            // the controls' fills stand down.
+            function tune() {
+                const off = more.checked || quiet.matches;
+
+                for (const input of [light, dark, blur, fill, checked, primary]) {
+                    input.nextElementSibling.value =
+                        input === blur ? `${input.value}px` : Number(input.value).toFixed(2);
+                }
+
+                panel.dataset.scene = scene.value;
+                panel.toggleAttribute('data-more', more.checked);
+                // The contrast answer sets its own accent, so the inversion stands down under it.
+                panel.dataset.invert = more.checked ? 'none' : invert.value;
+                panel.toggleAttribute('data-edge', edge.checked && !off);
+                panel.toggleAttribute('data-primary-edge', primaryEdge.checked);
+
+                for (const group of groups) {
+                    panel.toggleAttribute(`data-${group.id}`, group.checked && !off);
+                }
+
+                panel.style.setProperty('--proposal-fill', fill.value);
+                panel.style.setProperty('--proposal-checked', checked.value);
+                panel.style.setProperty('--proposal-primary', primary.value);
+
+                panel.style.setProperty('--proposal-page', colour.value);
+
+                if (scene.value === 'reference') {
+                    panel.dataset.backdrops = referencePage();
+                } else if (scene.value === 'colour') {
+                    panel.dataset.backdrops = colour.value;
+                } else {
+                    delete panel.dataset.backdrops;
+                }
+
+                if (off) {
+                    panel.style.removeProperty('--ui-color-surface-raised');
+                    panel.style.removeProperty('--ui-backdrop-raised');
+                } else {
+                    panel.style.setProperty(
+                        '--ui-color-surface-raised',
+                        `light-dark(rgb(255 255 255 / ${light.value}), rgb(0 0 0 / ${dark.value}))`,
+                    );
+                    panel.style.setProperty(
+                        '--ui-backdrop-raised',
+                        `blur(${blur.value}px) saturate(1.7)`,
+                    );
+                }
+
+                measureAll();
+                // No limit when the glass holds over every page in the scheme, or over none.
+                control('limit').disabled = panel.dataset.limit === undefined;
+            }
+
+            // Back to what the theme would ship, keeping the page behind.
+            function reset() {
+                light.value = '0.2';
+                dark.value = '0.2';
+                blur.value = '10';
+                fill.value = '0.2';
+                checked.value = '0.8';
+                primary.value = '0.8';
+                invert.value = 'buttons';
+                edge.checked = true;
+                primaryEdge.checked = true;
+                more.checked = false;
+
+                for (const group of groups) {
+                    group.checked = true;
+                }
+
+                tune();
+            }
+
+            for (const input of [
+                light,
+                dark,
+                blur,
+                fill,
+                checked,
+                primary,
+                invert,
+                primaryEdge,
+                scene,
+                edge,
+                more,
+                ...groups,
+            ]) {
+                input.addEventListener('input', tune);
+            }
+
+            control('theme').addEventListener('click', reset);
+
+            // Choosing a colour is choosing that page.
+            function paint(value) {
+                colour.value = value;
+                scene.value = 'colour';
+                tune();
+            }
+
+            colour.addEventListener('input', () => paint(colour.value));
+
+            for (const swatch of document.querySelectorAll('[data-colour]')) {
+                swatch.addEventListener('click', () => paint(swatch.dataset.colour));
+            }
+
+            control('limit').addEventListener('click', () => paint(panel.dataset.limit));
+
+            quiet.addEventListener('change', tune);
+            // The reference's ground follows the scheme, so its listed colours do too.
+            document.addEventListener('schemechange', tune);
+            tune();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>High contrast, as a setting</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <link rel="stylesheet" href="toast.css" />
+        <link rel="stylesheet" href="contrast.css" />
+    </head>
+    <body>
+        <header>
+            <div class="top">
+                <nav aria-label="Prototypes">
+                    <a href="index.html">All four</a>
+                    <a href="default.html">Default</a>
+                    <a href="contrast.html" aria-current="page">High contrast</a>
+                    <a href="matrix.html">Matrix</a>
+                    <a href="glass.html">Glass</a>
+                </nav>
+                <div data-scheme-control></div>
+            </div>
+            <h1>High contrast: the reader's setting, not a theme</h1>
+            <p>
+                Question 4's recommendation. When the reader's system asks for more contrast, the
+                default palette goes black and white: the text, the surface, the accent and the
+                focus ring move to the poles, and the dark scheme sits on pure black. The border and
+                the muted text follow on their own, because both mix toward the text. The outcome
+                colours keep their hue — an error still says so in red.
+            </p>
+            <p>
+                <strong>The states are written out, not derived.</strong> Over pure black an 8% mix
+                is <code>#020202</code>, 1.01:1 — the hover S5 found vanishing — and a black or
+                white accent has no shade to move away from its label toward. A palette that is only
+                black and white is fully known, so <code>contrast.css</code> gives its hover,
+                pressed and striped greys as values, and says beside them what that costs a theme.
+            </p>
+            <p>
+                The panel is a stand-in: it carries the declarations the media query in
+                <code>contrast.css</code> does, so the answer shows without the reader's setting.
+            </p>
+        </header>
+        <main>
+            <figure>
+                <figcaption>prefers-contrast: more</figcaption>
+                <div data-specimen data-more></div>
+                <dl data-floors></dl>
+            </figure>
+        </main>
+        <script type="module">
+            import './specimen.ts';
+        </script>
+    </body>
+</html>

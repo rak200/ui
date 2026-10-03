@@ -1,0 +1,34 @@
+/*
+ * What question 3 would change in src/tokens.ts: the accent's label becomes the WCAG pole of
+ * the accent, and the accent's hover and pressed shades mix away from that pole instead of
+ * toward the text — S1's third shape, 0 of 4096 accents under 4.5:1.
+ *
+ * The proposal puts these formulas in the var() fallback, where every derivation lives. This
+ * prototype declares them on the themed element instead, which freezes them there — the
+ * failure the formulas docblock describes — and that is harmless here only because every page
+ * sets the accent on that same element or inherits it unchanged from :root.
+ */
+[data-proposed] {
+    /* White while the accent's luminance is under the crossover, black from it on. */
+    --ui-color-accent-contrast: color(
+        from var(--ui-color-accent) srgb-linear
+            clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
+            clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
+            clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * infinity, 1)
+    );
+
+    /* The comparison reversed: the pole the label is not. Mixing toward it moves every state
+       away from the text on it, so the ratio can only rise. */
+    --proposal-away: color(
+        from var(--ui-color-accent) srgb-linear
+            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
+            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
+            clamp(0, ((0.2126 * r + 0.7152 * g + 0.0722 * b) - 0.1791) * infinity, 1)
+    );
+    --ui-color-accent-hover: color-mix(in oklab, var(--proposal-away) 12%, var(--ui-color-accent));
+    --ui-color-accent-pressed: color-mix(
+        in oklab,
+        var(--proposal-away) 22%,
+        var(--ui-color-accent)
+    );
+}

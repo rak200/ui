@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0003 prototypes</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <style>
+            main {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+                max-inline-size: 72rem;
+            }
+
+            main a {
+                display: grid;
+                gap: 0.5rem;
+                padding: 1.25rem;
+                border: 1px solid var(--frame-rule);
+                border-radius: 0.75rem;
+                color: inherit;
+                text-decoration: none;
+            }
+
+            main a:hover,
+            main a:focus-visible {
+                border-color: currentColor;
+            }
+
+            main h2 {
+                margin: 0;
+                font-size: 1.1rem;
+            }
+
+            main p {
+                margin: 0;
+                color: var(--frame-quiet);
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="top">
+                <nav aria-label="Prototypes">
+                    <a href="index.html" aria-current="page">All four</a>
+                    <a href="default.html">Default</a>
+                    <a href="contrast.html">High contrast</a>
+                    <a href="matrix.html">Matrix</a>
+                    <a href="glass.html">Glass</a>
+                </nav>
+                <div data-scheme-control></div>
+            </div>
+            <h1>RFC 0003 — the four themes, as the proposed design leaves them</h1>
+            <p>
+                Each page renders the real components from <code>src/</code> under the CSS a theme
+                would ship, which sits in the page's own <code>&lt;style&gt;</code>. Where the
+                proposal changes a component or a formula rather than a theme, the page carries a
+                stand-in and says so beside it. Under every panel, the floors
+                <code>tests/tokens.test.ts</code> holds for the default palette are measured again
+                for that one.
+            </p>
+        </header>
+        <main>
+            <a href="default.html">
+                <h2>Default</h2>
+                <p>A configurable accent, with its label derived rather than chosen. Question 3.</p>
+            </a>
+            <a href="contrast.html">
+                <h2>High contrast</h2>
+                <p>
+                    The reader's <code>prefers-contrast: more</code>, answered by the palette.
+                    Question 4.
+                </p>
+            </a>
+            <a href="matrix.html">
+                <h2>Matrix</h2>
+                <p>Green on black and on white, a glow through elevation. Question 2.</p>
+            </a>
+            <a href="glass.html">
+                <h2>Glass</h2>
+                <p>Translucent raised surfaces, and the opacity floor the text sets. Question 2.</p>
+            </a>
+        </main>
+        <script type="module">
+            import './scheme.ts';
+        </script>
+    </body>
+</html>

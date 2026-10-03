@@ -1,0 +1,99 @@
+/*
+ * The default palette's answer to prefers-contrast: more — question 4 — in black and white
+ * only: text, surface, accent and focus ring at the poles, and the dark scheme on pure black.
+ * The outcome colours keep their hue, because a message that is an error still says so in red.
+ *
+ * Border and muted text stay derived: both mix toward the text, so the poles carry them up.
+ * The states cannot stay derived, and that is S5's finding arriving here. Over pure black an 8%
+ * mix is #020202, 1.01:1, and a black or white accent has no shade to move away from its label
+ * toward. So a black-and-white palette, being fully known, writes its states out.
+ *
+ * What that costs in the real sheet: these are derived names declared at :root, and a
+ * declaration at :root reaches every themed subtree below it — a theme under `more` would
+ * inherit these greys unless its own answer declares its states or resets them with `initial`,
+ * which hands them back to the formula.
+ */
+@media (prefers-contrast: more) {
+    :root {
+        --ui-color-text: light-dark(#000000, #ffffff);
+        --ui-color-surface: light-dark(#ffffff, #000000);
+        --ui-color-accent: light-dark(#000000, #ffffff);
+        --ui-color-accent-contrast: light-dark(#ffffff, #000000);
+        --ui-color-focus: light-dark(#000000, #ffffff);
+        --ui-color-hover: light-dark(#ebebeb, #1f1f1f);
+        --ui-color-pressed: light-dark(#d6d6d6, #333333);
+        --ui-color-surface-muted: light-dark(#f2f2f2, #141414);
+        --ui-color-accent-hover: light-dark(#333333, #d6d6d6);
+        --ui-color-accent-pressed: light-dark(#4d4d4d, #b3b3b3);
+    }
+}
+
+/* The prototype's stand-in, so the answer shows without emulating the setting: the same
+   declarations, on the panel rather than on :root. */
+[data-more] {
+    --ui-color-text: light-dark(#000000, #ffffff);
+    --ui-color-surface: light-dark(#ffffff, #000000);
+    --ui-color-accent: light-dark(#000000, #ffffff);
+    --ui-color-accent-contrast: light-dark(#ffffff, #000000);
+    --ui-color-focus: light-dark(#000000, #ffffff);
+    --ui-color-hover: light-dark(#ebebeb, #1f1f1f);
+    --ui-color-pressed: light-dark(#d6d6d6, #333333);
+    --ui-color-surface-muted: light-dark(#f2f2f2, #141414);
+    --ui-color-accent-hover: light-dark(#333333, #d6d6d6);
+    --ui-color-accent-pressed: light-dark(#4d4d4d, #b3b3b3);
+}
+
+/* The switch, off, drawn as an empty box is — the surface inside the border, the thumb in the
+   border's colour — where it had been a track filled with the border's own grey. This is the
+   component's own drawing question 2 proposes for every palette, as Glass and Matrix draw it,
+   stood in through the part. A rule from out here outranks every state the component paints, so
+   the on state and its hover are written again. */
+[data-more] ui-switch::part(box) {
+    background-color: var(--ui-color-surface);
+    background-image: radial-gradient(
+        circle closest-side,
+        color-mix(in oklab, var(--ui-color-text) 50%, var(--ui-color-surface)) 100%,
+        transparent 100%
+    );
+}
+
+[data-more] ui-switch::part(box):checked {
+    background-color: var(--ui-color-accent);
+    background-image: radial-gradient(
+        circle closest-side,
+        var(--ui-color-surface) 100%,
+        transparent 100%
+    );
+}
+
+[data-more] ui-switch::part(box):checked:hover:not(:disabled) {
+    background-color: var(--ui-color-accent-hover);
+}
+
+/* What floats over the page is edged in the text's own colour, black in the light scheme and
+   white in the dark: the dialog, the tip and the open menu. Each lies over content that is not its
+   own, so its edge has to stand apart from whatever is under it, and the text's colour is the far
+   pole from the surface under it in this palette. The dialog needs it most: it draws no boundary
+   and leans on its scrim, black at 0.5, which over the dark scheme's pure black leaves the page
+   as black as the dialog, 1.00:1. Its edge reads 21:1 to the dialog and 5.32 to the page under
+   the scrim in the light scheme, 21:1 to both in the dark.
+
+   The dialog's edge stands in, through the part, for the boundary question 2 proposes the
+   component draws in every palette; the other two already draw the derived border, and only
+   its colour changes, at the strength this setting asks for. The tip is the host's own element,
+   so a rule from out here reaches it without a part. */
+[data-more] ui-dialog::part(dialog) {
+    border: 1px solid var(--ui-color-text);
+}
+
+[data-more] ui-tooltip > [slot='tip'],
+[data-more] ui-menu::part(menu) {
+    border-color: var(--ui-color-text);
+}
+
+/* The toast stays black and white: its edge all round, stripe included, and its icon in the
+   text's own colour, so the variant is told by the icon and the words rather than by a hue. */
+[data-more] ui-toast[variant] {
+    --proposal-toast-tone: currentcolor;
+    border-color: var(--ui-color-text);
+}
