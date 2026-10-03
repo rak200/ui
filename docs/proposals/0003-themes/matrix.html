@@ -22,27 +22,25 @@
                 /* The page's intensity slider, 1 unless moved: every glow below multiplies its
                    opacity by it. What ships is the strength chosen, folded into the values. */
                 --proposal-glow: 1;
-                /* The glow, through the elevation step the raised surfaces already read — so the
-                   card, the menu, the toast and the tip glow, and no name is added. Only its
-                   colour follows the scheme, which is S2: a shadow's colour can be light-dark()
-                   and the shadow cannot. */
-                --ui-elevation-100:
-                    0 0 0 1px
-                        light-dark(
-                            rgb(0 143 17 / calc(0.3 * var(--proposal-glow))),
-                            rgb(0 255 0 / calc(0.25 * var(--proposal-glow)))
-                        ),
-                    0 0 18px
-                        light-dark(
-                            rgb(0 143 17 / calc(0.25 * var(--proposal-glow))),
-                            rgb(0 255 0 / calc(0.3 * var(--proposal-glow)))
-                        );
-                /* Being tried: the glow on the controls, where elevation is not read — question
-                   2's case for a name of its own. One colour, at the slider's strength. */
-                --proposal-control-glow: light-dark(
-                    rgb(0 143 17 / calc(0.35 * var(--proposal-glow))),
-                    rgb(0 255 0 / calc(0.35 * var(--proposal-glow)))
+                /* The glow, one light in two places: the raised surfaces wear it through elevation
+                   and the controls being tried below wear it too, at the same blur, so neither
+                   reads weaker than the other. Only its colour follows the scheme, which is S2: a
+                   shadow's colour can be light-dark() and the shadow cannot. */
+                --proposal-glow-colour: light-dark(
+                    rgb(0 143 17 / calc(0.25 * var(--proposal-glow))),
+                    rgb(0 255 0 / calc(0.3 * var(--proposal-glow)))
                 );
+                --proposal-ring-colour: light-dark(
+                    rgb(0 143 17 / calc(0.3 * var(--proposal-glow))),
+                    rgb(0 255 0 / calc(0.25 * var(--proposal-glow)))
+                );
+                /* Through the elevation step the raised surfaces already read — so the card, the
+                   menu, the toast and the tip glow, and no name is added. */
+                --ui-elevation-100:
+                    0 0 0 1px var(--proposal-ring-colour), 0 0 18px var(--proposal-glow-colour);
+                /* Being tried: the same glow on the controls, where elevation is not read —
+                   question 2's case for a name of its own. */
+                --proposal-control-glow: var(--proposal-glow-colour);
             }
 
             /* Its answer to prefers-contrast: more. The green stays on the accent and the text
@@ -96,7 +94,7 @@
                     ui-switch,
                     ui-radio-group
                 ) {
-                --proposal-glow-shadow: 0 0 10px var(--proposal-control-glow);
+                --proposal-glow-shadow: 0 0 18px var(--proposal-control-glow);
             }
 
             /* The glow held 2px off the edge by a ring in the surface's own colour, and pushed
@@ -113,30 +111,22 @@
                     ui-radio-group
                 ) {
                 --proposal-glow-shadow:
-                    0 0 0 2px var(--ui-color-surface), 0 0 10px 2px var(--proposal-control-glow);
+                    0 0 0 2px var(--ui-color-surface), 0 0 18px 2px var(--proposal-control-glow);
             }
 
             [data-ui-theme='matrix'][data-glow-gap] {
                 --ui-elevation-100:
-                    0 0 0 2px var(--ui-color-surface),
-                    0 0 0 3px
-                        light-dark(
-                            rgb(0 143 17 / calc(0.3 * var(--proposal-glow))),
-                            rgb(0 255 0 / calc(0.25 * var(--proposal-glow)))
-                        ),
-                    0 0 18px 2px
-                        light-dark(
-                            rgb(0 143 17 / calc(0.25 * var(--proposal-glow))),
-                            rgb(0 255 0 / calc(0.3 * var(--proposal-glow)))
-                        );
+                    0 0 0 2px var(--ui-color-surface), 0 0 0 3px var(--proposal-ring-colour),
+                    0 0 18px 2px var(--proposal-glow-colour);
             }
 
             /* An invalid control glows in the colour of its own boundary, the danger. Its error
                reflects, so a control with none still carries the attribute, empty. */
             [data-ui-theme='matrix']
                 :is(ui-input, ui-select, ui-checkbox, ui-radio-group)[error]:not([error='']) {
-                --proposal-control-glow: rgb(
-                    from var(--ui-color-danger) r g b / calc(0.35 * var(--proposal-glow))
+                --proposal-control-glow: light-dark(
+                    rgb(from var(--ui-color-danger) r g b / calc(0.25 * var(--proposal-glow))),
+                    rgb(from var(--ui-color-danger) r g b / calc(0.3 * var(--proposal-glow)))
                 );
             }
 
@@ -245,7 +235,8 @@
             <p>
                 <strong>The glow can reach the controls too</strong> — buttons, fields and checks,
                 each on its own toggle — which is where elevation is not read, and so where question
-                2 would need a name of its own. A glow lights what sits beside a boundary, so the
+                2 would need a name of its own, though not a value: it is the raised surfaces' glow,
+                the same colour at the same blur. A glow lights what sits beside a boundary, so the
                 rows under each panel read a field's edge and a checked box against it: laid right
                 against the edge, the glow takes a field's boundary under 3:1 at the strength the
                 slider starts at. Held 2px off the edge, it leaves the boundary on the surface it
