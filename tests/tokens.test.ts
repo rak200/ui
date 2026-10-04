@@ -1081,6 +1081,15 @@ describe('the contrast floors', () => {
 
                     expect(palette.glows ? Math.max(fill, mark) : fill).toBeGreaterThanOrEqual(3);
                 });
+
+                it('edges what floats over the page in the text only when the reader asks', () => {
+                    // RFC 0003: the boundary's mix falls short of the text, which is the edge a
+                    // reader who asked for more contrast gets on a dialog, a tip and a menu.
+                    // Otherwise it is the boundary, so nothing renders differently.
+                    expect(paint('--ui-color-border-overlay')).toBe(
+                        paint(more ? '--ui-color-text' : '--ui-color-border'),
+                    );
+                });
             });
         });
     });

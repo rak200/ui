@@ -701,7 +701,7 @@ describe('every visual decision a dialog paints is a token', () => {
         element.style.setProperty('--ui-space', '7px');
         element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
         element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
-        element.style.setProperty('--ui-color-border', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-color-border-overlay', 'rgb(7, 8, 9)');
 
         await open(element);
 
@@ -709,9 +709,9 @@ describe('every visual decision a dialog paints is a token', () => {
 
         expect(styles.fontFamily, '--ui-font').toBe('monospace');
         expect(styles.borderRadius, '--ui-radius').toBe('11px');
-        // The card's boundary, and for a reason the scrim cannot cover: over the dark
+        // The edge of what floats, and for a reason the scrim cannot cover: over the dark
         // surface it leaves the panel 1.10:1 from the page.
-        expect(styles.borderTopColor, '--ui-color-border').toBe('rgb(7, 8, 9)');
+        expect(styles.borderTopColor, '--ui-color-border-overlay').toBe('rgb(7, 8, 9)');
         expect(styles.borderTopStyle).toBe('solid');
         expect(styles.borderTopWidth).toBe('1px');
         expect(styles.paddingTop, '--ui-space, tripled').toBe('21px');

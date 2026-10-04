@@ -131,7 +131,7 @@ export class UiTooltip extends LitElement {
                stops holding. */
             color: ${reference('--ui-color-text')};
             background: ${reference('--ui-color-surface')};
-            border: 1px solid ${reference('--ui-color-border')};
+            border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
             box-shadow: ${reference('--ui-elevation-raised')};
         }

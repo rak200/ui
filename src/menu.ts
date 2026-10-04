@@ -181,7 +181,7 @@ export class UiMenu extends LitElement {
             min-inline-size: max-content;
             max-inline-size: calc(${reference('--ui-space')} * 44);
             padding: calc(${reference('--ui-space')} / 2);
-            border: 1px solid ${reference('--ui-color-border')};
+            border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
             background: ${reference('--ui-color-surface')};
             color: ${reference('--ui-color-text')};

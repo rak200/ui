@@ -1431,7 +1431,7 @@ describe('the drawing', () => {
         const element = only(host, 'ui-tooltip');
 
         element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
-        element.style.setProperty('--ui-color-border', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-border-overlay', 'rgb(4, 5, 6)');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-space', '10px');
         element.style.setProperty('--ui-text-supporting', '21px');

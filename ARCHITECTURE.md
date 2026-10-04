@@ -379,8 +379,9 @@ token layer, so a reader's setting does not depend on a host shipping a picker.
 ### More contrast is the reader's setting, answered once
 
 `prefers-contrast: more` is answered where reduced motion is, in the token sheet: the text, the
-surface, the accent and the focus ring go to black and white, and the states are written out as
-values, because over pure black a mix toward the text barely moves. The outcome colours stay — an
+surface, the accent and the focus ring go to black and white, what floats over the page is edged in
+the text, and the states are written out as values, because over pure black a mix toward the text
+barely moves. The outcome colours stay — an
 error that turned grey would stop saying it is an error. The written states are declared at `:root`
 and reach under every theme, so a theme's own answer declares its states or hands them back to
 their formulas with `initial`, which `themeStyleSheet()` writes for it.

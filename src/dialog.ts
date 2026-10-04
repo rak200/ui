@@ -184,13 +184,14 @@ export class UiDialog extends LitElement {
 
         dialog {
             /* The user agent's own 2px border and white background are decisions this
-               component owns, and the border it owns is the card's: the derived boundary.
+               component owns, and the border it owns is the edge of what floats over the page,
+               which is the card's derived boundary until the reader asks for more contrast.
                The scrim alone does not part the panel from the page in every scheme — over
                the dark surface it leaves 1.10:1 — and the border stands 4.36:1 from the
                page under the scrim and 3.95 from the panel, measured for RFC 0003. Nothing
                is raised underneath: elevation arrives with the component that needs to read
                as lifted, and the boundary is what parts this one. */
-            border: 1px solid ${reference('--ui-color-border')};
+            border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
             padding: calc(${reference('--ui-space')} * 3);
             background: ${reference('--ui-color-surface')};
