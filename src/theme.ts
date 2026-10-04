@@ -204,10 +204,18 @@ export const glass: Theme = {
     values: {
         '--ui-color-text': '#000000',
         '--ui-color-accent': '#334155',
+        // 20% and 32% of the text rather than the formula's 16% and 26%: a menu's items and a
+        // toast's dismiss hover on the glass, and over the light page Glass holds over the
+        // formula's hover stood 1.15:1 from it, under the 1.25 it owes. Opaque, as a state's
+        // fill is, and written as values, as Matrix's are.
+        '--ui-color-hover': '#bebebe',
+        '--ui-color-pressed': '#989898',
     },
     dark: {
         '--ui-color-text': '#ffffff',
         '--ui-color-accent': '#94a3b8',
+        '--ui-color-hover': '#393f4d',
+        '--ui-color-pressed': '#535965',
     },
     translucent: {
         values: {

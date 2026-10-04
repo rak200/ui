@@ -1074,6 +1074,16 @@ describe('the contrast floors', () => {
                     ).toBeGreaterThanOrEqual(1.25);
                 });
 
+                it('moves a neutral state visibly where it rests on a raised surface', () => {
+                    // A menu's items and a toast's dismiss rest on the raised surface with no
+                    // fill of their own, so the hover is read against it, and they have nothing
+                    // else to show the pointer by. Over Glass's light limit the formula's hover
+                    // was 1.15:1 from the glass.
+                    expect(
+                        contrastRatio(paint('--ui-color-hover'), raised(palette, scheme)),
+                    ).toBeGreaterThanOrEqual(1.25);
+                });
+
                 it('keeps a hovered primary legible', () => {
                     const label = paint('--ui-color-accent-contrast');
 

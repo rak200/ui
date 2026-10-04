@@ -86,6 +86,8 @@ the tip, the dialog and the open menu.
 | ---------------- | --------------------------------------------------------- | ------------------------------ |
 | text             | `#000000`                                                 | `#ffffff`                      |
 | accent           | `#334155`                                                 | `#94a3b8`                      |
+| hover            | `#bebebe`                                                 | `#393f4d`                      |
+| pressed          | `#989898`                                                 | `#535965`                      |
 | a raised surface | white at 0.20                                             | black at 0.20                  |
 | behind it        | `blur(10px) saturate(1.7)`                                | the same                       |
 | its edge         | white at 0.45                                             | white at 0.16                  |
@@ -107,6 +109,11 @@ scheme, the focus ring in the dark. A page between the scheme's own pole and tha
 past the grey, or a light page behind dark glass, does not, and nothing here measures it. The text
 has the most room of anything on the glass, so a page that looks fine under it can still be past
 the limit.
+
+**It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
+26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer
+by, and over the light page Glass holds over, the formula's hover stood 1.15:1 from the glass, under
+the 1.25 a state owes.
 
 **When the reader asks for more contrast or for less transparency, glass stops being glass**: every
 raised surface goes back to the opaque surface with nothing behind it, its edge to the boundary and
