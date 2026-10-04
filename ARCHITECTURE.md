@@ -365,7 +365,25 @@ A **scheme** is the light or dark rendering of whichever theme is in force, sele
 `color-scheme`, with each ground carrying both of its values in one `light-dark()`. A **theme** is a
 named set of decisions, selected with the `data-ui-theme` attribute. They are independent: two
 themes cost two blocks rather than two blocks plus two guarded media queries, and a whole theme is
-four grounds.
+three grounds.
+
+**The package ships themes, as data a host opts into** — RFC 0003. Only a shipped theme is
+measured: the contrast floors run over every palette this package ships, in each scheme and under
+the reader's contrast setting, and a palette a host writes from a description is exactly the one
+nothing measures. A theme is the object `defaults` and `darkScheme` already are, rendered by
+`themeStyleSheet()` and never emitted by `tokenStyleSheet()`, so no host pays for a theme it does
+not select. Two wanted themes became something every palette does instead: the accent's label is
+derived, so a host's own accent gets a legible one, and `prefers-contrast: more` is answered in the
+token layer, so a reader's setting does not depend on a host shipping a picker.
+
+### More contrast is the reader's setting, answered once
+
+`prefers-contrast: more` is answered where reduced motion is, in the token sheet: the text, the
+surface, the accent and the focus ring go to black and white, and the states are written out as
+values, because over pure black a mix toward the text barely moves. The outcome colours stay — an
+error that turned grey would stop saying it is an error. The written states are declared at `:root`
+and reach under every theme, so a theme's own answer declares its states or hands them back to
+their formulas with `initial`, which `themeStyleSheet()` writes for it.
 
 ### Motion is tokens, and reduced motion is one rule
 
@@ -389,13 +407,22 @@ low alpha, and black on charcoal is black.
 The answer is at the component rather than in the token layer, because that is where it can be
 judged: `<ui-card>` draws a **boundary** as well as a lift, and the boundary is derived — it mixes
 toward the text, so it is correct in both schemes by construction. The shadow is the light scheme's
-cue; the edge is what both schemes have. A scheme-aware shadow would mean a second axis in the
-emitter for one category, and the thing it would buy is available from a name that already exists.
+cue; the edge is what both schemes have.
+
+**What cannot follow the scheme is a shadow's geometry, not its colour.** A whole shadow in
+`light-dark()` is refused by the parser, but the colour inside one can be a `light-dark()` pair, and
+the colour is the part a scheme has reason to change — RFC 0003 measured both. That is how Matrix's
+glow follows the scheme through the same `--ui-elevation-100` the card reads, with no second axis in
+the emitter.
 
 ### A category arrives with the component that consumes it
 
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not
-before.
+before. **Or with a shipped theme, when its default is the identity** — `none`, transparent, zero —
+so the default palette renders exactly as before and there is no default to correct later: the value
+that is not the identity is the theme's, judged in the theme's story, and the components that read
+the new name change in the same pull request. RFC 0003 added that clause, for a glow on a control and
+a glass behind a surface, which no component would ever ask for on its own.
 
 **The type scale is the case where the rule paid off most visibly, and it did so backwards.** It
 arrived with `<ui-table>` as scheduled, and what it found on arrival was not a gap but a **defect**:

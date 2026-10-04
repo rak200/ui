@@ -16,6 +16,10 @@
  * no second sheet, and no `@storybook/addon-themes` — which exists to do exactly the
  * swapping that decision removed. `globalTypes`, `initialGlobals` and the toolbar are core.
  *
+ * **The theme control is the scheme control's second axis**, which RFC 0003 asked for beside
+ * it: a theme is the attribute `data-ui-theme`, written on the same root the scheme is, with
+ * the theme's own block inserted where the token sheet is. A host does the same two things.
+ *
  * **`.storybook/main.ts` says the configuration surface stays as small as RFC 0001 allows,
  * and this grows it.** The trade is stated rather than skipped: a component kit whose site
  * can only be seen in one of the two schemes it ships is showing half of itself.
@@ -23,6 +27,7 @@
 
 import { html, type TemplateResult } from 'lit';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import type { Preview } from '@storybook/web-components-vite';
 import { ruleset } from '../tests/a11y-ruleset.js';
 
@@ -39,6 +44,17 @@ import { ruleset } from '../tests/a11y-ruleset.js';
 function sheet(): HTMLStyleElement {
     const element = document.createElement('style');
     element.textContent = tokenStyleSheet();
+
+    return element;
+}
+
+/** The themes the toolbar offers, by the value `data-ui-theme` takes for each. */
+const themes: ReadonlyMap<string, Theme> = new Map([[matrix.name, matrix]]);
+
+/** A shipped theme's block, built the way {@link sheet} builds the token sheet. */
+function themed(theme: Theme): HTMLStyleElement {
+    const element = document.createElement('style');
+    element.textContent = themeStyleSheet(theme);
 
     return element;
 }
@@ -61,9 +77,23 @@ const preview: Preview = {
                 dynamicTitle: true,
             },
         },
+        theme: {
+            description: 'Which shipped theme the preview renders under',
+            toolbar: {
+                title: 'Theme',
+                icon: 'paintbrush',
+                // An empty value for the default palette, which is no theme at all: the
+                // attribute is removed rather than set to a name nothing selects.
+                items: [
+                    { value: '', title: 'Default' },
+                    { value: matrix.name, title: 'Matrix' },
+                ],
+                dynamicTitle: true,
+            },
+        },
     },
 
-    initialGlobals: { scheme: 'light dark' },
+    initialGlobals: { scheme: 'light dark', theme: '' },
 
     decorators: [
         (story, context): TemplateResult => {
@@ -73,7 +103,20 @@ const preview: Preview = {
             // so one write reaches every component below.
             document.documentElement.style.colorScheme = String(context.globals['scheme']);
 
-            return html`${sheet()}${story()}`;
+            // On the root too, and removed rather than left behind: `tests/stories.ts`
+            // composes these annotations, so an attribute a story left would theme every
+            // test that ran after it.
+            const theme = themes.get(String(context.globals['theme']));
+
+            if (theme === undefined) {
+                delete document.documentElement.dataset['uiTheme'];
+
+                return html`${sheet()}${story()}`;
+            }
+
+            document.documentElement.dataset['uiTheme'] = theme.name;
+
+            return html`${sheet()}${themed(theme)}${story()}`;
         },
     ],
 
