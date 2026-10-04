@@ -93,18 +93,49 @@ function reducedMotion(): CSSMediaRule {
 }
 
 /**
- * What the browser computes for one declaration, with this package's own sheet in force
- * and `scheme` selected.
+ * A palette the floors run over: what puts it in force, and what selects it.
+ *
+ * The default palette is the token sheet alone. A shipped theme adds its own block and the
+ * value of `data-ui-theme` that selects it, and every floor runs again under it.
+ */
+interface Palette {
+    readonly name: string;
+    /** The stylesheet text that declares it, inserted after the token sheet. */
+    readonly sheet: string;
+    /** The value of `data-ui-theme` that selects it, if anything has to. */
+    readonly theme?: string;
+    /** Whether a shadow or a glow lies outside its controls, which the floors read through. */
+    readonly glows: boolean;
+}
+
+/** The token sheet alone, which is what a page that selects no theme renders. */
+const byDefault: Palette = { name: 'the default palette', sheet: '', glows: false };
+
+/** Every palette this package ships, which is every palette the floors are owed by. */
+const palettes: readonly Palette[] = [byDefault];
+
+/**
+ * What the browser computes for one declaration, with this package's own sheet in force,
+ * `scheme` selected and `palette` in force over it.
  *
  * A derived role has no value to read anywhere — only a formula — so resolving one is the
  * only way to check it at all, and the browser is the only thing that can.
  */
-function computed(property: string, value: string, scheme: Scheme): string {
+function computed(
+    property: string,
+    value: string,
+    scheme: Scheme,
+    palette: Palette = byDefault,
+): string {
     const style = document.createElement('style');
-    style.textContent = tokenStyleSheet();
+    style.textContent = tokenStyleSheet() + palette.sheet;
 
     const host = document.createElement('div');
     host.style.colorScheme = scheme;
+
+    if (palette.theme !== undefined) {
+        host.dataset['uiTheme'] = palette.theme;
+    }
 
     const probe = document.createElement('div');
     probe.style.setProperty(property, value);
@@ -143,14 +174,26 @@ function sRGB(colour: string): string {
     return `#${channels.join('')}`;
 }
 
-/** A token as a component writes it, resolved in `scheme`. */
-function painted(token: Token | DerivedToken, scheme: Scheme): string {
-    return sRGB(computed('background-color', String(reference(token)), scheme));
+/** A token as a component writes it, resolved in `scheme` under `palette`. */
+function painted(token: Token | DerivedToken, scheme: Scheme, palette?: Palette): string {
+    return sRGB(computed('background-color', String(reference(token)), scheme, palette));
 }
 
-/** The ground value in force in `scheme`, which is data rather than a rendering. */
-function ground(token: Token, scheme: Scheme): string {
-    return scheme === 'dark' ? (darkScheme[token] ?? defaults[token]) : defaults[token];
+/**
+ * What lies beside a control, outside its boundary: the page, which a host paints with the
+ * surface. A palette that lights its controls changes this, and says so here.
+ */
+function outside(palette: Palette, scheme: Scheme): string {
+    return painted('--ui-color-surface', scheme, palette);
+}
+
+/**
+ * A boundary's contrast, read on whichever side of it is higher: against the fill it closes
+ * in, or against what lies beside it outside. RFC 0003 decided that either reaching 3:1 is
+ * enough — the eye takes a border and what is laid against it for one line.
+ */
+function eitherSide(edge: string, inside: string, beside: string): number {
+    return Math.max(contrastRatio(edge, inside), contrastRatio(edge, beside));
 }
 
 /** The channels of a resolved colour, for a question about hue rather than about luminance. */
@@ -602,8 +645,10 @@ describe('every value is legal for the property its token serves', () => {
 /**
  * The floors the values themselves have to clear, before any component paints them.
  *
- * Two of these axe already enforces wherever a story renders the pair; the focus ring is
- * the one it cannot, and the one that was wrong.
+ * **They run over every palette this package ships, in each scheme it keeps**, which is RFC
+ * 0003's answer to its third question: no rule about the grounds predicts the floors, so the
+ * engine measures each palette. Every colour is resolved by the browser under the palette's
+ * own sheet rather than read from the data, because what a palette is, is what it renders.
  */
 describe('the contrast floors', () => {
     it('is a real ratio, checked against the two colours everyone knows', () => {
@@ -615,200 +660,177 @@ describe('the contrast floors', () => {
         expect(() => contrastRatio(defaults['--ui-font'], '#ffffff')).toThrow(/hex colour/);
     });
 
-    it('keeps the focus ring at 3:1 against the surface — WCAG 1.4.11, which axe cannot see', () => {
-        // `outline-offset` shows the surface on both sides of the ring, so the surface is
-        // what the ring is adjacent to. This is the assertion the shipped `#f59e0b` failed.
-        const ratio = contrastRatio(defaults['--ui-color-focus'], defaults['--ui-color-surface']);
-
-        expect(ratio).toBeGreaterThanOrEqual(3);
+    it('reads a boundary on whichever side clears it, and on neither when none does', () => {
+        // `#767676` is 4.54:1 against white and nothing against itself, so each order says
+        // which side was read.
+        expect(eitherSide('#767676', '#ffffff', '#767676'), 'the fill side').toBeCloseTo(4.54, 2);
+        expect(eitherSide('#767676', '#767676', '#ffffff'), 'the outer side').toBeCloseTo(4.54, 2);
+        expect(eitherSide('#ffffff', '#ffffff', '#ffffff'), 'neither').toBeCloseTo(1, 5);
     });
 
-    it('keeps body text at 4.5:1 against the surface', () => {
-        expect(
-            contrastRatio(defaults['--ui-color-text'], defaults['--ui-color-surface']),
-        ).toBeGreaterThanOrEqual(4.5);
-    });
+    describe.each(palettes)('under $name', (palette) => {
+        /**
+         * A second scheme is a second contrast obligation, and it is the same obligation
+         * rather than a lighter one. `--ui-color-danger` is why the dark half exists:
+         * red-700 is legible on white and 2.74:1 on charcoal, which no amount of looking at
+         * the light scheme would have revealed.
+         */
+        describe.each(['light', 'dark'] as const)('in the %s scheme', (scheme) => {
+            const paint = (token: Token | DerivedToken): string => painted(token, scheme, palette);
 
-    it('keeps error text at 4.5:1 against the surface', () => {
-        expect(
-            contrastRatio(defaults['--ui-color-danger'], defaults['--ui-color-surface']),
-        ).toBeGreaterThanOrEqual(4.5);
-    });
-
-    // The outcomes that arrived with `ui-toast`, held to the text floor rather than to
-    // the 3:1 a coloured edge would owe. The floor a value has to clear is the strictest
-    // use it is put to, and nothing stops a host writing one as text — `--ui-color-danger`
-    // is that use, in every control's message, today.
-    it.each(['--ui-color-success', '--ui-color-warning', '--ui-color-info'] as const)(
-        'keeps %s at 4.5:1 against the surface',
-        (token) => {
-            expect(
-                contrastRatio(defaults[token], defaults['--ui-color-surface']),
-            ).toBeGreaterThanOrEqual(4.5);
-        },
-    );
-
-    it('keeps a primary button legible, which is its own pair rather than the surface', () => {
-        expect(
-            contrastRatio(defaults['--ui-color-accent-contrast'], defaults['--ui-color-accent']),
-        ).toBeGreaterThanOrEqual(4.5);
-    });
-
-    /**
-     * A second scheme is a second contrast obligation, and it is the same obligation
-     * rather than a lighter one. `--ui-color-danger` is why this block exists: red-700 is
-     * legible on white and 2.74:1 on charcoal, which no amount of looking at the light
-     * scheme would have revealed.
-     */
-    describe('in the dark scheme', () => {
-        const dark = (token: Token): string => ground(token, 'dark');
-
-        it('keeps body text at 4.5:1', () => {
-            expect(
-                contrastRatio(dark('--ui-color-text'), dark('--ui-color-surface')),
-            ).toBeGreaterThanOrEqual(4.5);
-        });
-
-        it('keeps error text at 4.5:1', () => {
-            expect(
-                contrastRatio(dark('--ui-color-danger'), dark('--ui-color-surface')),
-            ).toBeGreaterThanOrEqual(4.5);
-        });
-
-        // All three are inverted for the dark surface for the reason the error is: green-700
-        // is 3.54:1 there and amber-700 is 3.53, so each would pass as an edge and fail as
-        // the text a host is free to write it as.
-        it.each(['--ui-color-success', '--ui-color-warning', '--ui-color-info'] as const)(
-            'keeps %s at 4.5:1',
-            (token) => {
+            it('keeps body text at 4.5:1 against the surface', () => {
                 expect(
-                    contrastRatio(dark(token), dark('--ui-color-surface')),
+                    contrastRatio(paint('--ui-color-text'), paint('--ui-color-surface')),
                 ).toBeGreaterThanOrEqual(4.5);
-            },
-        );
+            });
 
-        it('keeps a primary button legible against its own accent', () => {
-            expect(
-                contrastRatio(dark('--ui-color-accent-contrast'), dark('--ui-color-accent')),
-            ).toBeGreaterThanOrEqual(4.5);
-        });
-
-        it('keeps the focus ring at 3:1, which is why it needs no dark value of its own', () => {
-            expect(
-                contrastRatio(dark('--ui-color-focus'), dark('--ui-color-surface')),
-            ).toBeGreaterThanOrEqual(3);
-        });
-    });
-
-    /**
-     * And the derived colours have the same floors, which nothing else can check.
-     *
-     * A hovered button is a state axe never sees — it inspects a rendering, and no
-     * automated pass hovers anything — so a hover colour that puts text under 4.5:1 is
-     * invisible to every gate this repository has. The values are not readable either:
-     * a derived role has a formula and no value, so the browser has to resolve it first.
-     */
-    describe('over a derived colour, resolved by the browser', () => {
-        it.each(['light', 'dark'] as const)('moves the accent visibly, in %s', (scheme) => {
-            const resting = ground('--ui-color-accent', scheme);
-            const hover = painted('--ui-color-accent-hover', scheme);
-            const pressed = painted('--ui-color-accent-pressed', scheme);
-
-            // A component that accepts interaction and shows no feedback is defective, and
-            // *no feedback* includes a mix too small to see. 1.05 is about the least a
-            // real display renders as a difference at all.
-            expect(contrastRatio(hover, resting), 'hover against resting').toBeGreaterThan(1.05);
-            expect(contrastRatio(pressed, hover), 'pressed against hover').toBeGreaterThan(1.05);
-        });
-
-        it.each(['light', 'dark'] as const)('moves the surface visibly, in %s', (scheme) => {
-            const resting = ground('--ui-color-surface', scheme);
-            const hover = painted('--ui-color-hover', scheme);
-            const pressed = painted('--ui-color-pressed', scheme);
-
-            // 1.25 rather than the accent's 1.05, because 1.05 answers *renders as
-            // different* and a neutral state has to be *seen* as different: 1.17 cleared it
-            // and was reported, on a dark menu, as a hover that looked like the items beside
-            // it. The number was chosen by looking at both schemes, not derived.
-            expect(contrastRatio(hover, resting), 'hover against resting').toBeGreaterThanOrEqual(
-                1.25,
-            );
-            expect(contrastRatio(pressed, hover), 'pressed against hover').toBeGreaterThanOrEqual(
-                1.25,
-            );
-        });
-
-        it.each(['light', 'dark'] as const)('keeps a hovered primary legible, in %s', (scheme) => {
-            const label = ground('--ui-color-accent-contrast', scheme);
-
-            expect(
-                contrastRatio(label, painted('--ui-color-accent-hover', scheme)),
-                'hovered',
-            ).toBeGreaterThanOrEqual(4.5);
-            expect(
-                contrastRatio(label, painted('--ui-color-accent-pressed', scheme)),
-                'pressed',
-            ).toBeGreaterThanOrEqual(4.5);
-        });
-
-        it.each(['light', 'dark'] as const)(
-            'gives a control a boundary that clears the non-text floor, in %s',
-            (scheme) => {
-                // WCAG 1.4.11: a control's boundary is what identifies the component, so
-                // it owes 3:1 against what it sits on. The step below the shipped one is
-                // 2.94 in light — which is what a percentage chosen by eye would have
-                // shipped, and what nothing would have caught.
+            // The four outcomes, held to the text floor rather than to the 3:1 a coloured
+            // edge would owe. The floor a value has to clear is the strictest use it is put
+            // to, and nothing stops a host writing one as text — `--ui-color-danger` is that
+            // use, in every control's message, today. Each is inverted for the dark surface
+            // for the reason the error is: green-700 is 3.54:1 there and amber-700 is 3.53.
+            it.each([
+                '--ui-color-danger',
+                '--ui-color-success',
+                '--ui-color-warning',
+                '--ui-color-info',
+            ] as const)('keeps %s at 4.5:1 against the surface', (token) => {
                 expect(
-                    contrastRatio(
-                        painted('--ui-color-border', scheme),
-                        ground('--ui-color-surface', scheme),
-                    ),
-                ).toBeGreaterThanOrEqual(3);
-            },
-        );
+                    contrastRatio(paint(token), paint('--ui-color-surface')),
+                ).toBeGreaterThanOrEqual(4.5);
+            });
 
-        it.each(['light', 'dark'] as const)(
-            'keeps text legible on a striped row, in %s',
-            (scheme) => {
+            it('keeps a primary button legible, which is its own pair rather than the surface', () => {
+                expect(
+                    contrastRatio(paint('--ui-color-accent-contrast'), paint('--ui-color-accent')),
+                ).toBeGreaterThanOrEqual(4.5);
+            });
+
+            it('keeps the focus ring at 3:1 against the surface — WCAG 1.4.11, which axe cannot see', () => {
+                // `outline-offset` shows the surface on both sides of the ring, so the
+                // surface is what the ring is adjacent to. This is the assertion the shipped
+                // `#f59e0b` failed.
+                expect(
+                    contrastRatio(paint('--ui-color-focus'), paint('--ui-color-surface')),
+                ).toBeGreaterThanOrEqual(3);
+            });
+
+            /*
+             * And the derived colours have the same floors, which nothing else can check.
+             *
+             * A hovered button is a state axe never sees — it inspects a rendering, and no
+             * automated pass hovers anything — so a hover colour that puts text under 4.5:1
+             * is invisible to every gate this repository has.
+             */
+            it('moves the accent visibly', () => {
+                const resting = paint('--ui-color-accent');
+                const hover = paint('--ui-color-accent-hover');
+                const pressed = paint('--ui-color-accent-pressed');
+
+                // A component that accepts interaction and shows no feedback is defective,
+                // and *no feedback* includes a mix too small to see. 1.05 is about the least
+                // a real display renders as a difference at all.
+                expect(contrastRatio(hover, resting), 'hover against resting').toBeGreaterThan(
+                    1.05,
+                );
+                expect(contrastRatio(pressed, hover), 'pressed against hover').toBeGreaterThan(
+                    1.05,
+                );
+            });
+
+            it('moves the surface visibly', () => {
+                const resting = paint('--ui-color-surface');
+                const hover = paint('--ui-color-hover');
+                const pressed = paint('--ui-color-pressed');
+
+                // 1.25 rather than the accent's 1.05, because 1.05 answers *renders as
+                // different* and a neutral state has to be *seen* as different: 1.17 cleared
+                // it and was reported, on a dark menu, as a hover that looked like the items
+                // beside it. The number was chosen by looking at both schemes, not derived.
+                expect(
+                    contrastRatio(hover, resting),
+                    'hover against resting',
+                ).toBeGreaterThanOrEqual(1.25);
+                expect(
+                    contrastRatio(pressed, hover),
+                    'pressed against hover',
+                ).toBeGreaterThanOrEqual(1.25);
+            });
+
+            it('keeps a hovered primary legible', () => {
+                const label = paint('--ui-color-accent-contrast');
+
+                expect(
+                    contrastRatio(label, paint('--ui-color-accent-hover')),
+                    'hovered',
+                ).toBeGreaterThanOrEqual(4.5);
+                expect(
+                    contrastRatio(label, paint('--ui-color-accent-pressed')),
+                    'pressed',
+                ).toBeGreaterThanOrEqual(4.5);
+            });
+
+            it('keeps a hovered secondary legible', () => {
+                const label = paint('--ui-color-text');
+
+                expect(
+                    contrastRatio(label, paint('--ui-color-hover')),
+                    'hovered',
+                ).toBeGreaterThanOrEqual(4.5);
+                expect(
+                    contrastRatio(label, paint('--ui-color-pressed')),
+                    'pressed',
+                ).toBeGreaterThanOrEqual(4.5);
+            });
+
+            it('keeps text legible on a striped row', () => {
                 // A stripe is a surface that a row of text sits on, so what it owes is the
                 // text floor rather than the 3:1 a tint might look like it owes. The value
                 // arrived with `ui-table`, which stripes its rows and rests its header on
                 // it, and this is the reading that says how far the tint may go.
                 expect(
-                    contrastRatio(
-                        ground('--ui-color-text', scheme),
-                        painted('--ui-color-surface-muted', scheme),
-                    ),
+                    contrastRatio(paint('--ui-color-text'), paint('--ui-color-surface-muted')),
                 ).toBeGreaterThanOrEqual(4.5);
-            },
-        );
+            });
 
-        it.each(['light', 'dark'] as const)('keeps muted text legible as text, in %s', (scheme) => {
-            // A placeholder is text, so 4.5:1 rather than 3:1 — the floor that makes a
-            // muted role only just muted.
-            expect(
-                contrastRatio(
-                    painted('--ui-color-text-muted', scheme),
-                    ground('--ui-color-surface', scheme),
-                ),
-            ).toBeGreaterThanOrEqual(4.5);
+            it('keeps muted text legible as text', () => {
+                // A placeholder is text, so 4.5:1 rather than 3:1 — the floor that makes a
+                // muted role only just muted.
+                expect(
+                    contrastRatio(paint('--ui-color-text-muted'), paint('--ui-color-surface')),
+                ).toBeGreaterThanOrEqual(4.5);
+            });
+
+            it('gives a control a boundary that clears 3:1 on either side of it', () => {
+                // WCAG 1.4.11: a control's boundary is what identifies the component. It is
+                // read against the fill it closes in or against what lies beside it, and
+                // either reaching 3:1 is enough. The step below the shipped border is 2.94
+                // in light — what a percentage chosen by eye would have shipped.
+                const fill = paint('--ui-color-surface');
+                const beside = outside(palette, scheme);
+
+                expect(
+                    eitherSide(paint('--ui-color-border'), fill, beside),
+                    'a field',
+                ).toBeGreaterThanOrEqual(3);
+                expect(
+                    eitherSide(paint('--ui-color-danger'), fill, beside),
+                    'a field in error',
+                ).toBeGreaterThanOrEqual(3);
+            });
+
+            it('identifies a checked control against what lies beside it', () => {
+                // A checked box's boundary is its fill's own colour, so the fill is what owes
+                // 3:1 against what lies beside it. Where a shadow or a glow lies outside, the
+                // mark may meet the floor against the fill instead — RFC 0003's decision —
+                // and only there, so a palette without one is held to the fill.
+                const accent = paint('--ui-color-accent');
+                const fill = contrastRatio(accent, outside(palette, scheme));
+                const mark = contrastRatio(paint('--ui-color-accent-contrast'), accent);
+
+                expect(palette.glows ? Math.max(fill, mark) : fill).toBeGreaterThanOrEqual(3);
+            });
         });
-
-        it.each(['light', 'dark'] as const)(
-            'keeps a hovered secondary legible, in %s',
-            (scheme) => {
-                const label = ground('--ui-color-text', scheme);
-
-                expect(
-                    contrastRatio(label, painted('--ui-color-hover', scheme)),
-                    'hovered',
-                ).toBeGreaterThanOrEqual(4.5);
-                expect(
-                    contrastRatio(label, painted('--ui-color-pressed', scheme)),
-                    'pressed',
-                ).toBeGreaterThanOrEqual(4.5);
-            },
-        );
     });
 });
 
