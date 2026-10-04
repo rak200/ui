@@ -1007,3 +1007,9 @@ it of every commit here.
 scheme, and [#120](https://github.com/rak200/ui/issues/120) inserted the token sheet into the
 Storybook preview and put a scheme control in the toolbar. The theme axis is the second control that
 would live beside it.
+
+### Built
+
+| Step | Pull request                                  | What landed                                                                |
+| ---- | --------------------------------------------- | -------------------------------------------------------------------------- |
+| 1    | [#239](https://github.com/rak200/ui/pull/239) | the switch, off, an empty box: the surface inside, the thumb in the border |
