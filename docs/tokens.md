@@ -276,8 +276,8 @@ value serves every control:
 
 A colour named in the value instead lights every control in that one colour, an invalid one
 included — a variable inside a custom property is resolved where the property is declared, before
-any control can change it. A control that cannot be used lights nothing. Today the checkbox, the
-switch and the radio draw it.
+any control can change it. A control that cannot be used lights nothing. Every form control draws
+it: the checkbox, the switch, the radio, the text fields and the select.
 
 ## `defaults`
 

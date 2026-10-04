@@ -675,6 +675,85 @@ describe('the box, against the input it has to match', () => {
     });
 });
 
+/**
+ * The glow a theme lights a control with, drawn around the box for the reason the input
+ * draws it around its own — and compared with the input's, as the box is.
+ */
+describe('the glow a theme lights', () => {
+    const glow = '0 0 0 1px currentColor';
+
+    /** The box around a control that the glow is drawn on. */
+    function lit(element: UiSelect | UiInput): HTMLElement {
+        const found = element.renderRoot.querySelector<HTMLElement>('.glow');
+
+        if (found === null) {
+            throw new Error('the control rendered nothing to draw a glow on');
+        }
+
+        return found;
+    }
+
+    it('lights nothing by default', async () => {
+        const form = await mount(fixture);
+
+        expect(getComputedStyle(lit(select(form))).boxShadow).toBe('none');
+    });
+
+    it("lights the box in the accent, hugging it as the input's glow hugs the input", async () => {
+        const form = await mount(`
+            ${fixture}
+            <ui-input label="Amount" name="amount"></ui-input>
+        `);
+        const input = form.querySelector('ui-input');
+
+        if (input === null) {
+            throw new Error('no input in the fixture');
+        }
+
+        form.style.setProperty('--ui-elevation-control', glow);
+        form.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+        form.style.setProperty('--ui-radius', '11px');
+
+        const drawn = getComputedStyle(lit(select(form)));
+        const beside = getComputedStyle(lit(input));
+
+        expect(drawn.boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+
+        for (const property of ['display', 'borderRadius', 'color', 'boxShadow'] as const) {
+            expect(drawn[property], property).toBe(beside[property]);
+        }
+
+        expect(lit(select(form)).getBoundingClientRect().toJSON()).toEqual(
+            box(select(form)).getBoundingClientRect().toJSON(),
+        );
+    });
+
+    it('lights an invalid box in the danger, as its boundary is', async () => {
+        const form = await mount(`
+            <ui-select label="Currency" error="Pick one.">
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        select(form).style.setProperty('--ui-elevation-control', glow);
+        select(form).style.setProperty('--ui-color-danger', 'rgb(4, 5, 6)');
+
+        expect(getComputedStyle(lit(select(form))).boxShadow).toBe('rgb(4, 5, 6) 0px 0px 0px 1px');
+    });
+
+    it('lights nothing that cannot be used', async () => {
+        const form = await mount(`
+            <ui-select label="Currency" disabled>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        select(form).style.setProperty('--ui-elevation-control', glow);
+
+        expect(getComputedStyle(lit(select(form))).boxShadow).toBe('none');
+    });
+});
+
 describe('the caret', () => {
     it('is drawn from gradients, so its colour stays a token', async () => {
         const form = await mount(fixture);

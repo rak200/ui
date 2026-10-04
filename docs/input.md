@@ -206,18 +206,19 @@ written as `error=""` — which a presence selector matches on every element, er
 
 Every colour is a [token](tokens.md); nothing here is hardcoded.
 
-| Part               | Token                                                        |
-| ------------------ | ------------------------------------------------------------ |
-| surface            | `--ui-color-surface`                                         |
-| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
-| placeholder        | `--ui-color-text-muted`, at full opacity                     |
-| boundary           | `--ui-color-border`, and `--ui-color-text` on hover          |
-| in error           | `--ui-color-danger`, at `--ui-text-supporting`               |
-| help text          | `--ui-color-text`, at `--ui-text-supporting`                 |
-| focus ring         | `--ui-color-focus`                                           |
-| corner             | `--ui-radius`                                                |
-| padding and rhythm | `--ui-space`                                                 |
-| motion             | `--ui-duration-state`, `--ui-easing-state`                   |
+| Part               | Token                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| surface            | `--ui-color-surface`                                                                                        |
+| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled                                                |
+| placeholder        | `--ui-color-text-muted`, at full opacity                                                                    |
+| boundary           | `--ui-color-border`, and `--ui-color-text` on hover                                                         |
+| in error           | `--ui-color-danger`, at `--ui-text-supporting`                                                              |
+| help text          | `--ui-color-text`, at `--ui-text-supporting`                                                                |
+| focus ring         | `--ui-color-focus`                                                                                          |
+| glow               | `--ui-elevation-control`, around the control, lit in the accent, or the danger in error; none when disabled |
+| corner             | `--ui-radius`                                                                                               |
+| padding and rhythm | `--ui-space`                                                                                                |
+| motion             | `--ui-duration-state`, `--ui-easing-state`                                                                  |
 
 **Four parts are exposed**, because the drawing is now in here:
 
