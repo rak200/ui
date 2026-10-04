@@ -1162,6 +1162,55 @@ describe('the values, all of which come from the token layer', () => {
  * an `aria-controls` reference of its own, and a focus return written by hand across the
  * shadow boundary. Anything the protocol breaks here is worth learning at the start.
  */
+/**
+ * The glow a theme lights a control with, on the trigger as on a button: a layer over it,
+ * because a theme writes the glow in `currentColor` and the trigger's own colour is its text.
+ */
+describe('the glow a theme lights', () => {
+    const glow = '0 0 0 1px currentColor';
+
+    /** What the layer the glow is drawn on computes to. */
+    function lit(element: UiMenu): CSSStyleDeclaration {
+        return getComputedStyle(trigger(element), '::before');
+    }
+
+    it('lights nothing by default', async () => {
+        const host = await mount(fixture);
+
+        expect(lit(menu(host)).boxShadow).toBe('none');
+    });
+
+    it('lights the trigger in the accent, against its boundary', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        element.style.setProperty('--ui-elevation-control', glow);
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-radius', '11px');
+
+        expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+        expect(lit(element).position).toBe('absolute');
+        expect(lit(element).top).toBe('-1px');
+        expect(lit(element).left).toBe('-1px');
+        expect(lit(element).borderTopLeftRadius).toBe('11px');
+    });
+
+    it('lights to the hover glow under the pointer, the resting one until a theme says', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        element.style.setProperty('--ui-elevation-control', glow);
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+        await userEvent.hover(trigger(element));
+
+        expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+
+        element.style.setProperty('--ui-elevation-control-hover', '0 0 0 2px currentColor');
+
+        expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 2px');
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: UiMenu, detail: unknown): boolean {

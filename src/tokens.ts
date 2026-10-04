@@ -202,6 +202,10 @@ export const derivedTokens = [
     // and will not be the last, and the name a host retunes should not be the name of
     // whichever component happened to need it first.
     '--ui-elevation-raised',
+    // The glow a button lights to under the pointer, arriving with Matrix beside the glow it
+    // lights from. Derived from that one, so a theme that writes only the resting glow keeps
+    // it under the pointer rather than losing it, and the default palette lights nothing.
+    '--ui-elevation-control-hover',
     // The purpose the type scale is read through, and the only name a component writes.
     // `supporting` is a role rather than a size and rather than a component: the four
     // places that want it are a field's help text, a field's error, a tooltip's tip and a
@@ -438,6 +442,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // lives, and a host who wants flatter cards moves the role rather than reverse
     // engineering which step a card happens to read.
     '--ui-elevation-raised': ground('--ui-elevation-100'),
+    // A plain reference: the resting glow, until a theme lights a brighter one.
+    '--ui-elevation-control-hover': ground('--ui-elevation-control'),
     // A plain reference, like the two purposes above: the scale is where the value lives,
     // and a host who wants larger supporting text moves the role rather than working out
     // which step a tooltip happens to read.

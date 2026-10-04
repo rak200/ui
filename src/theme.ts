@@ -117,6 +117,11 @@ export const matrix: Theme = {
         // and the danger on an invalid one.
         '--ui-elevation-control':
             '0 0 0 1px light-dark(rgb(from currentColor r g b / 0.54), rgb(from currentColor r g b / 0.45)), 0 0 18px light-dark(rgb(from currentColor r g b / 0.45), rgb(from currentColor r g b / 0.54))',
+        // Under the pointer the ring goes solid and the glow doubles, which stops at solid in
+        // the dark: the fills' own hovers barely move in this green, so the glow says a
+        // button is live.
+        '--ui-elevation-control-hover':
+            '0 0 0 1px currentColor, 0 0 18px light-dark(rgb(from currentColor r g b / 0.9), currentColor)',
     },
     dark: {
         '--ui-color-surface': '#050505',

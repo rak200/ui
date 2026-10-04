@@ -168,23 +168,24 @@ description goes with it.
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
 
-| Part             | Token                                                                   |
-| ---------------- | ----------------------------------------------------------------------- |
-| trigger box      | the same as a secondary [`<ui-button>`](button.md), measured against it |
-| caret            | `--ui-icon-size` and `--ui-icon-stroke`, in `--ui-color-text-muted`     |
-| panel padding    | `--ui-space` ÷ 2                                                        |
-| panel width      | capped at `--ui-space` × 44                                             |
-| gap from trigger | `--ui-space` ÷ 2                                                        |
-| surface          | `--ui-color-surface`                                                    |
-| text             | `--ui-color-text`                                                       |
-| boundary         | `--ui-color-border-overlay`                                             |
-| separator        | `--ui-color-border`                                                     |
-| corner           | `--ui-radius`                                                           |
-| lift             | `--ui-elevation-raised`                                                 |
-| item padding     | `--ui-space` ÷ 2 and `--ui-space`                                       |
-| item hover       | `--ui-color-hover`                                                      |
-| focus ring       | `--ui-color-focus`                                                      |
-| motion           | `--ui-duration-state`, `--ui-easing-state`                              |
+| Part             | Token                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| trigger box      | the same as a secondary [`<ui-button>`](button.md), measured against it                       |
+| caret            | `--ui-icon-size` and `--ui-icon-stroke`, in `--ui-color-text-muted`                           |
+| panel padding    | `--ui-space` ÷ 2                                                                              |
+| panel width      | capped at `--ui-space` × 44                                                                   |
+| gap from trigger | `--ui-space` ÷ 2                                                                              |
+| surface          | `--ui-color-surface`                                                                          |
+| text             | `--ui-color-text`                                                                             |
+| boundary         | `--ui-color-border-overlay`                                                                   |
+| separator        | `--ui-color-border`                                                                           |
+| corner           | `--ui-radius`                                                                                 |
+| lift             | `--ui-elevation-raised`                                                                       |
+| item padding     | `--ui-space` ÷ 2 and `--ui-space`                                                             |
+| item hover       | `--ui-color-hover`                                                                            |
+| focus ring       | `--ui-color-focus`                                                                            |
+| trigger glow     | `--ui-elevation-control`, and `--ui-elevation-control-hover` under the pointer, in the accent |
+| motion           | `--ui-duration-state`, `--ui-easing-state`                                                    |
 
 **No new category arrives with this component**, which `ROADMAP.md` predicted: a menu is a
 surface over a page, and elevation, the boundary and the derived neutrals were all already

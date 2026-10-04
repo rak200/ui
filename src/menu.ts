@@ -135,10 +135,26 @@ export class UiMenu extends LitElement {
             -webkit-tap-highlight-color: transparent;
             transition: background-color ${reference('--ui-duration-state')}
                 ${reference('--ui-easing-state')};
+            /* What a theme's glow is laid out against. */
+            position: relative;
+        }
+
+        /* What a theme's glow is drawn on, as src/button.ts draws it and for its reason. */
+        button::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            color: ${reference('--ui-color-accent')};
+            box-shadow: ${reference('--ui-elevation-control')};
         }
 
         button:hover {
             background: ${reference('--ui-color-hover')};
+        }
+
+        button:hover::before {
+            box-shadow: ${reference('--ui-elevation-control-hover')};
         }
 
         /* Zero rather than a second token, for the reason src/button.ts states beside its
