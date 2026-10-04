@@ -16,11 +16,13 @@ import { tokens, derivedTokens, defaults, formulas, darkScheme, tokenStyleSheet 
 - [Light and dark](#light-and-dark)
 - [Themes](#themes)
 - [Motion](#motion)
+- [More contrast](#more-contrast)
 - [`tokens`](#tokens)
 - [`defaults`](#defaults)
 - [`derivedTokens`](#derivedtokens)
 - [`formulas`](#formulas)
 - [`darkScheme`](#darkscheme)
+- [`moreContrast`](#morecontrast)
 - [`tokenStyleSheet`](#tokenstylesheet)
 - [`Token`](#token)
 - [`DerivedToken`](#derivedtoken)
@@ -124,8 +126,8 @@ A whole theme is a handful of grounds, each carrying both of its schemes:
 ```
 
 Three declarations, and the accent's label, the hover and the pressed colours follow into **both
-schemes of both themes** without appearing anywhere — that is what [`formulas`](#formulas) buys. Nothing is scoped to
-`:root`, so a theme can be a region of a page rather than the whole of it.
+schemes of both themes** without appearing anywhere — that is what [`formulas`](#formulas) buys.
+Nothing is scoped to `:root`, so a theme can be a region of a page rather than the whole of it.
 
 ## Motion
 
@@ -137,6 +139,29 @@ The scale is named by ordinals with gaps — `--ui-duration-100`, leaving room f
 a naming scheme that turns _inserting a step_ into a rename is a scheme that breaks on a foreseeable
 change. Duration and easing are separate names so that changing a speed does not mean restating a
 curve.
+
+## More contrast
+
+**A reader who asks for more contrast gets it in every component, and nothing in a component
+knows.** The sheet answers `prefers-contrast: more` the way it answers reduced motion: the text, the
+surface, the accent and the focus ring go to black and white, with the dark scheme on pure black.
+The accent's label follows on its own, being derived from the accent, and so do the border and the
+muted text, which mix toward the text. Every pair the text makes with a surface clears 7:1, WCAG's
+enhanced level.
+
+**The outcome colours stay where they are.** An error that turned grey would stop saying it is an
+error, so `--ui-color-danger`, `-success`, `-warning` and `-info` keep the 4.5:1 they were chosen
+at.
+
+**The states are written out rather than derived.** Over pure black a mix toward the text barely
+moves, and a black or white accent has no room to shade toward, so the hover, the pressed, the
+striped row and the accent's two states are given as values — at the steps the default palette's own
+states take. Those values are declared at `:root`, so they reach under a theme of your own too: a
+theme that answers the setting itself declares its own states, or resets them with `initial` to hand
+them back to their formulas.
+
+It is the reader's setting, not a theme you select: a reader who needs it should not depend on a
+host having shipped a picker. [`moreContrast`](#morecontrast) holds the values.
 
 **Easing has three names and duration has one purpose, which is not an inconsistency.** A state
 change reverses mid-flight — a pointer leaves a button while the hover is still arriving — so
@@ -330,8 +355,9 @@ darkScheme['--ui-radius']; // undefined
 ```
 
 Seven entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent` and the four
-outcomes — `--ui-color-danger`, `--ui-color-success`, `--ui-color-warning` and `--ui-color-info`. Each of those four is a mid-dark hue that reads on white and goes muddy on
-charcoal, so each is inverted here for the same reason. `--ui-color-focus` is absent because one value
+outcomes — `--ui-color-danger`, `--ui-color-success`, `--ui-color-warning` and `--ui-color-info`.
+Each of those four is a mid-dark hue that reads on white and goes muddy on charcoal, so each is
+inverted here for the same reason. `--ui-color-focus` is absent because one value
 clears its contrast floor in both schemes, and `--ui-color-scrim` because dimming is dimming in
 either — it is the one neutral here that does **not** follow the text, since mixing toward the text
 would lighten the page behind a dialog on a dark one.
@@ -343,10 +369,26 @@ You rarely read this directly either — [`tokenStyleSheet()`](#tokenstylesheet)
 sheet. It is exported because a target that is not CSS cannot evaluate `light-dark()` and needs the
 two values as data.
 
+## `moreContrast`
+
+The default palette's answer to `prefers-contrast: more`: each name it moves, with a light value and
+a dark one.
+
+```js
+moreContrast['--ui-color-surface']; // ['#ffffff', '#000000']
+moreContrast['--ui-color-danger']; // undefined
+```
+
+A pair rather than two maps, so a name cannot be given one scheme and forgotten in the other, and so
+a target that is not CSS reads two values instead of parsing `light-dark()`. It names derived roles
+as well as grounds — the states, which [More contrast](#more-contrast) says why it writes out.
+[`tokenStyleSheet()`](#tokenstylesheet) composes it into the sheet.
+
 ## `tokenStyleSheet`
 
 Every token as CSS, for a host that wants them without importing a component. Returns the text of a
-`:root` block and the reduced-motion rule beside it; the host inserts them however it prefers.
+`:root` block, the reduced-motion rule beside it and the answer to `prefers-contrast: more` after
+both; the host inserts them however it prefers.
 
 ```js
 tokenStyleSheet();
@@ -360,7 +402,12 @@ tokenStyleSheet();
 //   :root {
 //     --ui-duration-100: 0.01ms;
 //     --ui-duration-state: 0.01ms;
-//   } }'
+//   } }
+//
+// @media (prefers-contrast: more) {
+//   :root {
+//     --ui-color-accent: light-dark(#000000, #ffffff);
+//     … } }'
 ```
 
 A token with a dark value is emitted as a `light-dark()` pair; one without is emitted plain. The
@@ -368,8 +415,8 @@ A token with a dark value is emitted as a `light-dark()` pair; one without is em
 can never be a token — and a dark scheme that depends on every host remembering to declare it is one
 that mostly does not happen.
 
-The reduced-motion rule is the only place a **derived** name is declared, and it is legal there
-because what it declares is a literal rather than a formula. If you want a different `color-scheme`
+The two media rules are the only places a **derived** name is declared, and it is legal there
+because what each declares is a literal rather than a formula. If you want a different `color-scheme`
 — `only light`, say — declare it after this sheet.
 
 ## `Token`
