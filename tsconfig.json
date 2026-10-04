@@ -1,6 +1,9 @@
 {
   "extends": "@rak200/coding-standard-ts/tsconfig",
   "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
     // Both off so components declare properties with a `static properties` map beside
     // plain fields, which is the only shape that survives this test setup.
     //
