@@ -472,13 +472,52 @@ export const darkScheme: Readonly<Partial<Record<Token, string>>> = {
     '--ui-color-info': '#22d3ee',
 };
 
+/**
+ * The default palette's answer to `prefers-contrast: more`: each name it moves, with its
+ * light value and its dark one.
+ *
+ * **The reader's setting, answered in the token layer as reduced motion is, and not a
+ * theme** — RFC 0003. A host chooses a theme; a reader's system asks for contrast, and a
+ * reader who needs it should not depend on a host having shipped a picker.
+ *
+ * The text, the surface, the accent and the focus ring go to the poles, the dark scheme on
+ * pure black. The accent's label follows on its own, being the accent's pole, and so do the
+ * border and the muted text, which mix toward the text. The outcome colours stay where they
+ * were chosen, at 4.5:1: an error that turned grey would stop saying it is an error.
+ *
+ * **The states are written out, as values rather than formulas.** Over pure black a mix
+ * toward the text barely moves — 8% of white is 1.01:1 — and a black or white accent has
+ * no room to shade toward, so a palette this fully known gives its states. Each is set at
+ * the step the default palette's own states take: the hover 1.41:1 from the surface in
+ * light and 1.42 in dark, the pressed 1.28 and 1.36 past it. They are derived names, and a
+ * value declared at `:root` reaches every subtree below it, which a formula must never do
+ * and a value may.
+ *
+ * A pair rather than two maps, so a name cannot be given one scheme and forgotten in the
+ * other, and so an emitter that is not CSS reads two values rather than parsing a function.
+ */
+export const moreContrast: Readonly<
+    Partial<Record<Token | DerivedToken, readonly [light: string, dark: string]>>
+> = {
+    '--ui-color-accent': ['#000000', '#ffffff'],
+    '--ui-color-surface': ['#ffffff', '#000000'],
+    '--ui-color-text': ['#000000', '#ffffff'],
+    '--ui-color-focus': ['#000000', '#ffffff'],
+    '--ui-color-hover': ['#d9d9d9', '#282828'],
+    '--ui-color-pressed': ['#c1c1c1', '#3d3d3d'],
+    '--ui-color-accent-hover': ['#333333', '#d6d6d6'],
+    '--ui-color-accent-pressed': ['#4d4d4d', '#b3b3b3'],
+    // Under the hover, so a row under the pointer is still a change rather than a stripe.
+    '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
+};
+
 /** The category every duration name shares, which is what reduced motion collapses. */
 const duration = '--ui-duration-';
 
 /**
  * The token defaults as a CSS rule, for a host that wants them without importing a
- * component. Returns the text of a `:root` block and the reduced-motion rule beside it; a
- * host inserts them however it prefers.
+ * component. Returns the text of a `:root` block, the reduced-motion rule beside it and the
+ * answer to `prefers-contrast: more` after both; a host inserts them however it prefers.
  *
  * **It declares `color-scheme` as well as the tokens, and that is deliberate.**
  * `color-scheme` is a real property rather than a custom one, so it can never be a token —
@@ -496,6 +535,9 @@ const duration = '--ui-duration-';
  * declares is a literal rather than a formula. Without it, a host who tuned
  * `--ui-duration-state` would keep their motion through the collapse, and the setting
  * would be honoured for everyone except the people who had touched it.
+ *
+ * **More contrast is answered here too**, from {@link moreContrast} and for the same
+ * reason: it is the reader's setting, so no component should have to learn it exists.
  */
 export function tokenStyleSheet(): string {
     const grounds = tokens
@@ -515,8 +557,13 @@ export function tokenStyleSheet(): string {
         .map((token) => `    ${token}: 0.01ms;`)
         .join('\n');
 
+    const contrasted = Object.entries(moreContrast)
+        .map(([token, [light, dark]]) => `    ${token}: light-dark(${light}, ${dark});`)
+        .join('\n');
+
     return [
         `:root {\n  color-scheme: light dark;\n${grounds}\n}`,
         `@media (prefers-reduced-motion: reduce) {\n  :root {\n${collapsed}\n  }\n}`,
+        `@media (prefers-contrast: more) {\n  :root {\n${contrasted}\n  }\n}`,
     ].join('\n\n');
 }
