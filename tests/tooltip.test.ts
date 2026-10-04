@@ -1430,7 +1430,8 @@ describe('the drawing', () => {
         const host = await mount(fixture);
         const element = only(host, 'ui-tooltip');
 
-        element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-surface-raised', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(10px)');
         element.style.setProperty('--ui-color-border-overlay', 'rgb(4, 5, 6)');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-space', '10px');
@@ -1441,6 +1442,7 @@ describe('the drawing', () => {
         const styles = getComputedStyle(tip(host));
 
         expect(styles.backgroundColor).toBe('rgb(1, 2, 3)');
+        expect(styles.backdropFilter).toBe('blur(10px)');
         // A tip is supporting text, and shipped as a hardcoded `0.875em` until the type
         // scale arrived to replace it — three hardcoded sizes across the package, all
         // agreeing and none of them read back by anything.

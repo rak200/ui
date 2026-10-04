@@ -699,7 +699,8 @@ describe('every visual decision a dialog paints is a token', () => {
         element.style.setProperty('--ui-font', 'monospace');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-space', '7px');
-        element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-surface-raised', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(10px)');
         element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
         element.style.setProperty('--ui-color-border-overlay', 'rgb(7, 8, 9)');
 
@@ -715,7 +716,8 @@ describe('every visual decision a dialog paints is a token', () => {
         expect(styles.borderTopStyle).toBe('solid');
         expect(styles.borderTopWidth).toBe('1px');
         expect(styles.paddingTop, '--ui-space, tripled').toBe('21px');
-        expect(styles.backgroundColor, '--ui-color-surface').toBe('rgb(1, 2, 3)');
+        expect(styles.backgroundColor, '--ui-color-surface-raised').toBe('rgb(1, 2, 3)');
+        expect(styles.backdropFilter, '--ui-backdrop-raised').toBe('blur(10px)');
         expect(styles.color, '--ui-color-text').toBe('rgb(4, 5, 6)');
         expect(styles.rowGap, '--ui-space, doubled between the regions').toBe('14px');
 

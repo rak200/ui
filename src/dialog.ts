@@ -194,7 +194,10 @@ export class UiDialog extends LitElement {
             border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
             padding: calc(${reference('--ui-space')} * 3);
-            background: ${reference('--ui-color-surface')};
+            /* A raised surface, as a card is: what a theme raises translucent, it raises here
+               over the scrim. */
+            background: ${reference('--ui-color-surface-raised')};
+            backdrop-filter: ${reference('--ui-backdrop-raised')};
             color: ${reference('--ui-color-text')};
             font-family: ${reference('--ui-font')};
 

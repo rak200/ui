@@ -203,7 +203,7 @@ describe('ui-card', () => {
         const host = await mount(fixture);
         const element = card(host);
 
-        element.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-border-raised', 'rgb(1, 2, 3)');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-space', '10px');
 
@@ -220,6 +220,19 @@ describe('ui-card', () => {
         card(host).style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
 
         expect(getComputedStyle(card(host)).backgroundColor).toBe('rgb(1, 2, 3)');
+    });
+
+    it('takes a raised surface and what it does to the page behind it from the host', async () => {
+        const host = await mount(fixture);
+        const element = card(host);
+
+        expect(getComputedStyle(element).backdropFilter, 'nothing by default').toBe('none');
+
+        element.style.setProperty('--ui-color-surface-raised', 'rgb(1, 2, 3, 0.2)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(10px)');
+
+        expect(getComputedStyle(element).backgroundColor).toBe('rgba(1, 2, 3, 0.2)');
+        expect(getComputedStyle(element).backdropFilter).toBe('blur(10px)');
     });
 
     it('exposes no part — the regions are the host own elements, styleable directly', () => {

@@ -53,8 +53,11 @@ export class UiCard extends LitElement {
                was chosen against it inherits whatever the page set, and the contrast the
                token layer measured stops holding at the one place it was measured for. */
             color: ${reference('--ui-color-text')};
-            background: ${reference('--ui-color-surface')};
-            border: 1px solid ${reference('--ui-color-border')};
+            /* The raised surface's own colour and what it does to the page behind it, which
+               are the surface and nothing until a theme makes the card glass. */
+            background: ${reference('--ui-color-surface-raised')};
+            backdrop-filter: ${reference('--ui-backdrop-raised')};
+            border: 1px solid ${reference('--ui-color-border-raised')};
             border-radius: ${reference('--ui-radius')};
             /* What the shadow's layer below is laid out against. */
             position: relative;

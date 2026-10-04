@@ -101,9 +101,10 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | Part                                 | Token                                                                   |
 | ------------------------------------ | ----------------------------------------------------------------------- |
 | padding, and the gap between regions | `--ui-space` × 2                                                        |
-| surface                              | `--ui-color-surface`                                                    |
+| surface                              | `--ui-color-surface-raised`, the surface unless set                     |
+| what it does to the page behind      | `--ui-backdrop-raised`, nothing unless set                              |
 | text                                 | `--ui-color-text`                                                       |
-| boundary                             | `--ui-color-border`                                                     |
+| boundary                             | `--ui-color-border-raised`, the boundary's mix unless set               |
 | corner                               | `--ui-radius`                                                           |
 | lift                                 | `--ui-elevation-raised`, lit in the accent if written in `currentColor` |
 | font                                 | `--ui-font`                                                             |

@@ -198,8 +198,8 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | gap           | `--ui-space`                                                                                                    |
 | toast padding | `--ui-space` and `--ui-space` × 1.5                                                                             |
 | edge          | `--ui-color-toast-edge`, the variant's colour unless set, all the way round, `--ui-space` ÷ 2 wide at the start |
-| icon          | the edge's colour, at `--ui-icon-size` and `--ui-icon-stroke`                                                   |
-| surface       | `--ui-color-surface`                                                                                            |
+| icon          | the edge's colour, opaque, at `--ui-icon-size` and `--ui-icon-stroke`                                           |
+| surface       | `--ui-color-surface-raised`, and `--ui-backdrop-raised` behind it                                               |
 | text          | `--ui-color-text`                                                                                               |
 | corner        | `--ui-radius`                                                                                                   |
 | lift          | `--ui-elevation-raised`, lit in the edge's colour if written in `currentColor`                                  |

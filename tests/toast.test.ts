@@ -184,6 +184,22 @@ function resolved(token: Token | DerivedToken): string {
 }
 
 /**
+ * A colour as the icon paints it: made opaque, which the browser writes as `color(srgb …)`
+ * rather than in the form it was given — so the expectation goes through the same function.
+ */
+function opaque(colour: string): string {
+    const probe = document.createElement('div');
+    probe.style.color = `rgb(from ${colour} r g b / 1)`;
+    document.body.append(probe);
+
+    try {
+        return getComputedStyle(probe).color;
+    } finally {
+        probe.remove();
+    }
+}
+
+/**
  * Moves the pointer out of the way — see `checkbox.test.ts` for why nothing in the page
  * can. The far corner is where the toaster lives, so this parks at the near one instead:
  * a pointer resting on a toast holds its clock, which is the component working and would
@@ -426,7 +442,7 @@ describe('the icon, which tells the variant apart without its colour', () => {
             `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
         );
 
-        expect(getComputedStyle(icon(toast(host))).color).toBe(resolved(token));
+        expect(getComputedStyle(icon(toast(host))).color).toBe(opaque(resolved(token)));
     });
 
     it.each([
@@ -468,7 +484,7 @@ describe('the icon, which tells the variant apart without its colour', () => {
         expect(getComputedStyle(element, '::before').borderTopColor, 'the edge').toBe(
             'rgb(1, 2, 3)',
         );
-        expect(getComputedStyle(icon(element)).color, 'the icon').toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(icon(element)).color, 'the icon').toBe(opaque('rgb(1, 2, 3)'));
     });
 
     it('follows a variant that changes after it was drawn', async () => {
@@ -533,9 +549,27 @@ describe('the edge, which agrees with the message rather than replacing it', () 
             expect(edge.boxShadow, 'a lift written in currentColor').toBe(
                 'rgb(1, 2, 3) 0px 0px 0px 1px',
             );
-            expect(getComputedStyle(part(element, 'icon')).color, 'the icon').toBe('rgb(1, 2, 3)');
+            expect(getComputedStyle(part(element, 'icon')).color, 'the icon').toBe(
+                opaque('rgb(1, 2, 3)'),
+            );
         },
     );
+
+    it('paints the icon opaque when the edge is softened, as the one cue that is not colour', async () => {
+        // A theme may write the edge at an opacity — Glass does, at 0.80 — and the icon owes
+        // 3:1 as a graphic, which every icon but the danger's lost at that opacity.
+        const host = await mount(fixture);
+        const element = toast(host);
+
+        element.style.setProperty('--ui-color-toast-edge', 'rgb(1 2 3 / 0.5)');
+
+        expect(getComputedStyle(element, '::before').borderTopColor, 'the edge').toBe(
+            'rgba(1, 2, 3, 0.5)',
+        );
+        expect(getComputedStyle(part(element, 'icon')).color, 'the icon').toBe(
+            opaque('rgb(1, 2, 3)'),
+        );
+    });
 
     it('lights a lift written in currentColor in the variant, as the edge is', async () => {
         const host = await mount(
@@ -567,7 +601,7 @@ describe('the edge, which agrees with the message rather than replacing it', () 
                     'rgb(0, 0, 0)',
                 );
                 expect(getComputedStyle(part(toast(host), 'icon')).color, variant).toBe(
-                    'rgb(0, 0, 0)',
+                    opaque('rgb(0, 0, 0)'),
                 );
                 host.remove();
             }
@@ -671,6 +705,19 @@ describe('the values, all of which come from the token layer', () => {
         expect(styles.fontFamily).toBe('Courier');
         expect(edge.boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
         expect(styles.boxShadow, 'and none on the toast').toBe('none');
+    });
+
+    it('takes a raised surface and what it does to the page behind it from the host', async () => {
+        const host = await mount(fixture);
+        const element = toast(host);
+
+        expect(getComputedStyle(element).backdropFilter, 'nothing by default').toBe('none');
+
+        element.style.setProperty('--ui-color-surface-raised', 'rgb(1, 2, 3, 0.2)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(10px)');
+
+        expect(getComputedStyle(element).backgroundColor).toBe('rgba(1, 2, 3, 0.2)');
+        expect(getComputedStyle(element).backdropFilter).toBe('blur(10px)');
     });
 
     it('declares the text colour with the surface, never half the pair', async () => {

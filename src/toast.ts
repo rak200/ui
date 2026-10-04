@@ -216,7 +216,9 @@ export class UiToast extends LitElement {
             border: 1px solid transparent;
             border-inline-start-width: calc(${reference('--ui-space')} / 2);
             border-radius: ${reference('--ui-radius')};
-            background: ${reference('--ui-color-surface')};
+            /* A raised surface, as a card is. */
+            background: ${reference('--ui-color-surface-raised')};
+            backdrop-filter: ${reference('--ui-backdrop-raised')};
             /* The variant's colour, which the edge, the glow and the icon are lit in. The
                message writes the text's, which is the pair the surface was chosen against. */
             color: ${reference('--ui-color-info')};
@@ -273,11 +275,16 @@ export class UiToast extends LitElement {
         /* The icon takes the edge's colour, and sits centred on the message's first line,
            whatever height the page's text gives a line: half of what one line has to spare
            over the glyph, above it and below. A fixed eighth of an em assumed a line-height
-           of 1.5 and sat low under a monospace face at normal — measured, under Matrix. */
+           of 1.5 and sat low under a monospace face at normal — measured, under Matrix.
+
+           Opaque, whatever opacity a theme softens the edge to: the icon is the one thing
+           that tells a variant by more than its colour, so it owes 3:1 as a graphic. Glass's
+           edge at 0.80 took every icon but the danger's under it over the page that theme
+           documents, the success's to 2.70:1, and opaque the least is 3.52 — measured. */
         .icon {
             flex: none;
             margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
-            color: ${reference('--ui-color-toast-edge')};
+            color: rgb(from ${reference('--ui-color-toast-edge')} r g b / 1);
         }
 
         /* Where the entrance comes from. Without it there is nothing to transition out of:

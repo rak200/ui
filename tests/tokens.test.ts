@@ -21,7 +21,7 @@ import {
     type Token,
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
-import { matrix, themeStyleSheet } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { UiButton } from '../src/button.js';
 import { UiCard } from '../src/card.js';
 import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
@@ -126,6 +126,12 @@ interface Palette {
     readonly theme?: string;
     /** Whether a shadow or a glow lies outside its controls, which the floors read through. */
     readonly glows: boolean;
+    /**
+     * The page it documents holding over, light and dark, where its raised surfaces let the
+     * page through. A palette that lets nothing through leaves it out, and its page is the
+     * surface a host paints by default.
+     */
+    readonly page?: readonly [light: string, dark: string];
 }
 
 /** The token sheet alone, which is what a page that selects no theme renders. */
@@ -135,6 +141,15 @@ const byDefault: Palette = { name: 'the default palette', sheet: '', glows: fals
 const palettes: readonly Palette[] = [
     byDefault,
     { name: 'Matrix', sheet: themeStyleSheet(matrix), theme: matrix.name, glows: false },
+    // The darkest page Glass holds over in the light scheme and the lightest in the dark,
+    // which `docs/theme.md` states as the condition on a host's page — RFC 0003.
+    {
+        name: 'Glass',
+        sheet: themeStyleSheet(glass),
+        theme: glass.name,
+        glows: false,
+        page: ['#cecece', '#303030'],
+    },
 ];
 
 /**
@@ -174,7 +189,9 @@ function computed(
 }
 
 /**
- * A colour the browser has resolved, as six-digit sRGB hex.
+ * A colour the browser has resolved, as six-digit sRGB hex — and as eight, with its opacity,
+ * where it lets something through, which no ratio reads: a translucent colour has no
+ * contrast until it is laid over something, so a floor that forgot to lay it fails loudly.
  *
  * `color-mix()` computes in oklab and serialises as `oklab(…)`, which is neither something
  * `contrastRatio` can read nor something a hand-written parser should be trusted with. A
@@ -192,9 +209,10 @@ function sRGB(colour: string): string {
     context.fillRect(0, 0, 1, 1);
 
     const pixel = context.getImageData(0, 0, 1, 1).data;
+    const opacity = pixel[3] ?? 0;
     const channels = [0, 1, 2].map((offset) => (pixel[offset] ?? 0).toString(16).padStart(2, '0'));
 
-    return `#${channels.join('')}`;
+    return `#${channels.join('')}${opacity === 255 ? '' : opacity.toString(16).padStart(2, '0')}`;
 }
 
 /** A token as a component writes it, resolved in `scheme` under `palette`. */
@@ -203,11 +221,56 @@ function painted(token: Token | DerivedToken, scheme: Scheme, palette?: Palette)
 }
 
 /**
- * What lies beside a control, outside its boundary: the page, which a host paints with the
- * surface. A palette that lights its controls changes this, and says so here.
+ * `token` as it shows over the opaque `backdrop`: source-over, in sRGB. Its channels are read
+ * from the colour made opaque and its opacity apart, because a faint pixel keeps too little of
+ * its colour to be un-premultiplied — RFC 0003's instrument for the glass.
  */
-function outside(palette: Palette, scheme: Scheme): string {
-    return painted('--ui-color-surface', scheme, palette);
+function laid(
+    token: Token | DerivedToken,
+    backdrop: string,
+    scheme: Scheme,
+    palette: Palette,
+): string {
+    const value = String(reference(token));
+    const colour = sRGB(
+        computed('background-color', `rgb(from ${value} r g b / 1)`, scheme, palette),
+    );
+    const opacity = Number.parseInt(
+        sRGB(computed('background-color', value, scheme, palette)).slice(7) || 'ff',
+        16,
+    );
+    const channel = (offset: number, of: string): number =>
+        Number.parseInt(of.slice(offset, offset + 2), 16);
+    const channels = [1, 3, 5].map((offset) =>
+        Math.round(
+            (opacity * channel(offset, colour) + (255 - opacity) * channel(offset, backdrop)) / 255,
+        )
+            .toString(16)
+            .padStart(2, '0'),
+    );
+
+    return `#${channels.join('')}`;
+}
+
+/** The page under a palette: the one it documents holding over, or the surface a host paints. */
+function page(palette: Palette, scheme: Scheme): string {
+    return (
+        palette.page?.[scheme === 'light' ? 0 : 1] ?? painted('--ui-color-surface', scheme, palette)
+    );
+}
+
+/** A raised surface as a reader sees it, laid over that page. */
+function raised(palette: Palette, scheme: Scheme): string {
+    return laid('--ui-color-surface-raised', page(palette, scheme), scheme, palette);
+}
+
+/**
+ * What lies beside a control, outside its boundary: the page, or a raised surface over it —
+ * the same colour wherever a raised surface is opaque. A floor read against what is beside
+ * a control holds against both.
+ */
+function outside(palette: Palette, scheme: Scheme): readonly string[] {
+    return [page(palette, scheme), raised(palette, scheme)];
 }
 
 /**
@@ -627,6 +690,7 @@ describe('every value is legal for the property its token serves', () => {
         ['--ui-icon-size', 'inline-size'],
         ['--ui-icon-stroke', 'stroke-width'],
         ['--ui-elevation-', 'box-shadow'],
+        ['--ui-backdrop-', 'backdrop-filter'],
         ['--ui-text-', 'font-size'],
     ] as const;
 
@@ -898,10 +962,12 @@ describe('the contrast floors', () => {
                     // than trusted: a setting that never reached the page would run the same
                     // floors twice and call it two.
                     expect(matchMedia('(prefers-contrast: more)').matches).toBe(more);
-                    // And it reached the tokens: the text goes to its pole only when asked.
-                    expect(
-                        paint('--ui-color-text') === (scheme === 'light' ? '#000000' : '#ffffff'),
-                    ).toBe(more);
+                    // And it reached the tokens: what floats over the page is edged in the
+                    // text only when asked. Not the text going to its pole, which Glass's is at
+                    // already.
+                    expect(paint('--ui-color-border-overlay') === paint('--ui-color-text')).toBe(
+                        more,
+                    );
                 });
 
                 it.runIf(more)(
@@ -1069,14 +1135,16 @@ describe('the contrast floors', () => {
                     // either reaching 3:1 is enough. The step below the shipped border is 2.94
                     // in light — what a percentage chosen by eye would have shipped.
                     const fill = paint('--ui-color-surface');
-                    const beside = outside(palette, scheme);
+                    const least = (edge: string): number =>
+                        Math.min(
+                            ...outside(palette, scheme).map((beside) =>
+                                eitherSide(edge, fill, beside),
+                            ),
+                        );
 
+                    expect(least(paint('--ui-color-border')), 'a field').toBeGreaterThanOrEqual(3);
                     expect(
-                        eitherSide(paint('--ui-color-border'), fill, beside),
-                        'a field',
-                    ).toBeGreaterThanOrEqual(3);
-                    expect(
-                        eitherSide(paint('--ui-color-danger'), fill, beside),
+                        least(paint('--ui-color-danger')),
                         'a field in error',
                     ).toBeGreaterThanOrEqual(3);
                 });
@@ -1087,7 +1155,9 @@ describe('the contrast floors', () => {
                     // mark may meet the floor against the fill instead — RFC 0003's decision —
                     // and only there, so a palette without one is held to the fill.
                     const accent = paint('--ui-color-accent');
-                    const fill = contrastRatio(accent, outside(palette, scheme));
+                    const fill = Math.min(
+                        ...outside(palette, scheme).map((beside) => contrastRatio(accent, beside)),
+                    );
                     const mark = contrastRatio(paint('--ui-color-accent-contrast'), accent);
 
                     expect(palette.glows ? Math.max(fill, mark) : fill).toBeGreaterThanOrEqual(3);
@@ -1096,10 +1166,53 @@ describe('the contrast floors', () => {
                 it('edges what floats over the page in the text only when the reader asks', () => {
                     // RFC 0003: the boundary's mix falls short of the text, which is the edge a
                     // reader who asked for more contrast gets on a dialog, a tip and a menu.
-                    // Otherwise it is the boundary, so nothing renders differently.
+                    // Otherwise it is a card's edge, so the two are edged alike.
                     expect(paint('--ui-color-border-overlay')).toBe(
-                        paint(more ? '--ui-color-text' : '--ui-color-border'),
+                        paint(more ? '--ui-color-text' : '--ui-color-border-raised'),
                     );
+                });
+
+                it("edges a card as the boundary until a palette gives a raised surface's own", () => {
+                    // Glass softens it; every other palette leaves it the boundary's mix.
+                    expect(paint('--ui-color-border-raised') === paint('--ui-color-border')).toBe(
+                        palette.page === undefined || more,
+                    );
+                });
+
+                /*
+                 * What rests on a raised surface is read against it, laid over the page — which,
+                 * where the surface lets the page through, is the page the palette documents
+                 * holding over. RFC 0003 measured that text has the most room there, and that
+                 * what runs out first is the error message in the light scheme and the focus
+                 * ring in the dark: the limits the page is set at.
+                 */
+                it('keeps what rests on a raised surface at its floor, over the page beneath it', () => {
+                    const surface = raised(palette, scheme);
+
+                    for (const [token, floor] of [
+                        ['--ui-color-text', 4.5],
+                        ['--ui-color-text-muted', 4.5],
+                        ['--ui-color-danger', 4.5],
+                        ['--ui-color-focus', 3],
+                    ] as const) {
+                        expect(contrastRatio(paint(token), surface), token).toBeGreaterThanOrEqual(
+                            floor,
+                        );
+                    }
+                });
+
+                it.each([
+                    '--ui-color-info',
+                    '--ui-color-success',
+                    '--ui-color-warning',
+                    '--ui-color-danger',
+                ] as const)("keeps a toast's %s icon at 3:1 on the toast", (token) => {
+                    // WCAG 1.4.11: the icon is what tells a variant by more than its colour,
+                    // and it is painted opaque whatever the edge's opacity. Under more contrast
+                    // it is the text, which the floors above already hold.
+                    expect(
+                        contrastRatio(paint(token), raised(palette, scheme)),
+                    ).toBeGreaterThanOrEqual(3);
                 });
             });
         });

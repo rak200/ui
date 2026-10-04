@@ -185,7 +185,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | padding              | `--ui-space` ÷ 2 and `--ui-space`                                           |
 | gap from the trigger | `--ui-space` ÷ 2                                                            |
 | maximum width        | `--ui-space` × 40                                                           |
-| surface              | `--ui-color-surface`                                                        |
+| surface              | `--ui-color-surface-raised`, and `--ui-backdrop-raised` behind it           |
 | text                 | `--ui-color-text`                                                           |
 | boundary             | `--ui-color-border-overlay`                                                 |
 | corner               | `--ui-radius`                                                               |

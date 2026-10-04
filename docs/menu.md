@@ -175,7 +175,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | panel padding    | `--ui-space` ÷ 2                                                                              |
 | panel width      | capped at `--ui-space` × 44                                                                   |
 | gap from trigger | `--ui-space` ÷ 2                                                                              |
-| surface          | `--ui-color-surface`                                                                          |
+| surface          | `--ui-color-surface-raised`, and `--ui-backdrop-raised` behind it                             |
 | text             | `--ui-color-text`                                                                             |
 | boundary         | `--ui-color-border-overlay`                                                                   |
 | separator        | `--ui-color-border`                                                                           |

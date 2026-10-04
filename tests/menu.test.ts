@@ -1019,7 +1019,8 @@ describe('the values, all of which come from the token layer', () => {
         element.style.setProperty('--ui-space', '10px');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-color-border-overlay', 'rgb(1, 2, 3)');
-        element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-surface-raised', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(10px)');
         element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
         element.style.setProperty('--ui-font', 'Courier');
         element.style.setProperty('--ui-elevation-raised', 'rgb(1, 2, 3) 0px 4px 8px 0px');
@@ -1032,6 +1033,7 @@ describe('the values, all of which come from the token layer', () => {
         expect(styles.borderTopColor).toBe('rgb(1, 2, 3)');
         expect(styles.borderRadius).toBe('11px');
         expect(styles.backgroundColor).toBe('rgb(4, 5, 6)');
+        expect(styles.backdropFilter).toBe('blur(10px)');
         expect(styles.color).toBe('rgb(7, 8, 9)');
         expect(styles.fontFamily).toBe('Courier');
         // On a layer over the panel, lit in the accent, and in the way of no item.

@@ -11,7 +11,7 @@
 // type-only import whole, so a lone `import type` would drop the side effect that
 // registers the elements and the tags below would never upgrade.
 import '@rak200/ui';
-import { matrix, themeStyleSheet, type Theme } from '@rak200/ui';
+import { glass, matrix, themeStyleSheet, type Theme } from '@rak200/ui';
 import { html, type TemplateResult } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 
@@ -23,14 +23,21 @@ function sheet(theme: Theme): HTMLStyleElement {
     return element;
 }
 
-/** One scheme's worth of components, under the theme. */
-function panel(theme: Theme, scheme: 'light' | 'dark'): TemplateResult {
+/**
+ * One scheme's worth of components, under the theme, on `page` — the theme's surface unless
+ * the theme lets the page through, where it is the page the theme documents holding over.
+ */
+function panel(
+    theme: Theme,
+    scheme: 'light' | 'dark',
+    page = 'var(--ui-color-surface)',
+): TemplateResult {
     return html`
         <section
             data-ui-theme=${theme.name}
             data-scheme=${scheme}
             style="color-scheme: ${scheme}; display: grid; gap: 1rem; padding: 1.25rem;
-                background: var(--ui-color-surface); color: var(--ui-color-text);
+                background: ${page}; color: var(--ui-color-text);
                 font-family: var(--ui-font)"
         >
             <ui-card>
@@ -71,6 +78,21 @@ export const Matrix: StoryObj = {
         ${sheet(matrix)}
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr))">
             ${panel(matrix, 'light')}${panel(matrix, 'dark')}
+        </div>
+    `,
+};
+
+/**
+ * Glass, in both of its schemes, over the page it documents holding over: the darkest grey in
+ * the light scheme and the lightest in the dark. A flat page rather than a busy one, because
+ * that is the page the accessibility assertion measures correctly — over an image it would
+ * pass however unreadable the glass was, RFC 0003 measured.
+ */
+export const Glass: StoryObj = {
+    render: (): TemplateResult => html`
+        ${sheet(glass)}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr))">
+            ${panel(glass, 'light', '#cecece')}${panel(glass, 'dark', '#303030')}
         </div>
     `,
 };
