@@ -181,9 +181,10 @@ description goes with it.
 
 ## What the platform still refuses
 
-**The list a click opens is drawn by the operating system**, and no rule here reaches inside it. The
-box, the caret and the states are this package's; the popup is not. That is the cost of delegating
-to a native `<select>`, and it is the reason to.
+**The list a click opens is drawn by the operating system**, and the one thing a rule here reaches
+inside it is the colour each choice paints. The box, the caret and the states are this package's;
+the popup, and the highlight on the choice under the pointer, are not. That is the cost of
+delegating to a native `<select>`, and it is the reason to.
 
 `ROADMAP.md` carries what would reopen the question, and it is a platform feature arriving broadly
 rather than a decision here.
@@ -192,26 +193,34 @@ rather than a decision here.
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the caret.
 
-| Part               | Token                                                        |
-| ------------------ | ------------------------------------------------------------ |
-| surface            | `--ui-color-surface`                                         |
-| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
-| boundary           | `--ui-color-border`, and `--ui-color-text` on hover          |
-| the caret          | `--ui-color-text-muted`                                      |
-| in error           | `--ui-color-danger`, at `--ui-text-supporting`               |
-| help text          | `--ui-color-text`, at `--ui-text-supporting`                 |
-| focus ring         | `--ui-color-focus`                                           |
-| corner             | `--ui-radius`                                                |
-| padding and rhythm | `--ui-space`                                                 |
-| motion             | `--ui-duration-state`, `--ui-easing-state`                   |
+| Part                  | Token                                                        |
+| --------------------- | ------------------------------------------------------------ |
+| surface               | `--ui-color-surface`                                         |
+| text and the label    | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
+| boundary              | `--ui-color-border`, and `--ui-color-text` on hover          |
+| the caret             | `--ui-color-text-muted`                                      |
+| each choice           | `--ui-color-surface` and `--ui-color-text`                   |
+| an unavailable choice | `--ui-color-text-muted`                                      |
+| in error              | `--ui-color-danger`, at `--ui-text-supporting`               |
+| help text             | `--ui-color-text`, at `--ui-text-supporting`                 |
+| focus ring            | `--ui-color-focus`                                           |
+| corner                | `--ui-radius`                                                |
+| padding and rhythm    | `--ui-space`                                                 |
+| motion                | `--ui-duration-state`, `--ui-easing-state`                   |
 
 The same five parts [`<ui-input>`](input.md#styling) exposes — `stack`, `label`, `control`, `help`
 and `error` — aimed at a `<select>` rather than an `<input>`.
 
 **The caret is two gradients, not a picture**, and that is what keeps its colour overridable: a
 gradient takes `var()`, while an SVG in a `data:` URI freezes whatever colour is drawn into it.
-[`<ui-checkbox>`](checkbox.md) answers the same problem the other way, by making its mark a hole —
-which is not available here, because a mask would clip the option text with it.
+[`<ui-checkbox>`](checkbox.md) needs a path for its tick, so it keeps the path as a mask and paints
+the colour under it; a caret is two triangles, and needs neither.
+
+**Each choice paints the surface and the text itself.** The picker takes its colours from the select
+unless an option brings its own, so a fill you make translucent would otherwise be what the open
+list is drawn on. In an opaque palette this changes nothing you can see. A `multiple` control is
+left alone: its list is in the box, and the platform marks a chosen option by painting its
+background, which a colour here would paint out.
 
 **It follows the control's direction.** `padding-inline-end` is logical and flips on its own;
 `background-position` has no logical form, so the caret is mirrored explicitly against `:dir(rtl)`.
