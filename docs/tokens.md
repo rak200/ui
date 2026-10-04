@@ -205,9 +205,9 @@ name is breaking. Read it as _the names that have a default_.
 ### Four tokens carry a text floor
 
 `--ui-color-danger`, `--ui-color-success`, `--ui-color-warning` and `--ui-color-info` each clear
-**4.5:1 against the surface** in both schemes — the floor for text, not the 3:1 a coloured edge would owe. The floor a
-value has to clear is the strictest use it is put to, and nothing stops a host writing one of these as
-text; every control's error message already writes the first one that way.
+**4.5:1 against the surface** in both schemes — the floor for text, not the 3:1 a coloured edge
+would owe. The floor a value has to clear is the strictest use it is put to, and nothing stops a host
+writing one of these as text; every control's error message already writes the first one that way.
 
 Override one and you own that ratio. A `success` that only ever draws an edge can be lighter; one that
 also labels something cannot.
