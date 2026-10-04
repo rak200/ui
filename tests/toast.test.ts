@@ -11,10 +11,21 @@ import { reference } from '../src/reference.js';
 import type { DerivedToken, Token } from '../src/tokens.js';
 import type { UiToast, UiToaster } from '../src/toast.js';
 
-/** The markup the behavioural tests use, unless one needs a different shape. */
+/**
+ * The markup the behavioural tests use, unless one needs a different shape.
+ *
+ * **With no clock**, because a test that is not about the clock must not race it. The
+ * default dwell is five seconds and starts on connection, so a host busy enough to stretch
+ * mounting and settling past it dismisses the toast before the test reaches it. Measured
+ * under a 700x CPU throttle: 12.3 s of setup, the toast gone, `closing` still on it and no
+ * animation left, which is the one recorded failure of the exit assertion exactly. Every
+ * test under `the clock` writes its own duration, so nothing the clock does goes unmeasured,
+ * and the markup written inline elsewhere in this file says `duration="0"` for the same
+ * reason — except a `danger` toast's, which never runs one. #177
+ */
 const fixture = `
     <ui-toaster>
-        <ui-toast>Your changes have been saved.</ui-toast>
+        <ui-toast duration="0">Your changes have been saved.</ui-toast>
     </ui-toaster>
 `;
 
@@ -310,7 +321,7 @@ describe('ui-toast', () => {
         'announces a %s toast politely',
         async (variant) => {
             const host = await mount(
-                `<ui-toaster><ui-toast variant="${variant}">x</ui-toast></ui-toaster>`,
+                `<ui-toaster><ui-toast variant="${variant}" duration="0">x</ui-toast></ui-toaster>`,
             );
 
             expect(toast(host).slot).toBe('polite');
@@ -371,7 +382,7 @@ describe('the edge, which agrees with the message rather than replacing it', () 
         ['danger', '--ui-color-danger'],
     ] as const)('paints a %s toast from %s', async (variant, token) => {
         const host = await mount(
-            `<ui-toaster><ui-toast variant="${variant}">Done.</ui-toast></ui-toaster>`,
+            `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
         );
 
         expect(getComputedStyle(toast(host)).borderInlineStartColor).toBe(resolved(token));
@@ -382,7 +393,7 @@ describe('the edge, which agrees with the message rather than replacing it', () 
 
         for (const variant of ['info', 'success', 'warning', 'danger'] as const) {
             const host = await mount(
-                `<ui-toaster><ui-toast variant="${variant}">Done.</ui-toast></ui-toaster>`,
+                `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
             );
 
             painted.add(getComputedStyle(toast(host)).borderInlineStartColor);
@@ -623,7 +634,7 @@ describe('the dismiss button, which every toast has', () => {
 
     it('takes the name a page that is not in English writes', async () => {
         const host = await mount(
-            '<ui-toaster><ui-toast dismiss-label="Fechar">Salvo.</ui-toast></ui-toaster>',
+            '<ui-toaster><ui-toast dismiss-label="Fechar" duration="0">Salvo.</ui-toast></ui-toaster>',
         );
 
         expect(dismisser(toast(host)).getAttribute('aria-label')).toBe('Fechar');
