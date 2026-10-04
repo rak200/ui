@@ -722,6 +722,7 @@ describe('ui-checkbox', () => {
         expect(styles.borderTopColor, 'boundary included').toBe('rgb(37, 99, 235)');
         expect(mark.backgroundColor, 'in the label, like the tick').toBe('rgb(1, 2, 3)');
         expect(mark.maskImage, 'a rectangle needs no picture').not.toContain('svg');
+        expect(mark.maskImage, 'and it is a rectangle, not nothing').toContain('linear-gradient');
         expect(mark.maskSize, 'a bar across the middle').toBe('12px 2px');
         expect(mark.maskPosition).toBe('50% 50%');
     });
@@ -732,7 +733,10 @@ describe('ui-checkbox', () => {
         const form = await mount('<ui-checkbox label="All" checked indeterminate></ui-checkbox>');
 
         expect(box(toggle(form)).checked, 'both, really').toBe(true);
-        expect(getComputedStyle(box(toggle(form)), '::before').maskImage).not.toContain('svg');
+        const mark = getComputedStyle(box(toggle(form)), '::before');
+
+        expect(mark.maskImage, 'not the tick').not.toContain('svg');
+        expect(mark.maskImage, 'but the dash').toContain('linear-gradient');
     });
 
     it('lets a toggle answer the question the mixed state was asking', async () => {
