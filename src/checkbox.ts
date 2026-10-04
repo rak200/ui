@@ -256,8 +256,8 @@ class UiToggle extends LitElement {
      * attribute is the *default*, which is what a form reset returns to, and an attribute
      * that followed every click would make the default whatever the user last did.
      *
-     * A host stylesheet reaches the live state through `:state(checked)` — see
-     * {@link UiToggle.expose}, and the measurement there for why it is not `::part()`.
+     * A host stylesheet reaches the live state through `:state(checked)`, and the box alone
+     * through `::part(box):checked` — {@link UiToggle.expose} says what each one reaches.
      */
     checked = false;
 
@@ -329,12 +329,13 @@ class UiToggle extends LitElement {
     /**
      * Puts one internal state where a host stylesheet can select on it.
      *
-     * **This is what replaces the attribute `checked` deliberately does not reflect**, and
-     * the alternative was measured rather than assumed: `::part(box):checked` does not
-     * match. A `::part()` may be followed by user-action pseudo-classes and not by state
-     * ones, so a host had no way at all to reach a state this element keeps in its shadow
-     * root — which would have made *not reflecting* a decision that costs the host
-     * something, rather than one that costs nothing.
+     * **This is what replaces the attribute `checked` deliberately does not reflect.**
+     * `::part(box):checked` matches as well — a `::part()` takes any pseudo-class that is
+     * not structural — but a part reaches the box and only the box. A host that wants the
+     * element itself to answer to the state, its label included, had no selector to write,
+     * which would have made *not reflecting* a decision that costs the host something,
+     * rather than one that costs nothing. `tests/checkbox.test.ts` holds both routes, so
+     * an engine that stops matching the part is a failure rather than a stale sentence.
      *
      * Only the two states with no other route are exposed. `:valid`, `:invalid` and
      * `:disabled` already match on this element, measured, because a form-associated

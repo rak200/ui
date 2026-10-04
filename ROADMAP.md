@@ -3,14 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `::part(box):checked` matches (#229)
-
-Three places — `docs/checkbox.md`, the docblock on `expose()` in `src/checkbox.ts`, and the comment
-above the custom-state assertions in `tests/checkbox.test.ts` — say the selector does not match,
-and in this engine it does. The custom states keep a reason, a different one: they select the
-host, where a part reaches only the box. The fix is the three sentences, and a test that fails when
-the engine changes rather than a re-dated measurement.
-
 ## Themes, as RFC 0003 accepted them (#233)
 
 The package ships themes as data a host opts into — Matrix and Glass, each rendered by

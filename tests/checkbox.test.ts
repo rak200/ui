@@ -255,10 +255,10 @@ describe('the control and its label, in one tree scope', () => {
     });
 
     it('puts the two states a host cannot otherwise reach where CSS can', async () => {
-        // Measured before this existed: `::part(box):checked` does not match, because a
-        // ::part() takes user-action pseudo-classes and not state ones. So without these a
-        // host had no way at all to select on a state kept in this shadow root — which is
-        // what would have made *not reflecting* `checked` cost the host something.
+        // A part reaches the box by its state — the test below holds that — and the box is
+        // all it reaches. So without these a host had no way to select the element itself on
+        // a state kept in this shadow root, which is what would have made *not reflecting*
+        // `checked` cost the host something.
         const form = await mount(fixture);
         const element = toggle(form);
 
@@ -275,6 +275,33 @@ describe('the control and its label, in one tree scope', () => {
         expect(element.matches(':state(checked)'), 'off again — it is removed, not left').toBe(
             false,
         );
+    });
+
+    it('lets a part select the box on its state too, which is the second route', async () => {
+        // A `::part()` takes any pseudo-class that is not structural, and `:checked` is a fact
+        // about the box rather than about the tree around it. This was once written down as
+        // not matching, and nothing failed when the engine disagreed — so the claim is held
+        // here rather than measured once.
+        const form = await mount(`
+            <style>
+                ::part(box):checked { outline-color: rgb(1, 2, 3); }
+                ::part(box):indeterminate { outline-color: rgb(4, 5, 6); }
+            </style>
+            <ui-checkbox label="On" checked></ui-checkbox>
+            <ui-checkbox label="Mixed" indeterminate></ui-checkbox>
+            <ui-switch label="On" checked></ui-switch>
+            <ui-switch label="Off"></ui-switch>
+        `);
+        const outlines = [...form.querySelectorAll<Toggle>('ui-checkbox, ui-switch')].map(
+            (element) => getComputedStyle(box(element)).outlineColor,
+        );
+
+        expect(outlines).toEqual([
+            'rgb(1, 2, 3)',
+            'rgb(4, 5, 6)',
+            'rgb(1, 2, 3)',
+            expect.not.stringMatching(/^rgb\((1, 2, 3|4, 5, 6)\)$/),
+        ]);
     });
 
     it('exposes the mixed state the same way, and only the checkbox has one', async () => {
