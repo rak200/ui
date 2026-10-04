@@ -3,6 +3,11 @@ import base from '@rak200/coding-standard-ts/eslint';
 export default [
     ...base,
     {
+        rules: {
+            '@rak200/coding-standard-ts/doc-summary': 'off',
+        },
+    },
+    {
         // `storybook build` writes `storybook-static/`, and `.gitignore` is an `exact`
         // seed — until the baseline carries the line, the directory sits untracked after
         // any local build. Linting it would put generated JavaScript in front of
