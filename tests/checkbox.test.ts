@@ -825,24 +825,39 @@ describe('ui-switch', () => {
         expect(box(toggle(form)).getAttribute('role')).toBe('switch');
     });
 
-    it('is a pill wider than it is tall, and takes its track from the boundary token', async () => {
+    it('is a pill wider than it is tall, and an empty box while it is off', async () => {
         const form = await mount(fixture);
         const styles = getComputedStyle(box(toggle(form)));
 
         expect(styles.blockSize).toBe('24px');
         expect(styles.inlineSize).toBe('40px');
         expect(styles.borderRadius, 'at half the height or more, the ends are round').toBe('24px');
-        // Compared against the checkbox's boundary rather than to a literal: the token is
-        // derived, so its value is a `color-mix()` that computes in oklab, and asserting
-        // the number would assert the mix rather than that both read the same name.
+        // Compared against an unchecked checkbox rather than to literals: the boundary is
+        // derived, so its value is a `color-mix()` that computes in oklab, and asserting the
+        // number would assert the mix rather than that both draw the same box.
         const other = await mount('<ui-checkbox label="Send a receipt"></ui-checkbox>');
+        const empty = getComputedStyle(box(toggle(other)));
 
-        expect(styles.backgroundColor, 'the 3:1 boundary, as a fill').toBe(
-            getComputedStyle(box(toggle(other))).borderTopColor,
-        );
-        // One flat track: the border is the same colour, so the pill has no ring around it
-        // that the checkbox's boundary would otherwise leave behind.
-        expect(styles.borderTopColor).toBe(styles.backgroundColor);
+        expect(styles.backgroundColor, 'the surface inside').toBe(empty.backgroundColor);
+        expect(styles.borderTopColor, 'the 3:1 boundary around it').toBe(empty.borderTopColor);
+    });
+
+    it('draws the thumb in the boundary colour while off, and the surface colour on', async () => {
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        // Retuned rather than compared with the defaults, so each colour is read back from
+        // the name it was written with: off, the thumb has to clear 3:1 against the surface
+        // it sits on, which is the boundary's own floor; on, it sits on the accent.
+        element.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
+
+        expect(getComputedStyle(box(element)).backgroundImage, 'off').toContain('rgb(1, 2, 3)');
+
+        element.checked = true;
+        await element.updateComplete;
+
+        expect(getComputedStyle(box(element)).backgroundImage, 'on').toContain('rgb(4, 5, 6)');
     });
 
     it('carries the thumb as a layer, because an element could not be told it is on', async () => {

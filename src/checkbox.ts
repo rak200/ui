@@ -612,20 +612,20 @@ export class UiSwitch extends UiToggle {
                 /* Any radius at or above half the block size rounds the ends fully, so
                    the whole size is a pill at every size this control can take. */
                 border-radius: ${size};
-                /* The track carries the boundary a checkbox gets from its border, so it
-                   is the border token: the value chosen to clear 3:1 against the
-                   surface, which is what WCAG 1.4.11 asks of a control's boundary. The
-                   border is left to the shared sheet, which already paints it that exact
-                   colour — restating it here changed no pixel, which is how it was
-                   found: as a mutant no test could possibly kill. */
-                background-color: ${reference('--ui-color-border')};
-                /* The thumb is a background layer rather than an element, because the
+                /* Off, the switch is an empty box, as an unchecked checkbox is: the shared
+                   sheet's surface inside the shared sheet's border, which is the boundary
+                   WCAG 1.4.11 asks 3:1 of. The thumb takes the border's colour, so it
+                   clears the same floor against the surface it sits on. Not a filled track:
+                   a fill is what *on* looks like, and a palette whose border is near its
+                   accent reads a filled track as on — RFC 0003.
+
+                   The thumb is a background layer rather than an element, because the
                    layer moves with one number where an element would need a second rule
                    to be told the control is on. A closest-side radius comes from the
                    layer's own size. */
                 background-image: radial-gradient(
                     circle closest-side,
-                    ${reference('--ui-color-surface')} 100%,
+                    ${reference('--ui-color-border')} 100%,
                     transparent 100%
                 );
                 background-size: calc(${size} * 2 / 3);
@@ -639,7 +639,14 @@ export class UiSwitch extends UiToggle {
                         ${reference('--ui-easing-state')};
             }
 
+            /* On, the shared sheet fills the box with the accent, and the thumb takes the
+               surface's colour over it. */
             input:checked {
+                background-image: radial-gradient(
+                    circle closest-side,
+                    ${reference('--ui-color-surface')} 100%,
+                    transparent 100%
+                );
                 background-position: calc(100% - ${size} / 6) center;
             }
         `,
