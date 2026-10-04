@@ -1018,7 +1018,7 @@ describe('the values, all of which come from the token layer', () => {
 
         element.style.setProperty('--ui-space', '10px');
         element.style.setProperty('--ui-radius', '11px');
-        element.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-border-overlay', 'rgb(1, 2, 3)');
         element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
         element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
         element.style.setProperty('--ui-font', 'Courier');

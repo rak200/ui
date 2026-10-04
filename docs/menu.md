@@ -177,7 +177,8 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | gap from trigger | `--ui-space` ÷ 2                                                        |
 | surface          | `--ui-color-surface`                                                    |
 | text             | `--ui-color-text`                                                       |
-| boundary         | `--ui-color-border`, and the separator with it                          |
+| boundary         | `--ui-color-border-overlay`                                             |
+| separator        | `--ui-color-border`                                                     |
 | corner           | `--ui-radius`                                                           |
 | lift             | `--ui-elevation-raised`                                                 |
 | item padding     | `--ui-space` ÷ 2 and `--ui-space`                                       |

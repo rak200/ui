@@ -64,8 +64,8 @@ of it that follows the scheme is its colour, which `light-dark()` can carry insi
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
 owe. The theme writes 18% and 30% of the text instead, as values.
 
-**When the reader asks for more contrast**, the green stays on the accent and the text goes to its
-pole, black or white.
+**When the reader asks for more contrast**, the green stays on the accent, and the text and the edge
+of what floats over the page go to the text's pole, black or white.
 
 ## `Theme`
 

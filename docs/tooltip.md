@@ -187,7 +187,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | maximum width        | `--ui-space` × 40                      |
 | surface              | `--ui-color-surface`                   |
 | text                 | `--ui-color-text`                      |
-| boundary             | `--ui-color-border`                    |
+| boundary             | `--ui-color-border-overlay`            |
 | corner               | `--ui-radius`                          |
 | lift                 | `--ui-elevation-raised`                |
 | font                 | `--ui-font`, at `--ui-text-supporting` |

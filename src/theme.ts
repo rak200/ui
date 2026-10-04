@@ -88,7 +88,8 @@ export function themeStyleSheet(theme: Theme): string {
  * that follows the scheme is its colour, and a colour inside a shadow can be `light-dark()`.
  * The strength the prototype settled on, 1.8, is folded into the alphas.
  *
- * Under `prefers-contrast: more` the green stays on the accent and the text goes to its pole.
+ * Under `prefers-contrast: more` the green stays on the accent, and the text and the edge of
+ * what floats over the page go to the text's pole.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -122,5 +123,6 @@ export const matrix: Theme = {
     },
     more: {
         '--ui-color-text': ['#000000', '#ffffff'],
+        '--ui-color-border-overlay': ['#000000', '#ffffff'],
     },
 };

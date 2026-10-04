@@ -172,6 +172,11 @@ export const derivedTokens = [
     // a placeholder is text, so 1.4.3 asks 4.5:1. `tests/tokens.test.ts` holds both.
     '--ui-color-border',
     '--ui-color-text-muted',
+    // The edge of what floats over the page — the dialog, the tip and the open menu — apart
+    // from a control's boundary, because the answer to `prefers-contrast: more` edges the
+    // first in the text and leaves the second where its floor put it — RFC 0003. Its default
+    // is the boundary's, so the default palette renders as before.
+    '--ui-color-border-overlay',
     // `hover` matches the pseudo-class it answers to; `pressed` deliberately does not —
     // `--ui-color-active` would read as *the active item* as readily as *the pressed
     // control*, and the role this implements was named `accent hover / pressed`.
@@ -411,6 +416,10 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // step below clears neither — 45% is 2.94 in light, which is what a value chosen by
     // eye would have shipped.
     '--ui-color-border': mix('--ui-color-text', 50, '--ui-color-surface'),
+    // The boundary's own mix, written from the grounds rather than through
+    // `--ui-color-border`, since a formula reads grounds only. So a host who retunes the
+    // boundary retunes this name beside it.
+    '--ui-color-border-overlay': mix('--ui-color-text', 50, '--ui-color-surface'),
     // 5.24:1 and 6.07:1, against a floor of 4.5. Not the 60% that first cleared it: that
     // is 4.52 in light, a rounding error from failing, and a default nobody could then
     // retune without breaking a floor they were not thinking about.
@@ -509,6 +518,8 @@ export const moreContrast: Readonly<
     '--ui-color-accent-pressed': ['#4d4d4d', '#b3b3b3'],
     // Under the hover, so a row under the pointer is still a change rather than a stripe.
     '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
+    // What floats over the page edged in the text, which the mix toward it falls short of.
+    '--ui-color-border-overlay': ['#000000', '#ffffff'],
 };
 
 /** The category every duration name shares, which is what reduced motion collapses. */

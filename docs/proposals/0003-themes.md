@@ -1021,3 +1021,4 @@ would live beside it.
 | 3    | [#253](https://github.com/rak200/ui/pull/253) | the accent's label derived, its states moving toward the pole with room    |
 | 4    | [#258](https://github.com/rak200/ui/pull/258) | prefers-contrast: more, black and white with its states written out        |
 | 5    | [#259](https://github.com/rak200/ui/pull/259) | the theme shape, themeStyleSheet() and Matrix, without question 2's names  |
+| 5    | [#262](https://github.com/rak200/ui/pull/262) | the edge of what floats over the page, in the text under more contrast     |

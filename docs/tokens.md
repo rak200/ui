@@ -149,8 +149,9 @@ curve.
 knows.** The sheet answers `prefers-contrast: more` the way it answers reduced motion: the text, the
 surface, the accent and the focus ring go to black and white, with the dark scheme on pure black.
 The accent's label follows on its own, being derived from the accent, and so do the border and the
-muted text, which mix toward the text. Every pair the text makes with a surface clears 7:1, WCAG's
-enhanced level.
+muted text, which mix toward the text. What floats over the page — a dialog, a tip, an open menu —
+is edged in the text itself. Every pair the text makes with a surface clears 7:1, WCAG's enhanced
+level.
 
 **The outcome colours stay where they are.** An error that turned grey would stop saying it is an
 error, so `--ui-color-danger`, `-success`, `-warning` and `-info` keep the 4.5:1 they were chosen
@@ -273,19 +274,20 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                        | Covers                               |
-| ---------------------------- | ------------------------------------ |
-| `--ui-color-accent-contrast` | text, and every mark, on the accent  |
-| `--ui-color-accent-hover`    | a primary control under the pointer  |
-| `--ui-color-accent-pressed`  | a primary control being pressed      |
-| `--ui-color-hover`           | a neutral surface under the pointer  |
-| `--ui-color-pressed`         | a neutral surface being pressed      |
-| `--ui-color-border`          | the boundary of a control            |
-| `--ui-color-text-muted`      | text that is not a value yet         |
-| `--ui-duration-state`        | how long a state change takes        |
-| `--ui-elevation-raised`      | a surface lifted off the page        |
-| `--ui-text-supporting`       | text that explains what is beside it |
-| `--ui-color-surface-muted`   | a second surface tone, for grouping  |
+| Token                        | Covers                                 |
+| ---------------------------- | -------------------------------------- |
+| `--ui-color-accent-contrast` | text, and every mark, on the accent    |
+| `--ui-color-accent-hover`    | a primary control under the pointer    |
+| `--ui-color-accent-pressed`  | a primary control being pressed        |
+| `--ui-color-hover`           | a neutral surface under the pointer    |
+| `--ui-color-pressed`         | a neutral surface being pressed        |
+| `--ui-color-border`          | the boundary of a control              |
+| `--ui-color-border-overlay`  | the edge of a dialog, a tip and a menu |
+| `--ui-color-text-muted`      | text that is not a value yet           |
+| `--ui-duration-state`        | how long a state change takes          |
+| `--ui-elevation-raised`      | a surface lifted off the page          |
+| `--ui-text-supporting`       | text that explains what is beside it   |
+| `--ui-color-surface-muted`   | a second surface tone, for grouping    |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -301,6 +303,12 @@ stands further from the accent, so no accent you pick leaves its label under 4.5
 the pressed move toward whichever pole leaves them room — away from the label while it has little to
 spare, toward it once it stands at 10:1 — so every accent but pure black keeps a state you can see.
 You can still set the label yourself; a derived name takes an override like any other.
+
+**The edge of what floats is the boundary under a name of its own.** `--ui-color-border-overlay`
+computes what `--ui-color-border` does, and is a second name because
+[more contrast](#more-contrast) edges a dialog, a tip and a menu in the text while a control's
+boundary stays where its floor put it. A formula reads grounds only, never another derived name, so
+setting `--ui-color-border` leaves this one alone: set both to move both.
 
 ## `formulas`
 
@@ -322,6 +330,7 @@ formulas['--ui-duration-state'];
 | `--ui-color-hover`           | the surface, 16% of the way toward the text                       |
 | `--ui-color-pressed`         | the surface, 26% of the way toward the text                       |
 | `--ui-color-border`          | the surface, 50% of the way toward the text                       |
+| `--ui-color-border-overlay`  | the same mix as `--ui-color-border`                               |
 | `--ui-color-text-muted`      | the surface, 65% of the way toward the text                       |
 | `--ui-duration-state`        | the first step of the duration scale                              |
 | `--ui-elevation-raised`      | the first step of the elevation scale                             |
