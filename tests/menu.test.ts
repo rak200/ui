@@ -1034,8 +1034,30 @@ describe('the values, all of which come from the token layer', () => {
         expect(styles.backgroundColor).toBe('rgb(4, 5, 6)');
         expect(styles.color).toBe('rgb(7, 8, 9)');
         expect(styles.fontFamily).toBe('Courier');
-        expect(styles.boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
+        // On a layer over the panel, lit in the accent, and in the way of no item.
+        const lift = getComputedStyle(panel(element), '::before');
+
+        expect(lift.boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
+        expect(styles.boxShadow, 'and none on the panel').toBe('none');
+        expect(lift.position).toBe('absolute');
+        expect(lift.top).toBe('-1px');
+        expect(lift.borderTopLeftRadius).toBe('11px');
+        expect(lift.pointerEvents).toBe('none');
         expect(styles.translate, 'the gap, which the script cannot resolve').toBe('0px 5px');
+    });
+
+    it('lights a lift written in currentColor in the accent, not in the text', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        element.style.setProperty('--ui-elevation-raised', '0 0 0 1px currentColor');
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
+        await open(element);
+
+        expect(getComputedStyle(panel(element), '::before').boxShadow).toBe(
+            'rgb(1, 2, 3) 0px 0px 0px 1px',
+        );
     });
 
     it('takes the gap above from the host when it flips', async () => {

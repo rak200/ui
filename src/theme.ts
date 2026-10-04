@@ -87,8 +87,9 @@ export function themeStyleSheet(theme: Theme): string {
  * a colour, so `light-dark()` cannot carry two of them — but the part of a glow that follows
  * the scheme is its colour, and a colour inside a shadow can be `light-dark()`. The strength
  * the prototype settled on, 1.8, is folded into the alphas. **The controls wear the same
- * ring and glow through `--ui-elevation-control`**, written in `currentColor` so each control
- * lights it in its own colour.
+ * ring and glow through `--ui-elevation-control`.** Both are written in `currentColor`, so
+ * each surface and control lights them in its own colour: the accent's green, the danger on
+ * an invalid control, and a toast's edge.
  *
  * Under `prefers-contrast: more` the green stays on the accent, and the text and the edge of
  * what floats over the page go to the text's pole.
@@ -111,7 +112,7 @@ export const matrix: Theme = {
         '--ui-color-hover': '#cfd9ce',
         '--ui-color-pressed': '#b0c1ae',
         '--ui-elevation-100':
-            '0 0 0 1px light-dark(rgb(0 143 17 / 0.54), rgb(0 255 0 / 0.45)), 0 0 18px light-dark(rgb(0 143 17 / 0.45), rgb(0 255 0 / 0.54))',
+            '0 0 0 1px light-dark(rgb(from currentColor r g b / 0.54), rgb(from currentColor r g b / 0.45)), 0 0 18px light-dark(rgb(from currentColor r g b / 0.45), rgb(from currentColor r g b / 0.54))',
         // The same ring and glow on every control, at the same strengths, so neither reads
         // weaker than the other. In the control's own colour, which is the accent's green
         // and the danger on an invalid one.

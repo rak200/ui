@@ -56,14 +56,30 @@ export class UiCard extends LitElement {
             background: ${reference('--ui-color-surface')};
             border: 1px solid ${reference('--ui-color-border')};
             border-radius: ${reference('--ui-radius')};
-            /* The boundary and the shadow are one decision made twice, because each covers
-               where the other cannot. The shadow is what says *raised* on a light page and
-               nearly nothing on a dark one — it is black at a low alpha, and light-dark()
-               cannot carry a second value for it, since it takes colours and a shadow is
-               not one. The boundary is derived, so it mixes toward the text and is correct
-               in both schemes by construction. Drop either and the card loses its edge in
-               one scheme: measured, a bordered card on the dark surface is the only thing
-               separating it from the page behind it. */
+            /* What the shadow's layer below is laid out against. */
+            position: relative;
+        }
+
+        /* The boundary and the shadow are one decision made twice, because each covers
+           where the other cannot. The shadow is what says *raised* on a light page and
+           nearly nothing on a dark one — it is black at a low alpha, and light-dark()
+           cannot carry a second value for it, since it takes colours and a shadow is not
+           one. The boundary is derived, so it mixes toward the text and is correct in both
+           schemes by construction. Drop either and the card loses its edge in one scheme:
+           measured, a bordered card on the dark surface is the only thing separating it
+           from the page behind it.
+
+           The shadow is drawn on a layer over the card rather than on the card, because a
+           theme may write it in currentColor — Matrix's glow is — and the card's own colour
+           is its text. The layer's is the accent; it covers the card and its border, and it
+           takes no pointer, so what is in the card is still what is clicked. */
+        :host::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            pointer-events: none;
+            color: ${reference('--ui-color-accent')};
             box-shadow: ${reference('--ui-elevation-raised')};
         }
 

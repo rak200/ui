@@ -155,14 +155,48 @@ describe('ui-card', () => {
 
     it('lifts off the page, and takes the lift from the host', async () => {
         const host = await mount(fixture);
+        // Drawn on a layer over the card, so a shadow a theme writes in currentColor is lit
+        // in the accent rather than in the card's text.
+        const lift = (): CSSStyleDeclaration => getComputedStyle(card(host), '::before');
 
-        expect(getComputedStyle(card(host)).boxShadow, 'two layers, not one').toMatch(
+        expect(lift().boxShadow, 'two layers, not one').toMatch(
             /rgba?\([^)]*\).*,.*rgba?\([^)]*\)/,
         );
+        expect(getComputedStyle(card(host)).boxShadow, 'and none on the card').toBe('none');
 
         card(host).style.setProperty('--ui-elevation-raised', 'rgb(1, 2, 3) 0px 4px 8px 0px');
 
-        expect(getComputedStyle(card(host)).boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
+        expect(lift().boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
+
+        card(host).style.setProperty('--ui-elevation-raised', '0 0 0 1px currentColor');
+        card(host).style.setProperty('--ui-color-accent', 'rgb(4, 5, 6)');
+        card(host).style.setProperty('--ui-radius', '11px');
+
+        expect(lift().boxShadow).toBe('rgb(4, 5, 6) 0px 0px 0px 1px');
+        // Over the card and its border, at its corner, and in the way of no pointer.
+        expect(lift().position).toBe('absolute');
+        expect(getComputedStyle(card(host)).position).toBe('relative');
+        expect(lift().top).toBe('-1px');
+        expect(lift().left).toBe('-1px');
+        expect(lift().borderTopLeftRadius).toBe('11px');
+        expect(lift().pointerEvents).toBe('none');
+    });
+
+    it('lets a pointer through its lift to what is in it', async () => {
+        // The lift's layer is positioned, so it is painted over the card's content and would
+        // be what a pointer lands on: the card, rather than the control inside it.
+        const host = await mount('<ui-card><button type="button">Choose</button></ui-card>');
+        const button = host.querySelector('button');
+
+        if (button === null) {
+            throw new Error('no button in the card');
+        }
+
+        const box = button.getBoundingClientRect();
+
+        expect(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)).toBe(
+            button,
+        );
     });
 
     it('takes the boundary, the corner and the spacing from the host', async () => {

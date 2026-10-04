@@ -202,9 +202,20 @@ export class UiMenu extends LitElement {
             background: ${reference('--ui-color-surface')};
             color: ${reference('--ui-color-text')};
             font-family: ${reference('--ui-font')};
-            /* Lifted and bounded both, for the reason src/card.ts gives: a shadow is one
-               value in both schemes and does almost nothing on a dark page, where the
-               derived boundary is what separates the surface from what is under it. */
+        }
+
+        /* Lifted and bounded both, for the reason src/card.ts gives: a shadow is one value
+           in both schemes and does almost nothing on a dark page, where the derived
+           boundary is what separates the surface from what is under it. On a layer in the
+           accent, as the card's is and for its reason, which takes no pointer so the items
+           are still what is chosen. */
+        [popover]::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            pointer-events: none;
+            color: ${reference('--ui-color-accent')};
             box-shadow: ${reference('--ui-elevation-raised')};
         }
 

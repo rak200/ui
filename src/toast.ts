@@ -211,23 +211,18 @@ export class UiToast extends LitElement {
             gap: ${reference('--ui-space')};
             box-sizing: border-box;
             padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 1.5);
-            /* The edge goes all the way round in the variant's colour, the stripe at the
-               start only wider. A stripe in one colour and three sides in the derived
-               border met at the corners as a break — RFC 0003. The shorthand comes after
-               the border rather than a width beside it: the width and the style are the
-               stripe's as much as the hue is. */
-            border: 1px solid ${reference('--ui-color-info')};
-            border-inline-start: calc(${reference('--ui-space')} / 2) solid
-                ${reference('--ui-color-info')};
+            /* The edge's room, which the layer below draws in: the stripe at the start is
+               wider, and the rest of the edge one pixel. */
+            border: 1px solid transparent;
+            border-inline-start-width: calc(${reference('--ui-space')} / 2);
             border-radius: ${reference('--ui-radius')};
             background: ${reference('--ui-color-surface')};
-            color: ${reference('--ui-color-text')};
+            /* The variant's colour, which the edge, the glow and the icon are lit in. The
+               message writes the text's, which is the pair the surface was chosen against. */
+            color: ${reference('--ui-color-info')};
             font-family: ${reference('--ui-font')};
-            /* Lifted, because it sits over the page rather than in it — and bounded as
-               well as lifted, for the reason src/card.ts gives: a shadow is one value in
-               both schemes and does almost nothing on a dark page, where the edge is what
-               separates the surface from what is under it. */
-            box-shadow: ${reference('--ui-elevation-raised')};
+            /* What the edge's layer below is laid out against. */
+            position: relative;
             /* The toaster takes no clicks so it does not steal a corner of the page. This
                is the part that is not the corner. */
             pointer-events: auto;
@@ -240,15 +235,39 @@ export class UiToast extends LitElement {
         }
 
         :host([variant='success']) {
-            border-color: ${reference('--ui-color-success')};
+            color: ${reference('--ui-color-success')};
         }
 
         :host([variant='warning']) {
-            border-color: ${reference('--ui-color-warning')};
+            color: ${reference('--ui-color-warning')};
         }
 
         :host([variant='danger']) {
-            border-color: ${reference('--ui-color-danger')};
+            color: ${reference('--ui-color-danger')};
+        }
+
+        /* The edge goes all the way round in one colour, the stripe at the start only
+           wider. A stripe in one colour and three sides in the derived border met at the
+           corners as a break — RFC 0003. Lifted, too, because a toast sits over the page
+           rather than in it, and bounded as well as lifted for the reason src/card.ts
+           gives.
+
+           Both are drawn on a layer whose colour is --ui-color-toast-edge, which is the
+           variant's until something sets it — the answer to more contrast sets it to the
+           text. A theme's glow written in currentColor is lit in it too. The layer covers
+           the toast and its edge, and takes no pointer, so the dismiss button is still
+           what is pressed. */
+        :host::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            inset-inline-start: calc(${reference('--ui-space')} / -2);
+            border: 1px solid currentColor;
+            border-inline-start-width: calc(${reference('--ui-space')} / 2);
+            border-radius: inherit;
+            pointer-events: none;
+            color: ${reference('--ui-color-toast-edge')};
+            box-shadow: ${reference('--ui-elevation-raised')};
         }
 
         /* The icon takes the edge's colour, and sits centred on the message's first line,
@@ -258,19 +277,7 @@ export class UiToast extends LitElement {
         .icon {
             flex: none;
             margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
-            color: ${reference('--ui-color-info')};
-        }
-
-        :host([variant='success']) .icon {
-            color: ${reference('--ui-color-success')};
-        }
-
-        :host([variant='warning']) .icon {
-            color: ${reference('--ui-color-warning')};
-        }
-
-        :host([variant='danger']) .icon {
-            color: ${reference('--ui-color-danger')};
+            color: ${reference('--ui-color-toast-edge')};
         }
 
         /* Where the entrance comes from. Without it there is nothing to transition out of:
@@ -296,6 +303,9 @@ export class UiToast extends LitElement {
                flex item refuses to shrink below its content without this. */
             flex: 1;
             min-inline-size: 0;
+            /* The pair, never half of it: the surface was chosen against the text, and the
+               toast's own colour is its variant's. */
+            color: ${reference('--ui-color-text')};
         }
 
         button {

@@ -98,15 +98,15 @@ belongs to the layout around it, not to the card.
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
 
-| Part                                 | Token                   |
-| ------------------------------------ | ----------------------- |
-| padding, and the gap between regions | `--ui-space` × 2        |
-| surface                              | `--ui-color-surface`    |
-| text                                 | `--ui-color-text`       |
-| boundary                             | `--ui-color-border`     |
-| corner                               | `--ui-radius`           |
-| lift                                 | `--ui-elevation-raised` |
-| font                                 | `--ui-font`             |
+| Part                                 | Token                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| padding, and the gap between regions | `--ui-space` × 2                                                        |
+| surface                              | `--ui-color-surface`                                                    |
+| text                                 | `--ui-color-text`                                                       |
+| boundary                             | `--ui-color-border`                                                     |
+| corner                               | `--ui-radius`                                                           |
+| lift                                 | `--ui-elevation-raised`, lit in the accent if written in `currentColor` |
+| font                                 | `--ui-font`                                                             |
 
 **The boundary and the shadow are one decision made twice**, and each covers where the other cannot.
 The shadow says _raised_ on a light page and nearly nothing on a dark one — it is black at a low
