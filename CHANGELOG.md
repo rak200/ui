@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.4](https://github.com/rak200/ui/compare/0.7.3...0.7.4) (2026-10-04)
+
+
+### Features
+
+* Glass, its raised surfaces frosted over the page it documents ([#273](https://github.com/rak200/ui/issues/273)) ([37e8567](https://github.com/rak200/ui/commit/37e8567f5702545c3d71338f54cce0f9c7492df4))
+
 ## [0.7.3](https://github.com/rak200/ui/compare/0.7.2...0.7.3) (2026-10-04)
 
 
