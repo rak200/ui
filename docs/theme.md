@@ -65,7 +65,9 @@ edge's colour, and the tip, which is your own element, in its text.
 **The controls wear the same ring and glow**, through `--ui-elevation-control`, at the same
 strengths. It is written in `currentColor`, so a control is lit in its own colour: the green of the
 accent, and the danger when it is invalid. **A button lights up under the pointer**: its ring goes
-solid and its glow doubles, because the fills' own hovers barely move in this green.
+solid and its glow doubles, because the fills' own hovers barely move in this green. **An invalid field
+writes its value in the danger**, inside its red edge: 6.47:1 on the field's white and 7.37 on its
+black.
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both

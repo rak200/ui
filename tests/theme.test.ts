@@ -10,6 +10,7 @@ import { Defaults } from '../stories/tokens.stories.js';
 import tokensMeta from '../stories/tokens.stories.js';
 import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import '../src/button.js';
+import '../src/input.js';
 import '../src/checkbox.js';
 import { reference } from '../src/reference.js';
 import {
@@ -296,6 +297,30 @@ describe('a theme, as the browser renders it', () => {
         await userEvent.hover(button);
 
         expect(getComputedStyle(button, '::before').boxShadow).toBe(lit);
+    });
+
+    it.each([
+        ['light', 'rgb(185, 28, 28)'],
+        ['dark', 'rgb(248, 113, 113)'],
+    ] as const)('writes a value in error in the danger, in %s', async (scheme, danger) => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+
+        const host = document.createElement('div');
+        host.dataset['uiTheme'] = matrix.name;
+        host.style.colorScheme = scheme;
+        host.innerHTML = '<ui-input label="Amount" error="A number."></ui-input>';
+        document.body.append(style, host);
+
+        const element = host.querySelector('ui-input');
+        await element?.updateComplete;
+        const control = element?.renderRoot.querySelector('input');
+
+        if (control === null || control === undefined) {
+            throw new Error('the field rendered no control');
+        }
+
+        expect(getComputedStyle(control).color).toBe(danger);
     });
 
     it("derives its accent's label from its own accent", () => {

@@ -216,6 +216,7 @@ Every colour is a [token](tokens.md); nothing here is hardcoded.
 | help text          | `--ui-color-text`, at `--ui-text-supporting`                                                                |
 | focus ring         | `--ui-color-focus`                                                                                          |
 | glow               | `--ui-elevation-control`, around the control, lit in the accent, or the danger in error; none when disabled |
+| value in error     | `--ui-color-text-invalid`, which is the text unless a theme writes it                                       |
 | corner             | `--ui-radius`                                                                                               |
 | padding and rhythm | `--ui-space`                                                                                                |
 | motion             | `--ui-duration-state`, `--ui-easing-state`                                                                  |

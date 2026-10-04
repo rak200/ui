@@ -1044,6 +1044,17 @@ describe('the contrast floors', () => {
                     ).toBeGreaterThanOrEqual(4.5);
                 });
 
+                it('keeps a value in error legible as text', () => {
+                    // A field's value is text whatever colour a theme writes it in when it is
+                    // in error, so it owes 4.5:1 against the surface the field is filled with.
+                    expect(
+                        contrastRatio(
+                            paint('--ui-color-text-invalid'),
+                            paint('--ui-color-surface'),
+                        ),
+                    ).toBeGreaterThanOrEqual(4.5);
+                });
+
                 it('keeps muted text legible as text', () => {
                     // A placeholder is text, so 4.5:1 rather than 3:1 — the floor that makes a
                     // muted role only just muted.

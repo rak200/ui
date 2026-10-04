@@ -311,6 +311,7 @@ export class UiSelect extends LitElement {
            attribute-presence selector matches every element. Measured on ui-checkbox. */
         select[aria-invalid='true'] {
             border-color: ${reference('--ui-color-danger')};
+            color: ${reference('--ui-color-text-invalid')};
         }
 
         /* The vertical rhythm, written out here rather than shared with src/input.ts for
