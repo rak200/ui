@@ -1027,3 +1027,4 @@ would live beside it.
 | 5    | [#269](https://github.com/rak200/ui/pull/269) | the glow on the buttons and the menu's trigger, brighter under the pointer |
 | 5    | [#270](https://github.com/rak200/ui/pull/270) | a toast's edge, and the raised surfaces' glow lit in their own colour      |
 | 5    | [#271](https://github.com/rak200/ui/pull/271) | a value in error in a theme's own colour, the danger in Matrix             |
+| 6    | [#273](https://github.com/rak200/ui/pull/273) | Glass, with the raised surfaces as glass over the page it documents        |
