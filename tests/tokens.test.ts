@@ -21,6 +21,7 @@ import {
     type Token,
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
+import { matrix, themeStyleSheet } from '../src/theme.js';
 import { UiButton } from '../src/button.js';
 import { UiCard } from '../src/card.js';
 import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
@@ -131,7 +132,10 @@ interface Palette {
 const byDefault: Palette = { name: 'the default palette', sheet: '', glows: false };
 
 /** Every palette this package ships, which is every palette the floors are owed by. */
-const palettes: readonly Palette[] = [byDefault];
+const palettes: readonly Palette[] = [
+    byDefault,
+    { name: 'Matrix', sheet: themeStyleSheet(matrix), theme: matrix.name, glows: false },
+];
 
 /**
  * What the browser computes for one declaration, with this package's own sheet in force,

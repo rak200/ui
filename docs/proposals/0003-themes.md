@@ -1020,3 +1020,4 @@ would live beside it.
 | 2    | [#250](https://github.com/rak200/ui/pull/250) | the floors per palette and per scheme, and the boundary on either side     |
 | 3    | [#253](https://github.com/rak200/ui/pull/253) | the accent's label derived, its states moving toward the pole with room    |
 | 4    | [#258](https://github.com/rak200/ui/pull/258) | prefers-contrast: more, black and white with its states written out        |
+| 5    | [#259](https://github.com/rak200/ui/pull/259) | the theme shape, themeStyleSheet() and Matrix, without question 2's names  |
