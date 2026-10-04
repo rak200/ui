@@ -116,7 +116,6 @@ A whole theme is a handful of grounds, each carrying both of its schemes:
   --ui-color-surface: light-dark(#faf5ff, #1a0b2e);
   --ui-color-text: light-dark(#3b0764, #f3e8ff);
   --ui-color-accent: light-dark(#7e22ce, #c084fc);
-  --ui-color-accent-contrast: light-dark(#ffffff, #1a0b2e);
 }
 ```
 
@@ -124,8 +123,8 @@ A whole theme is a handful of grounds, each carrying both of its schemes:
 <div data-ui-theme="brand">…</div>
 ```
 
-Four declarations, and the hover and pressed colours follow into **both schemes of both themes**
-without appearing anywhere — that is what [`formulas`](#formulas) buys. Nothing is scoped to
+Three declarations, and the accent's label, the hover and the pressed colours follow into **both
+schemes of both themes** without appearing anywhere — that is what [`formulas`](#formulas) buys. Nothing is scoped to
 `:root`, so a theme can be a region of a page rather than the whole of it.
 
 ## Motion
@@ -175,29 +174,28 @@ finish before closing, so it is the thing that would have waited forever.
 
 The names that have a default and are emitted at `:root` — the **ground** half of the set.
 
-| Token                        | Covers                                  |
-| ---------------------------- | --------------------------------------- |
-| `--ui-color-accent`          | the accent surface of a primary control |
-| `--ui-color-accent-contrast` | text on that accent                     |
-| `--ui-color-surface`         | a neutral surface                       |
-| `--ui-color-text`            | body and secondary text                 |
-| `--ui-color-focus`           | the focus ring — see the floor below    |
-| `--ui-color-danger`          | error text                              |
-| `--ui-color-success`         | a successful outcome                    |
-| `--ui-color-warning`         | an outcome worth a second look          |
-| `--ui-color-info`            | an outcome that is neither              |
-| `--ui-color-scrim`           | the dim behind a modal                  |
-| `--ui-radius`                | corner radius                           |
-| `--ui-space`                 | the spacing step components scale from  |
-| `--ui-font`                  | the font stack                          |
-| `--ui-duration-100`          | the first step of the duration scale    |
-| `--ui-easing-state`          | the curve a state change follows        |
-| `--ui-easing-enter`          | the curve an overlay arrives along      |
-| `--ui-easing-exit`           | the curve it leaves along               |
-| `--ui-icon-size`             | how big a glyph is drawn                |
-| `--ui-icon-stroke`           | how heavy its stroke is, on a 24 grid   |
-| `--ui-elevation-100`         | the first step of the elevation scale   |
-| `--ui-text-100`              | the first step of the type scale        |
+| Token                | Covers                                  |
+| -------------------- | --------------------------------------- |
+| `--ui-color-accent`  | the accent surface of a primary control |
+| `--ui-color-surface` | a neutral surface                       |
+| `--ui-color-text`    | body and secondary text                 |
+| `--ui-color-focus`   | the focus ring — see the floor below    |
+| `--ui-color-danger`  | error text                              |
+| `--ui-color-success` | a successful outcome                    |
+| `--ui-color-warning` | an outcome worth a second look          |
+| `--ui-color-info`    | an outcome that is neither              |
+| `--ui-color-scrim`   | the dim behind a modal                  |
+| `--ui-radius`        | corner radius                           |
+| `--ui-space`         | the spacing step components scale from  |
+| `--ui-font`          | the font stack                          |
+| `--ui-duration-100`  | the first step of the duration scale    |
+| `--ui-easing-state`  | the curve a state change follows        |
+| `--ui-easing-enter`  | the curve an overlay arrives along      |
+| `--ui-easing-exit`   | the curve it leaves along               |
+| `--ui-icon-size`     | how big a glyph is drawn                |
+| `--ui-icon-stroke`   | how heavy its stroke is, on a 24 grid   |
+| `--ui-elevation-100` | the first step of the elevation scale   |
+| `--ui-text-100`      | the first step of the type scale        |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -247,27 +245,34 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                       | Covers                               |
-| --------------------------- | ------------------------------------ |
-| `--ui-color-accent-hover`   | a primary control under the pointer  |
-| `--ui-color-accent-pressed` | a primary control being pressed      |
-| `--ui-color-hover`          | a neutral surface under the pointer  |
-| `--ui-color-pressed`        | a neutral surface being pressed      |
-| `--ui-color-border`         | the boundary of a control            |
-| `--ui-color-text-muted`     | text that is not a value yet         |
-| `--ui-duration-state`       | how long a state change takes        |
-| `--ui-elevation-raised`     | a surface lifted off the page        |
-| `--ui-text-supporting`      | text that explains what is beside it |
-| `--ui-color-surface-muted`  | a second surface tone, for grouping  |
+| Token                        | Covers                               |
+| ---------------------------- | ------------------------------------ |
+| `--ui-color-accent-contrast` | text, and every mark, on the accent  |
+| `--ui-color-accent-hover`    | a primary control under the pointer  |
+| `--ui-color-accent-pressed`  | a primary control being pressed      |
+| `--ui-color-hover`           | a neutral surface under the pointer  |
+| `--ui-color-pressed`         | a neutral surface being pressed      |
+| `--ui-color-border`          | the boundary of a control            |
+| `--ui-color-text-muted`      | text that is not a value yet         |
+| `--ui-duration-state`        | how long a state change takes        |
+| `--ui-elevation-raised`      | a surface lifted off the page        |
+| `--ui-text-supporting`       | text that explains what is beside it |
+| `--ui-color-surface-muted`   | a second surface tone, for grouping  |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
 read: a derived name is never declared anywhere, so `getComputedStyle(el).getPropertyValue()`
 returns an empty string for it, and it takes no row in [`defaults`](#defaults).
 
-What that buys is an override surface you can hold in your head. Change `--ui-color-accent` and the
-hover and pressed colours follow, in both schemes and under any theme, because each is a formula
-that resolves where it is used rather than a value somebody has to keep in step.
+What that buys is an override surface you can hold in your head. Change `--ui-color-accent` and its
+label, its hover and its pressed colours follow, in both schemes and under any theme, because each
+is a formula that resolves where it is used rather than a value somebody has to keep in step.
+
+**The accent's label is one of them.** `--ui-color-accent-contrast` is white or black, whichever
+stands further from the accent, so no accent you pick leaves its label under 4.5:1. The hover and
+the pressed move toward whichever pole leaves them room — away from the label while it has little to
+spare, toward it once it stands at 10:1 — so every accent but pure black keeps a state you can see.
+You can still set the label yourself; a derived name takes an override like any other.
 
 ## `formulas`
 
@@ -281,18 +286,19 @@ formulas['--ui-duration-state'];
 // 'var(--ui-duration-100, 150ms)'
 ```
 
-| Token                       | Computes                                    |
-| --------------------------- | ------------------------------------------- |
-| `--ui-color-accent-hover`   | the accent, 12% of the way toward the text  |
-| `--ui-color-accent-pressed` | the accent, 22% of the way toward the text  |
-| `--ui-color-hover`          | the surface, 16% of the way toward the text |
-| `--ui-color-pressed`        | the surface, 26% of the way toward the text |
-| `--ui-color-border`         | the surface, 50% of the way toward the text |
-| `--ui-color-text-muted`     | the surface, 65% of the way toward the text |
-| `--ui-duration-state`       | the first step of the duration scale        |
-| `--ui-elevation-raised`     | the first step of the elevation scale       |
-| `--ui-text-supporting`      | the first step of the type scale            |
-| `--ui-color-surface-muted`  | the surface, 5% of the way toward the text  |
+| Token                        | Computes                                                          |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `--ui-color-accent-contrast` | white or black, whichever stands further from the accent          |
+| `--ui-color-accent-hover`    | the accent, 12% of the way toward the pole it has room to move to |
+| `--ui-color-accent-pressed`  | the accent, 22% of the way toward that pole                       |
+| `--ui-color-hover`           | the surface, 16% of the way toward the text                       |
+| `--ui-color-pressed`         | the surface, 26% of the way toward the text                       |
+| `--ui-color-border`          | the surface, 50% of the way toward the text                       |
+| `--ui-color-text-muted`      | the surface, 65% of the way toward the text                       |
+| `--ui-duration-state`        | the first step of the duration scale                              |
+| `--ui-elevation-raised`      | the first step of the elevation scale                             |
+| `--ui-text-supporting`       | the first step of the type scale                                  |
+| `--ui-color-surface-muted`   | the surface, 5% of the way toward the text                        |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no
@@ -323,9 +329,8 @@ darkScheme['--ui-color-surface']; // '#111827'
 darkScheme['--ui-radius']; // undefined
 ```
 
-Eight entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent`,
-`--ui-color-accent-contrast` and the four outcomes — `--ui-color-danger`, `--ui-color-success`,
-`--ui-color-warning` and `--ui-color-info`. Each of those four is a mid-dark hue that reads on white and goes muddy on
+Seven entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent` and the four
+outcomes — `--ui-color-danger`, `--ui-color-success`, `--ui-color-warning` and `--ui-color-info`. Each of those four is a mid-dark hue that reads on white and goes muddy on
 charcoal, so each is inverted here for the same reason. `--ui-color-focus` is absent because one value
 clears its contrast floor in both schemes, and `--ui-color-scrim` because dimming is dimming in
 either — it is the one neutral here that does **not** follow the text, since mixing toward the text

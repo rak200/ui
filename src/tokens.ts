@@ -34,7 +34,6 @@
  */
 export const tokens = [
     '--ui-color-accent',
-    '--ui-color-accent-contrast',
     '--ui-color-surface',
     '--ui-color-text',
     '--ui-color-focus',
@@ -178,6 +177,10 @@ export const derivedTokens = [
     // control*, and the role this implements was named `accent hover / pressed`.
     '--ui-color-hover',
     '--ui-color-pressed',
+    // The text on the accent, derived from it so a host who moves the accent moves the
+    // label with it — RFC 0003. It was a ground until then, and a host's accent with the
+    // default label beside it was a pair nothing measured.
+    '--ui-color-accent-contrast',
     '--ui-color-accent-hover',
     '--ui-color-accent-pressed',
     // The purpose the elevation scale is read through, arriving with `ui-card`. `raised`
@@ -218,7 +221,6 @@ export type DerivedToken = (typeof derivedTokens)[number];
  */
 export const defaults: Readonly<Record<Token, string>> = {
     '--ui-color-accent': '#2563eb',
-    '--ui-color-accent-contrast': '#ffffff',
     '--ui-color-surface': '#ffffff',
     '--ui-color-text': '#1f2937',
     // Amber-700 rather than the amber-500 this shipped with, and the change is a floor
@@ -305,6 +307,53 @@ function mix(foreground: Token, amount: number, background: Token): string {
 }
 
 /**
+ * A ground's relative luminance, as relative colour syntax reads it: the WCAG weights over
+ * the linear channels. Written out wherever a formula needs it, because a CSS value has no
+ * variable of its own.
+ */
+const luminance = '(0.2126 * r + 0.7152 * g + 0.0722 * b)';
+
+/** 1 where `expression` is above zero and 0 where it is not — a step, as CSS can write one. */
+function step(expression: string): string {
+    return `clamp(0, (${expression}) * infinity, 1)`;
+}
+
+/**
+ * White or black, read off `name` by `channel`: the one number written into all three linear
+ * channels, so 1 is white and 0 is black, and nothing between is ever produced by a step.
+ */
+function pole(name: Token, channel: string): string {
+    return `color(from ${ground(name)} srgb-linear ${channel} ${channel} ${channel})`;
+}
+
+/**
+ * The luminance where white and black stand equally far from a colour, 1.05 / (Y + 0.05)
+ * against (Y + 0.05) / 0.05. Under it white is the further pole, from it on black.
+ */
+const crossover = 0.1791;
+
+/**
+ * The pole the accent's states move toward. Away from the label while the label has little
+ * to spare, toward it once the label stands at 10:1 or more: lighten at or under 0.055 (a
+ * white label at 10:1 and up) or between the crossover and 0.45 (a black label under 10:1),
+ * darken otherwise.
+ *
+ * Away from the label always left a very light or a very dark accent no room to move, 697
+ * of 4096 under the 1.05 the suite asks; toward it always took the label under 4.5:1 on
+ * 1978. With the turn anywhere from 8.5:1 to 12:1 only black fails, its hover at 1.03 under
+ * every shape — measured for RFC 0003, and 10 sits in the middle.
+ */
+const room = pole(
+    '--ui-color-accent',
+    `clamp(0, ${step(`0.055 - ${luminance}`)} + ${step(`${luminance} - ${String(crossover)}`)} * ${step(`0.45 - ${luminance}`)}, 1)`,
+);
+
+/** `amount`% of the way from the accent toward the pole its states have room to move to. */
+function shade(amount: number): string {
+    return `color-mix(in oklab, ${room} ${String(amount)}%, ${ground('--ui-color-accent')})`;
+}
+
+/**
  * How each derived role computes when the host has not set it.
  *
  * **Never emitted at `:root`, and this is the one measured failure of the whole design
@@ -346,8 +395,18 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // light, which is passing by rounding.
     '--ui-color-hover': mix('--ui-color-text', 16, '--ui-color-surface'),
     '--ui-color-pressed': mix('--ui-color-text', 26, '--ui-color-surface'),
-    '--ui-color-accent-hover': mix('--ui-color-text', 12, '--ui-color-accent'),
-    '--ui-color-accent-pressed': mix('--ui-color-text', 22, '--ui-color-accent'),
+    // The pole of the accent, white or black, whichever stands further from it: the label
+    // that reads on any accent a host picks, 0 of 4096 under 4.5:1. Black on the dark
+    // scheme's blue-400 at 8.26:1, where the ground it replaced was `#111827` at 6.98.
+    '--ui-color-accent-contrast': pole(
+        '--ui-color-accent',
+        step(`${String(crossover)} - ${luminance}`),
+    ),
+    // Toward whichever pole has room rather than toward the text, which ran out of room on
+    // an accent already near it: the docblock on `room` carries the measurement. The light
+    // scheme's hover moves from `#255cd4` to `#1d52c6`, the pole being black there.
+    '--ui-color-accent-hover': shade(12),
+    '--ui-color-accent-pressed': shade(22),
     // 3.39:1 on the light surface and 3.96:1 on the dark one, against a floor of 3. The
     // step below clears neither — 45% is 2.94 in light, which is what a value chosen by
     // eye would have shipped.
@@ -396,10 +455,9 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
  */
 export const darkScheme: Readonly<Partial<Record<Token, string>>> = {
     // Blue-400 over the dark surface rather than blue-600, which is legible on white and
-    // muddy on charcoal. Its contrast pair is inverted with it: dark text on a light
-    // accent is what reads at this end.
+    // muddy on charcoal. Its label needs no dark value: it is derived from the accent, so
+    // it goes to black at this end on its own.
     '--ui-color-accent': '#60a5fa',
-    '--ui-color-accent-contrast': '#111827',
     '--ui-color-surface': '#111827',
     '--ui-color-text': '#e5e7eb',
     // Red-700 is 2.74:1 on the dark surface — under the 4.5:1 floor for text, and error
