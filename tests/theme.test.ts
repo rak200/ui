@@ -5,10 +5,10 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { Matrix } from '../stories/theme.stories.js';
+import meta, { Glass, Matrix } from '../stories/theme.stories.js';
 import { Defaults } from '../stories/tokens.stories.js';
 import tokensMeta from '../stories/tokens.stories.js';
-import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import '../src/button.js';
 import '../src/input.js';
 import '../src/checkbox.js';
@@ -40,6 +40,23 @@ const sample: Theme = {
     more: { '--ui-color-text': ['#000000', '#ffffff'] },
 };
 
+/**
+ * A theme that makes something translucent: a ground it also gives an opaque value, and a
+ * derived name it gives none.
+ */
+const frosted: Theme = {
+    name: 'frosted',
+    values: { '--ui-color-accent': '#334155', '--ui-radius': '2px' },
+    dark: { '--ui-color-accent': '#94a3b8' },
+    translucent: {
+        values: {
+            '--ui-color-accent': 'rgb(51 65 85 / 0.8)',
+            '--ui-color-surface-raised': 'rgb(255 255 255 / 0.2)',
+        },
+        dark: { '--ui-color-surface-raised': 'rgb(0 0 0 / 0.2)' },
+    },
+};
+
 /** A theme's sheet as the browser parses it. */
 function parsed(theme: Theme): CSSStyleSheet {
     const sheet = new CSSStyleSheet();
@@ -65,17 +82,37 @@ function declarations(rule: CSSRule | undefined): Map<string, string> {
     return found;
 }
 
-/** The answer to more contrast a theme's sheet carries after its block. */
-function answer(theme: Theme): Map<string, string> {
-    const rule = parsed(theme).cssRules[1];
+/** The conditions a theme's sheet puts its media rules under, in order. */
+function conditions(theme: Theme): string[] {
+    return [...parsed(theme).cssRules].map((rule) =>
+        rule instanceof CSSMediaRule ? rule.conditionText : '',
+    );
+}
+
+/** The media rule a theme's sheet carries under `condition`. */
+function under(theme: Theme, condition: string): CSSMediaRule {
+    const rule = parsed(theme).cssRules[conditions(theme).indexOf(condition)];
 
     if (!(rule instanceof CSSMediaRule)) {
-        throw new Error('the theme sheet carries no answer to more contrast');
+        throw new Error(`the theme sheet carries nothing under ${condition}`);
     }
 
-    expect(rule.conditionText).toBe('(prefers-contrast: more)');
+    return rule;
+}
 
-    return declarations(rule.cssRules[0]);
+/** The answer to more contrast a theme's sheet carries, last. */
+function answer(theme: Theme): Map<string, string> {
+    expect(conditions(theme).at(-1), 'last').toBe('(prefers-contrast: more)');
+
+    return declarations(under(theme, '(prefers-contrast: more)').cssRules[0]);
+}
+
+/** Where a theme's translucency stands down: under either of the reader's two settings. */
+const quiet = '(prefers-contrast: more), (prefers-reduced-transparency: reduce)';
+
+/** What a theme's translucency stands down to. */
+function stoodDown(theme: Theme): Map<string, string> {
+    return declarations(under(theme, quiet).cssRules[0]);
 }
 
 /** A colour, as six-digit sRGB hex, resolved by a one-pixel canvas — `tokens.test.ts`'s. */
@@ -192,6 +229,37 @@ describe('themeStyleSheet', () => {
 
     it('emits the two rules the browser applies, and only those', () => {
         expect(parsed(matrix).cssRules).toHaveLength(2);
+    });
+
+    it('puts a translucent value in place of the opaque one, declaring each name once', () => {
+        const block = declarations(parsed(frosted).cssRules[0]);
+
+        expect([...block.keys()]).toEqual([
+            '--ui-color-accent',
+            '--ui-radius',
+            '--ui-color-surface-raised',
+        ]);
+        expect(block.get('--ui-color-accent')).toBe('rgb(51 65 85 / 0.8)');
+        expect(block.get('--ui-color-surface-raised')).toBe(
+            'light-dark(rgb(255 255 255 / 0.2), rgb(0 0 0 / 0.2))',
+        );
+    });
+
+    it("stands the translucency down to the theme's opaque value, or to the default", () => {
+        expect([...stoodDown(frosted)]).toEqual([
+            ['--ui-color-accent', 'light-dark(#334155, #94a3b8)'],
+            ['--ui-color-surface-raised', 'initial'],
+        ]);
+    });
+
+    it('stands it down before the answer to more contrast, which wins where both name one', () => {
+        expect(conditions(frosted)).toEqual(['', quiet, '(prefers-contrast: more)']);
+    });
+
+    it('emits one declaration per line for a translucent theme too', () => {
+        for (const line of themeStyleSheet(frosted).split('\n')) {
+            expect(line.split(';').length, line).toBeLessThanOrEqual(2);
+        }
     });
 });
 
@@ -349,19 +417,108 @@ describe('a theme, as the browser renders it', () => {
     });
 });
 
-describe('matrix', () => {
+/**
+ * Glass, read off one element painted the way the raised surfaces paint — every name it makes
+ * translucent, in both schemes, and what each stands down to.
+ */
+describe('glass, as the browser renders it', () => {
+    /** An element under Glass in `scheme`, painted from what a raised surface reads. */
+    function frosted(scheme: 'light' | 'dark'): CSSStyleDeclaration {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+
+        const host = document.createElement('div');
+        host.dataset['uiTheme'] = glass.name;
+        host.style.colorScheme = scheme;
+
+        const probe = document.createElement('div');
+        probe.style.color = 'rgb(10, 20, 30)';
+        probe.style.background = String(reference('--ui-color-surface-raised'));
+        probe.style.backdropFilter = String(reference('--ui-backdrop-raised'));
+        probe.style.border = `1px solid ${String(reference('--ui-color-border-raised'))}`;
+        probe.style.outline = `1px solid ${String(reference('--ui-color-border-overlay'))}`;
+        probe.style.boxShadow = String(reference('--ui-elevation-raised'));
+        // The toast's edge, lit in the colour above as a toast lights it in its variant's.
+        probe.style.textDecorationColor = String(reference('--ui-color-toast-edge'));
+        // And a control's boundary, which is what the two edges stand down to.
+        probe.style.columnRuleColor = String(reference('--ui-color-border'));
+        host.append(probe);
+        document.body.append(style, host);
+
+        return getComputedStyle(probe);
+    }
+
+    it.each([
+        [
+            'light',
+            'rgba(255, 255, 255, 0.2)',
+            'rgba(255, 255, 255, 0.45)',
+            'rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.08) 0px 8px 24px 0px',
+        ],
+        [
+            'dark',
+            'rgba(0, 0, 0, 0.2)',
+            'rgba(255, 255, 255, 0.16)',
+            'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.33) 0px 8px 24px 0px',
+        ],
+    ] as const)('frosts a raised surface, in %s', (scheme, surface, edge, lift) => {
+        const styles = frosted(scheme);
+
+        expect(styles.backgroundColor, 'the glass').toBe(surface);
+        expect(styles.backdropFilter, 'what it does to the page').toBe('blur(10px) saturate(1.7)');
+        expect(styles.borderTopColor, "a card's edge").toBe(edge);
+        expect(styles.outlineColor, 'the edge of what floats').toBe(edge);
+        expect(styles.boxShadow, 'a highlight along the top, and a soft drop').toBe(lift);
+        expect(styles.textDecorationColor, "a toast's edge, at 0.80").toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.8)',
+        );
+    });
+
+    it.each([
+        // Glass's own, and the boundary's mix where the edge of what floats goes: the text is
+        // only for the reader who asked for more contrast.
+        ['prefers-reduced-transparency', 'reduce', 'rgb(10, 20, 30)', false],
+        ['prefers-contrast', 'more', 'rgb(0, 0, 0)', true],
+    ] as const)('stops being glass when the reader sets %s', async (name, value, toast, more) => {
+        await cdp().send('Emulation.setEmulatedMedia', { features: [{ name, value }] });
+
+        const styles = frosted('light');
+
+        expect(styles.backgroundColor, 'the surface, opaque').toBe('rgb(255, 255, 255)');
+        expect(styles.backdropFilter, 'and nothing behind it').toBe('none');
+        expect(styles.borderTopColor, "a card's edge, the boundary's mix").toBe(
+            styles.columnRuleColor,
+        );
+        expect(styles.outlineColor, 'the edge of what floats').toBe(
+            more ? 'rgb(0, 0, 0)' : styles.columnRuleColor,
+        );
+        expect(styles.boxShadow, "the default palette's lift").toBe(
+            'rgba(0, 0, 0, 0.1) 0px 1px 2px -1px, rgba(0, 0, 0, 0.1) 0px 2px 6px -1px',
+        );
+        expect(styles.textDecorationColor, "a toast's edge").toBe(toast);
+    });
+});
+
+describe.each([matrix, glass])('$name', (theme) => {
+    /** The values it sets and the translucent ones it sets aside, each with its dark ones. */
+    const sets = [theme, ...(theme.translucent === undefined ? [] : [theme.translucent])];
+
     it('names only tokens that exist', () => {
         const named: readonly string[] = [...tokens, ...derivedTokens];
 
-        for (const name of [...Object.keys(matrix.values), ...Object.keys(matrix.dark ?? {})]) {
-            expect(named, name).toContain(name);
+        for (const set of sets) {
+            for (const name of [...Object.keys(set.values), ...Object.keys(set.dark ?? {})]) {
+                expect(named, name).toContain(name);
+            }
         }
     });
 
     it('gives a dark value only to a name it sets, and only a colour', () => {
-        for (const [name, value] of Object.entries(matrix.dark ?? {})) {
-            expect(Object.keys(matrix.values), name).toContain(name);
-            expect(CSS.supports('color', value), name).toBe(true);
+        for (const set of sets) {
+            for (const [name, value] of Object.entries(set.dark ?? {})) {
+                expect(Object.keys(set.values), name).toContain(name);
+                expect(CSS.supports('color', value), name).toBe(true);
+            }
         }
     });
 });
@@ -378,6 +535,19 @@ describe('theme stories', () => {
 
         await expectAccessible(container);
     });
+
+    it('renders Glass accessibly in both of its schemes, over the page it holds over', async () => {
+        const container = await mountStory(Glass, meta, 'Glass');
+        const panels = [...container.querySelectorAll<HTMLElement>('[data-ui-theme]')];
+
+        expect(panels.map((panel) => panel.getAttribute('data-scheme'))).toEqual(['light', 'dark']);
+        expect(panels.map((panel) => getComputedStyle(panel).backgroundColor)).toEqual([
+            'rgb(206, 206, 206)',
+            'rgb(48, 48, 48)',
+        ]);
+
+        await expectAccessible(container);
+    });
 });
 
 describe('the theme control the playground carries', () => {
@@ -387,14 +557,17 @@ describe('the theme control the playground carries', () => {
         expect(document.documentElement.hasAttribute('data-ui-theme')).toBe(false);
     });
 
-    it('themes the root and inserts the theme when the toolbar asks for one', async () => {
-        const container = await mountStory(
-            { ...Defaults, globals: { theme: matrix.name } },
-            tokensMeta,
-            'Defaults',
-        );
+    it.each([matrix, glass])(
+        'themes the root and inserts $name when the toolbar asks for it',
+        async (theme) => {
+            const container = await mountStory(
+                { ...Defaults, globals: { theme: theme.name } },
+                tokensMeta,
+                'Defaults',
+            );
 
-        expect(document.documentElement.dataset['uiTheme']).toBe(matrix.name);
-        expect(container.textContent).toContain("[data-ui-theme='matrix']");
-    });
+            expect(document.documentElement.dataset['uiTheme']).toBe(theme.name);
+            expect(container.textContent).toContain(`[data-ui-theme='${theme.name}']`);
+        },
+    );
 });

@@ -386,6 +386,21 @@ error that turned grey would stop saying it is an error. The written states are 
 and reach under every theme, so a theme's own answer declares its states or hands them back to
 their formulas with `initial`, which `themeStyleSheet()` writes for it.
 
+**A theme that lets the page through stops when the reader asks for more contrast or less
+transparency** — Glass, under RFC 0003. Its translucency is data of its own, set apart from its
+values, and `themeStyleSheet()` stands it down under either setting: each name goes back to the
+theme's opaque value where it gives one, or to its default. Set apart rather than reset, because
+the accent is a ground: `initial` would hand a translucent accent back to the default palette's blue
+rather than to the theme's own slate, so the opaque value has to be the theme's to write.
+
+**A translucent surface is measured over a page, and the page is the host's.** What rests on glass is
+read against the glass and whatever is behind it, and black and white bound a page that follows no
+scheme, which no host draws. So Glass states the page it holds over — no darker than `#cecece` in
+the light scheme, no lighter than `#303030` in the dark — and the floors run there, each scheme on
+its own limit: one step past it, the error message and the focus ring fall under their floors. That
+is a condition on the host, documented with the theme, rather than an opacity raised until any page
+passes, which leaves the glass reading as milk.
+
 ### Motion is tokens, and reduced motion is one rule
 
 Components read a **purpose** — `--ui-duration-state` — over a scale named by ordinals with gaps, so
@@ -434,6 +449,13 @@ A positioned layer is painted over the content it covers, so each takes no point
 click inside a card otherwise lands on the card. **The tooltip is the exception**: its tip is the
 host's element, reached through `::slotted()`, and nothing of the component's sits around it, so its
 lift is lit in its text.
+
+**A raised surface has a colour of its own, and a filter, rather than an alpha on the surface.**
+Every derivation mixes `--ui-color-surface`, so a translucent surface would take the border, the
+muted text and the hover translucent with it — RFC 0003 measured muted text at 0.755 over a surface
+at 0.3. `--ui-color-surface-raised` is the surface until a theme sets it, and `--ui-backdrop-raised`
+is a category of its own because a backdrop filter is not a colour; the card, the toast, the tip, the
+dialog and the open menu read both, and the surface stays opaque under every field.
 
 ### A category arrives with the component that consumes it
 

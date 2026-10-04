@@ -8,6 +8,7 @@ the scheme — is in [tokens.md](tokens.md#themes); this page is the shipped one
 
 - [Using a shipped theme](#using-a-shipped-theme)
 - [`matrix`](#matrix)
+- [`glass`](#glass)
 - [`Theme`](#theme)
 - [`themeStyleSheet`](#themestylesheet)
 - [Your own theme](#your-own-theme)
@@ -76,6 +77,50 @@ owe. The theme writes 18% and 30% of the text instead, as values.
 **When the reader asks for more contrast**, the green stays on the accent, and the text and the edge
 of what floats over the page go to the text's pole, black or white.
 
+## `glass`
+
+The raised surfaces frosted over whatever page is behind them, in both schemes: the card, the toast,
+the tip, the dialog and the open menu.
+
+|                  | light                                                     | dark                           |
+| ---------------- | --------------------------------------------------------- | ------------------------------ |
+| text             | `#000000`                                                 | `#ffffff`                      |
+| accent           | `#334155`                                                 | `#94a3b8`                      |
+| hover            | `#bebebe`                                                 | `#393f4d`                      |
+| pressed          | `#989898`                                                 | `#535965`                      |
+| a raised surface | white at 0.20                                             | black at 0.20                  |
+| behind it        | `blur(10px) saturate(1.7)`                                | the same                       |
+| its edge         | white at 0.45                                             | white at 0.16                  |
+| its lift         | a highlight along the top, white at 0.60, and a soft drop | white at 0.20, the drop darker |
+| a toast's edge   | its variant's colour at 0.80                              | the same                       |
+
+**The glass is the scheme's pole at an opacity**, white in the light scheme and black in the dark —
+black rather than the dark surface, because at the same opacity it takes a lighter page. The surface
+itself stays opaque, so a field inside a card is as legible as anywhere else. The text goes to its
+pole and the accent to slate: text over frosted glass reads washed out long before it measures as
+failing, and a saturated accent fights whatever colour the page throws through. A toast's icon stays
+opaque in its variant's colour, being the one cue that tells a variant by more than its colour.
+
+**It holds its floors over a page, and the page is yours.** What rests on the glass is read against
+the glass and the page behind it, so the theme is measured over the page it can take: **no darker
+than `#cecece` in the light scheme, and no lighter than `#303030` in the dark.** One step past
+either, something resting on the glass falls under its floor — the error message in the light
+scheme, the focus ring in the dark. A page between the scheme's own pole and that grey holds; one
+past the grey, or a light page behind dark glass, does not, and nothing here measures it. The text
+has the most room of anything on the glass, so a page that looks fine under it can still be past
+the limit.
+
+**It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
+26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer
+by, and over the light page Glass holds over, the formula's hover stood 1.15:1 from the glass, under
+the 1.25 a state owes.
+
+**When the reader asks for more contrast or for less transparency, glass stops being glass**: every
+raised surface goes back to the opaque surface with nothing behind it, its edge to the boundary and
+its lift to the default palette's. More contrast also edges what floats over the page and a toast in
+the text, and writes the default palette's neutral states, because Glass's text and surface are the
+default's there.
+
 ## `Theme`
 
 A theme as data, which is what `defaults`, `darkScheme` and `moreContrast` already are for the
@@ -87,23 +132,29 @@ interface Theme {
   readonly values: Readonly<Partial<Record<Token | DerivedToken, string>>>;
   readonly dark?: Readonly<Partial<Record<Token | DerivedToken, string>>>;
   readonly more?: Readonly<Partial<Record<Token | DerivedToken, readonly [string, string]>>>;
+  readonly translucent?: Pick<Theme, 'values' | 'dark'>;
 }
 ```
 
-| Field    | Holds                                                                          |
-| -------- | ------------------------------------------------------------------------------ |
-| `name`   | what `data-ui-theme` says to select it                                         |
-| `values` | what it sets, at its light value or at the value it has in both, as `defaults` |
-| `dark`   | the values that differ in the dark scheme — colours only, as `darkScheme`      |
-| `more`   | its answer to `prefers-contrast: more`, a light and a dark value per name      |
+| Field         | Holds                                                                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | what `data-ui-theme` says to select it                                                                                                   |
+| `values`      | what it sets, at its light value or at the value it has in both, as `defaults`                                                           |
+| `dark`        | the values that differ in the dark scheme — colours only, as `darkScheme`                                                                |
+| `more`        | its answer to `prefers-contrast: more`, a light and a dark value per name                                                                |
+| `translucent` | what it makes translucent, in the shape of `values` and `dark`, set aside for the reader who asks for more contrast or less transparency |
 
 A derived role belongs in `values` only where the theme needs a different mix than the formula
-gives; the floors then measure what it wrote. Data first, because a target that is not CSS reads the
+gives; the floors then measure what it wrote. **A name in `translucent` may be in `values` too**, at
+its opaque value: that is the value it goes back to when the translucency stands down. One that is
+not goes back to its default — Glass gives its accent both, and its raised surfaces only the
+translucent one. Data first, because a target that is not CSS reads the
 values rather than parsing a stylesheet back into them.
 
 ## `themeStyleSheet`
 
-A theme as CSS: its block under `[data-ui-theme='…']`, and its answer to more contrast after it.
+A theme as CSS: its block under `[data-ui-theme='…']`, where it makes something translucent the
+rule that stands that down, and its answer to more contrast last.
 
 ```js
 themeStyleSheet(matrix);
@@ -125,12 +176,29 @@ they would be the default palette's greys over the theme's grounds. `initial` ha
 formula, which resolves against the theme's own grounds. A ground needs no reset: one the theme
 declares wins on its own element, and one it leaves alone is the reader's setting, rightly inherited.
 
+**What a theme makes translucent stands down under either setting**, in a rule of its own:
+
+```css
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  [data-ui-theme='glass'] {
+    --ui-color-surface-raised: initial;
+    --ui-backdrop-raised: initial;
+    … } }
+```
+
+Each name goes back to the theme's opaque value, or with `initial` to its default. The answer to more
+contrast comes after it, so where it names one of these it wins. Reduced transparency is known to
+Chromium only; elsewhere the translucency stands down for more contrast alone.
+
 ## Your own theme
 
 Write it by hand, the way [tokens.md](tokens.md#themes) shows — a block under `data-ui-theme` with
 the grounds you want — or hand `themeStyleSheet()` an object of the shape above for the same
 rendering. Neither is measured by this package: the floors run over the themes it ships, and yours
 is yours to check.
+
+**If your theme lets the page through, put it in `translucent`**, so a reader who asks for more
+contrast or less transparency gets it opaque — and measure it over the page you will put it on.
 
 **If your theme should answer more contrast, write the answer.** The default palette's states are
 declared at `:root` under that setting and reach under your theme; declare your own, or reset them

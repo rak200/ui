@@ -27,7 +27,7 @@
 
 import { html, type TemplateResult } from 'lit';
 import { tokenStyleSheet } from '../src/tokens.js';
-import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import type { Preview } from '@storybook/web-components-vite';
 import { ruleset } from '../tests/a11y-ruleset.js';
 
@@ -49,7 +49,10 @@ function sheet(): HTMLStyleElement {
 }
 
 /** The themes the toolbar offers, by the value `data-ui-theme` takes for each. */
-const themes: ReadonlyMap<string, Theme> = new Map([[matrix.name, matrix]]);
+const themes: ReadonlyMap<string, Theme> = new Map([
+    [matrix.name, matrix],
+    [glass.name, glass],
+]);
 
 /** A shipped theme's block, built the way {@link sheet} builds the token sheet. */
 function themed(theme: Theme): HTMLStyleElement {
@@ -87,6 +90,7 @@ const preview: Preview = {
                 items: [
                     { value: '', title: 'Default' },
                     { value: matrix.name, title: 'Matrix' },
+                    { value: glass.name, title: 'Glass' },
                 ],
                 dynamicTitle: true,
             },

@@ -130,7 +130,9 @@ export class UiTooltip extends LitElement {
                inherits whatever the page set, and the contrast measured for that pair
                stops holding. */
             color: ${reference('--ui-color-text')};
-            background: ${reference('--ui-color-surface')};
+            /* A raised surface, as a card is. */
+            background: ${reference('--ui-color-surface-raised')};
+            backdrop-filter: ${reference('--ui-backdrop-raised')};
             border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
             /* On the tip itself, where the card and the menu draw theirs on a layer in the

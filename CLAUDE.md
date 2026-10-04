@@ -273,7 +273,7 @@ explains. This file restates none of them.
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
-  reader's setting_, and the docblocks on `Theme`, `themeStyleSheet` and `matrix` in
+  reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in
   `src/theme.ts`. **The contrast floors run over every shipped palette**, in each scheme and under
   emulated `prefers-contrast: more`: a theme joins them by an entry in `palettes` in
   `tests/tokens.test.ts`, and the derived accent label is swept over a grid of accents there too.

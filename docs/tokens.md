@@ -203,30 +203,31 @@ finish before closing, so it is the thing that would have waited forever.
 
 The names that have a default and are emitted at `:root` — the **ground** half of the set.
 
-| Token                    | Covers                                                  |
-| ------------------------ | ------------------------------------------------------- |
-| `--ui-color-accent`      | the accent surface of a primary control                 |
-| `--ui-color-surface`     | a neutral surface                                       |
-| `--ui-color-text`        | body and secondary text                                 |
-| `--ui-color-focus`       | the focus ring — see the floor below                    |
-| `--ui-color-danger`      | error text                                              |
-| `--ui-color-success`     | a successful outcome                                    |
-| `--ui-color-warning`     | an outcome worth a second look                          |
-| `--ui-color-info`        | an outcome that is neither                              |
-| `--ui-color-toast-edge`  | the edge of a toast, its variant's colour by default    |
-| `--ui-color-scrim`       | the dim behind a modal                                  |
-| `--ui-radius`            | corner radius                                           |
-| `--ui-space`             | the spacing step components scale from                  |
-| `--ui-font`              | the font stack                                          |
-| `--ui-duration-100`      | the first step of the duration scale                    |
-| `--ui-easing-state`      | the curve a state change follows                        |
-| `--ui-easing-enter`      | the curve an overlay arrives along                      |
-| `--ui-easing-exit`       | the curve it leaves along                               |
-| `--ui-icon-size`         | how big a glyph is drawn                                |
-| `--ui-icon-stroke`       | how heavy its stroke is, on a 24 grid                   |
-| `--ui-elevation-100`     | the first step of the elevation scale                   |
-| `--ui-elevation-control` | the glow a theme lights a control with, none by default |
-| `--ui-text-100`          | the first step of the type scale                        |
+| Token                    | Covers                                                            |
+| ------------------------ | ----------------------------------------------------------------- |
+| `--ui-color-accent`      | the accent surface of a primary control                           |
+| `--ui-color-surface`     | a neutral surface                                                 |
+| `--ui-color-text`        | body and secondary text                                           |
+| `--ui-color-focus`       | the focus ring — see the floor below                              |
+| `--ui-color-danger`      | error text                                                        |
+| `--ui-color-success`     | a successful outcome                                              |
+| `--ui-color-warning`     | an outcome worth a second look                                    |
+| `--ui-color-info`        | an outcome that is neither                                        |
+| `--ui-color-toast-edge`  | the edge of a toast, its variant's colour by default              |
+| `--ui-color-scrim`       | the dim behind a modal                                            |
+| `--ui-radius`            | corner radius                                                     |
+| `--ui-space`             | the spacing step components scale from                            |
+| `--ui-font`              | the font stack                                                    |
+| `--ui-duration-100`      | the first step of the duration scale                              |
+| `--ui-easing-state`      | the curve a state change follows                                  |
+| `--ui-easing-enter`      | the curve an overlay arrives along                                |
+| `--ui-easing-exit`       | the curve it leaves along                                         |
+| `--ui-icon-size`         | how big a glyph is drawn                                          |
+| `--ui-icon-stroke`       | how heavy its stroke is, on a 24 grid                             |
+| `--ui-elevation-100`     | the first step of the elevation scale                             |
+| `--ui-elevation-control` | the glow a theme lights a control with, none by default           |
+| `--ui-backdrop-raised`   | what a raised surface does to the page behind it, none by default |
+| `--ui-text-100`          | the first step of the type scale                                  |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -310,6 +311,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-color-pressed`           | a neutral surface being pressed               |
 | `--ui-color-border`            | the boundary of a control                     |
 | `--ui-color-border-overlay`    | the edge of a dialog, a tip and a menu        |
+| `--ui-color-border-raised`     | the edge of a card                            |
 | `--ui-color-text-invalid`      | the value written in a field in error         |
 | `--ui-color-text-muted`        | text that is not a value yet                  |
 | `--ui-duration-state`          | how long a state change takes                 |
@@ -317,6 +319,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-elevation-control-hover` | the glow a button lights to under the pointer |
 | `--ui-text-supporting`         | text that explains what is beside it          |
 | `--ui-color-surface-muted`     | a second surface tone, for grouping           |
+| `--ui-color-surface-raised`    | the colour of a raised surface                |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -337,7 +340,14 @@ You can still set the label yourself; a derived name takes an override like any 
 computes what `--ui-color-border` does, and is a second name because
 [more contrast](#more-contrast) edges a dialog, a tip and a menu in the text while a control's
 boundary stays where its floor put it. A formula reads grounds only, never another derived name, so
-setting `--ui-color-border` leaves this one alone: set both to move both.
+setting `--ui-color-border` leaves this one alone: set both to move both. A card's edge,
+`--ui-color-border-raised`, is a third name for the same mix, because more contrast leaves it alone.
+
+**A raised surface has a colour of its own**, `--ui-color-surface-raised`, and a filter it lays over
+the page behind it, `--ui-backdrop-raised`: the card, the toast, the tip, the dialog and the open
+menu read both. They are the surface and nothing until something sets them, which is how a theme
+makes those five glass. Not an alpha on `--ui-color-surface`: every derivation mixes the surface, so
+a translucent one would take the border, the muted text and the hover translucent with it.
 
 ## `formulas`
 
@@ -360,6 +370,7 @@ formulas['--ui-duration-state'];
 | `--ui-color-pressed`           | the surface, 26% of the way toward the text                       |
 | `--ui-color-border`            | the surface, 50% of the way toward the text                       |
 | `--ui-color-border-overlay`    | the same mix as `--ui-color-border`                               |
+| `--ui-color-border-raised`     | the same mix again                                                |
 | `--ui-color-text-invalid`      | the text                                                          |
 | `--ui-color-text-muted`        | the surface, 65% of the way toward the text                       |
 | `--ui-duration-state`          | the first step of the duration scale                              |
@@ -367,6 +378,7 @@ formulas['--ui-duration-state'];
 | `--ui-elevation-control-hover` | the resting glow, `--ui-elevation-control`                        |
 | `--ui-text-supporting`         | the first step of the type scale                                  |
 | `--ui-color-surface-muted`     | the surface, 5% of the way toward the text                        |
+| `--ui-color-surface-raised`    | the surface                                                       |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no

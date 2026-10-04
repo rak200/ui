@@ -199,7 +199,9 @@ export class UiMenu extends LitElement {
             padding: calc(${reference('--ui-space')} / 2);
             border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
-            background: ${reference('--ui-color-surface')};
+            /* A raised surface, as a card is. */
+            background: ${reference('--ui-color-surface-raised')};
+            backdrop-filter: ${reference('--ui-backdrop-raised')};
             color: ${reference('--ui-color-text')};
             font-family: ${reference('--ui-font')};
         }

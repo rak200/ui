@@ -137,6 +137,12 @@ export const tokens = [
     // to the accent, or to the danger when the control is invalid — so one value lights
     // every control in its state's colour. `ARCHITECTURE.md` says why a named colour would not.
     '--ui-elevation-control',
+    // What a raised surface does to the page behind it, arriving with Glass under the same
+    // clause: a backdrop filter is not a colour, so the glass's translucency rides on the
+    // surface's colour and its blur needs a category of its own. `none` by default, so the
+    // default palette renders as before. A ground for the reason the control's glow is one:
+    // it points into no scale.
+    '--ui-backdrop-raised',
     // The type scale, arriving with `ui-table` — the category `ROADMAP.md` said would, and
     // the last one the v0 surface expects. It arrives to fix a defect rather than to
     // anticipate one: `font-size: 0.875em` was written out in three places across the form
@@ -192,6 +198,10 @@ export const derivedTokens = [
     // first in the text and leaves the second where its floor put it — RFC 0003. Its default
     // is the boundary's, so the default palette renders as before.
     '--ui-color-border-overlay',
+    // The edge of a card, apart from the edge of what floats over the page, because the
+    // answer to more contrast edges only the second in the text — RFC 0003. Glass softens
+    // both to a translucent line; neither is a control's boundary, so neither owes 3:1.
+    '--ui-color-border-raised',
     // The value written in a field that is in error, arriving with Matrix, which writes it in
     // the danger — RFC 0003. The text by default, so the default palette renders as before:
     // a field's boundary, its glow and its message already say it is wrong.
@@ -236,6 +246,12 @@ export const derivedTokens = [
     // already says `muted` for *the same role, one step back*, and a second vocabulary for
     // the surface half would be one more thing for a host to learn.
     '--ui-color-surface-muted',
+    // The colour of a raised surface — the card, the toast, the tip, the dialog and the
+    // open menu — arriving with Glass, which makes it translucent. **Not an alpha on
+    // `--ui-color-surface`**: every derivation mixes the surface, so a translucent one would
+    // take the muted text, the border and the hover translucent with it — RFC 0003. The
+    // surface by default, so the default palette renders as before.
+    '--ui-color-surface-raised',
 ] as const;
 
 /** A CSS custom property this package computes rather than declares. */
@@ -310,6 +326,7 @@ export const defaults: Readonly<Record<Token, string>> = {
     // have to defend at every hue a host might set.
     '--ui-elevation-100': '0 1px 2px -1px rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.1)',
     '--ui-elevation-control': 'none',
+    '--ui-backdrop-raised': 'none',
     // The value the three hardcoded sites already carried, adopted rather than re-chosen:
     // this token exists to make an existing decision overridable, and changing it in the
     // same breath would hide whether the extraction was faithful. 87.5% is 14px against a
@@ -446,6 +463,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // `--ui-color-border`, since a formula reads grounds only. So a host who retunes the
     // boundary retunes this name beside it.
     '--ui-color-border-overlay': mix('--ui-color-text', 50, '--ui-color-surface'),
+    // The same mix again, for the same reason, and the edge a card has always drawn.
+    '--ui-color-border-raised': mix('--ui-color-text', 50, '--ui-color-surface'),
     // A plain reference: the text, until a theme writes a value in error in another colour.
     '--ui-color-text-invalid': ground('--ui-color-text'),
     // 5.24:1 and 6.07:1, against a floor of 4.5. Not the 60% that first cleared it: that
@@ -471,6 +490,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // `tests/tokens.test.ts` holds the floor that matters here: text on a striped row is
     // still text, so 4.5:1 is owed against this surface and not only against the plain one.
     '--ui-color-surface-muted': mix('--ui-color-text', 5, '--ui-color-surface'),
+    // A plain reference: the surface, until a theme raises something translucent off it.
+    '--ui-color-surface-raised': ground('--ui-color-surface'),
 };
 
 /**

@@ -30,11 +30,28 @@ export interface Theme {
      * `moreContrast` is.
      */
     readonly more?: Readonly<Partial<Record<Named, readonly [light: string, dark: string]>>>;
+    /**
+     * What it makes translucent, in the shape `values` and `dark` take — set aside, because
+     * a reader who asks for more contrast or for less transparency does not get it. Each name
+     * then takes the theme's own value in `values`, opaque, or its default where the theme
+     * gives none.
+     */
+    readonly translucent?: Pick<Theme, 'values' | 'dark'>;
 }
 
 /** One declaration, a value with its dark one where it has one. */
 function declare(name: string, light: string, dark: string | undefined): string {
     return `  ${name}: ${dark === undefined ? light : `light-dark(${light}, ${dark})`};`;
+}
+
+/** Every declaration a set of values makes, each with its dark one. */
+function declared(set: Pick<Theme, 'values' | 'dark'>): Map<string, string> {
+    return new Map(
+        Object.entries(set.values).map(([name, light]) => [
+            name,
+            declare(name, light, set.dark?.[name as Named]),
+        ]),
+    );
 }
 
 /**
@@ -50,11 +67,22 @@ function declare(name: string, light: string, dark: string | undefined): string 
  * over the theme's grounds. `initial` takes each back to its formula, which resolves against
  * the theme's own grounds where it is used. A ground needs no reset: one the theme declares
  * wins on its own element, and one it does not is the reader's setting, rightly inherited.
+ *
+ * **What it makes translucent stands down between the two**, under more contrast or reduced
+ * transparency: each name goes back to the theme's opaque value, or with `initial` to its
+ * default. A comma rather than a `not` around the translucent block, because a media feature
+ * an engine does not know makes a `not` false there — and only Chromium knows reduced
+ * transparency, so the glass would never show anywhere else. The answer to more contrast
+ * comes after, so where it names one of these, it wins.
  */
 export function themeStyleSheet(theme: Theme): string {
     const selector = `[data-ui-theme='${theme.name}']`;
-    const values = Object.entries(theme.values).map(([name, light]) =>
-        declare(name, light, theme.dark?.[name as Named]),
+    const opaque = declared(theme);
+    const translucent = declared(theme.translucent ?? { values: {} });
+    // One declaration per name: a translucent one takes the place of the opaque one.
+    const values = new Map([...opaque, ...translucent]);
+    const quiet = [...translucent.keys()].map(
+        (name) => `  ${opaque.get(name) ?? `  ${name}: initial;`}`,
     );
 
     const answered = theme.more ?? {};
@@ -67,7 +95,12 @@ export function themeStyleSheet(theme: Theme): string {
     ].map((line) => `  ${line}`);
 
     return [
-        `${selector} {\n${values.join('\n')}\n}`,
+        `${selector} {\n${[...values.values()].join('\n')}\n}`,
+        ...(quiet.length === 0
+            ? []
+            : [
+                  `@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {\n  ${selector} {\n${quiet.join('\n')}\n  }\n}`,
+              ]),
         `@media (prefers-contrast: more) {\n  ${selector} {\n${answer.join('\n')}\n  }\n}`,
     ].join('\n\n');
 }
@@ -142,5 +175,77 @@ export const matrix: Theme = {
     more: {
         '--ui-color-text': ['#000000', '#ffffff'],
         '--ui-color-border-overlay': ['#000000', '#ffffff'],
+    },
+};
+
+/**
+ * Glass: the raised surfaces frosted over whatever page is behind them, in both schemes —
+ * RFC 0003 chose it by eye over pages harder than a host's, and closed it at what that page
+ * rendered.
+ *
+ * **The glass is the scheme's pole at 0.20**, white in the light scheme and black in the
+ * dark, behind a 10px blur that saturates what it lets through. Black rather than the dark
+ * surface's blue-black, because at the same opacity it takes a lighter page. The surface
+ * itself stays opaque, so every derivation that mixes it stays where the floors measured it.
+ * The text goes to its pole and the accent to slate: text over frosted glass reads washed
+ * out long before it measures as failing, and a saturated accent fights whatever colour the
+ * page throws through.
+ *
+ * **The floor is a page, not an opacity.** What rests on the glass — the error message
+ * first in the light scheme, the focus ring in the dark — holds its floor over a page no
+ * darker than `#cecece` in the light scheme and no lighter than `#303030` in the dark, and
+ * that is a condition on the host's page, which `docs/theme.md` states.
+ *
+ * Under more contrast or reduced transparency, glass stops being glass: what it makes
+ * translucent stands down, and the edges and the toasts go to the text's pole.
+ */
+export const glass: Theme = {
+    name: 'glass',
+    values: {
+        '--ui-color-text': '#000000',
+        '--ui-color-accent': '#334155',
+        // 20% and 32% of the text rather than the formula's 16% and 26%: a menu's items and a
+        // toast's dismiss hover on the glass, and over the light page Glass holds over the
+        // formula's hover stood 1.15:1 from it, under the 1.25 it owes. Opaque, as a state's
+        // fill is, and written as values, as Matrix's are.
+        '--ui-color-hover': '#bebebe',
+        '--ui-color-pressed': '#989898',
+    },
+    dark: {
+        '--ui-color-text': '#ffffff',
+        '--ui-color-accent': '#94a3b8',
+        '--ui-color-hover': '#393f4d',
+        '--ui-color-pressed': '#535965',
+    },
+    translucent: {
+        values: {
+            '--ui-color-surface-raised': 'rgb(255 255 255 / 0.2)',
+            '--ui-backdrop-raised': 'blur(10px) saturate(1.7)',
+            // White at 0.45 on the light glass, where a dark glass's 0.16 would vanish into
+            // it; softer than a line, which is what the derived border drew.
+            '--ui-color-border-raised': 'rgb(255 255 255 / 0.45)',
+            '--ui-color-border-overlay': 'rgb(255 255 255 / 0.45)',
+            // A highlight along the top edge, and a soft drop under it.
+            '--ui-elevation-100':
+                'inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)), 0 8px 24px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33))',
+            // A toast edged all round in its variant's colour, at the opacity the glass's
+            // filled controls take.
+            '--ui-color-toast-edge': 'rgb(from currentColor r g b / 0.8)',
+        },
+        dark: {
+            '--ui-color-surface-raised': 'rgb(0 0 0 / 0.2)',
+            '--ui-color-border-raised': 'rgb(255 255 255 / 0.16)',
+            '--ui-color-border-overlay': 'rgb(255 255 255 / 0.16)',
+        },
+    },
+    more: {
+        '--ui-color-border-overlay': ['#000000', '#ffffff'],
+        '--ui-color-toast-edge': ['#000000', '#ffffff'],
+        // The neutral states the default palette's answer writes, because under more contrast
+        // Glass's text and surface are the default's, at their poles. Handed back to the
+        // formula instead, the hover over pure black is 1.08:1 from it, under the 1.25 it owes.
+        '--ui-color-hover': ['#d9d9d9', '#282828'],
+        '--ui-color-pressed': ['#c1c1c1', '#3d3d3d'],
+        '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
     },
 };
