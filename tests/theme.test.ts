@@ -169,6 +169,24 @@ describe('themeStyleSheet', () => {
         expect([...answer(bare)]).toEqual(written.map((name) => [name, 'initial']));
     });
 
+    it('emits one declaration per line, because a host reads this output as well as parses it', () => {
+        // The browser is indifferent to newlines, so every assertion above passes with each
+        // block on one line; a host pasting it into a page reads it there. `tokens.test.ts`
+        // holds the token sheet to the same.
+        const lines = themeStyleSheet(sample).split('\n');
+
+        for (const line of lines) {
+            expect(line.split(';').length, line).toBeLessThanOrEqual(2);
+        }
+
+        // The block: its selector, one line per value, its brace; a blank line; the media
+        // rule, the selector again, one line per answer, and the two closing braces.
+        expect(lines).toHaveLength(
+            Object.keys(sample.values).length + 2 + 1 + [...answer(sample)].length + 4,
+        );
+        expect(lines[Object.keys(sample.values).length + 2], 'the blank line between').toBe('');
+    });
+
     it('emits the two rules the browser applies, and only those', () => {
         expect(parsed(matrix).cssRules).toHaveLength(2);
     });
@@ -181,6 +199,34 @@ describe('a theme, as the browser renders it', () => {
     ] as const)('puts its grounds in force under the attribute, in %s', (scheme, surface, text) => {
         expect(painted('--ui-color-surface', matrix, scheme)).toBe(surface);
         expect(painted('--ui-color-text', matrix, scheme)).toBe(text);
+    });
+
+    it('takes its face, its corner and its glow from its own values', () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+
+        const host = document.createElement('div');
+        host.dataset['uiTheme'] = matrix.name;
+
+        const probe = document.createElement('div');
+        probe.style.fontFamily = String(reference('--ui-font'));
+        probe.style.borderRadius = String(reference('--ui-radius'));
+        probe.style.boxShadow = String(reference('--ui-elevation-raised'));
+        host.append(probe);
+        document.body.append(style, host);
+
+        const glow = (scheme: 'light' | 'dark'): string => {
+            host.style.colorScheme = scheme;
+
+            return getComputedStyle(probe).boxShadow;
+        };
+
+        expect(getComputedStyle(probe).fontFamily).toContain('Courier New');
+        expect(getComputedStyle(probe).borderRadius).toBe('8px');
+        // The raised surfaces read the elevation step, and Matrix makes it a glow whose
+        // colour follows the scheme: its middle green on white, its bright one on black.
+        expect(glow('light'), 'light').toContain('rgba(0, 143, 17');
+        expect(glow('dark'), 'dark').toContain('rgba(0, 255, 0');
     });
 
     it("derives its accent's label from its own accent", () => {
