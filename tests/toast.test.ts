@@ -468,6 +468,18 @@ describe('the icon, which tells the variant apart without its colour', () => {
         expect(geometry(icon(toast(host)))).not.toBe(before);
     });
 
+    it("sits centred on the message's first line, whatever height the page gives a line", async () => {
+        const host = await mount(fixture);
+        const element = toast(host);
+
+        element.style.lineHeight = '40px';
+        element.style.setProperty('--ui-icon-size', '20px');
+
+        // Half of what the line has to spare over the glyph, above it and below.
+        expect(getComputedStyle(icon(element)).marginTop).toBe('10px');
+        expect(getComputedStyle(icon(element)).marginBottom).toBe('10px');
+    });
+
     it('is hidden from the accessibility tree, which the message already covers', async () => {
         const host = await mount(fixture);
 
