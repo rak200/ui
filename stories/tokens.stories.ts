@@ -274,8 +274,8 @@ export const DarkScheme: StoryObj = {
 /**
  * The other axis: a whole theme, in both of its schemes.
  *
- * **A theme is four grounds and nothing else.** The block below redeclares `surface`,
- * `text`, `accent` and its contrast — and border, hover and pressed follow into both
+ * **A theme is three grounds and nothing else.** The block below redeclares `surface`,
+ * `text` and `accent` — and the accent's label, border, hover and pressed follow into both
  * schemes on their own, because each of those is a formula that resolves against the
  * grounds in force where it is used rather than a value frozen at `:root`. The swatches on
  * each panel are the evidence: nothing restates them, and they are purple here.
@@ -292,7 +292,6 @@ export const Theme: StoryObj = {
                 --ui-color-surface: light-dark(#faf5ff, #1a0b2e);
                 --ui-color-text: light-dark(#3b0764, #f3e8ff);
                 --ui-color-accent: light-dark(#7e22ce, #c084fc);
-                --ui-color-accent-contrast: light-dark(#ffffff, #1a0b2e);
             }
         </style>
         <div data-ui-theme="brand" class="theme">${panel('light')}${panel('dark')}</div>
