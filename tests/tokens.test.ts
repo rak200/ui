@@ -643,6 +643,145 @@ describe('every value is legal for the property its token serves', () => {
 });
 
 /**
+ * The accent's label and its two states, over the accents a host could pick.
+ *
+ * RFC 0003 made the label a derivation so that a host who moves the accent moves the label
+ * with it — a claim about every accent rather than about the shipped one, so it is measured
+ * over a grid. The proposal swept sixteen steps a channel, 4096 accents, once; the suite
+ * keeps eight, 512 with both ends of every channel in, because it runs on every mutant and
+ * sixteen took most of a minute.
+ */
+describe("the accent's label and states, derived", () => {
+    /** One accent and what the browser resolved beside it. */
+    interface Swept {
+        readonly accent: string;
+        readonly label: string;
+        readonly hover: string;
+        readonly pressed: string;
+    }
+
+    /** Each scheme's sweep, taken once and read by every test below. */
+    const sweeps = new Map<Scheme, Swept[]>();
+
+    /** The four values, resolved by the browser for each accent in `scheme`. */
+    function sweep(scheme: Scheme): Swept[] {
+        const taken = sweeps.get(scheme);
+
+        if (taken !== undefined) {
+            return taken;
+        }
+
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+
+        const host = document.createElement('div');
+        host.style.colorScheme = scheme;
+
+        const read = (
+            [
+                '--ui-color-accent',
+                '--ui-color-accent-contrast',
+                '--ui-color-accent-hover',
+                '--ui-color-accent-pressed',
+            ] as const
+        ).map((token) => {
+            const probe = document.createElement('div');
+            probe.style.backgroundColor = String(reference(token));
+            host.append(probe);
+
+            return (): string => sRGB(getComputedStyle(probe).backgroundColor);
+        });
+        document.body.append(style, host);
+
+        const steps = [0x00, 0x24, 0x49, 0x6d, 0x92, 0xb6, 0xdb, 0xff];
+        const swept: Swept[] = [];
+
+        try {
+            for (const red of steps) {
+                for (const green of steps) {
+                    for (const blue of steps) {
+                        const accent = `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+                        host.style.setProperty('--ui-color-accent', accent);
+
+                        const [resting, label, hover, pressed] = read.map((value) => value());
+
+                        swept.push({
+                            accent: resting ?? '',
+                            label: label ?? '',
+                            hover: hover ?? '',
+                            pressed: pressed ?? '',
+                        });
+                    }
+                }
+            }
+        } finally {
+            style.remove();
+            host.remove();
+        }
+
+        sweeps.set(scheme, swept);
+
+        return swept;
+    }
+
+    it.each(['light', 'dark'] as const)(
+        'gives every accent a label at 4.5:1 or more, in %s',
+        (scheme) => {
+            const swept = sweep(scheme);
+
+            expect(swept, 'the whole grid').toHaveLength(512);
+            expect(
+                swept.filter(({ label }) => label !== '#ffffff' && label !== '#000000'),
+                'only ever a pole',
+            ).toEqual([]);
+            expect(
+                swept.filter(({ accent, label }) => contrastRatio(label, accent) < 4.5),
+                'legible on the accent',
+            ).toEqual([]);
+            expect(
+                swept.filter(
+                    ({ label, hover, pressed }) =>
+                        contrastRatio(label, hover) < 4.5 || contrastRatio(label, pressed) < 4.5,
+                ),
+                'and on both of its states',
+            ).toEqual([]);
+        },
+    );
+
+    it.each(['light', 'dark'] as const)('moves every accent but black visibly, in %s', (scheme) => {
+        const swept = sweep(scheme);
+
+        // Black has no room toward black and its label is white at 21:1, so it lightens
+        // toward the label and stays at 1.03 — under every shape measured, which is why it
+        // is named here rather than fixed.
+        expect(
+            swept
+                .filter(({ accent, hover }) => contrastRatio(hover, accent) <= 1.05)
+                .map(({ accent }) => accent),
+            'the hover',
+        ).toEqual(['#000000']);
+        expect(
+            swept.filter(({ hover, pressed }) => contrastRatio(pressed, hover) <= 1.05),
+            'the pressed',
+        ).toEqual([]);
+    });
+
+    // The shipped accent's own values, which is what a host who changed nothing sees move:
+    // the dark label from `#111827` to black, and the light hover from `#255cd4` to the
+    // `#1d52c6` RFC 0003 measured, the pole being black there.
+    it.each([
+        ['light', '#ffffff', '#1d52c6'],
+        ['dark', '#000000', '#74b0fc'],
+    ] as const)(
+        'gives the shipped accent the label and the hover it now ships with, in %s',
+        (scheme, label, hover) => {
+            expect(painted('--ui-color-accent-contrast', scheme)).toBe(label);
+            expect(painted('--ui-color-accent-hover', scheme)).toBe(hover);
+        },
+    );
+});
+
+/**
  * The floors the values themselves have to clear, before any component paints them.
  *
  * **They run over every palette this package ships, in each scheme it keeps**, which is RFC
@@ -895,7 +1034,7 @@ describe('token stories', () => {
         const themed = channels(sRGB(getComputedStyle(swatch).backgroundColor));
         const shipped = channels(painted('--ui-color-accent-hover', 'light'));
 
-        // Nothing in the theme block declares this name — it redeclares four grounds and
+        // Nothing in the theme block declares this name — it redeclares three grounds and
         // stops. The swatch is purple because the formula resolved against those grounds
         // where it was used, which is the whole measurement item 1 turned on.
         expect(themed.red, 'the theme is purple').toBeGreaterThan(themed.green);

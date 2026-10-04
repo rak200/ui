@@ -354,8 +354,10 @@ element instead, so a hover colour follows a scheme and a theme without either r
 
 The price is real and is stated where a consumer meets it: a derived name is **write-only**. You can
 override one; nothing can read one back. What it buys is an override surface a host can hold in
-their head — change the accent and the hover and pressed colours follow, rather than being one more
-name each.
+their head — change the accent and its label, its hover and its pressed colours follow, rather than
+being one more name each. The label joined the derivations with RFC 0003: as a ground, a host's
+accent beside the default label was a pair nothing measured, and as the accent's own pole it reads
+on every accent a host can pick.
 
 ### A theme and a scheme are two axes
 
