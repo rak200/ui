@@ -37,6 +37,7 @@ src/
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
 ├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
+├── theme.ts         # the shipped themes, as data, and the function that renders one
 ├── toast.ts         # <ui-toaster> and <ui-toast> — two live regions, and a clock that is not a token
 ├── tooltip.ts       # <ui-tooltip> — a popover the platform lifts, placed by hand
 └── index.ts         # the public barrel
@@ -55,6 +56,7 @@ tests/               # mirrors src/, one test file per unit
 ├── radio.test.ts
 ├── select.test.ts
 ├── table.test.ts
+├── theme.test.ts
 ├── toast.test.ts
 ├── tooltip.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
@@ -74,6 +76,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── radio.stories.ts
 ├── select.stories.ts
 ├── table.stories.ts
+├── theme.stories.ts
 ├── toast.stories.ts
 ├── tooltip.stories.ts
 └── tokens.stories.ts
@@ -268,3 +271,9 @@ explains. This file restates none of them.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
+- **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
+  reader's setting_, and the docblocks on `Theme`, `themeStyleSheet` and `matrix` in
+  `src/theme.ts`. **The contrast floors run over every shipped palette**, in each scheme and under
+  emulated `prefers-contrast: more`: a theme joins them by an entry in `palettes` in
+  `tests/tokens.test.ts`, and the derived accent label is swept over a grid of accents there too.

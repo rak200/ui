@@ -129,6 +129,9 @@ Three declarations, and the accent's label, the hover and the pressed colours fo
 schemes of both themes** without appearing anywhere — that is what [`formulas`](#formulas) buys.
 Nothing is scoped to `:root`, so a theme can be a region of a page rather than the whole of it.
 
+The package ships themes of its own as well, as data with a function that renders them — see
+[theme.md](theme.md).
+
 ## Motion
 
 Components read a **purpose** — `--ui-duration-state` — never a step of the scale underneath it. So
