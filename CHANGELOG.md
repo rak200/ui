@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.15](https://github.com/rak200/ui/compare/0.6.14...0.6.15) (2026-10-04)
+
+
+### Features
+
+* a select's choices paint their own surface ([#247](https://github.com/rak200/ui/issues/247)) ([4bf23f7](https://github.com/rak200/ui/commit/4bf23f78758187a39e6bd76d52fb9765b5e5468c))
+* a toast carries an icon for its variant, its edge goes round in one colour, and info is cyan ([#248](https://github.com/rak200/ui/issues/248)) ([e976d26](https://github.com/rak200/ui/commit/e976d2666c0126a507eb431b5b46e83a980c919d))
+
 ## [0.6.14](https://github.com/rak200/ui/compare/0.6.13...0.6.14) (2026-10-04)
 
 
