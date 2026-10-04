@@ -200,3 +200,7 @@ ui-dialog::part(dialog) {
 
 For colour, radius, spacing, the scrim and the motion, prefer the [tokens](tokens.md) — they
 restyle every component at once instead of one selector at a time.
+
+**The panel draws a boundary**, `--ui-color-border`, the one [`<ui-card>`](card.md) draws. The scrim
+alone does not part it from the page in every scheme: over the dark surface it leaves 1.10:1, and
+the border stands well clear of both the panel and the page under the scrim.
