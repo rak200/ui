@@ -1015,4 +1015,4 @@ would live beside it.
 | 1    | [#239](https://github.com/rak200/ui/pull/239) | the switch, off, an empty box: the surface inside, the thumb in the border |
 | 1    | [#241](https://github.com/rak200/ui/pull/241) | the tick, the dash, the dot and the switch's thumb in the accent's label   |
 | 1    | [#245](https://github.com/rak200/ui/pull/245) | the dialog's boundary, the card's derived border                           |
-| 1    | [#247](https://github.com/rak200/ui/pull/247) | a select's choices paint the surface and the text, the drop-down only      |
+| 1    | [#247](https://github.com/rak200/ui/pull/247) | a select's choices paint the surface, the drop-down only                   |
