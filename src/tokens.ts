@@ -305,7 +305,7 @@ function mix(foreground: Token, amount: number, background: Token): string {
  *
  * ```css
  * :root {
- *   --ui-color-hover: color-mix(in oklab, var(--ui-color-text) 8%, var(--ui-color-surface));
+ *   --ui-color-hover: color-mix(in oklab, var(--ui-color-text) 16%, var(--ui-color-surface));
  * }
  * ```
  *
@@ -331,8 +331,14 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast
     // against whatever sits on top rises either way rather than falling.
-    '--ui-color-hover': mix('--ui-color-text', 8, '--ui-color-surface'),
-    '--ui-color-pressed': mix('--ui-color-text', 14, '--ui-color-surface'),
+    //
+    // 1.41:1 against the resting surface in light and 1.42 in dark, and the pressed 1.27 and
+    // 1.34 past the hover, against a floor of 1.25 for each. The 8% and 14% before these
+    // were 1.18 and 1.17: rendered as a difference, and reported on a dark menu as a hover
+    // nobody could see. The step below, 12% and 22%, clears with the pressed at 1.26 in
+    // light, which is passing by rounding.
+    '--ui-color-hover': mix('--ui-color-text', 16, '--ui-color-surface'),
+    '--ui-color-pressed': mix('--ui-color-text', 26, '--ui-color-surface'),
     '--ui-color-accent-hover': mix('--ui-color-text', 12, '--ui-color-accent'),
     '--ui-color-accent-pressed': mix('--ui-color-text', 22, '--ui-color-accent'),
     // 3.39:1 on the light surface and 3.96:1 on the dark one, against a floor of 3. The
@@ -351,7 +357,7 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // and a host who wants larger supporting text moves the role rather than working out
     // which step a tooltip happens to read.
     '--ui-text-supporting': ground('--ui-text-100'),
-    // 5% rather than the hover colour's 8%, and the gap is the whole design: a stripe has
+    // 5% rather than the hover colour's 16%, and the gap is the whole design: a stripe has
     // to be visible without reading as a different surface, and it has to leave room above
     // itself for a state that is not a stripe. Mixing toward the text is what makes one
     // formula right in both schemes, for the reason the neutrals above give — the tint

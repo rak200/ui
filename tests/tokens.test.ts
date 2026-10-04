@@ -235,7 +235,7 @@ describe('derivedTokens', () => {
 
     it('states the form a formula is composed into, rather than restating the composer', () => {
         expect(formulas['--ui-color-hover']).toBe(
-            'color-mix(in oklab, var(--ui-color-text, #1f2937) 8%, var(--ui-color-surface, #ffffff))',
+            'color-mix(in oklab, var(--ui-color-text, #1f2937) 16%, var(--ui-color-surface, #ffffff))',
         );
         expect(formulas['--ui-duration-state']).toBe('var(--ui-duration-100, 150ms)');
     });
@@ -726,8 +726,16 @@ describe('the contrast floors', () => {
             const hover = painted('--ui-color-hover', scheme);
             const pressed = painted('--ui-color-pressed', scheme);
 
-            expect(contrastRatio(hover, resting), 'hover against resting').toBeGreaterThan(1.05);
-            expect(contrastRatio(pressed, hover), 'pressed against hover').toBeGreaterThan(1.05);
+            // 1.25 rather than the accent's 1.05, because 1.05 answers *renders as
+            // different* and a neutral state has to be *seen* as different: 1.17 cleared it
+            // and was reported, on a dark menu, as a hover that looked like the items beside
+            // it. The number was chosen by looking at both schemes, not derived.
+            expect(contrastRatio(hover, resting), 'hover against resting').toBeGreaterThanOrEqual(
+                1.25,
+            );
+            expect(contrastRatio(pressed, hover), 'pressed against hover').toBeGreaterThanOrEqual(
+                1.25,
+            );
         });
 
         it.each(['light', 'dark'] as const)('keeps a hovered primary legible, in %s', (scheme) => {

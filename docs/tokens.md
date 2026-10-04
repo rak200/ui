@@ -274,7 +274,7 @@ How each derived role computes when you have not set it.
 
 ```js
 formulas['--ui-color-hover'];
-// 'color-mix(in oklab, var(--ui-color-text, #1f2937) 8%, var(--ui-color-surface, #ffffff))'
+// 'color-mix(in oklab, var(--ui-color-text, #1f2937) 16%, var(--ui-color-surface, #ffffff))'
 
 formulas['--ui-duration-state'];
 // 'var(--ui-duration-100, 150ms)'
@@ -284,8 +284,8 @@ formulas['--ui-duration-state'];
 | --------------------------- | ------------------------------------------- |
 | `--ui-color-accent-hover`   | the accent, 12% of the way toward the text  |
 | `--ui-color-accent-pressed` | the accent, 22% of the way toward the text  |
-| `--ui-color-hover`          | the surface, 8% of the way toward the text  |
-| `--ui-color-pressed`        | the surface, 14% of the way toward the text |
+| `--ui-color-hover`          | the surface, 16% of the way toward the text |
+| `--ui-color-pressed`        | the surface, 26% of the way toward the text |
 | `--ui-color-border`         | the surface, 50% of the way toward the text |
 | `--ui-color-text-muted`     | the surface, 65% of the way toward the text |
 | `--ui-duration-state`       | the first step of the duration scale        |
