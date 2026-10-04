@@ -1026,3 +1026,4 @@ would live beside it.
 | 5    | [#266](https://github.com/rak200/ui/pull/266) | the glow on the text fields and the select, drawn around the control       |
 | 5    | [#269](https://github.com/rak200/ui/pull/269) | the glow on the buttons and the menu's trigger, brighter under the pointer |
 | 5    | [#270](https://github.com/rak200/ui/pull/270) | a toast's edge, and the raised surfaces' glow lit in their own colour      |
+| 5    | [#271](https://github.com/rak200/ui/pull/271) | a value in error in a theme's own colour, the danger in Matrix             |

@@ -116,6 +116,7 @@ const field = css`
     input[aria-invalid='true'],
     textarea[aria-invalid='true'] {
         border-color: ${reference('--ui-color-danger')};
+        color: ${reference('--ui-color-text-invalid')};
     }
 
     .help {

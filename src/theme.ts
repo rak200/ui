@@ -111,6 +111,10 @@ export const matrix: Theme = {
         // are data a target that is not CSS can read.
         '--ui-color-hover': '#cfd9ce',
         '--ui-color-pressed': '#b0c1ae',
+        // A value in error written in the danger, inside its red edge: the default palette's
+        // own danger, which this theme keeps, at 6.47:1 on the field's white and 7.37 on its
+        // black.
+        '--ui-color-text-invalid': '#b91c1c',
         '--ui-elevation-100':
             '0 0 0 1px light-dark(rgb(from currentColor r g b / 0.54), rgb(from currentColor r g b / 0.45)), 0 0 18px light-dark(rgb(from currentColor r g b / 0.45), rgb(from currentColor r g b / 0.54))',
         // The same ring and glow on every control, at the same strengths, so neither reads
@@ -133,6 +137,7 @@ export const matrix: Theme = {
         '--ui-color-info': '#00e5ff',
         '--ui-color-hover': '#11280f',
         '--ui-color-pressed': '#174315',
+        '--ui-color-text-invalid': '#f87171',
     },
     more: {
         '--ui-color-text': ['#000000', '#ffffff'],

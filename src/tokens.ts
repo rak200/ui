@@ -192,6 +192,10 @@ export const derivedTokens = [
     // first in the text and leaves the second where its floor put it — RFC 0003. Its default
     // is the boundary's, so the default palette renders as before.
     '--ui-color-border-overlay',
+    // The value written in a field that is in error, arriving with Matrix, which writes it in
+    // the danger — RFC 0003. The text by default, so the default palette renders as before:
+    // a field's boundary, its glow and its message already say it is wrong.
+    '--ui-color-text-invalid',
     // `hover` matches the pseudo-class it answers to; `pressed` deliberately does not —
     // `--ui-color-active` would read as *the active item* as readily as *the pressed
     // control*, and the role this implements was named `accent hover / pressed`.
@@ -442,6 +446,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // `--ui-color-border`, since a formula reads grounds only. So a host who retunes the
     // boundary retunes this name beside it.
     '--ui-color-border-overlay': mix('--ui-color-text', 50, '--ui-color-surface'),
+    // A plain reference: the text, until a theme writes a value in error in another colour.
+    '--ui-color-text-invalid': ground('--ui-color-text'),
     // 5.24:1 and 6.07:1, against a floor of 4.5. Not the 60% that first cleared it: that
     // is 4.52 in light, a rounding error from failing, and a default nobody could then
     // retune without breaking a floor they were not thinking about.

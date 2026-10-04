@@ -642,6 +642,29 @@ describe('the glow a theme lights', () => {
         expect(getComputedStyle(box(element)).color).toBe('rgb(7, 8, 9)');
     });
 
+    it.each(tags)('writes the value of an invalid %s in --ui-color-text-invalid', async (tag) => {
+        const form = await mount(`<${tag} label="Notes" error="Write something."></${tag}>`);
+        const element = field(form);
+
+        element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
+
+        expect(getComputedStyle(box(element)).color, 'the text, by default').toBe('rgb(7, 8, 9)');
+
+        element.style.setProperty('--ui-color-text-invalid', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(element)).color, 'once a theme says').toBe('rgb(1, 2, 3)');
+    });
+
+    it.each(tags)('leaves the value of a valid %s in the text', async (tag) => {
+        const form = await mount(`<${tag} label="Notes"></${tag}>`);
+        const element = field(form);
+
+        element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-color-text-invalid', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(element)).color).toBe('rgb(7, 8, 9)');
+    });
+
     it.each(tags)('lights an invalid %s in the danger, as its boundary is', async (tag) => {
         const form = await mount(`<${tag} label="Notes" error="Write something."></${tag}>`);
         const element = field(form);

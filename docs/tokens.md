@@ -310,6 +310,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-color-pressed`           | a neutral surface being pressed               |
 | `--ui-color-border`            | the boundary of a control                     |
 | `--ui-color-border-overlay`    | the edge of a dialog, a tip and a menu        |
+| `--ui-color-text-invalid`      | the value written in a field in error         |
 | `--ui-color-text-muted`        | text that is not a value yet                  |
 | `--ui-duration-state`          | how long a state change takes                 |
 | `--ui-elevation-raised`        | a surface lifted off the page                 |
@@ -359,6 +360,7 @@ formulas['--ui-duration-state'];
 | `--ui-color-pressed`           | the surface, 26% of the way toward the text                       |
 | `--ui-color-border`            | the surface, 50% of the way toward the text                       |
 | `--ui-color-border-overlay`    | the same mix as `--ui-color-border`                               |
+| `--ui-color-text-invalid`      | the text                                                          |
 | `--ui-color-text-muted`        | the surface, 65% of the way toward the text                       |
 | `--ui-duration-state`          | the first step of the duration scale                              |
 | `--ui-elevation-raised`        | the first step of the elevation scale                             |

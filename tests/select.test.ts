@@ -728,6 +728,31 @@ describe('the glow a theme lights', () => {
         );
     });
 
+    it('writes the value of an invalid box in --ui-color-text-invalid', async () => {
+        const form = await mount(`
+            <ui-select label="Currency" error="Pick one.">
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+            <ui-select label="Currency">
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+        const [invalid, valid] = [...form.querySelectorAll('ui-select')];
+
+        if (invalid === undefined || valid === undefined) {
+            throw new Error('the fixture holds two selects');
+        }
+
+        form.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
+
+        expect(getComputedStyle(box(invalid)).color, 'the text, by default').toBe('rgb(7, 8, 9)');
+
+        form.style.setProperty('--ui-color-text-invalid', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(invalid)).color, 'once a theme says').toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(box(valid)).color, 'and only in error').toBe('rgb(7, 8, 9)');
+    });
+
     it('lights an invalid box in the danger, as its boundary is', async () => {
         const form = await mount(`
             <ui-select label="Currency" error="Pick one.">
