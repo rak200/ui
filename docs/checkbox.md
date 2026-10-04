@@ -243,21 +243,23 @@ ui-checkbox:invalid {
 }
 ```
 
-**Two states are published, and only two**, because they are the two with no other route. The
-control lives in this element's shadow root, and `::part(box):checked` **does not match** — a
-`::part()` may be followed by user-action pseudo-classes such as `:hover`, not by state ones. So
-`checked` and `indeterminate` are exposed as custom states instead. Measured in the engine this
-package's suite runs.
+**Two states are published, and only two**, because they are the two with no other route to the
+whole control. The box lives in this element's shadow root, and `::part(box):checked` and
+`::part(box):indeterminate` do match — a `::part()` takes any pseudo-class that is not structural —
+but a part reaches the box and nothing else. A rule on the element itself, like the `font-weight`
+above, needs the host to answer to the state, so `checked` and `indeterminate` are exposed as custom
+states as well.
 
 Everything else already works, and none of it is this element's doing:
 
-| Selector                | Reaches                                                   |
-| ----------------------- | --------------------------------------------------------- |
-| `:state(checked)`       | the live state, which `checked` does not reflect          |
-| `:state(indeterminate)` | the mixed state, `<ui-checkbox>` only                     |
-| `:valid` / `:invalid`   | constraint validation — a form-associated element gets it |
-| `:disabled`             | likewise, including from a `<fieldset disabled>`          |
-| `[required]`            | the attribute, which reflects                             |
+| Selector                                           | Reaches                                                   |
+| -------------------------------------------------- | --------------------------------------------------------- |
+| `:state(checked)`                                  | the live state, which `checked` does not reflect          |
+| `:state(indeterminate)`                            | the mixed state, `<ui-checkbox>` only                     |
+| `::part(box):checked`, `::part(box):indeterminate` | the box alone, by the state the platform keeps on it      |
+| `:valid` / `:invalid`                              | constraint validation — a form-associated element gets it |
+| `:disabled`                                        | likewise, including from a `<fieldset disabled>`          |
+| `[required]`                                       | the attribute, which reflects                             |
 
 **Do not select on `[error]`.** It reflects, and a reflected string whose default is empty is
 written as `error=""` — which a presence selector matches on every element, error or not. `:invalid`
