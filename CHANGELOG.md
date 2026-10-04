@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.14](https://github.com/rak200/ui/compare/0.6.13...0.6.14) (2026-10-04)
+
+
+### Features
+
+* a dialog draws the card's boundary ([#245](https://github.com/rak200/ui/issues/245)) ([c9cac7c](https://github.com/rak200/ui/commit/c9cac7c014efc91bca2b62d84e9ecc7298511fee))
+
 ## [0.6.13](https://github.com/rak200/ui/compare/0.6.12...0.6.13) (2026-10-04)
 
 
