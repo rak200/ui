@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.3](https://github.com/rak200/ui/compare/0.7.2...0.7.3) (2026-10-04)
+
+
+### Features
+
+* a theme can write a value in error in its own colour, and Matrix writes it in the danger ([#271](https://github.com/rak200/ui/issues/271)) ([a348958](https://github.com/rak200/ui/commit/a3489584cfa6995cf68a986b562b427b1043b9df))
+
 ## [0.7.2](https://github.com/rak200/ui/compare/0.7.1...0.7.2) (2026-10-04)
 
 
