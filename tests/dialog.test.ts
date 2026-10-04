@@ -693,7 +693,7 @@ describe('the lifecycle', () => {
  * one — an invalid `var()` drops the whole declaration.
  */
 describe('every visual decision a dialog paints is a token', () => {
-    it('takes its shape, its surface and its type from the host', async () => {
+    it('takes its shape, its boundary, its surface and its type from the host', async () => {
         const element = await mount(fixture);
 
         element.style.setProperty('--ui-font', 'monospace');
@@ -701,6 +701,7 @@ describe('every visual decision a dialog paints is a token', () => {
         element.style.setProperty('--ui-space', '7px');
         element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
         element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-border', 'rgb(7, 8, 9)');
 
         await open(element);
 
@@ -708,6 +709,11 @@ describe('every visual decision a dialog paints is a token', () => {
 
         expect(styles.fontFamily, '--ui-font').toBe('monospace');
         expect(styles.borderRadius, '--ui-radius').toBe('11px');
+        // The card's boundary, and for a reason the scrim cannot cover: over the dark
+        // surface it leaves the panel 1.10:1 from the page.
+        expect(styles.borderTopColor, '--ui-color-border').toBe('rgb(7, 8, 9)');
+        expect(styles.borderTopStyle).toBe('solid');
+        expect(styles.borderTopWidth).toBe('1px');
         expect(styles.paddingTop, '--ui-space, tripled').toBe('21px');
         expect(styles.backgroundColor, '--ui-color-surface').toBe('rgb(1, 2, 3)');
         expect(styles.color, '--ui-color-text').toBe('rgb(4, 5, 6)');
