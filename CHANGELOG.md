@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.13](https://github.com/rak200/ui/compare/0.6.12...0.6.13) (2026-10-04)
+
+
+### Features
+
+* a checked control's mark takes the accent's label ([#241](https://github.com/rak200/ui/issues/241)) ([4850bd3](https://github.com/rak200/ui/commit/4850bd3ede104afc4c74a069ce9dda8697e0ac53))
+
 ## [0.6.12](https://github.com/rak200/ui/compare/0.6.11...0.6.12) (2026-10-04)
 
 
