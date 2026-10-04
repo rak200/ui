@@ -1018,3 +1018,4 @@ would live beside it.
 | 1    | [#247](https://github.com/rak200/ui/pull/247) | a select's choices paint the surface, the drop-down only                   |
 | 1    | [#248](https://github.com/rak200/ui/pull/248) | a toast's icon per variant, its edge in one colour, and info in cyan       |
 | 2    | [#250](https://github.com/rak200/ui/pull/250) | the floors per palette and per scheme, and the boundary on either side     |
+| 3    | [#253](https://github.com/rak200/ui/pull/253) | the accent's label derived, its states moving toward the pole with room    |
