@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { cdp } from 'vitest/browser';
+import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `tokens.test.ts`, which
 // needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
@@ -9,6 +9,7 @@ import meta, { Matrix } from '../stories/theme.stories.js';
 import { Defaults } from '../stories/tokens.stories.js';
 import tokensMeta from '../stories/tokens.stories.js';
 import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import '../src/button.js';
 import '../src/checkbox.js';
 import { reference } from '../src/reference.js';
 import {
@@ -262,6 +263,37 @@ describe('a theme, as the browser renders it', () => {
             );
         },
     );
+
+    it.each([
+        // The ring goes solid and the glow doubles: 0.45 to 0.9 on white, and 0.54 to solid
+        // on black, where doubling stops.
+        [
+            'light',
+            'rgb(0, 143, 17) 0px 0px 0px 1px, color(srgb 0 0.560784 0.0666667 / 0.9) 0px 0px 18px 0px',
+        ],
+        ['dark', 'rgb(0, 255, 0) 0px 0px 0px 1px, rgb(0, 255, 0) 0px 0px 18px 0px'],
+    ] as const)('lights a button brighter under the pointer, in %s', async (scheme, lit) => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+
+        const host = document.createElement('div');
+        host.dataset['uiTheme'] = matrix.name;
+        host.style.colorScheme = scheme;
+        host.innerHTML = '<ui-button>Save</ui-button>';
+        document.body.append(style, host);
+
+        const element = host.querySelector('ui-button');
+        await element?.updateComplete;
+        const button = element?.renderRoot.querySelector('button');
+
+        if (button === null || button === undefined) {
+            throw new Error('the button rendered no control');
+        }
+
+        await userEvent.hover(button);
+
+        expect(getComputedStyle(button, '::before').boxShadow).toBe(lit);
+    });
 
     it("derives its accent's label from its own accent", () => {
         // Black on Matrix's green in both schemes: the label is the accent's pole, and both
