@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.12](https://github.com/rak200/ui/compare/0.6.11...0.6.12) (2026-10-04)
+
+
+### Features
+
+* a switch, off, is an empty box ([#239](https://github.com/rak200/ui/issues/239)) ([80f7abb](https://github.com/rak200/ui/commit/80f7abb23f80db1f0315f17a6292879a01b16d18))
+
 ## [0.6.11](https://github.com/rak200/ui/compare/0.6.10...0.6.11) (2026-10-04)
 
 
