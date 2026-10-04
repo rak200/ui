@@ -1,4 +1,4 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, svg, type SVGTemplateResult, type TemplateResult } from 'lit';
 import { reference } from './reference.js';
 
 /** What a toast is telling the reader, which decides how it looks *and* how it is announced. */
@@ -6,6 +6,21 @@ export type ToastVariant = 'info' | 'success' | 'warning' | 'danger';
 
 /** The class the exit is carried by, on the toast for exactly as long as the exit runs. */
 const closing = 'closing';
+
+/**
+ * The glyph each variant carries beside its edge: Lucide's `info`, `circle-check`,
+ * `triangle-alert` and `circle-x`, the geometry `src/icons/` vendors.
+ *
+ * Written here rather than imported, because importing a glyph module registers it: a
+ * toast would quietly put four names into the registry a host's `<ui-icon>` reads.
+ * `tests/toast.test.ts` compares each with the vendored one, so the copy cannot drift.
+ */
+const glyphs: Readonly<Record<ToastVariant, SVGTemplateResult>> = {
+    info: svg`<circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" />`,
+    success: svg`<circle cx="12" cy="12" r="10" /> <path d="m16 9-5.5 5.5L8 12" />`,
+    warning: svg`<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" />`,
+    danger: svg`<circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" />`,
+};
 
 /**
  * How long a toast that is not an error stays, in milliseconds.
@@ -160,9 +175,10 @@ export class UiToaster extends LitElement {
  * there is no way to write an assertive success.
  *
  * **The colour is redundant and must stay redundant.** WCAG 1.4.1 asks that colour never be
- * the only carrier of information, and here it never is: the message says what happened and
- * the edge agrees with it. That is also what makes the component correct under
- * `forced-colors`, where the edge goes flat and nothing is lost.
+ * the only carrier of information, and here it never is: the message says what happened,
+ * and the edge and an icon agree with it — the icon by its shape, so the variants stay
+ * apart under `forced-colors`, where the edge goes flat. The icon carries no text and is
+ * hidden from the accessibility tree, so nothing announced changes.
  *
  * ## Dismissal
  *
@@ -195,20 +211,22 @@ export class UiToast extends LitElement {
             gap: ${reference('--ui-space')};
             box-sizing: border-box;
             padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 1.5);
-            border: 1px solid ${reference('--ui-color-border')};
-            /* The edge, and the shorthand after the border above rather than a colour
-               beside it: the width and the style are this rule's as much as the hue is.
-               info reads the accent, which is the colour a page already answers with. */
+            /* The edge goes all the way round in the variant's colour, the stripe at the
+               start only wider. A stripe in one colour and three sides in the derived
+               border met at the corners as a break — RFC 0003. The shorthand comes after
+               the border rather than a width beside it: the width and the style are the
+               stripe's as much as the hue is. */
+            border: 1px solid ${reference('--ui-color-info')};
             border-inline-start: calc(${reference('--ui-space')} / 2) solid
-                ${reference('--ui-color-accent')};
+                ${reference('--ui-color-info')};
             border-radius: ${reference('--ui-radius')};
             background: ${reference('--ui-color-surface')};
             color: ${reference('--ui-color-text')};
             font-family: ${reference('--ui-font')};
             /* Lifted, because it sits over the page rather than in it — and bounded as
                well as lifted, for the reason src/card.ts gives: a shadow is one value in
-               both schemes and does almost nothing on a dark page, where the derived
-               boundary is what separates the surface from what is under it. */
+               both schemes and does almost nothing on a dark page, where the edge is what
+               separates the surface from what is under it. */
             box-shadow: ${reference('--ui-elevation-raised')};
             /* The toaster takes no clicks so it does not steal a corner of the page. This
                is the part that is not the corner. */
@@ -222,15 +240,37 @@ export class UiToast extends LitElement {
         }
 
         :host([variant='success']) {
-            border-inline-start-color: ${reference('--ui-color-success')};
+            border-color: ${reference('--ui-color-success')};
         }
 
         :host([variant='warning']) {
-            border-inline-start-color: ${reference('--ui-color-warning')};
+            border-color: ${reference('--ui-color-warning')};
         }
 
         :host([variant='danger']) {
-            border-inline-start-color: ${reference('--ui-color-danger')};
+            border-color: ${reference('--ui-color-danger')};
+        }
+
+        /* The icon takes the edge's colour, and sits centred on the message's first line,
+           whatever height the page's text gives a line: half of what one line has to spare
+           over the glyph, above it and below. A fixed eighth of an em assumed a line-height
+           of 1.5 and sat low under a monospace face at normal — measured, under Matrix. */
+        .icon {
+            flex: none;
+            margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
+            color: ${reference('--ui-color-info')};
+        }
+
+        :host([variant='success']) .icon {
+            color: ${reference('--ui-color-success')};
+        }
+
+        :host([variant='warning']) .icon {
+            color: ${reference('--ui-color-warning')};
+        }
+
+        :host([variant='danger']) .icon {
+            color: ${reference('--ui-color-danger')};
         }
 
         /* Where the entrance comes from. Without it there is nothing to transition out of:
@@ -429,9 +469,21 @@ export class UiToast extends LitElement {
         this.#route();
     }
 
-    /** The message, and a button that dismisses it. */
+    /** The variant's icon, the message, and a button that dismisses it. */
     override render(): TemplateResult {
         return html`
+            <svg
+                class="icon"
+                part="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                ${glyphs[this.variant]}
+            </svg>
             <div part="message"><slot></slot></div>
             <button
                 type="button"

@@ -635,11 +635,11 @@ describe('the contrast floors', () => {
         ).toBeGreaterThanOrEqual(4.5);
     });
 
-    // The two outcomes that arrived with `ui-toast`, held to the text floor rather than to
+    // The outcomes that arrived with `ui-toast`, held to the text floor rather than to
     // the 3:1 a coloured edge would owe. The floor a value has to clear is the strictest
     // use it is put to, and nothing stops a host writing one as text — `--ui-color-danger`
     // is that use, in every control's message, today.
-    it.each(['--ui-color-success', '--ui-color-warning'] as const)(
+    it.each(['--ui-color-success', '--ui-color-warning', '--ui-color-info'] as const)(
         'keeps %s at 4.5:1 against the surface',
         (token) => {
             expect(
@@ -675,10 +675,10 @@ describe('the contrast floors', () => {
             ).toBeGreaterThanOrEqual(4.5);
         });
 
-        // Both are inverted for the dark surface for the reason the error is: green-700 is
-        // 3.54:1 there and amber-700 is 3.53, so each would pass as an edge and fail as the
-        // text a host is free to write it as.
-        it.each(['--ui-color-success', '--ui-color-warning'] as const)(
+        // All three are inverted for the dark surface for the reason the error is: green-700
+        // is 3.54:1 there and amber-700 is 3.53, so each would pass as an edge and fail as
+        // the text a host is free to write it as.
+        it.each(['--ui-color-success', '--ui-color-warning', '--ui-color-info'] as const)(
             'keeps %s at 4.5:1',
             (token) => {
                 expect(
