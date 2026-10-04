@@ -193,20 +193,19 @@ rather than a decision here.
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the caret.
 
-| Part                  | Token                                                        |
-| --------------------- | ------------------------------------------------------------ |
-| surface               | `--ui-color-surface`                                         |
-| text and the label    | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
-| boundary              | `--ui-color-border`, and `--ui-color-text` on hover          |
-| the caret             | `--ui-color-text-muted`                                      |
-| each choice           | `--ui-color-surface` and `--ui-color-text`                   |
-| an unavailable choice | `--ui-color-text-muted`                                      |
-| in error              | `--ui-color-danger`, at `--ui-text-supporting`               |
-| help text             | `--ui-color-text`, at `--ui-text-supporting`                 |
-| focus ring            | `--ui-color-focus`                                           |
-| corner                | `--ui-radius`                                                |
-| padding and rhythm    | `--ui-space`                                                 |
-| motion                | `--ui-duration-state`, `--ui-easing-state`                   |
+| Part               | Token                                                        |
+| ------------------ | ------------------------------------------------------------ |
+| surface            | `--ui-color-surface`                                         |
+| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
+| boundary           | `--ui-color-border`, and `--ui-color-text` on hover          |
+| the caret          | `--ui-color-text-muted`                                      |
+| each choice        | `--ui-color-surface`                                         |
+| in error           | `--ui-color-danger`, at `--ui-text-supporting`               |
+| help text          | `--ui-color-text`, at `--ui-text-supporting`                 |
+| focus ring         | `--ui-color-focus`                                           |
+| corner             | `--ui-radius`                                                |
+| padding and rhythm | `--ui-space`                                                 |
+| motion             | `--ui-duration-state`, `--ui-easing-state`                   |
 
 The same five parts [`<ui-input>`](input.md#styling) exposes — `stack`, `label`, `control`, `help`
 and `error` — aimed at a `<select>` rather than an `<input>`.
@@ -216,11 +215,11 @@ gradient takes `var()`, while an SVG in a `data:` URI freezes whatever colour is
 [`<ui-checkbox>`](checkbox.md) needs a path for its tick, so it keeps the path as a mask and paints
 the colour under it; a caret is two triangles, and needs neither.
 
-**Each choice paints the surface and the text itself.** The picker takes its colours from the select
-unless an option brings its own, so a fill you make translucent would otherwise be what the open
-list is drawn on. In an opaque palette this changes nothing you can see. A `multiple` control is
-left alone: its list is in the box, and the platform marks a chosen option by painting its
-background, which a colour here would paint out.
+**Each choice paints the surface itself.** The picker takes its colours from the select unless an
+option brings its own, so a fill you make translucent would otherwise be what the open list is drawn
+on. In an opaque palette this changes nothing you can see. A `multiple` control is left alone: its
+list is in the box, and the platform marks a chosen option by painting its background, which a
+colour here would paint out.
 
 **It follows the control's direction.** `padding-inline-end` is logical and flips on its own;
 `background-position` has no logical form, so the caret is mirrored explicitly against `:dir(rtl)`.

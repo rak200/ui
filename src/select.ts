@@ -274,10 +274,11 @@ export class UiSelect extends LitElement {
             opacity: 0.5;
         }
 
-        /* The choices paint the surface and the text themselves. The picker takes its
-           colours from the select unless an option brings its own, so a select whose fill
-           a host made translucent opens a list nobody can read — RFC 0003 measured it in
-           the dark scheme. In every opaque palette this renders exactly as before.
+        /* The choices paint the surface themselves. The picker takes its colours from the
+           select unless an option brings its own, so a select whose fill a host made
+           translucent opens a list nobody can read — RFC 0003 measured it in the dark
+           scheme. In every opaque palette this renders exactly as before. The text needs
+           no rule: an option inherits the select's, which is already the text.
 
            The drop-down only. A multiple select draws its options in the box, where the
            platform marks a chosen one by painting its background, and an author colour on
@@ -285,13 +286,6 @@ export class UiSelect extends LitElement {
            pointer stays the platform's either way; docs/select.md says so. */
         select:not([multiple]) :is(option, optgroup) {
             background-color: ${reference('--ui-color-surface')};
-            color: ${reference('--ui-color-text')};
-        }
-
-        /* Painting the text took the platform's dimming of an unavailable choice with it,
-           so it is given back in the colour this package says *unavailable* with. */
-        select:not([multiple]) option:disabled {
-            color: ${reference('--ui-color-text-muted')};
         }
 
         /* Read off the control's own aria-invalid, which this element now writes: it is

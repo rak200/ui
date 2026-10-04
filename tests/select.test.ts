@@ -774,44 +774,32 @@ describe('every visual decision it paints is a token', () => {
         expect(help.fontSize, '--ui-text-supporting').toBe('19px');
     });
 
-    it('lets each choice paint the surface and the text, so the picker never takes the fill', async () => {
+    it('lets each choice paint the surface, so the picker never takes the fill', async () => {
         // The picker takes its colours from the select unless an option brings its own, so
         // a fill a host made translucent would be what the open list is drawn on. Retuned
-        // and read back, so each colour is the name it was written with.
+        // and read back, so the colour is the name it was written with.
         const form = await mount(`
             <ui-select label="C" name="c">
                 <ui-option value="brl">Real</ui-option>
-                <ui-option value="usd" disabled>Dollar</ui-option>
                 <ui-optgroup label="Euro area">
                     <ui-option value="eur">Euro</ui-option>
-                </ui-optgroup>
-                <ui-optgroup label="Closed" disabled>
-                    <ui-option value="gbp">Pound</ui-option>
                 </ui-optgroup>
             </ui-select>
         `);
         const element = select(form);
 
         element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
-        element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
-        element.style.setProperty('--ui-color-text-muted', 'rgb(7, 8, 9)');
 
-        const [real, dollar, euro, pound] = [...box(element).options].map((option) =>
-            getComputedStyle(option),
-        ) as [CSSStyleDeclaration, CSSStyleDeclaration, CSSStyleDeclaration, CSSStyleDeclaration];
-        const [area] = [...box(element).querySelectorAll('optgroup')].map((group) =>
-            getComputedStyle(group),
-        ) as [CSSStyleDeclaration];
+        const [real, euro] = [...box(element).options].map(
+            (option) => getComputedStyle(option).backgroundColor,
+        );
+        const area = box(element).querySelector('optgroup');
 
-        expect(real.backgroundColor, 'a choice, on the surface').toBe('rgb(1, 2, 3)');
-        expect(real.color, 'in the text').toBe('rgb(4, 5, 6)');
-        expect(area.backgroundColor, 'a group heading, likewise').toBe('rgb(1, 2, 3)');
-        expect(area.color).toBe('rgb(4, 5, 6)');
-        expect(euro.backgroundColor, 'and a choice inside it').toBe('rgb(1, 2, 3)');
-        // Painting the text took the platform's dimming with it, so an unavailable choice
-        // is given it back — one it was written on, and one its group made unavailable.
-        expect(dollar.color, 'unavailable').toBe('rgb(7, 8, 9)');
-        expect(pound.color, 'unavailable through its group').toBe('rgb(7, 8, 9)');
+        expect(real, 'a choice').toBe('rgb(1, 2, 3)');
+        expect(area === null ? '' : getComputedStyle(area).backgroundColor, 'a group heading').toBe(
+            'rgb(1, 2, 3)',
+        );
+        expect(euro, 'and a choice inside it').toBe('rgb(1, 2, 3)');
     });
 
     it("leaves a multiple select's choices to the platform, which marks a chosen one", async () => {
