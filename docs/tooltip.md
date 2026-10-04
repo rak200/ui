@@ -180,17 +180,17 @@ resolve it — so the composition above is for a control of yours, not for one o
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
 
-| Part                 | Token                                  |
-| -------------------- | -------------------------------------- |
-| padding              | `--ui-space` ÷ 2 and `--ui-space`      |
-| gap from the trigger | `--ui-space` ÷ 2                       |
-| maximum width        | `--ui-space` × 40                      |
-| surface              | `--ui-color-surface`                   |
-| text                 | `--ui-color-text`                      |
-| boundary             | `--ui-color-border-overlay`            |
-| corner               | `--ui-radius`                          |
-| lift                 | `--ui-elevation-raised`                |
-| font                 | `--ui-font`, at `--ui-text-supporting` |
+| Part                 | Token                                                                       |
+| -------------------- | --------------------------------------------------------------------------- |
+| padding              | `--ui-space` ÷ 2 and `--ui-space`                                           |
+| gap from the trigger | `--ui-space` ÷ 2                                                            |
+| maximum width        | `--ui-space` × 40                                                           |
+| surface              | `--ui-color-surface`                                                        |
+| text                 | `--ui-color-text`                                                           |
+| boundary             | `--ui-color-border-overlay`                                                 |
+| corner               | `--ui-radius`                                                               |
+| lift                 | `--ui-elevation-raised`, lit in the tip's text if written in `currentColor` |
+| font                 | `--ui-font`, at `--ui-text-supporting`                                      |
 
 **It is a small raised surface rather than an inverted one.** A dark bubble on a light page is the
 convention, and it would need a colour pair no other component in this kit uses — a category invented

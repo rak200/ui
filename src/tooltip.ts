@@ -133,6 +133,10 @@ export class UiTooltip extends LitElement {
             background: ${reference('--ui-color-surface')};
             border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
+            /* On the tip itself, where the card and the menu draw theirs on a layer in the
+               accent: the tip is the host's element, so nothing of this component's sits
+               around it to carry another colour, and a shadow a theme writes in
+               currentColor is lit in the tip's text. */
             box-shadow: ${reference('--ui-elevation-raised')};
         }
 

@@ -150,7 +150,7 @@ knows.** The sheet answers `prefers-contrast: more` the way it answers reduced m
 surface, the accent and the focus ring go to black and white, with the dark scheme on pure black.
 The accent's label follows on its own, being derived from the accent, and so do the border and the
 muted text, which mix toward the text. What floats over the page — a dialog, a tip, an open menu —
-is edged in the text itself. Every pair the text makes with a surface clears 7:1, WCAG's enhanced
+is edged in the text itself, and so is a toast, its icon with it. Every pair the text makes with a surface clears 7:1, WCAG's enhanced
 level.
 
 **The outcome colours stay where they are.** An error that turned grey would stop saying it is an
@@ -213,6 +213,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-color-success`     | a successful outcome                                    |
 | `--ui-color-warning`     | an outcome worth a second look                          |
 | `--ui-color-info`        | an outcome that is neither                              |
+| `--ui-color-toast-edge`  | the edge of a toast, its variant's colour by default    |
 | `--ui-color-scrim`       | the dim behind a modal                                  |
 | `--ui-radius`            | corner radius                                           |
 | `--ui-space`             | the spacing step components scale from                  |
@@ -261,7 +262,7 @@ That is stated rather than worked around, because the component that consumes it
 toward the text, so it is correct in both schemes by construction. The lift is the light scheme's
 cue; the edge is what both schemes have.
 
-### One token is lit in the control's own colour
+### A shadow written in `currentColor` is lit in its element's colour
 
 `--ui-elevation-control` is `none` until a theme writes one. **Write it in `currentColor`** and each
 control lights it in the colour of its state: the accent, or the danger on an invalid control. The
@@ -280,6 +281,11 @@ any control can change it. A control that cannot be used lights nothing. Every c
 the checkbox, the switch, the radio, the text fields, the select, the button and the menu's trigger.
 A button and the trigger light to `--ui-elevation-control-hover` under the pointer, which is the
 resting glow until a theme writes a brighter one.
+
+**`--ui-elevation-100` takes `currentColor` the same way.** The card and the open menu draw their lift
+on a layer in the accent, and a toast on one in its edge colour, `--ui-color-toast-edge` — its
+variant's, unless you set the name. The tooltip's tip is your own element, so it lights the lift in
+its text. The default palette's lift names its colour, so none of this changes how it renders.
 
 ## `defaults`
 

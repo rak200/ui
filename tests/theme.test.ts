@@ -213,6 +213,8 @@ describe('a theme, as the browser renders it', () => {
         const probe = document.createElement('div');
         probe.style.fontFamily = String(reference('--ui-font'));
         probe.style.borderRadius = String(reference('--ui-radius'));
+        // In the accent, which is the colour a raised surface's layer lights its lift in.
+        probe.style.color = String(reference('--ui-color-accent'));
         probe.style.boxShadow = String(reference('--ui-elevation-raised'));
         host.append(probe);
         document.body.append(style, host);
@@ -225,10 +227,11 @@ describe('a theme, as the browser renders it', () => {
 
         expect(getComputedStyle(probe).fontFamily).toContain('Courier New');
         expect(getComputedStyle(probe).borderRadius).toBe('8px');
-        // The raised surfaces read the elevation step, and Matrix makes it a glow whose
-        // colour follows the scheme: its middle green on white, its bright one on black.
-        expect(glow('light'), 'light').toContain('rgba(0, 143, 17');
-        expect(glow('dark'), 'dark').toContain('rgba(0, 255, 0');
+        // The raised surfaces read the elevation step, and Matrix makes it a glow in the
+        // colour it is lit in, which follows the scheme: its middle green on white at the
+        // ring's 0.54, its bright one on black at 0.45.
+        expect(glow('light'), 'light').toContain('color(srgb 0 0.560784 0.0666667 / 0.54)');
+        expect(glow('dark'), 'dark').toContain('color(srgb 0 1 0 / 0.45)');
     });
 
     it.each([

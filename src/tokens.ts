@@ -53,6 +53,12 @@ export const tokens = [
     // colour in the default palette and a second green beside success in a green one —
     // RFC 0003. A ground for the reason the other three are.
     '--ui-color-info',
+    // The edge of a toast, arriving with the answer to more contrast, which edges a toast in
+    // the text — RFC 0003. Its default is `currentColor`, and a toast's colour is its
+    // variant's, so each variant is edged in its own outcome colour with no formula per
+    // variant. Set, it edges every variant in that one colour, and a theme's glow on a toast
+    // is lit in it too.
+    '--ui-color-toast-edge',
     // The dim behind a modal, and a *ground* rather than a derivation even though every
     // other neutral here is derived. A derived neutral mixes toward the text, which is
     // what makes one formula right in both schemes — and it is exactly wrong for this
@@ -265,6 +271,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-color-warning': '#b45309',
     // Cyan-700, the step the other outcomes take, and held to their floor: 5.36:1.
     '--ui-color-info': '#0e7490',
+    // The colour of the toast it edges, which is its variant's.
+    '--ui-color-toast-edge': 'currentColor',
     // Half black. Enough to push the page behind a modal out of the reading order for the
     // eye as well as for the accessibility tree, and not so much that the context a modal
     // is *about* stops being visible. The alpha is the whole point, so this is the one
@@ -536,6 +544,8 @@ export const moreContrast: Readonly<
     '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
     // What floats over the page edged in the text, which the mix toward it falls short of.
     '--ui-color-border-overlay': ['#000000', '#ffffff'],
+    // And a toast, whichever its variant: black and white, its icon with it.
+    '--ui-color-toast-edge': ['#000000', '#ffffff'],
 };
 
 /** The category every duration name shares, which is what reduced motion collapses. */

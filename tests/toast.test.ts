@@ -15,7 +15,7 @@ import '../src/icons/circle-check.js';
 import '../src/icons/triangle-alert.js';
 import '../src/icons/circle-x.js';
 import { reference } from '../src/reference.js';
-import type { DerivedToken, Token } from '../src/tokens.js';
+import { tokenStyleSheet, type DerivedToken, type Token } from '../src/tokens.js';
 import type { UiToast, UiToaster } from '../src/toast.js';
 
 /**
@@ -100,6 +100,17 @@ function dismisser(element: UiToast): HTMLElement {
 
     if (found === null) {
         throw new Error('the toast rendered no dismiss button');
+    }
+
+    return found;
+}
+
+/** One of the parts a toast exposes. */
+function part(element: UiToast, name: string): HTMLElement {
+    const found = element.shadowRoot?.querySelector<HTMLElement>(`[part='${name}']`) ?? null;
+
+    if (found === null) {
+        throw new Error(`the toast exposed no ${name}`);
     }
 
     return found;
@@ -454,7 +465,9 @@ describe('the icon, which tells the variant apart without its colour', () => {
 
         element.style.setProperty('--ui-color-success', 'rgb(1, 2, 3)');
 
-        expect(getComputedStyle(element).borderTopColor, 'the edge').toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(element, '::before').borderTopColor, 'the edge').toBe(
+            'rgb(1, 2, 3)',
+        );
         expect(getComputedStyle(icon(element)).color, 'the icon').toBe('rgb(1, 2, 3)');
     });
 
@@ -492,7 +505,7 @@ describe('the edge, which agrees with the message rather than replacing it', () 
         const host = await mount(
             `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
         );
-        const styles = getComputedStyle(toast(host));
+        const styles = getComputedStyle(toast(host), '::before');
 
         // One colour on every side, where the stripe used to meet the derived border at the
         // corners as a break.
@@ -500,6 +513,68 @@ describe('the edge, which agrees with the message rather than replacing it', () 
         expect(styles.borderTopColor, 'and the rest of it').toBe(resolved(token));
         expect(styles.borderInlineEndColor).toBe(resolved(token));
         expect(styles.borderBottomColor).toBe(resolved(token));
+    });
+
+    it.each(tones)(
+        'edges a %s toast, its icon and its lift in --ui-color-toast-edge once it is set',
+        async (variant) => {
+            const host = await mount(
+                `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
+            );
+            const element = toast(host);
+
+            element.style.setProperty('--ui-color-toast-edge', 'rgb(1, 2, 3)');
+            element.style.setProperty('--ui-elevation-raised', '0 0 0 1px currentColor');
+
+            const edge = getComputedStyle(element, '::before');
+
+            expect(edge.borderTopColor, 'the edge').toBe('rgb(1, 2, 3)');
+            expect(edge.borderInlineStartColor, 'the stripe').toBe('rgb(1, 2, 3)');
+            expect(edge.boxShadow, 'a lift written in currentColor').toBe(
+                'rgb(1, 2, 3) 0px 0px 0px 1px',
+            );
+            expect(getComputedStyle(part(element, 'icon')).color, 'the icon').toBe('rgb(1, 2, 3)');
+        },
+    );
+
+    it('lights a lift written in currentColor in the variant, as the edge is', async () => {
+        const host = await mount(
+            '<ui-toaster><ui-toast variant="danger" duration="0">Done.</ui-toast></ui-toaster>',
+        );
+
+        toast(host).style.setProperty('--ui-elevation-raised', '0 0 0 1px currentColor');
+
+        expect(getComputedStyle(toast(host), '::before').boxShadow).toBe(
+            `${resolved('--ui-color-danger')} 0px 0px 0px 1px`,
+        );
+    });
+
+    it('edges every variant in the text, its icon too, when the reader asks for more contrast', async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.head.append(style);
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'prefers-contrast', value: 'more' }],
+        });
+
+        try {
+            for (const variant of ['info', 'success', 'warning', 'danger'] as const) {
+                const host = await mount(
+                    `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
+                );
+
+                expect(getComputedStyle(toast(host), '::before').borderTopColor, variant).toBe(
+                    'rgb(0, 0, 0)',
+                );
+                expect(getComputedStyle(part(toast(host), 'icon')).color, variant).toBe(
+                    'rgb(0, 0, 0)',
+                );
+                host.remove();
+            }
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+            style.remove();
+        }
     });
 
     it('tells the four apart, so the table above is not four names for one colour', async () => {
@@ -510,7 +585,7 @@ describe('the edge, which agrees with the message rather than replacing it', () 
                 `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
             );
 
-            painted.add(getComputedStyle(toast(host)).borderInlineStartColor);
+            painted.add(getComputedStyle(toast(host), '::before').borderInlineStartColor);
         }
 
         expect(painted.size).toBe(4);
@@ -573,16 +648,29 @@ describe('the values, all of which come from the token layer', () => {
         element.style.setProperty('--ui-elevation-raised', 'rgb(1, 2, 3) 0px 4px 8px 0px');
 
         const styles = getComputedStyle(element);
+        // The edge and the lift are drawn on a layer over the toast, in the edge's colour.
+        const edge = getComputedStyle(element, '::before');
 
         expect(styles.columnGap).toBe('10px');
         expect(styles.padding).toBe('10px 15px');
-        expect(styles.borderTopColor).toBe('rgb(1, 2, 3)');
+        // The toast holds the edge's room, and the layer draws in it.
         expect(styles.borderInlineStartWidth).toBe('5px');
+        expect(styles.borderTopWidth).toBe('1px');
+        expect(edge.borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(edge.borderInlineStartWidth).toBe('5px');
+        expect(edge.borderTopWidth).toBe('1px');
+        expect(edge.top).toBe('-1px');
+        expect(edge.insetInlineStart).toBe('-5px');
+        expect(edge.position).toBe('absolute');
+        expect(styles.position).toBe('relative');
+        expect(edge.pointerEvents).toBe('none');
         expect(styles.borderRadius).toBe('11px');
+        expect(edge.borderTopLeftRadius).toBe('11px');
         expect(styles.backgroundColor).toBe('rgb(4, 5, 6)');
-        expect(styles.color).toBe('rgb(7, 8, 9)');
+        expect(getComputedStyle(part(element, 'message')).color).toBe('rgb(7, 8, 9)');
         expect(styles.fontFamily).toBe('Courier');
-        expect(styles.boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
+        expect(edge.boxShadow).toBe('rgb(1, 2, 3) 0px 4px 8px 0px');
+        expect(styles.boxShadow, 'and none on the toast').toBe('none');
     });
 
     it('declares the text colour with the surface, never half the pair', async () => {
@@ -591,7 +679,7 @@ describe('the values, all of which come from the token layer', () => {
         // place it was measured for.
         const host = await mount(`<div style="color: rgb(1, 2, 3)">${fixture}</div>`);
 
-        expect(getComputedStyle(toast(host)).color).toBe('rgb(31, 41, 55)');
+        expect(getComputedStyle(part(toast(host), 'message')).color).toBe('rgb(31, 41, 55)');
     });
 
     it('takes the entrance from the host', async () => {

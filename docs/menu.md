@@ -180,7 +180,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | boundary         | `--ui-color-border-overlay`                                                                   |
 | separator        | `--ui-color-border`                                                                           |
 | corner           | `--ui-radius`                                                                                 |
-| lift             | `--ui-elevation-raised`                                                                       |
+| lift             | `--ui-elevation-raised`, lit in the accent if written in `currentColor`                       |
 | item padding     | `--ui-space` ÷ 2 and `--ui-space`                                                             |
 | item hover       | `--ui-color-hover`                                                                            |
 | focus ring       | `--ui-color-focus`                                                                            |

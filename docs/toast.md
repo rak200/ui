@@ -191,26 +191,30 @@ this component:
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
 
-| Part          | Token                                                                         |
-| ------------- | ----------------------------------------------------------------------------- |
-| stack padding | `--ui-space` × 2                                                              |
-| stack width   | capped at `--ui-space` × 44, and at the viewport                              |
-| gap           | `--ui-space`                                                                  |
-| toast padding | `--ui-space` and `--ui-space` × 1.5                                           |
-| edge          | all the way round in the variant's colour, `--ui-space` ÷ 2 wide at the start |
-| icon          | the variant's colour, at `--ui-icon-size` and `--ui-icon-stroke`              |
-| surface       | `--ui-color-surface`                                                          |
-| text          | `--ui-color-text`                                                             |
-| corner        | `--ui-radius`                                                                 |
-| lift          | `--ui-elevation-raised`                                                       |
-| font          | `--ui-font`                                                                   |
-| dismiss mark  | `--ui-icon-size` and `--ui-icon-stroke`, at 24 × 24 minimum                   |
-| motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit`                |
+| Part          | Token                                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------------------------------- |
+| stack padding | `--ui-space` × 2                                                                                                |
+| stack width   | capped at `--ui-space` × 44, and at the viewport                                                                |
+| gap           | `--ui-space`                                                                                                    |
+| toast padding | `--ui-space` and `--ui-space` × 1.5                                                                             |
+| edge          | `--ui-color-toast-edge`, the variant's colour unless set, all the way round, `--ui-space` ÷ 2 wide at the start |
+| icon          | the edge's colour, at `--ui-icon-size` and `--ui-icon-stroke`                                                   |
+| surface       | `--ui-color-surface`                                                                                            |
+| text          | `--ui-color-text`                                                                                               |
+| corner        | `--ui-radius`                                                                                                   |
+| lift          | `--ui-elevation-raised`, lit in the edge's colour if written in `currentColor`                                  |
+| font          | `--ui-font`                                                                                                     |
+| dismiss mark  | `--ui-icon-size` and `--ui-icon-stroke`, at 24 × 24 minimum                                                     |
+| motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit`                                                  |
 
 A toast is **bounded as well as lifted**, for the reason [`<ui-card>`](card.md) gives: a shadow is one
 value in both schemes and does almost nothing on a dark page, where the edge is what separates the
 surface from what is under it. **The edge is one colour all the way round**: a stripe in the
 variant's colour beside three sides in the derived border met at the corners as a break.
+
+**That colour is `--ui-color-toast-edge`**, which is the variant's until something sets it. Set it
+and every variant is edged in that one colour, the icon with it — which is what the answer to
+`prefers-contrast: more` does, in the text. A lift a theme writes in `currentColor` is lit in it too.
 
 | Part                            | Aims at                                 |
 | ------------------------------- | --------------------------------------- |

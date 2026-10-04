@@ -426,6 +426,15 @@ its colour to the accent, or to the danger when the control is invalid. The alte
 per state, every one of them a value each theme would have to write and keep in step with its
 accent.
 
+**The raised surfaces' lift takes `currentColor` the same way**, so a toast can glow in its own edge
+where the card glows in the accent. Each draws its lift on a layer of its own, because a surface's
+colour is its text: the card and the open menu's layer is in the accent, the toast's in
+`--ui-color-toast-edge`, the variant's colour until the answer to more contrast sets it to the text.
+A positioned layer is painted over the content it covers, so each takes no pointer — measured, a
+click inside a card otherwise lands on the card. **The tooltip is the exception**: its tip is the
+host's element, reached through `::slotted()`, and nothing of the component's sits around it, so its
+lift is lit in its text.
+
 ### A category arrives with the component that consumes it
 
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not

@@ -58,7 +58,9 @@ A terminal's green on near-black in the dark scheme, and the same idea on white 
 
 **The raised surfaces glow**, through `--ui-elevation-100` — the step the card, the menu, the toast
 and the tip already read, so no name is added for it. A glow is a shadow at no offset, and the part
-of it that follows the scheme is its colour, which `light-dark()` can carry inside a shadow.
+of it that follows the scheme is its colour, which `light-dark()` can carry inside a shadow. It is
+written in `currentColor`: the card and the open menu light it in the accent's green, a toast in its
+edge's colour, and the tip, which is your own element, in its text.
 
 **The controls wear the same ring and glow**, through `--ui-elevation-control`, at the same
 strengths. It is written in `currentColor`, so a control is lit in its own colour: the green of the
