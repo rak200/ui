@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.11](https://github.com/rak200/ui/compare/0.6.10...0.6.11) (2026-10-04)
+
+
+### Bug Fixes
+
+* a neutral hover a reader can see, at 16% and 26% against a floor of 1.25 ([#235](https://github.com/rak200/ui/issues/235)) ([69d675c](https://github.com/rak200/ui/commit/69d675cb9c848f0240f02e2920a0e8b5aaae8b18))
+
 ## [0.6.10](https://github.com/rak200/ui/compare/0.6.9...0.6.10) (2026-09-25)
 
 
