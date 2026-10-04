@@ -7,6 +7,13 @@ import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
 import '../src/toast.js';
+// The vendored glyphs the toast's icons are copied from, registered here so the copy can be
+// compared with them. Importing them is the test's doing and never the toast's.
+import '../src/icon.js';
+import '../src/icons/info.js';
+import '../src/icons/circle-check.js';
+import '../src/icons/triangle-alert.js';
+import '../src/icons/circle-x.js';
 import { reference } from '../src/reference.js';
 import type { DerivedToken, Token } from '../src/tokens.js';
 import type { UiToast, UiToaster } from '../src/toast.js';
@@ -111,7 +118,7 @@ function region(element: UiToaster, live: string): HTMLElement {
 
 /** The dismiss mark, drawn on the adopted grid rather than imported as a glyph module. */
 function mark(element: UiToast): SVGSVGElement {
-    const found = element.shadowRoot?.querySelector('svg') ?? null;
+    const found = element.shadowRoot?.querySelector<SVGSVGElement>('button svg') ?? null;
 
     if (found === null) {
         throw new Error('the toast drew no dismiss mark');
@@ -374,18 +381,113 @@ describe('ui-toast', () => {
     });
 });
 
-describe('the edge, which agrees with the message rather than replacing it', () => {
-    it.each([
-        ['info', '--ui-color-accent'],
-        ['success', '--ui-color-success'],
-        ['warning', '--ui-color-warning'],
-        ['danger', '--ui-color-danger'],
-    ] as const)('paints a %s toast from %s', async (variant, token) => {
+/** Each variant, and the colour its edge and its icon are painted from. */
+const tones = [
+    ['info', '--ui-color-info'],
+    ['success', '--ui-color-success'],
+    ['warning', '--ui-color-warning'],
+    ['danger', '--ui-color-danger'],
+] as const;
+
+/**
+ * The icon, which tells the variant by its shape, so colour is not the only thing that does —
+ * WCAG 1.4.1, and the one cue that survives forced colors, where the edge goes flat.
+ */
+describe('the icon, which tells the variant apart without its colour', () => {
+    /** The icon a toast draws, which is the one svg in it that is not the dismiss mark. */
+    function icon(element: UiToast): SVGSVGElement {
+        const found = element.shadowRoot?.querySelector<SVGSVGElement>('svg[part=icon]');
+
+        if (found === null || found === undefined) {
+            throw new Error('the toast drew no icon');
+        }
+
+        return found;
+    }
+
+    /** The shapes inside an svg, without the markers a template leaves between them. */
+    function geometry(drawing: SVGSVGElement): string {
+        return [...drawing.children].map((shape) => shape.outerHTML).join('');
+    }
+
+    it.each(tones)('paints a %s icon from %s, the colour of its edge', async (variant, token) => {
         const host = await mount(
             `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
         );
 
-        expect(getComputedStyle(toast(host)).borderInlineStartColor).toBe(resolved(token));
+        expect(getComputedStyle(icon(toast(host))).color).toBe(resolved(token));
+    });
+
+    it.each([
+        ['info', 'info'],
+        ['success', 'circle-check'],
+        ['warning', 'triangle-alert'],
+        ['danger', 'circle-x'],
+    ] as const)("draws a %s toast's icon as the vendored %s", async (variant, name) => {
+        const host = await mount(
+            `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
+        );
+        const vendored = document.createElement('ui-icon');
+        vendored.setAttribute('name', name);
+        host.append(vendored);
+        await vendored.updateComplete;
+
+        const drawn = vendored.shadowRoot?.querySelector('svg');
+
+        if (drawn === null || drawn === undefined) {
+            throw new Error(`the registry has no ${name}`);
+        }
+
+        // Copied rather than imported, so that importing a toast registers nothing — and
+        // compared here, so the copy is checked against the set it was copied from.
+        expect(geometry(icon(toast(host)))).toBe(geometry(drawn));
+    });
+
+    it("takes the edge and the icon from the host, through the variant's own name", async () => {
+        // Read back from a retuned name rather than from the default, which is what tells a
+        // colour from a fallback: an unresolvable reference would leave both the edge and the
+        // expectation at the text colour and agree.
+        const host = await mount(
+            '<ui-toaster><ui-toast variant="success" duration="0">Done.</ui-toast></ui-toaster>',
+        );
+        const element = toast(host);
+
+        element.style.setProperty('--ui-color-success', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(element).borderTopColor, 'the edge').toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(icon(element)).color, 'the icon').toBe('rgb(1, 2, 3)');
+    });
+
+    it('follows a variant that changes after it was drawn', async () => {
+        const host = await mount(fixture);
+        const before = geometry(icon(toast(host)));
+
+        toast(host).variant = 'danger';
+        await toast(host).updateComplete;
+
+        expect(geometry(icon(toast(host)))).not.toBe(before);
+    });
+
+    it('is hidden from the accessibility tree, which the message already covers', async () => {
+        const host = await mount(fixture);
+
+        expect(icon(toast(host)).getAttribute('aria-hidden')).toBe('true');
+    });
+});
+
+describe('the edge, which agrees with the message rather than replacing it', () => {
+    it.each(tones)('edges a %s toast all the way round from %s', async (variant, token) => {
+        const host = await mount(
+            `<ui-toaster><ui-toast variant="${variant}" duration="0">Done.</ui-toast></ui-toaster>`,
+        );
+        const styles = getComputedStyle(toast(host));
+
+        // One colour on every side, where the stripe used to meet the derived border at the
+        // corners as a break.
+        expect(styles.borderInlineStartColor, 'the stripe').toBe(resolved(token));
+        expect(styles.borderTopColor, 'and the rest of it').toBe(resolved(token));
+        expect(styles.borderInlineEndColor).toBe(resolved(token));
+        expect(styles.borderBottomColor).toBe(resolved(token));
     });
 
     it('tells the four apart, so the table above is not four names for one colour', async () => {
@@ -451,7 +553,8 @@ describe('the values, all of which come from the token layer', () => {
 
         element.style.setProperty('--ui-space', '10px');
         element.style.setProperty('--ui-radius', '11px');
-        element.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        // The edge is the variant's colour, and the fixture's variant is the default, info.
+        element.style.setProperty('--ui-color-info', 'rgb(1, 2, 3)');
         element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
         element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
         element.style.setProperty('--ui-font', 'Courier');
@@ -613,7 +716,7 @@ describe('the values, all of which come from the token layer', () => {
         expect(styles.outlineWidth).toBe('2px');
     });
 
-    it('exposes the four parts a host restyles through', async () => {
+    it('exposes the five parts a host restyles through', async () => {
         const host = await mount(fixture);
 
         expect(region(toaster(host), 'polite').getAttribute('part')).toBe('polite');
@@ -622,6 +725,7 @@ describe('the values, all of which come from the token layer', () => {
             toast(host).shadowRoot?.querySelector('[part=message]')?.textContent,
         ).not.toBeUndefined();
         expect(dismisser(toast(host)).getAttribute('part')).toBe('dismiss');
+        expect(toast(host).shadowRoot?.querySelector('svg')?.getAttribute('part')).toBe('icon');
     });
 });
 

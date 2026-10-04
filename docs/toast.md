@@ -95,7 +95,7 @@ keeps the half that is right for a stack.
 
 |           | Announced   | Expires                     | Edge                 |
 | --------- | ----------- | --------------------------- | -------------------- |
-| `info`    | politely    | after `duration`            | `--ui-color-accent`  |
+| `info`    | politely    | after `duration`            | `--ui-color-info`    |
 | `success` | politely    | after `duration`            | `--ui-color-success` |
 | `warning` | politely    | after `duration`            | `--ui-color-warning` |
 | `danger`  | assertively | **never**, whatever you set | `--ui-color-danger`  |
@@ -108,9 +108,10 @@ is real and is stated rather than hidden: **there is no way to write an assertiv
 find yourself wanting one, the message is probably an error.
 
 **The colour is redundant, and must stay redundant.** WCAG 1.4.1 asks that colour never be the only
-carrier of information: write a message that says what happened, and let the edge agree with it. That
-is also what makes the component correct under `forced-colors`, where the edge goes flat and nothing
-is lost.
+carrier of information: write a message that says what happened, and the edge and an icon agree with
+it. The icon tells the variants apart by its shape — Lucide's `info`, `circle-check`,
+`triangle-alert` and `circle-x` — so they stay apart under `forced-colors`, where the edge goes
+flat. It is hidden from the accessibility tree, so it changes nothing that is announced.
 
 ## Dismissal
 
@@ -190,30 +191,32 @@ this component:
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
 
-| Part          | Token                                                          |
-| ------------- | -------------------------------------------------------------- |
-| stack padding | `--ui-space` × 2                                               |
-| stack width   | capped at `--ui-space` × 44, and at the viewport               |
-| gap           | `--ui-space`                                                   |
-| toast padding | `--ui-space` and `--ui-space` × 1.5                            |
-| edge          | `--ui-space` ÷ 2 wide, in the variant's colour                 |
-| surface       | `--ui-color-surface`                                           |
-| text          | `--ui-color-text`                                              |
-| boundary      | `--ui-color-border`                                            |
-| corner        | `--ui-radius`                                                  |
-| lift          | `--ui-elevation-raised`                                        |
-| font          | `--ui-font`                                                    |
-| dismiss mark  | `--ui-icon-size` and `--ui-icon-stroke`, at 24 × 24 minimum    |
-| motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit` |
+| Part          | Token                                                                         |
+| ------------- | ----------------------------------------------------------------------------- |
+| stack padding | `--ui-space` × 2                                                              |
+| stack width   | capped at `--ui-space` × 44, and at the viewport                              |
+| gap           | `--ui-space`                                                                  |
+| toast padding | `--ui-space` and `--ui-space` × 1.5                                           |
+| edge          | all the way round in the variant's colour, `--ui-space` ÷ 2 wide at the start |
+| icon          | the variant's colour, at `--ui-icon-size` and `--ui-icon-stroke`              |
+| surface       | `--ui-color-surface`                                                          |
+| text          | `--ui-color-text`                                                             |
+| corner        | `--ui-radius`                                                                 |
+| lift          | `--ui-elevation-raised`                                                       |
+| font          | `--ui-font`                                                                   |
+| dismiss mark  | `--ui-icon-size` and `--ui-icon-stroke`, at 24 × 24 minimum                   |
+| motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit`                |
 
 A toast is **bounded as well as lifted**, for the reason [`<ui-card>`](card.md) gives: a shadow is one
-value in both schemes and does almost nothing on a dark page, where the derived boundary is what
-separates the surface from what is under it.
+value in both schemes and does almost nothing on a dark page, where the edge is what separates the
+surface from what is under it. **The edge is one colour all the way round**: a stripe in the
+variant's colour beside three sides in the derived border met at the corners as a break.
 
 | Part                            | Aims at                                 |
 | ------------------------------- | --------------------------------------- |
 | `<ui-toaster>::part(polite)`    | the polite region — the upper column    |
 | `<ui-toaster>::part(assertive)` | the assertive region — the lower column |
+| `<ui-toast>::part(icon)`        | the variant's icon                      |
 | `<ui-toast>::part(message)`     | the box around your message             |
 | `<ui-toast>::part(dismiss)`     | the dismiss button                      |
 

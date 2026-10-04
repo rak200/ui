@@ -49,6 +49,11 @@ export const tokens = [
     // expected to replace with their own brand's, which is what a ground is for.
     '--ui-color-success',
     '--ui-color-warning',
+    // The fourth outcome, the one that is neither good nor bad news, arriving with the
+    // toast that reads it. It read the accent before, which made a notice the buttons'
+    // colour in the default palette and a second green beside success in a green one —
+    // RFC 0003. A ground for the reason the other three are.
+    '--ui-color-info',
     // The dim behind a modal, and a *ground* rather than a derivation even though every
     // other neutral here is derived. A derived neutral mixes toward the text, which is
     // what makes one formula right in both schemes — and it is exactly wrong for this
@@ -238,6 +243,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     // knobs — a host who retunes the focus ring has said nothing about warnings.
     '--ui-color-success': '#15803d',
     '--ui-color-warning': '#b45309',
+    // Cyan-700, the step the other outcomes take, and held to their floor: 5.36:1.
+    '--ui-color-info': '#0e7490',
     // Half black. Enough to push the page behind a modal out of the reading order for the
     // eye as well as for the accessibility tree, and not so much that the context a modal
     // is *about* stops being visible. The alpha is the whole point, so this is the one
@@ -403,6 +410,8 @@ export const darkScheme: Readonly<Partial<Record<Token, string>>> = {
     // the half of the pair a reader is most likely to need.
     '--ui-color-success': '#4ade80',
     '--ui-color-warning': '#fbbf24',
+    // Cyan-400, inverted with the other three for the same reason: 9.82:1.
+    '--ui-color-info': '#22d3ee',
 };
 
 /** The category every duration name shares, which is what reduced motion collapses. */
