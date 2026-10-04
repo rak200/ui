@@ -251,12 +251,13 @@ export class UiToast extends LitElement {
             border-color: ${reference('--ui-color-danger')};
         }
 
-        /* The icon takes the edge's colour. An eighth of an em above and below brings the
-           default 1.25em glyph to 1.5em, the line-height a page's text usually sets, so it
-           sits on the message's first line. */
+        /* The icon takes the edge's colour, and sits centred on the message's first line,
+           whatever height the page's text gives a line: half of what one line has to spare
+           over the glyph, above it and below. A fixed eighth of an em assumed a line-height
+           of 1.5 and sat low under a monospace face at normal — measured, under Matrix. */
         .icon {
             flex: none;
-            margin-block: 0.125em;
+            margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
             color: ${reference('--ui-color-info')};
         }
 
