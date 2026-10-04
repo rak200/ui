@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/rak200/ui/compare/0.6.15...0.7.0) (2026-10-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* the accent's label is derived, and its states move toward the pole with room ([#253](https://github.com/rak200/ui/issues/253))
+
+### Features
+
+* a reader who asks for more contrast gets black and white, answered in the token layer ([#258](https://github.com/rak200/ui/issues/258)) ([f66a7fd](https://github.com/rak200/ui/commit/f66a7fdc3ef87467ab6b778235183c0bfd6f85f1))
+* the accent's label is derived, and its states move toward the pole with room ([#253](https://github.com/rak200/ui/issues/253)) ([8425613](https://github.com/rak200/ui/commit/8425613ff2e2372f6c52375126d2d5f0c855131d))
+
 ## [0.6.15](https://github.com/rak200/ui/compare/0.6.14...0.6.15) (2026-10-04)
 
 
