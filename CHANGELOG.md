@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.2](https://github.com/rak200/ui/compare/0.7.1...0.7.2) (2026-10-04)
+
+
+### Features
+
+* a raised surface's glow is lit in its own colour, and a toast's in its edge ([#270](https://github.com/rak200/ui/issues/270)) ([51f01b6](https://github.com/rak200/ui/commit/51f01b6daec1c867f18363bf1db83753cfc911f6))
+* a theme lights a control's glow in the control's own colour ([#263](https://github.com/rak200/ui/issues/263)) ([686d585](https://github.com/rak200/ui/commit/686d5857a1b6d5c881433dcef9cca2d3b760f4f8))
+* a theme's glow lights the buttons and the menu's trigger, brighter under the pointer ([#269](https://github.com/rak200/ui/issues/269)) ([bf1747e](https://github.com/rak200/ui/commit/bf1747ed623129e0161362ffb273a68bafa85127))
+* a theme's glow lights the text fields and the select ([#266](https://github.com/rak200/ui/issues/266)) ([ef6a9c4](https://github.com/rak200/ui/commit/ef6a9c45784b715783677ae4bf3dba53fbf3a65f))
+* what floats over the page is edged in the text when the reader asks for more contrast ([#262](https://github.com/rak200/ui/issues/262)) ([16c437f](https://github.com/rak200/ui/commit/16c437fea0edb5b0a234b02fb2d8def861a0b6d7))
+
 ## [0.7.1](https://github.com/rak200/ui/compare/0.7.0...0.7.1) (2026-10-04)
 
 
