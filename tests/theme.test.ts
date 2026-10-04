@@ -9,6 +9,7 @@ import meta, { Matrix } from '../stories/theme.stories.js';
 import { Defaults } from '../stories/tokens.stories.js';
 import tokensMeta from '../stories/tokens.stories.js';
 import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import '../src/checkbox.js';
 import { reference } from '../src/reference.js';
 import {
     derivedTokens,
@@ -228,6 +229,39 @@ describe('a theme, as the browser renders it', () => {
         expect(glow('light'), 'light').toContain('rgba(0, 143, 17');
         expect(glow('dark'), 'dark').toContain('rgba(0, 255, 0');
     });
+
+    it.each([
+        // Its accent at the raised surfaces' strengths, the ring 0.54 and the glow 0.45 on
+        // white and the other way round on black; an invalid control in the danger.
+        ['light', '', '0 0.560784 0.0666667', '0.54', '0.45'],
+        ['dark', '', '0 1 0', '0.45', '0.54'],
+        ['light', 'Accept the terms.', '0.72549 0.109804 0.109804', '0.54', '0.45'],
+        ['dark', 'Accept the terms.', '0.972549 0.443137 0.443137', '0.45', '0.54'],
+    ] as const)(
+        'lights a control in its own colour, in %s with the error %j',
+        async (scheme, error, colour, ring, spread) => {
+            const style = document.createElement('style');
+            style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+
+            const host = document.createElement('div');
+            host.dataset['uiTheme'] = matrix.name;
+            host.style.colorScheme = scheme;
+            host.innerHTML = `<ui-checkbox label="Terms" error="${error}"></ui-checkbox>`;
+            document.body.append(style, host);
+
+            const element = host.querySelector('ui-checkbox');
+            await element?.updateComplete;
+            const box = element?.renderRoot.querySelector('input');
+
+            if (box === null || box === undefined) {
+                throw new Error('the checkbox rendered no control');
+            }
+
+            expect(getComputedStyle(box).boxShadow).toBe(
+                `color(srgb ${colour} / ${ring}) 0px 0px 0px 1px, color(srgb ${colour} / ${spread}) 0px 0px 18px 0px`,
+            );
+        },
+    );
 
     it("derives its accent's label from its own accent", () => {
         // Black on Matrix's green in both schemes: the label is the accent's pole, and both

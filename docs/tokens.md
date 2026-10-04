@@ -203,28 +203,29 @@ finish before closing, so it is the thing that would have waited forever.
 
 The names that have a default and are emitted at `:root` — the **ground** half of the set.
 
-| Token                | Covers                                  |
-| -------------------- | --------------------------------------- |
-| `--ui-color-accent`  | the accent surface of a primary control |
-| `--ui-color-surface` | a neutral surface                       |
-| `--ui-color-text`    | body and secondary text                 |
-| `--ui-color-focus`   | the focus ring — see the floor below    |
-| `--ui-color-danger`  | error text                              |
-| `--ui-color-success` | a successful outcome                    |
-| `--ui-color-warning` | an outcome worth a second look          |
-| `--ui-color-info`    | an outcome that is neither              |
-| `--ui-color-scrim`   | the dim behind a modal                  |
-| `--ui-radius`        | corner radius                           |
-| `--ui-space`         | the spacing step components scale from  |
-| `--ui-font`          | the font stack                          |
-| `--ui-duration-100`  | the first step of the duration scale    |
-| `--ui-easing-state`  | the curve a state change follows        |
-| `--ui-easing-enter`  | the curve an overlay arrives along      |
-| `--ui-easing-exit`   | the curve it leaves along               |
-| `--ui-icon-size`     | how big a glyph is drawn                |
-| `--ui-icon-stroke`   | how heavy its stroke is, on a 24 grid   |
-| `--ui-elevation-100` | the first step of the elevation scale   |
-| `--ui-text-100`      | the first step of the type scale        |
+| Token                    | Covers                                                  |
+| ------------------------ | ------------------------------------------------------- |
+| `--ui-color-accent`      | the accent surface of a primary control                 |
+| `--ui-color-surface`     | a neutral surface                                       |
+| `--ui-color-text`        | body and secondary text                                 |
+| `--ui-color-focus`       | the focus ring — see the floor below                    |
+| `--ui-color-danger`      | error text                                              |
+| `--ui-color-success`     | a successful outcome                                    |
+| `--ui-color-warning`     | an outcome worth a second look                          |
+| `--ui-color-info`        | an outcome that is neither                              |
+| `--ui-color-scrim`       | the dim behind a modal                                  |
+| `--ui-radius`            | corner radius                                           |
+| `--ui-space`             | the spacing step components scale from                  |
+| `--ui-font`              | the font stack                                          |
+| `--ui-duration-100`      | the first step of the duration scale                    |
+| `--ui-easing-state`      | the curve a state change follows                        |
+| `--ui-easing-enter`      | the curve an overlay arrives along                      |
+| `--ui-easing-exit`       | the curve it leaves along                               |
+| `--ui-icon-size`         | how big a glyph is drawn                                |
+| `--ui-icon-stroke`       | how heavy its stroke is, on a 24 grid                   |
+| `--ui-elevation-100`     | the first step of the elevation scale                   |
+| `--ui-elevation-control` | the glow a theme lights a control with, none by default |
+| `--ui-text-100`          | the first step of the type scale                        |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -259,6 +260,24 @@ That is stated rather than worked around, because the component that consumes it
 [`<ui-card>`](card.md) draws a boundary as well as a shadow, and the boundary is derived — it mixes
 toward the text, so it is correct in both schemes by construction. The lift is the light scheme's
 cue; the edge is what both schemes have.
+
+### One token is lit in the control's own colour
+
+`--ui-elevation-control` is `none` until a theme writes one. **Write it in `currentColor`** and each
+control lights it in the colour of its state: the accent, or the danger on an invalid control. The
+box that draws it sets its own colour for that and has no text for the colour to reach, so one
+value serves every control:
+
+```css
+[data-ui-theme='neon'] {
+  --ui-elevation-control: 0 0 0 1px currentColor, 0 0 12px rgb(from currentColor r g b / 0.5);
+}
+```
+
+A colour named in the value instead lights every control in that one colour, an invalid one
+included — a variable inside a custom property is resolved where the property is declared, before
+any control can change it. A control that cannot be used lights nothing. Today the checkbox, the
+switch and the radio draw it.
 
 ## `defaults`
 

@@ -214,6 +214,10 @@ export class UiRadioGroup extends LitElement {
             background-repeat: no-repeat;
             border: 1px solid ${reference('--ui-color-border')};
             cursor: inherit;
+            /* The glow a theme lights a control with, as src/checkbox.ts draws it: lit in
+               this colour, the accent, and the danger below on an invalid group. */
+            color: ${reference('--ui-color-accent')};
+            box-shadow: ${reference('--ui-elevation-control')};
             /* What the mark is laid out against. */
             position: relative;
             /* The focus ring is deliberately not in this list, for the reason
@@ -269,9 +273,11 @@ export class UiRadioGroup extends LitElement {
             outline-offset: 2px;
         }
 
+        /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
         input:disabled {
             cursor: not-allowed;
             opacity: 0.5;
+            box-shadow: none;
         }
 
         /* The error is the SET's, not one option's: what a radio group gets wrong is the
@@ -285,6 +291,7 @@ export class UiRadioGroup extends LitElement {
            tree. The controls are in here now, so the rule names them. */
         .options[aria-invalid='true'] input {
             border-color: ${reference('--ui-color-danger')};
+            color: ${reference('--ui-color-danger')};
         }
 
         .help {

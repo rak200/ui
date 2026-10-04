@@ -416,6 +416,16 @@ the colour is the part a scheme has reason to change — RFC 0003 measured both.
 glow follows the scheme through the same `--ui-elevation-100` the card reads, with no second axis in
 the emitter.
 
+**A control's glow is written in `currentColor`, and the control decides what that is.** Matrix
+lights an invalid control in the danger and every other one in its green, and a theme declares its
+values on one element above all of them. A variable inside a custom property is resolved where the
+property is declared, so a glow that named its colour through one would reach every control already
+green, and an invalid one could not turn it red — measured. `currentColor` is resolved where the
+shadow is drawn instead, so `--ui-elevation-control` is one value, and the box that draws it sets
+its colour to the accent, or to the danger when the control is invalid. The alternative was a name
+per state, every one of them a value each theme would have to write and keep in step with its
+accent.
+
 ### A category arrives with the component that consumes it
 
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not

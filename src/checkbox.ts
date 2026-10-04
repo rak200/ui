@@ -95,6 +95,11 @@ const toggle = css`
         background-repeat: no-repeat;
         border: 1px solid ${reference('--ui-color-border')};
         cursor: inherit;
+        /* The glow a theme lights a control with, none in the default palette. A theme
+           writes it in currentColor, so this colour is what it is lit in: the accent, and
+           the danger below on an invalid control. The box has no text for it to reach. */
+        color: ${reference('--ui-color-accent')};
+        box-shadow: ${reference('--ui-elevation-control')};
         /* The focus ring is deliberately not in this list, for the reason src/button.ts
            gives beside its own: delaying the affordance that says *this is where you are*
            is the opposite of what it exists to do. */
@@ -130,8 +135,10 @@ const toggle = css`
         outline-offset: 2px;
     }
 
+    /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
     input:disabled {
         opacity: 0.5;
+        box-shadow: none;
     }
 
     /* Read off the host rather than through :has(), because the property is reflected and
@@ -143,13 +150,14 @@ const toggle = css`
 
     /* Read off the control's own aria-invalid rather than off a host attribute, which is
        the same source a screen reader uses. One property now feeds all three — the boundary,
-       the message and setValidity — so they cannot disagree. Only the boundary moves; a
-       red fill on a switch would read as *on*.
+       the message and setValidity — so they cannot disagree. The boundary moves, and the
+       glow with it where a theme lights one; a red fill on a switch would read as *on*.
 
        Not :host([error]): a reflected string property whose default is empty puts an
        empty attribute on the host, and an attribute-presence selector matches it. */
     input[aria-invalid='true'] {
         border-color: ${reference('--ui-color-danger')};
+        color: ${reference('--ui-color-danger')};
     }
 
     .error {
