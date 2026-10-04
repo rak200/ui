@@ -1019,3 +1019,4 @@ would live beside it.
 | 1    | [#248](https://github.com/rak200/ui/pull/248) | a toast's icon per variant, its edge in one colour, and info in cyan       |
 | 2    | [#250](https://github.com/rak200/ui/pull/250) | the floors per palette and per scheme, and the boundary on either side     |
 | 3    | [#253](https://github.com/rak200/ui/pull/253) | the accent's label derived, its states moving toward the pole with room    |
+| 4    | [#258](https://github.com/rak200/ui/pull/258) | prefers-contrast: more, black and white with its states written out        |
