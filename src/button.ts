@@ -46,11 +46,34 @@ export class UiButton extends LitElement {
            what it exists to do. */
             transition: background-color ${reference('--ui-duration-state')}
                 ${reference('--ui-easing-state')};
+            /* What a theme's glow is laid out against. */
+            position: relative;
+        }
+
+        /* What a theme's glow is drawn on: a layer over the button rather than the button,
+           because a theme writes the glow in currentColor and a button's own colour is its
+           label. inset: -1px reaches back over the border, so the glow hugs the boundary. */
+        button::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            color: ${reference('--ui-color-accent')};
+            box-shadow: ${reference('--ui-elevation-control')};
+        }
+
+        button:not(:disabled):hover::before {
+            box-shadow: ${reference('--ui-elevation-control-hover')};
         }
 
         button:disabled {
             cursor: not-allowed;
             opacity: 0.5;
+        }
+
+        /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
+        button:disabled::before {
+            box-shadow: none;
         }
 
         /* A visible focus ring is not decoration: removing it is the single most common

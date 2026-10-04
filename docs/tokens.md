@@ -276,8 +276,10 @@ value serves every control:
 
 A colour named in the value instead lights every control in that one colour, an invalid one
 included — a variable inside a custom property is resolved where the property is declared, before
-any control can change it. A control that cannot be used lights nothing. Every form control draws
-it: the checkbox, the switch, the radio, the text fields and the select.
+any control can change it. A control that cannot be used lights nothing. Every control draws it:
+the checkbox, the switch, the radio, the text fields, the select, the button and the menu's trigger.
+A button and the trigger light to `--ui-elevation-control-hover` under the pointer, which is the
+resting glow until a theme writes a brighter one.
 
 ## `defaults`
 
@@ -293,20 +295,21 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                        | Covers                                 |
-| ---------------------------- | -------------------------------------- |
-| `--ui-color-accent-contrast` | text, and every mark, on the accent    |
-| `--ui-color-accent-hover`    | a primary control under the pointer    |
-| `--ui-color-accent-pressed`  | a primary control being pressed        |
-| `--ui-color-hover`           | a neutral surface under the pointer    |
-| `--ui-color-pressed`         | a neutral surface being pressed        |
-| `--ui-color-border`          | the boundary of a control              |
-| `--ui-color-border-overlay`  | the edge of a dialog, a tip and a menu |
-| `--ui-color-text-muted`      | text that is not a value yet           |
-| `--ui-duration-state`        | how long a state change takes          |
-| `--ui-elevation-raised`      | a surface lifted off the page          |
-| `--ui-text-supporting`       | text that explains what is beside it   |
-| `--ui-color-surface-muted`   | a second surface tone, for grouping    |
+| Token                          | Covers                                        |
+| ------------------------------ | --------------------------------------------- |
+| `--ui-color-accent-contrast`   | text, and every mark, on the accent           |
+| `--ui-color-accent-hover`      | a primary control under the pointer           |
+| `--ui-color-accent-pressed`    | a primary control being pressed               |
+| `--ui-color-hover`             | a neutral surface under the pointer           |
+| `--ui-color-pressed`           | a neutral surface being pressed               |
+| `--ui-color-border`            | the boundary of a control                     |
+| `--ui-color-border-overlay`    | the edge of a dialog, a tip and a menu        |
+| `--ui-color-text-muted`        | text that is not a value yet                  |
+| `--ui-duration-state`          | how long a state change takes                 |
+| `--ui-elevation-raised`        | a surface lifted off the page                 |
+| `--ui-elevation-control-hover` | the glow a button lights to under the pointer |
+| `--ui-text-supporting`         | text that explains what is beside it          |
+| `--ui-color-surface-muted`     | a second surface tone, for grouping           |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -341,20 +344,21 @@ formulas['--ui-duration-state'];
 // 'var(--ui-duration-100, 150ms)'
 ```
 
-| Token                        | Computes                                                          |
-| ---------------------------- | ----------------------------------------------------------------- |
-| `--ui-color-accent-contrast` | white or black, whichever stands further from the accent          |
-| `--ui-color-accent-hover`    | the accent, 12% of the way toward the pole it has room to move to |
-| `--ui-color-accent-pressed`  | the accent, 22% of the way toward that pole                       |
-| `--ui-color-hover`           | the surface, 16% of the way toward the text                       |
-| `--ui-color-pressed`         | the surface, 26% of the way toward the text                       |
-| `--ui-color-border`          | the surface, 50% of the way toward the text                       |
-| `--ui-color-border-overlay`  | the same mix as `--ui-color-border`                               |
-| `--ui-color-text-muted`      | the surface, 65% of the way toward the text                       |
-| `--ui-duration-state`        | the first step of the duration scale                              |
-| `--ui-elevation-raised`      | the first step of the elevation scale                             |
-| `--ui-text-supporting`       | the first step of the type scale                                  |
-| `--ui-color-surface-muted`   | the surface, 5% of the way toward the text                        |
+| Token                          | Computes                                                          |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `--ui-color-accent-contrast`   | white or black, whichever stands further from the accent          |
+| `--ui-color-accent-hover`      | the accent, 12% of the way toward the pole it has room to move to |
+| `--ui-color-accent-pressed`    | the accent, 22% of the way toward that pole                       |
+| `--ui-color-hover`             | the surface, 16% of the way toward the text                       |
+| `--ui-color-pressed`           | the surface, 26% of the way toward the text                       |
+| `--ui-color-border`            | the surface, 50% of the way toward the text                       |
+| `--ui-color-border-overlay`    | the same mix as `--ui-color-border`                               |
+| `--ui-color-text-muted`        | the surface, 65% of the way toward the text                       |
+| `--ui-duration-state`          | the first step of the duration scale                              |
+| `--ui-elevation-raised`        | the first step of the elevation scale                             |
+| `--ui-elevation-control-hover` | the resting glow, `--ui-elevation-control`                        |
+| `--ui-text-supporting`         | the first step of the type scale                                  |
+| `--ui-color-surface-muted`     | the surface, 5% of the way toward the text                        |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no

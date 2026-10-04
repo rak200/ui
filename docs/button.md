@@ -90,6 +90,11 @@ The button answers a pointer, and every colour it answers with comes from the
 | Focus (keyboard) | a 2px `--ui-color-focus` ring, immediately                               |
 | Disabled         | nothing — a disabled button takes a pointer and does not respond to it   |
 
+**A theme can light a button as well**, through `--ui-elevation-control` at rest and
+`--ui-elevation-control-hover` under the pointer, both drawn in the accent on a layer over the
+button. Both are `none` in the default palette, and a disabled button lights nothing — see
+[tokens](tokens.md#one-token-is-lit-in-the-controls-own-colour).
+
 Three of those are deliberate rather than incidental. The pressed colour lands instantly because a
 click is over in about 100ms, so a 150ms transition would finish after the finger has left and the
 state would never be seen. The focus ring is left out of the transition for the same kind of reason

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `tokens.test.ts`,
 // which needs the same line for the same reason.
@@ -377,6 +377,83 @@ describe('the interaction states', () => {
  * `<ui-button>` is the element the proposal chose to prove it on: it is the one with no
  * supplementary text of any kind today, so there is nothing here to regress.
  */
+/**
+ * The glow a theme lights a control with, drawn on a layer over the button: a theme writes
+ * it in `currentColor`, and the button's own colour is its label.
+ */
+describe('the glow a theme lights', () => {
+    const glow = '0 0 0 1px currentColor';
+    const variants = [
+        ['primary', '<ui-button>Save</ui-button>'],
+        ['secondary', '<ui-button variant="secondary">Cancel</ui-button>'],
+    ] as const;
+
+    /** What the layer the glow is drawn on computes to. */
+    function lit(element: UiButton): CSSStyleDeclaration {
+        return getComputedStyle(inner(element), '::before');
+    }
+
+    beforeEach(async () => {
+        // Off every button, so a resting read is not a hovered one.
+        await cdp().send('Input.dispatchMouseEvent', {
+            type: 'mouseMoved',
+            x: 1,
+            y: 1,
+            buttons: 0,
+        });
+    });
+
+    it.each(variants)('lights nothing on a %s button by default', async (_variant, markup) => {
+        const element = await mount(markup);
+
+        expect(lit(element).boxShadow).toBe('none');
+    });
+
+    it.each(variants)(
+        'lights a %s button in the accent, against its boundary',
+        async (_v, markup) => {
+            const element = await mount(markup);
+
+            element.style.setProperty('--ui-elevation-control', glow);
+            element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+            element.style.setProperty('--ui-radius', '11px');
+
+            expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+            // Over the whole button, its border included, and at its corner.
+            expect(lit(element).position).toBe('absolute');
+            expect(lit(element).top).toBe('-1px');
+            expect(lit(element).left).toBe('-1px');
+            expect(lit(element).borderTopLeftRadius).toBe('11px');
+        },
+    );
+
+    it('lights to the hover glow under the pointer, the resting one until a theme says', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        element.style.setProperty('--ui-elevation-control', glow);
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+        await userEvent.hover(inner(element));
+
+        expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+
+        element.style.setProperty('--ui-elevation-control-hover', '0 0 0 2px currentColor');
+
+        expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 2px');
+    });
+
+    it('lights nothing that cannot be used, under the pointer or not', async () => {
+        const element = await mount('<ui-button disabled>Save</ui-button>');
+
+        element.style.setProperty('--ui-elevation-control', glow);
+
+        expect(lit(element).boxShadow).toBe('none');
+
+        await userEvent.hover(inner(element));
+
+        expect(lit(element).boxShadow).toBe('none');
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: UiButton, detail: unknown): boolean {

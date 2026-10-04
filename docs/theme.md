@@ -62,7 +62,8 @@ of it that follows the scheme is its colour, which `light-dark()` can carry insi
 
 **The controls wear the same ring and glow**, through `--ui-elevation-control`, at the same
 strengths. It is written in `currentColor`, so a control is lit in its own colour: the green of the
-accent, and the danger when it is invalid.
+accent, and the danger when it is invalid. **A button lights up under the pointer**: its ring goes
+solid and its glow doubles, because the fills' own hovers barely move in this green.
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
