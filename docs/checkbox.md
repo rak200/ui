@@ -272,7 +272,7 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the t
 | Part                        | Token                                                                                   |
 | --------------------------- | --------------------------------------------------------------------------------------- |
 | size                        | `--ui-space` × 3, floored at 24px                                                       |
-| resting fill                | `--ui-color-surface`                                                                    |
+| resting fill                | `--ui-color-surface-control`, the surface unless set                                    |
 | boundary                    | `--ui-color-border`                                                                     |
 | checked fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover                             |
 | unchecked boundary on hover | `--ui-color-text`                                                                       |

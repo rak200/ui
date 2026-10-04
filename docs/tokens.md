@@ -320,6 +320,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-text-supporting`         | text that explains what is beside it          |
 | `--ui-color-surface-muted`     | a second surface tone, for grouping           |
 | `--ui-color-surface-raised`    | the colour of a raised surface                |
+| `--ui-color-surface-control`   | the fill of a control, and of a table         |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -348,6 +349,11 @@ the page behind it, `--ui-backdrop-raised`: the card, the toast, the tip, the di
 menu read both. They are the surface and nothing until something sets them, which is how a theme
 makes those five glass. Not an alpha on `--ui-color-surface`: every derivation mixes the surface, so
 a translucent one would take the border, the muted text and the hover translucent with it.
+
+**A control has a fill of its own**, `--ui-color-surface-control`: a field, a select, an empty
+checkbox or radio, a switch that is off, and a table. It is the surface until something sets it, and
+a name apart from the raised surface's, because a control rests on a raised surface and on the page
+alike. A select's choices still paint `--ui-color-surface`, since the platform's picker reads them.
 
 ## `formulas`
 
@@ -379,6 +385,7 @@ formulas['--ui-duration-state'];
 | `--ui-text-supporting`         | the first step of the type scale                                  |
 | `--ui-color-surface-muted`     | the surface, 5% of the way toward the text                        |
 | `--ui-color-surface-raised`    | the surface                                                       |
+| `--ui-color-surface-control`   | the surface                                                       |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no

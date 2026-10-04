@@ -252,6 +252,11 @@ export const derivedTokens = [
     // take the muted text, the border and the hover translucent with it — RFC 0003. The
     // surface by default, so the default palette renders as before.
     '--ui-color-surface-raised',
+    // The fill of a control — a field, a select, an empty box, a switch that is off — and of
+    // a table, arriving with Glass, which makes it translucent. The surface by default. Not
+    // the raised surface's name: a control rests on a raised surface and on the page alike,
+    // and a theme fills it apart from whatever it rests on.
+    '--ui-color-surface-control',
 ] as const;
 
 /** A CSS custom property this package computes rather than declares. */
@@ -492,6 +497,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-color-surface-muted': mix('--ui-color-text', 5, '--ui-color-surface'),
     // A plain reference: the surface, until a theme raises something translucent off it.
     '--ui-color-surface-raised': ground('--ui-color-surface'),
+    // A plain reference: the surface, until a theme fills its controls with something else.
+    '--ui-color-surface-control': ground('--ui-color-surface'),
 };
 
 /**

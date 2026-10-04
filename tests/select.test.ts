@@ -849,6 +849,25 @@ describe('the caret', () => {
  * one — an invalid `var()` drops the whole declaration.
  */
 describe('every visual decision it paints is a token', () => {
+    it("fills the box with the controls' own fill, and the choices with the surface", async () => {
+        // The choices paint the surface because the platform's picker reads them, and a fill a
+        // theme made translucent would open a list nobody can read.
+        const form = await mount(fixture);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3, 0.2)');
+        element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
+
+        expect(getComputedStyle(box(element)).backgroundColor, 'the box').toBe(
+            'rgba(1, 2, 3, 0.2)',
+        );
+        const [choice] = [...box(element).options];
+
+        expect(
+            choice === undefined ? '' : getComputedStyle(choice).backgroundColor,
+            'a choice',
+        ).toBe('rgb(4, 5, 6)');
+    });
     it('paints the boundary and the two supporting texts from their own tokens', async () => {
         const form = await mount(`
             <ui-select label="C" name="c" help="How." error="Nope.">

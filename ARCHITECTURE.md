@@ -455,7 +455,10 @@ Every derivation mixes `--ui-color-surface`, so a translucent surface would take
 muted text and the hover translucent with it — RFC 0003 measured muted text at 0.755 over a surface
 at 0.3. `--ui-color-surface-raised` is the surface until a theme sets it, and `--ui-backdrop-raised`
 is a category of its own because a backdrop filter is not a colour; the card, the toast, the tip, the
-dialog and the open menu read both, and the surface stays opaque under every field.
+dialog and the open menu read both, and the surface itself stays opaque, so every mix of it stays where its floor was measured. **A control's
+fill is a name of its own too**, `--ui-color-surface-control`, because a control rests on a raised
+surface and on the page alike: a theme fills it apart from whatever it rests on, and its edge stays
+the opaque boundary its floor was measured for.
 
 ### A category arrives with the component that consumes it
 

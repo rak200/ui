@@ -93,13 +93,21 @@ the tip, the dialog and the open menu.
 | its edge         | white at 0.45                                             | white at 0.16                  |
 | its lift         | a highlight along the top, white at 0.60, and a soft drop | white at 0.20, the drop darker |
 | a toast's edge   | its variant's colour at 0.80                              | the same                       |
+| a control's fill | the surface at 0.20                                       | the same                       |
+| a table's stripe | its mix at 0.20                                           | the same                       |
 
 **The glass is the scheme's pole at an opacity**, white in the light scheme and black in the dark —
 black rather than the dark surface, because at the same opacity it takes a lighter page. The surface
-itself stays opaque, so a field inside a card is as legible as anywhere else. The text goes to its
+itself stays opaque, so every mix of it — the border, the muted text — stays where the floors measured it. The text goes to its
 pole and the accent to slate: text over frosted glass reads washed out long before it measures as
 failing, and a saturated accent fights whatever colour the page throws through. A toast's icon stays
 opaque in its variant's colour, being the one cue that tells a variant by more than its colour.
+
+**The controls are glass too.** A field, a select, an empty box or radio, a switch that is off and a
+table take their own fill at the glass's opacity, and a table's stripe its mix. Every edge stays
+opaque, so a field keeps the 3:1 its boundary was chosen for, and what is written in it is measured
+over the fill laid on the page and on the glass alike. A select's choices keep the opaque surface,
+because the platform's picker reads them.
 
 **It holds its floors over a page, and the page is yours.** What rests on the glass is read against
 the glass and the page behind it, so the theme is measured over the page it can take: **no darker
@@ -117,7 +125,7 @@ the 1.25 a state owes.
 
 **When the reader asks for more contrast or for less transparency, glass stops being glass**: every
 raised surface goes back to the opaque surface with nothing behind it, its edge to the boundary and
-its lift to the default palette's. More contrast also edges what floats over the page and a toast in
+its lift to the default palette's, and every control's fill and every stripe goes opaque. More contrast also edges what floats over the page and a toast in
 the text, and writes the default palette's neutral states, because Glass's text and surface are the
 default's there.
 

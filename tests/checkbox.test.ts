@@ -658,6 +658,13 @@ describe('ui-checkbox', () => {
         expect(styles.cursor).toBe('pointer');
     });
 
+    it("takes its fill from the controls' own, which a theme may set apart from the surface", async () => {
+        const form = await mount(fixture);
+        toggle(form).style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(toggle(form))).backgroundColor).toBe('rgb(1, 2, 3)');
+    });
+
     it('sets the control beside its text, a space apart', async () => {
         const form = await mount(fixture);
         const styles = getComputedStyle(part(toggle(form), 'label'));

@@ -442,6 +442,9 @@ describe('glass, as the browser renders it', () => {
         probe.style.textDecorationColor = String(reference('--ui-color-toast-edge'));
         // And a control's boundary, which is what the two edges stand down to.
         probe.style.columnRuleColor = String(reference('--ui-color-border'));
+        // A control's fill and a table's stripe.
+        probe.style.caretColor = String(reference('--ui-color-surface-control'));
+        probe.style.textEmphasisColor = String(reference('--ui-color-surface-muted'));
         host.append(probe);
         document.body.append(style, host);
 
@@ -454,25 +457,38 @@ describe('glass, as the browser renders it', () => {
             'rgba(255, 255, 255, 0.2)',
             'rgba(255, 255, 255, 0.45)',
             'rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.08) 0px 8px 24px 0px',
+            'rgba(255, 255, 255, 0.2)',
+            'rgba(238, 238, 238, 0.2)',
         ],
         [
             'dark',
             'rgba(0, 0, 0, 0.2)',
             'rgba(255, 255, 255, 0.16)',
             'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.33) 0px 8px 24px 0px',
+            'rgba(17, 24, 39, 0.2)',
+            'rgba(26, 33, 48, 0.2)',
         ],
-    ] as const)('frosts a raised surface, in %s', (scheme, surface, edge, lift) => {
-        const styles = frosted(scheme);
+    ] as const)(
+        'frosts a raised surface, in %s',
+        (scheme, surface, edge, lift, control, stripe) => {
+            const styles = frosted(scheme);
 
-        expect(styles.backgroundColor, 'the glass').toBe(surface);
-        expect(styles.backdropFilter, 'what it does to the page').toBe('blur(10px) saturate(1.7)');
-        expect(styles.borderTopColor, "a card's edge").toBe(edge);
-        expect(styles.outlineColor, 'the edge of what floats').toBe(edge);
-        expect(styles.boxShadow, 'a highlight along the top, and a soft drop').toBe(lift);
-        expect(styles.textDecorationColor, "a toast's edge, at 0.80").toBe(
-            'color(srgb 0.0392157 0.0784314 0.117647 / 0.8)',
-        );
-    });
+            // The surface at the glass's opacity in a control, and the stripe's mix with it.
+            expect(styles.caretColor, "a control's fill").toBe(control);
+            expect(styles.textEmphasisColor, "a table's stripe").toBe(stripe);
+
+            expect(styles.backgroundColor, 'the glass').toBe(surface);
+            expect(styles.backdropFilter, 'what it does to the page').toBe(
+                'blur(10px) saturate(1.7)',
+            );
+            expect(styles.borderTopColor, "a card's edge").toBe(edge);
+            expect(styles.outlineColor, 'the edge of what floats').toBe(edge);
+            expect(styles.boxShadow, 'a highlight along the top, and a soft drop').toBe(lift);
+            expect(styles.textDecorationColor, "a toast's edge, at 0.80").toBe(
+                'color(srgb 0.0392157 0.0784314 0.117647 / 0.8)',
+            );
+        },
+    );
 
     it.each([
         // Glass's own, and the boundary's mix where the edge of what floats goes: the text is
@@ -486,6 +502,9 @@ describe('glass, as the browser renders it', () => {
 
         expect(styles.backgroundColor, 'the surface, opaque').toBe('rgb(255, 255, 255)');
         expect(styles.backdropFilter, 'and nothing behind it').toBe('none');
+        expect(styles.caretColor, "a control's fill, opaque").toBe('rgb(255, 255, 255)');
+        // The stripe goes opaque too: back to its formula, or to the answer to more contrast.
+        expect(styles.textEmphasisColor, 'and a stripe').toMatch(/^(rgb|oklab)\(/);
         expect(styles.borderTopColor, "a card's edge, the boundary's mix").toBe(
             styles.columnRuleColor,
         );

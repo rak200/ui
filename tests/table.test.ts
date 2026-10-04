@@ -257,6 +257,13 @@ describe('the values, all of which come from the token layer', () => {
         expect(styles.borderCollapse, 'one rule per junction, not two').toBe('collapse');
     });
 
+    it("takes its fill from the controls' own, which a theme may set apart from the surface", async () => {
+        const host = await mount(fixture);
+        table(host).style.setProperty('--ui-color-surface-control', 'rgb(7, 8, 9)');
+
+        expect(getComputedStyle(only(host, 'table')).backgroundColor).toBe('rgb(7, 8, 9)');
+    });
+
     it('takes a cell from the host', async () => {
         const host = await mount(fixture);
         const element = table(host);

@@ -214,7 +214,7 @@ export class UiSelect extends LitElement {
             font: inherit;
             font-family: ${reference('--ui-font')};
             color: ${reference('--ui-color-text')};
-            background-color: ${reference('--ui-color-surface')};
+            background-color: ${reference('--ui-color-surface-control')};
             border: 1px solid ${reference('--ui-color-border')};
             border-radius: ${reference('--ui-radius')};
             padding: ${reference('--ui-space')};

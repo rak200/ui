@@ -28,7 +28,7 @@ const rules: CSSResult = css`
         font-family: ${reference('--ui-font')};
         /* The pair, never half of it — the argument src/card.ts makes beside its own. */
         color: ${reference('--ui-color-text')};
-        background: ${reference('--ui-color-surface')};
+        background: ${reference('--ui-color-surface-control')};
     }
 
     ui-table th,

@@ -59,7 +59,7 @@ const field = css`
         font: inherit;
         font-family: ${reference('--ui-font')};
         color: ${reference('--ui-color-text')};
-        background: ${reference('--ui-color-surface')};
+        background: ${reference('--ui-color-surface-control')};
         border: 1px solid ${reference('--ui-color-border')};
         border-radius: ${reference('--ui-radius')};
         padding: ${reference('--ui-space')};
