@@ -32,6 +32,26 @@ const field = css`
         color: ${reference('--ui-color-text')};
     }
 
+    /* What a theme's glow is drawn on, around the control rather than on it: a theme writes
+       the glow in currentColor, and the control's own colour is its text. This box is the
+       control's size and corner, so the glow hugs the boundary, and its colour is the
+       accent, or the danger on an invalid control. A control that cannot be used lights
+       nothing. */
+    .glow {
+        display: grid;
+        border-radius: ${reference('--ui-radius')};
+        color: ${reference('--ui-color-accent')};
+        box-shadow: ${reference('--ui-elevation-control')};
+    }
+
+    .glow:has(> [aria-invalid='true']) {
+        color: ${reference('--ui-color-danger')};
+    }
+
+    .glow:has(> :disabled) {
+        box-shadow: none;
+    }
+
     input,
     textarea {
         box-sizing: border-box;
@@ -331,7 +351,7 @@ class UiTextField extends LitElement {
         return html`
             <div class="stack" part="stack">
                 <label for="control" part="label">${this.label}</label>
-                ${control}
+                <span class="glow">${control}</span>
                 ${
                     this.help === ''
                         ? nothing

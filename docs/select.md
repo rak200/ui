@@ -193,19 +193,20 @@ rather than a decision here.
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the caret.
 
-| Part               | Token                                                        |
-| ------------------ | ------------------------------------------------------------ |
-| surface            | `--ui-color-surface`                                         |
-| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
-| boundary           | `--ui-color-border`, and `--ui-color-text` on hover          |
-| the caret          | `--ui-color-text-muted`                                      |
-| each choice        | `--ui-color-surface`                                         |
-| in error           | `--ui-color-danger`, at `--ui-text-supporting`               |
-| help text          | `--ui-color-text`, at `--ui-text-supporting`                 |
-| focus ring         | `--ui-color-focus`                                           |
-| corner             | `--ui-radius`                                                |
-| padding and rhythm | `--ui-space`                                                 |
-| motion             | `--ui-duration-state`, `--ui-easing-state`                   |
+| Part               | Token                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------- |
+| surface            | `--ui-color-surface`                                                                                    |
+| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled                                            |
+| boundary           | `--ui-color-border`, and `--ui-color-text` on hover                                                     |
+| the caret          | `--ui-color-text-muted`                                                                                 |
+| each choice        | `--ui-color-surface`                                                                                    |
+| in error           | `--ui-color-danger`, at `--ui-text-supporting`                                                          |
+| help text          | `--ui-color-text`, at `--ui-text-supporting`                                                            |
+| focus ring         | `--ui-color-focus`                                                                                      |
+| glow               | `--ui-elevation-control`, around the box, lit in the accent, or the danger in error; none when disabled |
+| corner             | `--ui-radius`                                                                                           |
+| padding and rhythm | `--ui-space`                                                                                            |
+| motion             | `--ui-duration-state`, `--ui-easing-state`                                                              |
 
 The same five parts [`<ui-input>`](input.md#styling) exposes — `stack`, `label`, `control`, `help`
 and `error` — aimed at a `<select>` rather than an `<input>`.

@@ -598,6 +598,69 @@ describe('every visual decision a control paints is a token', () => {
     });
 });
 
+/**
+ * The glow a theme lights a control with, drawn around the control rather than on it: a
+ * theme writes it in `currentColor`, and the control's own colour is its text.
+ */
+describe('the glow a theme lights', () => {
+    const glow = '0 0 0 1px currentColor';
+    const tags = ['ui-input', 'ui-textarea'] as const;
+
+    /** The box around the control that the glow is drawn on. */
+    function lit(element: Field): HTMLElement {
+        const found = element.renderRoot.querySelector<HTMLElement>('.glow');
+
+        if (found === null) {
+            throw new Error('the field rendered nothing to draw a glow on');
+        }
+
+        return found;
+    }
+
+    it.each(tags)('lights nothing around a %s by default', async (tag) => {
+        const form = await mount(`<${tag} label="Notes"></${tag}>`);
+
+        expect(getComputedStyle(lit(field(form))).boxShadow).toBe('none');
+    });
+
+    it.each(tags)('lights a %s in the accent, hugging its boundary', async (tag) => {
+        const form = await mount(`<${tag} label="Notes"></${tag}>`);
+        const element = field(form);
+
+        element.style.setProperty('--ui-elevation-control', glow);
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-text', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-radius', '11px');
+
+        expect(getComputedStyle(lit(element)).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+        // The control's size and corner, so the glow sits against the boundary.
+        expect(lit(element).getBoundingClientRect().toJSON()).toEqual(
+            box(element).getBoundingClientRect().toJSON(),
+        );
+        expect(getComputedStyle(lit(element)).borderRadius).toBe('11px');
+        // And the accent reaches no text: the control writes its own.
+        expect(getComputedStyle(box(element)).color).toBe('rgb(7, 8, 9)');
+    });
+
+    it.each(tags)('lights an invalid %s in the danger, as its boundary is', async (tag) => {
+        const form = await mount(`<${tag} label="Notes" error="Write something."></${tag}>`);
+        const element = field(form);
+
+        element.style.setProperty('--ui-elevation-control', glow);
+        element.style.setProperty('--ui-color-danger', 'rgb(4, 5, 6)');
+
+        expect(getComputedStyle(lit(element)).boxShadow).toBe('rgb(4, 5, 6) 0px 0px 0px 1px');
+    });
+
+    it.each(tags)('lights nothing around a %s that cannot be used', async (tag) => {
+        const form = await mount(`<${tag} label="Notes" disabled></${tag}>`);
+
+        field(form).style.setProperty('--ui-elevation-control', glow);
+
+        expect(getComputedStyle(lit(field(form))).boxShadow).toBe('none');
+    });
+});
+
 describe('ui-textarea', () => {
     const fixture = '<ui-textarea label="Notes" name="notes"></ui-textarea>';
 

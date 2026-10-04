@@ -190,6 +190,23 @@ export class UiSelect extends LitElement {
             display: block;
         }
 
+        /* What a theme's glow is drawn on, around the box for the reason src/input.ts gives
+           beside its own, which tests/select.test.ts compares as it compares the box. */
+        .glow {
+            display: grid;
+            border-radius: ${reference('--ui-radius')};
+            color: ${reference('--ui-color-accent')};
+            box-shadow: ${reference('--ui-elevation-control')};
+        }
+
+        .glow:has(> [aria-invalid='true']) {
+            color: ${reference('--ui-color-danger')};
+        }
+
+        .glow:has(> :disabled) {
+            box-shadow: none;
+        }
+
         /* The box, which src/input.ts also draws and tests/select.test.ts compares. */
         select {
             box-sizing: border-box;
@@ -565,19 +582,21 @@ export class UiSelect extends LitElement {
         return html`
             <div class="stack" part="stack">
                 <label for="control" part="label">${this.label}</label>
-                <select
-                    id="control"
-                    part="control"
-                    name=${this.name === '' ? nothing : this.name}
-                    ?required=${this.required}
-                    ?disabled=${this.disabled}
-                    ?multiple=${this.multiple}
-                    aria-invalid=${this.error === '' ? nothing : 'true'}
-                    aria-describedby=${this.#described()}
-                    @change=${this.#changed}
+                <span class="glow"
+                    ><select
+                        id="control"
+                        part="control"
+                        name=${this.name === '' ? nothing : this.name}
+                        ?required=${this.required}
+                        ?disabled=${this.disabled}
+                        ?multiple=${this.multiple}
+                        aria-invalid=${this.error === '' ? nothing : 'true'}
+                        aria-describedby=${this.#described()}
+                        @change=${this.#changed}
+                    >
+                        ${[...this.children].map((node) => this.#draw(node, chosen))}
+                    </select></span
                 >
-                    ${[...this.children].map((node) => this.#draw(node, chosen))}
-                </select>
                 ${
                     this.help === ''
                         ? nothing
