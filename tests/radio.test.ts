@@ -1145,6 +1145,66 @@ describe('in error', () => {
     });
 });
 
+/**
+ * The glow a theme lights a control with, drawn as src/checkbox.ts draws it: none until a
+ * theme writes one, and lit in the control's own colour when a theme writes it in
+ * `currentColor`.
+ */
+describe('the glow a theme lights', () => {
+    const glow = '0 0 0 1px currentColor';
+
+    it('lights nothing by default', async () => {
+        const form = await mount(fixture);
+
+        for (const control of controls(form)) {
+            expect(getComputedStyle(control).boxShadow, control.value).toBe('none');
+        }
+    });
+
+    it('lights every option in the accent', async () => {
+        const form = await mount(fixture);
+
+        group(form).style.setProperty('--ui-elevation-control', glow);
+        group(form).style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+
+        for (const control of controls(form)) {
+            expect(getComputedStyle(control).boxShadow, control.value).toBe(
+                'rgb(1, 2, 3) 0px 0px 0px 1px',
+            );
+        }
+    });
+
+    it('lights every option in the danger when the set is in error', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" error="Pick one.">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro">Pro</ui-radio>
+            </ui-radio-group>
+        `);
+
+        group(form).style.setProperty('--ui-elevation-control', glow);
+        group(form).style.setProperty('--ui-color-danger', 'rgb(4, 5, 6)');
+
+        for (const control of controls(form)) {
+            expect(getComputedStyle(control).boxShadow, control.value).toBe(
+                'rgb(4, 5, 6) 0px 0px 0px 1px',
+            );
+        }
+    });
+
+    it('lights nothing that cannot be used', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" disabled>
+                <ui-radio value="free">Free</ui-radio>
+            </ui-radio-group>
+        `);
+
+        group(form).style.setProperty('--ui-elevation-control', glow);
+
+        expect(getComputedStyle(radio(form)).boxShadow).toBe('none');
+    });
+});
+
 describe('under forced colors', () => {
     async function forcedColors(active: boolean): Promise<void> {
         await cdp().send('Emulation.setEmulatedMedia', {

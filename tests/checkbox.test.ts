@@ -1004,6 +1004,48 @@ describe('the interaction states', () => {
 });
 
 /**
+ * The glow a theme lights a control with. It is none until a theme writes one, and a theme
+ * writes it in `currentColor`, so the box's own colour is what it is lit in.
+ */
+describe('the glow a theme lights', () => {
+    const glow = '0 0 0 1px currentColor';
+
+    it.each(['ui-checkbox', 'ui-switch'])('lights nothing on a %s by default', async (tag) => {
+        const form = await mount(`<${tag} label="Notify"></${tag}>`);
+
+        expect(getComputedStyle(box(toggle(form))).boxShadow).toBe('none');
+    });
+
+    it.each(['ui-checkbox', 'ui-switch'])('lights a %s in the accent', async (tag) => {
+        const form = await mount(`<${tag} label="Notify"></${tag}>`);
+
+        toggle(form).style.setProperty('--ui-elevation-control', glow);
+        toggle(form).style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(toggle(form))).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+    });
+
+    it('lights an invalid control in the danger, as its boundary is', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Terms" error="Accept the terms."></ui-checkbox>',
+        );
+
+        toggle(form).style.setProperty('--ui-elevation-control', glow);
+        toggle(form).style.setProperty('--ui-color-danger', 'rgb(4, 5, 6)');
+
+        expect(getComputedStyle(box(toggle(form))).boxShadow).toBe('rgb(4, 5, 6) 0px 0px 0px 1px');
+    });
+
+    it('lights nothing that cannot be used', async () => {
+        const form = await mount('<ui-checkbox label="Notify" disabled></ui-checkbox>');
+
+        toggle(form).style.setProperty('--ui-elevation-control', glow);
+
+        expect(getComputedStyle(box(toggle(form))).boxShadow).toBe('none');
+    });
+});
+
+/**
  * Forced colors replaces every author colour, so a state told apart by colour alone stops
  * being told apart — for the people who turned the mode on to see states more clearly.
  */

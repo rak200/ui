@@ -269,20 +269,21 @@ is what you want.
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the tick.
 
-| Part                        | Token                                                         |
-| --------------------------- | ------------------------------------------------------------- |
-| size                        | `--ui-space` × 3, floored at 24px                             |
-| resting fill                | `--ui-color-surface`                                          |
-| boundary                    | `--ui-color-border`                                           |
-| checked fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover   |
-| unchecked boundary on hover | `--ui-color-text`                                             |
-| the tick and the dash       | `--ui-color-accent-contrast`                                  |
-| the switch's thumb          | `--ui-color-border` when off, `--ui-color-accent-contrast` on |
-| label text                  | `--ui-color-text`, and `--ui-color-text-muted` when disabled  |
-| in error                    | `--ui-color-danger`, at `--ui-text-supporting`                |
-| focus ring                  | `--ui-color-focus`                                            |
-| corner                      | `--ui-radius` (the switch is always a pill)                   |
-| motion                      | `--ui-duration-state`, `--ui-easing-state`                    |
+| Part                        | Token                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| size                        | `--ui-space` × 3, floored at 24px                                                       |
+| resting fill                | `--ui-color-surface`                                                                    |
+| boundary                    | `--ui-color-border`                                                                     |
+| checked fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover                             |
+| unchecked boundary on hover | `--ui-color-text`                                                                       |
+| the tick and the dash       | `--ui-color-accent-contrast`                                                            |
+| the switch's thumb          | `--ui-color-border` when off, `--ui-color-accent-contrast` on                           |
+| label text                  | `--ui-color-text`, and `--ui-color-text-muted` when disabled                            |
+| in error                    | `--ui-color-danger`, at `--ui-text-supporting`                                          |
+| focus ring                  | `--ui-color-focus`                                                                      |
+| glow                        | `--ui-elevation-control`, lit in the accent, or the danger in error; none when disabled |
+| corner                      | `--ui-radius` (the switch is always a pill)                                             |
+| motion                      | `--ui-duration-state`, `--ui-easing-state`                                              |
 
 **Four parts are exposed**, because the drawing is now in here:
 

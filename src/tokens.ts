@@ -122,6 +122,15 @@ export const tokens = [
     // and therefore already scheme-correct — which is why `src/card.ts` draws both and
     // says so beside them.
     '--ui-elevation-100',
+    // The glow a theme lights a control with, arriving with Matrix under RFC 0003's second
+    // clause: a category a shipped theme brings whose default is the identity, so the
+    // default palette renders as before. A ground rather than a purpose pointing into the
+    // scale, because a control is not raised and `none` is no step of it.
+    //
+    // **A theme writes it in `currentColor`**, and the box that draws it sets its own colour
+    // to the accent, or to the danger when the control is invalid — so one value lights
+    // every control in its state's colour. `ARCHITECTURE.md` says why a named colour would not.
+    '--ui-elevation-control',
     // The type scale, arriving with `ui-table` — the category `ROADMAP.md` said would, and
     // the last one the v0 surface expects. It arrives to fix a defect rather than to
     // anticipate one: `font-size: 0.875em` was written out in three places across the form
@@ -284,6 +293,7 @@ export const defaults: Readonly<Record<Token, string>> = {
     // falls on rather than tinting it — a coloured shadow is a decision this layer would
     // have to defend at every hue a host might set.
     '--ui-elevation-100': '0 1px 2px -1px rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.1)',
+    '--ui-elevation-control': 'none',
     // The value the three hardcoded sites already carried, adopted rather than re-chosen:
     // this token exists to make an existing decision overridable, and changing it in the
     // same breath would hide whether the extraction was faithful. 87.5% is 14px against a

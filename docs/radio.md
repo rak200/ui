@@ -191,19 +191,20 @@ criterion's _user agent control_ exception, which drawing our own gives up.
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the mark.
 
-| Part                         | Token                                                       |
-| ---------------------------- | ----------------------------------------------------------- |
-| size                         | `--ui-space` × 3, floored at 24px                           |
-| space between options        | `--ui-space` ÷ 2, and `--ui-space` × 2 across a row         |
-| resting fill                 | `--ui-color-surface`                                        |
-| boundary                     | `--ui-color-border`                                         |
-| selected fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover |
-| the dot                      | `--ui-color-accent-contrast`                                |
-| unselected boundary on hover | `--ui-color-text`                                           |
-| in error                     | `--ui-color-danger`                                         |
-| focus ring                   | `--ui-color-focus`                                          |
-| supporting text              | `--ui-text-supporting`, `--ui-color-text`                   |
-| motion                       | `--ui-duration-state`, `--ui-easing-state`                  |
+| Part                         | Token                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
+| size                         | `--ui-space` × 3, floored at 24px                                                       |
+| space between options        | `--ui-space` ÷ 2, and `--ui-space` × 2 across a row                                     |
+| resting fill                 | `--ui-color-surface`                                                                    |
+| boundary                     | `--ui-color-border`                                                                     |
+| selected fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover                             |
+| the dot                      | `--ui-color-accent-contrast`                                                            |
+| unselected boundary on hover | `--ui-color-text`                                                                       |
+| in error                     | `--ui-color-danger`                                                                     |
+| focus ring                   | `--ui-color-focus`                                                                      |
+| glow                         | `--ui-elevation-control`, lit in the accent, or the danger in error; none when disabled |
+| supporting text              | `--ui-text-supporting`, `--ui-color-text`                                               |
+| motion                       | `--ui-duration-state`, `--ui-easing-state`                                              |
 
 The exposed parts are `stack`, `label`, `options`, `option`, `control`, `option-label`, `help` and
 `error`.
