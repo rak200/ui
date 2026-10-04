@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/rak200/ui/compare/0.7.0...0.7.1) (2026-10-04)
+
+
+### Features
+
+* the package ships themes as data, with themeStyleSheet() and Matrix ([#259](https://github.com/rak200/ui/issues/259)) ([23479aa](https://github.com/rak200/ui/commit/23479aa60aaa9dab4f6160d669a44f6c4d27e296))
+
 ## [0.7.0](https://github.com/rak200/ui/compare/0.6.15...0.7.0) (2026-10-04)
 
 
