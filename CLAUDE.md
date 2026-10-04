@@ -141,10 +141,11 @@ explains. This file restates none of them.
   handing the text over. `src/checkbox.ts` is the arrangement every control moved to and
   `docs/checkbox.md` is the consumer-facing half; the docblock on `field` in `src/input.ts` says
   why those rules were once written with `::slotted()`.
-- **Why a drawn control paints its own mark, and why the mark is a hole** — `src/checkbox.ts`,
+- **Why a drawn control paints its own mark, and why the mark is a mask** — `src/checkbox.ts`,
   beside the mask constant. A `data:` URI would freeze the mark's colour in a package whose rule is
-  that a host overrides every visual decision, which `mask-composite: exclude` avoids by making the
-  mark absent rather than coloured. The target-size floor and the forced-colors block beside it are
+  that a host overrides every visual decision, which a mask avoids by carrying the shape and no
+  colour: the mark is the accent's label, painted on the control's `::before` and cut to that shape.
+  The target-size floor and the forced-colors block beside it are
   the other two things `appearance: none` made this component's to own — and **the mixed state's
   forced-colors override lives in `UiCheckbox`'s own sheet rather than the shared one**, because a
   later sheet at equal specificity wins; the comment there carries the measurement.

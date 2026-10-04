@@ -269,19 +269,20 @@ is what you want.
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the tick.
 
-| Part                        | Token                                                        |
-| --------------------------- | ------------------------------------------------------------ |
-| size                        | `--ui-space` × 3, floored at 24px                            |
-| resting fill                | `--ui-color-surface`                                         |
-| boundary                    | `--ui-color-border`                                          |
-| checked fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover  |
-| unchecked boundary on hover | `--ui-color-text`                                            |
-| the switch's thumb          | `--ui-color-border` when off, `--ui-color-surface` when on   |
-| label text                  | `--ui-color-text`, and `--ui-color-text-muted` when disabled |
-| in error                    | `--ui-color-danger`, at `--ui-text-supporting`               |
-| focus ring                  | `--ui-color-focus`                                           |
-| corner                      | `--ui-radius` (the switch is always a pill)                  |
-| motion                      | `--ui-duration-state`, `--ui-easing-state`                   |
+| Part                        | Token                                                         |
+| --------------------------- | ------------------------------------------------------------- |
+| size                        | `--ui-space` × 3, floored at 24px                             |
+| resting fill                | `--ui-color-surface`                                          |
+| boundary                    | `--ui-color-border`                                           |
+| checked fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover   |
+| unchecked boundary on hover | `--ui-color-text`                                             |
+| the tick and the dash       | `--ui-color-accent-contrast`                                  |
+| the switch's thumb          | `--ui-color-border` when off, `--ui-color-accent-contrast` on |
+| label text                  | `--ui-color-text`, and `--ui-color-text-muted` when disabled  |
+| in error                    | `--ui-color-danger`, at `--ui-text-supporting`                |
+| focus ring                  | `--ui-color-focus`                                            |
+| corner                      | `--ui-radius` (the switch is always a pill)                   |
+| motion                      | `--ui-duration-state`, `--ui-easing-state`                    |
 
 **Four parts are exposed**, because the drawing is now in here:
 
@@ -292,7 +293,9 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the t
 | `text`     | the span holding the label text           |
 | `error`    | the message, when there is one            |
 
-**The tick is a hole, not a colour**, and that is what keeps it overridable. An SVG embedded in a
-`data:` URI freezes whatever colour is drawn into it, and no host could override that. A mask has no
-colour — only its alpha is read — so the tick is punched out of the accent fill with
-`mask-composite: exclude`, and what shows through it is whatever the control sits on.
+**The tick is a shape and a token, not a picture**, and that is what keeps it overridable. An SVG
+embedded in a `data:` URI freezes whatever colour is drawn into it, and no host could override that.
+A mask has no colour — only its alpha is read — so the tick and the dash are `--ui-color-accent-contrast`
+painted over the fill and cut to their shape. That is the accent's label, the colour anything on the
+accent owes its contrast to, so a host who retunes the accent has one pair to keep legible rather
+than two.
