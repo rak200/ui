@@ -226,9 +226,9 @@ export class UiSelect extends LitElement {
 
         /* The caret is two triangles rather than a picture, and that is what keeps its
            colour a token: gradients take var(), and an SVG in a data: URI would
-           freeze whatever colour was drawn into it. src/checkbox.ts solved the same
-           problem the other way, by making its mark a hole — which is not available here,
-           because a mask would clip the option text with it.
+           freeze whatever colour was drawn into it. src/checkbox.ts needs a path for its
+           tick, so it keeps the path as a mask and paints the colour under it; a caret is
+           two triangles, and needs neither.
 
            A multiple select is a list rather than a drop-down, and a caret on a list
            points at nothing, so it is guarded rather than drawn everywhere. */
@@ -272,6 +272,20 @@ export class UiSelect extends LitElement {
         select:disabled {
             cursor: not-allowed;
             opacity: 0.5;
+        }
+
+        /* The choices paint the surface themselves. The picker takes its colours from the
+           select unless an option brings its own, so a select whose fill a host made
+           translucent opens a list nobody can read — RFC 0003 measured it in the dark
+           scheme. In every opaque palette this renders exactly as before. The text needs
+           no rule: an option inherits the select's, which is already the text.
+
+           The drop-down only. A multiple select draws its options in the box, where the
+           platform marks a chosen one by painting its background, and an author colour on
+           every option would paint that mark out. The highlight on the option under the
+           pointer stays the platform's either way; docs/select.md says so. */
+        select:not([multiple]) :is(option, optgroup) {
+            background-color: ${reference('--ui-color-surface')};
         }
 
         /* Read off the control's own aria-invalid, which this element now writes: it is
