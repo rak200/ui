@@ -774,6 +774,55 @@ describe('every visual decision it paints is a token', () => {
         expect(help.fontSize, '--ui-text-supporting').toBe('19px');
     });
 
+    it('lets each choice paint the surface, so the picker never takes the fill', async () => {
+        // The picker takes its colours from the select unless an option brings its own, so
+        // a fill a host made translucent would be what the open list is drawn on. Retuned
+        // and read back, so the colour is the name it was written with.
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <ui-option value="brl">Real</ui-option>
+                <ui-optgroup label="Euro area">
+                    <ui-option value="eur">Euro</ui-option>
+                </ui-optgroup>
+            </ui-select>
+        `);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
+
+        const [real, euro] = [...box(element).options].map(
+            (option) => getComputedStyle(option).backgroundColor,
+        );
+        const area = box(element).querySelector('optgroup');
+
+        expect(real, 'a choice').toBe('rgb(1, 2, 3)');
+        expect(area === null ? '' : getComputedStyle(area).backgroundColor, 'a group heading').toBe(
+            'rgb(1, 2, 3)',
+        );
+        expect(euro, 'and a choice inside it').toBe('rgb(1, 2, 3)');
+    });
+
+    it("leaves a multiple select's choices to the platform, which marks a chosen one", async () => {
+        // A list draws its options in the box, and the platform says which are chosen by
+        // painting their background. A surface on every option would paint that out.
+        const form = await mount(`
+            <ui-select label="C" name="c" multiple>
+                <ui-option value="brl" selected>Real</ui-option>
+                <ui-option value="usd">Dollar</ui-option>
+            </ui-select>
+        `);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
+
+        const [chosen, other] = [...box(element).options].map(
+            (option) => getComputedStyle(option).backgroundColor,
+        ) as [string, string];
+
+        expect(chosen, 'the platform marks the chosen one').not.toBe(other);
+        expect(chosen, 'and nothing here paints over the mark').not.toBe('rgb(1, 2, 3)');
+    });
+
     it('takes the label colour from the host, and mutes it while unavailable', async () => {
         const form = await mount(fixture);
 
