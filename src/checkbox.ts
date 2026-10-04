@@ -20,13 +20,14 @@ const size = css`max(24px, calc(${reference('--ui-space')} * 3))`;
  * A `data:` URI freezes whatever is inside it, so an SVG drawn with `stroke='#fff'` would
  * be one hardcoded colour in a package whose rule is that a host can override every visual
  * decision. **A mask has no colour**: only its alpha is read, so the black below is a
- * shape and never a value. What the tick shows is the surface behind the control, punched
- * out of the accent fill by `mask-composite: exclude`.
+ * shape and never a value. The colour is `--ui-color-accent-contrast`, painted on the
+ * control's `::before` and cut to this shape — the accent's label, which is what anything
+ * sitting on the accent takes.
  */
 const tick = css`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E")`;
 
-/** A mask layer covering the whole control, which the mark is then subtracted from. */
-const whole = css`linear-gradient(#000, #000)`;
+/** A rectangle, as a mask: the dash is this shape at a size. */
+const bar = css`linear-gradient(#000, #000)`;
 
 /**
  * What a drawn boolean control looks like, which both elements share.
@@ -161,7 +162,7 @@ const toggle = css`
        *not* — the state disappears, silently, for the people who turned the mode on to
        see states more clearly. Measured in this engine. System colours are the ones
        forced colors keeps, so the checked states name Highlight and the difference
-       survives; the mark keeps working untouched, because a mask has no colour to force.
+       survives, and the checkbox's mark names HighlightText beside its own rules.
 
        Opacity is not a colour and is not forced, so the disabled control would still be
        half-transparent against a palette chosen for contrast. GrayText is what that mode
@@ -517,29 +518,45 @@ export class UiCheckbox extends UiToggle {
             input {
                 inline-size: ${size};
                 border-radius: ${reference('--ui-radius')};
+                /* What the mark is laid out against. */
+                position: relative;
             }
 
-            /* The mark is a hole: the whole control, minus the shape, so what shows
-               through is whatever the control sits on. The docblock on the mask constant
-               above says why a hole rather than a colour. */
-            input:checked {
-                mask-image: ${whole}, ${tick};
-                mask-composite: exclude;
-                mask-size: 100% 100%;
+            /* The mark is painted over the fill, in the accent's label, and the mask
+               constant above gives it its shape. Not a hole showing whatever the control
+               sits on: that is the accent's label only by coincidence, and a black accent
+               on a dark page would put a dark tick on black.
+
+               On the control's own ::before, which appearance: none lets every engine
+               paint, and with inset: -1px to reach back over the shared sheet's border, so
+               the shape is laid out over the whole control as the tick's coordinates
+               assume. */
+            input:checked::before,
+            input:indeterminate::before {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                background-color: ${reference('--ui-color-accent-contrast')};
                 mask-repeat: no-repeat;
             }
 
-            /* A dash needs no drawing: a rectangle is a gradient with a size. */
+            input:checked::before {
+                mask-image: ${tick};
+                mask-size: 100% 100%;
+            }
+
+            /* A dash needs no drawing: a rectangle is a gradient with a size. Later than
+               the tick, so a control that is both shows the mixed state, as the platform's
+               own drawing does. */
             input:indeterminate {
                 background-color: ${reference('--ui-color-accent')};
                 border-color: ${reference('--ui-color-accent')};
-                mask-image: ${whole}, ${whole};
-                mask-composite: exclude;
-                mask-size:
-                    100% 100%,
-                    calc(${size} / 2) calc(${size} / 12);
+            }
+
+            input:indeterminate::before {
+                mask-image: ${bar};
+                mask-size: calc(${size} / 2) calc(${size} / 12);
                 mask-position: center;
-                mask-repeat: no-repeat;
             }
 
             /* The mixed state's forced-colors override lives here rather than beside the
@@ -553,6 +570,14 @@ export class UiCheckbox extends UiToggle {
                 input:indeterminate {
                     background-color: Highlight;
                     border-color: Highlight;
+                }
+
+                /* The mark is an author colour too, so the mode would force it to the
+                   surface's; HighlightText is the colour it pairs with Highlight. Its shape
+                   is a mask, which the mode leaves alone. */
+                input:checked::before,
+                input:indeterminate::before {
+                    background-color: HighlightText;
                 }
             }
         `,
@@ -640,11 +665,11 @@ export class UiSwitch extends UiToggle {
             }
 
             /* On, the shared sheet fills the box with the accent, and the thumb takes the
-               surface's colour over it. */
+               accent's label over it, as the checkbox's mark does. */
             input:checked {
                 background-image: radial-gradient(
                     circle closest-side,
-                    ${reference('--ui-color-surface')} 100%,
+                    ${reference('--ui-color-accent-contrast')} 100%,
                     transparent 100%
                 );
                 background-position: calc(100% - ${size} / 6) center;

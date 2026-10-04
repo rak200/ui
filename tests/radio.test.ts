@@ -839,24 +839,33 @@ describe('the drawing', () => {
         expect(styles.borderTopColor, 'the boundary disappears into the fill').toBe('rgb(1, 2, 3)');
     });
 
-    it('marks the fill by subtracting the dot from it, rather than painting one on', async () => {
+    it('paints the dot over the fill in the accent label, cut to its shape by a mask', async () => {
         const form = await mount(fixture);
+        group(form).style.setProperty('--ui-color-accent-contrast', 'rgb(1, 2, 3)');
 
         radio(form).click();
         await group(form).updateComplete;
 
-        const styles = getComputedStyle(radio(form));
+        const control = getComputedStyle(radio(form));
+        const mark = getComputedStyle(radio(form), '::before');
 
-        for (const composite of styles.maskComposite.split(', ')) {
-            expect(composite, 'the mark is a hole').toBe('exclude');
-        }
+        // Read back from the name it was written with, which is the whole difference from
+        // the hole this used to be: a hole shows whatever the control sits on.
+        expect(mark.backgroundColor, 'the accent label').toBe('rgb(1, 2, 3)');
+        expect(mark.maskImage, 'a circle').toContain('radial-gradient');
+        expect(mark.maskImage, 'and no picture freezes a colour').not.toContain('url(');
+        // The width alone: a size given one value may be serialised with or without the
+        // elided height, which `checkbox.test.ts` measured across two engine versions.
+        expect(mark.maskSize.split(' ')[0], 'half the control').toBe('12px');
+        expect(mark.maskPosition).toBe('50% 50%');
+        expect(mark.width, 'centred on the whole control, border included').toBe(control.width);
+        expect(control.maskImage, 'and the fill is whole').toBe('none');
+    });
 
-        // Two layers, and both have to be there: the whole control to subtract from, and the
-        // circle to subtract. Either one missing invalidates the declaration and the mask
-        // stops existing rather than coming out wrong.
-        expect(styles.maskImage, 'the whole control').toContain('linear-gradient');
-        expect(styles.maskImage, 'minus the circle').toContain('radial-gradient');
-        expect(styles.maskImage, 'and no picture freezes a colour').not.toContain('url(');
+    it('paints no dot on a choice that is not selected', async () => {
+        const form = await mount(fixture);
+
+        expect(getComputedStyle(radio(form), '::before').content).toBe('none');
     });
 
     it('takes the typeface from the host, for everything it draws', async () => {
@@ -1160,6 +1169,22 @@ describe('under forced colors', () => {
         await group(form).updateComplete;
 
         expect(getComputedStyle(radio(form)).backgroundColor).not.toBe(resting);
+    });
+
+    it('keeps the dot apart from the fill it sits on', async () => {
+        const form = await mount(fixture);
+        withoutMotion(form);
+
+        radio(form).click();
+        await group(form).updateComplete;
+        await forcedColors(true);
+
+        // HighlightText on Highlight, the pair the mode has for a selected thing. The
+        // emulated palette makes HighlightText the same white an author colour is forced
+        // to, so what this can read is the half that matters: the dot is not the fill.
+        expect(getComputedStyle(radio(form), '::before').backgroundColor).not.toBe(
+            getComputedStyle(radio(form)).backgroundColor,
+        );
     });
 
     it('says unavailable with a colour rather than a veil, which is not forced', async () => {

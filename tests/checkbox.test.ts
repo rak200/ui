@@ -682,34 +682,57 @@ describe('ui-checkbox', () => {
         expect(styles.borderTopColor).toBe('rgb(37, 99, 235)');
     });
 
-    it('marks the fill by subtracting the tick from it, rather than painting one on', async () => {
+    it('paints the tick over the fill in the accent label, cut to its shape by a mask', async () => {
         const form = await mount('<ui-checkbox label="Send a receipt" checked></ui-checkbox>');
+        const element = toggle(form);
 
-        const styles = getComputedStyle(box(toggle(form)));
+        // Retuned and read back, which is the whole difference from the hole this used to
+        // be: a hole shows whatever the control sits on, and the label is the colour
+        // anything on the accent owes its contrast to.
+        element.style.setProperty('--ui-color-accent-contrast', 'rgb(1, 2, 3)');
 
-        // Two layers and `exclude` is the whole mechanism: the mark is the hole, so its
-        // colour is whatever the control sits on and no colour is frozen in the data URI.
-        expect(styles.maskComposite).toBe('exclude, exclude');
-        expect(styles.maskImage).toContain('linear-gradient');
-        expect(styles.maskImage).toContain('svg');
-        expect(styles.maskRepeat).toBe('no-repeat, no-repeat');
-        expect(styles.maskSize).toBe('100% 100%, 100% 100%');
+        const control = getComputedStyle(box(element));
+        const mark = getComputedStyle(box(element), '::before');
+
+        expect(mark.backgroundColor, 'the accent label').toBe('rgb(1, 2, 3)');
+        expect(mark.maskImage, 'a shape from a path').toContain('svg');
+        expect(mark.maskSize).toBe('100% 100%');
+        expect(mark.maskRepeat).toBe('no-repeat');
+        expect(mark.width, 'laid out over the whole control, border included').toBe(control.width);
+        expect(control.maskImage, 'and the fill is whole').toBe('none');
+    });
+
+    it('paints no mark while it is off', async () => {
+        const form = await mount(fixture);
+
+        expect(getComputedStyle(box(toggle(form)), '::before').content).toBe('none');
     });
 
     it('draws a dash for the mixed state the platform stopped drawing', async () => {
         const form = await mount('<ui-checkbox label="All" indeterminate></ui-checkbox>');
         withoutMotion(toggle(form));
+        toggle(form).style.setProperty('--ui-color-accent-contrast', 'rgb(1, 2, 3)');
 
         expect(box(toggle(form)).indeterminate, 'an attribute the platform never had').toBe(true);
 
         const styles = getComputedStyle(box(toggle(form)));
+        const mark = getComputedStyle(box(toggle(form)), '::before');
 
         expect(styles.backgroundColor, 'filled, like checked').toBe('rgb(37, 99, 235)');
         expect(styles.borderTopColor, 'boundary included').toBe('rgb(37, 99, 235)');
-        expect(styles.maskComposite).toBe('exclude, exclude');
-        expect(styles.maskImage, 'a rectangle needs no picture').not.toContain('svg');
-        expect(styles.maskSize, 'a bar across the middle').toBe('100% 100%, 12px 2px');
-        expect(styles.maskPosition).toBe('50% 50%, 50% 50%');
+        expect(mark.backgroundColor, 'in the label, like the tick').toBe('rgb(1, 2, 3)');
+        expect(mark.maskImage, 'a rectangle needs no picture').not.toContain('svg');
+        expect(mark.maskSize, 'a bar across the middle').toBe('12px 2px');
+        expect(mark.maskPosition).toBe('50% 50%');
+    });
+
+    it('shows the mixed state over the tick when a control is both', async () => {
+        // The platform's own drawing does, and the order of the two rules is what does it
+        // here: the mixed state's comes later at the same specificity.
+        const form = await mount('<ui-checkbox label="All" checked indeterminate></ui-checkbox>');
+
+        expect(box(toggle(form)).checked, 'both, really').toBe(true);
+        expect(getComputedStyle(box(toggle(form)), '::before').maskImage).not.toContain('svg');
     });
 
     it('lets a toggle answer the question the mixed state was asking', async () => {
@@ -842,15 +865,16 @@ describe('ui-switch', () => {
         expect(styles.borderTopColor, 'the 3:1 boundary around it').toBe(empty.borderTopColor);
     });
 
-    it('draws the thumb in the boundary colour while off, and the surface colour on', async () => {
+    it('draws the thumb in the boundary colour while off, and the accent label on', async () => {
         const form = await mount(fixture);
         const element = toggle(form);
 
         // Retuned rather than compared with the defaults, so each colour is read back from
         // the name it was written with: off, the thumb has to clear 3:1 against the surface
-        // it sits on, which is the boundary's own floor; on, it sits on the accent.
+        // it sits on, which is the boundary's own floor; on, it sits on the accent, so it
+        // takes the accent's label, as the checkbox's mark does.
         element.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
-        element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-accent-contrast', 'rgb(4, 5, 6)');
 
         expect(getComputedStyle(box(element)).backgroundImage, 'off').toContain('rgb(1, 2, 3)');
 
@@ -1016,6 +1040,23 @@ describe('under forced colors', () => {
         await toggle(form).updateComplete;
 
         expect(getComputedStyle(box(toggle(form))).backgroundColor).not.toBe(resting);
+    });
+
+    it.each([
+        ['checked', '<ui-checkbox label="Send a receipt" checked></ui-checkbox>'],
+        ['mixed', '<ui-checkbox label="All" indeterminate></ui-checkbox>'],
+    ])('keeps the mark apart from the fill it sits on, %s', async (_, markup) => {
+        const form = await mount(markup);
+        withoutMotion(toggle(form));
+        await forcedColors(true);
+
+        // The fill names Highlight and the mark HighlightText, the colour the mode pairs
+        // with it. The emulated palette makes HighlightText the same white the mode forces
+        // an author colour to, so what this can read is the half that matters: the mark
+        // is not the fill.
+        expect(getComputedStyle(box(toggle(form)), '::before').backgroundColor).not.toBe(
+            getComputedStyle(box(toggle(form))).backgroundColor,
+        );
     });
 
     it('says unavailable with a colour rather than a veil, which is not forced', async () => {

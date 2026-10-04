@@ -198,6 +198,7 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the m
 | resting fill                 | `--ui-color-surface`                                        |
 | boundary                     | `--ui-color-border`                                         |
 | selected fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover |
+| the dot                      | `--ui-color-accent-contrast`                                |
 | unselected boundary on hover | `--ui-color-text`                                           |
 | in error                     | `--ui-color-danger`                                         |
 | focus ring                   | `--ui-color-focus`                                          |

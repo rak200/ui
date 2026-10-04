@@ -39,18 +39,14 @@ const grouping = 'option';
  */
 const size = css`max(24px, calc(${reference('--ui-space')} * 3))`;
 
-/** A mask layer covering the whole control, which the mark is then subtracted from. */
-const whole = css`linear-gradient(#000, #000)`;
-
 /**
- * The mark, as a hole rather than a dot — the same decision `src/checkbox.ts` explains at
- * length, reached here without a picture at all.
+ * The mark, as a mask rather than a picture — the same decision `src/checkbox.ts` explains
+ * at length, reached here without a picture at all.
  *
  * A checkbox's tick needs a path and therefore a `data:` URI; a radio's mark is a circle,
- * which is a gradient with a size. What both share is that the mark is **absent** rather
- * than coloured: `mask-composite: exclude` punches it out of the accent fill, so what
- * shows through is whatever the control sits on, and no colour is frozen anywhere a host
- * could not override it.
+ * which is a gradient with a size. What both share is that the shape carries no colour:
+ * the dot is `--ui-color-accent-contrast`, painted on the control's `::before` and cut to
+ * this circle, so no colour is frozen anywhere a host could not override it.
  */
 const mark = css`radial-gradient(circle closest-side, #000 100%, transparent 100%)`;
 
@@ -218,6 +214,8 @@ export class UiRadioGroup extends LitElement {
             background-repeat: no-repeat;
             border: 1px solid ${reference('--ui-color-border')};
             cursor: inherit;
+            /* What the mark is laid out against. */
+            position: relative;
             /* The focus ring is deliberately not in this list, for the reason
                src/button.ts gives beside its own: delaying the affordance that says *this
                is where you are* is the opposite of what it exists to do. */
@@ -227,17 +225,22 @@ export class UiRadioGroup extends LitElement {
                 border-color ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
         }
 
-        /* The mark is a hole: the whole control, minus the circle, so what shows through is
-           whatever the control sits on. The docblock on the mask constant says why a hole
-           rather than a colour. */
         input:checked {
             background-color: ${reference('--ui-color-accent')};
             border-color: ${reference('--ui-color-accent')};
-            mask-image: ${whole}, ${mark};
-            mask-composite: exclude;
-            mask-size:
-                100% 100%,
-                calc(${size} / 2);
+        }
+
+        /* The mark is painted over the fill, in the accent's label, the way the checkbox's
+           is and for its reason: a hole shows whatever the control sits on, which is the
+           label only by coincidence. On the control's own ::before, with inset: -1px to
+           reach back over the border, so the dot is centred on the whole control. */
+        input:checked::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background-color: ${reference('--ui-color-accent-contrast')};
+            mask-image: ${mark};
+            mask-size: calc(${size} / 2);
             mask-position: center;
             mask-repeat: no-repeat;
         }
@@ -300,8 +303,9 @@ export class UiRadioGroup extends LitElement {
            the accent that says *selected* becomes the same Canvas as the surface that says
            *not* — the state disappears, silently, for the people who turned the mode on to
            see states more clearly. System colours are the ones forced colors keeps, so the
-           selected state names Highlight and the difference survives; the mark keeps
-           working untouched, because a mask has no colour to force.
+           selected state names Highlight and the difference survives. The mark is an author
+           colour too, so it names HighlightText, the colour the mode pairs with Highlight;
+           its shape is a mask, which the mode leaves alone.
 
            Opacity is not a colour and is not forced, so the disabled control would still be
            half-transparent against a palette chosen for contrast. GrayText is what that
@@ -310,6 +314,10 @@ export class UiRadioGroup extends LitElement {
             input:checked {
                 background-color: Highlight;
                 border-color: Highlight;
+            }
+
+            input:checked::before {
+                background-color: HighlightText;
             }
 
             input:disabled {
