@@ -1025,3 +1025,4 @@ would live beside it.
 | 5    | [#263](https://github.com/rak200/ui/pull/263) | a control's glow, in its own colour, on the checkbox, switch and radio     |
 | 5    | [#266](https://github.com/rak200/ui/pull/266) | the glow on the text fields and the select, drawn around the control       |
 | 5    | [#269](https://github.com/rak200/ui/pull/269) | the glow on the buttons and the menu's trigger, brighter under the pointer |
+| 5    | [#270](https://github.com/rak200/ui/pull/270) | a toast's edge, and the raised surfaces' glow lit in their own colour      |
