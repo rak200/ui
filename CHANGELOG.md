@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/rak200/ui/compare/0.7.4...0.8.0) (2026-10-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* the primary button reads --ui-color-primary-contrast, --ui-color-primary-hover and --ui-color-primary-pressed. A host that overrides --ui-color-accent-contrast, --ui-color-accent-hover or --ui-color-accent-pressed still moves the checked controls, but no longer the primary button: set the primary's names too. Overriding --ui-color-accent moves both, as before.
+
+### Features
+
+* Glass edges its buttons as glass, and a button hovers on its edge ([#279](https://github.com/rak200/ui/issues/279)) ([e7ee0eb](https://github.com/rak200/ui/commit/e7ee0eba116de7e6799f960a508b574d87d861c4))
+* Glass fills a checked control at 0.80 and inverts the primary button ([7d1ba57](https://github.com/rak200/ui/commit/7d1ba579cdda3dd3ba885b213584c283c40b895b))
+* Glass fills its controls with glass, and keeps their edges opaque ([#276](https://github.com/rak200/ui/issues/276)) ([3e365e9](https://github.com/rak200/ui/commit/3e365e997880afaf689364a1dcc958c2f45368bb))
+
 ## [0.7.4](https://github.com/rak200/ui/compare/0.7.3...0.7.4) (2026-10-04)
 
 
