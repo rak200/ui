@@ -1269,6 +1269,17 @@ describe('the edge, and the lift a theme gives', () => {
 
         expect(edged(element).borderTopColor, 'under the pointer').toBe('rgb(7, 8, 9)');
     });
+
+    it('moves the edge with the motion the host sets', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+        element.style.setProperty('--ui-duration-state', '0.4s');
+        element.style.setProperty('--ui-easing-state', 'linear');
+
+        expect(edged(element).transitionProperty).toBe('border-color');
+        expect(edged(element).transitionDuration).toBe('0.4s');
+        expect(edged(element).transitionTimingFunction).toBe('linear');
+    });
 });
 
 describe('the description a tooltip hands over', () => {

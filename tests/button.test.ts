@@ -522,6 +522,16 @@ describe('the edge, and the lift a theme gives', () => {
         expect(edged(element).boxShadow).toBe('none');
     });
 
+    it('moves the edge with the motion the host sets', async () => {
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-duration-state', '0.4s');
+        element.style.setProperty('--ui-easing-state', 'linear');
+
+        expect(edged(element).transitionProperty).toBe('border-color');
+        expect(edged(element).transitionDuration).toBe('0.4s');
+        expect(edged(element).transitionTimingFunction).toBe('linear');
+    });
+
     it('goes to the edge a theme gives the pointer, and stays put until one does', async () => {
         const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
         element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
