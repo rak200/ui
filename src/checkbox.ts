@@ -91,7 +91,7 @@ const toggle = css`
         margin: 0;
         flex: none;
         block-size: ${size};
-        background-color: ${reference('--ui-color-surface')};
+        background-color: ${reference('--ui-color-surface-control')};
         background-repeat: no-repeat;
         border: 1px solid ${reference('--ui-color-border')};
         cursor: inherit;

@@ -210,7 +210,7 @@ export class UiRadioGroup extends LitElement {
                tells a radio from a checkbox before either is read, so it cannot follow
                --ui-radius without a square radio becoming possible. */
             border-radius: 50%;
-            background-color: ${reference('--ui-color-surface')};
+            background-color: ${reference('--ui-color-surface-control')};
             background-repeat: no-repeat;
             border: 1px solid ${reference('--ui-color-border')};
             cursor: inherit;

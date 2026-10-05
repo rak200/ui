@@ -274,6 +274,16 @@ function outside(palette: Palette, scheme: Scheme): readonly string[] {
 }
 
 /**
+ * A control's fill as a reader sees it, over each thing it can rest on — which is its own
+ * colour wherever the fill is opaque, and in the default palette the surface.
+ */
+function filled(palette: Palette, scheme: Scheme): readonly string[] {
+    return outside(palette, scheme).map((beside) =>
+        laid('--ui-color-surface-control', beside, scheme, palette),
+    );
+}
+
+/**
  * A boundary's contrast, read on whichever side of it is higher: against the fill it closes
  * in, or against what lies beside it outside. RFC 0003 decided that either reaching 3:1 is
  * enough — the eye takes a border and what is laid against it for one line.
@@ -1114,10 +1124,33 @@ describe('the contrast floors', () => {
                     // A stripe is a surface that a row of text sits on, so what it owes is the
                     // text floor rather than the 3:1 a tint might look like it owes. The value
                     // arrived with `ui-table`, which stripes its rows and rests its header on
-                    // it, and this is the reading that says how far the tint may go.
-                    expect(
-                        contrastRatio(paint('--ui-color-text'), paint('--ui-color-surface-muted')),
-                    ).toBeGreaterThanOrEqual(4.5);
+                    // it, and this is the reading that says how far the tint may go. It lies on
+                    // the table's own fill, which lies on whatever is beside the table.
+                    for (const table of filled(palette, scheme)) {
+                        expect(
+                            contrastRatio(
+                                paint('--ui-color-text'),
+                                laid('--ui-color-surface-muted', table, scheme, palette),
+                            ),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
+                it('keeps what is written in a control legible, whatever the control rests on', () => {
+                    // A value, a placeholder and a value in error are text, so each owes 4.5:1
+                    // against the fill — read through, where a theme makes it translucent, to
+                    // whatever the control rests on.
+                    for (const fill of filled(palette, scheme)) {
+                        for (const token of [
+                            '--ui-color-text',
+                            '--ui-color-text-muted',
+                            '--ui-color-text-invalid',
+                        ] as const) {
+                            expect(contrastRatio(paint(token), fill), token).toBeGreaterThanOrEqual(
+                                4.5,
+                            );
+                        }
+                    }
                 });
 
                 it('keeps a value in error legible as text', () => {
@@ -1144,11 +1177,14 @@ describe('the contrast floors', () => {
                     // read against the fill it closes in or against what lies beside it, and
                     // either reaching 3:1 is enough. The step below the shipped border is 2.94
                     // in light — what a percentage chosen by eye would have shipped.
-                    const fill = paint('--ui-color-surface');
                     const least = (edge: string): number =>
                         Math.min(
                             ...outside(palette, scheme).map((beside) =>
-                                eitherSide(edge, fill, beside),
+                                eitherSide(
+                                    edge,
+                                    laid('--ui-color-surface-control', beside, scheme, palette),
+                                    beside,
+                                ),
                             ),
                         );
 
@@ -1157,6 +1193,14 @@ describe('the contrast floors', () => {
                         least(paint('--ui-color-danger')),
                         'a field in error',
                     ).toBeGreaterThanOrEqual(3);
+                    // A switch that is off is an empty box, its thumb in the boundary's colour
+                    // on the fill — the one part of it the eye reads for its state.
+                    for (const fill of filled(palette, scheme)) {
+                        expect(
+                            contrastRatio(paint('--ui-color-border'), fill),
+                            "a switch's thumb",
+                        ).toBeGreaterThanOrEqual(3);
+                    }
                 });
 
                 it('identifies a checked control against what lies beside it', () => {

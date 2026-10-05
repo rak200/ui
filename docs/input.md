@@ -208,7 +208,7 @@ Every colour is a [token](tokens.md); nothing here is hardcoded.
 
 | Part               | Token                                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| surface            | `--ui-color-surface`                                                                                        |
+| surface            | `--ui-color-surface-control`, the surface unless set                                                        |
 | text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled                                                |
 | placeholder        | `--ui-color-text-muted`, at full opacity                                                                    |
 | boundary           | `--ui-color-border`, and `--ui-color-text` on hover                                                         |

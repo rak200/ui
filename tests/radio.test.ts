@@ -839,6 +839,13 @@ describe('the drawing', () => {
         expect(styles.borderTopColor, 'the boundary disappears into the fill').toBe('rgb(1, 2, 3)');
     });
 
+    it("takes its fill from the controls' own, which a theme may set apart from the surface", async () => {
+        const form = await mount(fixture);
+        group(form).style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(radio(form)).backgroundColor).toBe('rgb(1, 2, 3)');
+    });
+
     it('paints the dot over the fill in the accent label, cut to its shape by a mask', async () => {
         const form = await mount(fixture);
         group(form).style.setProperty('--ui-color-accent-contrast', 'rgb(1, 2, 3)');

@@ -476,6 +476,14 @@ describe('the validity', () => {
  * one — an invalid `var()` drops the whole declaration.
  */
 describe('every visual decision a control paints is a token', () => {
+    it("takes its fill from the controls' own, which a theme may set apart from the surface", async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+
+        element.style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(box(element)).backgroundColor).toBe('rgb(1, 2, 3)');
+    });
     it('takes its shape, its surface and its type from the host', async () => {
         const form = await mount(fixture);
         const element = field(form);

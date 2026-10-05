@@ -60,7 +60,7 @@ It also means everything the platform gives you still works: `colspan`, `rowspan
 | Part                       | What it gets                                                                 |
 | -------------------------- | ---------------------------------------------------------------------------- |
 | the element                | a boundary, a corner, and horizontal scrolling                               |
-| `table`                    | collapsed borders, full width, the font and the surface pair                 |
+| `table`                    | collapsed borders, full width, the font, and the text on a control's fill    |
 | `th`, `td`                 | padding from `--ui-space`, a bottom rule, `text-align: start`, top alignment |
 | `thead th`                 | the second surface tone, so a one-row table still reads as having a header   |
 | `tbody tr:nth-child(even)` | the same tone, as a stripe                                                   |
@@ -131,7 +131,8 @@ The category that arrived with this component is the **type scale** — `--ui-te
 
 `--ui-color-surface-muted` arrived with it: a second surface tone, for the header and the stripes.
 It is deliberately lighter than `--ui-color-hover`, so a state drawn over a striped row is still a
-change.
+change. The table itself is filled with `--ui-color-surface-control`, the fill every control takes,
+which is the surface until a theme sets it.
 
 There are **no parts**. `::part()` reaches into a shadow root, and everything you would want to
 style is in your own tree already — write a selector.

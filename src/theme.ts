@@ -231,11 +231,19 @@ export const glass: Theme = {
             // A toast edged all round in its variant's colour, at the opacity the glass's
             // filled controls take.
             '--ui-color-toast-edge': 'rgb(from currentColor r g b / 0.8)',
+            // A control's fill and a table's stripe at the glass's own opacity, each its own
+            // colour — the surface and the stripe's mix of the text into it — with only the
+            // opacity given up. Every edge stays opaque, so a field keeps the 3:1 its
+            // boundary was chosen for.
+            '--ui-color-surface-control': 'rgb(255 255 255 / 0.2)',
+            '--ui-color-surface-muted': 'rgb(238 238 238 / 0.2)',
         },
         dark: {
             '--ui-color-surface-raised': 'rgb(0 0 0 / 0.2)',
             '--ui-color-border-raised': 'rgb(255 255 255 / 0.16)',
             '--ui-color-border-overlay': 'rgb(255 255 255 / 0.16)',
+            '--ui-color-surface-control': 'rgb(17 24 39 / 0.2)',
+            '--ui-color-surface-muted': 'rgb(26 33 48 / 0.2)',
         },
     },
     more: {

@@ -195,7 +195,7 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the m
 | ---------------------------- | --------------------------------------------------------------------------------------- |
 | size                         | `--ui-space` × 3, floored at 24px                                                       |
 | space between options        | `--ui-space` ÷ 2, and `--ui-space` × 2 across a row                                     |
-| resting fill                 | `--ui-color-surface`                                                                    |
+| resting fill                 | `--ui-color-surface-control`, the surface unless set                                    |
 | boundary                     | `--ui-color-border`                                                                     |
 | selected fill                | `--ui-color-accent`, and `--ui-color-accent-hover` on hover                             |
 | the dot                      | `--ui-color-accent-contrast`                                                            |

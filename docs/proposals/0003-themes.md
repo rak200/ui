@@ -1028,3 +1028,4 @@ would live beside it.
 | 5    | [#270](https://github.com/rak200/ui/pull/270) | a toast's edge, and the raised surfaces' glow lit in their own colour      |
 | 5    | [#271](https://github.com/rak200/ui/pull/271) | a value in error in a theme's own colour, the danger in Matrix             |
 | 6    | [#273](https://github.com/rak200/ui/pull/273) | Glass, with the raised surfaces as glass over the page it documents        |
+| 6    | [#276](https://github.com/rak200/ui/pull/276) | the controls' fill, glass in Glass, with their edges opaque                |
