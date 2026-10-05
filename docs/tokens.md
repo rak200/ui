@@ -203,31 +203,33 @@ finish before closing, so it is the thing that would have waited forever.
 
 The names that have a default and are emitted at `:root` — the **ground** half of the set.
 
-| Token                    | Covers                                                            |
-| ------------------------ | ----------------------------------------------------------------- |
-| `--ui-color-accent`      | a checked control's fill, and a primary button's by default       |
-| `--ui-color-surface`     | a neutral surface                                                 |
-| `--ui-color-text`        | body and secondary text                                           |
-| `--ui-color-focus`       | the focus ring — see the floor below                              |
-| `--ui-color-danger`      | error text                                                        |
-| `--ui-color-success`     | a successful outcome                                              |
-| `--ui-color-warning`     | an outcome worth a second look                                    |
-| `--ui-color-info`        | an outcome that is neither                                        |
-| `--ui-color-toast-edge`  | the edge of a toast, its variant's colour by default              |
-| `--ui-color-scrim`       | the dim behind a modal                                            |
-| `--ui-radius`            | corner radius                                                     |
-| `--ui-space`             | the spacing step components scale from                            |
-| `--ui-font`              | the font stack                                                    |
-| `--ui-duration-100`      | the first step of the duration scale                              |
-| `--ui-easing-state`      | the curve a state change follows                                  |
-| `--ui-easing-enter`      | the curve an overlay arrives along                                |
-| `--ui-easing-exit`       | the curve it leaves along                                         |
-| `--ui-icon-size`         | how big a glyph is drawn                                          |
-| `--ui-icon-stroke`       | how heavy its stroke is, on a 24 grid                             |
-| `--ui-elevation-100`     | the first step of the elevation scale                             |
-| `--ui-elevation-control` | the glow a theme lights a control with, none by default           |
-| `--ui-backdrop-raised`   | what a raised surface does to the page behind it, none by default |
-| `--ui-text-100`          | the first step of the type scale                                  |
+| Token                      | Covers                                                            |
+| -------------------------- | ----------------------------------------------------------------- |
+| `--ui-color-accent`        | a checked control's fill, and a primary button's by default       |
+| `--ui-color-surface`       | a neutral surface                                                 |
+| `--ui-color-text`          | body and secondary text                                           |
+| `--ui-color-focus`         | the focus ring — see the floor below                              |
+| `--ui-color-danger`        | error text                                                        |
+| `--ui-color-success`       | a successful outcome                                              |
+| `--ui-color-warning`       | an outcome worth a second look                                    |
+| `--ui-color-info`          | an outcome that is neither                                        |
+| `--ui-color-toast-edge`    | the edge of a toast, its variant's colour by default              |
+| `--ui-color-border-button` | the edge of a button, its variant's colour by default             |
+| `--ui-color-scrim`         | the dim behind a modal                                            |
+| `--ui-radius`              | corner radius                                                     |
+| `--ui-space`               | the spacing step components scale from                            |
+| `--ui-font`                | the font stack                                                    |
+| `--ui-duration-100`        | the first step of the duration scale                              |
+| `--ui-easing-state`        | the curve a state change follows                                  |
+| `--ui-easing-enter`        | the curve an overlay arrives along                                |
+| `--ui-easing-exit`         | the curve it leaves along                                         |
+| `--ui-icon-size`           | how big a glyph is drawn                                          |
+| `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
+| `--ui-elevation-100`       | the first step of the elevation scale                             |
+| `--ui-elevation-control`   | the glow a theme lights a control with, none by default           |
+| `--ui-elevation-button`    | the lift a theme gives a button, none by default                  |
+| `--ui-backdrop-raised`     | what a raised surface does to the page behind it, none by default |
+| `--ui-text-100`            | the first step of the type scale                                  |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -302,29 +304,30 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                          | Covers                                        |
-| ------------------------------ | --------------------------------------------- |
-| `--ui-color-accent-contrast`   | every mark on the accent                      |
-| `--ui-color-accent-hover`      | a checked control under the pointer           |
-| `--ui-color-accent-pressed`    | the step past the hover                       |
-| `--ui-color-primary`           | the fill of a primary button                  |
-| `--ui-color-primary-contrast`  | its label                                     |
-| `--ui-color-primary-hover`     | a primary button under the pointer            |
-| `--ui-color-primary-pressed`   | a primary button being pressed                |
-| `--ui-color-hover`             | a neutral surface under the pointer           |
-| `--ui-color-pressed`           | a neutral surface being pressed               |
-| `--ui-color-border`            | the boundary of a control                     |
-| `--ui-color-border-overlay`    | the edge of a dialog, a tip and a menu        |
-| `--ui-color-border-raised`     | the edge of a card                            |
-| `--ui-color-text-invalid`      | the value written in a field in error         |
-| `--ui-color-text-muted`        | text that is not a value yet                  |
-| `--ui-duration-state`          | how long a state change takes                 |
-| `--ui-elevation-raised`        | a surface lifted off the page                 |
-| `--ui-elevation-control-hover` | the glow a button lights to under the pointer |
-| `--ui-text-supporting`         | text that explains what is beside it          |
-| `--ui-color-surface-muted`     | a second surface tone, for grouping           |
-| `--ui-color-surface-raised`    | the colour of a raised surface                |
-| `--ui-color-surface-control`   | the fill of a control, and of a table         |
+| Token                            | Covers                                        |
+| -------------------------------- | --------------------------------------------- |
+| `--ui-color-accent-contrast`     | every mark on the accent                      |
+| `--ui-color-accent-hover`        | a checked control under the pointer           |
+| `--ui-color-accent-pressed`      | the step past the hover                       |
+| `--ui-color-primary`             | the fill of a primary button                  |
+| `--ui-color-primary-contrast`    | its label                                     |
+| `--ui-color-primary-hover`       | a primary button under the pointer            |
+| `--ui-color-primary-pressed`     | a primary button being pressed                |
+| `--ui-color-hover`               | a neutral surface under the pointer           |
+| `--ui-color-pressed`             | a neutral surface being pressed               |
+| `--ui-color-border`              | the boundary of a control                     |
+| `--ui-color-border-overlay`      | the edge of a dialog, a tip and a menu        |
+| `--ui-color-border-raised`       | the edge of a card                            |
+| `--ui-color-border-button-hover` | the edge a button goes to under the pointer   |
+| `--ui-color-text-invalid`        | the value written in a field in error         |
+| `--ui-color-text-muted`          | text that is not a value yet                  |
+| `--ui-duration-state`            | how long a state change takes                 |
+| `--ui-elevation-raised`          | a surface lifted off the page                 |
+| `--ui-elevation-control-hover`   | the glow a button lights to under the pointer |
+| `--ui-text-supporting`           | text that explains what is beside it          |
+| `--ui-color-surface-muted`       | a second surface tone, for grouping           |
+| `--ui-color-surface-raised`      | the colour of a raised surface                |
+| `--ui-color-surface-control`     | the fill of a control, and of a table         |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -363,6 +366,13 @@ menu read both. They are the surface and nothing until something sets them, whic
 makes those five glass. Not an alpha on `--ui-color-surface`: every derivation mixes the surface, so
 a translucent one would take the border, the muted text and the hover translucent with it.
 
+**A button's edge is a name of its own, and may soften**, `--ui-color-border-button`, with the edge it
+goes to under the pointer, `--ui-color-border-button-hover`, and the lift a theme gives it,
+`--ui-elevation-button`. A button's label already identifies it, so WCAG 1.4.11 asks its edge for no
+3:1, where a field's edge is what identifies the field and keeps the derived border. The edge is drawn
+on a layer in the variant's colour and defaults to it — the text on a secondary button and the menu's
+trigger, nothing on a primary — so each draws what it drew before until something sets it.
+
 **A control has a fill of its own**, `--ui-color-surface-control`: a field, a select, an empty
 checkbox or radio, a switch that is off, and a table. It is the surface until something sets it, and
 a name apart from the raised surface's, because a control rests on a raised surface and on the page
@@ -380,29 +390,30 @@ formulas['--ui-duration-state'];
 // 'var(--ui-duration-100, 150ms)'
 ```
 
-| Token                          | Computes                                                          |
-| ------------------------------ | ----------------------------------------------------------------- |
-| `--ui-color-accent-contrast`   | white or black, whichever stands further from the accent          |
-| `--ui-color-accent-hover`      | the accent, 12% of the way toward the pole it has room to move to |
-| `--ui-color-accent-pressed`    | the accent, 22% of the way toward that pole                       |
-| `--ui-color-primary`           | the accent                                                        |
-| `--ui-color-primary-contrast`  | the accent's label                                                |
-| `--ui-color-primary-hover`     | the accent's hover                                                |
-| `--ui-color-primary-pressed`   | the accent's pressed                                              |
-| `--ui-color-hover`             | the surface, 16% of the way toward the text                       |
-| `--ui-color-pressed`           | the surface, 26% of the way toward the text                       |
-| `--ui-color-border`            | the surface, 50% of the way toward the text                       |
-| `--ui-color-border-overlay`    | the same mix as `--ui-color-border`                               |
-| `--ui-color-border-raised`     | the same mix again                                                |
-| `--ui-color-text-invalid`      | the text                                                          |
-| `--ui-color-text-muted`        | the surface, 65% of the way toward the text                       |
-| `--ui-duration-state`          | the first step of the duration scale                              |
-| `--ui-elevation-raised`        | the first step of the elevation scale                             |
-| `--ui-elevation-control-hover` | the resting glow, `--ui-elevation-control`                        |
-| `--ui-text-supporting`         | the first step of the type scale                                  |
-| `--ui-color-surface-muted`     | the surface, 5% of the way toward the text                        |
-| `--ui-color-surface-raised`    | the surface                                                       |
-| `--ui-color-surface-control`   | the surface                                                       |
+| Token                            | Computes                                                          |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `--ui-color-accent-contrast`     | white or black, whichever stands further from the accent          |
+| `--ui-color-accent-hover`        | the accent, 12% of the way toward the pole it has room to move to |
+| `--ui-color-accent-pressed`      | the accent, 22% of the way toward that pole                       |
+| `--ui-color-primary`             | the accent                                                        |
+| `--ui-color-primary-contrast`    | the accent's label                                                |
+| `--ui-color-primary-hover`       | the accent's hover                                                |
+| `--ui-color-primary-pressed`     | the accent's pressed                                              |
+| `--ui-color-hover`               | the surface, 16% of the way toward the text                       |
+| `--ui-color-pressed`             | the surface, 26% of the way toward the text                       |
+| `--ui-color-border`              | the surface, 50% of the way toward the text                       |
+| `--ui-color-border-overlay`      | the same mix as `--ui-color-border`                               |
+| `--ui-color-border-raised`       | the same mix again                                                |
+| `--ui-color-border-button-hover` | the resting edge, `--ui-color-border-button`                      |
+| `--ui-color-text-invalid`        | the text                                                          |
+| `--ui-color-text-muted`          | the surface, 65% of the way toward the text                       |
+| `--ui-duration-state`            | the first step of the duration scale                              |
+| `--ui-elevation-raised`          | the first step of the elevation scale                             |
+| `--ui-elevation-control-hover`   | the resting glow, `--ui-elevation-control`                        |
+| `--ui-text-supporting`           | the first step of the type scale                                  |
+| `--ui-color-surface-muted`       | the surface, 5% of the way toward the text                        |
+| `--ui-color-surface-raised`      | the surface                                                       |
+| `--ui-color-surface-control`     | the surface                                                       |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no

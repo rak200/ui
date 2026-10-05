@@ -66,6 +66,31 @@ export class UiButton extends LitElement {
             box-shadow: ${reference('--ui-elevation-control-hover')};
         }
 
+        /* The edge, and the lift a theme gives a button, on a layer of their own over the
+           border the button keeps as room. The layer's colour is the variant's — the text on
+           a secondary button, nothing on a primary — and the edge defaults to it, so each
+           draws what it drew before until a theme softens the edge. A button hovers on its
+           fill, and on its edge too where a theme gives the pointer one: a translucent fill's
+           own hover is the least of what moves. */
+        button::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border: 1px solid ${reference('--ui-color-border-button')};
+            border-radius: inherit;
+            box-shadow: ${reference('--ui-elevation-button')};
+            transition: border-color ${reference('--ui-duration-state')}
+                ${reference('--ui-easing-state')};
+        }
+
+        button.primary::after {
+            color: transparent;
+        }
+
+        button:not(:disabled):hover::after {
+            border-color: ${reference('--ui-color-border-button-hover')};
+        }
+
         button:disabled {
             cursor: not-allowed;
             opacity: 0.5;
@@ -90,10 +115,10 @@ export class UiButton extends LitElement {
             color: ${reference('--ui-color-primary-contrast')};
         }
 
+        /* A control's fill, as a field's: a theme may let the page through it. */
         button.secondary {
-            background: ${reference('--ui-color-surface')};
+            background: ${reference('--ui-color-surface-control')};
             color: ${reference('--ui-color-text')};
-            border-color: currentcolor;
         }
 
         /* The :not(:disabled) guard is measured rather than assumed: a disabled button

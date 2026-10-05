@@ -467,6 +467,102 @@ describe('the glow a theme lights', () => {
     });
 });
 
+/**
+ * The edge, which is drawn on a layer of its own in the variant's colour, and the lift a theme
+ * gives a button on the same layer. Read back from a retuned name, as every token here is.
+ */
+describe('the edge, and the lift a theme gives', () => {
+    /** What the layer the edge is drawn on computes to. */
+    function edged(element: UiButton): CSSStyleDeclaration {
+        return getComputedStyle(inner(element), '::after');
+    }
+
+    beforeEach(async () => {
+        // Off every button, so a resting read is not a hovered one.
+        await cdp().send('Input.dispatchMouseEvent', {
+            type: 'mouseMoved',
+            x: 1,
+            y: 1,
+            buttons: 0,
+        });
+    });
+
+    it('edges a secondary button in its text and a primary in nothing, as before', async () => {
+        const secondary = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        secondary.style.setProperty('--ui-color-text', 'rgb(1, 2, 3)');
+        const primary = await mount('<ui-button>Save</ui-button>');
+
+        expect(edged(secondary).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(edged(primary).borderTopColor).toBe('rgba(0, 0, 0, 0)');
+        // Over the button's own border, which it keeps transparent as room.
+        expect(edged(secondary).top).toBe('-1px');
+        expect(edged(secondary).borderTopWidth).toBe('1px');
+        expect(edged(secondary).borderTopStyle).toBe('solid');
+        expect(edged(secondary).position).toBe('absolute');
+        expect(getComputedStyle(inner(secondary)).borderTopColor).toBe('rgba(0, 0, 0, 0)');
+    });
+
+    it.each([
+        ['primary', '<ui-button>Save</ui-button>'],
+        ['secondary', '<ui-button variant="secondary">Cancel</ui-button>'],
+    ])('takes the edge, and the lift, from the host on a %s button', async (_v, markup) => {
+        const element = await mount(markup);
+        element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-elevation-button', 'rgb(4, 5, 6) 0px 1px 3px 0px');
+        element.style.setProperty('--ui-radius', '11px');
+
+        expect(edged(element).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(edged(element).boxShadow).toBe('rgb(4, 5, 6) 0px 1px 3px 0px');
+        expect(edged(element).borderTopLeftRadius).toBe('11px');
+    });
+
+    it('lifts nothing by default', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        expect(edged(element).boxShadow).toBe('none');
+    });
+
+    it('moves the edge with the motion the host sets', async () => {
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-duration-state', '0.4s');
+        element.style.setProperty('--ui-easing-state', 'linear');
+
+        expect(edged(element).transitionProperty).toBe('border-color');
+        expect(edged(element).transitionDuration).toBe('0.4s');
+        expect(edged(element).transitionTimingFunction).toBe('linear');
+    });
+
+    it('goes to the edge a theme gives the pointer, and stays put until one does', async () => {
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-duration-state', '0s');
+        await userEvent.hover(inner(element));
+
+        expect(edged(element).borderTopColor, 'the resting edge').toBe('rgb(1, 2, 3)');
+
+        element.style.setProperty('--ui-color-border-button-hover', 'rgb(7, 8, 9)');
+
+        expect(edged(element).borderTopColor, 'the edge under the pointer').toBe('rgb(7, 8, 9)');
+    });
+
+    it('moves no edge on a button that cannot be used', async () => {
+        const element = await mount('<ui-button variant="secondary" disabled>Cancel</ui-button>');
+        element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-border-button-hover', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-duration-state', '0s');
+        await userEvent.hover(inner(element), { force: true });
+
+        expect(edged(element).borderTopColor).toBe('rgb(1, 2, 3)');
+    });
+
+    it("fills a secondary button with the controls' own fill", async () => {
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3, 0.2)');
+
+        expect(background(element)).toBe('rgba(1, 2, 3, 0.2)');
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: UiButton, detail: unknown): boolean {

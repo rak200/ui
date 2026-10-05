@@ -126,10 +126,10 @@ export class UiMenu extends LitElement {
             gap: calc(${reference('--ui-space')} / 2);
             font: inherit;
             font-family: ${reference('--ui-font')};
-            border: 1px solid currentcolor;
+            border: 1px solid transparent;
             border-radius: ${reference('--ui-radius')};
             padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 2);
-            background: ${reference('--ui-color-surface')};
+            background: ${reference('--ui-color-surface-control')};
             color: ${reference('--ui-color-text')};
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
@@ -155,6 +155,23 @@ export class UiMenu extends LitElement {
 
         button:hover::before {
             box-shadow: ${reference('--ui-elevation-control-hover')};
+        }
+
+        /* The edge and a theme's lift, on a layer in the text, as src/button.ts draws a
+           secondary button's and for its reason. */
+        button::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border: 1px solid ${reference('--ui-color-border-button')};
+            border-radius: inherit;
+            box-shadow: ${reference('--ui-elevation-button')};
+            transition: border-color ${reference('--ui-duration-state')}
+                ${reference('--ui-easing-state')};
+        }
+
+        button:hover::after {
+            border-color: ${reference('--ui-color-border-button-hover')};
         }
 
         /* Zero rather than a second token, for the reason src/button.ts states beside its

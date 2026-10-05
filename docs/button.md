@@ -97,6 +97,12 @@ The button answers a pointer, and every colour it answers with comes from the
 | Focus (keyboard) | a 2px `--ui-color-focus` ring, immediately                               |
 | Disabled         | nothing — a disabled button takes a pointer and does not respond to it   |
 
+**Its edge is drawn on a layer of its own**, in `--ui-color-border-button` — the variant's colour by
+default, the text on a secondary button and nothing on a primary — with `--ui-elevation-button`, a
+lift a theme gives it, on the same layer. Under the pointer the edge goes to
+`--ui-color-border-button-hover`, which is the resting edge until a theme gives the pointer its own.
+A secondary button is filled with `--ui-color-surface-control`, the fill every control takes.
+
 **A theme can light a button as well**, through `--ui-elevation-control` at rest and
 `--ui-elevation-control-hover` under the pointer, both drawn in the accent on a layer over the
 button. Both are `none` in the default palette, and a disabled button lights nothing — see

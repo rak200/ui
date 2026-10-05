@@ -3,15 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## Themes, as RFC 0003 accepted them (#233)
-
-The package ships themes as data a host opts into — Matrix and Glass, each rendered by
-`themeStyleSheet()` — and the other two wanted ones become things every palette does: the accent's
-label derived from the accent, and `prefers-contrast: more` answered in the token layer. Six steps,
-in an order that is the rule: the drawings no theme waits on, the per-palette floors, the derived
-label (the one break), the contrast setting, then Matrix, then Glass. The prototypes under
-`docs/proposals/0003-themes/` render every decision against the real components.
-
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by

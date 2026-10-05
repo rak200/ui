@@ -1030,3 +1030,9 @@ would live beside it.
 | 6    | [#273](https://github.com/rak200/ui/pull/273) | Glass, with the raised surfaces as glass over the page it documents             |
 | 6    | [#276](https://github.com/rak200/ui/pull/276) | the controls' fill, glass in Glass, with their edges opaque                     |
 | 6    | [#278](https://github.com/rak200/ui/pull/278) | a checked control at 0.80, and the primary button inverted, on names of its own |
+| 6    | [#279](https://github.com/rak200/ui/pull/279) | a button's edge and lift, glass in Glass, and the edge it hovers to             |
+
+**One more break than the Decision named.** #278 gave the primary button four names of its own, which
+compute from the accent. A host that overrides the accent's label or its states still moves the
+checked controls, but no longer the button, because a formula reads grounds only. The Decision listed
+the derived label as the one break.
