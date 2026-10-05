@@ -930,9 +930,10 @@ describe('the values, all of which come from the token layer', () => {
         expect(styles.borderRadius).toBe('11px');
         expect(styles.backgroundColor).toBe('rgb(1, 2, 3)');
         expect(styles.color).toBe('rgb(4, 5, 6)');
-        expect(styles.borderTopColor, 'currentcolor, so the edge follows the text').toBe(
-            'rgb(4, 5, 6)',
-        );
+        expect(
+            getComputedStyle(trigger(element), '::after').borderTopColor,
+            'drawn in the text, so the edge follows it',
+        ).toBe('rgb(4, 5, 6)');
         expect(styles.fontFamily).toBe('Courier');
         expect(styles.transitionProperty).toBe('background-color');
         expect(styles.transitionDuration).toBe('0.4s');
@@ -1232,6 +1233,41 @@ describe('the glow a theme lights', () => {
         element.style.setProperty('--ui-elevation-control-hover', '0 0 0 2px currentColor');
 
         expect(lit(element).boxShadow).toBe('rgb(1, 2, 3) 0px 0px 0px 2px');
+    });
+});
+
+/** The trigger's edge and a theme's lift, as a secondary `ui-button` draws them. */
+describe('the edge, and the lift a theme gives', () => {
+    /** What the layer the edge is drawn on computes to. */
+    function edged(element: UiMenu): CSSStyleDeclaration {
+        return getComputedStyle(trigger(element), '::after');
+    }
+
+    it('takes the edge and the lift from the host, and the fill from the controls', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+        element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-elevation-button', 'rgb(4, 5, 6) 0px 1px 3px 0px');
+        element.style.setProperty('--ui-color-surface-control', 'rgb(7, 8, 9)');
+
+        expect(edged(element).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(edged(element).boxShadow).toBe('rgb(4, 5, 6) 0px 1px 3px 0px');
+        expect(edged(element).top).toBe('-1px');
+        expect(getComputedStyle(trigger(element)).backgroundColor).toBe('rgb(7, 8, 9)');
+    });
+
+    it('goes to the edge a theme gives the pointer', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+        element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-border-button-hover', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-duration-state', '0s');
+
+        expect(edged(element).borderTopColor, 'at rest').toBe('rgb(1, 2, 3)');
+
+        await userEvent.hover(trigger(element));
+
+        expect(edged(element).borderTopColor, 'under the pointer').toBe('rgb(7, 8, 9)');
     });
 });
 

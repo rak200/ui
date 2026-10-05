@@ -251,6 +251,16 @@ export const glass: Theme = {
             '--ui-color-primary-contrast': '#000000',
             '--ui-color-primary-hover': 'rgb(160 174 192 / 0.8)',
             '--ui-color-primary-pressed': 'rgb(171 183 199 / 0.8)',
+            // A button and the menu's trigger edged as the glass is, primary included: drawn in
+            // the text's colour, a secondary button's was the hardest line on the glass. A
+            // button's label identifies it, so its edge owes no 3:1, where a field's does and
+            // keeps the derived border. Under the pointer the edge goes to the text, which is
+            // the change a reader sees: a translucent fill's own hover barely moves.
+            '--ui-color-border-button': 'rgb(255 255 255 / 0.45)',
+            '--ui-color-border-button-hover': '#000000',
+            // The glass's highlight along the top, and a shorter drop than a raised surface's.
+            '--ui-elevation-button':
+                'inset 0 1px 0 light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.2)), 0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.33))',
         },
         dark: {
             '--ui-color-surface-raised': 'rgb(0 0 0 / 0.2)',
@@ -263,6 +273,8 @@ export const glass: Theme = {
             '--ui-color-primary-contrast': '#ffffff',
             '--ui-color-primary-hover': 'rgb(41 53 70 / 0.8)',
             '--ui-color-primary-pressed': 'rgb(34 44 59 / 0.8)',
+            '--ui-color-border-button': 'rgb(255 255 255 / 0.16)',
+            '--ui-color-border-button-hover': '#ffffff',
         },
     },
     more: {

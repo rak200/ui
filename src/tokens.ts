@@ -59,6 +59,13 @@ export const tokens = [
     // variant. Set, it edges every variant in that one colour, and a theme's glow on a toast
     // is lit in it too.
     '--ui-color-toast-edge',
+    // The edge of a button and of the menu's trigger, arriving with Glass, which softens it to
+    // the glass's own edge — RFC 0003. A button's label already identifies it, so WCAG 1.4.11
+    // asks its edge for no 3:1 and the edge may soften, where a field's may not. Its default
+    // is `currentColor`, and the layer it is drawn on is each variant's colour: the text for a
+    // secondary button and the trigger, nothing for a primary — so each draws what it drew
+    // before with no formula per variant.
+    '--ui-color-border-button',
     // The dim behind a modal, and a *ground* rather than a derivation even though every
     // other neutral here is derived. A derived neutral mixes toward the text, which is
     // what makes one formula right in both schemes — and it is exactly wrong for this
@@ -137,6 +144,10 @@ export const tokens = [
     // to the accent, or to the danger when the control is invalid — so one value lights
     // every control in its state's colour. `ARCHITECTURE.md` says why a named colour would not.
     '--ui-elevation-control',
+    // The lift a theme gives a button and the menu's trigger, arriving with Glass's highlight
+    // and short drop. A name apart from the control's glow, because fields and checks take
+    // the glow and not this. `none` by default, on the layer the button's edge is drawn on.
+    '--ui-elevation-button',
     // What a raised surface does to the page behind it, arriving with Glass under the same
     // clause: a backdrop filter is not a colour, so the glass's translucency rides on the
     // surface's colour and its blur needs a category of its own. `none` by default, so the
@@ -202,6 +213,10 @@ export const derivedTokens = [
     // answer to more contrast edges only the second in the text — RFC 0003. Glass softens
     // both to a translucent line; neither is a control's boundary, so neither owes 3:1.
     '--ui-color-border-raised',
+    // The edge a button goes to under the pointer. Derived from the resting edge, so a theme
+    // that softens the edge and writes nothing here keeps it steady, and the default palette's
+    // buttons hover on their fill alone, as before.
+    '--ui-color-border-button-hover',
     // The value written in a field that is in error, arriving with Matrix, which writes it in
     // the danger — RFC 0003. The text by default, so the default palette renders as before:
     // a field's boundary, its glow and its message already say it is wrong.
@@ -308,6 +323,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-color-info': '#0e7490',
     // The colour of the toast it edges, which is its variant's.
     '--ui-color-toast-edge': 'currentColor',
+    // The colour of the layer it edges, which is its variant's.
+    '--ui-color-border-button': 'currentColor',
     // Half black. Enough to push the page behind a modal out of the reading order for the
     // eye as well as for the accessibility tree, and not so much that the context a modal
     // is *about* stops being visible. The alpha is the whole point, so this is the one
@@ -341,6 +358,7 @@ export const defaults: Readonly<Record<Token, string>> = {
     // have to defend at every hue a host might set.
     '--ui-elevation-100': '0 1px 2px -1px rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.1)',
     '--ui-elevation-control': 'none',
+    '--ui-elevation-button': 'none',
     '--ui-backdrop-raised': 'none',
     // The value the three hardcoded sites already carried, adopted rather than re-chosen:
     // this token exists to make an existing decision overridable, and changing it in the
@@ -489,6 +507,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-color-border-overlay': mix('--ui-color-text', 50, '--ui-color-surface'),
     // The same mix again, for the same reason, and the edge a card has always drawn.
     '--ui-color-border-raised': mix('--ui-color-text', 50, '--ui-color-surface'),
+    // A plain reference: the resting edge, until a theme gives the pointer one of its own.
+    '--ui-color-border-button-hover': ground('--ui-color-border-button'),
     // A plain reference: the text, until a theme writes a value in error in another colour.
     '--ui-color-text-invalid': ground('--ui-color-text'),
     // 5.24:1 and 6.07:1, against a floor of 4.5. Not the 60% that first cleared it: that

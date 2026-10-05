@@ -757,8 +757,10 @@ describe('every value is legal for the property its token serves', () => {
 
             expect(resolved, token).toMatch(/\S/);
 
+            // An unresolvable colour computes to transparent, which `sRGB` writes with its
+            // opacity; every colour the default palette derives is opaque.
             if (token.startsWith('--ui-color-')) {
-                expect(painted(token, 'light'), token).not.toBe('#000000');
+                expect(painted(token, 'light'), token).toMatch(/^#[0-9a-f]{6}$/);
             }
         }
     });
@@ -1105,6 +1107,16 @@ describe('the contrast floors', () => {
                         contrastRatio(pressed, hover),
                         'pressed against hover',
                     ).toBeGreaterThanOrEqual(1.25);
+                });
+
+                it('moves a secondary button visibly from its own fill, whatever it rests on', () => {
+                    // A secondary button and the menu's trigger rest on a control's fill, which
+                    // a theme may let the page through, and hover to the neutral state.
+                    for (const fill of over('--ui-color-surface-control', palette, scheme)) {
+                        expect(
+                            contrastRatio(paint('--ui-color-hover'), fill),
+                        ).toBeGreaterThanOrEqual(1.25);
+                    }
                 });
 
                 it('moves a neutral state visibly where it rests on a raised surface', () => {

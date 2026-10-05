@@ -463,6 +463,12 @@ fill is a name of its own too**, `--ui-color-surface-control`, because a control
 surface and on the page alike: a theme fills it apart from whatever it rests on, and its edge stays
 the opaque boundary its floor was measured for.
 
+**A button's edge may soften; a field's may not.** WCAG 1.4.11 asks a boundary 3:1 only where the
+boundary is what identifies the control, and a button's label already does — so a button and the
+menu's trigger draw their edge in a name of their own, `--ui-color-border-button`, on a layer in the
+variant's colour, and Glass softens it to the glass's own edge. A field's edge is what shows where an
+empty field is, so it stays the derived border every palette measures.
+
 ### A category arrives with the component that consumes it
 
 Elevation lands with a card, a type scale with a table, `success` and `warning` with a toast — not

@@ -556,6 +556,10 @@ describe("glass's filled controls, as the browser renders them", () => {
         ['--ui-color-primary-hover', 'dark', 'rgba(41, 53, 70, 0.8)'],
         ['--ui-color-primary-pressed', 'light', 'rgba(171, 183, 199, 0.8)'],
         ['--ui-color-primary-pressed', 'dark', 'rgba(34, 44, 59, 0.8)'],
+        ['--ui-color-border-button', 'light', 'rgba(255, 255, 255, 0.45)'],
+        ['--ui-color-border-button', 'dark', 'rgba(255, 255, 255, 0.16)'],
+        ['--ui-color-border-button-hover', 'light', 'rgb(0, 0, 0)'],
+        ['--ui-color-border-button-hover', 'dark', 'rgb(255, 255, 255)'],
     ] as const)('writes %s in %s as %s', (token, scheme, value) => {
         expect(underGlass(token, scheme)).toBe(value);
     });
@@ -570,6 +574,31 @@ describe("glass's filled controls, as the browser renders them", () => {
         },
     );
 
+    it.each([
+        [
+            'light',
+            'rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.08) 0px 1px 3px 0px',
+        ],
+        [
+            'dark',
+            'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.33) 0px 1px 3px 0px',
+        ],
+    ] as const)('lifts a button with a highlight and a short drop, in %s', (scheme, lift) => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+
+        const host = document.createElement('div');
+        host.dataset['uiTheme'] = glass.name;
+        host.style.colorScheme = scheme;
+
+        const probe = document.createElement('div');
+        probe.style.boxShadow = String(reference('--ui-elevation-button'));
+        host.append(probe);
+        document.body.append(style, host);
+
+        expect(getComputedStyle(probe).boxShadow).toBe(lift);
+    });
+
     it('fills them opaque, and the button as the accent is, when the reader asks for less transparency', async () => {
         await cdp().send('Emulation.setEmulatedMedia', {
             features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
@@ -580,6 +609,8 @@ describe("glass's filled controls, as the browser renders them", () => {
         expect(underGlass('--ui-color-primary-contrast', 'light'), 'its label').toBe(
             'color(srgb-linear 1 1 1)',
         );
+        // A button's edge back to its variant's colour, which this probe paints in black.
+        expect(underGlass('--ui-color-border-button', 'light'), 'its edge').toBe('rgb(0, 0, 0)');
     });
 });
 
