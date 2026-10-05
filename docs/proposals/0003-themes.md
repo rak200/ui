@@ -1010,22 +1010,23 @@ would live beside it.
 
 ### Built
 
-| Step | Pull request                                  | What landed                                                                |
-| ---- | --------------------------------------------- | -------------------------------------------------------------------------- |
-| 1    | [#239](https://github.com/rak200/ui/pull/239) | the switch, off, an empty box: the surface inside, the thumb in the border |
-| 1    | [#241](https://github.com/rak200/ui/pull/241) | the tick, the dash, the dot and the switch's thumb in the accent's label   |
-| 1    | [#245](https://github.com/rak200/ui/pull/245) | the dialog's boundary, the card's derived border                           |
-| 1    | [#247](https://github.com/rak200/ui/pull/247) | a select's choices paint the surface, the drop-down only                   |
-| 1    | [#248](https://github.com/rak200/ui/pull/248) | a toast's icon per variant, its edge in one colour, and info in cyan       |
-| 2    | [#250](https://github.com/rak200/ui/pull/250) | the floors per palette and per scheme, and the boundary on either side     |
-| 3    | [#253](https://github.com/rak200/ui/pull/253) | the accent's label derived, its states moving toward the pole with room    |
-| 4    | [#258](https://github.com/rak200/ui/pull/258) | prefers-contrast: more, black and white with its states written out        |
-| 5    | [#259](https://github.com/rak200/ui/pull/259) | the theme shape, themeStyleSheet() and Matrix, without question 2's names  |
-| 5    | [#262](https://github.com/rak200/ui/pull/262) | the edge of what floats over the page, in the text under more contrast     |
-| 5    | [#263](https://github.com/rak200/ui/pull/263) | a control's glow, in its own colour, on the checkbox, switch and radio     |
-| 5    | [#266](https://github.com/rak200/ui/pull/266) | the glow on the text fields and the select, drawn around the control       |
-| 5    | [#269](https://github.com/rak200/ui/pull/269) | the glow on the buttons and the menu's trigger, brighter under the pointer |
-| 5    | [#270](https://github.com/rak200/ui/pull/270) | a toast's edge, and the raised surfaces' glow lit in their own colour      |
-| 5    | [#271](https://github.com/rak200/ui/pull/271) | a value in error in a theme's own colour, the danger in Matrix             |
-| 6    | [#273](https://github.com/rak200/ui/pull/273) | Glass, with the raised surfaces as glass over the page it documents        |
-| 6    | [#276](https://github.com/rak200/ui/pull/276) | the controls' fill, glass in Glass, with their edges opaque                |
+| Step | Pull request                                  | What landed                                                                     |
+| ---- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1    | [#239](https://github.com/rak200/ui/pull/239) | the switch, off, an empty box: the surface inside, the thumb in the border      |
+| 1    | [#241](https://github.com/rak200/ui/pull/241) | the tick, the dash, the dot and the switch's thumb in the accent's label        |
+| 1    | [#245](https://github.com/rak200/ui/pull/245) | the dialog's boundary, the card's derived border                                |
+| 1    | [#247](https://github.com/rak200/ui/pull/247) | a select's choices paint the surface, the drop-down only                        |
+| 1    | [#248](https://github.com/rak200/ui/pull/248) | a toast's icon per variant, its edge in one colour, and info in cyan            |
+| 2    | [#250](https://github.com/rak200/ui/pull/250) | the floors per palette and per scheme, and the boundary on either side          |
+| 3    | [#253](https://github.com/rak200/ui/pull/253) | the accent's label derived, its states moving toward the pole with room         |
+| 4    | [#258](https://github.com/rak200/ui/pull/258) | prefers-contrast: more, black and white with its states written out             |
+| 5    | [#259](https://github.com/rak200/ui/pull/259) | the theme shape, themeStyleSheet() and Matrix, without question 2's names       |
+| 5    | [#262](https://github.com/rak200/ui/pull/262) | the edge of what floats over the page, in the text under more contrast          |
+| 5    | [#263](https://github.com/rak200/ui/pull/263) | a control's glow, in its own colour, on the checkbox, switch and radio          |
+| 5    | [#266](https://github.com/rak200/ui/pull/266) | the glow on the text fields and the select, drawn around the control            |
+| 5    | [#269](https://github.com/rak200/ui/pull/269) | the glow on the buttons and the menu's trigger, brighter under the pointer      |
+| 5    | [#270](https://github.com/rak200/ui/pull/270) | a toast's edge, and the raised surfaces' glow lit in their own colour           |
+| 5    | [#271](https://github.com/rak200/ui/pull/271) | a value in error in a theme's own colour, the danger in Matrix                  |
+| 6    | [#273](https://github.com/rak200/ui/pull/273) | Glass, with the raised surfaces as glass over the page it documents             |
+| 6    | [#276](https://github.com/rak200/ui/pull/276) | the controls' fill, glass in Glass, with their edges opaque                     |
+| 6    | [#278](https://github.com/rak200/ui/pull/278) | a checked control at 0.80, and the primary button inverted, on names of its own |
