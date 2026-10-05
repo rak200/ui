@@ -192,8 +192,8 @@ describe('every visual decision a button paints is a token', () => {
         element.style.setProperty('--ui-font', 'monospace');
         element.style.setProperty('--ui-radius', '11px');
         element.style.setProperty('--ui-space', '7px');
-        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
-        element.style.setProperty('--ui-color-accent-contrast', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-primary', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-primary-contrast', 'rgb(4, 5, 6)');
 
         const styles = getComputedStyle(inner(element));
 
@@ -201,8 +201,21 @@ describe('every visual decision a button paints is a token', () => {
         expect(styles.borderRadius, '--ui-radius').toBe('11px');
         expect(styles.paddingTop, '--ui-space').toBe('7px');
         expect(styles.paddingLeft, '--ui-space, doubled across the inline axis').toBe('14px');
-        expect(styles.backgroundColor, '--ui-color-accent').toBe('rgb(1, 2, 3)');
-        expect(styles.color, '--ui-color-accent-contrast').toBe('rgb(4, 5, 6)');
+        expect(styles.backgroundColor, '--ui-color-primary').toBe('rgb(1, 2, 3)');
+        expect(styles.color, '--ui-color-primary-contrast').toBe('rgb(4, 5, 6)');
+    });
+
+    it('fills a primary button with the accent and its label, until a theme gives the button its own', async () => {
+        // The primary's names compute what the accent's do, from the accent: a host who moves
+        // the accent moves the button with it.
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        element.style.setProperty('--ui-color-accent', 'rgb(0, 0, 0)');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor).toBe('rgb(0, 0, 0)');
+        expect(styles.color, "the accent's pole").toBe('color(srgb-linear 1 1 1)');
     });
 
     it('takes the neutral pair from the host, as a secondary button', async () => {
@@ -230,7 +243,7 @@ describe('every visual decision a button paints is a token', () => {
     });
 
     it.each([
-        ['primary', '<ui-button>Save</ui-button>', '--ui-color-accent-hover'],
+        ['primary', '<ui-button>Save</ui-button>', '--ui-color-primary-hover'],
         ['secondary', '<ui-button variant="secondary">Cancel</ui-button>', '--ui-color-hover'],
     ])('takes the hover colour from the host, as a %s button', async (_v, markup, token) => {
         const element = await mount(markup);
@@ -246,7 +259,7 @@ describe('every visual decision a button paints is a token', () => {
     });
 
     it.each([
-        ['primary', '<ui-button>Save</ui-button>', '--ui-color-accent-pressed'],
+        ['primary', '<ui-button>Save</ui-button>', '--ui-color-primary-pressed'],
         ['secondary', '<ui-button variant="secondary">Cancel</ui-button>', '--ui-color-pressed'],
     ])('takes the pressed colour from the host, as a %s button', async (_v, markup, token) => {
         const element = await mount(markup);

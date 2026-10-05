@@ -45,6 +45,13 @@ where a check that stops at the host silently passes.
 How much visual weight the button carries — `primary` (the default) or `secondary`. Reflected, so
 it can be read back from the attribute and selected on in CSS.
 
+**A primary button is filled with its own four names**: `--ui-color-primary`, its label
+`--ui-color-primary-contrast`, and `--ui-color-primary-hover` and `--ui-color-primary-pressed`. Each
+computes what the accent's own does, from `--ui-color-accent`, so moving the accent moves the button.
+Overriding the accent's label or its states does not reach the button; set the primary's too. A
+theme can fill the button apart from the checked controls, which is what [Glass](theme.md#glass)
+does. A secondary button is the surface and the text.
+
 ## `disabled`
 
 ```html

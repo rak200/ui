@@ -82,19 +82,21 @@ of what floats over the page go to the text's pole, black or white.
 The raised surfaces frosted over whatever page is behind them, in both schemes: the card, the toast,
 the tip, the dialog and the open menu.
 
-|                  | light                                                     | dark                           |
-| ---------------- | --------------------------------------------------------- | ------------------------------ |
-| text             | `#000000`                                                 | `#ffffff`                      |
-| accent           | `#334155`                                                 | `#94a3b8`                      |
-| hover            | `#bebebe`                                                 | `#393f4d`                      |
-| pressed          | `#989898`                                                 | `#535965`                      |
-| a raised surface | white at 0.20                                             | black at 0.20                  |
-| behind it        | `blur(10px) saturate(1.7)`                                | the same                       |
-| its edge         | white at 0.45                                             | white at 0.16                  |
-| its lift         | a highlight along the top, white at 0.60, and a soft drop | white at 0.20, the drop darker |
-| a toast's edge   | its variant's colour at 0.80                              | the same                       |
-| a control's fill | the surface at 0.20                                       | the same                       |
-| a table's stripe | its mix at 0.20                                           | the same                       |
+|                    | light                                                     | dark                                   |
+| ------------------ | --------------------------------------------------------- | -------------------------------------- |
+| text               | `#000000`                                                 | `#ffffff`                              |
+| accent             | `#334155`                                                 | `#94a3b8`                              |
+| hover              | `#bebebe`                                                 | `#393f4d`                              |
+| pressed            | `#989898`                                                 | `#535965`                              |
+| a raised surface   | white at 0.20                                             | black at 0.20                          |
+| behind it          | `blur(10px) saturate(1.7)`                                | the same                               |
+| its edge           | white at 0.45                                             | white at 0.16                          |
+| its lift           | a highlight along the top, white at 0.60, and a soft drop | white at 0.20, the drop darker         |
+| a toast's edge     | its variant's colour at 0.80                              | the same                               |
+| a control's fill   | the surface at 0.20                                       | the same                               |
+| a table's stripe   | its mix at 0.20                                           | the same                               |
+| a checked control  | the accent at 0.80, its mark whole                        | the same                               |
+| the primary button | `#94a3b8` at 0.80, under a black label                    | `#334155` at 0.80, under a white label |
 
 **The glass is the scheme's pole at an opacity**, white in the light scheme and black in the dark —
 black rather than the dark surface, because at the same opacity it takes a lighter page. The surface
@@ -108,6 +110,13 @@ table take their own fill at the glass's opacity, and a table's stripe its mix. 
 opaque, so a field keeps the 3:1 its boundary was chosen for, and what is written in it is measured
 over the fill laid on the page and on the glass alike. A select's choices keep the opaque surface,
 because the platform's picker reads them.
+
+**A checked control takes the accent at 0.80, and the primary button is inverted.** A translucent
+fill moves toward its own label, and Glass's accent sits at the far pole from the glass, so its label
+is the glass's own pole: a primary button at an opacity would lose it below 0.72. Inverted — a light
+slate under a black label in the light scheme, a dark one under a white label in the dark — the fill
+moves away from the label instead, and so does each of its states. A checked box keeps the accent,
+because inverted it fell under 3:1 against the glass even when opaque; its mark is drawn whole.
 
 **It holds its floors over a page, and the page is yours.** What rests on the glass is read against
 the glass and the page behind it, so the theme is measured over the page it can take: **no darker

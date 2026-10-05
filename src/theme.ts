@@ -237,6 +237,20 @@ export const glass: Theme = {
             // boundary was chosen for.
             '--ui-color-surface-control': 'rgb(255 255 255 / 0.2)',
             '--ui-color-surface-muted': 'rgb(238 238 238 / 0.2)',
+            // A checked control filled with the accent at 0.80, its mark drawn whole in the
+            // accent's label. Opaque in `values`, which is what it stands down to.
+            '--ui-color-accent': 'rgb(51 65 85 / 0.8)',
+            // The primary button inverted, a light slate under a black label in the light
+            // scheme and a dark one under a white label in the dark. A translucent accent moves
+            // toward its own label, and Glass's sits at the far pole from the glass, so its
+            // label is the glass's own pole: under 4.5:1 below 0.72. Inverted, the fill moves
+            // away from the label instead, and each state moves on away from it. Inverted
+            // everywhere, a checked box fell under 3:1 against the glass even opaque, so the
+            // button alone takes it — RFC 0003.
+            '--ui-color-primary': 'rgb(148 163 184 / 0.8)',
+            '--ui-color-primary-contrast': '#000000',
+            '--ui-color-primary-hover': 'rgb(160 174 192 / 0.8)',
+            '--ui-color-primary-pressed': 'rgb(171 183 199 / 0.8)',
         },
         dark: {
             '--ui-color-surface-raised': 'rgb(0 0 0 / 0.2)',
@@ -244,6 +258,11 @@ export const glass: Theme = {
             '--ui-color-border-overlay': 'rgb(255 255 255 / 0.16)',
             '--ui-color-surface-control': 'rgb(17 24 39 / 0.2)',
             '--ui-color-surface-muted': 'rgb(26 33 48 / 0.2)',
+            '--ui-color-accent': 'rgb(148 163 184 / 0.8)',
+            '--ui-color-primary': 'rgb(51 65 85 / 0.8)',
+            '--ui-color-primary-contrast': '#ffffff',
+            '--ui-color-primary-hover': 'rgb(41 53 70 / 0.8)',
+            '--ui-color-primary-pressed': 'rgb(34 44 59 / 0.8)',
         },
     },
     more: {

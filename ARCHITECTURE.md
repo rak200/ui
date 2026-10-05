@@ -357,7 +357,10 @@ override one; nothing can read one back. What it buys is an override surface a h
 their head — change the accent and its label, its hover and its pressed colours follow, rather than
 being one more name each. The label joined the derivations with RFC 0003: as a ground, a host's
 accent beside the default label was a pair nothing measured, and as the accent's own pole it reads
-on every accent a host can pick.
+on every accent a host can pick. **The primary button has four names of its own**, which compute what
+the accent's do, from the accent: a theme can then fill the button apart from the checked controls,
+which Glass needs, and the price is that overriding the accent's derived names no longer reaches the
+button — a formula reads grounds only, so the button's names cannot point at the accent's.
 
 ### A theme and a scheme are two axes
 

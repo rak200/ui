@@ -159,7 +159,7 @@ at.
 
 **The states are written out rather than derived.** Over pure black a mix toward the text barely
 moves, and a black or white accent has no room to shade toward, so the hover, the pressed, the
-striped row and the accent's two states are given as values — at the steps the default palette's own
+striped row, the accent's two states and the primary button's are given as values — at the steps the default palette's own
 states take. Those values are declared at `:root`, so they reach under a theme of your own too: a
 theme that answers the setting itself declares its own states, or resets them with `initial` to hand
 them back to their formulas.
@@ -205,7 +205,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 
 | Token                    | Covers                                                            |
 | ------------------------ | ----------------------------------------------------------------- |
-| `--ui-color-accent`      | the accent surface of a primary control                           |
+| `--ui-color-accent`      | a checked control's fill, and a primary button's by default       |
 | `--ui-color-surface`     | a neutral surface                                                 |
 | `--ui-color-text`        | body and secondary text                                           |
 | `--ui-color-focus`       | the focus ring — see the floor below                              |
@@ -304,9 +304,13 @@ The roles computed from the grounds rather than declared beside them.
 
 | Token                          | Covers                                        |
 | ------------------------------ | --------------------------------------------- |
-| `--ui-color-accent-contrast`   | text, and every mark, on the accent           |
-| `--ui-color-accent-hover`      | a primary control under the pointer           |
-| `--ui-color-accent-pressed`    | a primary control being pressed               |
+| `--ui-color-accent-contrast`   | every mark on the accent                      |
+| `--ui-color-accent-hover`      | a checked control under the pointer           |
+| `--ui-color-accent-pressed`    | the step past the hover                       |
+| `--ui-color-primary`           | the fill of a primary button                  |
+| `--ui-color-primary-contrast`  | its label                                     |
+| `--ui-color-primary-hover`     | a primary button under the pointer            |
+| `--ui-color-primary-pressed`   | a primary button being pressed                |
 | `--ui-color-hover`             | a neutral surface under the pointer           |
 | `--ui-color-pressed`           | a neutral surface being pressed               |
 | `--ui-color-border`            | the boundary of a control                     |
@@ -335,7 +339,16 @@ is a formula that resolves where it is used rather than a value somebody has to 
 stands further from the accent, so no accent you pick leaves its label under 4.5:1. The hover and
 the pressed move toward whichever pole leaves them room — away from the label while it has little to
 spare, toward it once it stands at 10:1 — so every accent but pure black keeps a state you can see.
-You can still set the label yourself; a derived name takes an override like any other.
+You can still set the label yourself; a derived name takes an override like any other. It is drawn
+opaque whatever the accent's opacity, so a mark on an accent a theme made translucent is still drawn
+whole.
+
+**The primary button has four names of its own**, `--ui-color-primary`, `-primary-contrast`,
+`-primary-hover` and `-primary-pressed`. Each computes what the accent's own does, from the accent: a
+formula reads grounds only, so the four cannot point at the accent's derived names. Moving the
+accent moves the button; overriding the accent's label or states reaches the checked controls and
+not the button, so set the primary's too. A theme fills the button apart from the checked controls
+through them, as [Glass](theme.md#glass) inverts it.
 
 **The edge of what floats is the boundary under a name of its own.** `--ui-color-border-overlay`
 computes what `--ui-color-border` does, and is a second name because
@@ -372,6 +385,10 @@ formulas['--ui-duration-state'];
 | `--ui-color-accent-contrast`   | white or black, whichever stands further from the accent          |
 | `--ui-color-accent-hover`      | the accent, 12% of the way toward the pole it has room to move to |
 | `--ui-color-accent-pressed`    | the accent, 22% of the way toward that pole                       |
+| `--ui-color-primary`           | the accent                                                        |
+| `--ui-color-primary-contrast`  | the accent's label                                                |
+| `--ui-color-primary-hover`     | the accent's hover                                                |
+| `--ui-color-primary-pressed`   | the accent's pressed                                              |
 | `--ui-color-hover`             | the surface, 16% of the way toward the text                       |
 | `--ui-color-pressed`           | the surface, 26% of the way toward the text                       |
 | `--ui-color-border`            | the surface, 50% of the way toward the text                       |

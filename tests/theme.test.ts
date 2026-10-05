@@ -518,6 +518,71 @@ describe('glass, as the browser renders it', () => {
     });
 });
 
+/**
+ * Glass's accent and primary button, as the browser resolves each name — at 0.80 the accent a
+ * checked control is filled with, the button inverted, and the marks drawn whole.
+ */
+describe("glass's filled controls, as the browser renders them", () => {
+    /** One token under Glass in `scheme`, as the browser serialises the colour. */
+    function underGlass(token: Token | DerivedToken, scheme: 'light' | 'dark'): string {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+
+        const host = document.createElement('div');
+        host.dataset['uiTheme'] = glass.name;
+        host.style.colorScheme = scheme;
+
+        const probe = document.createElement('div');
+        probe.style.backgroundColor = String(reference(token));
+        host.append(probe);
+        document.body.append(style, host);
+
+        try {
+            return getComputedStyle(probe).backgroundColor;
+        } finally {
+            style.remove();
+            host.remove();
+        }
+    }
+
+    it.each([
+        ['--ui-color-accent', 'light', 'rgba(51, 65, 85, 0.8)'],
+        ['--ui-color-accent', 'dark', 'rgba(148, 163, 184, 0.8)'],
+        ['--ui-color-primary', 'light', 'rgba(148, 163, 184, 0.8)'],
+        ['--ui-color-primary', 'dark', 'rgba(51, 65, 85, 0.8)'],
+        ['--ui-color-primary-contrast', 'light', 'rgb(0, 0, 0)'],
+        ['--ui-color-primary-contrast', 'dark', 'rgb(255, 255, 255)'],
+        ['--ui-color-primary-hover', 'light', 'rgba(160, 174, 192, 0.8)'],
+        ['--ui-color-primary-hover', 'dark', 'rgba(41, 53, 70, 0.8)'],
+        ['--ui-color-primary-pressed', 'light', 'rgba(171, 183, 199, 0.8)'],
+        ['--ui-color-primary-pressed', 'dark', 'rgba(34, 44, 59, 0.8)'],
+    ] as const)('writes %s in %s as %s', (token, scheme, value) => {
+        expect(underGlass(token, scheme)).toBe(value);
+    });
+
+    it.each([
+        ['light', 'color(srgb-linear 1 1 1)'],
+        ['dark', 'color(srgb-linear 0 0 0)'],
+    ] as const)(
+        "draws a checked control's mark whole on the translucent accent, in %s",
+        (scheme, mark) => {
+            expect(underGlass('--ui-color-accent-contrast', scheme)).toBe(mark);
+        },
+    );
+
+    it('fills them opaque, and the button as the accent is, when the reader asks for less transparency', async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
+        });
+
+        expect(underGlass('--ui-color-accent', 'light'), 'the accent').toBe('rgb(51, 65, 85)');
+        expect(underGlass('--ui-color-primary', 'light'), 'the button').toBe('rgb(51, 65, 85)');
+        expect(underGlass('--ui-color-primary-contrast', 'light'), 'its label').toBe(
+            'color(srgb-linear 1 1 1)',
+        );
+    });
+});
+
 describe.each([matrix, glass])('$name', (theme) => {
     /** The values it sets and the translucent ones it sets aside, each with its dark ones. */
     const sets = [theme, ...(theme.translucent === undefined ? [] : [theme.translucent])];
