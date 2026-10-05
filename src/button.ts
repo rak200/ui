@@ -83,9 +83,11 @@ export class UiButton extends LitElement {
             outline-offset: 2px;
         }
 
+        /* The primary's own four names, which are the accent's until a theme fills the
+           button apart from the checked controls — Glass inverts it. */
         button.primary {
-            background: ${reference('--ui-color-accent')};
-            color: ${reference('--ui-color-accent-contrast')};
+            background: ${reference('--ui-color-primary')};
+            color: ${reference('--ui-color-primary-contrast')};
         }
 
         button.secondary {
@@ -99,7 +101,7 @@ export class UiButton extends LitElement {
        pointer that cannot activate it. Ordering does not substitute for the guard — both
        rules below outrank the resting one on specificity whatever their position. */
         button.primary:not(:disabled):hover {
-            background: ${reference('--ui-color-accent-hover')};
+            background: ${reference('--ui-color-primary-hover')};
         }
 
         button.secondary:not(:disabled):hover {
@@ -112,7 +114,7 @@ export class UiButton extends LitElement {
        decision a host would want to retune. And the pressed state is never the only
        feedback a component gives — activating by Enter produces no :active at all. */
         button.primary:not(:disabled):active {
-            background: ${reference('--ui-color-accent-pressed')};
+            background: ${reference('--ui-color-primary-pressed')};
             transition-duration: 0s;
         }
 

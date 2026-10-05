@@ -274,13 +274,11 @@ function outside(palette: Palette, scheme: Scheme): readonly string[] {
 }
 
 /**
- * A control's fill as a reader sees it, over each thing it can rest on — which is its own
- * colour wherever the fill is opaque, and in the default palette the surface.
+ * A fill as a reader sees it, over each thing a control can rest on — which is the fill's own
+ * colour wherever it is opaque.
  */
-function filled(palette: Palette, scheme: Scheme): readonly string[] {
-    return outside(palette, scheme).map((beside) =>
-        laid('--ui-color-surface-control', beside, scheme, palette),
-    );
+function over(token: Token | DerivedToken, palette: Palette, scheme: Scheme): readonly string[] {
+    return outside(palette, scheme).map((beside) => laid(token, beside, scheme, palette));
 }
 
 /**
@@ -1025,12 +1023,26 @@ describe('the contrast floors', () => {
                 });
 
                 it('keeps a primary button legible, which is its own pair rather than the surface', () => {
-                    expect(
-                        contrastRatio(
-                            paint('--ui-color-accent-contrast'),
-                            paint('--ui-color-accent'),
-                        ),
-                    ).toBeGreaterThanOrEqual(4.5);
+                    // Its label against its fill, laid over whatever the button rests on: a
+                    // theme may fill it at an opacity, as Glass does.
+                    for (const fill of over('--ui-color-primary', palette, scheme)) {
+                        expect(
+                            contrastRatio(paint('--ui-color-primary-contrast'), fill),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
+                it("keeps a checked control's mark legible, at rest and under the pointer", () => {
+                    // The tick, the dot and the thumb are the accent's label, drawn whole on a
+                    // fill that may let the page through.
+                    for (const token of ['--ui-color-accent', '--ui-color-accent-hover'] as const) {
+                        for (const fill of over(token, palette, scheme)) {
+                            expect(
+                                contrastRatio(paint('--ui-color-accent-contrast'), fill),
+                                token,
+                            ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    }
                 });
 
                 it('keeps the focus ring at 3:1 against the surface — WCAG 1.4.11, which axe cannot see', () => {
@@ -1049,20 +1061,31 @@ describe('the contrast floors', () => {
                  * automated pass hovers anything — so a hover colour that puts text under 4.5:1
                  * is invisible to every gate this repository has.
                  */
-                it('moves the accent visibly', () => {
-                    const resting = paint('--ui-color-accent');
-                    const hover = paint('--ui-color-accent-hover');
-                    const pressed = paint('--ui-color-accent-pressed');
-
+                it.each([
+                    ['--ui-color-accent', '--ui-color-accent-hover', '--ui-color-accent-pressed'],
+                    [
+                        '--ui-color-primary',
+                        '--ui-color-primary-hover',
+                        '--ui-color-primary-pressed',
+                    ],
+                ] as const)('moves %s visibly', (resting, hover, pressed) => {
                     // A component that accepts interaction and shows no feedback is defective,
                     // and *no feedback* includes a mix too small to see. 1.05 is about the least
-                    // a real display renders as a difference at all.
-                    expect(contrastRatio(hover, resting), 'hover against resting').toBeGreaterThan(
-                        1.05,
-                    );
-                    expect(contrastRatio(pressed, hover), 'pressed against hover').toBeGreaterThan(
-                        1.05,
-                    );
+                    // a real display renders as a difference at all. Read over whatever the
+                    // control rests on, which a fill at an opacity lets through.
+                    for (const beside of outside(palette, scheme)) {
+                        const at = (token: DerivedToken | Token): string =>
+                            laid(token, beside, scheme, palette);
+
+                        expect(
+                            contrastRatio(at(hover), at(resting)),
+                            'hover against resting',
+                        ).toBeGreaterThan(1.05);
+                        expect(
+                            contrastRatio(at(pressed), at(hover)),
+                            'pressed against hover',
+                        ).toBeGreaterThan(1.05);
+                    }
                 });
 
                 it('moves the surface visibly', () => {
@@ -1095,16 +1118,16 @@ describe('the contrast floors', () => {
                 });
 
                 it('keeps a hovered primary legible', () => {
-                    const label = paint('--ui-color-accent-contrast');
+                    const label = paint('--ui-color-primary-contrast');
 
-                    expect(
-                        contrastRatio(label, paint('--ui-color-accent-hover')),
-                        'hovered',
-                    ).toBeGreaterThanOrEqual(4.5);
-                    expect(
-                        contrastRatio(label, paint('--ui-color-accent-pressed')),
-                        'pressed',
-                    ).toBeGreaterThanOrEqual(4.5);
+                    for (const token of [
+                        '--ui-color-primary-hover',
+                        '--ui-color-primary-pressed',
+                    ] as const) {
+                        for (const fill of over(token, palette, scheme)) {
+                            expect(contrastRatio(label, fill), token).toBeGreaterThanOrEqual(4.5);
+                        }
+                    }
                 });
 
                 it('keeps a hovered secondary legible', () => {
@@ -1126,7 +1149,7 @@ describe('the contrast floors', () => {
                     // arrived with `ui-table`, which stripes its rows and rests its header on
                     // it, and this is the reading that says how far the tint may go. It lies on
                     // the table's own fill, which lies on whatever is beside the table.
-                    for (const table of filled(palette, scheme)) {
+                    for (const table of over('--ui-color-surface-control', palette, scheme)) {
                         expect(
                             contrastRatio(
                                 paint('--ui-color-text'),
@@ -1140,7 +1163,7 @@ describe('the contrast floors', () => {
                     // A value, a placeholder and a value in error are text, so each owes 4.5:1
                     // against the fill — read through, where a theme makes it translucent, to
                     // whatever the control rests on.
-                    for (const fill of filled(palette, scheme)) {
+                    for (const fill of over('--ui-color-surface-control', palette, scheme)) {
                         for (const token of [
                             '--ui-color-text',
                             '--ui-color-text-muted',
@@ -1195,7 +1218,7 @@ describe('the contrast floors', () => {
                     ).toBeGreaterThanOrEqual(3);
                     // A switch that is off is an empty box, its thumb in the boundary's colour
                     // on the fill — the one part of it the eye reads for its state.
-                    for (const fill of filled(palette, scheme)) {
+                    for (const fill of over('--ui-color-surface-control', palette, scheme)) {
                         expect(
                             contrastRatio(paint('--ui-color-border'), fill),
                             "a switch's thumb",
@@ -1208,11 +1231,19 @@ describe('the contrast floors', () => {
                     // 3:1 against what lies beside it. Where a shadow or a glow lies outside, the
                     // mark may meet the floor against the fill instead — RFC 0003's decision —
                     // and only there, so a palette without one is held to the fill.
-                    const accent = paint('--ui-color-accent');
                     const fill = Math.min(
-                        ...outside(palette, scheme).map((beside) => contrastRatio(accent, beside)),
+                        ...outside(palette, scheme).map((beside) =>
+                            contrastRatio(
+                                laid('--ui-color-accent', beside, scheme, palette),
+                                beside,
+                            ),
+                        ),
                     );
-                    const mark = contrastRatio(paint('--ui-color-accent-contrast'), accent);
+                    const mark = Math.min(
+                        ...over('--ui-color-accent', palette, scheme).map((accent) =>
+                            contrastRatio(paint('--ui-color-accent-contrast'), accent),
+                        ),
+                    );
 
                     expect(palette.glows ? Math.max(fill, mark) : fill).toBeGreaterThanOrEqual(3);
                 });

@@ -217,6 +217,16 @@ export const derivedTokens = [
     '--ui-color-accent-contrast',
     '--ui-color-accent-hover',
     '--ui-color-accent-pressed',
+    // The primary button's fill, its label and its two states, arriving with Glass, which
+    // fills the button apart from the checked controls — RFC 0003: a translucent fill moves
+    // toward its own label, so Glass inverts the button alone. Each computes what the
+    // accent's own does, from the accent, because a formula reads grounds only and the four
+    // cannot point at one another: a host that moves the button apart from the accent sets
+    // all four.
+    '--ui-color-primary',
+    '--ui-color-primary-contrast',
+    '--ui-color-primary-hover',
+    '--ui-color-primary-pressed',
     // The purpose the elevation scale is read through, arriving with `ui-card`. `raised`
     // is a role rather than a component: a card is the first surface lifted off the page
     // and will not be the last, and the name a host retunes should not be the name of
@@ -374,9 +384,13 @@ function step(expression: string): string {
 /**
  * White or black, read off `name` by `channel`: the one number written into all three linear
  * channels, so 1 is white and 0 is black, and nothing between is ever produced by a step.
+ *
+ * **Opaque, whatever the colour it is read off.** Relative colour syntax keeps the origin's
+ * alpha unless it is given one, and a theme may write the accent at an opacity — Glass's checked
+ * controls are at 0.80 — while the mark on them is still drawn whole.
  */
 function pole(name: Token, channel: string): string {
-    return `color(from ${ground(name)} srgb-linear ${channel} ${channel} ${channel})`;
+    return `color(from ${ground(name)} srgb-linear ${channel} ${channel} ${channel} / 1)`;
 }
 
 /**
@@ -405,6 +419,9 @@ const room = pole(
 function shade(amount: number): string {
     return `color-mix(in oklab, ${room} ${String(amount)}%, ${ground('--ui-color-accent')})`;
 }
+
+/** The pole of the accent, white or black, whichever stands further from it. */
+const label = pole('--ui-color-accent', step(`${String(crossover)} - ${luminance}`));
 
 /**
  * How each derived role computes when the host has not set it.
@@ -451,15 +468,17 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // The pole of the accent, white or black, whichever stands further from it: the label
     // that reads on any accent a host picks, 0 of 4096 under 4.5:1. Black on the dark
     // scheme's blue-400 at 8.26:1, where the ground it replaced was `#111827` at 6.98.
-    '--ui-color-accent-contrast': pole(
-        '--ui-color-accent',
-        step(`${String(crossover)} - ${luminance}`),
-    ),
+    '--ui-color-accent-contrast': label,
     // Toward whichever pole has room rather than toward the text, which ran out of room on
     // an accent already near it: the docblock on `room` carries the measurement. The light
     // scheme's hover moves from `#255cd4` to `#1d52c6`, the pole being black there.
     '--ui-color-accent-hover': shade(12),
     '--ui-color-accent-pressed': shade(22),
+    // The accent's own, until a theme fills the primary button apart from it.
+    '--ui-color-primary': ground('--ui-color-accent'),
+    '--ui-color-primary-contrast': label,
+    '--ui-color-primary-hover': shade(12),
+    '--ui-color-primary-pressed': shade(22),
     // 3.39:1 on the light surface and 3.96:1 on the dark one, against a floor of 3. The
     // step below clears neither — 45% is 2.94 in light, which is what a value chosen by
     // eye would have shipped.
@@ -574,6 +593,10 @@ export const moreContrast: Readonly<
     '--ui-color-pressed': ['#c1c1c1', '#3d3d3d'],
     '--ui-color-accent-hover': ['#333333', '#d6d6d6'],
     '--ui-color-accent-pressed': ['#4d4d4d', '#b3b3b3'],
+    // The primary button's, which are the accent's: a black or white accent has no room to
+    // shade toward, and the formula's hover on black is 1.04:1 from it.
+    '--ui-color-primary-hover': ['#333333', '#d6d6d6'],
+    '--ui-color-primary-pressed': ['#4d4d4d', '#b3b3b3'],
     // Under the hover, so a row under the pointer is still a change rather than a stripe.
     '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
     // What floats over the page edged in the text, which the mix toward it falls short of.
