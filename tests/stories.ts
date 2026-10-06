@@ -50,17 +50,21 @@ const project = setProjectAnnotations(preview);
  * @param story - The story export, as written in `stories/`.
  * @param meta - Its module's default export, which carries the args and the render.
  * @param name - The export's name, which is what Storybook derives a story id from.
+ * @param toolbar - What a reader set the toolbar to. It goes in as the project's initial
+ *   globals, which a story's own `globals` override, as they override the toolbar on the
+ *   site.
  */
 export async function mountStory<TArgs>(
     story: StoryObj<TArgs>,
     meta: Meta<TArgs>,
     name: string,
+    toolbar: Readonly<Record<string, string>> = {},
 ): Promise<HTMLElement> {
     const composed = composeStory(
         // @ts-expect-error Storybook's own types do not survive `exactOptionalPropertyTypes`: `composeStory` fixes its first parameter at the index-signature `Args`, and a `StoryObj<TArgs>` is not assignable to it — the decorator and play-function positions are contravariant, so a typed story is rejected by the helper written to take stories. A cast would outlive the defect silently; this fails the moment upstream fixes it.
         story,
         meta,
-        project,
+        { ...project, initialGlobals: { ...project.initialGlobals, ...toolbar } },
         undefined,
         name,
     );

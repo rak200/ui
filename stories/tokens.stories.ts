@@ -127,6 +127,14 @@ const tableStyles = html`
 const meta: Meta = {
     title: 'Tokens/Design tokens',
 
+    // The default palette, whatever the toolbar's theme says: these stories show the token
+    // layer itself, and a shipped theme on the root declares its own values beneath every
+    // one of them. A theme inherits each name it does not declare from the one around it, so
+    // the host's theme below rendered its purple in Matrix's font, glow, hover and pressed.
+    // Storybook disables the selector for a global a story sets, so the toolbar says the
+    // theme is fixed here.
+    globals: { theme: '' },
+
     render: (): TemplateResult => html`
         ${tableStyles}
         <table class="tokens">
@@ -272,7 +280,8 @@ export const DarkScheme: StoryObj = {
 };
 
 /**
- * The other axis: a whole theme, in both of its schemes.
+ * The other axis: a theme a host writes, in both of its schemes. Not one this package
+ * ships — those are the Themes stories.
  *
  * **A theme is three grounds and nothing else.** The block below redeclares `surface`,
  * `text` and `accent` — and the accent's label, border, hover and pressed follow into both
@@ -284,7 +293,7 @@ export const DarkScheme: StoryObj = {
  * a paragraph — `expectAccessible` reaches what renders, and a theme without a story is
  * outside the bar this repository advertises.
  */
-export const Theme: StoryObj = {
+export const YourOwnTheme: StoryObj = {
     render: (): TemplateResult => html`
         ${panelStyles}
         <style>

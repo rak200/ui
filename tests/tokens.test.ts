@@ -8,7 +8,7 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { contrastRatio } from './contrast.js';
 import { mountStory } from './stories.js';
-import meta, { DarkScheme, Defaults, Derived, Theme } from '../stories/tokens.stories.js';
+import meta, { DarkScheme, Defaults, Derived, YourOwnTheme } from '../stories/tokens.stories.js';
 import {
     darkScheme,
     defaults,
@@ -1365,7 +1365,7 @@ describe('token stories', () => {
     });
 
     it('carries a derived role into a second theme, hue and all', async () => {
-        const container = await mountStory(Theme, meta, 'Theme');
+        const container = await mountStory(YourOwnTheme, meta, 'YourOwnTheme');
         const swatch = container.querySelector(
             '[data-ui-theme] [data-token="--ui-color-accent-hover"]',
         );
@@ -1385,7 +1385,25 @@ describe('token stories', () => {
     });
 
     it('meets the bar under a second theme — a theme with no story has no floor', async () => {
-        await expectAccessible(await mountStory(Theme, meta, 'Theme'));
+        await expectAccessible(await mountStory(YourOwnTheme, meta, 'YourOwnTheme'));
+    });
+
+    it("keeps a host's theme on its own formulas when the toolbar picks a shipped one", async () => {
+        const container = await mountStory(YourOwnTheme, meta, 'YourOwnTheme', {
+            theme: matrix.name,
+        });
+        const swatch = container.querySelector('[data-ui-theme] [data-token="--ui-color-hover"]');
+
+        if (swatch === null) {
+            throw new Error('the theme story rendered no hover swatch');
+        }
+
+        const hover = channels(sRGB(getComputedStyle(swatch).backgroundColor));
+
+        // Matrix writes its hover as a value, #cfd9ce, and a theme nested under it inherits
+        // that value instead of resolving its own formula: green over red. Mixed from the
+        // host's own grounds, the formula is purple, red over green.
+        expect(hover.red, "the host's purple").toBeGreaterThan(hover.green);
     });
 });
 

@@ -129,6 +129,12 @@ Three declarations, and the accent's label, the hover and the pressed colours fo
 schemes of both themes** without appearing anywhere — that is what [`formulas`](#formulas) buys.
 Nothing is scoped to `:root`, so a theme can be a region of a page rather than the whole of it.
 
+**A theme inside another inherits what its own block leaves out.** A custom property inherits, so a
+region takes each name it does not declare from the theme around it, and a formula follows only
+where nothing around it declared the name. Inside [`matrix`](theme.md#matrix), which writes its
+hover and pressed as values, the block above renders its purple in Matrix's font, glow, hover and
+pressed.
+
 The package ships themes of its own as well, as data with a function that renders them — see
 [theme.md](theme.md).
 
