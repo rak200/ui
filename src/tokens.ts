@@ -129,11 +129,12 @@ export const tokens = [
     // judge one, and neither is written.
     //
     // **It carries no dark value, and cannot.** `darkScheme` is emitted through
-    // `light-dark()`, which takes colours — and a shadow is not a colour. So this is one
-    // value in both schemes, and on a dark page it does almost nothing: black on charcoal
-    // is black. What separates a raised surface there is the *boundary*, which is derived
-    // and therefore already scheme-correct — which is why `src/card.ts` draws both and
-    // says so beside them.
+    // `light-dark()`, which takes colours — and a shadow is not a colour. The colour inside
+    // one is, and can be a `light-dark()` pair within the one value, which is how Matrix's
+    // glow and Glass's lift follow the scheme. This default writes one colour, so on a dark
+    // page it does almost nothing: black on charcoal is black. What separates a raised
+    // surface there is the *boundary*, which is derived and therefore already
+    // scheme-correct — which is why `src/card.ts` draws both and says so beside them.
     '--ui-elevation-100',
     // The glow a theme lights a control with, arriving with Matrix under RFC 0003's second
     // clause: a category a shipped theme brings whose default is the identity, so the

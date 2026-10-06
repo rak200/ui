@@ -160,10 +160,10 @@ explains. This file restates none of them.
   control drawn inside a shadow root, which #156 measured and RFC 0006 answered — so what the
   warning is left pointing at is a trigger **someone else** wrote that does not take the handoff.
 - **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
-  `UiCard` in `src/card.ts`, beside each. `light-dark()` takes colours and a shadow is not one, so
-  the elevation category cannot follow the scheme and the derived boundary is what both schemes
-  have; the missing role is the same rule `ui-button` states from the other side — there is no card
-  element to delegate to, so what a card _means_ stays the host's.
+  `UiCard` in `src/card.ts`, beside each. Only a shadow's colour can follow the scheme, and the
+  default shadow writes one colour that all but vanishes on a dark page, so the derived boundary is
+  what both schemes have; the missing role is the same rule `ui-button` states from the other
+  side — there is no card element to delegate to, so what a card _means_ stays the host's.
 - **Why `ui-radio-group` hand-rolls no roving tabindex** — the docblock on `UiRadioGroup` in
   `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform already had_,
   which measures the APG pattern rather than citing it — in the arrangement the controls are

@@ -110,10 +110,11 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | font                                 | `--ui-font`                                                             |
 
 **The boundary and the shadow are one decision made twice**, and each covers where the other cannot.
-The shadow says _raised_ on a light page and nearly nothing on a dark one — it is black at a low
-alpha, and `light-dark()` cannot carry a second value for it, because it takes colours and a shadow
-is not one. The boundary is derived, so it mixes toward the text and is correct in both schemes by
-construction. Drop either and the card loses its edge in one scheme.
+The shadow says _raised_ on a light page and nearly nothing on a dark one: the default's is black at
+a low alpha in both schemes. Only a shadow's colour can follow the scheme, as a `light-dark()` pair
+inside it — [`matrix`](theme.md#matrix) and [`glass`](theme.md#glass) write theirs that way — and
+the default writes one colour. The boundary is derived, so it mixes toward the text and is correct
+in both schemes by construction. Drop either and the card loses its edge in one scheme.
 
 **The surface and the text colour are set as a pair**, never half of it: a surface declared without
 the colour chosen against it inherits whatever the page set, and the contrast the token layer
