@@ -5,9 +5,12 @@
 
 ## Motivation
 
-**The intention is a catalogue**: a variety of transitions and animations offered per component, for
-click, hover, focus and blur, and some that follow the pointer. Stated that way it is not yet a
-proposal, because it assumes an answer to the question underneath it — **whose decision is a
+**The intention is a catalogue, per component and per event.** Each component offers a set of
+effects for each event it answers — a press, the pointer arriving and leaving, focus arriving and
+leaving, an entrance and an exit — and **the consumer picks which effect each event uses, and
+where**: for the page, for a region of it, for every instance of one component, or for one instance,
+each choice apart from the others. Some of the effects follow the pointer. Stated that way it is not
+yet a proposal, because it assumes an answer to the question underneath it — **whose decision is a
 component's motion?**
 
 Today it is the package's. Each component makes exactly one motion decision, writes it into its
@@ -16,9 +19,10 @@ duration and the curve, and RFC 0002 item 9 already established that per-compone
 nothing new: custom properties inherit, so `ui-tooltip { --ui-duration-enter: 300ms }` moves tooltips
 and nothing else.
 
-A catalogue moves the ownership. That may well be right — a library that intends to be rich in
-effects cannot hold every effect as a single blessed choice. But **some of what would move is not
-taste**, and that is the part this proposal exists to separate.
+A catalogue moves the ownership, and the intention says how far: **which effect runs becomes the
+consumer's, and what each effect is stays the package's.** That may well be right — a library that
+intends to be rich in effects cannot hold every effect as a single blessed choice. But **some of
+what would move is not taste**, and that is the part this proposal exists to separate.
 
 Five modules carry the same sentence about what is _not_ in a transition list:
 
@@ -55,21 +59,21 @@ the one mechanism that protects the reader, which the Study measures below.
 
 ### What the tree carries today
 
-|                                                               |                                                                                         |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `transition:` declarations                                    | 13, across 8 modules                                                                    |
-| properties actually moved                                     | 15: `background-color` ×7, `border-color` ×3, `opacity` ×3, `rotate` ×1, `translate` ×1 |
-| `@keyframes`                                                  | **0**                                                                                   |
-| `animation:`                                                  | **0**                                                                                   |
-| `pointermove`, `mousemove`, `requestAnimationFrame` in `src/` | **0**                                                                                   |
-| `@starting-style`                                             | 2, in `dialog` and `toast`                                                              |
-| duration steps in the scale                                   | **1** — `--ui-duration-100`                                                             |
-| duration purposes                                             | **1** — `--ui-duration-state`                                                           |
-| easing purposes                                               | 3 — `--ui-easing-state`, `--ui-easing-enter`, `--ui-easing-exit`                        |
+|                                                               |                                                                                                                   |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `transition:` declarations                                    | 15, across 8 modules                                                                                              |
+| properties actually moved                                     | 20: `background-color` ×7, `border-color` ×7, `opacity` ×3, `background-position` ×1, `rotate` ×1, `translate` ×1 |
+| `@keyframes`                                                  | **0**                                                                                                             |
+| `animation:`                                                  | **0**                                                                                                             |
+| `pointermove`, `mousemove`, `requestAnimationFrame` in `src/` | **0**                                                                                                             |
+| `@starting-style`                                             | 3, in `dialog` and `toast`                                                                                        |
+| duration steps in the scale                                   | **1** — `--ui-duration-100`                                                                                       |
+| duration purposes                                             | **1** — `--ui-duration-state`                                                                                     |
+| easing purposes                                               | 3 — `--ui-easing-state`, `--ui-easing-enter`, `--ui-easing-exit`                                                  |
 
 Two readings of that table matter.
 
-**The package has no animation, only transition.** Five properties move, all of them on a
+**The package has no animation, only transition.** Six properties move, all of them on a
 declarative state change. Nothing is keyframed and nothing runs on a clock.
 
 **The motion category shipped a scale with one step, and three curves against one duration.** An
@@ -114,16 +118,24 @@ rather than to assume it.
   variety in the sense the Motivation asks for**: a host can make the existing motion slower or
   softer, never different.
 - **B — a named motion set, selected the way a theme is.** `data-ui-motion` beside `data-ui-theme`,
-  shipping N presets. This reuses item 2's machinery whole, and it is why **RFC 0003 has to answer
-  first**: its question 2 is whether a theme may bring a token category when no component asks, and
-  a motion set is the same question in a second costume. If that answer is no, shape B is closed
-  before it is written.
+  shipping N presets. This reuses item 2's machinery whole. **RFC 0003 has answered the question
+  that could have closed it**: its question 2 was whether a theme may bring a token category when no
+  component asks, and the answer is yes, when the category's default is the identity. A set is
+  coarser than the intention, though: it chooses every event at once, where the Motivation chooses
+  each apart.
 - **C — the package ships hooks and no catalogue.** `::part()`, documented custom properties, named
   `@keyframes` a host may target. Thinnest runtime, largest documentation burden, and it moves the
   accessibility findings above from _decided_ to _documented_ — which is a real downgrade unless the
   documentation is unusually good.
+- **D — the package offers a catalogue per component and event, and the consumer picks from it at
+  any scope.** The Motivation's intention, made precise. It splits the decision rather than moving
+  it: what an effect is stays the package's, so a finding written into one stays decided, and which
+  one runs is the consumer's. The choice is a custom property, so it reaches every scope the way
+  item 9's granularity already does, with no attribute and no new axis — and a named set falls out
+  of it as a block of choices under one selector, which is what a theme already is. What it asks of
+  the platform is that a component branch on a value it inherits, which S5 to S7 measure.
 
-None of the three is obviously right, which is the argument for deciding once here rather than four
+None of the four is obviously right, which is the argument for deciding once here rather than four
 times in four issues.
 
 ### What a catalogue costs the gate, measured
@@ -174,19 +186,77 @@ Hypotheses, each unrun until it is run.
   reads no `--ui-duration-*` unless it is written to, so a `@keyframes` effect survives reduced
   motion untouched. _Steps_: declare one, collapse the tokens, read it back. _Expected_: it keeps
   running, which would make "every effect reads a duration token" a rule rather than a habit.
+
+  > **Measured in Chromium 153, Firefox 155 and WebKit 26.6: it holds.** Under emulated reduced
+  > motion, keyframes whose duration reads `--ui-duration-state` run for 0.01ms, and the same
+  > keyframes at a literal `10s` keep all 10,000ms, in the three. So _every effect reads a duration
+  > token_ has to be a rule of the catalogue rather than a habit — and one a test can check effect
+  > by effect, since the collapse is a value the suite already reads.
+  > `tests/manual/motion-selection.mjs` is the step, for this and for S5 to S7.
+
 - **S3 — what does pointer tracking actually cost?** _Claim_: a `pointermove` handler writing two
   custom properties, throttled to `requestAnimationFrame`, is measurable against an idle baseline.
   _Steps_: one component, one effect, main-thread time over a fixed pointer path. _Expected_:
   unknown, and that is the point — a number decides this, not an opinion.
+
+  > **Measured in Chromium 153, headless: it is.** Six hundred moves across one card lit by a
+  > gradient at `--x` and `--y` cost 300 to 850ms more main-thread time with the handler than the
+  > same path idle, over six rounds — 0.5 to 1.4ms a move, of which 0.1 to 0.2ms is script and 0.2
+  > to 0.3ms style recalculation. Layout never moved; the rest is paint, which a headless engine
+  > does in software, so that share is an upper bound. The cost is per frame while the pointer is
+  > over the one element that follows it, not per instance on the page. **And the effect reads no
+  > duration token, so the collapse never reaches it**: it would have to look for the collapse
+  > itself, in script. `tests/manual/pointer-cost.mjs` is the step.
+
 - **S4 — do the existing interaction states hold outside Chromium?** RFC 0002 measured `:active` in
   one engine and left Firefox, Safari and iOS touch unmeasured; #80 closed on that rather than
   staying open. **Any catalogue inherits that gap and multiplies it**, so the gap is this proposal's
   to reckon with rather than to re-file.
 
+  > **Answered by [RFC 0002](0002-the-visual-language.md)'s Rollout, and the premise was already out
+  > of date.** `tests/manual/interaction-states.mjs` measured the button in Chromium, Firefox and
+  > WebKit, and under an iPhone viewport, a week before this was written: the three agree on every
+  > derived colour, on the transition, on the focus ring and on the disabled guard. What stays
+  > unmeasured is a real finger on real iOS, closed as such in #80 — and a press effect inherits
+  > exactly that, since it hangs on `:active` firing there.
+
+- **S5 — can a component run an effect the consumer named?** _Claim_: a custom property set outside
+  a shadow root names the `@keyframes` an element inside it runs, through `animation-name: var(…)`.
+  _Steps_: keyframes declared in the shadow root, only in the document, and nowhere; the name set on
+  the instance.
+
+  > **Measured in the three engines: it can, from the component's own shadow root.** Keyframes
+  > declared there run when named from outside, in all three, and a name nothing declares runs
+  > nothing and throws nothing. **Keyframes declared only in the document are where the engines
+  > part**: WebKit finds them from inside the shadow root, Chromium and Firefox do not. So an effect
+  > a component offers is declared in that component's shadow root, the one place all three agree
+  > on.
+
+- **S6 — can a component branch on a choice made at any scope?** _Claim_: `@container style()`
+  inside a shadow root reads the custom property its host inherits, so one choice reaches the page,
+  a region, a component type and an instance, the narrower winning. Container style queries are
+  Baseline since Firefox 151, after Chrome 111 and Safari 18, per web-features 3.40.1; `if()`, which
+  would branch inside one declaration, is in Chromium alone.
+
+  > **Measured in the three engines: it does, at all four scopes.** The page's choice reaches an
+  > instance with no other, a region's overrides the page's, and so does a rule on one component's
+  > type or a choice on the instance itself. `none`, or a name the component does not offer, matches
+  > no query and leaves the default — so the default is what renders until someone chooses, and a
+  > misspelt choice costs the effect and nothing else.
+
+- **S7 — does a press effect run on every press?** _Claim_: an animation applied under `:active`
+  starts again each time the state is entered.
+
+  > **Measured in the three engines: it starts every time, and it is cut short.** A 60ms press runs
+  > it, and releasing removes it at once, well before its 300ms are up — `:active` ends, and the
+  > animation with it; the next press starts it again. Most of what a press effect is outlasts the
+  > press, so it cannot hang on `:active` alone: a transition runs back on release rather than
+  > stopping, and anything that has to finish needs a trigger that outlives the state.
+
 ## Proposed design
 
-**Not written.** The proposal is `Draft`, and shape A, B or C is what the Study has to choose
-between. What is already fixed is what any answer has to hold:
+**Not written** — it waits on the Study choosing between A, B, C and D. What is already fixed is
+what any answer has to hold:
 
 - Motion is named by purpose, per item 9. A catalogue does not get to ship speed names.
 - Every effect the package ships collapses under `prefers-reduced-motion`, through one mechanism
@@ -205,11 +275,11 @@ accepted design needs, and there is no accepted design.
 
 Two dependencies are already visible.
 
-**[RFC 0003](0003-themes.md) answers first.** Its question 2 — may a theme bring a token category
-when the theme, not a component, is the consumer — decides shape B before this proposal can weigh
-it. Answering it twice is how two proposals end up with two answers.
+**[RFC 0003](0003-themes.md) has answered.** Its question 2 — may a theme bring a token category
+when the theme, not a component, is the consumer — was decided yes, when the category's default is
+the identity. So B is open, and under D a choice is a value a theme can carry like any other.
 
-**[#120](https://github.com/rak200/ui/issues/120) is a prerequisite here more than it is there.** A
-motion catalogue cannot be reviewed in a playground with no scheme control and no reduced-motion
-emulation: the second state of every effect is the one that is easiest to ship broken, because
-nobody sees it by accident.
+**[#120](https://github.com/rak200/ui/issues/120) did half of what this needs.** It put a scheme
+control in the playground; there is still no way to see a story under reduced motion there, and a
+motion catalogue cannot be reviewed without one: the second state of every effect is the one that is
+easiest to ship broken, because nobody sees it by accident.
