@@ -34,7 +34,8 @@ document.head.append(style);
 **A theme is opt-in.** `tokenStyleSheet()` never emits one, so a page pays for no theme it does not
 select. The attribute can sit on any element — a theme can be a region of a page rather than the
 whole of it — and the scheme stays yours: a shipped theme renders in both, under whatever
-`color-scheme` is in force.
+`color-scheme` is in force. A region inside another theme inherits every name its own block leaves
+out, which [tokens.md](tokens.md#themes) shows.
 
 **A shipped theme is measured.** Every contrast floor the default palette clears runs again under
 each shipped theme, in both schemes and when the reader asks for more contrast, and each one carries

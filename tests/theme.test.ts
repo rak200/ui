@@ -6,8 +6,13 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Glass, Matrix } from '../stories/theme.stories.js';
-import { Defaults } from '../stories/tokens.stories.js';
-import tokensMeta from '../stories/tokens.stories.js';
+import tokensMeta, {
+    DarkScheme,
+    Defaults,
+    Derived,
+    YourOwnTheme,
+} from '../stories/tokens.stories.js';
+import buttonMeta, { Primary } from '../stories/button.stories.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import '../src/button.js';
 import '../src/input.js';
@@ -667,7 +672,7 @@ describe('theme stories', () => {
 
 describe('the theme control the playground carries', () => {
     it('leaves the root unthemed by default, which is the default palette', async () => {
-        await mountStory(Defaults, tokensMeta, 'Defaults');
+        await mountStory(Primary, buttonMeta, 'Primary');
 
         expect(document.documentElement.hasAttribute('data-ui-theme')).toBe(false);
     });
@@ -675,14 +680,24 @@ describe('the theme control the playground carries', () => {
     it.each([matrix, glass])(
         'themes the root and inserts $name when the toolbar asks for it',
         async (theme) => {
-            const container = await mountStory(
-                { ...Defaults, globals: { theme: theme.name } },
-                tokensMeta,
-                'Defaults',
-            );
+            const container = await mountStory(Primary, buttonMeta, 'Primary', {
+                theme: theme.name,
+            });
 
             expect(document.documentElement.dataset['uiTheme']).toBe(theme.name);
             expect(container.textContent).toContain(`[data-ui-theme='${theme.name}']`);
         },
     );
+
+    it.each([
+        { name: 'Defaults', story: Defaults },
+        { name: 'Derived', story: Derived },
+        { name: 'DarkScheme', story: DarkScheme },
+        { name: 'YourOwnTheme', story: YourOwnTheme },
+    ])('keeps $name on the default palette, whatever the toolbar says', async ({ name, story }) => {
+        const container = await mountStory(story, tokensMeta, name, { theme: matrix.name });
+
+        expect(document.documentElement.hasAttribute('data-ui-theme')).toBe(false);
+        expect(container.textContent).not.toContain(`[data-ui-theme='${matrix.name}']`);
+    });
 });
