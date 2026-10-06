@@ -416,12 +416,12 @@ That is the argument for motion being tokens at all, and it is stronger than the
 hardcoded `150ms` is not merely un-overridable, it is an accessibility defect that every component
 would otherwise have to fix on its own.
 
-### One value cannot follow the scheme, and it says so
+### A shadow follows the scheme only through its colour
 
-`light-dark()` takes **colours**, so a ground whose value is not a colour has no way to carry a
-second one — and elevation is the first such category to arrive. `--ui-elevation-100` is a
-`box-shadow`, one value in both schemes, and on a dark page it does almost nothing: it is black at a
-low alpha, and black on charcoal is black.
+`light-dark()` takes **colours**, so a ground whose value is a shadow has no dark value beside it
+the way a colour does — and elevation is the first such category to arrive. `--ui-elevation-100`
+is a `box-shadow` in one colour for both schemes, and on a dark page it does almost nothing: it is
+black at a low alpha, and black on charcoal is black.
 
 The answer is at the component rather than in the token layer, because that is where it can be
 judged: `<ui-card>` draws a **boundary** as well as a lift, and the boundary is derived — it mixes

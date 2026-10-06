@@ -65,9 +65,10 @@ export class UiCard extends LitElement {
 
         /* The boundary and the shadow are one decision made twice, because each covers
            where the other cannot. The shadow is what says *raised* on a light page and
-           nearly nothing on a dark one — it is black at a low alpha, and light-dark()
-           cannot carry a second value for it, since it takes colours and a shadow is not
-           one. The boundary is derived, so it mixes toward the text and is correct in both
+           nearly nothing on a dark one: the default's is black at a low alpha in both
+           schemes. Only a shadow's colour can follow the scheme, as a light-dark() pair
+           inside it — Matrix's and Glass's do — and the default writes one colour. The
+           boundary is derived, so it mixes toward the text and is correct in both
            schemes by construction. Drop either and the card loses its edge in one scheme:
            measured, a bordered card on the dark surface is the only thing separating it
            from the page behind it.
