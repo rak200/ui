@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-icon</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <style>
+            .scoped ui-icon {
+                --ui-icon-size: 2rem;
+            }
+        </style>
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-icon</code> — entrance, pointer</h1>
+            <p>Add icons to see the entrance; point at one to see the pointer effect.</p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped" id="on-page">
+                    <span class="name">page</span>
+                    <ui-icon name="check"></ui-icon>
+                    <ui-icon name="search"></ui-icon>
+                </div>
+                <div class="scoped region" id="in-region">
+                    <span class="name">.region</span>
+                    <ui-icon name="settings"></ui-icon>
+                    <ui-icon name="star"></ui-icon>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-icon id="chosen" name="circle-alert"></ui-icon>
+                </div>
+                <div class="actions">
+                    <ui-button variant="secondary" data-icon="#on-page"
+                        >Add an icon to the page</ui-button
+                    >
+                    <ui-button variant="secondary" data-icon="#in-region"
+                        >Add an icon to the region</ui-button
+                    >
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

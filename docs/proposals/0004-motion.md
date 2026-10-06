@@ -133,7 +133,7 @@ rather than to assume it.
   one runs is the consumer's. The choice is a custom property, so it reaches every scope the way
   item 9's granularity already does, with no attribute and no new axis — and a named set falls out
   of it as a block of choices under one selector, which is what a theme already is. What it asks of
-  the platform is that a component branch on a value it inherits, which S5 to S7 measure.
+  the platform is that a component branch on a value it inherits, which S5 to S8 measure.
 
 None of the four is obviously right, which is the argument for deciding once here rather than four
 times in four issues.
@@ -165,6 +165,11 @@ neither links nor names one. The effects are therefore described by what they do
 proposal needs to _rest_ on gets reproduced here, in the open, or it does not count. The same
 constraint applies to [RFC 0003](0003-themes.md), and for the same reason.
 
+**[The prototypes](0004-motion/README.md) are that reproduction**: one page per component,
+rendering the real component with the catalogue shape D would give it — the moments it answers, the
+effects it offers for each, the choice made at each of the four scopes and the CSS that choice is,
+and the effects the reference has that the catalogue leaves out, each with its reason.
+
 ### Simulation plan
 
 Hypotheses, each unrun until it is run.
@@ -192,7 +197,7 @@ Hypotheses, each unrun until it is run.
   > keyframes at a literal `10s` keep all 10,000ms, in the three. So _every effect reads a duration
   > token_ has to be a rule of the catalogue rather than a habit — and one a test can check effect
   > by effect, since the collapse is a value the suite already reads.
-  > `tests/manual/motion-selection.mjs` is the step, for this and for S5 to S7.
+  > `tests/manual/motion-selection.mjs` is the step, for this and for S5 to S8.
 
 - **S3 — what does pointer tracking actually cost?** _Claim_: a `pointermove` handler writing two
   custom properties, throttled to `requestAnimationFrame`, is measurable against an idle baseline.
@@ -252,6 +257,19 @@ Hypotheses, each unrun until it is run.
   > animation with it; the next press starts it again. Most of what a press effect is outlasts the
   > press, so it cannot hang on `:active` alone: a transition runs back on release rather than
   > stopping, and anything that has to finish needs a trigger that outlives the state.
+
+- **S8 — can an effect drawn on the host see a choice made on the host?** _Claim_: no. A container
+  query asks an ancestor, never the element itself, so a rule on `:host` reads the choice of
+  whatever is around the component, while the elements inside its shadow root, and the host's own
+  pseudo-elements, read the host's. _Steps_: one element choosing an effect on itself inside a page
+  that chose another; read its `:host`, its `::before` and an element in its shadow root.
+
+  > **Measured in the three engines: it cannot.** The `:host` took the page's choice and ignored
+  > its own, while the `::before` and the element inside took the element's. So an effect that
+  > moves a whole component is out of reach of the two narrowest scopes wherever the component's
+  > surface is its host — the card and the toast today. Drawing the surface inside the shadow root,
+  > or the effect on a pseudo-element, brings them back; the prototypes mark every effect this
+  > limits.
 
 ## Proposed design
 

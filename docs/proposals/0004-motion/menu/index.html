@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-menu</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-menu</code> — open, close, caret</h1>
+            <p>
+                Today the panel appears and disappears at once, and only the caret moves. The
+                effects below are the reference's popover entrances, held to what the menu can take
+                without being placed wrong.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances" style="padding-block-end: 12rem">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-menu>
+                        <span slot="trigger">File</span>
+                        <button type="button">Rename</button>
+                        <button type="button">Duplicate</button>
+                        <hr />
+                        <button type="button">Move to trash</button>
+                    </ui-menu>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-menu>
+                        <span slot="trigger">Edit</span>
+                        <button type="button">Undo</button>
+                        <button type="button">Redo</button>
+                    </ui-menu>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-menu id="chosen">
+                        <span slot="trigger">View</span>
+                        <button type="button">Zoom in</button>
+                        <button type="button">Zoom out</button>
+                    </ui-menu>
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

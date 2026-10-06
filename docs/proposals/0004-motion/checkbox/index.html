@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-checkbox and ui-switch</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-checkbox</code> and <code>ui-switch</code> — check, invalid, focus</h1>
+            <p>
+                The reference's form page names this the one place where animating helps: a control
+                the reader has just changed, confirming which way it went. It also names the ceiling
+                — about 220ms — and the effect it measured hurting, which is the shake.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-checkbox label="Email me the receipt" required></ui-checkbox>
+                    <ui-switch label="Dark mode"></ui-switch>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-checkbox label="Remember this device"></ui-checkbox>
+                    <ui-switch label="Notifications" checked></ui-switch>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-checkbox id="chosen" label="I accept the terms" required></ui-checkbox>
+                </div>
+                <div class="actions">
+                    <ui-button variant="secondary" data-validate
+                        >Validate the required ones</ui-button
+                    >
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

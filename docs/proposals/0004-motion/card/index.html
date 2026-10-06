@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-card</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <style>
+            ui-card {
+                inline-size: 15rem;
+            }
+
+            ui-card h3,
+            ui-card p {
+                margin: 0;
+            }
+        </style>
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-card</code> — pointer, entrance</h1>
+            <p>
+                The card's surface is its host, which is where the limit S8 measured shows: an
+                effect that moves the whole card cannot see a choice made on the card itself. Choose
+                one of those for <em>every ui-card</em> or <em>this instance</em> and nothing
+                happens — the page and the region still reach it.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped" id="on-page">
+                    <span class="name">page</span>
+                    <ui-card>
+                        <h3 slot="header">Monthly</h3>
+                        <p>Everything in the free tier, plus priority support.</p>
+                        <div slot="footer"><ui-button>Choose</ui-button></div>
+                    </ui-card>
+                </div>
+                <div class="scoped region" id="in-region">
+                    <span class="name">.region</span>
+                    <ui-card>
+                        <h3 slot="header">Yearly</h3>
+                        <p>Two months free, billed once.</p>
+                        <div slot="footer"><ui-button>Choose</ui-button></div>
+                    </ui-card>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-card id="chosen">
+                        <h3 slot="header">Team</h3>
+                        <p>Five seats, one invoice.</p>
+                        <div slot="footer"><ui-button>Choose</ui-button></div>
+                    </ui-card>
+                </div>
+                <div class="actions">
+                    <ui-button variant="secondary" data-add="#on-page"
+                        >Add a card to the page</ui-button
+                    >
+                    <ui-button variant="secondary" data-add="#in-region"
+                        >Add a card to the region</ui-button
+                    >
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+        <template id="card">
+            <ui-card>
+                <h3 slot="header">Added</h3>
+                <p>Inserted just now.</p>
+            </ui-card>
+        </template>
+    </body>
+</html>

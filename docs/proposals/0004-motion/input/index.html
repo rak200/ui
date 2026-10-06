@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-input and ui-textarea</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <style>
+            .scoped > ui-input,
+            .scoped > ui-textarea {
+                inline-size: 16rem;
+            }
+        </style>
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-input</code> and <code>ui-textarea</code> — focus, invalid</h1>
+            <p>
+                In a field the reader is doing something, and every movement lands in the middle of
+                it. The catalogue is short on purpose: nothing here moves the control, and the
+                reference's measurements are why.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-input label="Email" type="email" required></ui-input>
+                    <ui-textarea label="Message" rows="2"></ui-textarea>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-input label="Company"></ui-input>
+                    <ui-input label="Tax number" required></ui-input>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-input id="chosen" label="Promo code" required></ui-input>
+                </div>
+                <div class="actions">
+                    <ui-button variant="secondary" data-validate
+                        >Validate the required ones</ui-button
+                    >
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

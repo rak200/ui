@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-radio-group</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-radio-group</code> — choose, invalid, focus</h1>
+            <p>
+                Choosing is a change the reader just made, so it is the case where the reference
+                says motion helps — inside the same ceiling as a checkbox.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-radio-group label="Plan" name="plan" required>
+                        <ui-radio value="free">Free</ui-radio>
+                        <ui-radio value="pro">Pro</ui-radio>
+                        <ui-radio value="max">Max</ui-radio>
+                    </ui-radio-group>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-radio-group label="Billing" name="billing">
+                        <ui-radio value="monthly" checked>Monthly</ui-radio>
+                        <ui-radio value="yearly">Yearly</ui-radio>
+                    </ui-radio-group>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-radio-group id="chosen" label="Seats" name="seats" required>
+                        <ui-radio value="one">One</ui-radio>
+                        <ui-radio value="five">Five</ui-radio>
+                    </ui-radio-group>
+                </div>
+                <div class="actions">
+                    <ui-button variant="secondary" data-validate
+                        >Validate the required ones</ui-button
+                    >
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

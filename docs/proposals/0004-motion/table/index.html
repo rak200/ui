@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-table</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-table</code> — the row under the pointer, a row added</h1>
+            <p>
+                The rows are the host's, so the effects stay small: a colour under the pointer, and
+                a way to see which row just arrived.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-table aria-label="Invoices" id="invoices">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Number</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#1031</td>
+                                    <td>Acme</td>
+                                    <td>R$ 1.200,00</td>
+                                </tr>
+                                <tr>
+                                    <td>#1032</td>
+                                    <td>Globex</td>
+                                    <td>R$ 860,00</td>
+                                </tr>
+                                <tr>
+                                    <td>#1033</td>
+                                    <td>Initech</td>
+                                    <td>R$ 2.450,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </ui-table>
+                    <ui-button variant="secondary" data-row="#invoices">Add a row</ui-button>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-table aria-label="Payments" id="payments">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Number</th>
+                                    <th>Method</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#2201</td>
+                                    <td>Pix</td>
+                                    <td>R$ 300,00</td>
+                                </tr>
+                                <tr>
+                                    <td>#2202</td>
+                                    <td>Card</td>
+                                    <td>R$ 75,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </ui-table>
+                    <ui-button variant="secondary" data-row="#payments">Add a row</ui-button>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-table aria-label="Refunds" id="chosen">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Number</th>
+                                    <th>Reason</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#3101</td>
+                                    <td>Duplicate</td>
+                                    <td>R$ 40,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </ui-table>
+                    <ui-button variant="secondary" data-row="#chosen">Add a row</ui-button>
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

@@ -1,6 +1,6 @@
 /**
  * Whether a consumer's choice of effect reaches a component, at every scope, in every
- * engine — RFC 0004's S2, S5, S6 and S7, run.
+ * engine — RFC 0004's S2, S5, S6, S7 and S8, run.
  *
  * **A step, not a test.** It is not collected by the suite and does not gate anything:
  * `vitest` picks up `*.test.ts`, and this is neither. The suite runs one engine, and the
@@ -38,6 +38,10 @@
  *   press ends at none, so one running during the second is a new start. Counting
  *   `animationstart` instead was measured to miss one in WebKit, on one run of two.
  * - `s2-*` — each animation's duration once the reader asks for less motion.
+ * - `s8-*` — one element choosing `sink` on itself, inside a page that chose `lift`: what
+ *   its `:host`, its `::before` and an element in its shadow root each resolved to. A
+ *   container query asks an ancestor, never the element itself, so this is where the
+ *   narrowest scopes either reach an effect or do not.
  *
  * ## What it cannot tell you
  *
@@ -86,6 +90,30 @@ const FIXTURE = `<!doctype html>
             }
         });
     }
+
+    // S8: the same two choices, drawn on the host, on its ::before and inside it.
+    const host = \`
+        :host { display: block; }
+        :host::before { content: ''; display: block; opacity: 1; }
+        @container style(--fx-hover: lift) {
+            :host { translate: 0 -2px; }
+            :host::before { opacity: 0.5; }
+            .box { translate: 0 -2px; }
+        }
+        @container style(--fx-hover: sink) {
+            :host { translate: 0 2px; }
+            :host::before { opacity: 0.25; }
+            .box { translate: 0 2px; }
+        }
+    \`;
+
+    customElements.define('fx-host', class extends HTMLElement {
+        constructor() {
+            super();
+            this.attachShadow({ mode: 'open' }).innerHTML =
+                \`<style>\${host}</style><div class="box"></div>\`;
+        }
+    });
 </script>
 <fx-box id="s5-inner" box="named" style="--fx-press: fx-pulse"></fx-box>
 <fx-box id="s5-doc" box="named" style="--fx-press: doc-only"></fx-box>
@@ -97,13 +125,14 @@ const FIXTURE = `<!doctype html>
 <fx-box id="s6-unknown" style="--fx-hover: wobble"></fx-box>
 <fx-box id="s7" box="tap" style="--fx-tap: pulse"></fx-box>
 <fx-box id="s2-tokened" box="tokened"></fx-box>
-<fx-box id="s2-literal" box="literal"></fx-box>`;
+<fx-box id="s2-literal" box="literal"></fx-box>
+<fx-host id="s8" style="--fx-hover: sink"></fx-host>`;
 
 for (const name of process.argv.slice(2)) {
     const browser = await ENGINES[name].launch();
     const page = await browser.newPage();
     await page.setContent(FIXTURE);
-    await page.waitForFunction(() => customElements.get('fx-other') !== undefined);
+    await page.waitForFunction(() => customElements.get('fx-host') !== undefined);
 
     /** The box inside one element's shadow root. */
     const inner = (id) =>
@@ -144,6 +173,19 @@ for (const name of process.argv.slice(2)) {
     };
     results['s7-press'] = await press(60);
     results['s7-press-again'] = await press(60);
+
+    Object.assign(
+        results,
+        await page.evaluate(() => {
+            const element = document.getElementById('s8');
+
+            return {
+                's8-host': getComputedStyle(element).translate,
+                's8-before': getComputedStyle(element, '::before').opacity,
+                's8-inner': getComputedStyle(element.shadowRoot.querySelector('.box')).translate,
+            };
+        }),
+    );
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const id of ['s2-tokened', 's2-literal']) {
