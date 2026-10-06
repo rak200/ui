@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-tooltip</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-tooltip</code> — appear, leave</h1>
+            <p>
+                Point at a button, or move focus to it. Today the tip is there at once and gone at
+                once.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances" style="padding-block: 3rem">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-tooltip>
+                        <ui-button variant="secondary">Archive</ui-button>
+                        <span slot="tip">Moves the thread out of the inbox</span>
+                    </ui-tooltip>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-tooltip>
+                        <ui-button variant="secondary">Snooze</ui-button>
+                        <span slot="tip">Brings it back tomorrow morning</span>
+                    </ui-tooltip>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-tooltip id="chosen">
+                        <ui-button variant="secondary">Pin</ui-button>
+                        <span slot="tip">Keeps it at the top</span>
+                    </ui-tooltip>
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

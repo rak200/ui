@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-dialog</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-dialog</code> — entrance, exit, backdrop</h1>
+            <p>
+                Today a dialog fades in and out with its scrim. Open one from each scope, and close
+                it from its actions or with Escape: the exit runs either way.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-button data-open="#on-page">Delete account</ui-button>
+                    <ui-dialog id="on-page">
+                        <h2 slot="title">Delete account?</h2>
+                        <p>Your projects and invoices go with it.</p>
+                        <ui-button slot="actions" variant="secondary" data-close>Cancel</ui-button>
+                        <ui-button slot="actions" data-close>Delete</ui-button>
+                    </ui-dialog>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-button data-open="#in-region">Edit workspace</ui-button>
+                    <ui-dialog id="in-region">
+                        <h2 slot="title">Edit workspace</h2>
+                        <p>Rename it, or change who can see it.</p>
+                        <ui-button slot="actions" data-close>Done</ui-button>
+                    </ui-dialog>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-button data-open="#chosen">Read the terms</ui-button>
+                    <ui-dialog id="chosen">
+                        <h2 slot="title">Terms of service</h2>
+                        <p>The short version: be kind, pay on time.</p>
+                        <ui-button slot="actions" data-close>Close</ui-button>
+                    </ui-dialog>
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

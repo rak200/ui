@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-button</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-button</code> — press, pointer, focus</h1>
+            <p>
+                Pick an effect for each moment and where it applies. The buttons below are the real
+                component; what changes is the custom property each one inherits, which the panel at
+                the bottom shows as the CSS a consumer would write.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-button>Save</ui-button>
+                    <ui-button variant="secondary">Cancel</ui-button>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-button>Publish</ui-button>
+                    <ui-button variant="secondary">Preview</ui-button>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-button id="chosen">This one</ui-button>
+                    <ui-button disabled>Disabled</ui-button>
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

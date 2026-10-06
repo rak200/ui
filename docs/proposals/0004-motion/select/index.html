@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-select</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <style>
+            .scoped > ui-select {
+                inline-size: 14rem;
+            }
+        </style>
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-select</code> — focus, invalid</h1>
+            <p>
+                The same short catalogue as a text field, for the same reason. Opening the list is
+                the platform's, and the page says why under <em>Left out</em>.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-select label="Currency" name="currency" required>
+                        <ui-option value="">Choose…</ui-option>
+                        <ui-option value="brl">Real</ui-option>
+                        <ui-option value="usd">Dollar</ui-option>
+                    </ui-select>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-select label="Country" name="country">
+                        <ui-option value="br" selected>Brazil</ui-option>
+                        <ui-option value="pt">Portugal</ui-option>
+                    </ui-select>
+                </div>
+                <div class="scoped">
+                    <span class="name">#chosen</span>
+                    <ui-select id="chosen" label="Plan" name="plan" required>
+                        <ui-option value="">Choose…</ui-option>
+                        <ui-option value="free">Free</ui-option>
+                        <ui-option value="pro">Pro</ui-option>
+                    </ui-select>
+                </div>
+                <div class="actions">
+                    <ui-button variant="secondary" data-validate
+                        >Validate the required ones</ui-button
+                    >
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>

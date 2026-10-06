@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 prototypes</title>
+        <link rel="stylesheet" href="prototype.css" />
+        <style>
+            .pages {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+                gap: 1rem;
+                max-inline-size: 72rem;
+                padding: 1.5rem;
+            }
+
+            .pages a {
+                display: grid;
+                gap: 0.25rem;
+                padding: 1rem 1.25rem;
+                border: 1px solid var(--frame-rule);
+                border-radius: 0.75rem;
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .pages a:hover,
+            .pages a:focus-visible {
+                border-color: currentColor;
+            }
+
+            .pages strong {
+                font-size: 1.05rem;
+            }
+
+            .pages span {
+                color: var(--frame-quiet);
+                font-size: 0.875rem;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>RFC 0004 — a catalogue of effects, per component and per moment</h1>
+            <p>
+                One page per component. Each renders the real component from <code>src/</code>,
+                offers the effects the proposal would ship for each moment it answers, and lets you
+                choose one per moment at four scopes — the page, a region, every instance of the
+                component, or one instance. The choice is a custom property; the component reads it
+                with a style query on its own shadow root.
+            </p>
+        </header>
+        <nav class="pages" aria-label="Prototypes">
+            <a href="button/index.html"
+                ><strong>Button</strong><span>press, pointer, focus</span></a
+            >
+            <a href="card/index.html"><strong>Card</strong><span>pointer, entrance</span></a>
+            <a href="checkbox/index.html"
+                ><strong>Checkbox and switch</strong><span>check, invalid, focus</span></a
+            >
+            <a href="radio/index.html"><strong>Radio</strong><span>check, invalid</span></a>
+            <a href="input/index.html"><strong>Input</strong><span>focus, invalid</span></a>
+            <a href="select/index.html"><strong>Select</strong><span>focus, invalid</span></a>
+            <a href="menu/index.html"><strong>Menu</strong><span>open, close, caret</span></a>
+            <a href="tooltip/index.html"><strong>Tooltip</strong><span>appear, leave</span></a>
+            <a href="dialog/index.html"
+                ><strong>Dialog</strong><span>entrance, exit, backdrop</span></a
+            >
+            <a href="toast/index.html"
+                ><strong>Toast</strong><span>entrance, exit, the stack</span></a
+            >
+            <a href="table/index.html"
+                ><strong>Table</strong><span>row under the pointer, new row</span></a
+            >
+            <a href="icon/index.html"><strong>Icon</strong><span>entrance, pointer</span></a>
+        </nav>
+    </body>
+</html>

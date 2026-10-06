@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — ui-toast</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1><code>ui-toast</code> — entrance, exit, the stack</h1>
+            <p>
+                The page's toaster sits in the bottom-right corner and the region's in the
+                bottom-left. A notice leaves after six seconds or from its own dismiss button. The
+                toast's surface is its host, so <em>every ui-toast</em> and
+                <em>this instance</em> do not reach its effects — S8, again.
+            </p>
+        </header>
+        <main>
+            <section class="choices" data-choices aria-label="Choices"></section>
+            <section class="stage" aria-label="Instances">
+                <div class="scoped">
+                    <span class="name">page</span>
+                    <ui-button variant="secondary" data-toast="#page-toaster"
+                        >Notify here</ui-button
+                    >
+                    <ui-button variant="secondary" data-toast="#page-toaster" data-id="chosen"
+                        >Notify with #chosen</ui-button
+                    >
+                    <ui-toaster id="page-toaster"></ui-toaster>
+                </div>
+                <div class="scoped region">
+                    <span class="name">.region</span>
+                    <ui-button variant="secondary" data-toast="#region-toaster"
+                        >Notify in the region</ui-button
+                    >
+                    <ui-toaster id="region-toaster" style="inset-inline: 0 auto"></ui-toaster>
+                </div>
+            </section>
+            <section class="written" data-written aria-label="What the consumer writes"></section>
+            <section class="refused" data-refused aria-label="Left out"></section>
+        </main>
+    </body>
+</html>
