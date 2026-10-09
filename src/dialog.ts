@@ -329,6 +329,15 @@ export class UiDialog extends LitElement {
             // Node 22 in CI and not on Node 24, which is what a timing dependency looks
             // like from the outside. {@link UiDialog.#shut} owns the release instead, at
             // both of the synchronous points where this element closes the dialog.
+            //
+            // **That turn is also long enough to open the dialog again**, and an event that
+            // lands on an open dialog reports a close that is already over. Followed, it
+            // shuts the dialog the page has just reopened, measured; announced, it would
+            // tell a host that an open dialog is closed.
+            if (this.#dialog.open) {
+                return;
+            }
+
             this.open = false;
             this.dispatchEvent(new Event('ui-close', { bubbles: true, composed: true }));
         });

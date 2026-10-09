@@ -629,6 +629,44 @@ describe('the lifecycle', () => {
         expect(seen[0]?.composed, 'and crosses a shadow boundary').toBe(true);
     });
 
+    it('stays open when it is reopened before the platform reports the close', async () => {
+        // The platform fires `close` as a queued task, a turn after the dialog has closed.
+        // This reopens it as early as anything can: an observer's callback runs before any
+        // queued task, so the dialog is back up before the event lands.
+        const element = await mount(fixture);
+        const seen: Event[] = [];
+
+        element.addEventListener('ui-close', (event) => {
+            seen.push(event);
+        });
+
+        await open(element);
+
+        const reopened = new Promise<void>((resolve) => {
+            const observer = new MutationObserver(() => {
+                if (!inner(element).open) {
+                    observer.disconnect();
+                    element.open = true;
+                    resolve();
+                }
+            });
+
+            observer.observe(inner(element), { attributeFilter: ['open'] });
+        });
+        const reported = new Promise((resolve) => {
+            inner(element).addEventListener('close', resolve, { once: true });
+        });
+
+        element.open = false;
+        await reopened;
+        await reported;
+        await element.updateComplete;
+
+        expect(element.open, 'the host still says open').toBe(true);
+        expect(inner(element).matches(':modal'), 'and the dialog is').toBe(true);
+        expect(seen.length, 'with no close announced for a dialog that is open').toBe(0);
+    });
+
     it('gives the page back in the same turn it is removed in', async () => {
         // Removing an open dialog drops it out of the top layer and announces nothing, so
         // without this the page stays held by a dialog that is no longer anywhere.

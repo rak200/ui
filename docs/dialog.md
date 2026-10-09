@@ -90,6 +90,10 @@ Fired after the dialog has closed, however it was closed — the exit finishing,
 the element being removed from the document while open. It bubbles and is composed, so a host can
 delegate it and it crosses a shadow boundary.
 
+**A dialog opened again in the turn it closed in announces nothing for that close.** The platform
+reports a close a turn after it happens, and by then the dialog is open: the announcement would
+tell a host that an open dialog is closed.
+
 ## What the platform does, and what this element adds
 
 Everything in the first list is the browser's, and delegating it is the design decision rather than
