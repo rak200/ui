@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/rak200/ui/compare/0.8.0...0.8.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **dialog:** a dialog reopened before its close is reported stays open ([#287](https://github.com/rak200/ui/issues/287)) ([b6e0a88](https://github.com/rak200/ui/commit/b6e0a88d126ae9addc0b6332cc5e843696dd4c3c))
+
 ## [0.8.0](https://github.com/rak200/ui/compare/0.7.4...0.8.0) (2026-10-05)
 
 
