@@ -187,14 +187,14 @@ export const matrix: Theme = {
  * dark, behind a 10px blur that saturates what it lets through. Black rather than the dark
  * surface's blue-black, because at the same opacity it takes a lighter page. The surface
  * itself stays opaque, so every derivation that mixes it stays where the floors measured it.
- * The text goes to its pole and the accent to slate: text over frosted glass reads washed
- * out long before it measures as failing, and a saturated accent fights whatever colour the
- * page throws through.
+ * The text goes to its pole and the accent to slate, the focus ring with it: text over
+ * frosted glass reads washed out long before it measures as failing, and a saturated accent
+ * fights whatever colour the page throws through.
  *
  * **The floor is a page, not an opacity.** What rests on the glass — the error message
- * first in the light scheme, the focus ring in the dark — holds its floor over a page no
- * darker than `#cecece` in the light scheme and no lighter than `#303030` in the dark, and
- * that is a condition on the host's page, which `docs/theme.md` states.
+ * first in the light scheme, a secondary button's hover in the dark — holds its floor over a
+ * page no darker than `#cecece` in the light scheme and no lighter than `#363636` in the
+ * dark, and that is a condition on the host's page, which `docs/theme.md` states.
  *
  * Under more contrast or reduced transparency, glass stops being glass: what it makes
  * translucent stands down, and the edges and the toasts go to the text's pole.
@@ -204,6 +204,10 @@ export const glass: Theme = {
     values: {
         '--ui-color-text': '#000000',
         '--ui-color-accent': '#334155',
+        // The ring in the theme's slate, as the default palette draws it in its blue, and
+        // opaque where a checked control's accent is not: it rests on the glass, and keeps
+        // its floor there.
+        '--ui-color-focus': '#334155',
         // 20% and 32% of the text rather than the formula's 16% and 26%: a menu's items and a
         // toast's dismiss hover on the glass, and over the light page Glass holds over the
         // formula's hover stood 1.15:1 from it, under the 1.25 it owes. Opaque, as a state's
@@ -214,6 +218,7 @@ export const glass: Theme = {
     dark: {
         '--ui-color-text': '#ffffff',
         '--ui-color-accent': '#94a3b8',
+        '--ui-color-focus': '#94a3b8',
         '--ui-color-hover': '#393f4d',
         '--ui-color-pressed': '#535965',
     },
@@ -280,6 +285,9 @@ export const glass: Theme = {
     more: {
         '--ui-color-border-overlay': ['#000000', '#ffffff'],
         '--ui-color-toast-edge': ['#000000', '#ffffff'],
+        // The ring to the pole, as the default palette's goes: the slate the theme declares
+        // would otherwise outrank the reader's setting.
+        '--ui-color-focus': ['#000000', '#ffffff'],
         // The neutral states the default palette's answer writes, because under more contrast
         // Glass's text and surface are the default's, at their poles. Handed back to the
         // formula instead, the hover over pure black is 1.08:1 from it, under the 1.25 it owes.

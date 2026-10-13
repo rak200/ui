@@ -10,12 +10,13 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-toast</code> — entrance, exit, the stack</h1>
+            <h1><code>ui-toast</code> — entrance, exit, time left, the stack</h1>
             <p>
                 The page's toaster sits in the bottom-right corner and the region's in the
-                bottom-left. A notice leaves after six seconds or from its own dismiss button. The
-                toast's surface is its host, so <em>every ui-toast</em> and
-                <em>this instance</em> do not reach its effects — S8, again.
+                bottom-left. A notice leaves after six seconds or from its own dismiss button, and
+                every fourth is an error, which stays. The toast's surface is its host, so
+                <em>this instance</em> does not reach the effects that move it — S8, again. The time
+                left is drawn inside it, and every scope reaches that.
             </p>
         </header>
         <main>

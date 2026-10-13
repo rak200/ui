@@ -257,7 +257,10 @@ for **3:1 against the surface it sits on** — `outline-offset` puts the surface
 ring, so the surface is what it is measured against rather than the control underneath.
 
 An override is yours to choose, but a focus ring below that ratio is one some people cannot see. The
-default is 5.02:1 on the light surface and clears the floor on a dark one too.
+default is the accent's own colour in each scheme — 5.17:1 on the light surface, 6.98:1 on the dark
+one — so the ring is drawn in the palette's colour, as each shipped theme draws it in its own. It is
+a ground rather than a derivation of the accent: move the accent and the ring stays where it was
+unless you move it too.
 
 ### A shadow follows the scheme only through its colour
 
@@ -452,13 +455,13 @@ darkScheme['--ui-color-surface']; // '#111827'
 darkScheme['--ui-radius']; // undefined
 ```
 
-Seven entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent` and the four
-outcomes — `--ui-color-danger`, `--ui-color-success`, `--ui-color-warning` and `--ui-color-info`.
-Each of those four is a mid-dark hue that reads on white and goes muddy on charcoal, so each is
-inverted here for the same reason. `--ui-color-focus` is absent because one value
-clears its contrast floor in both schemes, and `--ui-color-scrim` because dimming is dimming in
-either — it is the one neutral here that does **not** follow the text, since mixing toward the text
-would lighten the page behind a dialog on a dark one.
+Eight entries today: `--ui-color-surface`, `--ui-color-text`, `--ui-color-accent`,
+`--ui-color-focus`, which follows the accent, and the four outcomes — `--ui-color-danger`,
+`--ui-color-success`, `--ui-color-warning` and `--ui-color-info`. Each of those four is a mid-dark
+hue that reads on white and goes muddy on charcoal, so each is inverted here for the same reason.
+`--ui-color-scrim` is absent because dimming is dimming in either — it is the one neutral here that
+does **not** follow the text, since mixing toward the text would lighten the page behind a dialog on
+a dark one.
 
 Only colours may appear here, and that is a rule rather than a coincidence: `light-dark()` takes
 colours, so a dark value for `--ui-radius` would emit CSS the browser discards.

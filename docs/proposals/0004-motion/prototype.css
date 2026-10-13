@@ -10,6 +10,11 @@
     --frame-quiet: light-dark(#55555e, #a3a3ad);
     --frame-rule: light-dark(#c4c4cc, #3a3a42);
     --frame-mark: light-dark(#7c2d12, #fdba74);
+    --frame-glass-ground: light-dark(#e2e2e7, #1c1c22);
+    --frame-glass-line: light-dark(rgb(255 255 255 / 0.6), rgb(0 0 0 / 0.4));
+    --frame-glass-a: light-dark(oklch(0.89 0.07 350), oklch(0.3 0.08 330));
+    --frame-glass-b: light-dark(oklch(0.89 0.07 235), oklch(0.3 0.07 240));
+    --frame-glass-c: light-dark(oklch(0.91 0.07 160), oklch(0.3 0.06 175));
 }
 
 body {
@@ -115,6 +120,33 @@ main h2 {
     grid-row: 1 / span 4;
 }
 
+/* What every moment can be set to at once: none of them, or the theme's again. */
+.choices .every {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.choices .every button {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--frame-rule);
+    border-radius: 0.5rem;
+    background: var(--frame-panel);
+    color: inherit;
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.choices .every button:hover {
+    border-color: var(--frame-quiet);
+}
+
+.choices .every button:focus-visible {
+    outline: 2px solid var(--frame-mark);
+    outline-offset: 2px;
+}
+
 @media (max-width: 60rem) {
     main {
         grid-template-rows: none;
@@ -125,25 +157,136 @@ main h2 {
     }
 }
 
+/* Where there are two columns, each scrolls on its own: the page is the window's height and keeps
+   its header, the instances scroll in main, and the choices hold to its top and scroll apart, so a
+   choice and what it does stay in view together. A scroll that reaches the end of the choices
+   stops there rather than moving the instances. They are padded a little past their edge, which
+   the scroll would otherwise cut a focus ring at, and held from inside main's padding, where all
+   three engines hold a sticky box — measured — so the offset takes back only that little. Where
+   the window is too short for the header and much else, the page scrolls as one. */
+@media (width > 60rem) and (height >= 32rem) {
+    body {
+        display: flex;
+        flex-direction: column;
+        block-size: 100dvh;
+        overflow: hidden;
+    }
+
+    main {
+        flex: 1;
+        min-block-size: 0;
+        overflow-y: auto;
+        container-type: size;
+    }
+
+    .choices {
+        position: sticky;
+        inset-block-start: -0.25rem;
+        max-block-size: 100cqb;
+        margin: -0.25rem;
+        padding: 0.25rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+    }
+}
+
+/* A moment folds to its summary, which still says what is chosen and for where. */
 .moment {
-    display: grid;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0.75rem 1rem 1rem;
     border: 1px solid var(--frame-rule);
     border-radius: 0.75rem;
     background: var(--frame-panel);
 }
 
-.moment legend {
-    padding: 0 0.25rem;
+.moment summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: inherit;
+    font-weight: 600;
+    list-style: none;
+    cursor: pointer;
+}
+
+.moment summary::-webkit-details-marker {
+    display: none;
+}
+
+/* The chevron: pointing right when folded, down when open. */
+.moment summary::before {
+    content: '';
+    inline-size: 0.45em;
+    block-size: 0.45em;
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    rotate: -45deg;
+    translate: 0 -0.1em;
+}
+
+.moment[open] summary::before {
+    rotate: 45deg;
+}
+
+.moment summary code {
+    font-weight: 400;
+    color: var(--frame-quiet);
+}
+
+.moment summary .current {
+    margin-inline-start: auto;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--frame-quiet);
+}
+
+.moment .choice {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0 1rem 1rem;
+}
+
+.moment fieldset {
+    display: grid;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+/* A kind of change, which is a property of its own: its name, and the property. Floated, so
+   it is laid out with the effects rather than as the fieldset's rendered legend. */
+.moment legend.kind {
+    float: left;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    padding: 0;
+    font-size: 0.875rem;
     font-weight: 600;
 }
 
-.moment legend code {
-    margin-inline-start: 0.5rem;
+.moment legend.kind code {
     font-weight: 400;
     color: var(--frame-quiet);
+}
+
+.moment fieldset + fieldset {
+    padding-block-start: 0.75rem;
+    border-block-start: 1px solid var(--frame-rule);
+}
+
+/* The group's name for a screen reader; the summary already shows it. */
+.hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .effect {
@@ -199,6 +342,22 @@ main h2 {
     color: var(--ui-color-text, CanvasText);
 }
 
+/* Glass lets the page through, and over the token sheet's surface alone its glass and its
+   edge were white on white. So under it the stage is a page with something on it: a grid for
+   the blur to soften and colour for the saturation to lift. Every colour stays inside the
+   pages the theme is measured over, no darker than #cecece in the light scheme and no lighter
+   than #363636 in the dark: the lines go toward the scheme's own pole, so none crosses it. */
+:root[data-ui-theme='glass'] .stage {
+    background:
+        linear-gradient(to right, var(--frame-glass-line) 1px, transparent 1px) 0 0 / 1.5rem 1.5rem,
+        linear-gradient(to bottom, var(--frame-glass-line) 1px, transparent 1px) 0 0 / 1.5rem 1.5rem,
+        radial-gradient(30rem 18rem at 8% 10%, var(--frame-glass-a), transparent 70%),
+        radial-gradient(34rem 18rem at 30% 52%, var(--frame-glass-b), transparent 70%),
+        radial-gradient(30rem 18rem at 15% 95%, var(--frame-glass-c), transparent 70%),
+        radial-gradient(30rem 26rem at 95% 25%, var(--frame-glass-c), transparent 70%),
+        var(--frame-glass-ground);
+}
+
 .scoped {
     position: relative;
     display: flex;
@@ -223,6 +382,32 @@ main h2 {
 .region {
     border-style: solid;
     border-color: var(--frame-mark);
+}
+
+/* Every state of a control side by side: on the checkbox's page a row for each control and a
+   column for each state, on the radio's a column for each group; where the group is too narrow
+   for four, two, the unchecked over the unchecked; and on a phone, one. The checkbox's four took
+   635px and two 369px, so each step leaves room for a wider face. */
+.states {
+    container-type: inline-size;
+}
+
+.states > .matrix {
+    display: grid;
+    grid-template-columns: repeat(4, max-content);
+    gap: 0.75rem 2rem;
+}
+
+@container (width < 42rem) {
+    .states > .matrix {
+        grid-template-columns: repeat(2, max-content);
+    }
+}
+
+@container (width < 25rem) {
+    .states > .matrix {
+        grid-template-columns: max-content;
+    }
 }
 
 .actions {

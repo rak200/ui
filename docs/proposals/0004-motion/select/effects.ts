@@ -2,22 +2,26 @@
  * `ui-select`: what focus and an error can do. The list itself is the platform's popup, which
  * no style reaches in two engines of three, so opening it is not a moment this catalogue has.
  */
-import { prototype } from '../motion.js';
+import { reference } from '../../../../src/reference.js';
+import { prototype, queries } from '../motion.js';
+
+/** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
+const is = queries('select');
 
 const sheet = String.raw`
 select {
     transition-property: border-color, box-shadow;
-    transition-duration: var(--ui-duration-state), var(--ui-duration-200);
+    transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-200);
     transition-timing-function: var(--ui-easing-state), var(--ui-easing-enter);
 }
 
-@container style(--ui-motion-focus: halo) {
+@container ${is('focus', 'halo')} {
     select:focus-visible {
         box-shadow: 0 0 0 0.25rem rgb(from var(--ui-color-accent) r g b / 0.22);
     }
 }
 
-@container style(--ui-motion-focus: underline) {
+@container ${is('focus', 'underline')} {
     .glow {
         position: relative;
     }
@@ -40,9 +44,9 @@ select {
     }
 }
 
-@container style(--ui-motion-invalid: pulse) {
+@container ${is('invalid', 'pulse')} {
     select[aria-invalid='true'] {
-        animation: ui-alarm var(--ui-duration-400) var(--ui-easing-exit);
+        animation: ui-alarm var(--ui-duration-400) var(--ui-easing-enter);
     }
 }
 

@@ -271,6 +271,109 @@ Hypotheses, each unrun until it is run.
   > or the effect on a pseudo-element, brings them back; the prototypes mark every effect this
   > limits.
 
+### What the review of the prototypes has settled
+
+The prototypes were reviewed page by page, each choice judged in Chromium, Firefox and WebKit, and
+the review has been building shape D. What it settled is below, each point with what it rests on;
+[the prototypes' README](0004-motion/README.md) carries every measurement in full, and each page
+lists what its component leaves out and why. None of it is the Decision, which stays open below.
+
+- **A choice is one custom property per moment, and its value is the effect's name.**
+  `--ui-motion-<moment>`, inherited, so the page, a region, a component type and one instance choose
+  apart and the narrowest wins, as S6 measured. Moments share names across components, and a name
+  means one effect wherever it is offered.
+- **A moment can come by kind**, a property per kind of change — `--ui-motion-hover-move`,
+  `-shadow`, `-fill` and `-border` — because a style query compares the whole value: a list in one
+  property matched no effect, in all three engines. Each kind draws on an element of its own, since
+  an element has one animation list and two effects animating it leave one unplayed.
+- **A kind can qualify an effect instead**: an entrance or an exit takes a direction and a curve
+  beside it, `--ui-motion-enter-direction` and `--ui-motion-enter-curve`.
+- **What a component does today is one of its choices**, by name, and `none` is nothing. The focus
+  ring is not a choice: every focus effect adds to it, which is what the Proposed design's third
+  point asks of any shape.
+- **A moment can be one element's**: a toast arrives and leaves, and the stack is its toaster's.
+- **What a component ships is a sheet in its shadow root**, every effect under a style query on its
+  moment (S5, S6) — and a `not` in that query takes parentheses of its own: without them Chromium
+  and WebKit dropped the rule and Firefox read only its first half. Beside the sheet goes the script
+  CSS cannot stand in for: a trigger for an effect that outlives its state (S7), a pointer engine
+  for one that follows the pointer (S3), a focus and a press state on the host — no engine lets a
+  host match `:focus-visible` for the control inside it, and under Space the control is `:active`
+  and its host is not, in Chromium and WebKit — an arrival and a departure, the pieces and the
+  grain, and per component what only it needs: the toast's stack, and the tooltip's typing and next
+  tip.
+- **S8 is marked rather than solved.** An effect drawn on the host misses a choice made on the host;
+  every page badges such an effect, and a script that draws one reads its choice where the sheet
+  does, so the two miss the same choices.
+- **Every effect reads a duration token, and the catalogue needs more of them** (S2). One step and
+  three curves cannot carry it, so the prototypes declare four steps on the reference's five-step
+  scale and the dialog's between two of them, a move curve and an emphasis curve, collapsed under
+  reduced motion with the rest: shape A arriving with D. A loop needs a period and a count, and the
+  count has to collapse as well — with only the period at 0.01ms, an infinite loop runs on in all
+  three engines.
+- **A theme brings a taste.** `--ui-taste-<moment>` for the page and
+  `--ui-taste-<component>-<moment>` for one component, written on the root under `:where()` and read
+  only where no choice is written, so any choice at any scope runs instead of every taste, in all
+  three engines. The default theme's taste stands under every theme, as its tokens do, and a theme
+  that names a moment for the page clears the default theme's taste for one component there. That is
+  RFC 0003's answer, that a theme may bring a category whose default is the identity, spent on
+  motion — B falling out of D as a block of choices under one selector.
+- **An effect never rewrites the text it animates.** A toast's message is in the live region it is
+  announced through, and a tooltip hands its trigger its sentence again whenever the tip's text
+  changes. The tooltip's typing hides what is not typed yet with a highlight drawn in no colour
+  instead, through the highlight API, whose rules have to be in the tree the text is in: written in
+  the tooltip's shadow root, Firefox drew none of them on a slotted tip.
+- **An exit that has to play in every engine is held by its component.** A popover's exit holds it
+  on the page by transitioning `display` and `overlay`, and Firefox takes it away at once while it
+  reports `transition-behavior: allow-discrete` as supported, so the tooltip's and the menu's exits
+  play in Chromium and WebKit only; the dialog and the toast hold theirs themselves.
+- **An overlay placed by its size moves, uncovers, blurs and fades, and never scales or turns.** The
+  tooltip reads its tip's box, transform and all, as it shows: started at 0.9 of its size, a tip was
+  placed 11px off its trigger's middle, and edge-on, 26px over it, in all three engines. The menu
+  leaves zoom out for the same reason.
+
+**The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
+under each theme; `today` marks what the component does today. The input, the select, the menu and
+the tooltip have no taste yet, so their pages run today's motion under every theme.
+
+| Component                    | Moment         | Default          | Matrix           | Glass       |
+| ---------------------------- | -------------- | ---------------- | ---------------- | ----------- |
+| button                       | `press-move`   | squish           | shatter          | spring      |
+| button                       | `press-fill`   | highlight, today | none             | ripple      |
+| button                       | `press-shadow` | sink             | fragments        | sink        |
+| button                       | `press-border` | bloom            | bloom            | pulse       |
+| button                       | `hover-move`   | none, today      | zoom             | tilt        |
+| button                       | `hover-fill`   | highlight, today | highlight, today | spotlight   |
+| button                       | `hover-shadow` | raise            | neon             | raise       |
+| button                       | `hover-border` | pulse            | trace            | edge        |
+| button                       | `focus-move`   | lift             | glitch           | none, today |
+| button                       | `focus-fill`   | none, today      | scan             | shimmer     |
+| button                       | `focus-shadow` | raise            | burst            | neon        |
+| button                       | `focus-border` | beacon           | comet            | orbit       |
+| card                         | `hover-move`   | lift             | zoom             | tilt        |
+| card                         | `hover-shadow` | raise            | glow             | cast        |
+| card                         | `hover-fill`   | tint             | tint             | spotlight   |
+| card                         | `hover-border` | orbit            | trace            | edge        |
+| card                         | `enter`        | fade             | materialize      | dissolve    |
+| card                         | `exit`         | fade             | erode            | dissolve    |
+| checkbox                     | `check`        | draw             | draw             | draw        |
+| switch                       | `check`        | spring           | spring           | spring      |
+| radio                        | `check`        | pop              | pop              | pop         |
+| checkbox, switch, radio      | `hover`        | glow             | glow             | glow        |
+| checkbox, switch, radio      | `invalid`      | pulse            | glitch           | flash       |
+| checkbox, switch, radio      | `focus`        | beacon           | neon             | orbit       |
+| dialog                       | `enter`        | fade, today      | materialize      | dissolve    |
+| dialog                       | `exit`         | fade, today      | erode            | dissolve    |
+| dialog                       | `backdrop`     | fade, today      | char-rain        | blur        |
+| toast                        | `enter`        | slide-elastic    | wind             | refocus     |
+| toast                        | `exit`         | slide            | wind             | defocus     |
+| toast                        | `dwell`        | ring             | ring             | ring        |
+| toaster                      | `stack`        | spring           | spring           | spring      |
+| table                        | `hover`        | highlight        | highlight        | frost       |
+| table                        | `enter`        | glow             | glow             | glow        |
+| icon                         | `enter`        | draw             | pop              | refocus     |
+| icon                         | `hover`        | glow             | glitch           | pop         |
+| input, select, menu, tooltip | every one      | today's          | today's          | today's     |
+
 ## Proposed design
 
 **Not written** — it waits on the Study choosing between A, B, C and D. What is already fixed is

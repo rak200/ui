@@ -399,8 +399,9 @@ rather than to the theme's own slate, so the opaque value has to be the theme's 
 **A translucent surface is measured over a page, and the page is the host's.** What rests on glass is
 read against the glass and whatever is behind it, and black and white bound a page that follows no
 scheme, which no host draws. So Glass states the page it holds over — no darker than `#cecece` in
-the light scheme, no lighter than `#303030` in the dark — and the floors run there, each scheme on
-its own limit: one step past it, the error message and the focus ring fall under their floors. That
+the light scheme, no lighter than `#363636` in the dark — and the floors run there, each scheme on
+its own limit: one step past it, the error message and a secondary button's hover fall under their
+floors. That
 is a condition on the host, documented with the theme, rather than an opacity raised until any page
 passes, which leaves the glass reading as milk.
 

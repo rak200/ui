@@ -7,7 +7,10 @@
  * around it, so every scope reaches it.
  */
 import { reference } from '../../../../src/reference.js';
-import { prototype } from '../motion.js';
+import { prototype, queries } from '../motion.js';
+
+/** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
+const is = queries('table');
 
 // The tint a new row arrives in, registered so it can be transitioned to nothing.
 try {
@@ -25,10 +28,19 @@ try {
 // fallback, so it resolves against the grounds where the row is.
 const hover = reference('--ui-color-hover').cssText;
 
+// The text's colour, the rule between rows, and the glass a theme frosts its raised surfaces
+// with — none where it has none, and no value at all where Glass stands down.
+const text = reference('--ui-color-text').cssText;
+const rule = reference('--ui-color-border').cssText;
+const glass = reference('--ui-backdrop-raised').cssText;
+
+/** Where there is glass: the token written, and written as something other than none. */
+const glassy = '(style(--ui-backdrop-raised) and (not style(--ui-backdrop-raised: none)))';
+
 const sheet = String.raw`
 /* :nth-child(n) matches every row, and lifts these to the stripe rule's weight, which this
    sheet then follows. */
-@container style(--ui-motion-hover: highlight) {
+@container ${is('hover', 'highlight')} {
     ui-table tbody tr:nth-child(n) {
         transition: background-color var(--ui-duration-50) var(--ui-easing-state);
     }
@@ -38,7 +50,41 @@ const sheet = String.raw`
     }
 }
 
-@container style(--ui-motion-enter: fade) {
+/* frost: the row turns to the theme's glass under the pointer, what is behind it blurred and
+   its colour lifted, under a veil of the text's colour, in place of the hover colour, which
+   Glass makes opaque and which hid the page its glass lets through. Drawn for Glass. Where
+   there is no glass — another theme, or Glass standing down — it is the hover colour: over a
+   table made opaque, the veil left a striped row under 1.2:1 from itself, short of the 1.25 a
+   state owes — measured. */
+@container ${is('hover', 'frost')} {
+    ui-table tbody tr:nth-child(n) {
+        transition: background-color var(--ui-duration-50) var(--ui-easing-state);
+    }
+
+    ui-table tbody tr:nth-child(n):hover {
+        background-color: ${hover};
+    }
+}
+
+/* Over the glass, the veil is the text at 0.12, which held the row 1.33:1 or more from itself
+   at rest over the pages Glass holds, where the opaque hover colour held 1.26 — measured. The
+   blur is the row's: each cell blurred apart broke the page behind at every cell's edge. And
+   the rules the table draws between rows went under the glass and were blurred away, so the
+   row draws them again inside its cells — measured. */
+@container ${is('hover', 'frost')} and ${glassy} {
+    ui-table tbody tr:nth-child(n):hover {
+        background-color: rgb(from ${text} r g b / 0.12);
+        backdrop-filter: ${glass};
+    }
+
+    ui-table tbody tr:nth-child(n):hover > * {
+        box-shadow:
+            inset 0 1px 0 ${rule},
+            inset 0 -1px 0 ${rule};
+    }
+}
+
+@container ${is('enter', 'fade')} {
     ui-table tbody tr:nth-child(n) {
         transition: opacity var(--ui-duration-300) var(--ui-easing-enter);
     }
@@ -52,7 +98,7 @@ const sheet = String.raw`
 
 /* glow: the row arrives tinted with the accent and the tint drains away, so the eye finds
    what changed after it has happened. */
-@container style(--ui-motion-enter: glow) {
+@container ${is('enter', 'glow')} {
     ui-table tbody tr:nth-child(n) {
         background-image: linear-gradient(var(--ui-row-tint), var(--ui-row-tint));
         transition: --ui-row-tint var(--ui-duration-400) var(--ui-easing-exit);
@@ -77,6 +123,10 @@ prototype({
             effects: [
                 { name: 'none', today: true, says: 'Nothing changes.' },
                 { name: 'highlight', says: 'The row takes the hover colour.' },
+                {
+                    name: 'frost',
+                    says: 'The row turns to the theme’s glass: what is behind it blurred, under a veil of the text’s colour; where there is no glass, the hover colour. Drawn for Glass.',
+                },
             ],
         },
         {

@@ -92,7 +92,7 @@ export const Glass: StoryObj = {
     render: (): TemplateResult => html`
         ${sheet(glass)}
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr))">
-            ${panel(glass, 'light', '#cecece')}${panel(glass, 'dark', '#303030')}
+            ${panel(glass, 'light', '#cecece')}${panel(glass, 'dark', '#363636')}
         </div>
     `,
 };

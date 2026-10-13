@@ -148,7 +148,7 @@ const palettes: readonly Palette[] = [
         sheet: themeStyleSheet(glass),
         theme: glass.name,
         glows: false,
-        page: ['#cecece', '#303030'],
+        page: ['#cecece', '#363636'],
     },
 ];
 
@@ -1279,9 +1279,9 @@ describe('the contrast floors', () => {
                 /*
                  * What rests on a raised surface is read against it, laid over the page — which,
                  * where the surface lets the page through, is the page the palette documents
-                 * holding over. RFC 0003 measured that text has the most room there, and that
-                 * what runs out first is the error message in the light scheme and the focus
-                 * ring in the dark: the limits the page is set at.
+                 * holding over. RFC 0003 measured that text has the most room there, and the
+                 * error message is what runs out first in the light scheme: the limit the page
+                 * is set at there. In the dark it is a secondary button's hover, above.
                  */
                 it('keeps what rests on a raised surface at its floor, over the page beneath it', () => {
                     const surface = raised(palette, scheme);

@@ -3,18 +3,22 @@
  * reference measured motion getting in the way, so the catalogue here is short and nothing in
  * it moves the control.
  */
-import { prototype } from '../motion.js';
+import { reference } from '../../../../src/reference.js';
+import { prototype, queries } from '../motion.js';
+
+/** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
+const is = queries('input');
 
 const sheet = String.raw`
 input,
 textarea {
     transition-property: border-color, box-shadow;
-    transition-duration: var(--ui-duration-state), var(--ui-duration-200);
+    transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-200);
     transition-timing-function: var(--ui-easing-state), var(--ui-easing-enter);
 }
 
 /* focus: halo, a soft ring of the accent around the field, beside the focus ring. */
-@container style(--ui-motion-focus: halo) {
+@container ${is('focus', 'halo')} {
     input:focus-visible,
     textarea:focus-visible {
         box-shadow: 0 0 0 0.25rem rgb(from var(--ui-color-accent) r g b / 0.22);
@@ -22,7 +26,7 @@ textarea {
 }
 
 /* focus: underline, a line of the accent drawn out from the middle along the bottom edge. */
-@container style(--ui-motion-focus: underline) {
+@container ${is('focus', 'underline')} {
     .glow {
         position: relative;
     }
@@ -46,10 +50,10 @@ textarea {
 }
 
 /* invalid: pulse. The ring leaves the boundary once, and the field stays where it was. */
-@container style(--ui-motion-invalid: pulse) {
+@container ${is('invalid', 'pulse')} {
     input[aria-invalid='true'],
     textarea[aria-invalid='true'] {
-        animation: ui-alarm var(--ui-duration-400) var(--ui-easing-exit);
+        animation: ui-alarm var(--ui-duration-400) var(--ui-easing-enter);
     }
 }
 

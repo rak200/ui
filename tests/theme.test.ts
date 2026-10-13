@@ -663,7 +663,7 @@ describe('theme stories', () => {
         expect(panels.map((panel) => panel.getAttribute('data-scheme'))).toEqual(['light', 'dark']);
         expect(panels.map((panel) => getComputedStyle(panel).backgroundColor)).toEqual([
             'rgb(206, 206, 206)',
-            'rgb(48, 48, 48)',
+            'rgb(54, 54, 54)',
         ]);
 
         await expectAccessible(container);

@@ -10,10 +10,11 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-tooltip</code> — appear, leave</h1>
+            <h1><code>ui-tooltip</code> — appear, leave, the next tip</h1>
             <p>
                 Point at a button, or move focus to it. Today the tip is there at once and gone at
-                once.
+                once. Pass along the row of four, or Tab along it, to see what a tip does when it
+                opens as another closes.
             </p>
         </header>
         <main>
@@ -24,6 +25,18 @@
                     <ui-tooltip>
                         <ui-button variant="secondary">Archive</ui-button>
                         <span slot="tip">Moves the thread out of the inbox</span>
+                    </ui-tooltip>
+                    <ui-tooltip>
+                        <ui-button variant="secondary">Mark as read</ui-button>
+                        <span slot="tip">Takes the bold off it</span>
+                    </ui-tooltip>
+                    <ui-tooltip>
+                        <ui-button variant="secondary">Label</ui-button>
+                        <span slot="tip">Files it under a label of yours</span>
+                    </ui-tooltip>
+                    <ui-tooltip>
+                        <ui-button variant="secondary">Delete</ui-button>
+                        <span slot="tip">Moves it to the bin for thirty days</span>
                     </ui-tooltip>
                 </div>
                 <div class="scoped region">

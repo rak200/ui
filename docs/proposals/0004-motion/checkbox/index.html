@@ -10,7 +10,10 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-checkbox</code> and <code>ui-switch</code> — check, invalid, focus</h1>
+            <h1>
+                <code>ui-checkbox</code> and <code>ui-switch</code> — check, pointer over, invalid,
+                focus
+            </h1>
             <p>
                 The reference's form page names this the one place where animating helps: a control
                 the reader has just changed, confirming which way it went. It also names the ceiling
@@ -23,7 +26,20 @@
                 <div class="scoped">
                     <span class="name">page</span>
                     <ui-checkbox label="Email me the receipt" required></ui-checkbox>
-                    <ui-switch label="Dark mode"></ui-switch>
+                    <ui-switch label="Dark mode" required></ui-switch>
+                </div>
+                <div class="scoped states">
+                    <span class="name">page · every state</span>
+                    <div class="matrix">
+                        <ui-checkbox label="Unchecked"></ui-checkbox>
+                        <ui-checkbox label="Checked" checked></ui-checkbox>
+                        <ui-checkbox label="Unchecked, disabled" disabled></ui-checkbox>
+                        <ui-checkbox label="Checked, disabled" checked disabled></ui-checkbox>
+                        <ui-switch label="Off"></ui-switch>
+                        <ui-switch label="On" checked></ui-switch>
+                        <ui-switch label="Off, disabled" disabled></ui-switch>
+                        <ui-switch label="On, disabled" checked disabled></ui-switch>
+                    </div>
                 </div>
                 <div class="scoped region">
                     <span class="name">.region</span>
@@ -38,6 +54,7 @@
                     <ui-button variant="secondary" data-validate
                         >Validate the required ones</ui-button
                     >
+                    <ui-button variant="secondary" data-again>Play the error again</ui-button>
                 </div>
             </section>
             <section class="written" data-written aria-label="What the consumer writes"></section>
