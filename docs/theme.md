@@ -87,6 +87,7 @@ the tip, the dialog and the open menu.
 | ------------------ | ---------------------------------------------------------- | -------------------------------------- |
 | text               | `#000000`                                                  | `#ffffff`                              |
 | accent             | `#334155`                                                  | `#94a3b8`                              |
+| focus ring         | `#334155`                                                  | `#94a3b8`                              |
 | hover              | `#bebebe`                                                  | `#393f4d`                              |
 | pressed            | `#989898`                                                  | `#535965`                              |
 | a raised surface   | white at 0.20                                              | black at 0.20                          |
@@ -105,8 +106,9 @@ the tip, the dialog and the open menu.
 **The glass is the scheme's pole at an opacity**, white in the light scheme and black in the dark —
 black rather than the dark surface, because at the same opacity it takes a lighter page. The surface
 itself stays opaque, so every mix of it — the border, the muted text — stays where the floors measured it. The text goes to its
-pole and the accent to slate: text over frosted glass reads washed out long before it measures as
-failing, and a saturated accent fights whatever colour the page throws through. A toast's icon stays
+pole and the accent to slate, the focus ring with it: text over frosted glass reads washed out long
+before it measures as failing, and a saturated accent fights whatever colour the page throws
+through. A toast's icon stays
 opaque in its variant's colour, being the one cue that tells a variant by more than its colour.
 
 **The controls are glass too.** A field, a select, an empty box or radio, a switch that is off and a
@@ -131,9 +133,9 @@ hover is the least of what moves.
 
 **It holds its floors over a page, and the page is yours.** What rests on the glass is read against
 the glass and the page behind it, so the theme is measured over the page it can take: **no darker
-than `#cecece` in the light scheme, and no lighter than `#303030` in the dark.** One step past
-either, something resting on the glass falls under its floor — the error message in the light
-scheme, the focus ring in the dark. A page between the scheme's own pole and that grey holds; one
+than `#cecece` in the light scheme, and no lighter than `#363636` in the dark.** One step past
+either, something on the glass falls under its floor — the error message in the light scheme, a
+secondary button's hover against its own fill in the dark. A page between the scheme's own pole and that grey holds; one
 past the grey, or a light page behind dark glass, does not, and nothing here measures it. The text
 has the most room of anything on the glass, so a page that looks fine under it can still be past
 the limit.
@@ -147,8 +149,8 @@ the 1.25 a state owes.
 raised surface goes back to the opaque surface with nothing behind it, its edge to the boundary and
 its lift to the default palette's, every control's fill and every stripe goes opaque, and a button
 goes back to its variant's edge and no lift. More contrast also edges what floats over the page and a toast in
-the text, and writes the default palette's neutral states, because Glass's text and surface are the
-default's there.
+the text, takes the focus ring to the text's pole as the default palette's goes, and writes the
+default palette's neutral states, because Glass's text and surface are the default's there.
 
 ## `Theme`
 

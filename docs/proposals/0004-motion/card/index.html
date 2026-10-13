@@ -20,12 +20,21 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-card</code> — pointer, entrance</h1>
+            <h1><code>ui-card</code> — pointer, entrance, exit</h1>
+            <p>
+                The pointer's effects come by kind — movement, shadow, fill, border — and each kind
+                is a property of its own, so one of each can be chosen at once.
+            </p>
             <p>
                 The card's surface is its host, which is where the limit S8 measured shows: an
                 effect that moves the whole card cannot see a choice made on the card itself. Choose
                 one of those for <em>every ui-card</em> or <em>this instance</em> and nothing
                 happens — the page and the region still reach it.
+            </p>
+            <p>
+                A card cannot hold off its own removal, so its exit needs a way out the component
+                owns, as the dialog owns its close. The buttons below take a card away that way, the
+                exit first; choosing an exit plays it on every card and brings them back.
             </p>
         </header>
         <main>
@@ -61,6 +70,12 @@
                     >
                     <ui-button variant="secondary" data-add="#in-region"
                         >Add a card to the region</ui-button
+                    >
+                    <ui-button variant="secondary" data-remove="#on-page"
+                        >Remove a card from the page</ui-button
+                    >
+                    <ui-button variant="secondary" data-remove="#in-region"
+                        >Remove a card from the region</ui-button
                     >
                 </div>
             </section>

@@ -8,10 +8,13 @@
  * An exit holds the panel on screen while it runs — `display` and `overlay` transitioned as
  * discrete values — and only when one is chosen, so a menu with no exit still closes at once.
  */
-import { prototype } from '../motion.js';
+import { prototype, queries } from '../motion.js';
+
+/** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
+const is = queries('menu');
 
 const sheet = String.raw`
-@container style(--ui-motion-enter: fade) {
+@container ${is('enter', 'fade')} {
     [popover]:popover-open {
         transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
     }
@@ -23,7 +26,7 @@ const sheet = String.raw`
     }
 }
 
-@container style(--ui-motion-enter: drop) {
+@container ${is('enter', 'drop')} {
     [popover]:popover-open {
         transition:
             opacity var(--ui-duration-200) var(--ui-easing-enter),
@@ -44,7 +47,7 @@ const sheet = String.raw`
 
 /* unfold: the clip opens from the trigger's side. Open, it clears the shadow's reach, so the
    layer the menu lifts itself on is not cut. */
-@container style(--ui-motion-enter: unfold) {
+@container ${is('enter', 'unfold')} {
     [popover]:popover-open {
         clip-path: inset(-1rem);
         transition: clip-path var(--ui-duration-200) var(--ui-easing-enter);
@@ -61,7 +64,7 @@ const sheet = String.raw`
     }
 }
 
-@container style(--ui-motion-exit: fade) {
+@container ${is('exit', 'fade')} {
     [popover]:not(:popover-open) {
         opacity: 0;
         transition:
@@ -71,7 +74,7 @@ const sheet = String.raw`
     }
 }
 
-@container style(--ui-motion-exit: lift) {
+@container ${is('exit', 'lift')} {
     [popover]:not(:popover-open) {
         opacity: 0;
         transform: translateY(-0.5rem);
@@ -83,7 +86,7 @@ const sheet = String.raw`
     }
 }
 
-@container style(--ui-motion-exit: fold) {
+@container ${is('exit', 'fold')} {
     [popover]:popover-open {
         clip-path: inset(-1rem);
     }
@@ -98,13 +101,13 @@ const sheet = String.raw`
 }
 
 /* caret: today it turns over on the state's step. */
-@container style(--ui-motion-caret: none) {
+@container ${is('caret', 'none')} {
     svg {
         transition: none;
     }
 }
 
-@container style(--ui-motion-caret: spring) {
+@container ${is('caret', 'spring')} {
     svg {
         transition: rotate var(--ui-duration-300) var(--ui-easing-emphasis);
     }

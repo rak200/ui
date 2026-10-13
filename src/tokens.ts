@@ -298,26 +298,22 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-color-accent': '#2563eb',
     '--ui-color-surface': '#ffffff',
     '--ui-color-text': '#1f2937',
-    // Amber-700 rather than the amber-500 this shipped with, and the change is a floor
-    // rather than a preference: a focus ring is the visual information that identifies a
-    // component's state, so WCAG 1.4.11 asks 3:1 against what it sits on. `#f59e0b`
-    // against the default surface is 2.15:1 — and `outline-offset` puts the surface on
-    // both sides of the ring, so the surface is what it is measured against, not the
-    // button underneath. This value is 5.02:1 there and 3.53:1 on a dark surface, so it
-    // clears the floor in either scheme. `tests/tokens.test.ts` holds the assertion,
-    // because no axe rule does.
-    '--ui-color-focus': '#b45309',
+    // The accent's own blue, so the ring is drawn in the palette's colour, as each shipped
+    // theme's is in its own. A ground rather than a derivation, so a host who moves the
+    // accent and wants the ring to follow moves both.
+    //
+    // A focus ring is the visual information that identifies a component's state, so
+    // WCAG 1.4.11 asks 3:1 against what it sits on — and `outline-offset` puts the surface
+    // on both sides of the ring, so the surface is what it is measured against, not the
+    // control underneath. This is 5.17:1 there, and the dark scheme's value 6.98:1 on its
+    // surface. `tests/tokens.test.ts` holds the assertion, because no axe rule does.
+    '--ui-color-focus': '#2563eb',
     '--ui-color-danger': '#b91c1c',
     // Green-700 and amber-700, each the darkest step of its hue that still reads as that
     // hue. Both clear **4.5:1** against the surface rather than the 3:1 a coloured edge
     // would owe, because the floor a value has to clear is the strictest use it is put to
     // and nothing stops a host using one as text — `--ui-color-danger` was chosen the same
     // way and is text in every control's message today.
-    //
-    // The warning is the same amber as `--ui-color-focus`, and the two arrived at it
-    // independently: both are *the darkest amber that clears its floor in both schemes*,
-    // and that question has one answer. They stay separate names because they are separate
-    // knobs — a host who retunes the focus ring has said nothing about warnings.
     '--ui-color-success': '#15803d',
     '--ui-color-warning': '#b45309',
     // Cyan-700, the step the other outcomes take, and held to their floor: 5.36:1.
@@ -565,6 +561,8 @@ export const darkScheme: Readonly<Partial<Record<Token, string>>> = {
     // muddy on charcoal. Its label needs no dark value: it is derived from the accent, so
     // it goes to black at this end on its own.
     '--ui-color-accent': '#60a5fa',
+    // The ring follows the accent here too: 6.98:1 on the dark surface.
+    '--ui-color-focus': '#60a5fa',
     '--ui-color-surface': '#111827',
     '--ui-color-text': '#e5e7eb',
     // Red-700 is 2.74:1 on the dark surface — under the 4.5:1 floor for text, and error

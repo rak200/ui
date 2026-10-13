@@ -10,7 +10,7 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-radio-group</code> — choose, invalid, focus</h1>
+            <h1><code>ui-radio-group</code> — choose, pointer over, invalid, focus</h1>
             <p>
                 Choosing is a change the reader just made, so it is the case where the reference
                 says motion helps — inside the same ceiling as a checkbox.
@@ -26,6 +26,24 @@
                         <ui-radio value="pro">Pro</ui-radio>
                         <ui-radio value="max">Max</ui-radio>
                     </ui-radio-group>
+                </div>
+                <div class="scoped states">
+                    <span class="name">page · every state</span>
+                    <div class="matrix">
+                        <ui-radio-group label="Enabled" name="enabled">
+                            <ui-radio value="unchecked">Unchecked</ui-radio>
+                            <ui-radio value="checked" checked>Checked</ui-radio>
+                        </ui-radio-group>
+                        <ui-radio-group label="Disabled" name="disabled" disabled>
+                            <ui-radio value="unchecked">Unchecked, disabled</ui-radio>
+                            <ui-radio value="checked" checked>Checked, disabled</ui-radio>
+                        </ui-radio-group>
+                        <ui-radio-group label="Disabled options" name="options">
+                            <ui-radio value="enabled">Enabled</ui-radio>
+                            <ui-radio value="unchecked" disabled>Unchecked, disabled</ui-radio>
+                            <ui-radio value="checked" checked disabled>Checked, disabled</ui-radio>
+                        </ui-radio-group>
+                    </div>
                 </div>
                 <div class="scoped region">
                     <span class="name">.region</span>
@@ -45,6 +63,7 @@
                     <ui-button variant="secondary" data-validate
                         >Validate the required ones</ui-button
                     >
+                    <ui-button variant="secondary" data-again>Play the error again</ui-button>
                 </div>
             </section>
             <section class="written" data-written aria-label="What the consumer writes"></section>
