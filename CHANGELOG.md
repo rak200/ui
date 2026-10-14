@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/rak200/ui/compare/0.8.1...0.8.2) (2026-10-13)
+
+
+### Features
+
+* **tokens:** the focus ring takes the accent, and RFC 0004's prototypes are reviewed ([#290](https://github.com/rak200/ui/issues/290)) ([ebdc67d](https://github.com/rak200/ui/commit/ebdc67d4f332b204f8c08d603ce47a3c87ab79fe))
+
 ## [0.8.1](https://github.com/rak200/ui/compare/0.8.0...0.8.1) (2026-10-09)
 
 
