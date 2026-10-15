@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0004 — side by side</title>
+        <link rel="stylesheet" href="../prototype.css" />
+        <style>
+            /* One column: there is nothing to choose on this page. */
+            main {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .side {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+                gap: 1rem;
+                align-items: start;
+            }
+
+            .scoped > :is(ui-input, ui-textarea, ui-select) {
+                inline-size: 15rem;
+            }
+
+            ui-card {
+                inline-size: 15rem;
+            }
+
+            ui-card h3,
+            ui-card p {
+                margin: 0;
+            }
+
+            .scoped ui-icon {
+                --ui-icon-size: 2rem;
+            }
+
+            /* Each control beside its disabled twin, in columns that give way before the cell
+               does: a label wraps rather than running out of it. At max-content, Matrix's
+               monospaced labels ran 98px past the cell and over the radios beside it, at 820px
+               wide — measured. */
+            .pairs {
+                display: grid;
+                grid-template-columns: repeat(2, auto);
+                gap: 0.75rem 1.5rem;
+            }
+
+            /* Room for the menu's panel under its trigger. */
+            .opens {
+                padding-block-end: 9rem;
+            }
+        </style>
+        <script type="module" src="./effects.ts"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top" data-frame></div>
+            <h1>Every component, side by side</h1>
+            <p>
+                Each component as its own page draws it, with the effects its theme chooses and
+                nothing chosen here, so one moment can be compared from one component to the next:
+                point at each, tab through them, play the error on every required one at once.
+                Choose the theme and the scheme above.
+            </p>
+        </header>
+        <main>
+            <section class="stage" aria-label="Components">
+                <div class="actions">
+                    <ui-button variant="secondary" data-validate
+                        >Validate the required ones</ui-button
+                    >
+                    <ui-button variant="secondary" data-again>Play the error again</ui-button>
+                </div>
+                <div class="side">
+                    <div class="scoped">
+                        <span class="name">ui-button</span>
+                        <ui-button>Save</ui-button>
+                        <ui-button variant="secondary">Cancel</ui-button>
+                        <ui-button disabled>Disabled</ui-button>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-input, ui-textarea</span>
+                        <ui-input label="Email" type="email" required></ui-input>
+                        <ui-textarea label="Message" rows="2" required></ui-textarea>
+                        <ui-input label="Plan" value="Team, billed yearly" disabled></ui-input>
+                        <ui-textarea label="Notes" rows="2" disabled></ui-textarea>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-select</span>
+                        <ui-select label="Currency" name="currency" required>
+                            <ui-option value="">Choose…</ui-option>
+                            <ui-option value="brl">Real</ui-option>
+                            <ui-option value="usd">Dollar</ui-option>
+                        </ui-select>
+                        <ui-select label="Region" name="region" disabled>
+                            <ui-option value="sa" selected>South America</ui-option>
+                            <ui-option value="eu">Europe</ui-option>
+                        </ui-select>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-checkbox, ui-switch</span>
+                        <div class="pairs">
+                            <ui-checkbox label="Email me the receipt" required></ui-checkbox>
+                            <ui-checkbox label="Unchecked, disabled" disabled></ui-checkbox>
+                            <ui-checkbox label="Checked" checked></ui-checkbox>
+                            <ui-checkbox label="Checked, disabled" checked disabled></ui-checkbox>
+                            <ui-switch label="Dark mode" required></ui-switch>
+                            <ui-switch label="Off, disabled" disabled></ui-switch>
+                            <ui-switch label="On" checked></ui-switch>
+                            <ui-switch label="On, disabled" checked disabled></ui-switch>
+                        </div>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-radio-group</span>
+                        <ui-radio-group label="Plan" name="plan" required>
+                            <ui-radio value="free">Free</ui-radio>
+                            <ui-radio value="pro">Pro</ui-radio>
+                            <ui-radio value="max">Max</ui-radio>
+                        </ui-radio-group>
+                        <ui-radio-group label="Billing" name="billing" disabled>
+                            <ui-radio value="monthly" checked>Monthly</ui-radio>
+                            <ui-radio value="yearly">Yearly</ui-radio>
+                        </ui-radio-group>
+                    </div>
+                    <div class="scoped" id="cards">
+                        <span class="name">ui-card</span>
+                        <ui-card>
+                            <h3 slot="header">Monthly</h3>
+                            <p>Everything in the free tier, plus priority support.</p>
+                            <div slot="footer"><ui-button>Choose</ui-button></div>
+                        </ui-card>
+                        <ui-button variant="secondary" data-add="#cards">Add a card</ui-button>
+                    </div>
+                    <div class="scoped opens">
+                        <span class="name">ui-menu</span>
+                        <ui-menu>
+                            <span slot="trigger">File</span>
+                            <button type="button">Rename</button>
+                            <button type="button">Duplicate</button>
+                            <button type="button" disabled>Export</button>
+                            <hr />
+                            <button type="button">Move to trash</button>
+                        </ui-menu>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-tooltip</span>
+                        <ui-tooltip>
+                            <ui-button variant="secondary">Archive</ui-button>
+                            <span slot="tip">Moves the thread out of the inbox</span>
+                        </ui-tooltip>
+                        <ui-tooltip>
+                            <ui-button variant="secondary">Snooze</ui-button>
+                            <span slot="tip">Brings it back tomorrow morning</span>
+                        </ui-tooltip>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-dialog</span>
+                        <ui-button data-open="#dialog">Delete account</ui-button>
+                        <ui-dialog id="dialog">
+                            <h2 slot="title">Delete account?</h2>
+                            <p>Your projects and invoices go with it.</p>
+                            <ui-button slot="actions" variant="secondary" data-close
+                                >Cancel</ui-button
+                            >
+                            <ui-button slot="actions" data-close>Delete</ui-button>
+                        </ui-dialog>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-toast</span>
+                        <ui-button variant="secondary" data-toast="#toaster">Notify</ui-button>
+                        <ui-toaster id="toaster"></ui-toaster>
+                    </div>
+                    <div class="scoped">
+                        <span class="name">ui-table</span>
+                        <ui-table aria-label="Invoices" id="invoices">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Number</th>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#1031</td>
+                                        <td>Acme</td>
+                                        <td>R$ 1.200,00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1032</td>
+                                        <td>Globex</td>
+                                        <td>R$ 860,00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </ui-table>
+                        <ui-button variant="secondary" data-row="#invoices">Add a row</ui-button>
+                    </div>
+                    <div class="scoped" id="icons">
+                        <span class="name">ui-icon</span>
+                        <ui-icon name="check"></ui-icon>
+                        <ui-icon name="search"></ui-icon>
+                        <ui-icon name="settings"></ui-icon>
+                        <ui-button variant="secondary" data-icon="#icons">Add an icon</ui-button>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <template id="card">
+            <ui-card>
+                <h3 slot="header">Added</h3>
+                <p>Inserted just now.</p>
+            </ui-card>
+        </template>
+    </body>
+</html>

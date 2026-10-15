@@ -20,6 +20,7 @@ import { UiDialog } from '../../../../src/dialog.js';
 import { reference } from '../../../../src/reference.js';
 import {
     attributes,
+    chosen,
     curve,
     dissolve,
     duration,
@@ -46,6 +47,9 @@ interface Depth {
     readonly strength: number;
     readonly width: number;
     readonly height: number;
+    /** How far it falls in a round of the loop, in pixels: a tile for the nearest, three in four
+     *  of one for the middle, one in two behind. */
+    readonly pace: number;
 }
 
 /**
@@ -53,10 +57,92 @@ interface Depth {
  * together: with one size for all, the repeat lined up across them and showed.
  */
 const [near, middle, far]: readonly [Depth, Depth, Depth] = [
-    { size: 18, strength: 1, width: 640, height: 600 },
-    { size: 13, strength: 0.7, width: 520, height: 520 },
-    { size: 9, strength: 0.45, width: 400, height: 440 },
+    { size: 18, strength: 1, width: 640, height: 600, pace: 600 },
+    { size: 13, strength: 0.7, width: 520, height: 520, pace: 390 },
+    { size: 9, strength: 0.45, width: 400, height: 440, pace: 220 },
 ];
+
+/** A point on a curve, across and up. */
+type Point = readonly [number, number];
+
+/** The rain's curve, from its start to where it rests. */
+const settling: readonly [Point, Point, Point, Point] = [
+    [0, 0],
+    [0.33, 0.33],
+    [0.5, 1],
+    [1, 1],
+];
+
+/**
+ * A column's fall of `tiles` periods, as keyframes on the rain's curve: cut where each period has
+ * gone by, every part on its own piece of the curve, so the parts make the one fall. A column comes
+ * down a period and is put back a period up at once, where its code is the same, so it is not seen
+ * to jump.
+ */
+function falling(tiles: number): string {
+    const along = (a: Point, b: Point, t: number): Point => [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t,
+    ];
+    // The curve's polar form: where de Casteljau's three steps go, taken at three parameters. A
+    // piece of the curve has the pieces' own control points at its two ends' parameters.
+    const polar = (u: number, v: number, w: number): Point => {
+        const [p0, p1, p2, p3] = settling;
+        const [a, b, c] = [along(p0, p1, u), along(p1, p2, u), along(p2, p3, u)];
+
+        return along(along(a, b, v), along(b, c, v), w);
+    };
+    // Where along the curve a share of the fall has gone by.
+    const at = (share: number): number => {
+        let [low, high] = [0, 1];
+
+        for (let step = 0; step < 40; step += 1) {
+            const middle = (low + high) / 2;
+            [low, high] = polar(middle, middle, middle)[1] < share ? [middle, high] : [low, middle];
+        }
+
+        return (low + high) / 2;
+    };
+    const cuts = Array.from({ length: tiles + 1 }, (_, index) =>
+        index === 0 ? 0 : index === tiles ? 1 : at(index / tiles),
+    );
+    const percent = (time: number): string => `${(time * 100).toFixed(2)}%`;
+    const frames = cuts.slice(0, -1).map((from, index) => {
+        const to = cuts[index + 1] ?? 1;
+        const [start, first, second, end] = [
+            polar(from, from, from),
+            polar(from, from, to),
+            polar(from, to, to),
+            polar(to, to, to),
+        ];
+        const across = (point: Point): string =>
+            ((point[0] - start[0]) / (end[0] - start[0])).toFixed(3);
+        const up = (point: Point): string =>
+            ((point[1] - start[1]) / (end[1] - start[1])).toFixed(3);
+        const shape = `cubic-bezier(${across(first)}, ${up(first)}, ${across(second)}, ${up(second)})`;
+        const back = index === 0 ? '0%' : percent(start[0] + 0.0001);
+        const down =
+            index === tiles - 1
+                ? ''
+                : `
+    ${percent(end[0])} {
+        translate: 0 0;
+        animation-timing-function: step-start;
+    }`;
+
+        return `
+    ${back} {
+        translate: 0 -100%;
+        animation-timing-function: ${shape};
+    }${down}`;
+    });
+
+    return `@keyframes ui-fall-${String(tiles)} {${frames.join('')}
+    100% {
+        translate: 0 0;
+    }
+}`;
+}
 
 /**
  * A copy of a dialog's panel, for a piece to show its cell of: the `<dialog>` the component
@@ -73,8 +159,16 @@ const panel = (host: HTMLElement, dialog: HTMLElement) => (): HTMLElement => {
     const own = UiDialog.styles.styleSheet;
     root.adoptedStyleSheets = own === undefined ? [] : [own];
 
-    const shown = dialog.cloneNode(true) as HTMLElement;
+    const shown = dialog.cloneNode() as HTMLElement;
     shown.removeAttribute('class');
+    // The panel's own content and not the columns' layer, which is the dialog's child and no part
+    // of its panel: copied with the rest, it went into each of the thirty-six pieces, and opening
+    // took 316ms of script where it takes 44 without it — measured.
+    shown.append(
+        ...[...dialog.childNodes]
+            .filter((child) => !(child instanceof HTMLElement && 'rain' in child.dataset))
+            .map((child) => child.cloneNode(true)),
+    );
     // The copy's whole box, with nothing to come in from: the component's fade would.
     shown.style.cssText =
         'position: absolute; inset: 0; width: auto; height: auto; max-inline-size: none; max-block-size: none; margin: 0; transition: none; backdrop-filter: none;';
@@ -745,6 +839,136 @@ dialog {
     }
 }
 
+/* char-columns: the falling code as the reference's loading columns draw theirs, characters set
+   in type, in a column each moved by a transform, the colour the accent's own. The backdrop
+   cannot hold them, having no children, so a layer of the dialog's own does: shown as the dialog
+   is about to open, it goes into the top layer before the dialog, under it and under its
+   backdrop, and none of what the dialog's entrance and exit do to the dialog reaches it there.
+   The scrim comes down to it, under the columns, and the backdrop above them is left clear. The
+   layer comes in as the scrim would and goes with the panel, on the exit's length, which it
+   inherits from the dialog. Each column falls a distance of its own, slowing to rest within the
+   five seconds WCAG 2.2.2 allows, and the columns stand down under forced colours, as the rain
+   does. They are more to draw while they fall than the rain, in software and on a GPU alike, and a
+   dialog closed meanwhile waits longer for them: #292 holds what was measured. */
+[data-rain] {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    contain: strict;
+    background: ${reference('--ui-color-scrim')};
+    color: var(--ui-color-accent);
+    font-family: 'Courier New', Courier, ui-monospace, monospace;
+    font-weight: bold;
+    line-height: 1.3;
+    pointer-events: none;
+    user-select: none;
+    opacity: 1;
+    transition: opacity var(${step}) var(--ui-easing-enter);
+}
+
+dialog.closing > [data-rain] {
+    opacity: 0;
+    transition-duration: var(--ui-exit-length, ${reference('--ui-duration-state')});
+    transition-timing-function: var(--ui-easing-exit);
+}
+
+@container ${is('exit', 'dissolve')} {
+    dialog.closing > [data-rain] {
+        transition-timing-function: var(--ui-exit-curve, linear);
+    }
+}
+
+@container ${is('backdrop', 'char-columns')} {
+    dialog::backdrop {
+        background: transparent;
+    }
+
+    [data-rain]:popover-open {
+        display: block;
+    }
+
+    @starting-style {
+        [data-rain]:popover-open {
+            opacity: 0;
+        }
+    }
+}
+
+/* The columns, a frame behind the layer, fading in over the step. */
+[data-rain] > div {
+    display: none;
+    opacity: 1;
+    transition: opacity var(${step}) var(--ui-easing-enter);
+}
+
+[data-rain][data-falling] > div {
+    display: block;
+}
+
+/* Under forced colours the columns stand down, as the rain does: the scrim alone. */
+@media (forced-colors: active) {
+    [data-rain][data-falling] > div {
+        display: none;
+    }
+}
+
+@starting-style {
+    [data-rain][data-falling] > div {
+        opacity: 0;
+    }
+}
+
+/* A column, a period of its code tall, which it falls as many times as its depth's fall says. */
+[data-rain] > div > div {
+    position: absolute;
+    top: 0;
+    animation: var(--ui-fall) calc(var(--ui-duration-loop) * var(--ui-iteration-settle)) linear;
+}
+
+/* A trail, a character to a line, lit at its head and fading in four steps toward its tail. */
+[data-rain] span {
+    position: absolute;
+    inset-inline: 0;
+    white-space: pre;
+    text-align: center;
+}
+
+[data-rain] span[data-mirrored] {
+    scale: -1 1;
+}
+
+[data-rain] i {
+    font-style: normal;
+    text-shadow: 0 0 0.6em currentColor;
+}
+
+[data-rain] i:nth-of-type(1) {
+    color: rgb(from var(--ui-color-accent) r g b / 0.18);
+}
+
+[data-rain] i:nth-of-type(2) {
+    color: rgb(from var(--ui-color-accent) r g b / 0.38);
+}
+
+[data-rain] i:nth-of-type(3) {
+    color: rgb(from var(--ui-color-accent) r g b / 0.58);
+}
+
+[data-rain] i:nth-of-type(4) {
+    color: rgb(from var(--ui-color-accent) r g b / 0.78);
+}
+
+[data-rain] b {
+    color: color-mix(in srgb, white 65%, var(--ui-color-accent));
+    text-shadow: 0 0 0.6em var(--ui-color-accent);
+}
+
 /* A step below, as the entrance has always risen. */
 @keyframes ui-enter-rise {
     from {
@@ -987,12 +1211,16 @@ dialog {
 @keyframes ui-rain {
     from {
         background-position:
-            0 calc(var(--ui-iteration-settle) * -${String(near.height)}px),
-            0 calc(var(--ui-iteration-settle) * -${String(middle.height * 0.75)}px),
-            0 calc(var(--ui-iteration-settle) * -${String(far.height * 0.5)}px),
+            0 calc(var(--ui-iteration-settle) * -${String(near.pace)}px),
+            0 calc(var(--ui-iteration-settle) * -${String(middle.pace)}px),
+            0 calc(var(--ui-iteration-settle) * -${String(far.pace)}px),
             0 0;
     }
 }
+
+/* Each column falls a whole number of its periods, as a depth of the rain falls a whole number of
+   its tiles: one to four, by how many rounds the loop takes to rest. */
+${[1, 2, 3, 4].map(falling).join('\n\n')}
 `;
 
 /** The way a moment's effect travels, a kind of its own beside the effect. */
@@ -1222,6 +1450,10 @@ prototype({
                     name: 'char-rain',
                     says: 'Falling code in the theme’s accent, at three depths over the scrim, slowing to rest within five seconds as a still wall of it.',
                 },
+                {
+                    name: 'char-columns',
+                    says: 'Falling code in the theme’s accent, at three depths over the scrim, each column at a speed of its own, slowing to rest within five seconds as a still wall of it.',
+                },
             ],
         },
     ],
@@ -1292,8 +1524,14 @@ const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
  * character mirrored now and then, as the film's are. Drawn on a canvas, in the colour the
  * theme's accent resolves to, because a picture cannot read a token; and a canvas rather than an
  * SVG, so its glow is drawn once rather than on every frame the rain moves.
+ *
+ * Handed to the sheet by a blob URL rather than written into it: as data URLs, the three depths
+ * came to 1.1MB or more in the property the backdrop reads them from, and opening the dialog took
+ * 212 to 230ms in Chromium and 64 to 129ms in Firefox, on the page with every component, where
+ * their blob URLs, under a kilobyte, took 28 to 57ms and 39 to 51ms — measured. The press that
+ * opened it played on meanwhile, and the dialog came after it.
  */
-function depth(colour: string, { size, strength, width: wide, height }: Depth): string {
+function depth(colour: string, { size, strength, width: wide, height }: Depth): Promise<string> {
     const ratio = Math.min(devicePixelRatio, 2);
     // A row's height divides the tile's, so the tile repeats on a whole row.
     const line = height / Math.round(height / (size * 1.3));
@@ -1307,7 +1545,7 @@ function depth(colour: string, { size, strength, width: wide, height }: Depth): 
     const context = canvas.getContext('2d');
 
     if (context === null) {
-        return 'none';
+        return Promise.resolve('none');
     }
 
     context.scale(ratio, ratio);
@@ -1365,18 +1603,105 @@ function depth(colour: string, { size, strength, width: wide, height }: Depth): 
         }
     }
 
-    return `url("${canvas.toDataURL('image/png')}") 0 0 / ${String(width)}px ${String(height)}px`;
+    return new Promise((resolve) => {
+        canvas.toBlob((tile) => {
+            resolve(
+                tile === null
+                    ? 'none'
+                    : `url("${URL.createObjectURL(tile)}") 0 0 / ${String(width)}px ${String(height)}px`,
+            );
+        });
+    });
+}
+
+/**
+ * The falling code as columns of type, laid out for a viewport: for each depth, farthest first so
+ * the nearest is drawn over it, a column every pitch across. A column is a period of its code
+ * tall, a whole number of rows near its depth's tile, give or take two fifths, and falls as many
+ * of its periods as the depth falls tiles, so the nearer falls faster, and one column faster than
+ * the next. Its trails go round the period clear of one another, and repeat a period apart from a
+ * period above it to the foot of the viewport, which is as far as its turning back could show. A
+ * trail is the tile's: as long, as far apart, lit at its head, fading toward its tail in four
+ * steps of a quarter of it each, and mirrored now and then, whole.
+ */
+function columns(holder: HTMLElement, width: number, height: number, settle: number): void {
+    const glyph = (): string => glyphs.charAt(Math.floor(Math.random() * glyphs.length));
+    const laid: HTMLElement[] = [];
+
+    for (const { size, strength, height: tile, pace } of [far, middle, near]) {
+        const line = size * 1.3;
+        const pitch = Math.round(size * 1.15);
+        // The tile's rows, which a trail's length and the gap after it are counted in.
+        const rows = Math.round(tile / line);
+        const tiles = Math.min(4, Math.max(1, Math.round((settle * pace) / tile)));
+
+        for (let left = 0; left < width; left += pitch) {
+            const cycle = Math.max(7, Math.round((tile * (0.6 + Math.random() * 0.8)) / line));
+            const period = cycle * line;
+            const column = document.createElement('div');
+            column.style.cssText = `left: ${String(left)}px; width: ${String(pitch)}px; height: ${period.toFixed(2)}px; font-size: ${String(size)}px; opacity: ${String(strength)}; --ui-fall: ui-fall-${String(tiles)};`;
+            const start = Math.floor(Math.random() * cycle);
+
+            for (let row = start; ;) {
+                const length = Math.min(6 + Math.floor(Math.random() * rows * 0.45), cycle - 1);
+
+                if (row + length >= start + cycle) {
+                    break;
+                }
+
+                const trail = document.createElement('span');
+                const body = Array.from({ length: length - 1 }, glyph);
+
+                for (let step = 0; step < 4; step += 1) {
+                    const part = document.createElement('i');
+                    part.textContent = body
+                        .slice(
+                            Math.round((step * body.length) / 4),
+                            Math.round(((step + 1) * body.length) / 4),
+                        )
+                        .map((one) => `${one}\n`)
+                        .join('');
+                    trail.append(part);
+                }
+
+                const head = document.createElement('b');
+                head.textContent = glyph();
+                trail.append(head);
+
+                if (Math.random() < 0.3) {
+                    trail.dataset['mirrored'] = '';
+                }
+
+                // Every copy of it that reaches the period above the column or the viewport.
+                for (let top = row - cycle; top * line < period + height; top += cycle) {
+                    if ((top + length) * line > 0) {
+                        const copy = trail.cloneNode(true) as HTMLElement;
+                        copy.style.top = `${(top * line).toFixed(2)}px`;
+                        column.append(copy);
+                    }
+                }
+
+                row += length + 1 + Math.floor(Math.random() * rows);
+            }
+
+            laid.push(column);
+        }
+    }
+
+    holder.replaceChildren(...laid);
 }
 
 /** The rain's three depths in one accent, drawn once for every dialog that asks for it. */
-const rains = new Map<string, string>();
+const rains = new Map<string, Promise<string>>();
 
 /** The rain's depths, nearest first, for a colour the accent resolved to. */
-function rain(colour: string): string {
+function rain(colour: string): Promise<string> {
     let layers = rains.get(colour);
 
     if (layers === undefined) {
-        layers = [near, middle, far].map((one) => depth(colour, one)).join(', ');
+        layers = Promise.all([near, middle, far].map((one) => depth(colour, one))).then((all) =>
+            all.join(', '),
+        );
         rains.set(colour, layers);
     }
 
@@ -1407,7 +1732,12 @@ for (const host of document.querySelectorAll('ui-dialog')) {
 
             if (colour !== drawn) {
                 drawn = colour;
-                dialog.style.setProperty('--ui-rain', rain(colour));
+                void rain(colour).then((layers) => {
+                    // A later colour may have been asked for while this one was drawn.
+                    if (drawn === colour) {
+                        dialog.style.setProperty('--ui-rain', layers);
+                    }
+                });
             }
         };
         paint();
@@ -1416,6 +1746,63 @@ for (const host of document.querySelectorAll('ui-dialog')) {
             requestAnimationFrame(paint);
         }).observe(document.documentElement, { attributes: true });
         matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
+
+        // The columns' layer, shown before the dialog enters the top layer, so it lands under
+        // it, and hidden as the dialog leaves. The columns are laid out ahead of the opening,
+        // while nothing waits on them: as the page starts, and as the theme changes, wherever
+        // they are chosen; and on opening, for a choice or a viewport they were not laid out
+        // for. They come in a frame behind the dialog.
+        const layer = document.createElement('div');
+        layer.dataset['rain'] = '';
+        layer.popover = 'manual';
+        layer.inert = true;
+        layer.setAttribute('aria-hidden', 'true');
+        const holder = document.createElement('div');
+        layer.append(holder);
+        dialog.append(layer);
+        let laid = '';
+        const prepare = (): void => {
+            if (chosen(dialog, 'backdrop') !== 'char-columns') {
+                return;
+            }
+
+            const settle = Number.parseFloat(
+                getComputedStyle(dialog).getPropertyValue('--ui-iteration-settle'),
+            );
+            const size = `${String(innerWidth)}x${String(innerHeight)}x${String(settle)}`;
+
+            if (size !== laid) {
+                laid = size;
+                columns(holder, innerWidth, innerHeight, settle);
+            }
+        };
+        setTimeout(prepare, 0);
+        new MutationObserver(() => {
+            setTimeout(prepare, 0);
+        }).observe(document.documentElement, { attributes: true });
+        dialog.addEventListener('beforetoggle', (event) => {
+            if (!(event instanceof ToggleEvent)) {
+                return;
+            }
+
+            if (event.newState === 'open') {
+                prepare();
+                delete layer.dataset['falling'];
+                layer.showPopover();
+                // After the frame the dialog is first drawn in: a task asked for from that frame's
+                // callback. A second callback asked for from the first never ran in WebKit, and the
+                // columns stayed hidden — measured.
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        if (layer.matches(':popover-open')) {
+                            layer.dataset['falling'] = '';
+                        }
+                    }, 0);
+                });
+            } else if (layer.matches(':popover-open')) {
+                layer.hidePopover();
+            }
+        });
 
         const announce = (moment: 'opening' | 'closing'): void => {
             restore(dialog);

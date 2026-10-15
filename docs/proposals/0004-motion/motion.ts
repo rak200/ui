@@ -102,8 +102,10 @@ export interface Catalogue {
     /** The elements the choices are made on, the first named in the page's title. */
     readonly tags: readonly string[];
     readonly moments: readonly Moment[];
-    /** The CSS the component would carry: every effect under its style query. */
-    readonly sheet: string;
+    /** The CSS the component would carry: every effect under its style query. Where a page's
+     *  elements carry one sheet and each asks for its tastes under its own name, the sheet is
+     *  written for that name, and each element takes its own copy. */
+    readonly sheet: string | ((name: string) => string);
     /** Where the sheet goes: the shadow root, or the host's tree for a component that styles
      *  what the host wrote, as `ui-table` does. */
     readonly where?: 'shadow' | 'document';
@@ -164,6 +166,7 @@ const pages = [
     ['toast', 'Toast'],
     ['table', 'Table'],
     ['icon', 'Icon'],
+    ['compare', 'Side by side'],
 ] as const;
 
 /**
@@ -238,6 +241,9 @@ const registered = [
     ['--ui-breath', '<number>', '0'],
     ['--ui-typed', '<length-percentage>', '100%'],
     ['--ui-swept', '<angle>', '360deg'],
+    ['--ui-scan', '<length-percentage>', '-80%'],
+    ['--ui-shimmer', '<length-percentage>', '150%'],
+    ['--ui-shown', '<number>', '0'],
 ] as const;
 
 for (const [name, syntax, initialValue] of registered) {
@@ -285,6 +291,36 @@ interface Taste {
     readonly components?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
+/** The pointer over a form's control, in every theme: the boundary darkened as today, a light of
+ *  the accent round the control, its fill left as it is, and the control kept where it is. */
+const pointer = {
+    'hover-border': 'highlight',
+    'hover-shadow': 'glow',
+    'hover-fill': 'none',
+    'hover-move': 'none',
+};
+
+/** The components a form's taste is one for: the fields and the drawn controls. */
+const controls = ['input', 'textarea', 'select', 'checkbox', 'switch', 'radio-group'] as const;
+
+/**
+ * A theme's taste for a form's controls, one for the fields and the drawn controls alike, so a
+ * moment does the same on each: the pointer, and what the theme gives the focus and an error, with
+ * a control's own check beside it. Every theme names the pointer, since Matrix and Glass name the
+ * pointer's kinds for the page, which clears the default theme's taste for one component: Matrix's
+ * `tint` would fill a field and its `zoom` grow a checkbox, and Glass's `cast`, which no control
+ * offers, would take its light away. A kind a theme leaves alone where the default theme names an
+ * effect is named `none`, or the default theme's would run there.
+ */
+function form(
+    own: Readonly<Record<string, string>>,
+    checks: Readonly<Record<string, Readonly<Record<string, string>>>> = {},
+): Readonly<Record<string, Readonly<Record<string, string>>>> {
+    return Object.fromEntries(
+        controls.map((name) => [name, { ...pointer, ...own, ...checks[name] }]),
+    );
+}
+
 /** The tastes, by the value `data-ui-theme` takes, and `default` for the theme that is none. */
 const tastes: ReadonlyMap<string, Taste> = new Map([
     [
@@ -300,6 +336,11 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'ui-icon',
                 'ui-table',
                 'ui-toast',
+                'ui-tooltip',
+                'ui-menu',
+                'ui-input',
+                'ui-textarea',
+                'ui-select',
             ],
             moments: {
                 enter: 'fade',
@@ -309,8 +350,6 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-fill': 'tint',
                 'hover-border': 'orbit',
                 hover: 'glow',
-                invalid: 'pulse',
-                focus: 'beacon',
             },
             components: {
                 button: {
@@ -327,13 +366,27 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                     'focus-shadow': 'raise',
                     'focus-border': 'beacon',
                 },
-                checkbox: { check: 'draw' },
-                switch: { check: 'spring' },
-                'radio-group': { check: 'pop' },
                 icon: { enter: 'draw' },
                 table: { hover: 'highlight', enter: 'glow' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
                 toaster: { stack: 'spring' },
+                tooltip: { enter: 'rise', exit: 'sink', next: 'glide' },
+                menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
+                ...form(
+                    {
+                        'focus-border': 'beacon',
+                        'focus-shadow': 'inner',
+                        'focus-fill': 'none',
+                        'focus-label': 'accent',
+                        'invalid-border': 'pulse',
+                        'invalid-fill': 'flash',
+                    },
+                    {
+                        checkbox: { check: 'draw' },
+                        switch: { check: 'spring' },
+                        'radio-group': { check: 'pop' },
+                    },
+                ),
             },
         },
     ],
@@ -350,6 +403,11 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'ui-icon',
                 'ui-table',
                 'ui-toast',
+                'ui-tooltip',
+                'ui-menu',
+                'ui-input',
+                'ui-textarea',
+                'ui-select',
             ],
             moments: {
                 enter: 'materialize',
@@ -359,8 +417,6 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-shadow': 'glow',
                 'hover-fill': 'tint',
                 'hover-border': 'trace',
-                invalid: 'glitch',
-                focus: 'neon',
             },
             components: {
                 button: {
@@ -377,6 +433,16 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 icon: { enter: 'pop', hover: 'glitch' },
                 table: { enter: 'glow' },
                 toast: { enter: 'wind', exit: 'wind' },
+                tooltip: { enter: 'typing', exit: 'glitch' },
+                menu: { enter: 'glitch', exit: 'glitch' },
+                ...form({
+                    'focus-border': 'trace',
+                    'focus-shadow': 'glow',
+                    'focus-fill': 'scan',
+                    'focus-label': 'glow',
+                    'invalid-border': 'split',
+                    'invalid-fill': 'none',
+                }),
             },
         },
     ],
@@ -393,6 +459,11 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'ui-icon',
                 'ui-table',
                 'ui-toast',
+                'ui-tooltip',
+                'ui-menu',
+                'ui-input',
+                'ui-textarea',
+                'ui-select',
             ],
             moments: {
                 enter: 'dissolve',
@@ -402,8 +473,6 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-shadow': 'cast',
                 'hover-fill': 'spotlight',
                 'hover-border': 'edge',
-                invalid: 'flash',
-                focus: 'orbit',
             },
             components: {
                 button: {
@@ -420,6 +489,16 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 icon: { enter: 'refocus', hover: 'pop' },
                 table: { hover: 'frost', enter: 'glow' },
                 toast: { enter: 'refocus', exit: 'defocus' },
+                tooltip: { enter: 'refocus', exit: 'defocus' },
+                menu: { enter: 'refocus', exit: 'defocus' },
+                ...form({
+                    'focus-border': 'orbit',
+                    'focus-shadow': 'halo',
+                    'focus-fill': 'blur',
+                    'focus-label': 'none',
+                    'invalid-border': 'glow',
+                    'invalid-fill': 'flash',
+                }),
             },
         },
     ],
@@ -1213,11 +1292,31 @@ export function prototype(catalogue: Catalogue): Page {
             .join('\n\n');
     };
 
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(catalogue.sheet);
+    /** A sheet of these rules, for an element to adopt. */
+    const adoptable = (rules: string): CSSStyleSheet => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(rules);
+
+        return sheet;
+    };
+
+    /** The sheet each element adopts, by its tag: the catalogue's one, or the copy written for
+     *  the name the element asks for its tastes under. */
+    const sheets = new Map<string, CSSStyleSheet>();
+    let shared: CSSStyleSheet | undefined;
+
+    for (const tag of tags) {
+        const { sheet } = catalogue;
+        sheets.set(
+            tag,
+            typeof sheet === 'string'
+                ? (shared ??= adoptable(sheet))
+                : adoptable(sheet(component(tag))),
+        );
+    }
 
     if (catalogue.where === 'document') {
-        document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, ...new Set(sheets.values())];
     }
 
     /** One of the layers the component would render, empty until an effect draws on it. */
@@ -1229,8 +1328,8 @@ export function prototype(catalogue: Catalogue): Page {
         return element;
     };
 
-    /** Adopts the catalogue's sheet into one instance's shadow root, once, and renders its
-     *  layers there after what the component rendered. */
+    /** Adopts the element's sheet into one instance's shadow root, once, and renders its layers
+     *  there after what the component rendered. */
     const adopt = async (element: Element): Promise<void> => {
         if (catalogue.where === 'document' || !(element instanceof LitElement)) {
             return;
@@ -1238,8 +1337,9 @@ export function prototype(catalogue: Catalogue): Page {
 
         await element.updateComplete;
         const root = element.shadowRoot;
+        const sheet = sheets.get(element.localName);
 
-        if (root !== null && !root.adoptedStyleSheets.includes(sheet)) {
+        if (root !== null && sheet !== undefined && !root.adoptedStyleSheets.includes(sheet)) {
             root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
             root.append(...(catalogue.layers ?? []).map(layer));
         }
@@ -2139,12 +2239,18 @@ function hold(): void {
     );
 }
 
-/** The navigation, the scheme and the reduced-motion switch every page carries; `changed`
- *  hears of a new theme, whose taste can change what a moment runs. */
+/** What hears of a new theme: each catalogue drawn on the page, which is one but on the page
+ *  that sets every component side by side. */
+const listening: (() => void)[] = [];
+
+/** The navigation, the scheme and the reduced-motion switch every page carries, drawn once
+ *  however many catalogues a page draws; `changed` hears of a new theme, whose taste can change
+ *  what a moment runs. */
 function frame(changed: () => void): void {
+    listening.push(changed);
     const slot = document.querySelector('[data-frame]');
 
-    if (!(slot instanceof HTMLElement)) {
+    if (listening.length > 1 || !(slot instanceof HTMLElement)) {
         return;
     }
 
@@ -2170,7 +2276,9 @@ function frame(changed: () => void): void {
             root.dataset['uiTheme'] = chosen.name;
         }
 
-        changed();
+        for (const each of listening) {
+            each();
+        }
     };
 
     render(

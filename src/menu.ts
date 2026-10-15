@@ -1,5 +1,5 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
-import { place } from './placement.js';
+import { place, type Box } from './placement.js';
 import { Description } from './description.js';
 import { reference } from './reference.js';
 
@@ -214,6 +214,16 @@ export class UiMenu extends LitElement {
             min-inline-size: max-content;
             max-inline-size: calc(${reference('--ui-space')} * 44);
             padding: calc(${reference('--ui-space')} / 2);
+            /* Not the popover's own overflow: auto. The boundary's layer below reaches a pixel
+               past the padding box on purpose, and that gave every open panel a pixel to
+               scroll and a scrollbar to show it — measured, 121×109 of 122×110. A menu is as
+               tall as its items, so nothing here scrolls. */
+            overflow: visible;
+            /* Here rather than under :popover-open with the display: a host that holds the
+               panel through its close with a transition of display keeps the display, and a
+               direction scoped to the open state let go of it first — measured, the items
+               laid out in a row, 280×63 for 123×111, for the whole of the exit. */
+            flex-direction: column;
             border: 1px solid ${reference('--ui-color-border-overlay')};
             border-radius: ${reference('--ui-radius')};
             /* A raised surface, as a card is. */
@@ -243,7 +253,6 @@ export class UiMenu extends LitElement {
            display: none, and an author rule naming display unconditionally outranks it. */
         [popover]:popover-open {
             display: flex;
-            flex-direction: column;
         }
 
         /* The gap between the panel and its trigger, in CSS because it is a token and the
@@ -363,6 +372,13 @@ export class UiMenu extends LitElement {
      */
     #returning = false;
 
+    /**
+     * The panel as it was last measured open, which is what places it before it opens: a
+     * closed popover measures nothing. Empty until the first open, which then hangs below
+     * its trigger, as a panel does wherever it fits.
+     */
+    #box: Box = { top: 0, left: 0, width: 0, height: 0 };
+
     /** Re-places the panel under anything that moves the trigger while it is open. */
     readonly #reflow = (): void => {
         this.#place();
@@ -399,6 +415,7 @@ export class UiMenu extends LitElement {
         panel.setAttribute('part', 'menu');
         panel.setAttribute('role', 'menu');
         panel.setAttribute('popover', 'auto');
+        panel.addEventListener('beforetoggle', this.#onBeforeToggle);
         panel.addEventListener('toggle', this.#onToggle);
         panel.addEventListener('keydown', this.#onMenuKey);
         panel.addEventListener('click', this.#onChoose);
@@ -560,6 +577,21 @@ export class UiMenu extends LitElement {
     };
 
     /**
+     * Places the panel before it is shown, which `toggle` alone does a frame late.
+     *
+     * `toggle` comes in a task of its own, and a frame can be drawn before it: measured, the
+     * first frame after a click drew the panel at the viewport's corner, 3ms before `toggle`
+     * placed it. So the panel is placed here by the size it had when it was last open, and
+     * again on `toggle` by the size it has now. Only on the way in: a panel on its way out
+     * leaves from where the reader saw it.
+     */
+    readonly #onBeforeToggle = (event: ToggleEvent): void => {
+        if (event.newState === 'open') {
+            this.#place();
+        }
+    };
+
+    /**
      * Follows the platform's own state, whichever way it moved.
      *
      * The invoker, a click elsewhere and Escape all close the panel without going through
@@ -666,9 +698,14 @@ export class UiMenu extends LitElement {
      */
     #place(): void {
         const root = document.documentElement;
+
+        if (this.#panel.matches(':popover-open')) {
+            this.#box = this.#panel.getBoundingClientRect();
+        }
+
         const placement = place(
             this.#trigger.getBoundingClientRect(),
-            this.#panel.getBoundingClientRect(),
+            this.#box,
             { width: root.clientWidth, height: root.clientHeight },
             'block-end',
             'inline-start',
