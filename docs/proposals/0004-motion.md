@@ -323,56 +323,89 @@ lists what its component leaves out and why. None of it is the Decision, which s
   instead, through the highlight API, whose rules have to be in the tree the text is in: written in
   the tooltip's shadow root, Firefox drew none of them on a slotted tip.
 - **An exit that has to play in every engine is held by its component.** A popover's exit holds it
-  on the page by transitioning `display` and `overlay`, and Firefox takes it away at once while it
-  reports `transition-behavior: allow-discrete` as supported, so the tooltip's and the menu's exits
-  play in Chromium and WebKit only; the dialog and the toast hold theirs themselves.
+  on the page by transitioning `display` and `overlay`, and only Chromium holds it: Firefox takes it
+  away at once while it reports `transition-behavior: allow-discrete` as supported, and WebKit,
+  which holds a plain element that way, takes a popover away at once. So the tooltip's and the
+  menu's exits play in Chromium only; the dialog and the toast hold theirs themselves.
+- **An effect that colours text, or the ground under it, keeps the text's 4.5:1.** The accent alone,
+  as a field's label, was 4.31:1 on Matrix's light page and on Glass's dark one, and the danger laid
+  over a field as a flash took its text to 3.14:1, so the label mixes in a fifth of the text's
+  colour and the flash, on a field and a drawn control alike, a fifth of the danger into the surface
+  — measured. The menu leaves dimming the other items out for the same floor.
+- **An effect of one name looks the same on every component**, adjusted only for the size of what it
+  lights: the glow and the halo are one definition, and the beacon and the neon one shape in a drawn
+  control's size and a button's, which a field takes. The shimmer and the scan are the button's
+  wherever they are offered, a wide sheen swept across a little off upright and a thin band crossing
+  down, no thicker than a rem however tall what it crosses is, where a field's and a drawn control's
+  scan had crossed from the start to the end, two fifths of their width. The orbit is the card's
+  wherever it is offered, a light on the boundary that never runs past it, and the comet the
+  button's, clear of the boundary and over the focus ring, in the orbit's colours: in the accent,
+  which the ring takes, its tail was the ring's own colour. And no band runs in the gap a focus ring
+  keeps from its control, where the band, the ring and the boundary read as one line: the trace runs
+  inside a field and outside a drawn control's ring.
 - **An overlay placed by its size moves, uncovers, blurs and fades, and never scales or turns.** The
   tooltip reads its tip's box, transform and all, as it shows: started at 0.9 of its size, a tip was
   placed 11px off its trigger's middle, and edge-on, 26px over it, in all three engines. The menu
-  leaves zoom out for the same reason.
+  leaves zoom out for the same reason. And an entrance comes from the trigger's side only where the
+  side is written before the overlay's first style: the menu now places its panel before it is
+  shown, by the size it had when it was last open, and the tooltip places its tip after, so a tip
+  comes from the side it was last placed on.
 
 **The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
-under each theme; `today` marks what the component does today. The input, the select, the menu and
-the tooltip have no taste yet, so their pages run today's motion under every theme.
+under each theme; `today` marks what the component does today. A form is the input, the textarea,
+the select, the checkbox, the switch and the radio, which take one taste.
 
-| Component                    | Moment         | Default          | Matrix           | Glass       |
-| ---------------------------- | -------------- | ---------------- | ---------------- | ----------- |
-| button                       | `press-move`   | squish           | shatter          | spring      |
-| button                       | `press-fill`   | highlight, today | none             | ripple      |
-| button                       | `press-shadow` | sink             | fragments        | sink        |
-| button                       | `press-border` | bloom            | bloom            | pulse       |
-| button                       | `hover-move`   | none, today      | zoom             | tilt        |
-| button                       | `hover-fill`   | highlight, today | highlight, today | spotlight   |
-| button                       | `hover-shadow` | raise            | neon             | raise       |
-| button                       | `hover-border` | pulse            | trace            | edge        |
-| button                       | `focus-move`   | lift             | glitch           | none, today |
-| button                       | `focus-fill`   | none, today      | scan             | shimmer     |
-| button                       | `focus-shadow` | raise            | burst            | neon        |
-| button                       | `focus-border` | beacon           | comet            | orbit       |
-| card                         | `hover-move`   | lift             | zoom             | tilt        |
-| card                         | `hover-shadow` | raise            | glow             | cast        |
-| card                         | `hover-fill`   | tint             | tint             | spotlight   |
-| card                         | `hover-border` | orbit            | trace            | edge        |
-| card                         | `enter`        | fade             | materialize      | dissolve    |
-| card                         | `exit`         | fade             | erode            | dissolve    |
-| checkbox                     | `check`        | draw             | draw             | draw        |
-| switch                       | `check`        | spring           | spring           | spring      |
-| radio                        | `check`        | pop              | pop              | pop         |
-| checkbox, switch, radio      | `hover`        | glow             | glow             | glow        |
-| checkbox, switch, radio      | `invalid`      | pulse            | glitch           | flash       |
-| checkbox, switch, radio      | `focus`        | beacon           | neon             | orbit       |
-| dialog                       | `enter`        | fade, today      | materialize      | dissolve    |
-| dialog                       | `exit`         | fade, today      | erode            | dissolve    |
-| dialog                       | `backdrop`     | fade, today      | char-rain        | blur        |
-| toast                        | `enter`        | slide-elastic    | wind             | refocus     |
-| toast                        | `exit`         | slide            | wind             | defocus     |
-| toast                        | `dwell`        | ring             | ring             | ring        |
-| toaster                      | `stack`        | spring           | spring           | spring      |
-| table                        | `hover`        | highlight        | highlight        | frost       |
-| table                        | `enter`        | glow             | glow             | glow        |
-| icon                         | `enter`        | draw             | pop              | refocus     |
-| icon                         | `hover`        | glow             | glitch           | pop         |
-| input, select, menu, tooltip | every one      | today's          | today's          | today's     |
+| Component | Moment            | Default          | Matrix           | Glass            |
+| --------- | ----------------- | ---------------- | ---------------- | ---------------- |
+| button    | `press-move`      | squish           | shatter          | spring           |
+| button    | `press-fill`      | highlight, today | none             | ripple           |
+| button    | `press-shadow`    | sink             | fragments        | sink             |
+| button    | `press-border`    | bloom            | bloom            | pulse            |
+| button    | `hover-move`      | none, today      | zoom             | tilt             |
+| button    | `hover-fill`      | highlight, today | highlight, today | spotlight        |
+| button    | `hover-shadow`    | raise            | neon             | raise            |
+| button    | `hover-border`    | pulse            | trace            | edge             |
+| button    | `focus-move`      | lift             | glitch           | none, today      |
+| button    | `focus-fill`      | none, today      | scan             | shimmer          |
+| button    | `focus-shadow`    | raise            | burst            | neon             |
+| button    | `focus-border`    | beacon           | comet            | orbit            |
+| card      | `hover-move`      | lift             | zoom             | tilt             |
+| card      | `hover-shadow`    | raise            | glow             | cast             |
+| card      | `hover-fill`      | tint             | tint             | spotlight        |
+| card      | `hover-border`    | orbit            | trace            | edge             |
+| card      | `enter`           | fade             | materialize      | dissolve         |
+| card      | `exit`            | fade             | erode            | dissolve         |
+| checkbox  | `check`           | draw             | draw             | draw             |
+| switch    | `check`           | spring           | spring           | spring           |
+| radio     | `check`           | pop              | pop              | pop              |
+| dialog    | `enter`           | fade, today      | materialize      | dissolve         |
+| dialog    | `exit`            | fade, today      | erode            | dissolve         |
+| dialog    | `backdrop`        | fade, today      | char-rain        | blur             |
+| toast     | `enter`           | slide-elastic    | wind             | refocus          |
+| toast     | `exit`            | slide            | wind             | defocus          |
+| toast     | `dwell`           | ring             | ring             | ring             |
+| toaster   | `stack`           | spring           | spring           | spring           |
+| table     | `hover`           | highlight        | highlight        | frost            |
+| table     | `enter`           | glow             | glow             | glow             |
+| icon      | `enter`           | draw             | pop              | refocus          |
+| icon      | `hover`           | glow             | glitch           | pop              |
+| tooltip   | `enter`           | rise             | typing           | refocus          |
+| tooltip   | `exit`            | sink             | glitch           | defocus          |
+| tooltip   | `next`            | glide            | glide            | glide            |
+| menu      | `enter`           | cascade          | glitch           | refocus          |
+| menu      | `exit`            | fold             | glitch           | defocus          |
+| menu      | `caret`           | flip             | flip             | flip             |
+| form      | `hover-border`    | highlight, today | highlight, today | highlight, today |
+| form      | `hover-shadow`    | glow             | glow             | glow             |
+| form      | `hover-fill`      | none, today      | none, today      | none, today      |
+| form      | `hover-move`      | none, today      | none, today      | none, today      |
+| form      | `focus-border`    | beacon           | trace            | orbit            |
+| form      | `focus-shadow`    | inner            | glow             | halo             |
+| form      | `focus-fill`      | none, today      | scan             | blur             |
+| form      | `focus-label`     | accent           | glow             | none, today      |
+| form      | `invalid-border`  | pulse            | split            | glow             |
+| form      | `invalid-fill`    | flash            | none, today      | flash            |
+| form      | `invalid-message` | none, today      | none, today      | none, today      |
 
 ## Proposed design
 

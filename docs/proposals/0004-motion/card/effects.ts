@@ -14,6 +14,7 @@
  * Moving the surface into the shadow root would lift the limit.
  */
 import { reference } from '../../../../src/reference.js';
+import { comet, far, orbit, scan, sheen, shimmer, sweeps } from '../controls.js';
 import {
     curve,
     dissolve,
@@ -58,17 +59,6 @@ const tint = String.raw`light-dark(
             )
             l c h / max(alpha, 0.6)
     )
-)`;
-
-/*
- * The accent pushed toward the far pole from the page — darker on a light one, lighter on a
- * dark one — which every effect on the boundary draws in, so it stands apart from an edge that
- * is already the accent, as a glowing theme's is: a band in the accent itself vanished into
- * Matrix's.
- */
-const far = String.raw`light-dark(
-    oklch(from var(--ui-color-accent) calc(l - 0.1) c h),
-    oklch(from var(--ui-color-accent) calc(l + 0.2) c h)
 )`;
 
 /**
@@ -350,6 +340,41 @@ const sheet = String.raw`
     }
 }
 
+/* hover-fill: shimmer and scan, the button's, on the fill's layer: a sheen swept across the
+   surface for as long as the pointer rests, or a band crossing it down once as the pointer
+   arrives — a line across a card, at no more than a rem. */
+@container ${is('hover-fill', 'shimmer')} {
+    [data-layer='fill'] {
+        background-image: ${shimmer.image(sheen.over)};
+        background-size: ${shimmer.size};
+        background-repeat: no-repeat;
+        background-position: ${shimmer.position};
+    }
+
+    @media (hover: hover) {
+        :host(:hover) [data-layer='fill'] {
+            opacity: 1;
+            animation: ${shimmer.loop};
+        }
+    }
+}
+
+@container ${is('hover-fill', 'scan')} {
+    [data-layer='fill'] {
+        background-image: ${scan.image(sheen.over)};
+        background-size: ${scan.size};
+        background-repeat: no-repeat;
+        background-position: ${scan.position};
+    }
+
+    @media (hover: hover) {
+        :host(:hover) [data-layer='fill'] {
+            opacity: 1;
+            animation: ${scan.run};
+        }
+    }
+}
+
 /* hover-border: edge, the band lit where the pointer is nearest, fading over 20rem, so a
    pointer in the middle of a card still lights the side it is nearest. */
 @container ${is('hover-border', 'edge')} {
@@ -379,28 +404,39 @@ const sheet = String.raw`
     }
 }
 
-/* hover-border: orbit. A comet of that colour and the info runs round the band, as the
-   button's does, but for four laps and then it fades, where the button's runs for as long as
-   the pointer rests: a card is read with the pointer resting on it. */
+/* hover-border: orbit. A light of that colour and the info runs round the band, on the boundary
+   and never past it, three laps, and then it fades. */
 @container ${is('hover-border', 'orbit')} {
     [data-layer='border'] {
-        background: conic-gradient(
-            from var(--ui-orbit),
-            transparent 0 55%,
-            ${far} 75%,
-            var(--ui-color-info) 88%,
-            transparent
-        );
+        background: ${orbit.light};
         transition: opacity var(--ui-duration-200) var(--ui-easing-exit);
     }
 
     @media (hover: hover) {
         :host(:hover) [data-layer='border'] {
             opacity: 1;
-            animation:
-                ui-orbit var(--ui-duration-loop) linear var(--ui-iteration-settle),
-                ui-rest var(--ui-duration-200) var(--ui-easing-exit)
-                    calc(var(--ui-duration-loop) * var(--ui-iteration-settle)) forwards;
+            animation: ${orbit.run};
+        }
+    }
+}
+
+/* hover-border: comet. The button's: a comet of that colour and the info runs round clear of the
+   boundary for as long as the pointer rests, and is held where it was when the pointer leaves.
+   The layer's box is the border's, a pixel out from the box it is placed in. */
+@container ${is('hover-border', 'comet')} {
+    [data-layer='border'] {
+        inset: -${comet.reach + 1}px;
+        padding: ${comet.width}px;
+        border-radius: calc(${reference('--ui-radius')} + ${comet.reach}px);
+        background: ${comet.light};
+        transition: opacity var(--ui-duration-200) var(--ui-easing-state);
+        animation: ${comet.loop};
+    }
+
+    @media (hover: hover) {
+        :host(:hover) [data-layer='border'] {
+            opacity: 1;
+            animation-play-state: running;
         }
     }
 }
@@ -930,6 +966,8 @@ const sheet = String.raw`
     }
 }
 
+${sweeps}
+
 @keyframes ui-rest {
     to {
         opacity: 0;
@@ -1001,6 +1039,15 @@ const page = prototype({
                             fire: flood,
                             says: 'The tint spreads from where the pointer came in, and drains toward where it leaves.',
                         },
+                        {
+                            name: 'shimmer',
+                            loops: true,
+                            says: 'A sheen sweeps across the surface, and comes round again.',
+                        },
+                        {
+                            name: 'scan',
+                            says: 'Once, as the pointer arrives: a band of light crosses the card, top to bottom.',
+                        },
                     ],
                 },
                 {
@@ -1020,7 +1067,12 @@ const page = prototype({
                         {
                             name: 'orbit',
                             settles: true,
-                            says: 'A light runs round the boundary, four times, then rests.',
+                            says: 'A light runs round on the boundary, three times, then rests.',
+                        },
+                        {
+                            name: 'comet',
+                            loops: true,
+                            says: 'A comet of light runs round clear of the boundary, and waits where it was when the pointer leaves.',
                         },
                     ],
                 },
@@ -1264,10 +1316,6 @@ const page = prototype({
         {
             name: 'flip, under the pointer',
             why: 'turns the content away from the reader for half its run, and a card’s content is what is being read: the entrance has it, before there is anything to read.',
-        },
-        {
-            name: 'turning border',
-            why: 'a light that keeps circling for as long as the pointer rests is motion with no end, and a card is read with the pointer resting on it: orbit runs four laps and rests.',
         },
     ],
 });

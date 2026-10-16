@@ -15,10 +15,12 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-select</code> — focus, invalid</h1>
+            <h1><code>ui-select</code> — pointer, focus, invalid</h1>
             <p>
-                The same short catalogue as a text field, for the same reason. Opening the list is
-                the platform's, and the page says why under <em>Left out</em>.
+                A select is a field, so it takes the text field's effects, sorted by the same kinds
+                and drawn the same way, and none of them moves the box; its caret stays where it is.
+                Opening the list is the platform's, and the page says why under
+                <em>Left out</em>. The disabled select answers none of them.
             </p>
         </header>
         <main>
@@ -30,6 +32,10 @@
                         <ui-option value="">Choose…</ui-option>
                         <ui-option value="brl">Real</ui-option>
                         <ui-option value="usd">Dollar</ui-option>
+                    </ui-select>
+                    <ui-select label="Region" name="region" disabled>
+                        <ui-option value="sa" selected>South America</ui-option>
+                        <ui-option value="eu">Europe</ui-option>
                     </ui-select>
                 </div>
                 <div class="scoped region">
@@ -51,6 +57,7 @@
                     <ui-button variant="secondary" data-validate
                         >Validate the required ones</ui-button
                     >
+                    <ui-button variant="secondary" data-again>Play the error again</ui-button>
                 </div>
             </section>
             <section class="written" data-written aria-label="What the consumer writes"></section>

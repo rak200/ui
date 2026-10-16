@@ -265,6 +265,43 @@ describe('ui-menu', () => {
         expect(getComputedStyle(panel(menu(host))).display).toBe('flex');
     });
 
+    it('keeps its items in a column while a host holds it through its close', async () => {
+        // An exit is the host's to write, through the part: a transition of display holds the
+        // panel on the page as it closes, and the direction has to hold with the display.
+        const host = await mount(`
+            <style>
+                ui-menu::part(menu) {
+                    transition:
+                        display 10s allow-discrete,
+                        overlay 10s allow-discrete;
+                }
+            </style>
+            ${fixture}
+        `);
+        await open(menu(host));
+
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        expect(getComputedStyle(panel(menu(host))).display).toBe('flex');
+        expect(item(host, 1).getBoundingClientRect().top).toBeGreaterThan(
+            item(host, 0).getBoundingClientRect().bottom - 1,
+        );
+    });
+
+    it('has nothing to scroll, though its boundary reaches past its edge', async () => {
+        // The boundary's layer reaches a pixel past the padding box on purpose, and a popover
+        // scrolls what overflows it: that pixel was a scrollbar on every open panel.
+        const host = await mount(fixture);
+        await open(menu(host));
+
+        const box = panel(menu(host));
+        box.scrollTop = 10;
+        box.scrollLeft = 10;
+
+        expect([box.scrollTop, box.scrollLeft]).toEqual([0, 0]);
+    });
+
     it('takes the top layer rather than a z-index', async () => {
         const host = await mount(fixture);
         await open(menu(host));
@@ -770,6 +807,24 @@ describe('where the panel lands', () => {
         expect(box.left).toBeCloseTo(anchor.left, 0);
     });
 
+    it('is placed as it is shown, rather than a frame later at the corner', async () => {
+        // `toggle` comes in a task of its own and a frame can be drawn before it, so nothing
+        // here waits: what is read is the panel the first frame would draw.
+        const host = await mount(fixture);
+
+        trigger(menu(host)).click();
+
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(panel(menu(host)).matches(':popover-open')).toBe(true);
+        expect(panel(menu(host)).getAttribute('data-side')).toBe('block-end');
+        expect(box.top - anchor.bottom).toBeCloseTo(4, 0);
+        expect(box.left).toBeCloseTo(anchor.left, 0);
+
+        await settle();
+    });
+
     it('flips above when there is no room below', async () => {
         const host = await mount(
             `<div style="position: fixed; inset-block-end: 0; inset-inline-start: 0">${fixture}</div>`,
@@ -781,6 +836,42 @@ describe('where the panel lands', () => {
 
         expect(panel(menu(host)).getAttribute('data-side')).toBe('block-start');
         expect(anchor.top - box.bottom).toBeCloseTo(4, 0);
+    });
+
+    it('opens again on the side it last took, from the frame it opens in', async () => {
+        // A closed popover measures nothing, so the panel is placed as it is shown by the size
+        // it had when it was last open: by none, a menu that flipped would open below.
+        const host = await mount(
+            `<div style="position: fixed; inset-block-end: 0; inset-inline-start: 0">${fixture}</div>`,
+        );
+        await open(menu(host));
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        trigger(menu(host)).click();
+
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(panel(menu(host)).getAttribute('data-side')).toBe('block-start');
+        expect(anchor.top - box.bottom).toBeCloseTo(4, 0);
+
+        await settle();
+    });
+
+    it('leaves from where the reader saw it, whatever moved under it', async () => {
+        // Placed on the way in and not on the way out: a panel a host holds on the page as it
+        // closes would otherwise jump to wherever the trigger went, as its exit begins.
+        const host = await mount(fixture);
+        await open(menu(host));
+
+        const before = panel(menu(host)).style.insetInlineStart;
+
+        only(host, 'ui-menu').style.marginInlineStart = '80px';
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        expect(panel(menu(host)).style.insetInlineStart).toBe(before);
     });
 
     it('stays inside the viewport at the trailing edge', async () => {

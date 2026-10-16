@@ -9,7 +9,8 @@ import '../../../../src/icons/settings.js';
 import '../../../../src/icons/star.js';
 import '../../../../src/icons/trash-2.js';
 import { reference } from '../../../../src/reference.js';
-import { prototype, queries } from '../motion.js';
+import { scan, sheen, shimmer, sweeps } from '../controls.js';
+import { chosen, prototype, queries } from '../motion.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
 const is = queries('icon');
@@ -95,6 +96,43 @@ svg {
 @container ${is('hover', 'glitch')} {
     :host(:hover) svg {
         animation: ui-glitch var(--ui-duration-200) linear;
+    }
+}
+
+/* shimmer and scan, the button's, on a layer over the glyph cut to its strokes, which the page
+   cuts as the pointer arrives: a sheen swept across the strokes for as long as the pointer rests,
+   or a band crossing them down once. */
+:host {
+    position: relative;
+}
+
+[data-sheen] {
+    position: absolute;
+    inset: 0;
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    pointer-events: none;
+}
+
+@media (hover: hover) {
+    @container ${is('hover', 'shimmer')} {
+        :host(:hover) [data-sheen] {
+            background-image: ${shimmer.image(sheen.over)};
+            background-size: ${shimmer.size};
+            background-repeat: no-repeat;
+            background-position: ${shimmer.position};
+            animation: ${shimmer.loop};
+        }
+    }
+
+    @container ${is('hover', 'scan')} {
+        :host(:hover) [data-sheen] {
+            background-image: ${scan.image(sheen.over)};
+            background-size: ${scan.size};
+            background-repeat: no-repeat;
+            background-position: ${scan.position};
+            animation: ${scan.run};
+        }
     }
 }
 
@@ -186,7 +224,8 @@ svg {
         transform: translate(2px, 2px) skewX(3deg);
     }
 }
-`;
+
+${sweeps}`;
 
 prototype({
     tags: ['ui-icon'],
@@ -221,6 +260,15 @@ prototype({
                 {
                     name: 'glitch',
                     says: 'Jumps and splits into two colours, once. Drawn for Matrix.',
+                },
+                {
+                    name: 'shimmer',
+                    loops: true,
+                    says: 'A sheen sweeps across its strokes, and comes round again.',
+                },
+                {
+                    name: 'scan',
+                    says: 'Once, as the pointer arrives: a band of light crosses its strokes, top to bottom.',
                 },
             ],
         },
@@ -259,3 +307,55 @@ for (const button of document.querySelectorAll<HTMLElement>('[data-icon]')) {
         target.append(icon);
     });
 }
+
+/** The glyph each icon's sheen layer was last cut to. */
+const cuts = new WeakMap<Element, string>();
+
+/**
+ * Cuts the sheen's layer to the icon's strokes, as the pointer arrives on an icon that sweeps one:
+ * a mask is a picture, and a picture cannot read the glyph the page draws, so the page draws it
+ * into one — the icon's own `<svg>`, or the one slotted in its place, its strokes in black at the
+ * weight and with the ends the page draws them with. Again when the glyph has changed since.
+ */
+function cut(host: HTMLElement): void {
+    const root = host.shadowRoot;
+    const svg = root?.querySelector('svg') ?? host.querySelector(':scope > svg');
+
+    if (root === null || svg === null || !['shimmer', 'scan'].includes(chosen(host, 'hover'))) {
+        return;
+    }
+
+    const drawn = getComputedStyle(svg);
+    const copy = svg.cloneNode(true) as SVGSVGElement;
+    copy.removeAttribute('style');
+    copy.setAttribute('fill', 'none');
+    copy.setAttribute('stroke', '#000');
+    copy.setAttribute('stroke-width', drawn.strokeWidth);
+    copy.setAttribute('stroke-linecap', drawn.strokeLinecap);
+    copy.setAttribute('stroke-linejoin', drawn.strokeLinejoin);
+    const markup = new XMLSerializer().serializeToString(copy);
+
+    if (cuts.get(host) === markup) {
+        return;
+    }
+
+    cuts.set(host, markup);
+    let layer = root.querySelector<HTMLElement>('[data-sheen]');
+
+    if (layer === null) {
+        layer = document.createElement('span');
+        layer.dataset['sheen'] = '';
+        layer.setAttribute('aria-hidden', 'true');
+        root.append(layer);
+    }
+
+    layer.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(markup)}")`;
+}
+
+document.addEventListener('pointerover', (event) => {
+    for (const target of event.composedPath()) {
+        if (target instanceof HTMLElement && target.localName === 'ui-icon') {
+            cut(target);
+        }
+    }
+});

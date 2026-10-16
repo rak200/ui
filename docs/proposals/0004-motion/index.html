@@ -47,7 +47,8 @@
                 offers the effects the proposal would ship for each moment it answers, and lets you
                 choose one per moment at four scopes — the page, a region, every instance of the
                 component, or one instance. The choice is a custom property; the component reads it
-                with a style query on its own shadow root.
+                with a style query on its own shadow root. The last page sets every component side
+                by side, to compare one moment from one to the next.
             </p>
         </header>
         <nav class="pages" aria-label="Prototypes">
@@ -56,11 +57,17 @@
             >
             <a href="card/index.html"><strong>Card</strong><span>pointer, entrance</span></a>
             <a href="checkbox/index.html"
-                ><strong>Checkbox and switch</strong><span>check, invalid, focus</span></a
+                ><strong>Checkbox and switch</strong><span>check, pointer, focus, invalid</span></a
             >
-            <a href="radio/index.html"><strong>Radio</strong><span>check, invalid</span></a>
-            <a href="input/index.html"><strong>Input</strong><span>focus, invalid</span></a>
-            <a href="select/index.html"><strong>Select</strong><span>focus, invalid</span></a>
+            <a href="radio/index.html"
+                ><strong>Radio</strong><span>choose, pointer, focus, invalid</span></a
+            >
+            <a href="input/index.html"
+                ><strong>Input</strong><span>pointer, focus, invalid</span></a
+            >
+            <a href="select/index.html"
+                ><strong>Select</strong><span>pointer, focus, invalid</span></a
+            >
             <a href="menu/index.html"><strong>Menu</strong><span>open, close, caret</span></a>
             <a href="tooltip/index.html"
                 ><strong>Tooltip</strong><span>appear, leave, the next tip</span></a
@@ -75,6 +82,9 @@
                 ><strong>Table</strong><span>row under the pointer, new row</span></a
             >
             <a href="icon/index.html"><strong>Icon</strong><span>entrance, pointer</span></a>
+            <a href="compare/index.html"
+                ><strong>Side by side</strong><span>every component, nothing to choose</span></a
+            >
         </nav>
     </body>
 </html>

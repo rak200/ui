@@ -1,107 +1,52 @@
 /**
- * `ui-select`: what focus and an error can do. The list itself is the platform's popup, which
- * no style reaches in two engines of three, so opening it is not a moment this catalogue has.
+ * `ui-select`: what the pointer, focus and an error can do, as `../fields.ts` draws them for every
+ * field. The list itself is the platform's popup, which no style reaches in two engines of three,
+ * so opening it is not a moment this catalogue has.
  */
 import { reference } from '../../../../src/reference.js';
-import { prototype, queries } from '../motion.js';
+import { validation, type Field } from '../controls.js';
+import { moments, refused, sheet } from '../fields.js';
+import { prototype } from '../motion.js';
 
-/** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
-const is = queries('select');
+/** The component's space, and the arm of its caret, which the component keeps to itself. */
+const space = reference('--ui-space').cssText;
+const arm = `calc(${space} * 0.75)`;
 
-const sheet = String.raw`
-select {
-    transition-property: border-color, box-shadow;
-    transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-200);
-    transition-timing-function: var(--ui-easing-state), var(--ui-easing-enter);
-}
-
-@container ${is('focus', 'halo')} {
-    select:focus-visible {
-        box-shadow: 0 0 0 0.25rem rgb(from var(--ui-color-accent) r g b / 0.22);
-    }
-}
-
-@container ${is('focus', 'underline')} {
-    .glow {
-        position: relative;
-    }
-
-    .glow::after {
-        content: '';
-        position: absolute;
-        inset-inline: var(--ui-radius);
-        inset-block-end: 0;
-        block-size: 2px;
-        border-radius: 1px;
-        background: var(--ui-color-accent);
-        pointer-events: none;
-        scale: 0 1;
-        transition: scale var(--ui-duration-200) var(--ui-easing-enter);
-    }
-
-    .glow:has(> :focus-visible)::after {
-        scale: 1 1;
-    }
-}
-
-@container ${is('invalid', 'pulse')} {
-    select[aria-invalid='true'] {
-        animation: ui-alarm var(--ui-duration-400) var(--ui-easing-enter);
-    }
-}
-
-@keyframes ui-alarm {
-    from {
-        box-shadow: 0 0 0 0 rgb(from var(--ui-color-danger) r g b / 0.5);
-    }
-    to {
-        box-shadow: 0 0 0 0.5rem rgb(from var(--ui-color-danger) r g b / 0);
-    }
-}
-`;
+/** The caret's colour. */
+const muted = reference('--ui-color-text-muted').cssText;
 
 prototype({
     tags: ['ui-select'],
-    sheet,
-    moments: [
-        {
-            name: 'focus',
-            label: 'Focus',
-            effects: [
-                { name: 'none', today: true, says: 'The ring, drawn at once.' },
-                { name: 'halo', says: 'A soft ring of the accent fades in around the box.' },
-                { name: 'underline', says: 'A line of the accent is drawn along the bottom edge.' },
-            ],
-        },
-        {
-            name: 'invalid',
-            label: 'Invalid',
-            effects: [
-                { name: 'none', today: true, says: 'The boundary and the message turn red.' },
-                { name: 'pulse', says: 'A red ring leaves the boundary once; the box stays put.' },
-            ],
-        },
-    ],
+    sheet: (name) =>
+        sheet(
+            {
+                controls: ['select'],
+                // A select has no read-only state, so its darkening has no second guard.
+                pointed: ':hover:not(:disabled)',
+                // The caret: two triangles the component paints in the control's background, on
+                // a select that is not a list.
+                behind: {
+                    where: 'select:not([multiple])',
+                    image: `linear-gradient(45deg, transparent 50%, ${muted} 50%), linear-gradient(135deg, ${muted} 50%, transparent 50%)`,
+                    size: `${arm} ${arm}, ${arm} ${arm}`,
+                    position: `right calc(${space} + ${arm}) center, right ${space} center`,
+                    mirrored: `left ${space} center, left calc(${space} + ${arm}) center`,
+                },
+            },
+            name,
+        ),
+    moments,
     refused: [
         {
             name: 'opening the list',
             why: 'the list is the platform’s popup; docs/select.md publishes what it refuses, and appearance: base-select, which would hand it over, is in one engine.',
         },
-        {
-            name: 'shake',
-            why: 'moves the box the reader aimed at, for the reason the input’s page gives.',
-        },
+        ...refused,
     ],
 });
 
-for (const button of document.querySelectorAll<HTMLElement>('[data-validate]')) {
-    button.addEventListener('click', () => {
-        for (const select of document.querySelectorAll('ui-select[required]')) {
-            if ((select as HTMLElement & { value: string }).value === '') {
-                select.setAttribute('error', 'Choose one to continue.');
-            } else {
-                select.removeAttribute('error');
-            }
-        }
-    });
-}
+validation(
+    'ui-select[required]',
+    (field: Field) => (field as Field & { readonly value: string }).value !== '',
+    'Choose one to continue.',
+);

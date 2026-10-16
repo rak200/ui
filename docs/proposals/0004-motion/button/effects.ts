@@ -15,6 +15,7 @@
  * the host cannot reach; the host's `::after`, which S8 found it can, carries the border.
  */
 import { reference } from '../../../../src/reference.js';
+import { comet, far, orbit, scan, sheen, shimmer, sized, sweeps } from '../controls.js';
 import {
     attributes,
     duration,
@@ -358,12 +359,6 @@ const fragments = emit(18, (index, box, length) => {
         options: { duration: seconds * 1000, easing: 'linear', fill: 'forwards' },
     };
 });
-
-/** The colour a band of the border is drawn in: the card's, the accent a step from the page. */
-const far = String.raw`light-dark(
-    oklch(from var(--ui-color-accent) calc(l - 0.1) c h),
-    oklch(from var(--ui-color-accent) calc(l + 0.2) c h)
-)`;
 
 /** The flood's circle, from where the pointer came in, as far as its registered progress. */
 const flooded = String.raw`radial-gradient(
@@ -766,61 +761,52 @@ const pointerBorder = `(${is('hover-border', 'edge')} or ${is('hover-border', 'o
 /** The pointer's fills that hold the fill's layer while the pointer rests on the button. */
 const pointerFill = `(${is('hover-fill', 'spotlight')} or ${is('hover-fill', 'flood')} or ${is('hover-fill', 'shimmer')})`;
 
-/** The focus's orbit, on the edge's band: the card's comet on the edge, inside the focus ring,
- *  four laps, then it fades. */
-const focusOrbit = String.raw`
+/** The orbit's band, on the edge from its outer side in, and never past it. */
+const onEdge = String.raw`
         content: '';
         position: absolute;
-        inset: -2px;
-        padding: 3px;
-        border-radius: calc(var(--ui-radius) + 2px);
-        background: conic-gradient(
-            from var(--ui-orbit),
-            transparent 0 55%,
-            ${far} 75%,
-            var(--ui-color-info) 88%,
-            transparent
-        );
+        inset: 0;
+        padding: ${orbit.width}px;
+        border-radius: var(--ui-radius);
+        background: ${orbit.light};
         mask:
             linear-gradient(#000 0 0) content-box exclude,
             linear-gradient(#000 0 0);
-        pointer-events: none;
-        opacity: 1;
-        animation:
-            ui-orbit var(--ui-duration-loop) linear var(--ui-iteration-settle),
-            ui-rest var(--ui-duration-200) var(--ui-easing-exit)
-                calc(var(--ui-duration-loop) * var(--ui-iteration-settle)) forwards;`;
+        pointer-events: none;`;
 
-/** The focus's comet, outside the focus ring and 2px clear of it, four laps, then it fades. */
-const focusComet = String.raw`
+/** The comet's band, clear of the edge, over where the focus ring is drawn. */
+const clear = String.raw`
         content: '';
         position: absolute;
-        inset: -9px;
-        padding: 3px;
-        border-radius: calc(var(--ui-radius) + 9px);
-        background: conic-gradient(
-            from var(--ui-orbit),
-            transparent 0 55%,
-            var(--ui-color-accent) 75%,
-            var(--ui-color-info) 88%,
-            transparent
-        );
+        inset: -${comet.reach}px;
+        padding: ${comet.width}px;
+        border-radius: calc(var(--ui-radius) + ${comet.reach}px);
+        background: ${comet.light};
         mask:
             linear-gradient(#000 0 0) content-box exclude,
             linear-gradient(#000 0 0);
-        pointer-events: none;
-        opacity: 1;
-        animation:
-            ui-orbit var(--ui-duration-loop) linear var(--ui-iteration-settle),
-            ui-rest var(--ui-duration-200) var(--ui-easing-exit)
-                calc(var(--ui-duration-loop) * var(--ui-iteration-settle)) forwards;`;
+        pointer-events: none;`;
 
-/** The focus's sheen, swept across four times, then at rest past the button's edge. */
-const focusShimmer = String.raw`
-        background-image: linear-gradient(100deg, transparent 35%, var(--ui-sheen) 50%, transparent 65%);
-        background-size: 250% 100%;
+/** The focus's orbit, the pointer's, three laps, then it fades. */
+const focusOrbit = String.raw`${onEdge}
+        opacity: 1;
+        animation: ${orbit.run};`;
+
+/** The focus's comet, the pointer's, two laps, then it fades. */
+const focusComet = String.raw`${clear}
+        opacity: 1;
+        animation: ${comet.run};`;
+
+/** The shimmer's sheen, in the button's own colour for it. */
+const sheened = String.raw`
+        background-image: ${shimmer.image('var(--ui-sheen)')};
+        background-size: ${shimmer.size};
         background-repeat: no-repeat;
-        animation: ui-shimmer var(--ui-duration-loop) linear var(--ui-iteration-settle);`;
+        background-position: ${shimmer.position};`;
+
+/** The focus's sheen, swept across four times, then at rest before the button's start. */
+const focusShimmer = String.raw`${sheened}
+        animation: ${shimmer.run};`;
 
 const sheet = String.raw`
 /* Every property the movement moves, transitioned once. Nothing here moves until an effect
@@ -859,12 +845,12 @@ button::after {
    button as a shadow. */
 button.primary::after {
     --ui-ink: ${reference('--ui-color-primary-contrast')};
-    --ui-sheen: oklch(from ${reference('--ui-color-primary')} calc(l + 0.35) calc(c * 0.4) h / 0.55);
+    --ui-sheen: ${sheen.on(reference('--ui-color-primary').cssText)};
 }
 
 button.secondary::after {
     --ui-ink: ${reference('--ui-color-text')};
-    --ui-sheen: rgb(from var(--ui-color-accent) r g b / 0.5);
+    --ui-sheen: ${sheen.over};
 }
 
 /* Every effect a moment fires is an animation the script starts — as the pointer or Space goes
@@ -1082,10 +1068,11 @@ button[data-fill='ripple']::after {
 
 /* scan: a band of light crossing the button, top to bottom. */
 button[data-fill='scan']::after {
-    background-image: linear-gradient(transparent, var(--ui-sheen), transparent);
-    background-size: 100% 40%;
+    background-image: ${scan.image('var(--ui-sheen)')};
+    background-size: ${scan.size};
     background-repeat: no-repeat;
-    animation: ui-scan var(--ui-duration-400) var(--ui-easing-state);
+    background-position: ${scan.position};
+    animation: ${scan.run};
 }
 
 /* hover-fill: spotlight. A light where the pointer is, fading with distance. It steps aside for
@@ -1105,11 +1092,8 @@ button[data-fill='scan']::after {
    loader, as a light rather than as a placeholder. */
 @media (hover: hover) {
     @container ${is('hover-fill', 'shimmer')} {
-        button:not(:disabled):not([data-fill]):hover::after {
-            background-image: linear-gradient(100deg, transparent 35%, var(--ui-sheen) 50%, transparent 65%);
-            background-size: 250% 100%;
-            background-repeat: no-repeat;
-            animation: ui-shimmer calc(var(--ui-duration-loop) * 1.25) linear var(--ui-iteration-loop);
+        button:not(:disabled):not([data-fill]):hover::after {${sheened}
+            animation: ${shimmer.loop};
         }
     }
 }
@@ -1139,8 +1123,9 @@ button[data-fill='scan']::after {
     }
 
     button[data-fill='scan']::after {
-        background-image: linear-gradient(transparent, var(--ui-sheen), transparent), ${flooded};
-        background-size: 100% 40%, 100% 100%;
+        background-image: ${scan.image('var(--ui-sheen)')}, ${flooded};
+        background-size: ${scan.size}, 100% 100%;
+        background-position: ${scan.position}, 0 0;
     }
 
     @media (hover: hover) {
@@ -1365,12 +1350,11 @@ button {
     }
 }
 
-/* The edge's band, for the edge, the orbit and the trace, the rest masked out, as the card's
-   border layer is: 3px, from 2px out to 1px in. The card's is 2px across its edge, half of it
-   over the card's white; half of the button's would be over its own fill, which on a primary is
-   the accent, and the comet went into it. The focus's orbit draws the same band for itself. */
-@container ${is('hover-border', 'edge')} or ${is('hover-border', 'orbit')} or
-    ${is('hover-border', 'trace')} {
+/* The edge's band, for the edge and the trace, the rest masked out, as the card's border layer
+   is: 3px, from 2px out to 1px in. The card's is 2px across its edge, half of it over the card's
+   white; half of the button's would be over its own fill, which on a primary is the accent the
+   band is drawn a step from. The orbit runs on the edge itself, as the card's does. */
+@container ${is('hover-border', 'edge')} or ${is('hover-border', 'trace')} {
     :host::after {
         content: '';
         position: absolute;
@@ -1406,18 +1390,12 @@ button {
     }
 }
 
-/* hover-border: orbit. The card's: a comet of the band's colour and the info runs round the edge
-   itself, four laps, and fades. A name means one effect wherever it is offered, so a choice made
-   for the page — a theme's taste among them — orbits the card and the button alike. */
+/* hover-border: orbit. The card's: a light of the band's colour and the info runs round on the
+   edge itself and never past it, three laps, and fades. A name means one effect wherever it is
+   offered, so a choice made for the page — a theme's taste among them — orbits the card and the
+   button alike. */
 @container ${is('hover-border', 'orbit')} {
-    :host::after {
-        background: conic-gradient(
-            from var(--ui-orbit),
-            transparent 0 55%,
-            ${far} 75%,
-            var(--ui-color-info) 88%,
-            transparent
-        );
+    :host::after {${onEdge}
         opacity: 0;
         transition: opacity var(--ui-duration-200) var(--ui-easing-exit);
     }
@@ -1425,10 +1403,7 @@ button {
     @media (hover: hover) {
         :host(:hover:not([disabled]):not([data-border]))::after {
             opacity: 1;
-            animation:
-                ui-orbit var(--ui-duration-loop) linear var(--ui-iteration-settle),
-                ui-rest var(--ui-duration-200) var(--ui-easing-exit)
-                    calc(var(--ui-duration-loop) * var(--ui-iteration-settle)) forwards;
+            animation: ${orbit.run};
         }
     }
 }
@@ -1448,32 +1423,16 @@ button {
     }
 }
 
-/* hover-border: comet. A comet of the accent and the info runs round the button, 2px clear of
-   its edge so it reads apart from any ring a theme draws there, while the pointer rests; the
-   mask leaves only the 3px track. Paused rather than removed when the pointer leaves, so the
+/* hover-border: comet. A comet of the band's colour and the info runs round the button, 2px
+   clear of its edge so it reads apart from any ring a theme draws there, while the pointer rests;
+   the mask leaves only the 3px track. Paused rather than removed when the pointer leaves, so the
    next pass picks the comet up where this one left it, which is how the reference keeps a hover
    loop from jumping back to its start. */
 @container ${is('hover-border', 'comet')} {
-    :host::after {
-        content: '';
-        position: absolute;
-        inset: -5px;
-        padding: 3px;
-        border-radius: calc(var(--ui-radius) + 5px);
-        background: conic-gradient(
-            from var(--ui-orbit),
-            transparent 0 55%,
-            var(--ui-color-accent) 75%,
-            var(--ui-color-info) 88%,
-            transparent
-        );
-        mask:
-            linear-gradient(#000 0 0) content-box exclude,
-            linear-gradient(#000 0 0);
-        pointer-events: none;
+    :host::after {${clear}
         opacity: 0;
         transition: opacity var(--ui-duration-200) var(--ui-easing-state);
-        animation: ui-orbit calc(var(--ui-duration-loop) * 2) linear var(--ui-iteration-loop) paused;
+        animation: ${comet.loop};
     }
 
     @media (hover: hover) {
@@ -1751,16 +1710,7 @@ button {
     }
 }
 
-/* The band is 40% of the height, so -66.7% starts it wholly above and 166.7% ends it wholly
-   below: a percentage places the band within what is left over once its own size is taken. */
-@keyframes ui-scan {
-    from {
-        background-position: 0 -66.7%;
-    }
-    to {
-        background-position: 0 166.7%;
-    }
-}
+${sweeps}
 
 /* The ring is gone by nine tenths; the last tenth only brings the blur back down. */
 @keyframes ui-explode {
@@ -1851,39 +1801,6 @@ button {
     to { transform: perspective(calc(var(--ui-flip-width) * 10)) rotateY(0deg); }
 }
 
-/* The line holds through the whole loop, so the trough is lit too: a glow alone, 2px at its
-   lowest, drew next to nothing there on a light page, and the loop read as a faint flicker.
-
-   In the accent, which is this layer's colour, written out rather than as currentColor:
-   Chromium does not interpolate a shadow whose colour is derived from currentColor, by
-   rgb(from) or color-mix(). It holds the first value to halfway and jumps — measured; Firefox
-   and WebKit interpolate it. */
-@keyframes ui-neon {
-    from {
-        box-shadow:
-            0 0 0 1px var(--ui-color-accent),
-            0 0 6px 1px rgb(from var(--ui-color-accent) r g b / 0.7),
-            0 0 16px 3px rgb(from var(--ui-color-accent) r g b / 0.35);
-    }
-    to {
-        box-shadow:
-            0 0 0 1px var(--ui-color-accent),
-            0 0 12px 3px var(--ui-color-accent),
-            0 0 40px 10px rgb(from var(--ui-color-accent) r g b / 0.5);
-    }
-}
-
-/* From where an even count of rounds leaves the neon, to the keyframe it leaves out, which is
-   the layer's own: the theme's glow, or nothing. */
-@keyframes ui-neon-rest {
-    from {
-        box-shadow:
-            0 0 0 1px var(--ui-color-accent),
-            0 0 6px 1px rgb(from var(--ui-color-accent) r g b / 0.7),
-            0 0 16px 3px rgb(from var(--ui-color-accent) r g b / 0.35);
-    }
-}
-
 @keyframes ui-breathe {
     from { scale: 1; }
     to { scale: 1.06; }
@@ -1900,13 +1817,6 @@ button {
     }
 }
 
-/* The image is two and a half widths long with the band in its middle, so 150% starts the
-   band wholly off the left edge and -50% ends it wholly off the right. */
-@keyframes ui-shimmer {
-    from { background-position: 150% 0; }
-    to { background-position: -50% 0; }
-}
-
 @keyframes ui-orbit {
     to { --ui-orbit: 360deg; }
 }
@@ -1915,14 +1825,7 @@ button {
     to { opacity: 0; }
 }
 
-@keyframes ui-beacon {
-    from {
-        box-shadow: 0 0 0 2px rgb(from var(--ui-color-focus) r g b / 0.55);
-    }
-    to {
-        box-shadow: 0 0 0 12px rgb(from var(--ui-color-focus) r g b / 0);
-    }
-}
+${sized.wide}
 `;
 
 prototype({
@@ -2219,7 +2122,7 @@ prototype({
                         {
                             name: 'orbit',
                             settles: true,
-                            says: 'A light runs round the edge itself, four times, then rests — the card’s.',
+                            says: 'A light runs round on the edge itself, three times, then rests — the card’s.',
                         },
                         {
                             name: 'trace',
@@ -2228,7 +2131,7 @@ prototype({
                         {
                             name: 'comet',
                             loops: true,
-                            says: 'A comet of light runs round just outside the edge, and waits where it was when the pointer leaves.',
+                            says: 'A comet of light runs round clear of the edge, and waits where it was when the pointer leaves.',
                         },
                         {
                             name: 'pulse',
@@ -2375,12 +2278,12 @@ prototype({
                         {
                             name: 'orbit',
                             settles: true,
-                            says: 'A light runs round the edge, inside the focus ring, four times, then rests.',
+                            says: 'A light runs round on the edge itself, three times, then rests.',
                         },
                         {
                             name: 'comet',
                             settles: true,
-                            says: 'A comet runs round outside the focus ring, four laps, then fades.',
+                            says: 'A comet runs round clear of the edge, over the focus ring, two laps, then fades.',
                         },
                     ],
                 },

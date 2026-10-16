@@ -7,7 +7,7 @@
  * controls share; what is the radio's own is choosing, and the dot a click would leave.
  */
 import { reference } from '../../../../src/reference.js';
-import { keyframes, moments, rules, validation } from '../controls.js';
+import { keyframes, moments, rules, sized, validation } from '../controls.js';
 import { inner, prototype, queries, replay } from '../motion.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
@@ -35,12 +35,13 @@ const mark =
     };
 
 const sheet = String.raw`
-/* The control's own transitions, written again with the zoom's beside them, as the checkbox's
-   are: an element has one list, so a property this sheet eases goes in with the component's. */
+/* The control's own transitions, written again with the zoom's and the blur's beside them, as the
+   checkbox's are: an element has one list, so a property this sheet eases goes in with the
+   component's. */
 :host input {
-    transition-property: background-color, border-color, scale;
-    transition-duration: ${state}, ${state}, var(--ui-duration-200);
-    transition-timing-function: ${ease}, ${ease}, var(--ui-easing-emphasis);
+    transition-property: background-color, border-color, scale, backdrop-filter;
+    transition-duration: ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200);
+    transition-timing-function: ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter);
 }
 
 /* check: fade is what the control does today — the chosen one's fill fades in and the one it
@@ -48,7 +49,7 @@ const sheet = String.raw`
    choice changes at once. */
 @container ${is('check', 'none')} {
     :host input {
-        transition-duration: 0s, 0s, var(--ui-duration-200);
+        transition-duration: 0s, 0s, var(--ui-duration-200), var(--ui-duration-200);
     }
 }
 
@@ -57,9 +58,9 @@ const sheet = String.raw`
    the fill's label, drawn in the colour that reads on the fill. */
 :host input[data-fx='pop'],
 :host input[data-fx='draw'] {
-    transition-property: scale;
+    transition-property: scale, backdrop-filter;
     transition-duration: var(--ui-duration-200);
-    transition-timing-function: var(--ui-easing-emphasis);
+    transition-timing-function: var(--ui-easing-emphasis), var(--ui-easing-enter);
 }
 
 input[data-fx='pop']::before {
@@ -79,7 +80,7 @@ input[data-fx='draw']::before {
 
 /* pointer: preview, what a click would do, faintly: the dot, pale, in an empty control. */
 @media (hover: hover) {
-    @container ${is('hover', 'preview')} {
+    @container ${is('hover-fill', 'preview')} {
         :host input:not(:checked)::before {
             content: '';
             position: absolute;
@@ -102,9 +103,15 @@ input[data-fx='draw']::before {
 ${rules({
     is,
     host: ':host',
+    focused: ':host([data-focus-visible])',
+    calm: ':host(:not([data-focus-visible]))',
     invalid: ".options[aria-invalid='true'] input",
     filled: ':checked',
     radius: '50%',
+    label: 'label.option',
+    text: "[part='option-label']",
+    width: size,
+    height: size,
 })}
 
 @keyframes ui-pop {
@@ -123,6 +130,8 @@ ${rules({
 }
 
 ${keyframes}
+
+${sized.small}
 `;
 
 prototype({

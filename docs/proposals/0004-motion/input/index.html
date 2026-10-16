@@ -16,11 +16,13 @@
     <body>
         <header>
             <div class="top" data-frame></div>
-            <h1><code>ui-input</code> and <code>ui-textarea</code> — focus, invalid</h1>
+            <h1><code>ui-input</code> and <code>ui-textarea</code> — pointer, focus, invalid</h1>
             <p>
                 In a field the reader is doing something, and every movement lands in the middle of
-                it. The catalogue is short on purpose: nothing here moves the control, and the
-                reference's measurements are why.
+                it. So nothing here moves the control, which the reference's measurements are why:
+                the effects change its boundary, what is round it, its fill, its label and its
+                message, each a kind of its own, as the button's are. The disabled field answers
+                none of them.
             </p>
         </header>
         <main>
@@ -30,6 +32,7 @@
                     <span class="name">page</span>
                     <ui-input label="Email" type="email" required></ui-input>
                     <ui-textarea label="Message" rows="2"></ui-textarea>
+                    <ui-input label="Plan" value="Team, billed yearly" disabled></ui-input>
                 </div>
                 <div class="scoped region">
                     <span class="name">.region</span>
@@ -44,6 +47,7 @@
                     <ui-button variant="secondary" data-validate
                         >Validate the required ones</ui-button
                     >
+                    <ui-button variant="secondary" data-again>Play the error again</ui-button>
                 </div>
             </section>
             <section class="written" data-written aria-label="What the consumer writes"></section>

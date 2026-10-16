@@ -7,6 +7,7 @@
  * around it, so every scope reaches it.
  */
 import { reference } from '../../../../src/reference.js';
+import { scan, sheen, shimmer, sweeps } from '../controls.js';
 import { prototype, queries } from '../motion.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
@@ -84,6 +85,31 @@ const sheet = String.raw`
     }
 }
 
+/* shimmer and scan, the button's, on the row under a pointer that hovers: a sheen swept across the
+   row for as long as the pointer rests there, or a band crossing it down once as the pointer
+   arrives. */
+@media (hover: hover) {
+    @container ${is('hover', 'shimmer')} {
+        ui-table tbody tr:nth-child(n):hover {
+            background-image: ${shimmer.image(sheen.over)};
+            background-size: ${shimmer.size};
+            background-repeat: no-repeat;
+            background-position: ${shimmer.position};
+            animation: ${shimmer.loop};
+        }
+    }
+
+    @container ${is('hover', 'scan')} {
+        ui-table tbody tr:nth-child(n):hover {
+            background-image: ${scan.image(sheen.over)};
+            background-size: ${scan.size};
+            background-repeat: no-repeat;
+            background-position: ${scan.position};
+            animation: ${scan.run};
+        }
+    }
+}
+
 @container ${is('enter', 'fade')} {
     ui-table tbody tr:nth-child(n) {
         transition: opacity var(--ui-duration-300) var(--ui-easing-enter);
@@ -110,7 +136,8 @@ const sheet = String.raw`
         }
     }
 }
-`;
+
+${sweeps}`;
 
 prototype({
     tags: ['ui-table'],
@@ -126,6 +153,15 @@ prototype({
                 {
                     name: 'frost',
                     says: 'The row turns to the theme’s glass: what is behind it blurred, under a veil of the text’s colour; where there is no glass, the hover colour. Drawn for Glass.',
+                },
+                {
+                    name: 'shimmer',
+                    loops: true,
+                    says: 'A sheen sweeps across the row, and comes round again.',
+                },
+                {
+                    name: 'scan',
+                    says: 'Once, as the pointer arrives: a band of light crosses the row, top to bottom.',
                 },
             ],
         },
