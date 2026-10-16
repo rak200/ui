@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.3](https://github.com/rak200/ui/compare/0.8.2...0.8.3) (2026-10-16)
+
+
+### Bug Fixes
+
+* **menu:** the panel hangs from where its trigger rests, which RFC 0004 now moves as a button ([#295](https://github.com/rak200/ui/issues/295)) ([5f19ac0](https://github.com/rak200/ui/commit/5f19ac09264cd9d22213c8d6f699f2608119563e))
+* **menu:** the panel is placed before it shows, and RFC 0004's effects look alike ([#293](https://github.com/rak200/ui/issues/293)) ([f7645ff](https://github.com/rak200/ui/commit/f7645ff9202a657d5a685c2f7f3ab4c813d1b2c3))
+
 ## [0.8.2](https://github.com/rak200/ui/compare/0.8.1...0.8.2) (2026-10-13)
 
 
