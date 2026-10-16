@@ -184,6 +184,10 @@ prototype({
             name: 'numbers rolling',
             why: 'a figure that counts up to its value shows values that were never true on the way; the reference’s page on changing data argues it out.',
         },
+        {
+            name: 'pulse, on a row',
+            why: 'a row has no room round it: a ring leaving it ran over the rows above and below, and the table’s frame cut it off at the sides, in all three engines; drawn inside the row instead, WebKit painted none of it — measured.',
+        },
     ],
 });
 

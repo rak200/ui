@@ -333,16 +333,21 @@ lists what its component leaves out and why. None of it is the Decision, which s
   colour and the flash, on a field and a drawn control alike, a fifth of the danger into the surface
   — measured. The menu leaves dimming the other items out for the same floor.
 - **An effect of one name looks the same on every component**, adjusted only for the size of what it
-  lights: the glow and the halo are one definition, and the beacon and the neon one shape in a drawn
-  control's size and a button's, which a field takes. The shimmer and the scan are the button's
-  wherever they are offered, a wide sheen swept across a little off upright and a thin band crossing
-  down, no thicker than a rem however tall what it crosses is, where a field's and a drawn control's
-  scan had crossed from the start to the end, two fifths of their width. The orbit is the card's
-  wherever it is offered, a light on the boundary that never runs past it, and the comet the
-  button's, clear of the boundary and over the focus ring, in the orbit's colours: in the accent,
-  which the ring takes, its tail was the ring's own colour. And no band runs in the gap a focus ring
-  keeps from its control, where the band, the ring and the boundary read as one line: the trace runs
-  inside a field and outside a drawn control's ring.
+  lights: the glow and the halo are one definition, and the pulse and the neon one shape in a drawn
+  control's size and a button's, which a field and a card take. The pulse is the ring that leaves a
+  boundary wherever one does, in the colour of what it answers — the accent under the pointer, at a
+  press and on a change, the ring's own at the focus, the danger in error — and the focus's beacon
+  was that ring under a second name: from 80ms on the two reached within a pixel of each other —
+  measured. A table's row has no room round it for one, and the icon's follows its strokes. The
+  shimmer and the scan are the button's wherever they are offered, a wide sheen swept across a
+  little off upright and a thin band crossing down, no thicker than a rem however tall what it
+  crosses is, where a field's and a drawn control's scan had crossed from the start to the end, two
+  fifths of their width. The orbit is the card's wherever it is offered, a light on the boundary
+  that never runs past it, and the comet the button's, clear of the boundary and over the focus
+  ring, in the orbit's colours: in the accent, which the ring takes, its tail was the ring's own
+  colour. And no band runs in the gap a focus ring keeps from its control, where the band, the ring
+  and the boundary read as one line: the trace runs inside a field and outside a drawn control's
+  ring.
 - **An overlay placed by its size moves, uncovers, blurs and fades, and never scales or turns.** The
   tooltip reads its tip's box, transform and all, as it shows: started at 0.9 of its size, a tip was
   placed 11px off its trigger's middle, and edge-on, 26px over it, in all three engines. The menu
@@ -350,10 +355,20 @@ lists what its component leaves out and why. None of it is the Decision, which s
   side is written before the overlay's first style: the menu now places its panel before it is
   shown, by the size it had when it was last open, and the tooltip places its tip after, so a tip
   comes from the side it was last placed on.
+- **A menu's trigger answers as a button does, and only the trigger.** It is a secondary button, so
+  it takes the button's effects and its taste. Its host holds the panel and the items too, whose
+  press, pointer and focus are not the trigger's, and in Firefox the host's own `:hover` and
+  `:active` take the panel in: drawn off them, the trigger's raise and trace held over the panel,
+  and an item's press put its border out. So the page names the control the moments are answered on
+  and keeps a record of the pointer on it, which a component would keep as a state of its own. And
+  the menu now hangs its panel from where the trigger rests, its host's box: hung from the trigger
+  as drawn, a panel opened under a movement came to rest anywhere from 1.6px over the trigger to 7px
+  clear of it — measured.
 
 **The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
 under each theme; `today` marks what the component does today. A form is the input, the textarea,
-the select, the checkbox, the switch and the radio, which take one taste.
+the select, the checkbox, the switch and the radio, which take one taste. The menu's trigger is a
+secondary button, and takes the button's for a press, the pointer and focus.
 
 | Component | Moment            | Default          | Matrix           | Glass            |
 | --------- | ----------------- | ---------------- | ---------------- | ---------------- |
@@ -368,7 +383,7 @@ the select, the checkbox, the switch and the radio, which take one taste.
 | button    | `focus-move`      | lift             | glitch           | none, today      |
 | button    | `focus-fill`      | none, today      | scan             | shimmer          |
 | button    | `focus-shadow`    | raise            | burst            | neon             |
-| button    | `focus-border`    | beacon           | comet            | orbit            |
+| button    | `focus-border`    | pulse            | comet            | orbit            |
 | card      | `hover-move`      | lift             | zoom             | tilt             |
 | card      | `hover-shadow`    | raise            | glow             | cast             |
 | card      | `hover-fill`      | tint             | tint             | spotlight        |
@@ -395,11 +410,12 @@ the select, the checkbox, the switch and the radio, which take one taste.
 | menu      | `enter`           | cascade          | glitch           | refocus          |
 | menu      | `exit`            | fold             | glitch           | defocus          |
 | menu      | `caret`           | flip             | flip             | flip             |
+| menu      | the trigger       | the button's     | the button's     | the button's     |
 | form      | `hover-border`    | highlight, today | highlight, today | highlight, today |
 | form      | `hover-shadow`    | glow             | glow             | glow             |
 | form      | `hover-fill`      | none, today      | none, today      | none, today      |
 | form      | `hover-move`      | none, today      | none, today      | none, today      |
-| form      | `focus-border`    | beacon           | trace            | orbit            |
+| form      | `focus-border`    | pulse            | trace            | orbit            |
 | form      | `focus-shadow`    | inner            | glow             | halo             |
 | form      | `focus-fill`      | none, today      | scan             | blur             |
 | form      | `focus-label`     | accent           | glow             | none, today      |

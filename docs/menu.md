@@ -120,6 +120,10 @@ It hangs from the trigger's leading edge, flips above when there is no room belo
 pulled back inside the viewport at either edge. It writes `data-side` — `block-start` or
 `block-end` — on the panel, so a host who wants a different gap has something to select on.
 
+**It hangs from where the trigger rests**, which is the box the component takes up. A trigger you
+move through `::part(trigger)` — grown under the pointer, say — moves alone, and when it goes back
+the panel is still where it was hung.
+
 **The arithmetic is shared with [`<ui-tooltip>`](tooltip.md)**, which is what issue #23 asked
 for: two answers to one problem is one too many. It lives in one internal module, alongside
 `reference` — the exported `place` takes a `Box` for the anchor and one for the overlay, a

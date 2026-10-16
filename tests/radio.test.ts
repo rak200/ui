@@ -841,6 +841,7 @@ describe('the drawing', () => {
 
     it("takes its fill from the controls' own, which a theme may set apart from the surface", async () => {
         const form = await mount(fixture);
+        withoutMotion(form);
         group(form).style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3)');
 
         expect(getComputedStyle(radio(form)).backgroundColor).toBe('rgb(1, 2, 3)');

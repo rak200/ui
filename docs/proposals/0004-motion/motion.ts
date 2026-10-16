@@ -113,6 +113,10 @@ export interface Catalogue {
      *  change that needs one, so effects of different kinds draw at once: a host has two
      *  pseudo-elements, and a theme already draws on one. */
     readonly layers?: readonly string[];
+    /** The control in the shadow root that a press, the pointer and focus are answered on, where
+     *  the component renders more than the control: the menu's trigger, and not its items, which
+     *  are in its host too. Any control in the instance, unless named. */
+    readonly control?: string;
     readonly refused?: readonly Refusal[];
 }
 
@@ -321,6 +325,18 @@ function form(
     );
 }
 
+/**
+ * A theme's taste for a button, which is the menu's trigger's too, beside the menu's own: the
+ * trigger is a secondary button the menu writes out, so a press, the pointer and focus do to it
+ * what they do to every button under the theme.
+ */
+function buttons(
+    own: Readonly<Record<string, string>>,
+    menu: Readonly<Record<string, string>>,
+): Readonly<Record<string, Readonly<Record<string, string>>>> {
+    return { button: own, menu: { ...own, ...menu } };
+}
+
 /** The tastes, by the value `data-ui-theme` takes, and `default` for the theme that is none. */
 const tastes: ReadonlyMap<string, Taste> = new Map([
     [
@@ -352,29 +368,31 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 hover: 'glow',
             },
             components: {
-                button: {
-                    'hover-move': 'none',
-                    'hover-fill': 'highlight',
-                    'hover-shadow': 'raise',
-                    'hover-border': 'pulse',
-                    'press-move': 'squish',
-                    'press-fill': 'highlight',
-                    'press-shadow': 'sink',
-                    'press-border': 'bloom',
-                    'focus-move': 'lift',
-                    'focus-fill': 'none',
-                    'focus-shadow': 'raise',
-                    'focus-border': 'beacon',
-                },
+                ...buttons(
+                    {
+                        'hover-move': 'none',
+                        'hover-fill': 'highlight',
+                        'hover-shadow': 'raise',
+                        'hover-border': 'pulse',
+                        'press-move': 'squish',
+                        'press-fill': 'highlight',
+                        'press-shadow': 'sink',
+                        'press-border': 'bloom',
+                        'focus-move': 'lift',
+                        'focus-fill': 'none',
+                        'focus-shadow': 'raise',
+                        'focus-border': 'pulse',
+                    },
+                    { enter: 'cascade', exit: 'fold', caret: 'flip' },
+                ),
                 icon: { enter: 'draw' },
                 table: { hover: 'highlight', enter: 'glow' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
                 toaster: { stack: 'spring' },
                 tooltip: { enter: 'rise', exit: 'sink', next: 'glide' },
-                menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
                 ...form(
                     {
-                        'focus-border': 'beacon',
+                        'focus-border': 'pulse',
                         'focus-shadow': 'inner',
                         'focus-fill': 'none',
                         'focus-label': 'accent',
@@ -419,22 +437,24 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-border': 'trace',
             },
             components: {
-                button: {
-                    'hover-shadow': 'neon',
-                    'press-move': 'shatter',
-                    'press-fill': 'none',
-                    'press-shadow': 'fragments',
-                    'press-border': 'bloom',
-                    'focus-move': 'glitch',
-                    'focus-fill': 'scan',
-                    'focus-shadow': 'burst',
-                    'focus-border': 'comet',
-                },
+                ...buttons(
+                    {
+                        'hover-shadow': 'neon',
+                        'press-move': 'shatter',
+                        'press-fill': 'none',
+                        'press-shadow': 'fragments',
+                        'press-border': 'bloom',
+                        'focus-move': 'glitch',
+                        'focus-fill': 'scan',
+                        'focus-shadow': 'burst',
+                        'focus-border': 'comet',
+                    },
+                    { enter: 'glitch', exit: 'glitch' },
+                ),
                 icon: { enter: 'pop', hover: 'glitch' },
                 table: { enter: 'glow' },
                 toast: { enter: 'wind', exit: 'wind' },
                 tooltip: { enter: 'typing', exit: 'glitch' },
-                menu: { enter: 'glitch', exit: 'glitch' },
                 ...form({
                     'focus-border': 'trace',
                     'focus-shadow': 'glow',
@@ -475,22 +495,24 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-border': 'edge',
             },
             components: {
-                button: {
-                    'hover-shadow': 'raise',
-                    'press-move': 'spring',
-                    'press-fill': 'ripple',
-                    'press-shadow': 'sink',
-                    'press-border': 'pulse',
-                    'focus-move': 'none',
-                    'focus-fill': 'shimmer',
-                    'focus-shadow': 'neon',
-                    'focus-border': 'orbit',
-                },
+                ...buttons(
+                    {
+                        'hover-shadow': 'raise',
+                        'press-move': 'spring',
+                        'press-fill': 'ripple',
+                        'press-shadow': 'sink',
+                        'press-border': 'pulse',
+                        'focus-move': 'none',
+                        'focus-fill': 'shimmer',
+                        'focus-shadow': 'neon',
+                        'focus-border': 'orbit',
+                    },
+                    { enter: 'refocus', exit: 'defocus' },
+                ),
                 icon: { enter: 'refocus', hover: 'pop' },
                 table: { hover: 'frost', enter: 'glow' },
                 toast: { enter: 'refocus', exit: 'defocus' },
                 tooltip: { enter: 'refocus', exit: 'defocus' },
-                menu: { enter: 'refocus', exit: 'defocus' },
                 ...form({
                     'focus-border': 'orbit',
                     'focus-shadow': 'halo',
@@ -740,9 +762,11 @@ export function inner(host: Element, selector: string): HTMLElement | null {
  *
  * **One element can carry effects of several kinds at once**, each under a mark of its own, so
  * a mark goes when its own animation ends — `ui-<name>`, the name every sheet here gives it —
- * and not when the first animation on the element or its layers does.
+ * and not when the first animation on the element or its layers does. Where another animation
+ * on the element shares the name, the layer the mark's plays on is named too: a drawn control's
+ * pointer plays the pulse on the control, and its check plays it on the control's `::after`.
  */
-export function replay(target: HTMLElement, name: string, mark = 'data-fx'): void {
+export function replay(target: HTMLElement, name: string, mark = 'data-fx', on?: string): void {
     target.removeAttribute(mark);
     // Read layout once, so the removal is seen before the mark comes back: without it the
     // two writes land in the same frame and the animation never restarts.
@@ -750,7 +774,10 @@ export function replay(target: HTMLElement, name: string, mark = 'data-fx'): voi
     target.setAttribute(mark, name);
 
     const done = (event: AnimationEvent): void => {
-        if (event.animationName === `ui-${name}`) {
+        if (
+            event.animationName === `ui-${name}` &&
+            (on === undefined || event.pseudoElement === on)
+        ) {
             target.removeAttribute(mark);
             target.removeEventListener('animationend', done);
         }
@@ -1328,8 +1355,58 @@ export function prototype(catalogue: Catalogue): Page {
         return element;
     };
 
-    /** Adopts the element's sheet into one instance's shadow root, once, and renders its layers
-     *  there after what the component rendered. */
+    /** The control an instance's moments are answered on: the one the catalogue names, or else
+     *  the instance, any control in it. */
+    const answering = (host: HTMLElement): Element | null =>
+        catalogue.control === undefined ? host : inner(host, catalogue.control);
+
+    /** Whether an event happened on that control. */
+    const within = (event: Event, host: HTMLElement): boolean => {
+        const control = answering(host);
+
+        return control !== null && event.composedPath().includes(control);
+    };
+
+    /*
+     * The pointer's arrival on a named control, and the host's record of the pointer on it. The
+     * host's own :hover takes in everything the host holds, and the menu's holds its panel; and a
+     * pointer arriving on a control in the shadow root is not heard from the document, where the
+     * other moments are: pointerenter is not composed, in all three engines — measured. So the
+     * control is listened to itself, as the component would listen to it, and the attribute
+     * stands in for the state it would set from the same event: :host(:state(hover)).
+     */
+    const point = (host: HTMLElement): void => {
+        const control = catalogue.control === undefined ? null : inner(host, catalogue.control);
+
+        control?.addEventListener('pointerenter', (event) => {
+            // A finger has no hover, so it arrives only to press. And the pointer arrives once,
+            // while it is not on the control yet: Chromium dispatches two of these as it
+            // arrives, where Firefox and WebKit dispatch one — measured.
+            if (
+                event.pointerType === 'touch' ||
+                host.hasAttribute('data-hover') ||
+                disabled(event)
+            ) {
+                return;
+            }
+
+            host.setAttribute('data-hover', '');
+
+            for (const moment of catalogue.moments) {
+                if (moment.on === 'enter') {
+                    for (const slot of slots(moment)) {
+                        running(slot, host)?.fire?.({ host, event });
+                    }
+                }
+            }
+        });
+        control?.addEventListener('pointerleave', () => {
+            host.removeAttribute('data-hover');
+        });
+    };
+
+    /** Adopts the element's sheet into one instance's shadow root, once, renders its layers there
+     *  after what the component rendered, and listens to the control it names. */
     const adopt = async (element: Element): Promise<void> => {
         if (catalogue.where === 'document' || !(element instanceof LitElement)) {
             return;
@@ -1342,6 +1419,7 @@ export function prototype(catalogue: Catalogue): Page {
         if (root !== null && sheet !== undefined && !root.adoptedStyleSheets.includes(sheet)) {
             root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
             root.append(...(catalogue.layers ?? []).map(layer));
+            point(element);
         }
     };
 
@@ -1482,7 +1560,12 @@ export function prototype(catalogue: Catalogue): Page {
                 (event) => {
                     const host = hostOf(event);
 
-                    if (host === undefined || !counts(event, host) || disabled(event)) {
+                    if (
+                        host === undefined ||
+                        !within(event, host) ||
+                        !counts(event, host) ||
+                        disabled(event)
+                    ) {
                         return;
                     }
 
@@ -1500,7 +1583,8 @@ export function prototype(catalogue: Catalogue): Page {
      * rather than inside it. No engine lets a host match :focus-visible for a control in its
      * shadow root — it matches :focus and :focus-within, which a click sets too — so the
      * attribute stands in for the custom state a component would set from the same event:
-     * :host(:state(focus-visible)).
+     * :host(:state(focus-visible)). Only for the control the catalogue names, where it names one:
+     * a focus on one of the menu's items is not its trigger's.
      */
     document.addEventListener(
         'focusin',
@@ -1509,7 +1593,10 @@ export function prototype(catalogue: Catalogue): Page {
             const target = event.composedPath()[0];
 
             if (host !== undefined && target instanceof Element) {
-                host.toggleAttribute('data-focus-visible', target.matches(':focus-visible'));
+                host.toggleAttribute(
+                    'data-focus-visible',
+                    within(event, host) && target.matches(':focus-visible'),
+                );
             }
         },
         { capture: true },
@@ -1540,7 +1627,12 @@ export function prototype(catalogue: Catalogue): Page {
             const host = hostOf(event);
             const target = event.composedPath()[0];
 
-            if (event.key === ' ' && host !== undefined && target instanceof Element) {
+            if (
+                event.key === ' ' &&
+                host !== undefined &&
+                target instanceof Element &&
+                within(event, host)
+            ) {
                 setTimeout(() => {
                     host.toggleAttribute('data-pressed', target.matches(':active'));
                 });
@@ -1588,7 +1680,7 @@ export function prototype(catalogue: Catalogue): Page {
             const control = document
                 .querySelector(`:is(${tags.join(', ')}):is(${where}, ${where} *):not([disabled])`)
                 ?.shadowRoot?.querySelector<HTMLElement>(
-                    ':is(button, input, select, textarea):not(:disabled)',
+                    catalogue.control ?? ':is(button, input, select, textarea):not(:disabled)',
                 );
 
             control?.blur();

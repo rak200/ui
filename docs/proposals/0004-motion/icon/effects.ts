@@ -21,6 +21,10 @@ const size = reference('--ui-icon-size').cssText;
 /** The weight of its strokes, as the component draws them. */
 const stroke = reference('--ui-icon-stroke').cssText;
 
+/** How far the pulse's band reaches past the strokes, in the glyph's own units — a twenty-fourth
+ *  of the icon's size each — so it grows with the icon, as the pulse's reach grows with a control. */
+const reach = 4;
+
 /** The colours the glitch splits into, the button's own. */
 const danger = reference('--ui-color-danger').cssText;
 const info = reference('--ui-color-info').cssText;
@@ -101,9 +105,11 @@ svg {
 
 /* shimmer and scan, the button's, on a layer over the glyph cut to its strokes, which the page
    cuts as the pointer arrives: a sheen swept across the strokes for as long as the pointer rests,
-   or a band crossing them down once. */
+   or a band crossing them down once. Isolated, so the pulse's copy can go under the glyph and stay
+   over what the page put under the icon. */
 :host {
     position: relative;
+    isolation: isolate;
 }
 
 [data-sheen] {
@@ -132,6 +138,40 @@ svg {
             background-repeat: no-repeat;
             background-position: ${scan.position};
             animation: ${scan.run};
+        }
+    }
+}
+
+/* pulse: the button's, a ring of the accent leaving the boundary once as the pointer arrives, and
+   the boundary here is the strokes', as the glow's light is: a copy of the glyph under it, which
+   the page makes as the pointer arrives, its strokes widened to ${reach} units either side and faded
+   out. Faded as one, so where two strokes meet they are not drawn twice as strong. Nothing the
+   glyph's entrance eases reaches the copy, which comes in as the pointer does. */
+[data-pulse] {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: visible;
+    opacity: 0;
+    pointer-events: none;
+}
+
+[data-pulse] * {
+    fill: none;
+    stroke: var(--ui-color-accent);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: none;
+}
+
+@media (hover: hover) {
+    @container ${is('hover', 'pulse')} {
+        :host(:hover) [data-pulse] {
+            animation: ui-pulse-fade var(--ui-duration-400) var(--ui-easing-enter);
+        }
+
+        :host(:hover) [data-pulse] * {
+            animation: ui-pulse-widen var(--ui-duration-400) var(--ui-easing-enter);
         }
     }
 }
@@ -186,6 +226,24 @@ svg {
             filter: blur(calc(${size} / 8));
             opacity: 0;
         }
+    }
+}
+
+@keyframes ui-pulse-fade {
+    from {
+        opacity: 0.5;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes ui-pulse-widen {
+    from {
+        stroke-width: calc(${stroke} * 1px);
+    }
+    to {
+        stroke-width: calc(${stroke} * 1px + ${2 * reach}px);
     }
 }
 
@@ -270,6 +328,10 @@ prototype({
                     name: 'scan',
                     says: 'Once, as the pointer arrives: a band of light crosses its strokes, top to bottom.',
                 },
+                {
+                    name: 'pulse',
+                    says: 'Once, as the pointer arrives: a ring of the accent leaves its strokes and fades.',
+                },
             ],
         },
     ],
@@ -319,7 +381,7 @@ const cuts = new WeakMap<Element, string>();
  */
 function cut(host: HTMLElement): void {
     const root = host.shadowRoot;
-    const svg = root?.querySelector('svg') ?? host.querySelector(':scope > svg');
+    const svg = root?.querySelector('svg:not([data-pulse])') ?? host.querySelector(':scope > svg');
 
     if (root === null || svg === null || !['shimmer', 'scan'].includes(chosen(host, 'hover'))) {
         return;
@@ -352,10 +414,44 @@ function cut(host: HTMLElement): void {
     layer.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(markup)}")`;
 }
 
+/** The glyph each icon's pulse was last copied from. */
+const copies = new WeakMap<Element, string>();
+
+/**
+ * Copies the icon's glyph under it for the pulse to widen, as the pointer arrives on an icon that
+ * pulses: the icon's own `<svg>`, or the one slotted in its place, its geometry and no more, since
+ * the sheet draws the copy. Before the component's own nodes, which a render of its own clears.
+ * Again when the glyph has changed since.
+ */
+function copy(host: HTMLElement): void {
+    const root = host.shadowRoot;
+    const svg = root?.querySelector('svg:not([data-pulse])') ?? host.querySelector(':scope > svg');
+
+    if (root === null || svg === null || chosen(host, 'hover') !== 'pulse') {
+        return;
+    }
+
+    const drawn = root.querySelector('[data-pulse]');
+
+    if (drawn !== null && copies.get(host) === svg.innerHTML) {
+        return;
+    }
+
+    copies.set(host, svg.innerHTML);
+    drawn?.remove();
+    const layer = svg.cloneNode(true) as SVGSVGElement;
+    layer.removeAttribute('part');
+    layer.removeAttribute('style');
+    layer.setAttribute('data-pulse', '');
+    layer.setAttribute('aria-hidden', 'true');
+    root.prepend(layer);
+}
+
 document.addEventListener('pointerover', (event) => {
     for (const target of event.composedPath()) {
         if (target instanceof HTMLElement && target.localName === 'ui-icon') {
             cut(target);
+            copy(target);
         }
     }
 });
