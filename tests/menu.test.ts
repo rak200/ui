@@ -807,6 +807,24 @@ describe('where the panel lands', () => {
         expect(box.left).toBeCloseTo(anchor.left, 0);
     });
 
+    it('hangs from where the trigger rests, whatever moves it as it opens', async () => {
+        // A host can move the trigger through its part, and a transform is drawn where it went
+        // and laid out where it was: grown under the pointer that opens the menu, the trigger
+        // goes back once the pointer is in the panel, and the panel stays where it was hung.
+        const host = await mount(
+            `<style>ui-menu::part(trigger):hover { scale: 1.1; }</style>${fixture}`,
+        );
+        await open(menu(host));
+        await userEvent.hover(item(host, 0));
+        await settle();
+
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(box.top - anchor.bottom).toBeCloseTo(4, 0);
+        expect(box.left).toBeCloseTo(anchor.left, 0);
+    });
+
     it('is placed as it is shown, rather than a frame later at the corner', async () => {
         // `toggle` comes in a task of its own and a frame can be drawn before it, so nothing
         // here waits: what is read is the panel the first frame would draw.

@@ -193,6 +193,17 @@ ${both('')} {
         }
     }
 
+    /* pulse, the button's and the drawn controls': a ring of the accent leaving the boundary once
+       as the pointer arrives, on the same layer, and yielding as the bands do. */
+    @container ${is('hover-border', 'pulse')} {
+        ${free} {${round}
+        }
+
+        ${resting} {
+            animation: ui-pulse var(--ui-duration-400) var(--ui-easing-enter);
+        }
+    }
+
     @container ${is('hover-shadow', 'halo')} {
         ${both(unfocused)} {
             box-shadow: ${lights.halo};
@@ -289,13 +300,14 @@ ${both('')} {
     }
 }
 
-/* beacon: the ring at once, then a wave past it, as the drawn controls' is. */
-@container ${is('focus-border', 'beacon')} {
+/* pulse: the ring at once, then the pointer's pulse out across it in the ring's colour, as the
+   drawn controls' is. */
+@container ${is('focus-border', 'pulse')} {
     .glow::after {${round}
     }
 
     .glow:has(> :focus-visible)::after {
-        animation: ui-beacon var(--ui-duration-400) var(--ui-easing-enter);
+        animation: ui-pulse-focus var(--ui-duration-400) var(--ui-easing-enter);
     }
 }
 
@@ -423,7 +435,8 @@ ${both('')} {
 
 @container ${is('invalid-border', 'pulse')} {
     .glow:has(> [aria-invalid='true'])::before {
-        animation: ui-alarm var(--ui-duration-400) var(--ui-easing-enter) var(--ui-iteration-settle);
+        animation: ui-pulse-danger var(--ui-duration-400) var(--ui-easing-enter)
+            var(--ui-iteration-settle);
     }
 }
 
@@ -506,6 +519,10 @@ export const moments: readonly Moment[] = [
                     { name: 'none', says: 'The boundary keeps its colour.' },
                     { name: 'accent', says: 'The boundary takes the accent.' },
                     {
+                        name: 'pulse',
+                        says: 'A ring of the accent leaves the boundary once as the pointer arrives.',
+                    },
+                    {
                         name: 'orbit',
                         settles: true,
                         says: 'A light runs round on the boundary, three times, then rests.',
@@ -570,7 +587,10 @@ export const moments: readonly Moment[] = [
                         name: 'trace',
                         says: 'A line of the accent drawn round once inside the boundary, from the top, apart from the boundary and the ring.',
                     },
-                    { name: 'beacon', says: 'The ring, then a wave past it.' },
+                    {
+                        name: 'pulse',
+                        says: 'The ring, then a ring of its colour leaves the boundary once.',
+                    },
                     {
                         name: 'orbit',
                         settles: true,

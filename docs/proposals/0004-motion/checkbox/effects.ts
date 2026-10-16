@@ -39,6 +39,16 @@ const mark =
         }
     };
 
+/** Sends the pulse out from the control as the change checks it or clears it, on the layer the
+ *  control's lights are drawn on. */
+const ring = ({ host }: { host: HTMLElement }): void => {
+    const input = inner(host, 'input');
+
+    if (input !== null) {
+        replay(input, 'pulse', 'data-fx', '::after');
+    }
+};
+
 const sheet = String.raw`
 /* The controls' own transitions, written again with the zoom's and the blur's beside them: an
    element has one list, so a property this sheet eases goes in with the component's, and the
@@ -221,6 +231,11 @@ prototype({
                     name: 'spring',
                     only: 'ui-switch',
                     says: 'The track takes its colour at once; the thumb springs past its place and back.',
+                },
+                {
+                    name: 'pulse',
+                    says: 'The fill fades as it does today, and a ring of the accent leaves the control.',
+                    fire: ring,
                 },
             ],
         },

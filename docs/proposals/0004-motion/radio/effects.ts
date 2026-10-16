@@ -34,6 +34,15 @@ const mark =
         }
     };
 
+/** Sends the pulse out from the control the change chose, on the layer its lights are drawn on. */
+const ring = ({ host }: { host: HTMLElement }): void => {
+    const input = inner(host, 'input:checked');
+
+    if (input !== null) {
+        replay(input, 'pulse', 'data-fx', '::after');
+    }
+};
+
 const sheet = String.raw`
 /* The control's own transitions, written again with the zoom's and the blur's beside them, as the
    checkbox's are: an element has one list, so a property this sheet eases goes in with the
@@ -161,6 +170,11 @@ prototype({
                     name: 'draw',
                     says: 'The control takes its colour at once and the dot is swept round from the top.',
                     fire: mark('draw'),
+                },
+                {
+                    name: 'pulse',
+                    says: 'The fills fade as they do today, and a ring of the accent leaves the chosen control.',
+                    fire: ring,
                 },
             ],
         },

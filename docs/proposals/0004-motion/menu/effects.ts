@@ -1,5 +1,6 @@
 /**
- * `ui-menu`: what opening, closing and the caret can do.
+ * `ui-menu`: what opening, closing and the caret can do, and what a press, the pointer and focus
+ * can do to its trigger, as `../buttons.ts` draws them on every button.
  *
  * **Nothing here changes the panel's size.** The menu measures the panel to place it, so an
  * entrance that started scaled would be measured instead of the panel: the effects fade it, move
@@ -11,8 +12,14 @@
  *
  * An exit holds the panel on screen while it runs — `display` and `overlay` transitioned as
  * discrete values — and only when one is chosen, so a menu with no exit still closes at once.
+ *
+ * **The trigger is a secondary button**, which the component writes out, so it offers the
+ * button's effects, under the button's taste in every theme. Its host holds the panel and the
+ * items too, so they are answered on the trigger alone: the catalogue names it as its control, and
+ * the layers drawn on the host are drawn off the page's record of the pointer on it.
  */
 import { reference } from '../../../../src/reference.js';
+import * as trigger from '../buttons.js';
 import { prototype, queries } from '../motion.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
@@ -414,7 +421,8 @@ ${cascade}
 
 prototype({
     tags: ['ui-menu'],
-    sheet,
+    sheet: `${sheet}\n${trigger.sheet({ variants: { secondary: 'button' }, hovered: '[data-hover]' }, 'menu')}`,
+    control: 'button',
     moments: [
         {
             name: 'enter',
@@ -461,6 +469,7 @@ prototype({
                 { name: 'spin', says: 'Spins round once and a half.' },
             ],
         },
+        ...trigger.moments,
     ],
     refused: [
         {
@@ -479,5 +488,6 @@ prototype({
             name: 'typing',
             why: 'a menu is opened to be chosen from, and labels typed in one by one hide what the reader opened it for.',
         },
+        ...trigger.refused,
     ],
 });

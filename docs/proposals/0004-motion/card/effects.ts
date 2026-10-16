@@ -14,7 +14,7 @@
  * Moving the surface into the shadow root would lift the limit.
  */
 import { reference } from '../../../../src/reference.js';
-import { comet, far, orbit, scan, sheen, shimmer, sweeps } from '../controls.js';
+import { comet, far, orbit, scan, sheen, shimmer, sized, sweeps } from '../controls.js';
 import {
     curve,
     dissolve,
@@ -437,6 +437,23 @@ const sheet = String.raw`
         :host(:hover) [data-layer='border'] {
             opacity: 1;
             animation-play-state: running;
+        }
+    }
+}
+
+/* hover-border: pulse. The button's: a ring of the accent leaving the boundary once as the pointer
+   arrives, in the reach a button's takes. A shadow round the layer, which the band's mask would
+   cut away, so the layer is the whole box here. */
+@container ${is('hover-border', 'pulse')} {
+    [data-layer='border'] {
+        padding: 0;
+        mask: none;
+        opacity: 1;
+    }
+
+    @media (hover: hover) {
+        :host(:hover) [data-layer='border'] {
+            animation: ui-pulse var(--ui-duration-400) var(--ui-easing-enter);
         }
     }
 }
@@ -966,6 +983,8 @@ const sheet = String.raw`
     }
 }
 
+${sized.wide}
+
 ${sweeps}
 
 @keyframes ui-rest {
@@ -1073,6 +1092,10 @@ const page = prototype({
                             name: 'comet',
                             loops: true,
                             says: 'A comet of light runs round clear of the boundary, and waits where it was when the pointer leaves.',
+                        },
+                        {
+                            name: 'pulse',
+                            says: 'Once, as the pointer arrives: a ring of the accent leaves the boundary and fades.',
                         },
                     ],
                 },

@@ -695,6 +695,13 @@ export class UiMenu extends LitElement {
      * The arithmetic is `src/placement.ts`, which `<ui-tooltip>` reads as well — the issue
      * behind this component asked for one answer rather than two, and what differs between
      * the two callers is a preferred side and an alignment.
+     *
+     * **From where the trigger rests**, which is the host's own box: the trigger fills it, and
+     * nothing that moves the trigger moves the host. A host can move the trigger through its
+     * part, and a transform is drawn where it went and laid out where it was — grown by a tenth
+     * under the pointer that opened the menu, the trigger went back once the pointer was in the
+     * panel, and a panel hung from the trigger as drawn stayed 6px below it instead of 4,
+     * measured.
      */
     #place(): void {
         const root = document.documentElement;
@@ -704,7 +711,7 @@ export class UiMenu extends LitElement {
         }
 
         const placement = place(
-            this.#trigger.getBoundingClientRect(),
+            this.getBoundingClientRect(),
             this.#box,
             { width: root.clientWidth, height: root.clientHeight },
             'block-end',

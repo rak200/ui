@@ -22,7 +22,7 @@ Then open the address Vite prints. The dev server compiles `src/` directly, so n
 | `radio/`    | choose, pointer, focus, invalid                                    |
 | `input/`    | pointer, focus, invalid — for `ui-input` and `ui-textarea`         |
 | `select/`   | pointer, focus, invalid                                            |
-| `menu/`     | open, close, caret                                                 |
+| `menu/`     | open, close, caret, and the trigger's press, pointer and focus     |
 | `tooltip/`  | appear, leave, the next tip                                        |
 | `dialog/`   | entrance, exit, backdrop                                           |
 | `toast/`    | entrance, exit, time left, the stack                               |
@@ -73,23 +73,23 @@ spring shrink a button the pointer zoomed, and while they hold it smaller, the r
 round its edge, the pointer's or the focus's, step aside until it is let go: they are drawn on the
 host, at its size rather than the button's, and framed the pressed button — measured. A sink takes
 the raise away as well, since a button pressed into the page casts nothing under it. A ring fired on
-those layers — a pulse, an explode, a burst, a beacon — is drawn where the button is held instead,
-at the size, the turn and the place the pointer, the focus or the press holds it at, on the button's
-own transitions and at once for a press: at the host's size the pulse began 4.3px clear of a button
-the spring had pulled in, measured. A layer that comes into being with its effect starts where the
-button rests and moves with it, since begun where the button was going, the beacon ran 2px above a
-button the focus was still lifting. The pointer is drawn over the focus as the press is over the
-pointer: an effect the focus brings to a layer the pointer draws on too — the border's, the fill's —
-waits while the pointer rests on the button and plays again when it leaves. Written for the layer
-rather than for the focus, the focus's orbit stood in for Glass's edge under the pointer, and its
-comet put Matrix's trace out, measured. A drawn control's pointer yields to its focus instead, as a
-field's does: its halo and glow are drawn only where it has no focus. An error and a focus play
-together on the control itself. When each declared the control's one list of animations, one took
-the other's away — the focus never played on a radio in error, and an error that came while a
-checkbox or a switch had the focus never played on it, measured — so each kind writes its animation
-into a property of its own, which the one list reads: the focus's beacon or scan and the error's
-pulse and flash or split ran together, whichever came first, in all three engines. The rings are
-added to what is drawn under them rather than drawn in its place, so a theme's glow stays beside
+those layers — a pulse, an explode, a burst — is drawn where the button is held instead, at the
+size, the turn and the place the pointer, the focus or the press holds it at, on the button's own
+transitions and at once for a press: at the host's size the pulse began 4.3px clear of a button the
+spring had pulled in, measured. A layer that comes into being with its effect starts where the
+button rests and moves with it, since begun where the button was going, the pulse a focus sent out
+ran 2px above a button the focus was still lifting. The pointer is drawn over the focus as the press
+is over the pointer: an effect the focus brings to a layer the pointer draws on too — the border's,
+the fill's — waits while the pointer rests on the button and plays again when it leaves. Written for
+the layer rather than for the focus, the focus's orbit stood in for Glass's edge under the pointer,
+and its comet put Matrix's trace out, measured. A drawn control's pointer yields to its focus
+instead, as a field's does: its halo and glow are drawn only where it has no focus. An error and a
+focus play together on the control itself. When each declared the control's one list of animations,
+one took the other's away — the focus never played on a radio in error, and an error that came while
+a checkbox or a switch had the focus never played on it, measured — so each kind writes its
+animation into a property of its own, which the one list reads: the focus's pulse or scan and the
+error's pulse and flash or split ran together, whichever came first, in all three engines. The rings
+are added to what is drawn under them rather than drawn in its place, so a theme's glow stays beside
 them; the one exception is the glow a theme lights the control with, which Chromium draws
 transparent there, measured.
 
@@ -153,12 +153,14 @@ CSS cannot do it alone, all in `motion.ts`:
 - **a pointer engine** that publishes where the pointer is, for the effects that follow it (S3): one
   passive listener, one write a frame, and nothing at all for a reader who asked for less motion or
   has no hover;
-- **a focus state and a press state on the host**, for an effect drawn on the host rather than
-  inside it. No engine lets a host match `:focus-visible` for the control in its shadow root — it
-  matches `:focus` and `:focus-within`, which a click sets too — so an attribute stands in for the
-  custom state a component would set, `:host(:state(focus-visible))`. Under Space the control is
-  `:active` and the host is not, in Chromium and WebKit, where a pointer's press makes both, so a
-  second stands in for `:host(:state(pressed))`, set only once the control is `:active`;
+- **a focus state, a press state and a pointer state on the host**, for an effect drawn on the host
+  rather than inside it. No engine lets a host match `:focus-visible` for the control in its shadow
+  root — it matches `:focus` and `:focus-within`, which a click sets too — so an attribute stands in
+  for the custom state a component would set, `:host(:state(focus-visible))`. Under Space the
+  control is `:active` and the host is not, in Chromium and WebKit, where a pointer's press makes
+  both, so a second stands in for `:host(:state(pressed))`, set only once the control is `:active`.
+  Where the host holds more than its control, as the menu's holds its panel, a third stands in for
+  `:host(:state(hover))`, the pointer on the control, and all three are that control's alone;
 - **an arrival and a departure**, for an entrance and an exit: one the sheet draws plays as the
   instance is inserted, and one a script draws is fired then — the card's reintegrations, which put
   it together from copies of itself, as the reference's disintegration takes one apart. A choice
@@ -255,56 +257,57 @@ its effect — a tooltip's fade — and a component's own runs over it there. Th
 the button still under the pointer, in the hover colour of its `highlight`, raises it with `raise`
 and sends a ring out with `pulse`; has a press shrink it with `squish`, sink it with `sink`, take
 the pressed colour with `highlight` and throw a disc out from under it with `bloom`; and has a focus
-lift it with `lift` and `raise` and send the beacon out past the ring, its fill left alone. A theme
-that names a moment for the page clears the default theme's taste for one component there, so under
-Matrix the pointer zooms the button and traces its edge, and under Glass it leans the button, lights
-it with the spotlight where the hover colour was and lights its edge nearest the pointer with
-`edge`. A theme can name one for the component as well: Matrix has the pointer light the button with
-`neon`, since the `glow` it names for the page is the card's halo and not one the button offers; has
-a press break it with `shatter`, leave its colour alone, throw chips of the accent off its edge with
-`fragments` and throw the disc out with `bloom`; and has a focus make its label jump and split with
-`glitch`, send a band of light across it with `scan`, burst light out round it with `burst` and run
-a comet round over the ring with `comet`. Glass has the pointer raise the button with `raise`, the
-`cast` it names for the page being the card's, and has a press spring it in with `spring`, spread a
-circle from where it was pressed with `ripple`, sink it with `sink` and send a ring out from its
-edge with `pulse`; and has a focus leave it where it is, sweep a sheen across it with `shimmer`,
-light a line round it that glows out and back with `neon` and run a light round on its edge with
-`orbit`. The default theme also has the checkbox draw its tick with `draw`, the switch spring its
-thumb with `spring`, and the radio grow its dot into place with `pop`, and Matrix and Glass keep all
-three, naming no `check` of their own. The default theme slides the toast in with `slide-elastic`
-and out with `slide`, over the page's fade, and runs its time left down round its dismiss button
-with `ring` and its toaster's stack into place with `spring`, under the toaster's own name,
-`--ui-taste-toaster-stack`, the stack being the toaster's; Matrix and Glass keep both, naming
-neither for the page, and Matrix puts it together and blows it away with `wind`, and Glass brings it
-into focus with `refocus` and lets it go with `defocus`, where the card and the dialog dissolve: the
-toast kept its glass through the blur in Chromium and in Firefox's video, and Firefox takes a
-glass's blur away for as long as the grain's filter is on. Each theme names the icon's entrance over
-the one it names for the page: the icon draws its strokes in with `draw` under the default theme,
-grows in with `pop` under Matrix and comes into focus with `refocus` under Glass; and under the
-pointer, over the page's `glow`, Matrix makes it jump and split with `glitch` and Glass grows it
-with `pop`. A table's row arrives in the accent's tint with `glow` in every theme, which Matrix and
-Glass name again, since the entrance each names for the page, which the table does not offer, would
-clear the default theme's; and under the pointer it takes the hover colour with `highlight`, but
-under Glass, whose hover colour is opaque and hid the page its glass lets through, it turns to that
-glass with `frost`: the page behind the row blurred under a veil of the text at 0.12, which held it
-1.33:1 or more from itself at rest where the hover colour held 1.26. Where there is no glass,
-`frost` is the hover colour. The tooltip rises away from its trigger with `rise` and sinks back
-toward it with `sink` under the default theme, is typed in with `typing` and flickers out with
-`glitch` under Matrix, and comes into focus with `refocus` and goes out of it with `defocus` under
-Glass, over the entrance and the exit each names for the page; a tip that opens as another closes
-glides from where the other was with `glide` in every theme, Matrix and Glass naming no `next`. The
-menu's panel is there at once and its items come into it one after another with `cascade`, and it is
-covered back toward the trigger with `fold`, under the default theme; it jumps in and flickers out
-with `glitch` under Matrix, and comes into focus and blurs away with `refocus` and `defocus` under
-Glass; and its caret flips over with `flip` in every theme. A form's controls — the input, the
-textarea, the select, the checkbox, the switch and the radio — take one taste, so a moment does the
-same on each. Under the pointer the boundary darkens as it does today, with `highlight`, a light of
-the accent comes round the control with `glow`, and its fill and its place are left as they are,
-with `none`, in every theme. Matrix and Glass name the pointer again, since the pointer's kinds each
-names for the page clear the default theme's: with the form's taste cleared, Matrix's `tint` filled
-a field and its `zoom` grew a checkbox a tenth, and Glass's `cast`, which no control offers, took a
-field's light away, in Chromium and Firefox. At the focus the default theme sends a wave past the
-ring with `beacon`, lights the control from inside its boundary with `inner`, takes its label to the
+lift it with `lift` and `raise` and send a pulse out across the ring with `pulse`, its fill left
+alone. A theme that names a moment for the page clears the default theme's taste for one component
+there, so under Matrix the pointer zooms the button and traces its edge, and under Glass it leans
+the button, lights it with the spotlight where the hover colour was and lights its edge nearest the
+pointer with `edge`. A theme can name one for the component as well: Matrix has the pointer light
+the button with `neon`, since the `glow` it names for the page is the card's halo and not one the
+button offers; has a press break it with `shatter`, leave its colour alone, throw chips of the
+accent off its edge with `fragments` and throw the disc out with `bloom`; and has a focus make its
+label jump and split with `glitch`, send a band of light across it with `scan`, burst light out
+round it with `burst` and run a comet round over the ring with `comet`. Glass has the pointer raise
+the button with `raise`, the `cast` it names for the page being the card's, and has a press spring
+it in with `spring`, spread a circle from where it was pressed with `ripple`, sink it with `sink`
+and send a ring out from its edge with `pulse`; and has a focus leave it where it is, sweep a sheen
+across it with `shimmer`, light a line round it that glows out and back with `neon` and run a light
+round on its edge with `orbit`. The default theme also has the checkbox draw its tick with `draw`,
+the switch spring its thumb with `spring`, and the radio grow its dot into place with `pop`, and
+Matrix and Glass keep all three, naming no `check` of their own. The default theme slides the toast
+in with `slide-elastic` and out with `slide`, over the page's fade, and runs its time left down
+round its dismiss button with `ring` and its toaster's stack into place with `spring`, under the
+toaster's own name, `--ui-taste-toaster-stack`, the stack being the toaster's; Matrix and Glass keep
+both, naming neither for the page, and Matrix puts it together and blows it away with `wind`, and
+Glass brings it into focus with `refocus` and lets it go with `defocus`, where the card and the
+dialog dissolve: the toast kept its glass through the blur in Chromium and in Firefox's video, and
+Firefox takes a glass's blur away for as long as the grain's filter is on. Each theme names the
+icon's entrance over the one it names for the page: the icon draws its strokes in with `draw` under
+the default theme, grows in with `pop` under Matrix and comes into focus with `refocus` under Glass;
+and under the pointer, over the page's `glow`, Matrix makes it jump and split with `glitch` and
+Glass grows it with `pop`. A table's row arrives in the accent's tint with `glow` in every theme,
+which Matrix and Glass name again, since the entrance each names for the page, which the table does
+not offer, would clear the default theme's; and under the pointer it takes the hover colour with
+`highlight`, but under Glass, whose hover colour is opaque and hid the page its glass lets through,
+it turns to that glass with `frost`: the page behind the row blurred under a veil of the text at
+0.12, which held it 1.33:1 or more from itself at rest where the hover colour held 1.26. Where there
+is no glass, `frost` is the hover colour. The tooltip rises away from its trigger with `rise` and
+sinks back toward it with `sink` under the default theme, is typed in with `typing` and flickers out
+with `glitch` under Matrix, and comes into focus with `refocus` and goes out of it with `defocus`
+under Glass, over the entrance and the exit each names for the page; a tip that opens as another
+closes glides from where the other was with `glide` in every theme, Matrix and Glass naming no
+`next`. The menu's panel is there at once and its items come into it one after another with
+`cascade`, and it is covered back toward the trigger with `fold`, under the default theme; it jumps
+in and flickers out with `glitch` under Matrix, and comes into focus and blurs away with `refocus`
+and `defocus` under Glass; its caret flips over with `flip` in every theme; and its trigger, a
+secondary button, takes the button's taste in each. A form's controls — the input, the textarea, the
+select, the checkbox, the switch and the radio — take one taste, so a moment does the same on each.
+Under the pointer the boundary darkens as it does today, with `highlight`, a light of the accent
+comes round the control with `glow`, and its fill and its place are left as they are, with `none`,
+in every theme. Matrix and Glass name the pointer again, since the pointer's kinds each names for
+the page clear the default theme's: with the form's taste cleared, Matrix's `tint` filled a field
+and its `zoom` grew a checkbox a tenth, and Glass's `cast`, which no control offers, took a field's
+light away, in Chromium and Firefox. At the focus the default theme sends a pulse out across the
+ring with `pulse`, lights the control from inside its boundary with `inner`, takes its label to the
 accent with `accent` and leaves its fill alone; Matrix draws a line round the control with `trace` —
 inside a field's boundary, and outside a drawn control's ring — holds a light round it with `glow`,
 sends a band of light across it with `scan` and lights its label with `glow`; and Glass runs a light
@@ -448,43 +451,61 @@ the `toggle` event that placed it, in Chromium. Held on the page as it closed, t
 items out in a row, because the direction was written for the open state alone; the component writes
 it for both now. A clip stands 3rem clear of the panel, past the 32px Glass's shadow falls.
 
+**A menu's trigger answers as a button does.** It is a secondary button the component writes out, so
+it offers the button's effects for a press, the pointer and focus, from the module the two pages
+share, `buttons.ts`, and takes the button's taste under every theme. Its host holds the panel and
+the items as well, so only the trigger answers: the catalogue names it as the control its moments
+are answered on, and an item pressed, pointed at or reached by the keys changed nothing on the
+trigger, in all three engines. The layers the trigger draws on its host are drawn off the page's
+record of the pointer on the trigger rather than off the host's own `:hover` and `:active`, which
+take the panel in: drawn off those, Firefox held the trigger's raise and its trace while the pointer
+was in the panel and put the border's layer out while an item was pressed, where Chromium and WebKit
+took the panel into neither — measured. The record is set as the pointer arrives on the trigger,
+heard on the trigger itself, since that arrival is not composed out of the shadow root, and once:
+Chromium dispatches two as the pointer arrives, Firefox and WebKit one. The menu hangs its panel
+from where the trigger rests now, the host's box, which the trigger fills and no effect moves. Hung
+from the trigger as drawn when the menu opened, the panel came to rest anywhere from 1.6px over the
+trigger to 7px clear of it, and up to 6.5px along, whatever movement the pointer, the press or the
+focus had brought, in Chromium and Firefox; hung from the host, it rests 4px below and level with
+the trigger's start under every movement, in all three engines.
+
 **A field's effects are sorted by kind, as the button's are, and none moves it.** Under the pointer
-it has a border, a shadow and a fill; at the focus a border, which takes the accent, draws a line
-along the bottom edge from the middle or from where the text starts, draws a line round inside the
-boundary, sends a wave past the ring, runs a light round on the boundary or a comet round clear of
-it, and a shadow, a fill and a label; in error a border, a fill and a message. Each kind draws on a
-layer of its own, so one of each draws at once: on a focused field in error, a neon, a scan and a
-flash ran on the control together, with an orbit round it, a pulse off its boundary, the label in
-the accent and the message dropping in, in all three engines. Four kinds animate the control itself
-— the pointer's fill, the focus's shadow and fill, and an error's fill — so each writes its
-animations into a property of its own, and the control's one list of animations reads the four. The
-trace's line runs 2px inside the boundary and is 2px wide, as the ring runs outside it: drawn across
-the boundary, from 2px out to 1px in, as the button's is, it filled the gap the ring keeps, and the
-ring, the line and the boundary ran together as one line 5px wide, in every theme; inside, the three
-stood apart in all three engines — measured. The pointer's shadow and fill yield to the focus, and a
-disabled field answers none of the pointer's effects. The pointer's orbit and comet yield to the
-focus too, and to an error, whose layer they are drawn on; they are shown through a property of
-their own rather than through their opacity, which that layer holds at full: eased, the opacity ran
-down from there each time an error was taken away, with the band drawn where it stood, in all three
-engines — measured. The focus's `blur` is drawn for Glass, the one theme whose field lets the page
-through: the field takes the theme's glass, and in Chromium the steepest step between neighbouring
-pixels of the page behind it went from 42 to 20 in the light scheme and from 49 to 16 in the dark.
-Firefox's video drew it too, WebKit is unmeasured, as the backdrops are, and the text held 15.3:1 or
-more over it in both schemes. Where there is no glass, under another theme or with Glass standing
-down, it changes nothing. An error's effects on the field play four rounds and rest, as the drawn
-controls' do, and Play the error again starts them over. The label's accent is mixed a fifth of the
-way to the text's colour: alone, it was 4.31:1 on Matrix's light page and on Glass's dark one, and
-mixed, 5.4:1 or more in every theme and scheme. The flash mixes a fifth of the danger into the
-surface rather than laying the danger over it, as the drawn controls once did, which took a field's
-text to 3.14:1 at each round's start on Matrix's light page; mixed in, the text held 4.74:1 at the
-least — measured — and the drawn controls take the same flash now, so the two look alike. The
-select's page draws the same effects, from the module the two pages share, `fields.ts`. Its caret is
-the control's background, two triangles the component paints there, so the shimmer and the scan
-write the list again with their light in front of them and move the light alone, through a property
-of its own: the caret stayed where the component puts it, left to right and right to left, under the
-pointer and at the focus, in all three engines. Over the select the label in the accent held 5.4:1
-or more, the text 4.74:1 at the least at the flash's peak and 15.5:1 or more over Glass's blur —
-measured.
+it has a border, which can send a pulse out, a shadow and a fill; at the focus a border, which takes
+the accent, draws a line along the bottom edge from the middle or from where the text starts, draws
+a line round inside the boundary, sends a pulse out across the ring, runs a light round on the
+boundary or a comet round clear of it, and a shadow, a fill and a label; in error a border, a fill
+and a message. Each kind draws on a layer of its own, so one of each draws at once: on a focused
+field in error, a neon, a scan and a flash ran on the control together, with an orbit round it, a
+pulse off its boundary, the label in the accent and the message dropping in, in all three engines.
+Four kinds animate the control itself — the pointer's fill, the focus's shadow and fill, and an
+error's fill — so each writes its animations into a property of its own, and the control's one list
+of animations reads the four. The trace's line runs 2px inside the boundary and is 2px wide, as the
+ring runs outside it: drawn across the boundary, from 2px out to 1px in, as the button's is, it
+filled the gap the ring keeps, and the ring, the line and the boundary ran together as one line 5px
+wide, in every theme; inside, the three stood apart in all three engines — measured. The pointer's
+shadow and fill yield to the focus, and a disabled field answers none of the pointer's effects. The
+pointer's orbit and comet yield to the focus too, and to an error, whose layer they are drawn on;
+they are shown through a property of their own rather than through their opacity, which that layer
+holds at full: eased, the opacity ran down from there each time an error was taken away, with the
+band drawn where it stood, in all three engines — measured. The focus's `blur` is drawn for Glass,
+the one theme whose field lets the page through: the field takes the theme's glass, and in Chromium
+the steepest step between neighbouring pixels of the page behind it went from 42 to 20 in the light
+scheme and from 49 to 16 in the dark. Firefox's video drew it too, WebKit is unmeasured, as the
+backdrops are, and the text held 15.3:1 or more over it in both schemes. Where there is no glass,
+under another theme or with Glass standing down, it changes nothing. An error's effects on the field
+play four rounds and rest, as the drawn controls' do, and Play the error again starts them over. The
+label's accent is mixed a fifth of the way to the text's colour: alone, it was 4.31:1 on Matrix's
+light page and on Glass's dark one, and mixed, 5.4:1 or more in every theme and scheme. The flash
+mixes a fifth of the danger into the surface rather than laying the danger over it, as the drawn
+controls once did, which took a field's text to 3.14:1 at each round's start on Matrix's light page;
+mixed in, the text held 4.74:1 at the least — measured — and the drawn controls take the same flash
+now, so the two look alike. The select's page draws the same effects, from the module the two pages
+share, `fields.ts`. Its caret is the control's background, two triangles the component paints there,
+so the shimmer and the scan write the list again with their light in front of them and move the
+light alone, through a property of its own: the caret stayed where the component puts it, left to
+right and right to left, under the pointer and at the focus, in all three engines. Over the select
+the label in the accent held 5.4:1 or more, the text 4.74:1 at the least at the flash's peak and
+15.5:1 or more over Glass's blur — measured.
 
 **A drawn control's effects are sorted by kind, as a field's are.** The checkbox, the switch and the
 radio have the field's kinds — under the pointer a border, a shadow, a fill and their place; at the
@@ -511,40 +532,61 @@ and on the checkbox's and the radio's pages it held 5.4:1 or more in every theme
 the accent alone fell to 4.23:1 — measured.
 
 **An effect of one name looks the same wherever it is drawn.** The halo, the glow and the red glow
-are one definition, which the fields and the drawn controls draw from, and the beacon and the neon
-are one shape in two sizes: the beacon reaching 10px and the neon's widest light blurred over 24px
-on a drawn control, and 12px and 40px on the button and a field, a field being the button's size.
-Before, under the pointer a field's glow was two thirds of a checkbox's beside it and its halo half
-as wide, and a field's beacon and neon were a checkbox's. The orbit and the comet are one definition
-each, under the pointer and at the focus, on every component that offers either — the button, the
-fields and the drawn controls in both moments, the card under the pointer. The orbit is the card's:
-a light that runs round on the boundary and never past it, in a band from the boundary's outer edge
-2px in, three laps of 1.6s, a third longer than the card's took and ending where four of the loop's
-1.2s do, and then it fades. The comet is the button's: the orbit's light, in a band from 2px out to
-5px, over where the focus ring is drawn, a lap every 2.4s; under the pointer it runs for as long as
-the pointer rests and is held where it was when the pointer leaves, and at the focus, which can rest
-for minutes, it runs two laps and fades. Before, the orbit ran from 2px out to 1px in on the button
-under the pointer and from 4px out to 7px at every focus, and the button's comet from 6px out to 9px
-at its focus. Each band landed where it is written on every component, in all three engines —
-measured. The comet is drawn after the control, so it passes over the ring rather than under it, in
-all three engines, and its tail is the accent a step from the page, as the orbit's is, rather than
-the accent the ring takes: where the ring is the accent, which is every theme and scheme but
-Matrix's dark one, the tail in the accent was 1.00 to 1.01:1 from the ring, and only the comet's
-outer pixel and its head stood out over it; a step from the page, the tail is 1.35 to 1.86:1 from
-the ring — measured. The card had left out a light that circles for as long as the pointer rests,
-since a card is read with the pointer on it; it offers the comet now, and that refusal is gone. The
-shimmer and the scan are the button's, one definition each, on every component with a pointer or a
-focus to answer: the button, the fields and the drawn controls in both moments, and the card, a
-table's row and the icon under the pointer. The shimmer is a sheen ten degrees off upright, three
-quarters as wide as what it crosses, swept across from before its start to past its end, a sweep in
-1.5s for as long as the pointer rests, and four of the loop's 1.2s at the focus, which can rest for
-minutes, before it rests. The scan is a band of light crossing from above to below once as its
-moment arrives, in 520ms: two fifths of the height, as on the button, and never more than a rem, so
-across a card it is still a line. Both are drawn in the accent at half its strength over a surface,
-and over a fill in that fill lifted toward white, as on the button's primary. Before, a field's and
-a drawn control's scan was a band two fifths of their width crossing from the start to the end, at
-the focus only, in a fifth of the accent and over a full control in the colour its mark is drawn in.
-The icon's are cut to its strokes, on a layer over the glyph: a mask is a picture, which cannot read
-the glyph the page draws, so the page draws the glyph into one as the pointer arrives. Each crossed
-the way it is written, on every component, in all three engines — measured. No band runs in the gap
-a control's focus ring keeps: the trace runs inside a field and outside a drawn control's ring.
+are one definition, which the fields and the drawn controls draw from, and the pulse and the neon
+are one shape in two sizes: the pulse reaching 10px and the neon's widest light blurred over 24px on
+a drawn control, and 12px and 40px on the button and a field, a field being the button's size, and a
+card taking the button's pulse. Before, under the pointer a field's glow was two thirds of a
+checkbox's beside it and its halo half as wide, and a field's neon was a checkbox's, as was the wave
+its focus sent past the ring. The orbit and the comet are one definition each, under the pointer and
+at the focus, on every component that offers either — the button, the fields and the drawn controls
+in both moments, the card under the pointer. The orbit is the card's: a light that runs round on the
+boundary and never past it, in a band from the boundary's outer edge 2px in, three laps of 1.6s, a
+third longer than the card's took and ending where four of the loop's 1.2s do, and then it fades.
+The comet is the button's: the orbit's light, in a band from 2px out to 5px, over where the focus
+ring is drawn, a lap every 2.4s; under the pointer it runs for as long as the pointer rests and is
+held where it was when the pointer leaves, and at the focus, which can rest for minutes, it runs two
+laps and fades. Before, the orbit ran from 2px out to 1px in on the button under the pointer and
+from 4px out to 7px at every focus, and the button's comet from 6px out to 9px at its focus. Each
+band landed where it is written on every component, in all three engines — measured. The comet is
+drawn after the control, so it passes over the ring rather than under it, in all three engines, and
+its tail is the accent a step from the page, as the orbit's is, rather than the accent the ring
+takes: where the ring is the accent, which is every theme and scheme but Matrix's dark one, the tail
+in the accent was 1.00 to 1.01:1 from the ring, and only the comet's outer pixel and its head stood
+out over it; a step from the page, the tail is 1.35 to 1.86:1 from the ring — measured. The card had
+left out a light that circles for as long as the pointer rests, since a card is read with the
+pointer on it; it offers the comet now, and that refusal is gone. The shimmer and the scan are the
+button's, one definition each, on every component with a pointer or a focus to answer: the button,
+the fields and the drawn controls in both moments, and the card, a table's row and the icon under
+the pointer. The shimmer is a sheen ten degrees off upright, three quarters as wide as what it
+crosses, swept across from before its start to past its end, a sweep in 1.5s for as long as the
+pointer rests, and four of the loop's 1.2s at the focus, which can rest for minutes, before it
+rests. The scan is a band of light crossing from above to below once as its moment arrives, in
+520ms: two fifths of the height, as on the button, and never more than a rem, so across a card it is
+still a line. Both are drawn in the accent at half its strength over a surface, and over a fill in
+that fill lifted toward white, as on the button's primary. Before, a field's and a drawn control's
+scan was a band two fifths of their width crossing from the start to the end, at the focus only, in
+a fifth of the accent and over a full control in the colour its mark is drawn in. The icon's are cut
+to its strokes, on a layer over the glyph: a mask is a picture, which cannot read the glyph the page
+draws, so the page draws the glyph into one as the pointer arrives. Each crossed the way it is
+written, on every component, in all three engines — measured. No band runs in the gap a control's
+focus ring keeps: the trace runs inside a field and outside a drawn control's ring.
+
+**The pulse is the one ring that leaves a boundary.** A band leaves the boundary and fades, from
+nothing to 12px on the button, the menu's trigger, a field and a card and to 10px on a drawn
+control, in 520ms, in the colour of what it answers: the accent under the pointer, at a press and on
+a checkbox's, a switch's or a radio's change; the ring's own at the focus, out across the ring,
+which is drawn at once as it is today; and the danger in error, four rounds and then it rests. Each
+colour is a keyframes of its own, since a drawn control plays a focus's and an error's at once from
+one list. The focus's had been a second effect, the beacon, from 2px out to 12px at 0.55 where the
+pulse ran from the edge to 13px at 0.5, and from 80ms on the two reached within a pixel of each
+other, a tenth of each other's strength apart, on one button in both schemes, in Chromium —
+measured; a drawn control's pulse and an error's had reached 8px. A checkbox's, a switch's or a
+radio's change sends it out on the control's layer of lights, added to them, whichever way the
+change went; the pointer's plays on the control itself under the same name, so the change's mark
+goes when its own ring ends and not when the pointer's does — the pointer's ended first and the
+change's ran its whole length, in all three engines. The icon's follows its strokes, as its glow
+does, where a shadow would light the square round them: a copy of the glyph under it, which the page
+makes as the pointer arrives, its strokes widened by four of the glyph's 24 units either side and
+faded as one, so where two strokes meet they are not drawn twice as strong. A table's row leaves it
+out: a ring leaving a row ran over the rows above and below, and the table's frame cut it off at the
+sides, in all three engines; drawn inside the row instead, WebKit painted none of it — measured.

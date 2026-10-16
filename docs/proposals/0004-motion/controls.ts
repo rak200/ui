@@ -267,6 +267,14 @@ ${host} input::after {
     transition: box-shadow var(--ui-duration-200) var(--ui-easing-enter);
 }
 
+/* The check's pulse, as a change fires it, checked or cleared: a ring of the accent leaving the
+   boundary, on the lights' layer and added to them, since the control's own list is the pointer's,
+   the focus's and an error's. */
+${host} input[data-fx='pulse']::after {
+    animation: ui-pulse var(--ui-duration-400) var(--ui-easing-enter);
+    animation-composition: add;
+}
+
 /* The pointer's bands and the focus's, on two layers the label lays over the control from where
    the control starts. The pointer's is the label's ::before, which comes before the control, so it
    is raised over it: the orbit runs on the control's own boundary. Both are always there, empty
@@ -401,10 +409,10 @@ ${host} ${label}::before {
 
 /* ——— Focus. Every effect keeps the ring, drawn at once, as the component draws it today. ——— */
 
-/* border: beacon, after the ring and outside it. */
-@container ${is('focus-border', 'beacon')} {
+/* border: pulse, the ring at once and the pointer's pulse out across it, in the ring's colour. */
+@container ${is('focus-border', 'pulse')} {
     ${host} input:focus-visible {
-        --ui-run-focus-border: ui-beacon var(--ui-duration-400) var(--ui-easing-enter);
+        --ui-run-focus-border: ui-pulse-focus var(--ui-duration-400) var(--ui-easing-enter);
     }
 }
 
@@ -542,7 +550,7 @@ ${host} ${label}::before {
    message away. ——— */
 @container ${is('invalid-border', 'pulse')} {
     ${host} ${invalid} {
-        --ui-run-error-border: ui-alarm var(--ui-duration-400) var(--ui-easing-enter)
+        --ui-run-error-border: ui-pulse-danger var(--ui-duration-400) var(--ui-easing-enter)
             var(--ui-iteration-settle);
     }
 }
@@ -605,24 +613,6 @@ ${host} ${label}::before {
 /** The keyframes those rules play, and a field's: once in a sheet, however many elements it
  *  draws. */
 export const keyframes = String.raw`
-@keyframes ui-pulse {
-    from {
-        box-shadow: 0 0 0 0 rgb(from var(--ui-color-accent) r g b / 0.5);
-    }
-    to {
-        box-shadow: 0 0 0 0.5rem rgb(from var(--ui-color-accent) r g b / 0);
-    }
-}
-
-@keyframes ui-alarm {
-    from {
-        box-shadow: 0 0 0 0 rgb(from var(--ui-color-danger) r g b / 0.5);
-    }
-    to {
-        box-shadow: 0 0 0 0.5rem rgb(from var(--ui-color-danger) r g b / 0);
-    }
-}
-
 /* From a fifth of the danger mixed into the surface rather than the danger laid over it, since a
    field has text in it to read: laid over, it took the text of a field in error to 3.14:1 at each
    round's start, on Matrix's light page, and mixed in, to 4.74:1 at the least, in every theme and
@@ -719,8 +709,8 @@ ${sweeps}
 `;
 
 /**
- * The beacon's wave and the neon's rounds, sized for what they light: `small` for a drawn
- * control, 24px across, and `wide` for one the size of a button — the button and a field. The
+ * The pulse and the neon's rounds, sized for what they light: `small` for a drawn control, 24px
+ * across, and `wide` for one the size of a button or larger — the button, a field and a card. The
  * shape and the colours are one; only the reach grows with the control.
  *
  * The neon's line holds through the whole loop, so the trough is lit too: a glow alone, 2px at its
@@ -730,13 +720,36 @@ ${sweeps}
  * halfway and jumps — measured; Firefox and WebKit interpolate it.
  */
 export const sized = {
-    small: neon(10, [4, 1, 10, 2], [8, 2, 24, 6]),
-    wide: neon(12, [6, 1, 16, 3], [12, 3, 40, 10]),
+    small: `${pulse(10)}\n${neon([4, 1, 10, 2], [8, 2, 24, 6])}`,
+    wide: `${pulse(12)}\n${neon([6, 1, 16, 3], [12, 3, 40, 10])}`,
 } as const;
 
-/** The beacon's keyframes reaching `reach` px, and the neon's from its near lights to its far. */
+/**
+ * The pulse's keyframes: a band leaving the boundary out to `reach` px and fading, in the colour of
+ * what it answers — the pointer and a press in the accent, the focus in its own colour, an error in
+ * the danger. One shape in three colours, each under a name of its own, since a drawn control plays
+ * a focus's and an error's at once, from one list.
+ */
+function pulse(reach: number): string {
+    const ring = (name: string, colour: string): string => String.raw`
+@keyframes ${name} {
+    from {
+        box-shadow: 0 0 0 0 rgb(from ${colour} r g b / 0.5);
+    }
+    to {
+        box-shadow: 0 0 0 ${String(reach)}px rgb(from ${colour} r g b / 0);
+    }
+}`;
+
+    return [
+        ring('ui-pulse', 'var(--ui-color-accent)'),
+        ring('ui-pulse-focus', 'var(--ui-color-focus)'),
+        ring('ui-pulse-danger', 'var(--ui-color-danger)'),
+    ].join('\n');
+}
+
+/** The neon's keyframes, from its near lights to its far. */
 function neon(
-    reach: number,
     [nearBlur, nearSpread, farBlur, farSpread]: readonly number[],
     [peakBlur, peakSpread, haloBlur, haloSpread]: readonly number[],
 ): string {
@@ -746,15 +759,6 @@ function neon(
             0 0 ${farBlur}px ${farSpread}px rgb(from var(--ui-color-accent) r g b / 0.35)`;
 
     return String.raw`
-@keyframes ui-beacon {
-    from {
-        box-shadow: 0 0 0 2px rgb(from var(--ui-color-focus) r g b / 0.55);
-    }
-    to {
-        box-shadow: 0 0 0 ${reach}px rgb(from var(--ui-color-focus) r g b / 0);
-    }
-}
-
 @keyframes ui-neon {
     from {
         box-shadow:${near};
@@ -855,7 +859,10 @@ export function moments(preview: string): readonly Moment[] {
                     label: 'Border',
                     effects: [
                         { name: 'none', today: true, says: 'The ring, drawn at once.' },
-                        { name: 'beacon', says: 'The ring, then a wave past it.' },
+                        {
+                            name: 'pulse',
+                            says: 'The ring, then a ring of its colour leaves the boundary once.',
+                        },
                         {
                             name: 'orbit',
                             settles: true,
