@@ -14,7 +14,29 @@
  * Moving the surface into the shadow root would lift the limit.
  */
 import { reference } from '../../../../src/reference.js';
-import { comet, far, orbit, scan, sheen, shimmer, sized, sweeps } from '../controls.js';
+import {
+    comet,
+    edge,
+    enters,
+    floods,
+    focal,
+    lights,
+    line,
+    moves,
+    orbit,
+    ripple,
+    scan,
+    sheen,
+    shimmer,
+    sized,
+    spotlit,
+    sweeps,
+    thrown,
+    tinted,
+    trace,
+    waves,
+} from '../controls.js';
+import { focus, hover } from '../moments.js';
 import {
     curve,
     dissolve,
@@ -30,61 +52,38 @@ import {
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
 const is = queries('card');
 
-/*
- * The accent the fill takes, in both of its effects. How far it goes is what the text in the
- * card allows, and two shipped palettes allow little in the light scheme: Matrix's muted text
- * clears 4.5:1 there by 6%, and Glass's error message is at its floor over the darkest page
- * the theme takes. A plain 8% of the accent left them at 4.32 and 4.06:1. So the light mix is
- * held at a lightness of at least 0.98, and the dark one, with room there, is 15%: every
- * shipped palette's text then holds 4.5:1 on the hovered card — measured, Glass at both of
- * its page limits.
- *
- * A translucent surface takes it at 0.6 at least, laid over its own glass: at the glass's
- * opacity the light mix is white over white glass, and nothing showed.
- */
-const tint = String.raw`light-dark(
-    oklch(
-        from color-mix(
-                in oklab,
-                ${reference('--ui-color-surface-raised')} 88%,
-                ${reference('--ui-color-accent')}
-            )
-            max(l, 0.98) c h / max(alpha, 0.6)
-    ),
-    oklch(
-        from color-mix(
-                in oklab,
-                ${reference('--ui-color-surface-raised')} 85%,
-                ${reference('--ui-color-accent')}
-            )
-            l c h / max(alpha, 0.6)
-    )
-)`;
+/** A card without a focus the reader can see in it, which the pointer's effects are drawn on,
+ *  since they yield to it. Under :where(), so each weighs what it did. */
+const calm = ':where(:not([data-focus-visible]))';
 
-/**
- * Publishes where the pointer came onto the card, for the flood to spread from, and then where
- * it leaves, for the flood to drain toward. Measured once each way rather than followed, so the
- * circle's centre holds still while it grows; held to the card's box, because the first point a
- * fast pointer is seen at outside it can be a long way off.
- */
-const flood = ({ host, event }: Firing): void => {
-    const layer = inner(host, "[data-layer='fill']");
+/** The card's raise: the theme's lift drawn a second time, with a drop under it, and on a dark
+ *  page, where a shadow barely shows, the boundary catching the light. */
+const raised = String.raw`
+        color: ${reference('--ui-color-accent')};
+        box-shadow:
+            ${reference('--ui-elevation-raised')},
+            inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.22)),
+            inset 0 0 0 1px light-dark(transparent, rgb(255 255 255 / 0.12)),
+            0 0.75rem 1.75rem -0.5rem light-dark(rgb(0 0 0 / 0.35), transparent),
+            0 1rem 2.5rem -0.25rem light-dark(transparent, rgb(0 0 0 / 0.9)),
+            0 0.25rem 0.75rem light-dark(transparent, rgb(0 0 0 / 0.5));`;
 
-    if (layer === null || !(event instanceof PointerEvent)) {
-        return;
-    }
+/** The card's glow: a light of the accent round it, at the card's size. */
+const glowing = String.raw`0 0 1rem 0.125rem rgb(from var(--ui-color-accent) r g b / 0.45),
+            0 0 2.5rem 0.5rem rgb(from var(--ui-color-accent) r g b / 0.25)`;
 
-    const at = (point: PointerEvent): void => {
-        const box = layer.getBoundingClientRect();
-        const x = Math.min(Math.max(point.clientX - box.left, 0), box.width);
-        const y = Math.min(Math.max(point.clientY - box.top, 0), box.height);
-        layer.style.setProperty('--ui-ripple-x', `${x.toFixed(1)}px`);
-        layer.style.setProperty('--ui-ripple-y', `${y.toFixed(1)}px`);
-    };
+/** The card's tint: the surface it is raised on, taking a little of the accent. */
+const tint = tinted(reference('--ui-color-surface-raised').cssText);
 
-    at(event);
-    host.addEventListener('pointerleave', at, { once: true });
-};
+/** Throws a circle out from under the card, on the pointer's border layer or the focus's. */
+const wave = waves(
+    (host) => host,
+    (host) => inner(host, "[data-layer='border']"),
+);
+const focusWave = waves(
+    (host) => host,
+    (host) => inner(host, "[data-layer='focus-border']"),
+);
 
 /**
  * A copy of the card for a piece to show its cell of: neither its name, nor what the pointer left
@@ -165,6 +164,16 @@ const sheet = String.raw`
     transition-timing-function: var(--ui-easing-enter), var(--ui-easing-enter), linear;
 }
 
+/* The host's one list of animations, read from a property for its entrance and its exit and one
+   for a movement the pointer or the focus plays: written in one, a beat as the pointer arrived
+   would take the entrance out of the list, which played again as the pointer left. Named for the
+   card, since what it holds inherits them. A beat, a stretch and a swell go a quarter of the
+   button's way, the card being three buttons wide. */
+:host {
+    animation: var(--ui-card-passage, none), var(--ui-card-move, none);
+    --ui-give: 0.25;
+}
+
 /* A layer per kind that draws, over the boundary, taking no pointer, and invisible until an
    effect gives it something. The fill and the shadow are under the content, so neither veils
    the text; the border is over it, where the content never reaches. */
@@ -178,12 +187,15 @@ const sheet = String.raw`
 }
 
 /* Inside the boundary, which a fill would paint out. */
-[data-layer='fill'] {
+[data-layer='fill'],
+[data-layer='focus-fill'] {
     inset: 0;
 }
 
-/* A band: 2px over the edge and just inside, the rest masked out. */
-[data-layer='border'] {
+/* A band: 2px over the edge and just inside, the rest masked out. The pointer's border and the
+   focus's each have one, so the two can be chosen apart. */
+[data-layer='border'],
+[data-layer='focus-border'] {
     z-index: auto;
     padding: 2px;
     mask:
@@ -192,13 +204,17 @@ const sheet = String.raw`
     mask-composite: exclude;
 }
 
+/* The focus wins. A card the reader can see the focus in is drawn as the focus chose, and the
+   pointer resting on it changes nothing, nor does its arrival fire anything: a reader who came by
+   the keyboard may have left the pointer where it was. */
+
 /* hover-move: lift, on the host.
 
    Every hover state here sits under hover: hover, as the button's do: a tap leaves :hover on
    whatever it touched, so a state drawn without it stays on a phone's card. */
 @media (hover: hover) {
     @container ${is('hover-move', 'lift')} {
-        :host(:hover) {
+        :host(:hover${calm}) {
             translate: 0 -0.25rem;
         }
     }
@@ -207,7 +223,7 @@ const sheet = String.raw`
 /* hover-move: zoom, on the host: three hundredths larger. */
 @media (hover: hover) {
     @container ${is('hover-move', 'zoom')} {
-        :host(:hover) {
+        :host(:hover${calm}) {
             scale: 1.03;
         }
     }
@@ -215,7 +231,7 @@ const sheet = String.raw`
 
 /* hover-move: tilt, on the host. */
 @container ${is('hover-move', 'tilt')} {
-    :host {
+    :host(${calm}) {
         transform: perspective(60rem)
             rotateX(calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * -5deg))
             rotateY(calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 5deg));
@@ -225,9 +241,63 @@ const sheet = String.raw`
 /* hover-move: magnetic, on the host: drawn toward the pointer as it nears, half a step at most —
    the button's magnetic, at a card's size. */
 @container ${is('hover-move', 'magnetic')} {
-    :host {
+    :host(${calm}) {
         translate: calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 0.5rem)
             calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * 0.375rem);
+    }
+}
+
+/* hover-move: heartbeat, rubber and glitch, the button's, once, as the pointer arrives, on the
+   host; and at the focus, as the focus arrives in the card, with its lift and its zoom. The
+   focus's play under its own names, so its arrival starts them where the pointer's played the
+   same in the host's one list. */
+@media (hover: hover) {
+    @container ${is('hover-move', 'heartbeat')} {
+        :host(:hover${calm}) {
+            --ui-card-move: ui-heartbeat var(--ui-duration-300) var(--ui-easing-state);
+        }
+    }
+
+    @container ${is('hover-move', 'rubber')} {
+        :host(:hover${calm}) {
+            --ui-card-move: ui-rubber var(--ui-duration-400) linear;
+        }
+    }
+
+    @container ${is('hover-move', 'glitch')} {
+        :host(:hover${calm}) {
+            --ui-card-move: ui-glitch var(--ui-duration-200) linear;
+        }
+    }
+}
+
+@container ${is('focus-move', 'lift')} {
+    :host([data-focus-visible]) {
+        translate: 0 -0.25rem;
+    }
+}
+
+@container ${is('focus-move', 'zoom')} {
+    :host([data-focus-visible]) {
+        scale: 1.03;
+    }
+}
+
+@container ${is('focus-move', 'heartbeat')} {
+    :host([data-focus-visible]) {
+        --ui-card-move: ${focal.run('ui-heartbeat var(--ui-duration-300) var(--ui-easing-state)')};
+    }
+}
+
+@container ${is('focus-move', 'rubber')} {
+    :host([data-focus-visible]) {
+        --ui-card-move: ${focal.run('ui-rubber var(--ui-duration-400) linear')};
+    }
+}
+
+@container ${is('focus-move', 'glitch')} {
+    :host([data-focus-visible]) {
+        --ui-card-move: ${focal.run('ui-glitch var(--ui-duration-200) linear')};
     }
 }
 
@@ -241,20 +311,12 @@ const sheet = String.raw`
    along the top. Not by lighting the card from inside, which showed most: that is the fill's
    to change, and with the tint's it took Matrix's muted text to 3.95:1 — measured. */
 @container ${is('hover-shadow', 'raise')} {
-    [data-layer='shadow'] {
-        color: ${reference('--ui-color-accent')};
-        box-shadow:
-            ${reference('--ui-elevation-raised')},
-            inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.22)),
-            inset 0 0 0 1px light-dark(transparent, rgb(255 255 255 / 0.12)),
-            0 0.75rem 1.75rem -0.5rem light-dark(rgb(0 0 0 / 0.35), transparent),
-            0 1rem 2.5rem -0.25rem light-dark(transparent, rgb(0 0 0 / 0.9)),
-            0 0.25rem 0.75rem light-dark(transparent, rgb(0 0 0 / 0.5));
+    [data-layer='shadow'] {${raised}
         transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='shadow'] {
+        :host(:hover${calm}) [data-layer='shadow'] {
             opacity: 1;
         }
     }
@@ -264,14 +326,12 @@ const sheet = String.raw`
    ring: a ring at the boundary read as a border, which is another kind's to draw. */
 @container ${is('hover-shadow', 'glow')} {
     [data-layer='shadow'] {
-        box-shadow:
-            0 0 1rem 0.125rem rgb(from var(--ui-color-accent) r g b / 0.45),
-            0 0 2.5rem 0.5rem rgb(from var(--ui-color-accent) r g b / 0.25);
+        box-shadow: ${glowing};
         transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='shadow'] {
+        :host(:hover${calm}) [data-layer='shadow'] {
             opacity: 1;
         }
     }
@@ -290,7 +350,121 @@ const sheet = String.raw`
                 -0.25rem light-dark(rgb(0 0 0 / 0.3), rgb(0 0 0 / 0.85)),
             calc(var(--ui-pointer-nx) * 1.5rem) calc(var(--ui-pointer-ny) * 1.5rem) 3rem 0.25rem
                 light-dark(transparent, rgb(from var(--ui-color-accent) r g b / 0.35));
+    }
+
+    :host(${calm}) [data-layer='shadow'] {
         opacity: var(--ui-pointer-near);
+    }
+}
+
+/* hover-shadow: sink, halo and inner, the button's and a field's, faded in as the raise is; neon
+   and breathe, which come round for as long as the pointer rests; and burst, once, as it arrives. */
+${(
+    [
+        ['sink', lights.sink],
+        ['halo', lights.halo],
+        ['inner', lights.inner('0.75rem')],
+    ] as const
+)
+    .map(
+        ([effect, light]) => String.raw`@container ${is('hover-shadow', effect)} {
+    [data-layer='shadow'] {
+        box-shadow: ${light};
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='shadow'] {
+            opacity: 1;
+        }
+    }
+}`,
+    )
+    .join('\n\n')}
+
+@container ${is('hover-shadow', 'neon')} {
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='shadow'] {
+            opacity: 1;
+            animation: ui-neon var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-loop)
+                alternate;
+        }
+    }
+}
+
+@container ${is('hover-shadow', 'breathe')} {
+    [data-layer='shadow'] {
+        box-shadow: ${lights.breath('var(--ui-color-accent)', '15px')};
+    }
+
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='shadow'] {
+            opacity: 1;
+            animation: ui-breathe-glow var(--ui-duration-loop) var(--ui-easing-state)
+                var(--ui-iteration-loop) alternate;
+        }
+    }
+}
+
+@container ${is('hover-shadow', 'burst')} {
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='shadow'] {
+            opacity: 1;
+            animation: ui-burst var(--ui-duration-400) var(--ui-easing-enter);
+        }
+    }
+}
+
+/* ——— The focus in the card, on its own layer, as its fill's and its border's are. ——— */
+${(
+    [
+        ['raise', raised],
+        ['sink', `box-shadow: ${lights.sink};`],
+        ['halo', `box-shadow: ${lights.halo};`],
+        ['glow', `box-shadow: ${glowing};`],
+        ['inner', `box-shadow: ${lights.inner('0.75rem')};`],
+    ] as const
+)
+    .map(
+        ([effect, light]) => String.raw`@container ${is('focus-shadow', effect)} {
+    [data-layer='focus-shadow'] {${light}
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-shadow'] {
+        opacity: 1;
+    }
+}`,
+    )
+    .join('\n\n')}
+
+/* neon and breathe, four rounds and then at rest, and burst, once, as at every focus. */
+@container ${is('focus-shadow', 'neon')} {
+    :host([data-focus-visible]) [data-layer='focus-shadow'] {
+        opacity: 1;
+        animation:
+            ui-neon var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-settle) alternate,
+            ui-neon-rest var(--ui-duration-200) var(--ui-easing-exit)
+                calc(var(--ui-duration-loop) * var(--ui-iteration-settle));
+    }
+}
+
+@container ${is('focus-shadow', 'breathe')} {
+    [data-layer='focus-shadow'] {
+        box-shadow: ${lights.breath('var(--ui-color-accent)', '15px')};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-shadow'] {
+        opacity: 1;
+        animation: ui-breathe-glow var(--ui-duration-loop) var(--ui-easing-state)
+            var(--ui-iteration-settle) alternate;
+    }
+}
+
+@container ${is('focus-shadow', 'burst')} {
+    :host([data-focus-visible]) [data-layer='focus-shadow'] {
+        opacity: 1;
+        animation: ui-burst var(--ui-duration-400) var(--ui-easing-enter);
     }
 }
 
@@ -302,7 +476,7 @@ const sheet = String.raw`
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='fill'] {
+        :host(:hover${calm}) [data-layer='fill'] {
             opacity: 1;
         }
     }
@@ -312,11 +486,10 @@ const sheet = String.raw`
    the accent's own, so the text over it holds what the tint measured. */
 @container ${is('hover-fill', 'spotlight')} {
     [data-layer='fill'] {
-        background: radial-gradient(
-            16rem circle at var(--ui-pointer-x) var(--ui-pointer-y),
-            ${tint},
-            transparent 70%
-        );
+        background: ${spotlit(tint)};
+    }
+
+    :host(${calm}) [data-layer='fill'] {
         opacity: var(--ui-pointer-near);
     }
 }
@@ -324,18 +497,24 @@ const sheet = String.raw`
 /* hover-fill: flood. The tint spreads from where the pointer came onto the card, a circle
    growing until it covers the card, and drains toward where the pointer leaves. At 150% of the
    box's own measure the circle covers the box from any point on its edge, so a reader who asked
-   for less motion gets the tint whole, at once. */
+   for less motion gets the tint whole, at once. The radius grows with the button's registered
+   progress rather than the clip's own transition, which carried the centre along with it; the
+   centre glides only where the script finds the circle showing. */
 @container ${is('hover-fill', 'flood')} {
     [data-layer='fill'] {
         background-color: ${tint};
         opacity: 1;
-        clip-path: circle(0 at var(--ui-ripple-x) var(--ui-ripple-y));
-        transition: clip-path var(--ui-duration-400) var(--ui-easing-move);
+        clip-path: circle(calc(var(--ui-flood) * 150%) at var(--ui-flood-x) var(--ui-flood-y));
+        transition: --ui-flood var(--ui-duration-400) var(--ui-easing-move);
+    }
+
+    [data-layer='fill'][data-gliding] {
+        transition-property: --ui-flood, --ui-flood-x, --ui-flood-y;
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='fill'] {
-            clip-path: circle(150% at var(--ui-ripple-x) var(--ui-ripple-y));
+        :host(:hover${calm}) [data-layer='fill'] {
+            --ui-flood: 1;
         }
     }
 }
@@ -352,7 +531,7 @@ const sheet = String.raw`
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='fill'] {
+        :host(:hover${calm}) [data-layer='fill'] {
             opacity: 1;
             animation: ${shimmer.loop};
         }
@@ -368,44 +547,141 @@ const sheet = String.raw`
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='fill'] {
+        :host(:hover${calm}) [data-layer='fill'] {
             opacity: 1;
             animation: ${scan.run};
         }
     }
 }
 
-/* hover-border: edge, the band lit where the pointer is nearest, fading over 20rem, so a
-   pointer in the middle of a card still lights the side it is nearest. */
+/* hover-fill: ripple, the button's, in the tint the card's other lights are drawn in: once, as the
+   pointer arrives, a circle spreads from where it came in. */
+@container ${is('hover-fill', 'ripple')} {
+    [data-layer='fill'] {
+        background-image: ${ripple.image(tinted(reference('--ui-color-surface-raised').cssText, 'var(--ui-ripple-alpha)'))};
+    }
+
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='fill'] {
+            opacity: 1;
+            animation: ${ripple.run};
+        }
+    }
+}
+
+/* ——— The focus in the card, on its own layer, as its border's is. ——— */
+@container ${is('focus-fill', 'tint')} {
+    [data-layer='focus-fill'] {
+        background-color: ${tint};
+        transition: opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-fill'] {
+        opacity: 1;
+    }
+}
+
+/* shimmer, four sweeps and then at rest, and scan, once, as at every focus. */
+@container ${is('focus-fill', 'shimmer')} {
+    [data-layer='focus-fill'] {
+        background-image: ${shimmer.image(sheen.over)};
+        background-size: ${shimmer.size};
+        background-repeat: no-repeat;
+        background-position: ${shimmer.position};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-fill'] {
+        opacity: 1;
+        animation: ${shimmer.run};
+    }
+}
+
+@container ${is('focus-fill', 'scan')} {
+    [data-layer='focus-fill'] {
+        background-image: ${scan.image(sheen.over)};
+        background-size: ${scan.size};
+        background-repeat: no-repeat;
+        background-position: ${scan.position};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-fill'] {
+        opacity: 1;
+        animation: ${scan.run};
+    }
+}
+
+/* ripple: as the focus arrives, from the middle, as a focus has no point to come in at. */
+@container ${is('focus-fill', 'ripple')} {
+    [data-layer='focus-fill'] {
+        background-image: ${ripple.image(tinted(reference('--ui-color-surface-raised').cssText, 'var(--ui-ripple-alpha)'), '50% 50%')};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-fill'] {
+        opacity: 1;
+        animation: ${ripple.run};
+    }
+}
+
+/* spotlight and flood, the pointer's, from the middle, as a focus has no point to come in at: the
+   tint lit round the middle, faded in, or spread from there as the focus arrives and drained back
+   as it leaves. At 71% of the box's own measure, a circle from the middle reaches its farthest
+   corner. */
+@container ${is('focus-fill', 'spotlight')} {
+    [data-layer='focus-fill'] {
+        background: ${spotlit(tint, '50% 50%')};
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-fill'] {
+        opacity: 1;
+    }
+}
+
+@container ${is('focus-fill', 'flood')} {
+    [data-layer='focus-fill'] {
+        background-color: ${tint};
+        opacity: 1;
+        clip-path: circle(calc(var(--ui-flood) * 71%) at 50% 50%);
+        transition: --ui-flood var(--ui-duration-400) var(--ui-easing-move);
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-fill'] {
+        --ui-flood: 1;
+    }
+}
+
+/* hover-border: edge, the band lit where the pointer is nearest: the definition every component
+   that offers it draws, fading out over the card's own width across and its own height down, so a
+   pointer in the middle of a card still lights every side, and one at a side lights the far one at
+   nothing. The layer's box is the card's, so the pointer is where the engine writes it. */
 @container ${is('hover-border', 'edge')} {
     [data-layer='border'] {
-        background: radial-gradient(
-            20rem circle at calc(var(--ui-pointer-x) + 1px) calc(var(--ui-pointer-y) + 1px),
-            ${far},
-            transparent 70%
-        );
+        background: ${edge.light};
+    }
+
+    :host(${calm}) [data-layer='border'] {
         opacity: var(--ui-pointer-near);
     }
 }
 
 /* hover-border: trace. The band drawn round once, clockwise from the top, and undrawn the same
-   way when the pointer leaves: a registered angle, transitioned. */
+   way when the pointer leaves: the definition every component that offers it draws. */
 @container ${is('hover-border', 'trace')} {
     [data-layer='border'] {
-        background: conic-gradient(${far} var(--ui-trace), transparent 0);
+        background: ${trace.light};
         opacity: 1;
-        transition: --ui-trace calc(var(--ui-duration-400) * 1.5) var(--ui-easing-move);
+        transition: ${trace.transition};
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='border'] {
+        :host(:hover${calm}) [data-layer='border'] {
             --ui-trace: 360deg;
         }
     }
 }
 
-/* hover-border: orbit. A light of that colour and the info runs round the band, on the boundary
-   and never past it, three laps, and then it fades. */
+/* hover-border: orbit. A light from the accent round the hue wheel runs round the band, on the
+   boundary and never past it, three laps, and then it fades. */
 @container ${is('hover-border', 'orbit')} {
     [data-layer='border'] {
         background: ${orbit.light};
@@ -413,16 +689,16 @@ const sheet = String.raw`
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='border'] {
+        :host(:hover${calm}) [data-layer='border'] {
             opacity: 1;
             animation: ${orbit.run};
         }
     }
 }
 
-/* hover-border: comet. The button's: a comet of that colour and the info runs round clear of the
-   boundary for as long as the pointer rests, and is held where it was when the pointer leaves.
-   The layer's box is the border's, a pixel out from the box it is placed in. */
+/* hover-border: comet. The button's: a comet from the accent round the hue wheel runs round clear
+   of the boundary for as long as the pointer rests, and is held where it was when the pointer
+   leaves. The layer's box is the border's, a pixel out from the box it is placed in. */
 @container ${is('hover-border', 'comet')} {
     [data-layer='border'] {
         inset: -${comet.reach + 1}px;
@@ -434,7 +710,7 @@ const sheet = String.raw`
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='border'] {
+        :host(:hover${calm}) [data-layer='border'] {
             opacity: 1;
             animation-play-state: running;
         }
@@ -452,11 +728,267 @@ const sheet = String.raw`
     }
 
     @media (hover: hover) {
-        :host(:hover) [data-layer='border'] {
+        :host(:hover${calm}) [data-layer='border'] {
             animation: ui-pulse var(--ui-duration-400) var(--ui-easing-enter);
         }
     }
 }
+
+/* hover-border: highlight and accent. The boundary finishes the mix it started, to the text's
+   colour, as a field's does under the pointer, or takes the accent: a band the boundary's own
+   width, laid over it on the border's layer, so a choice made on the card itself reaches it. */
+@container ${is('hover-border', 'highlight')} or ${is('hover-border', 'accent')} {
+    [data-layer='border'] {
+        padding: 1px;
+        transition: opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
+    }
+
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='border'] {
+            opacity: 1;
+        }
+    }
+}
+
+@container ${is('hover-border', 'highlight')} {
+    [data-layer='border'] {
+        background: ${reference('--ui-color-text')};
+    }
+}
+
+@container ${is('hover-border', 'accent')} {
+    [data-layer='border'] {
+        background: var(--ui-color-accent);
+    }
+}
+
+/* hover-border: underline and sweep, the field's: a line of the accent along the bottom edge,
+   drawn out from the middle or from where the text starts, over the boundary, which is outside the
+   box the layer is placed in. */
+@container ${is('hover-border', 'underline')} or ${is('hover-border', 'sweep')} {
+    [data-layer='border'] {${line.drawn}
+        inset-block-end: -1px;
+        opacity: 1;
+        clip-path: ${line.underline};
+        transition: ${line.transition};
+    }
+
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='border'] {
+            clip-path: inset(0);
+        }
+    }
+}
+
+@container ${is('hover-border', 'sweep')} {
+    [data-layer='border'] {
+        clip-path: ${line.sweep};
+    }
+
+    :host(:dir(rtl)) [data-layer='border'] {
+        clip-path: ${line.mirrored};
+    }
+}
+
+/* hover-border: explode, the button's: one ring thrown out from the boundary once as the pointer
+   arrives, round the whole box, in the accent. */
+@container ${is('hover-border', 'explode')} {
+    [data-layer='border'] {
+        padding: 0;
+        color: var(--ui-color-accent);
+        mask: none;
+        opacity: 1;
+    }
+
+    @media (hover: hover) {
+        :host(:hover${calm}) [data-layer='border'] {${thrown.explode}
+        }
+    }
+}
+
+/* The circles the pointer and the focus throw, the button's, each on its moment's layer while it
+   plays: from under the card's middle to past its farthest corner, in the accent. The card's
+   surface is its host's own background, which every layer is drawn over, so the card's box is cut
+   out of the circle, which then comes out from under the card as it does from under a button. */
+[data-layer][data-border='shockwave'],
+[data-layer][data-border='bloom'] {${thrown.dot}
+    color: var(--ui-color-accent);
+    opacity: 1;
+    clip-path: polygon(
+        evenodd,
+        -200vmax -200vmax,
+        200vmax -200vmax,
+        200vmax 200vmax,
+        -200vmax 200vmax,
+        -200vmax -200vmax,
+        calc(1px - var(--ui-wave-x)) calc(1px - var(--ui-wave-y)),
+        calc(1px + var(--ui-wave-x)) calc(1px - var(--ui-wave-y)),
+        calc(1px + var(--ui-wave-x)) calc(1px + var(--ui-wave-y)),
+        calc(1px - var(--ui-wave-x)) calc(1px + var(--ui-wave-y)),
+        calc(1px - var(--ui-wave-x)) calc(1px - var(--ui-wave-y))
+    );
+}
+
+[data-layer][data-border='shockwave'] {${thrown.shockwave}
+}
+
+[data-layer][data-border='bloom'] {${thrown.bloom}
+}
+
+/* ——— The focus in the card, on what it holds: a button the reader has reached, which draws its
+   own ring. The page marks the host for a focus the reader can see in it. Each border draws on
+   the focus's layer, as the pointer's do on theirs. ——— */
+@container ${is('focus-border', 'highlight')} or ${is('focus-border', 'accent')} {
+    [data-layer='focus-border'] {
+        padding: 1px;
+        transition: opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        opacity: 1;
+    }
+}
+
+@container ${is('focus-border', 'highlight')} {
+    [data-layer='focus-border'] {
+        background: ${reference('--ui-color-text')};
+    }
+}
+
+@container ${is('focus-border', 'accent')} {
+    [data-layer='focus-border'] {
+        background: var(--ui-color-accent);
+    }
+}
+
+/* edge, the pointer's: the band lit as a pointer in the middle of the card would light it, faded
+   in. */
+@container ${is('focus-border', 'edge')} {
+    [data-layer='focus-border'] {
+        background: ${edge.middle};
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        opacity: 1;
+    }
+}
+
+@container ${is('focus-border', 'orbit')} {
+    [data-layer='focus-border'] {
+        background: ${orbit.light};
+        transition: opacity var(--ui-duration-200) var(--ui-easing-exit);
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        opacity: 1;
+        animation: ${orbit.run};
+    }
+}
+
+@container ${is('focus-border', 'trace')} {
+    [data-layer='focus-border'] {
+        background: ${trace.light};
+        opacity: 1;
+        transition: ${trace.transition};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        --ui-trace: 360deg;
+    }
+}
+
+/* comet: the pointer's, two laps and then it fades, as at every focus. */
+@container ${is('focus-border', 'comet')} {
+    [data-layer='focus-border'] {
+        inset: -${comet.reach + 1}px;
+        padding: ${comet.width}px;
+        border-radius: calc(${reference('--ui-radius')} + ${comet.reach}px);
+        background: ${comet.light};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        opacity: 1;
+        animation: ${comet.run};
+    }
+}
+
+@container ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')} {
+    [data-layer='focus-border'] {${line.drawn}
+        inset-block-end: -1px;
+        opacity: 1;
+        clip-path: ${line.underline};
+        transition: ${line.transition};
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        clip-path: inset(0);
+    }
+}
+
+@container ${is('focus-border', 'sweep')} {
+    [data-layer='focus-border'] {
+        clip-path: ${line.sweep};
+    }
+
+    :host(:dir(rtl)) [data-layer='focus-border'] {
+        clip-path: ${line.mirrored};
+    }
+}
+
+/* pulse: in the focus's own colour, as the focus's pulse is everywhere, out from the card. */
+@container ${is('focus-border', 'pulse')} {
+    [data-layer='focus-border'] {
+        padding: 0;
+        mask: none;
+        opacity: 1;
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {
+        animation: ui-pulse-focus var(--ui-duration-400) var(--ui-easing-enter);
+    }
+}
+
+@container ${is('focus-border', 'explode')} {
+    [data-layer='focus-border'] {
+        padding: 0;
+        color: var(--ui-color-accent);
+        mask: none;
+        opacity: 1;
+    }
+
+    :host([data-focus-visible]) [data-layer='focus-border'] {${thrown.explode}
+    }
+}
+
+/* Where the pointer and the focus both chose an effect that holds, it is drawn once, on the
+   pointer's layer, for either, so it holds from one to the other rather than fading out of one
+   layer while it fades into the other; the focus's layer stays out. */
+${(
+    [
+        ['fill', ['tint'], 'opacity: 1;'],
+        ['shadow', ['raise', 'sink', 'halo', 'glow', 'inner'], 'opacity: 1;'],
+        ['border', ['highlight', 'accent'], 'opacity: 1;'],
+        ['border', ['trace'], '--ui-trace: 360deg;'],
+        ['border', ['underline', 'sweep'], 'clip-path: inset(0);'],
+    ] as const
+)
+    .flatMap(([kind, effects, shown]) =>
+        effects.map(
+            (
+                effect,
+            ) => String.raw`@container ${is(`hover-${kind}`, effect)} and ${is(`focus-${kind}`, effect)} {
+    :host([data-focus-visible]) [data-layer='${kind}'] {
+        ${shown}
+    }
+
+    [data-layer='focus-${kind}'] {
+        visibility: hidden;
+    }
+}`,
+        ),
+    )
+    .join('\n\n')}
 
 /* ——— The entrance, on the host, which a choice made on the card itself does not reach — S8.
 
@@ -471,7 +1003,7 @@ const sheet = String.raw`
    sheet, and wins. ——— */
 @container ${is('enter', 'fade')} {
     :host {
-        animation: ui-enter-fade var(--ui-duration-300)
+        --ui-card-passage: ui-enter-fade var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -480,14 +1012,14 @@ const sheet = String.raw`
     :host {
         --ui-enter-x: 0;
         --ui-enter-y: -1;
-        animation: ui-enter-rise var(--ui-duration-300)
+        --ui-card-passage: ui-enter-rise var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
 
 @container ${is('enter', 'zoom')} {
     :host {
-        animation: ui-enter-zoom var(--ui-duration-300)
+        --ui-card-passage: ui-enter-zoom var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -495,7 +1027,7 @@ const sheet = String.raw`
 /* drop: its bounce is its curve, which a chosen one does not replace. */
 @container ${is('enter', 'drop')} {
     :host {
-        animation: ui-drop var(--ui-duration-400) linear backwards;
+        --ui-card-passage: ui-drop var(--ui-duration-400) linear backwards;
     }
 }
 
@@ -503,21 +1035,21 @@ const sheet = String.raw`
     :host {
         --ui-enter-x: 1;
         --ui-enter-y: 0;
-        animation: ui-enter-slide var(--ui-duration-400)
+        --ui-card-passage: ui-enter-slide var(--ui-duration-400)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
 
 @container ${is('enter', 'flip-vertical')} {
     :host {
-        animation: ui-enter-flip-vertical var(--ui-duration-400)
+        --ui-card-passage: ui-enter-flip-vertical var(--ui-duration-400)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
 
 @container ${is('enter', 'flip-horizontal')} {
     :host {
-        animation: ui-enter-flip-horizontal var(--ui-duration-400)
+        --ui-card-passage: ui-enter-flip-horizontal var(--ui-duration-400)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -526,7 +1058,7 @@ const sheet = String.raw`
     :host {
         --ui-enter-x: 1;
         --ui-enter-y: 0;
-        animation: ui-enter-wipe var(--ui-duration-400)
+        --ui-card-passage: ui-enter-wipe var(--ui-duration-400)
             var(--ui-enter-curve, var(--ui-easing-move)) backwards;
     }
 }
@@ -535,7 +1067,7 @@ const sheet = String.raw`
     :host {
         --ui-enter-x: 0;
         --ui-enter-y: 0;
-        animation: ui-enter-circle var(--ui-duration-400)
+        --ui-card-passage: ui-enter-circle var(--ui-duration-400)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -544,14 +1076,14 @@ const sheet = String.raw`
     :host {
         --ui-enter-x: 1;
         --ui-enter-y: 0;
-        animation: ui-enter-curtain var(--ui-duration-400)
+        --ui-card-passage: ui-enter-curtain var(--ui-duration-400)
             var(--ui-enter-curve, var(--ui-easing-move)) backwards;
     }
 }
 
 @container ${is('enter', 'refocus')} {
     :host {
-        animation: ui-enter-refocus calc(var(--ui-duration-400) * 1.25)
+        --ui-card-passage: ui-enter-refocus calc(var(--ui-duration-400) * 1.25)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -602,7 +1134,7 @@ const sheet = String.raw`
    holds its last frame until the card has gone. The direction is the way it leaves. ——— */
 @container ${is('exit', 'fade')} {
     :host([data-leaving]) {
-        animation: ui-exit-fade var(--ui-duration-200)
+        --ui-card-passage: ui-exit-fade var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -614,14 +1146,14 @@ const sheet = String.raw`
     }
 
     :host([data-leaving]) {
-        animation: ui-exit-sink var(--ui-duration-200)
+        --ui-card-passage: ui-exit-sink var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
 
 @container ${is('exit', 'zoom')} {
     :host([data-leaving]) {
-        animation: ui-exit-zoom var(--ui-duration-200)
+        --ui-card-passage: ui-exit-zoom var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -633,21 +1165,21 @@ const sheet = String.raw`
     }
 
     :host([data-leaving]) {
-        animation: ui-exit-slide var(--ui-duration-300)
+        --ui-card-passage: ui-exit-slide var(--ui-duration-300)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
 
 @container ${is('exit', 'flip-vertical')} {
     :host([data-leaving]) {
-        animation: ui-exit-flip-vertical var(--ui-duration-300)
+        --ui-card-passage: ui-exit-flip-vertical var(--ui-duration-300)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
 
 @container ${is('exit', 'flip-horizontal')} {
     :host([data-leaving]) {
-        animation: ui-exit-flip-horizontal var(--ui-duration-300)
+        --ui-card-passage: ui-exit-flip-horizontal var(--ui-duration-300)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -659,7 +1191,7 @@ const sheet = String.raw`
     }
 
     :host([data-leaving]) {
-        animation: ui-exit-wipe var(--ui-duration-300)
+        --ui-card-passage: ui-exit-wipe var(--ui-duration-300)
             var(--ui-exit-curve, var(--ui-easing-move)) forwards;
     }
 }
@@ -671,7 +1203,7 @@ const sheet = String.raw`
     }
 
     :host([data-leaving]) {
-        animation: ui-exit-circle var(--ui-duration-300)
+        --ui-card-passage: ui-exit-circle var(--ui-duration-300)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -683,14 +1215,14 @@ const sheet = String.raw`
     }
 
     :host([data-leaving]) {
-        animation: ui-exit-curtain var(--ui-duration-300)
+        --ui-card-passage: ui-exit-curtain var(--ui-duration-300)
             var(--ui-exit-curve, var(--ui-easing-move)) forwards;
     }
 }
 
 @container ${is('exit', 'defocus')} {
     :host([data-leaving]) {
-        animation: ui-exit-defocus calc(var(--ui-duration-300) * 1.25)
+        --ui-card-passage: ui-exit-defocus calc(var(--ui-duration-300) * 1.25)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -987,6 +1519,10 @@ ${sized.wide}
 
 ${sweeps}
 
+${moves}
+
+${focal.frames(moves)}
+
 @keyframes ui-rest {
     to {
         opacity: 0;
@@ -994,113 +1530,133 @@ ${sweeps}
 }
 `;
 
+/** Why the card leaves the hover colour out: its muted text is set against its own surface. */
+const hovered =
+    'the hover colour is chosen against a control’s label, and under the card’s muted text it fell to 3.28:1 on Matrix’s light page, and under 4.5:1 in five themes and schemes of six — measured.';
+
+/** Why the card leaves the theme's own pointer shadow out: there is none for a raised surface. */
+const unlit =
+    'no theme gives a raised surface a shadow of its own under the pointer: the token layer has the card’s elevation at rest, and none for the pointer.';
+
+/** Why the card leaves the preview out: what it shows is what a click would change. */
+const unchanged = 'a click changes nothing of the card’s own for it to show beforehand.';
+
+/** Why the card leaves the blur out: it is the glass already, wherever a theme makes it glass. */
+const glassy =
+    'the card is the theme’s glass already: it blurs the page behind it at rest wherever a theme makes it glass, and nothing is left for the effect to add.';
+
+/** Why the card leaves the breathe out: what it swells is what is being read. */
+const swelled =
+    'it swells and settles the card’s content round after round, and a card’s content is what is being read.';
+
+/** Why the card leaves the flips out. */
+const turned =
+    'it turns the content away from the reader for half its run, and a card’s content is what is being read: the entrance has it, before there is anything to read.';
+
 const page = prototype({
     tags: ['ui-card'],
     sheet,
-    layers: ['fill', 'shadow', 'border'],
+    layers: ['fill', 'focus-fill', 'shadow', 'focus-shadow', 'border', 'focus-border'],
     moments: [
-        {
-            name: 'hover',
-            label: 'Pointer over',
-            on: 'enter',
-            kinds: [
-                {
-                    name: 'move',
-                    label: 'Movement',
-                    effects: [
-                        { name: 'none', today: true, says: 'Stays where it is.' },
-                        { name: 'lift', host: true, says: 'Rises a quarter of a step.' },
-                        { name: 'zoom', host: true, says: 'Grows a little, as if it came closer.' },
-                        {
-                            name: 'tilt',
-                            follows: true,
-                            host: true,
-                            says: 'Leans toward the pointer, a few degrees.',
-                        },
-                        {
-                            name: 'magnetic',
-                            follows: true,
-                            host: true,
-                            says: 'Drawn toward the pointer as it nears, half a step at most.',
-                        },
+        hover('card', {
+            move: {
+                draws: [
+                    { name: 'lift', host: true },
+                    { name: 'zoom', host: true },
+                    { name: 'magnetic', host: true },
+                    { name: 'tilt', host: true },
+                    { name: 'heartbeat', host: true },
+                    { name: 'rubber', host: true },
+                    { name: 'glitch', host: true },
+                ],
+                refuses: { breathe: swelled, 'flip-vertical': turned, 'flip-horizontal': turned },
+            },
+            fill: {
+                draws: [
+                    'tint',
+                    'spotlight',
+                    { name: 'flood', fire: floods((host) => inner(host, "[data-layer='fill']")) },
+                    'shimmer',
+                    { name: 'ripple', fire: enters((host) => inner(host, "[data-layer='fill']")) },
+                    'scan',
+                ],
+                refuses: { highlight: hovered, preview: unchanged, blur: glassy },
+            },
+            shadow: {
+                draws: [
+                    'raise',
+                    'sink',
+                    'halo',
+                    'glow',
+                    'inner',
+                    'cast',
+                    'neon',
+                    'breathe',
+                    'burst',
+                ],
+                refuses: { highlight: unlit },
+            },
+            border: {
+                draws: [
+                    'highlight',
+                    'accent',
+                    'edge',
+                    'orbit',
+                    'trace',
+                    'comet',
+                    'underline',
+                    'sweep',
+                    'pulse',
+                    { name: 'shockwave', fire: wave('shockwave') },
+                    { name: 'bloom', fire: wave('bloom') },
+                    'explode',
+                ],
+            },
+        }),
+        focus(
+            'card',
+            {
+                move: {
+                    draws: [
+                        { name: 'lift', host: true },
+                        { name: 'zoom', host: true },
+                        { name: 'heartbeat', host: true },
+                        { name: 'rubber', host: true },
+                        { name: 'glitch', host: true },
+                    ],
+                    refuses: {
+                        breathe: swelled,
+                        'flip-vertical': turned,
+                        'flip-horizontal': turned,
+                    },
+                },
+                fill: {
+                    draws: ['tint', 'spotlight', 'flood', 'shimmer', 'ripple', 'scan'],
+                    refuses: { highlight: hovered, preview: unchanged, blur: glassy },
+                },
+                shadow: {
+                    draws: ['raise', 'sink', 'halo', 'glow', 'inner', 'neon', 'breathe', 'burst'],
+                    refuses: { highlight: unlit },
+                },
+                border: {
+                    draws: [
+                        'highlight',
+                        'accent',
+                        'edge',
+                        'orbit',
+                        'trace',
+                        'comet',
+                        'underline',
+                        'sweep',
+                        'pulse',
+                        { name: 'shockwave', fire: focusWave('shockwave') },
+                        { name: 'bloom', fire: focusWave('bloom') },
+                        'explode',
                     ],
                 },
-                {
-                    name: 'shadow',
-                    label: 'Shadow',
-                    effects: [
-                        { name: 'none', today: true, says: 'The theme’s own shadow or glow.' },
-                        {
-                            name: 'raise',
-                            says: 'The shadow or glow deepens, with a drop under it, as if the card came forward; on a dark page, where a shadow barely shows, its edge also catches the light.',
-                        },
-                        { name: 'glow', says: 'A halo of the accent round the card.' },
-                        {
-                            name: 'cast',
-                            follows: true,
-                            says: 'The pointer as a light: the shadow falls away from it, and on a dark page, where a shadow barely shows, the light spills round the side the pointer is on.',
-                        },
-                    ],
-                },
-                {
-                    name: 'fill',
-                    label: 'Fill',
-                    effects: [
-                        { name: 'none', today: true, says: 'The surface’s own colour.' },
-                        { name: 'tint', says: 'The surface takes a little of the accent.' },
-                        {
-                            name: 'spotlight',
-                            follows: true,
-                            says: 'The same tint, under the pointer.',
-                        },
-                        {
-                            name: 'flood',
-                            fire: flood,
-                            says: 'The tint spreads from where the pointer came in, and drains toward where it leaves.',
-                        },
-                        {
-                            name: 'shimmer',
-                            loops: true,
-                            says: 'A sheen sweeps across the surface, and comes round again.',
-                        },
-                        {
-                            name: 'scan',
-                            says: 'Once, as the pointer arrives: a band of light crosses the card, top to bottom.',
-                        },
-                    ],
-                },
-                {
-                    name: 'border',
-                    label: 'Border',
-                    effects: [
-                        { name: 'none', today: true, says: 'The boundary the theme draws.' },
-                        {
-                            name: 'edge',
-                            follows: true,
-                            says: 'A band of the boundary lights up where the pointer is nearest.',
-                        },
-                        {
-                            name: 'trace',
-                            says: 'The boundary is drawn round once, from the top, and undrawn as the pointer leaves.',
-                        },
-                        {
-                            name: 'orbit',
-                            settles: true,
-                            says: 'A light runs round on the boundary, three times, then rests.',
-                        },
-                        {
-                            name: 'comet',
-                            loops: true,
-                            says: 'A comet of light runs round clear of the boundary, and waits where it was when the pointer leaves.',
-                        },
-                        {
-                            name: 'pulse',
-                            says: 'Once, as the pointer arrives: a ring of the accent leaves the boundary and fades.',
-                        },
-                    ],
-                },
-            ],
-        },
+            },
+            true,
+        ),
         {
             name: 'enter',
             label: 'Entrance',
@@ -1333,12 +1889,6 @@ const page = prototype({
                     ],
                 },
             ],
-        },
-    ],
-    refused: [
-        {
-            name: 'flip, under the pointer',
-            why: 'turns the content away from the reader for half its run, and a card’s content is what is being read: the entrance has it, before there is anything to read.',
         },
     ],
 });

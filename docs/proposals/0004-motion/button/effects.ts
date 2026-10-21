@@ -8,7 +8,10 @@ import { prototype } from '../motion.js';
 prototype({
     tags: ['ui-button'],
     sheet: sheet(
-        { variants: { primary: 'button.primary', secondary: 'button.secondary' } },
+        {
+            variants: { primary: 'button.primary', secondary: 'button.secondary' },
+            filled: "[variant='primary']",
+        },
         'button',
     ),
     moments,

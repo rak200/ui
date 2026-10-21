@@ -22,8 +22,13 @@ const size = reference('--ui-icon-size').cssText;
 const stroke = reference('--ui-icon-stroke').cssText;
 
 /** How far the pulse's band reaches past the strokes, in the glyph's own units — a twenty-fourth
- *  of the icon's size each — so it grows with the icon, as the pulse's reach grows with a control. */
-const reach = 4;
+ *  of the icon's size each — so it grows with the icon, as the pulse's reach grows with a control:
+ *  a third of the icon either side, 10.7px past the strokes of the page's 32px icons, near the
+ *  button's 12px. */
+const reach = 8;
+
+/** What the shimmer and the scan cross the strokes in, which are drawn in the icon's colour. */
+const band = sheen.against('currentColor');
 
 /** The colours the glitch splits into, the button's own. */
 const danger = reference('--ui-color-danger').cssText;
@@ -105,8 +110,8 @@ svg {
 
 /* shimmer and scan, the button's, on a layer over the glyph cut to its strokes, which the page
    cuts as the pointer arrives: a sheen swept across the strokes for as long as the pointer rests,
-   or a band crossing them down once. Isolated, so the pulse's copy can go under the glyph and stay
-   over what the page put under the icon. */
+   or a band crossing them down once, in the accent moved off the strokes. Isolated, so the pulse's
+   copy can go under the glyph and stay over what the page put under the icon. */
 :host {
     position: relative;
     isolation: isolate;
@@ -123,7 +128,7 @@ svg {
 @media (hover: hover) {
     @container ${is('hover', 'shimmer')} {
         :host(:hover) [data-sheen] {
-            background-image: ${shimmer.image(sheen.over)};
+            background-image: ${shimmer.image(band)};
             background-size: ${shimmer.size};
             background-repeat: no-repeat;
             background-position: ${shimmer.position};
@@ -133,7 +138,7 @@ svg {
 
     @container ${is('hover', 'scan')} {
         :host(:hover) [data-sheen] {
-            background-image: ${scan.image(sheen.over)};
+            background-image: ${scan.image(band)};
             background-size: ${scan.size};
             background-repeat: no-repeat;
             background-position: ${scan.position};

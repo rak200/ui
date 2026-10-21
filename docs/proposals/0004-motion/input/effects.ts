@@ -8,12 +8,14 @@ import { prototype } from '../motion.js';
 
 prototype({
     tags: ['ui-input', 'ui-textarea'],
+    // Under its label, so the edge is lit from where the pointer is in the box round the control.
+    bounded: 'input, textarea',
     sheet: (name) =>
         sheet(
             {
                 controls: ['input', 'textarea'],
                 // Not one that cannot be used or written in.
-                pointed: ':hover:not(:disabled):not([readonly])',
+                able: ':not(:disabled):not([readonly])',
             },
             name,
         ),

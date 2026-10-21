@@ -52,6 +52,16 @@ export interface Effect {
     readonly only?: string;
     /** It travels, and a direction chosen beside it says which way. */
     readonly directed?: boolean;
+    /** The list its moment shares offers it, and this component does not draw it yet. */
+    readonly yet?: boolean;
+    /** The list its moment shares offers it, and this component never draws it, for this reason. */
+    readonly refused?: string;
+}
+
+/** Whether a component draws an effect it lists: one the list its moment shares offers and the
+ *  component does not draw is shown, and runs nowhere. */
+function drawn(effect: Effect): boolean {
+    return effect.yet !== true && effect.refused === undefined;
 }
 
 /** A kind of change a moment's effects make — where the element is, its shadow, its fill —
@@ -117,6 +127,11 @@ export interface Catalogue {
      *  the component renders more than the control: the menu's trigger, and not its items, which
      *  are in its host too. Any control in the instance, unless named. */
     readonly control?: string;
+    /** The controls in the shadow root a border's light is drawn round, where the instance's box
+     *  is not theirs: a field under its label, a drawn control beside its text, each choice in a
+     *  group. The pointer engine writes each control's parent, which lays the layers over it,
+     *  where the pointer is from the control's own box. */
+    readonly bounded?: string;
     readonly refused?: readonly Refusal[];
 }
 
@@ -133,7 +148,9 @@ interface Slot {
 /** Whether a property offers an effect by that name other than today's: what a taste, or a
  *  choice of today's over it, has to be for the property to be written at all. */
 function offers(slot: Slot, name: string | undefined): boolean {
-    return slot.effects.some((effect) => effect.name === name && effect.today !== true);
+    return slot.effects.some(
+        (effect) => effect.name === name && effect.today !== true && drawn(effect),
+    );
 }
 
 /** A moment's properties: its one, or one per kind. */
@@ -242,6 +259,8 @@ const registered = [
     ['--ui-orbit', '<angle>', '0deg'],
     ['--ui-trace', '<angle>', '0deg'],
     ['--ui-flood', '<number>', '0'],
+    ['--ui-flood-x', '<length>', '0px'],
+    ['--ui-flood-y', '<length>', '0px'],
     ['--ui-breath', '<number>', '0'],
     ['--ui-typed', '<length-percentage>', '100%'],
     ['--ui-swept', '<angle>', '360deg'],
@@ -279,6 +298,13 @@ sheets.after(themed);
  * identity. The default theme's is on the root whatever the theme, as its tokens are, so a theme
  * with no taste keeps it and one with a taste replaces it moment by moment.
  *
+ * **A theme names each moment once, for the page.** The pointer's and the focus's effects are one
+ * list wherever they are answered — `moments.ts` — so a name is one effect on every component, and
+ * one that leaves the effect out, with why, does what it does today there; a press is answered by
+ * the button alone, and an error by a form's controls. A component's own taste is left for a
+ * moment of its own: a check, a menu's panel and caret, a toast, a tooltip, an icon and a table's
+ * row.
+ *
  * A taste is written in properties of its own, never in the consumer's: `--ui-taste-<moment>` for
  * the page and `--ui-taste-<component>-<moment>` for one component, both on the root, read only
  * where no choice is written — `queries()` and `chosen()`. In the consumer's property a taste for
@@ -293,48 +319,6 @@ interface Taste {
     readonly moments: Readonly<Record<string, string>>;
     /** The effect for each moment of one component, by its tag less `ui-`, over the page's. */
     readonly components?: Readonly<Record<string, Readonly<Record<string, string>>>>;
-}
-
-/** The pointer over a form's control, in every theme: the boundary darkened as today, a light of
- *  the accent round the control, its fill left as it is, and the control kept where it is. */
-const pointer = {
-    'hover-border': 'highlight',
-    'hover-shadow': 'glow',
-    'hover-fill': 'none',
-    'hover-move': 'none',
-};
-
-/** The components a form's taste is one for: the fields and the drawn controls. */
-const controls = ['input', 'textarea', 'select', 'checkbox', 'switch', 'radio-group'] as const;
-
-/**
- * A theme's taste for a form's controls, one for the fields and the drawn controls alike, so a
- * moment does the same on each: the pointer, and what the theme gives the focus and an error, with
- * a control's own check beside it. Every theme names the pointer, since Matrix and Glass name the
- * pointer's kinds for the page, which clears the default theme's taste for one component: Matrix's
- * `tint` would fill a field and its `zoom` grow a checkbox, and Glass's `cast`, which no control
- * offers, would take its light away. A kind a theme leaves alone where the default theme names an
- * effect is named `none`, or the default theme's would run there.
- */
-function form(
-    own: Readonly<Record<string, string>>,
-    checks: Readonly<Record<string, Readonly<Record<string, string>>>> = {},
-): Readonly<Record<string, Readonly<Record<string, string>>>> {
-    return Object.fromEntries(
-        controls.map((name) => [name, { ...pointer, ...own, ...checks[name] }]),
-    );
-}
-
-/**
- * A theme's taste for a button, which is the menu's trigger's too, beside the menu's own: the
- * trigger is a secondary button the menu writes out, so a press, the pointer and focus do to it
- * what they do to every button under the theme.
- */
-function buttons(
-    own: Readonly<Record<string, string>>,
-    menu: Readonly<Record<string, string>>,
-): Readonly<Record<string, Readonly<Record<string, string>>>> {
-    return { button: own, menu: { ...own, ...menu } };
 }
 
 /** The tastes, by the value `data-ui-theme` takes, and `default` for the theme that is none. */
@@ -361,50 +345,31 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
             moments: {
                 enter: 'fade',
                 exit: 'fade',
-                'hover-move': 'lift',
-                'hover-shadow': 'raise',
-                'hover-fill': 'tint',
-                'hover-border': 'orbit',
                 hover: 'glow',
+                'hover-fill': 'highlight',
+                'hover-shadow': 'raise',
+                'hover-border': 'pulse',
+                'focus-move': 'lift',
+                'focus-shadow': 'raise',
+                'focus-border': 'pulse',
+                'focus-label': 'accent',
+                'press-move': 'squish',
+                'press-fill': 'highlight',
+                'press-shadow': 'sink',
+                'press-border': 'bloom',
+                'invalid-border': 'pulse',
+                'invalid-fill': 'flash',
             },
             components: {
-                ...buttons(
-                    {
-                        'hover-move': 'none',
-                        'hover-fill': 'highlight',
-                        'hover-shadow': 'raise',
-                        'hover-border': 'pulse',
-                        'press-move': 'squish',
-                        'press-fill': 'highlight',
-                        'press-shadow': 'sink',
-                        'press-border': 'bloom',
-                        'focus-move': 'lift',
-                        'focus-fill': 'none',
-                        'focus-shadow': 'raise',
-                        'focus-border': 'pulse',
-                    },
-                    { enter: 'cascade', exit: 'fold', caret: 'flip' },
-                ),
+                menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
                 icon: { enter: 'draw' },
                 table: { hover: 'highlight', enter: 'glow' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
                 toaster: { stack: 'spring' },
                 tooltip: { enter: 'rise', exit: 'sink', next: 'glide' },
-                ...form(
-                    {
-                        'focus-border': 'pulse',
-                        'focus-shadow': 'inner',
-                        'focus-fill': 'none',
-                        'focus-label': 'accent',
-                        'invalid-border': 'pulse',
-                        'invalid-fill': 'flash',
-                    },
-                    {
-                        checkbox: { check: 'draw' },
-                        switch: { check: 'spring' },
-                        'radio-group': { check: 'pop' },
-                    },
-                ),
+                checkbox: { check: 'draw' },
+                switch: { check: 'spring' },
+                'radio-group': { check: 'pop' },
             },
         },
     ],
@@ -432,37 +397,27 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 exit: 'erode',
                 backdrop: 'char-rain',
                 'hover-move': 'zoom',
-                'hover-shadow': 'glow',
                 'hover-fill': 'tint',
+                'hover-shadow': 'glow',
                 'hover-border': 'trace',
+                'focus-move': 'glitch',
+                'focus-fill': 'scan',
+                'focus-shadow': 'burst',
+                'focus-border': 'comet',
+                'focus-label': 'glow',
+                'press-move': 'shatter',
+                'press-fill': 'none',
+                'press-shadow': 'fragments',
+                'press-border': 'bloom',
+                'invalid-border': 'split',
+                'invalid-fill': 'none',
             },
             components: {
-                ...buttons(
-                    {
-                        'hover-shadow': 'neon',
-                        'press-move': 'shatter',
-                        'press-fill': 'none',
-                        'press-shadow': 'fragments',
-                        'press-border': 'bloom',
-                        'focus-move': 'glitch',
-                        'focus-fill': 'scan',
-                        'focus-shadow': 'burst',
-                        'focus-border': 'comet',
-                    },
-                    { enter: 'glitch', exit: 'glitch' },
-                ),
+                menu: { enter: 'glitch', exit: 'glitch' },
                 icon: { enter: 'pop', hover: 'glitch' },
                 table: { enter: 'glow' },
                 toast: { enter: 'wind', exit: 'wind' },
                 tooltip: { enter: 'typing', exit: 'glitch' },
-                ...form({
-                    'focus-border': 'trace',
-                    'focus-shadow': 'glow',
-                    'focus-fill': 'scan',
-                    'focus-label': 'glow',
-                    'invalid-border': 'split',
-                    'invalid-fill': 'none',
-                }),
             },
         },
     ],
@@ -490,37 +445,27 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 exit: 'dissolve',
                 backdrop: 'blur',
                 'hover-move': 'tilt',
-                'hover-shadow': 'cast',
                 'hover-fill': 'spotlight',
+                'hover-shadow': 'cast',
                 'hover-border': 'edge',
+                'focus-move': 'none',
+                'focus-fill': 'shimmer',
+                'focus-shadow': 'neon',
+                'focus-border': 'orbit',
+                'focus-label': 'none',
+                'press-move': 'spring',
+                'press-fill': 'ripple',
+                'press-shadow': 'sink',
+                'press-border': 'pulse',
+                'invalid-border': 'glow',
+                'invalid-fill': 'flash',
             },
             components: {
-                ...buttons(
-                    {
-                        'hover-shadow': 'raise',
-                        'press-move': 'spring',
-                        'press-fill': 'ripple',
-                        'press-shadow': 'sink',
-                        'press-border': 'pulse',
-                        'focus-move': 'none',
-                        'focus-fill': 'shimmer',
-                        'focus-shadow': 'neon',
-                        'focus-border': 'orbit',
-                    },
-                    { enter: 'refocus', exit: 'defocus' },
-                ),
+                menu: { enter: 'refocus', exit: 'defocus' },
                 icon: { enter: 'refocus', hover: 'pop' },
                 table: { hover: 'frost', enter: 'glow' },
                 toast: { enter: 'refocus', exit: 'defocus' },
                 tooltip: { enter: 'refocus', exit: 'defocus' },
-                ...form({
-                    'focus-border': 'orbit',
-                    'focus-shadow': 'halo',
-                    'focus-fill': 'blur',
-                    'focus-label': 'none',
-                    'invalid-border': 'glow',
-                    'invalid-fill': 'flash',
-                }),
             },
         },
     ],
@@ -581,10 +526,12 @@ function answers(slot: Slot, tag: string): boolean {
     return slot.only === undefined || slot.only === tag;
 }
 
-/** Whether an effect is one a component offers: for a moment it answers, and one its element is
- *  the one it applies to, or one every element of the catalogue offers. */
+/** Whether an effect is one a component offers: for a moment it answers, one it draws, and one its
+ *  element is the one it applies to, or one every element of the catalogue offers. */
 function applies(effect: Effect, tag: string, slot: Slot): boolean {
-    return answers(slot, tag) && (effect.only === undefined || effect.only === tag);
+    return (
+        answers(slot, tag) && drawn(effect) && (effect.only === undefined || effect.only === tag)
+    );
 }
 
 /** Whether a theme's taste runs an effect other than today's for a property on any component of
@@ -641,7 +588,7 @@ function running(slot: Slot, host: HTMLElement): Effect | undefined {
  * A theme's taste as its block carries it, on the root and under `:where()`: the page's and each
  * component's, in properties no choice is written in. A theme other than the default clears the
  * default theme's taste for one component wherever it names the moment for the page and not for
- * that component, so its own runs there: Matrix's pointer is Matrix's on the button too.
+ * that component, so its own runs there, as it does on every other component.
  */
 function tasteSheet(theme: string): string {
     const given = tastes.get(theme);
@@ -1392,6 +1339,12 @@ export function prototype(catalogue: Catalogue): Page {
 
             host.setAttribute('data-hover', '');
 
+            // The focus wins: on a control the reader can see the focus on, the pointer's arrival
+            // plays nothing of the pointer's.
+            if (host.hasAttribute('data-focus-visible')) {
+                return;
+            }
+
             for (const moment of catalogue.moments) {
                 if (moment.on === 'enter') {
                     for (const slot of slots(moment)) {
@@ -1665,7 +1618,8 @@ export function prototype(catalogue: Catalogue): Page {
      * a click matches no :focus-visible in any engine unless it asks to — measured in all
      * three. After the click has finished choosing, and once: a click on an option's text
      * reaches the radio as a second click. Away first, for an engine whose click leaves the
-     * focus where it was: a focus that does not move does not arrive again.
+     * focus where it was: a focus that does not move does not arrive again. An instance with no
+     * control of its own, a card, is shown the focus on the first one it holds.
      */
     let judging = false;
     const judge = (scope: Scope): void => {
@@ -1677,11 +1631,13 @@ export function prototype(catalogue: Catalogue): Page {
         setTimeout(() => {
             judging = false;
             const where = selector[scope];
-            const control = document
-                .querySelector(`:is(${tags.join(', ')}):is(${where}, ${where} *):not([disabled])`)
-                ?.shadowRoot?.querySelector<HTMLElement>(
-                    catalogue.control ?? ':is(button, input, select, textarea):not(:disabled)',
-                );
+            const instance = document.querySelector(
+                `:is(${tags.join(', ')}):is(${where}, ${where} *):not([disabled])`,
+            );
+            const control =
+                instance?.shadowRoot?.querySelector<HTMLElement>(
+                    catalogue.control ?? `${reachable}:not(:disabled)`,
+                ) ?? (instance === null ? null : held(instance));
 
             control?.blur();
             control?.focus({ focusVisible: true });
@@ -1729,6 +1685,27 @@ export function prototype(catalogue: Catalogue): Page {
             restore(host);
         },
     };
+}
+
+/** What a reader reaches by Tab in an instance, as the components render it. */
+const reachable = ':is(button, input, select, textarea)';
+
+/** The first control an element holds, its own or one a component it holds renders: where a
+ *  focus in a card is shown. */
+function held(element: Element): HTMLElement | null {
+    for (const each of element.querySelectorAll('*')) {
+        if (each instanceof HTMLElement && each.matches(`${reachable}:not(:disabled)`)) {
+            return each;
+        }
+
+        const inside = each.shadowRoot?.querySelector<HTMLElement>(`${reachable}:not(:disabled)`);
+
+        if (inside !== undefined && inside !== null) {
+            return inside;
+        }
+    }
+
+    return null;
 }
 
 /** What Space presses: a button, and the inputs it clicks. */
@@ -1802,11 +1779,13 @@ function triggers(on: string): [string, (event: Event, host: HTMLElement) => boo
                 'pointerenter',
                 // The host's own arrival, not one of its shadow root's: the listener is a
                 // capture on the document, which every element entered passes on its way down.
-                // A finger has no hover, so it arrives only to press.
+                // A finger has no hover, so it arrives only to press. And none on a host the
+                // reader can see the focus on or in, which the pointer's effects yield to.
                 (event, host) =>
                     event instanceof PointerEvent &&
                     event.pointerType !== 'touch' &&
-                    event.composedPath()[0] === host,
+                    event.composedPath()[0] === host &&
+                    !host.hasAttribute('data-focus-visible'),
             ],
         ];
     }
@@ -1897,6 +1876,8 @@ function draw(
                 : nothing
         }
         ${effect.only === undefined ? nothing : html`<span class="badge">${effect.only} only</span>`}
+        ${effect.yet === true ? html`<span class="badge">not here yet</span>` : nothing}
+        ${effect.refused === undefined ? nothing : html`<span class="badge">left out here</span>`}
     `;
 
     const panel = document.querySelector('[data-choices]');
@@ -2042,7 +2023,11 @@ function draw(
                                         class="effect"
                                         @click=${(event: MouseEvent): void => {
                                             // A pointer's click: a key's has no count.
-                                            if (moment.name === 'focus' && event.detail > 0) {
+                                            if (
+                                                moment.name === 'focus' &&
+                                                event.detail > 0 &&
+                                                drawn(effect)
+                                            ) {
                                                 judge(choice.scope);
                                             }
                                         }}
@@ -2050,6 +2035,7 @@ function draw(
                                         <input
                                             type="radio"
                                             name=${slot.name}
+                                            ?disabled=${!drawn(effect)}
                                             .checked=${runs(slot) === effect.name}
                                             @change=${(): void => {
                                                 // Today's, with no taste to stand against, is
@@ -2076,6 +2062,13 @@ function draw(
                                         <span>
                                             <strong>${effect.name}</strong>${badges(effect, slot)}
                                             <span class="says">${effect.says}</span>
+                                            ${
+                                                effect.refused === undefined
+                                                    ? nothing
+                                                    : html`<span class="says"
+                                                          >Left out here: ${effect.refused}</span
+                                                      >`
+                                            }
                                         </span>
                                     </label>
                                 `,
@@ -2197,6 +2190,13 @@ function draw(
     }
 }
 
+/** A control a border's light is drawn round: the element that lays the layers over it, and the
+ *  control's own box. */
+interface Bound {
+    readonly layers: HTMLElement;
+    readonly box: DOMRect;
+}
+
 /**
  * The pointer engine, for the effects that follow: one passive listener, one write a frame,
  * and the box measured when the pointer arrives rather than on every move. Nothing runs for a
@@ -2212,6 +2212,7 @@ function follow(catalogue: Catalogue, hostOf: (event: Event) => HTMLElement | un
     }
 
     const boxes = new Map<HTMLElement, DOMRect>();
+    const bounds = new Map<HTMLElement, readonly Bound[]>();
     const radius = 96;
     let last: PointerEvent | undefined;
     let pending = false;
@@ -2219,17 +2220,67 @@ function follow(catalogue: Catalogue, hostOf: (event: Event) => HTMLElement | un
     const follows = (host: HTMLElement): boolean =>
         following.some((slot) => running(slot, host)?.follows === true);
 
+    /** The controls in an instance the catalogue names, each with its parent and its own box. */
+    const bound = (host: HTMLElement): readonly Bound[] =>
+        catalogue.bounded === undefined
+            ? []
+            : [...(host.shadowRoot?.querySelectorAll(catalogue.bounded) ?? [])].flatMap(
+                  (control) =>
+                      control.parentElement === null
+                          ? []
+                          : [
+                                {
+                                    layers: control.parentElement,
+                                    box: control.getBoundingClientRect(),
+                                },
+                            ],
+              );
+
+    /** An instance measured, and the controls in it. */
+    const measured = (host: HTMLElement): void => {
+        boxes.set(host, host.getBoundingClientRect());
+        bounds.set(host, bound(host));
+    };
+
     document.addEventListener(
         'pointerover',
         (event) => {
             const host = hostOf(event);
 
             if (host !== undefined && !boxes.has(host) && follows(host)) {
-                boxes.set(host, host.getBoundingClientRect());
+                measured(host);
             }
         },
         { passive: true },
     );
+
+    /** Where the pointer is from a box, written on an element, and how near it is. */
+    const write = (
+        element: HTMLElement,
+        box: DOMRect,
+        x: number,
+        y: number,
+        quiet: boolean,
+    ): number => {
+        const dx = Math.max(box.left - x, 0, x - box.right);
+        const dy = Math.max(box.top - y, 0, y - box.bottom);
+        const near = quiet ? 0 : Math.max(0, 1 - Math.hypot(dx, dy) / radius);
+        const clamp = (value: number): number => Math.max(-1, Math.min(1, value));
+
+        element.style.setProperty('--ui-pointer-near', near.toFixed(3));
+        element.style.setProperty(
+            '--ui-pointer-nx',
+            clamp((x - (box.left + box.width / 2)) / (box.width / 2)).toFixed(3),
+        );
+        element.style.setProperty(
+            '--ui-pointer-ny',
+            clamp((y - (box.top + box.height / 2)) / (box.height / 2)).toFixed(3),
+        );
+        element.style.setProperty('--ui-pointer-x', `${(x - box.left).toFixed(1)}px`);
+        element.style.setProperty('--ui-pointer-y', `${(y - box.top).toFixed(1)}px`);
+
+        return near;
+    };
 
     const frame = (): void => {
         pending = false;
@@ -2242,25 +2293,16 @@ function follow(catalogue: Catalogue, hostOf: (event: Event) => HTMLElement | un
         const quiet = still() || matchMedia('(hover: none)').matches;
 
         for (const [host, box] of boxes) {
-            const dx = Math.max(box.left - x, 0, x - box.right);
-            const dy = Math.max(box.top - y, 0, y - box.bottom);
-            const near = quiet ? 0 : Math.max(0, 1 - Math.hypot(dx, dy) / radius);
-            const clamp = (value: number): number => Math.max(-1, Math.min(1, value));
+            const near = write(host, box, x, y, quiet);
 
-            host.style.setProperty('--ui-pointer-near', near.toFixed(3));
-            host.style.setProperty(
-                '--ui-pointer-nx',
-                clamp((x - (box.left + box.width / 2)) / (box.width / 2)).toFixed(3),
-            );
-            host.style.setProperty(
-                '--ui-pointer-ny',
-                clamp((y - (box.top + box.height / 2)) / (box.height / 2)).toFixed(3),
-            );
-            host.style.setProperty('--ui-pointer-x', `${(x - box.left).toFixed(1)}px`);
-            host.style.setProperty('--ui-pointer-y', `${(y - box.top).toFixed(1)}px`);
+            // Inside the instance's box, so never nearer than it: at nothing with it.
+            for (const { layers, box: own } of bounds.get(host) ?? []) {
+                write(layers, own, x, y, quiet);
+            }
 
             if (near === 0) {
                 boxes.delete(host);
+                bounds.delete(host);
             }
         }
     };
@@ -2287,7 +2329,7 @@ function follow(catalogue: Catalogue, hostOf: (event: Event) => HTMLElement | un
     // Captured, so the instances' own column is heard too: its scroll does not reach the window.
     const measure = (): void => {
         for (const host of boxes.keys()) {
-            boxes.set(host, host.getBoundingClientRect());
+            measured(host);
         }
 
         schedule();
