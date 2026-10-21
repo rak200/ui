@@ -5,7 +5,16 @@
  * checked never plays them; everything they move is in the sheet.
  */
 import { reference } from '../../../../src/reference.js';
-import { keyframes, moments, rules, sized, validation, type Field } from '../controls.js';
+import {
+    focal,
+    keyframes,
+    moments,
+    moves,
+    rules,
+    sized,
+    validation,
+    type Field,
+} from '../controls.js';
 import { inner, prototype, queries, replay } from '../motion.js';
 
 /** The query each of the checkbox's effects is drawn under, and each of the switch's: the
@@ -55,16 +64,21 @@ const sheet = String.raw`
    check's effects below change them by place — the colours, the switch's thumb, then the scale.
    The switch is what its ::after is laid out against, as the checkbox already is for its mark. */
 :host(ui-checkbox) input {
-    transition-property: background-color, border-color, scale, backdrop-filter;
-    transition-duration: ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200);
-    transition-timing-function: ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter);
+    transition-property: background-color, border-color, scale, backdrop-filter, translate, transform;
+    transition-duration: ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200),
+        var(--ui-duration-200), var(--ui-duration-100);
+    transition-timing-function: ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter),
+        var(--ui-easing-enter), linear;
 }
 
 :host(ui-switch) input {
     position: relative;
-    transition-property: background-color, border-color, background-position, scale, backdrop-filter;
-    transition-duration: ${state}, ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200);
-    transition-timing-function: ${ease}, ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter);
+    transition-property: background-color, border-color, background-position, scale, backdrop-filter,
+        translate, transform;
+    transition-duration: ${state}, ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200),
+        var(--ui-duration-200), var(--ui-duration-100);
+    transition-timing-function: ${ease}, ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter),
+        var(--ui-easing-enter), linear;
 }
 
 /* check: fade is what both do today — the colours fade, and the switch's thumb slides as they do
@@ -72,13 +86,15 @@ const sheet = String.raw`
    once. */
 @container ${checkbox('check', 'none')} {
     :host(ui-checkbox) input {
-        transition-duration: 0s, 0s, var(--ui-duration-200), var(--ui-duration-200);
+        transition-duration: 0s, 0s, var(--ui-duration-200), var(--ui-duration-200),
+            var(--ui-duration-200), var(--ui-duration-100);
     }
 }
 
 @container ${toggle('check', 'none')} {
     :host(ui-switch) input {
-        transition-duration: 0s, 0s, 0s, var(--ui-duration-200), var(--ui-duration-200);
+        transition-duration: 0s, 0s, 0s, var(--ui-duration-200), var(--ui-duration-200),
+            var(--ui-duration-200), var(--ui-duration-100);
     }
 }
 
@@ -89,9 +105,11 @@ const sheet = String.raw`
    the fade where it was going. */
 :host(ui-checkbox) input[data-fx='pop'],
 :host(ui-checkbox) input[data-fx='draw'] {
-    transition-property: scale, backdrop-filter;
-    transition-duration: var(--ui-duration-200);
-    transition-timing-function: var(--ui-easing-emphasis), var(--ui-easing-enter);
+    transition-property: scale, backdrop-filter, translate, transform;
+    transition-duration: var(--ui-duration-200), var(--ui-duration-200), var(--ui-duration-200),
+        var(--ui-duration-100);
+    transition-timing-function: var(--ui-easing-emphasis), var(--ui-easing-enter),
+        var(--ui-easing-enter), linear;
 }
 
 input[data-fx='pop']::before {
@@ -109,28 +127,30 @@ input[data-fx='draw']::before {
 @container ${toggle('check', 'spring')} {
     :host(ui-switch) input {
         transition-duration: 0s, 0s, var(--ui-duration-400), var(--ui-duration-200),
-            var(--ui-duration-200);
+            var(--ui-duration-200), var(--ui-duration-200), var(--ui-duration-100);
         transition-timing-function: linear, linear, ${bounce}, var(--ui-easing-emphasis),
-            var(--ui-easing-enter);
+            var(--ui-easing-enter), var(--ui-easing-enter), linear;
     }
 }
 
 /* pointer: preview, what a click would do, faintly: the tick, pale, in an empty box, and the
-   thumb leaning 3px toward the other side. */
+   thumb leaning 3px toward the other side. At the focus, what Space would do, the same way. */
+@container ${checkbox('hover-fill', 'preview')} or ${checkbox('focus-fill', 'preview')} {
+    :host(ui-checkbox) input:not(:checked, :indeterminate)::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        background-color: var(--ui-color-accent);
+        mask-image: ${tick};
+        mask-size: 100% 100%;
+        mask-repeat: no-repeat;
+        opacity: 0;
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+}
+
 @media (hover: hover) {
     @container ${checkbox('hover-fill', 'preview')} {
-        :host(ui-checkbox) input:not(:checked, :indeterminate)::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            background-color: var(--ui-color-accent);
-            mask-image: ${tick};
-            mask-size: 100% 100%;
-            mask-repeat: no-repeat;
-            opacity: 0;
-            transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
-        }
-
         :host(ui-checkbox) input:not(:checked, :indeterminate):hover:not(:disabled)::before {
             opacity: 0.4;
         }
@@ -147,6 +167,22 @@ input[data-fx='draw']::before {
     }
 }
 
+@container ${checkbox('focus-fill', 'preview')} {
+    :host(ui-checkbox) input:not(:checked, :indeterminate):focus-visible::before {
+        opacity: 0.4;
+    }
+}
+
+@container ${toggle('focus-fill', 'preview')} {
+    :host(ui-switch) input:focus-visible {
+        background-position: calc(${size} / 6 + 3px) center;
+    }
+
+    :host(ui-switch) input:checked:focus-visible {
+        background-position: calc(100% - ${size} / 6 - 3px) center;
+    }
+}
+
 ${rules({
     is: checkbox,
     host: ':host(ui-checkbox)',
@@ -155,6 +191,8 @@ ${rules({
     invalid: "input[aria-invalid='true']",
     filled: ':is(:checked, :indeterminate)',
     radius: reference('--ui-radius').cssText,
+    past: String.raw`
+        border-radius: max(0px, calc(${reference('--ui-radius').cssText} - 2px));`,
     label: 'label',
     text: "[part='text']",
     width: size,
@@ -169,6 +207,11 @@ ${rules({
     invalid: "input[aria-invalid='true']",
     filled: ':checked',
     radius: size,
+    past: String.raw`
+        /* Half a pixel past each edge of the 40 by 24px the switch is drawn at, turned a thousandth
+           of a degree, which keeps Firefox from snapping the half pixel to a whole one or to none:
+           scaled alone, it drew the line where it had been — measured. */
+        transform: scale(calc(41 / 40), calc(25 / 24)) rotate(0.001deg);`,
     label: 'label',
     text: "[part='text']",
     width: `calc(${size} * 5 / 3)`,
@@ -194,11 +237,17 @@ ${rules({
 
 ${keyframes}
 
+${moves}
+
 ${sized.small}
+
+${focal.frames(keyframes + moves + sized.small)}
 `;
 
 prototype({
     tags: ['ui-checkbox', 'ui-switch'],
+    // Beside its text, so the edge is lit from where the pointer is in the control's own box.
+    bounded: 'input',
     sheet,
     moments: [
         {

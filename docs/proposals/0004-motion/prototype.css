@@ -306,6 +306,11 @@ main h2 {
     color: var(--frame-quiet);
 }
 
+/* One the list offers and this component does not draw: there to be read, not chosen. */
+.effect:has(> input:disabled) strong {
+    color: var(--frame-quiet);
+}
+
 .badge {
     display: inline-block;
     margin-inline-start: 0.375rem;

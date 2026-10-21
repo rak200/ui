@@ -23,7 +23,33 @@
  * on the trigger instead, which a component would set as a custom state.
  */
 import { reference } from '../../../src/reference.js';
-import { comet, far, orbit, scan, sheen, shimmer, sized, sweeps } from './controls.js';
+import {
+    breathe,
+    centres,
+    comet,
+    edge,
+    flooded,
+    floods,
+    focal,
+    glass,
+    lights,
+    line,
+    mixed,
+    moves,
+    orbit,
+    ripple,
+    scan,
+    sheen,
+    shimmer,
+    sized,
+    spot,
+    sweeps,
+    thrown,
+    tinted,
+    trace,
+    waves,
+} from './controls.js';
+import { focus, hover } from './moments.js';
 import {
     attributes,
     duration,
@@ -49,6 +75,9 @@ export interface Buttons {
      *  button; a press is the record and `:active`. Without one, the host's own `:hover` and
      *  `:active`. */
     readonly hovered?: string;
+    /** The host while the button it renders is filled, `ui-button`'s primary, which the trace is
+     *  drawn over in a colour moved off the fill. */
+    readonly filled?: string;
 }
 
 /** What each variant draws its fill in, at rest, under the pointer and pressed, and the ink and
@@ -60,6 +89,7 @@ const colours = {
         pressed: reference('--ui-color-primary-pressed').cssText,
         ink: reference('--ui-color-primary-contrast').cssText,
         sheen: sheen.on(reference('--ui-color-primary').cssText),
+        tint: mixed(reference('--ui-color-primary').cssText),
     },
     secondary: {
         rest: reference('--ui-color-surface-control').cssText,
@@ -67,6 +97,7 @@ const colours = {
         pressed: reference('--ui-color-pressed').cssText,
         ink: reference('--ui-color-text').cssText,
         sheen: sheen.over,
+        tint: tinted(reference('--ui-color-surface-control').cssText),
     },
 } as const;
 
@@ -89,7 +120,7 @@ const play =
  * Spreads the ripple from where the pointer came onto the button — going down for a press,
  * arriving for a hover — or from the centre for a key.
  */
-const ripple = ({ host, event }: Firing): void => {
+const spread = ({ host, event }: Firing): void => {
     const target = inner(host, 'button');
 
     if (target === null) {
@@ -102,59 +133,26 @@ const ripple = ({ host, event }: Firing): void => {
         (event.type === 'pointerdown' || event.type === 'pointerenter');
     const x = pointer ? event.clientX - box.left : box.width / 2;
     const y = pointer ? event.clientY - box.top : box.height / 2;
-    const reach = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
 
     target.style.setProperty('--ui-ripple-x', `${x.toFixed(1)}px`);
     target.style.setProperty('--ui-ripple-y', `${y.toFixed(1)}px`);
-    target.style.setProperty('--ui-ripple-reach', `${reach.toFixed(1)}px`);
     replay(target, 'ripple', 'data-fill');
 };
 
-/**
- * Throws a circle out from under the button, publishing first where it starts and how far it
- * goes: from half the button's height, under it, to past its farthest corner by half as far again
- * as the explode's ring flies. A circle's reach is in proportion to the button, and only a
- * measurement has the button's size.
- */
-const wave =
-    (name: 'shockwave' | 'bloom') =>
-    ({ host }: { host: HTMLElement }): void => {
-        const target = inner(host, 'button');
+/** Throws a circle out from under the button, from the host's layer: the shared measure, taken
+ *  of the button the component renders. */
+const wave = waves(
+    (host) => inner(host, 'button'),
+    (host) => host,
+);
 
-        if (target === null) {
-            return;
-        }
-
-        const corner = Math.hypot(target.offsetWidth, target.offsetHeight) / 2;
-        host.style.setProperty('--ui-wave-from', `${(target.offsetHeight / 2).toFixed(1)}px`);
-        host.style.setProperty('--ui-wave-to', `calc(${corner.toFixed(1)}px + 4.5rem)`);
-        replay(host, name, 'data-border');
-    };
-
-/**
- * Publishes where the pointer came onto the button, for the flood to spread from, and then where
- * it leaves, for the flood to drain toward: the card's, held to the button's box.
- */
-const flood = ({ host, event }: Firing): void => {
-    const target = inner(host, 'button');
-
-    if (target === null || !(event instanceof PointerEvent)) {
-        return;
-    }
-
-    const at = (point: PointerEvent): void => {
-        const box = target.getBoundingClientRect();
-        const x = Math.min(Math.max(point.clientX - box.left, 0), box.width);
-        const y = Math.min(Math.max(point.clientY - box.top, 0), box.height);
-        target.style.setProperty('--ui-ripple-x', `${x.toFixed(1)}px`);
-        target.style.setProperty('--ui-ripple-y', `${y.toFixed(1)}px`);
-    };
-
-    at(event);
-    // Off the button rather than off the host: the menu's host holds its panel too, which the
-    // pointer leaves the trigger for.
-    target.addEventListener('pointerleave', at, { once: true });
-};
+/** Publishes where the pointer came onto the button and where it leaves it, for the flood: the
+ *  card's, held to the button's box, with the leaving read off the button rather than off the
+ *  host, which on the menu holds the panel too. */
+const flood = floods(
+    (host) => inner(host, 'button'),
+    (host) => inner(host, 'button'),
+);
 
 /** One particle a press throws: its element, set at the button's middle, and its flight. */
 interface Particle {
@@ -400,13 +398,6 @@ const fragments = emit(18, (index, box, length) => {
         options: { duration: seconds * 1000, easing: 'linear', fill: 'forwards' },
     };
 });
-
-/** The flood's circle, from where the pointer came in, as far as its registered progress. */
-const flooded = String.raw`radial-gradient(
-    circle farthest-corner at var(--ui-ripple-x) var(--ui-ripple-y),
-    var(--ui-flood-ink) calc(var(--ui-flood) * 101% - 1px),
-    transparent calc(var(--ui-flood) * 101%)
-)`;
 
 /**
  * Turns the button in from edge-on, publishing its size first: how deep the turn reads is in
@@ -778,23 +769,8 @@ const shatter =
         }
     };
 
-/** The ripple's circle, in the label's colour, at how far it has spread. */
-const circle = String.raw`radial-gradient(
-    circle at var(--ui-ripple-x) var(--ui-ripple-y),
-    rgb(from var(--ui-ink) r g b / var(--ui-ripple-alpha))
-        calc(var(--ui-ripple-progress) * var(--ui-ripple-reach)),
-    transparent calc(var(--ui-ripple-progress) * var(--ui-ripple-reach) + 1px)
-)`;
-
 /** The breathe's own light, in the layer's colour, as strong as its registered progress. */
-const breath = String.raw`0 0 calc(var(--ui-breath) * 15px) rgb(from currentColor r g b / var(--ui-breath))`;
-
-/** The light under the pointer, in the label's colour, fading with distance. */
-const spot = String.raw`radial-gradient(
-    circle 4rem at var(--ui-pointer-x) var(--ui-pointer-y),
-    rgb(from var(--ui-ink) r g b / calc(var(--ui-pointer-near) * 0.24)),
-    transparent
-)`;
+const breath = lights.breath('currentColor', '15px');
 
 /** The orbit's band, on the edge from its outer side in, and never past it. */
 const onEdge = String.raw`
@@ -809,6 +785,29 @@ const onEdge = String.raw`
             linear-gradient(#000 0 0);
         pointer-events: none;`;
 
+/** What moves the button, on the button's own transitions, for a layer held where the button is:
+ *  the scale's on `--ui-scale-time`, which the press's spring sets as it sets the button's. */
+const moving = String.raw`scale var(--ui-scale-time),
+            translate var(--ui-duration-200) var(--ui-easing-enter),
+            transform var(--ui-duration-100) linear`;
+
+/** The trace's band, the orbit's, on the edge from its outer side in, moving as the button moves,
+ *  on the button's own transitions. */
+const traced = String.raw`
+        content: '';
+        position: absolute;
+        inset: 0;
+        padding: ${trace.width}px;
+        border-radius: var(--ui-band-radius, var(--ui-radius));
+        background: ${trace.light};
+        mask:
+            linear-gradient(#000 0 0) content-box exclude,
+            linear-gradient(#000 0 0);
+        pointer-events: none;
+        transition:
+            ${trace.transition},
+            ${moving};`;
+
 /** The comet's band, clear of the edge, over where the focus ring is drawn. */
 const clear = String.raw`
         content: '';
@@ -822,15 +821,40 @@ const clear = String.raw`
             linear-gradient(#000 0 0);
         pointer-events: none;`;
 
+/** The edge's band, the orbit's, on the edge from its outer side in, lit by `light`. */
+const edged = (light: string): string => String.raw`
+        content: '';
+        position: absolute;
+        inset: 0;
+        padding: ${edge.width}px;
+        border-radius: var(--ui-band-radius, var(--ui-radius));
+        background: ${light};
+        mask:
+            linear-gradient(#000 0 0) content-box exclude,
+            linear-gradient(#000 0 0);
+        pointer-events: none;`;
+
 /** The focus's orbit, the pointer's, three laps, then it fades. */
 const focusOrbit = String.raw`${onEdge}
         opacity: 1;
-        animation: ${orbit.run};`;
+        animation: ${focal.run(orbit.run)};
+        transition: ${moving};`;
 
 /** The focus's comet, the pointer's, two laps, then it fades. */
 const focusComet = String.raw`${clear}
         opacity: 1;
-        animation: ${comet.run};`;
+        animation: ${focal.run(comet.run)};
+        transition: ${moving};`;
+
+/** The orbit's laps and the fade it rests by. */
+const laps = String.raw`
+@keyframes ui-orbit {
+    to { --ui-orbit: 360deg; }
+}
+
+@keyframes ui-rest {
+    to { opacity: 0; }
+}`;
 
 /** The shimmer's sheen, in the button's own colour for it. */
 const sheened = String.raw`
@@ -841,13 +865,13 @@ const sheened = String.raw`
 
 /** The focus's sheen, swept across four times, then at rest before the button's start. */
 const focusShimmer = String.raw`${sheened}
-        animation: ${shimmer.run};`;
+        animation: ${focal.run(shimmer.run)};`;
 
 /**
  * The sheet as one page's buttons carry it, under the name the component asks for its tastes by:
  * the button's `--ui-taste-button-<moment>`, the menu's `--ui-taste-menu-<moment>`.
  */
-export function sheet({ variants, hovered }: Buttons, name: string): string {
+export function sheet({ variants, hovered, filled }: Buttons, name: string): string {
     /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
     const is = queries(name);
 
@@ -856,6 +880,12 @@ export function sheet({ variants, hovered }: Buttons, name: string): string {
     const pointed = hovered ?? ':hover';
     const pressed = hovered === undefined ? ':active' : `${hovered}:active`;
     const held = hovered === undefined ? ':hover:active' : `${hovered}:active`;
+
+    /** What the pointer's effects are drawn on: a button without a focus the reader can see, and
+     *  a host whose record says there is none, since they yield to it. Under :where(), so each
+     *  weighs what it did, under a press, which is drawn over the pointer and the focus alike. */
+    const unfocused = ':where(:not(:focus-visible))';
+    const calm = ':where(:not([data-focus-visible]))';
 
     /** The variants the component renders, each with its selector. */
     const drawn = (['primary', 'secondary'] as const).flatMap((variant) => {
@@ -873,30 +903,34 @@ export function sheet({ variants, hovered }: Buttons, name: string): string {
         drawn.map(([variant, selector]) => `${selector}${block(variant)}`).join('\n\n');
 
     /** The pointer's borders that hold the edge's layer while the pointer rests on the button. */
-    const pointerBorder = `(${is('hover-border', 'edge')} or ${is('hover-border', 'orbit')} or ${is('hover-border', 'trace')} or ${is('hover-border', 'comet')})`;
+    const pointerBorder = `(${is('hover-border', 'edge')} or ${is('hover-border', 'orbit')} or ${is('hover-border', 'trace')} or ${is('hover-border', 'comet')} or ${is('hover-border', 'underline')} or ${is('hover-border', 'sweep')})`;
 
-    /** The pointer's fills that hold the fill's layer while the pointer rests on the button. */
-    const pointerFill = `(${is('hover-fill', 'spotlight')} or ${is('hover-fill', 'flood')} or ${is('hover-fill', 'shimmer')})`;
+    /** The focus's borders that hold the same layer while the focus stays. */
+    const focusBorder = `(${is('focus-border', 'edge')} or ${is('focus-border', 'orbit')} or ${is('focus-border', 'trace')} or ${is('focus-border', 'comet')} or ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')})`;
 
     return String.raw`
-/* Every property the movement moves, transitioned once. Nothing here moves until an effect
-   asks it to, so with no choice the button does what it does today. The transform's short
-   linear step only smooths the tilt between the pointer engine's frames.
+/* Every property the movement moves, transitioned once, and the blur's glass, on the fill's
+   length and curve, which the list's fifth entry takes. Nothing here moves until an effect asks it
+   to, so with no choice the button does what it does today. The transform's short linear step
+   only smooths the tilt between the pointer engine's frames.
 
    Isolated, so the fill's layer can sit under the label and still over the button's own fill. */
 button {
     isolation: isolate;
-    transition-property: background-color, scale, translate, transform;
+    transition-property: background-color, scale, translate, transform, backdrop-filter;
     transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-200), var(--ui-duration-200), var(--ui-duration-100);
     transition-timing-function: var(--ui-easing-state), var(--ui-easing-emphasis), var(--ui-easing-enter), linear;
 }
 
 /* The border's containing block. Not under the border's queries: a :host rule there would miss
    a choice made on the host itself — S8 — and the border would be placed against the page.
-   Isolated, so the circles drawn under the button stay over whatever the page put under it. */
+   Isolated, so the circles drawn under the button stay over whatever the page put under it. The
+   give its beats take is its own, whatever holds it: a card's, a quarter, is inherited. */
 :host {
     position: relative;
     isolation: isolate;
+    --ui-scale-time: var(--ui-duration-200) var(--ui-easing-emphasis);
+    --ui-give: 1;
 }
 
 /* The fill is drawn on the layer the edge is drawn on, put under the label: what a fill paints
@@ -932,6 +966,12 @@ ${each(
    that a moment fires plays on the same element: one element has one animation list, so the
    more specific rule would otherwise keep a press from ever showing on a hovered button. */
 
+/* The focus wins. A button the reader can see the focus on is drawn as the focus chose, and the
+   pointer resting on it changes nothing, what the button does today under the pointer included —
+   the hover colour, and the edge and the glow a theme gives the pointer: a reader who came by the
+   keyboard may have left the pointer where it was. A press is drawn over both. The pointer's
+   arrival on such a button fires nothing either, which the page's script holds back. */
+
 /* ——— The movement, on the button. ——— */
 
 /* press-move: squish. A transition rather than an animation, so letting go runs it back instead
@@ -953,6 +993,10 @@ ${each(
     button {
         transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-400), var(--ui-duration-200), var(--ui-duration-100);
         transition-timing-function: var(--ui-easing-state), ${spring}, var(--ui-easing-enter), linear;
+    }
+
+    :host {
+        --ui-scale-time: var(--ui-duration-400) ${spring};
     }
 
     button:not(:disabled):active,
@@ -1010,7 +1054,7 @@ button[data-move='flip-horizontal'] {
    phone's button after the finger has gone. */
 @media (hover: hover) {
     @container ${is('hover-move', 'lift')} {
-        button:not(:disabled):hover {
+        button:not(:disabled):hover${unfocused} {
             translate: 0 -2px;
         }
     }
@@ -1019,7 +1063,7 @@ button[data-move='flip-horizontal'] {
 /* hover-move: zoom. Grows a little under the pointer, which it only grows away from. */
 @media (hover: hover) {
     @container ${is('hover-move', 'zoom')} {
-        button:not(:disabled):hover {
+        button:not(:disabled):hover${unfocused} {
             scale: 1.05;
         }
     }
@@ -1027,7 +1071,7 @@ button[data-move='flip-horizontal'] {
 
 /* hover-move: magnetic. Leans toward the pointer as it nears, a few pixels at most. */
 @container ${is('hover-move', 'magnetic')} {
-    button:not(:disabled) {
+    button:not(:disabled)${unfocused} {
         translate: calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 6px)
             calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * 4px);
     }
@@ -1037,7 +1081,7 @@ button[data-move='flip-horizontal'] {
    reference's 3D tilt, through the pointer engine. The light the reference's catches where the
    pointer is, is the fill's spotlight: the two together are the whole of it. */
 @container ${is('hover-move', 'tilt')} {
-    button:not(:disabled) {
+    button:not(:disabled)${unfocused} {
         transform: perspective(500px)
             rotateY(calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 14deg))
             rotateX(calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * -14deg));
@@ -1049,16 +1093,23 @@ button[data-move='flip-horizontal'] {
    the shadow's breathe as the other; it only grows, so the pointer resting on it stays on it. */
 @media (hover: hover) {
     @container ${is('hover-move', 'breathe')} {
-        button:not(:disabled):not([data-move]):hover {
-            animation: ui-breathe var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-loop) alternate;
+        button:not(:disabled):not([data-move]):hover${unfocused} {
+            animation: ${breathe.loop};
         }
     }
 }
 
-/* focus-move: lift. Two pixels up, ring and all, for as long as the focus stays. */
+/* focus-move: lift and zoom. Two pixels up, or grown a little, ring and all, for as long as the
+   focus stays. */
 @container ${is('focus-move', 'lift')} {
     button:focus-visible {
         translate: 0 -2px;
+    }
+}
+
+@container ${is('focus-move', 'zoom')} {
+    button:focus-visible {
+        scale: 1.05;
     }
 }
 
@@ -1066,7 +1117,7 @@ button[data-move='flip-horizontal'] {
    the reader reads. */
 @container ${is('focus-move', 'breathe')} {
     button:focus-visible:not([data-move]) {
-        animation: ui-breathe var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-settle) alternate;
+        animation: ${focal.run(breathe.settle)};
     }
 }
 
@@ -1075,25 +1126,51 @@ button[data-move='flip-horizontal'] {
 /* highlight: the hover colour under the pointer and the pressed colour while held, which is what
    the component does today and so what renders with no choice. The colours are named here so any
    other choice of the kind can take its one away: the pointer then leaves the resting colour, and
-   a press leaves whatever the pointer gave, since a press is drawn over the pointer, as it is
-   today. A press that brings no colour leaves its name unset, and the fill falls back. */
+   a press leaves whatever the pointer or the focus gave, since a press is drawn over both, as it is
+   over the pointer today. A press that brings no colour leaves its name unset, and the fill falls
+   back. */
 ${each(
     (variant) => String.raw` {
     --ui-fill-rest: ${colours[variant].rest};
     --ui-fill-hover: ${colours[variant].hover};
     --ui-fill-pressed: ${colours[variant].pressed};
+    --ui-fill-tint: ${colours[variant].tint};
 }`,
 )}
 
 ${every()} {
     --ui-fill-hovered: var(--ui-fill-hover);
+    --ui-fill-focused: var(--ui-fill-rest);
 }
 
 @container ${is('hover-fill', 'none')} or ${is('hover-fill', 'spotlight')} or
     ${is('hover-fill', 'flood')} or ${is('hover-fill', 'shimmer')} or
-    ${is('hover-fill', 'ripple')} or ${is('hover-fill', 'scan')} {
+    ${is('hover-fill', 'ripple')} or ${is('hover-fill', 'scan')} or
+    ${is('hover-fill', 'blur')} {
     ${every()} {
         --ui-fill-hovered: var(--ui-fill-rest);
+    }
+}
+
+/* tint: a little of the accent in the button's own fill, in the hover colour's place: a field's
+   over the secondary's surface, and mixed in plainly over the primary's fill. */
+@container ${is('hover-fill', 'tint')} {
+    ${every()} {
+        --ui-fill-hovered: var(--ui-fill-tint);
+    }
+}
+
+/* highlight and tint at the focus: the hover colour, or the tint, while the focus stays, in the
+   resting fill's place, which is the focus's with no choice. */
+@container ${is('focus-fill', 'highlight')} {
+    ${every()} {
+        --ui-fill-focused: var(--ui-fill-hover);
+    }
+}
+
+@container ${is('focus-fill', 'tint')} {
+    ${every()} {
+        --ui-fill-focused: var(--ui-fill-tint);
     }
 }
 
@@ -1104,22 +1181,48 @@ ${every()} {
     }
 }
 
-${every(':not(:disabled):hover')} {
+${every(`:not(:disabled):hover${unfocused}`)} {
     background: var(--ui-fill-hovered);
+}
+
+/* As specific as the component's own colour under the pointer, which it is drawn over. */
+${every(':not(:disabled):focus-visible')} {
+    background: var(--ui-fill-focused);
 }
 
 ${every(':not(:disabled):active')} {
     background: var(--ui-fill-pressed, var(--ui-fill-rest));
 }
 
-${every(':not(:disabled):hover:active')} {
+${every(`:not(:disabled):hover:active${unfocused}`)} {
     background: var(--ui-fill-pressed, var(--ui-fill-hovered));
+}
+
+${every(':not(:disabled):focus-visible:active')} {
+    background: var(--ui-fill-pressed, var(--ui-fill-focused));
+}
+
+/* blur: a field's, the page behind the button blurred through the theme's glass, under the pointer
+   or while the focus stays. Only Glass lets the page through a button, so only Glass has anything
+   to blur; where there is no glass, nothing changes. Faded in on the button's own transitions. */
+@media (hover: hover) {
+    @container ${is('hover-fill', 'blur')} {
+        button:not(:disabled):hover${unfocused} {
+            backdrop-filter: ${glass};
+        }
+    }
+}
+
+@container ${is('focus-fill', 'blur')} {
+    button:focus-visible {
+        backdrop-filter: ${glass};
+    }
 }
 
 /* ripple: from where the pointer went down for a press or came in for a hover, and from the
    middle for a key or a focus. */
 button[data-fill='ripple']::after {
-    background-image: ${circle};
+    background-image: ${ripple.image(ripple.ink('var(--ui-ink)'))};
     animation: ui-ripple var(--ui-duration-400) var(--ui-easing-enter);
 }
 
@@ -1134,14 +1237,24 @@ button[data-fill='scan']::after {
 
 /* hover-fill: spotlight. A light where the pointer is, fading with distance. It steps aside for
    the scan, and the ripple is drawn over it: one background-image, two layers, for as long as
-   the ripple plays. */
+   the ripple plays. At the focus, the light is in the middle, as strong as it gets. */
 @container ${is('hover-fill', 'spotlight')} {
-    button:not(:disabled):not([data-fill])::after {
-        background-image: ${spot};
+    button:not(:disabled):not([data-fill])${unfocused}::after {
+        background-image: ${spot('var(--ui-ink)')};
     }
 
-    button[data-fill='ripple']::after {
-        background-image: ${circle}, ${spot};
+    button[data-fill='ripple']${unfocused}::after {
+        background-image: ${ripple.image(ripple.ink('var(--ui-ink)'))}, ${spot('var(--ui-ink)')};
+    }
+}
+
+@container ${is('focus-fill', 'spotlight')} {
+    button:focus-visible:not([data-fill])::after {
+        background-image: ${spot('var(--ui-ink)', '50% 50%', '1')};
+    }
+
+    button[data-fill='ripple']:focus-visible::after {
+        background-image: ${ripple.image(ripple.ink('var(--ui-ink)'))}, ${spot('var(--ui-ink)', '50% 50%', '1')};
     }
 }
 
@@ -1149,7 +1262,7 @@ button[data-fill='scan']::after {
    loader, as a light rather than as a placeholder. */
 @media (hover: hover) {
     @container ${is('hover-fill', 'shimmer')} {
-        button:not(:disabled):not([data-fill]):hover::after {${sheened}
+        button:not(:disabled):not([data-fill]):hover${unfocused}::after {${sheened}
             animation: ${shimmer.loop};
         }
     }
@@ -1160,8 +1273,10 @@ button[data-fill='scan']::after {
    and the flood brings the hover colour, and the pressed one while it is held where the press
    brings it, so the label stands on the colours it stands on today. A circle drawn on the layer
    under the label rather than the card's clip: this layer also draws the edge and a theme's lift,
-   which a clip would take away. The ripple and the scan are drawn over it. */
-@container ${is('hover-fill', 'flood')} {
+   which a clip would take away. The ripple and the scan are drawn over it. Its centre glides only
+   where the script finds the circle showing, as the card's does. At the focus, from the middle,
+   which the focus's arrival publishes, and back to it. */
+@container ${is('hover-fill', 'flood')} or ${is('focus-fill', 'flood')} {
     button {
         --ui-flood-ink: var(--ui-fill-hover);
     }
@@ -1171,39 +1286,42 @@ button[data-fill='scan']::after {
     }
 
     button::after {
-        background-image: ${flooded};
+        background-image: ${flooded('var(--ui-flood-ink)')};
         transition: --ui-flood var(--ui-duration-400) var(--ui-easing-move);
     }
 
+    button[data-gliding]::after {
+        transition-property: --ui-flood, --ui-flood-x, --ui-flood-y;
+    }
+
     button[data-fill='ripple']::after {
-        background-image: ${circle}, ${flooded};
+        background-image: ${ripple.image(ripple.ink('var(--ui-ink)'))}, ${flooded('var(--ui-flood-ink)')};
     }
 
     button[data-fill='scan']::after {
-        background-image: ${scan.image('var(--ui-sheen)')}, ${flooded};
+        background-image: ${scan.image('var(--ui-sheen)')}, ${flooded('var(--ui-flood-ink)')};
         background-size: ${scan.size}, 100% 100%;
         background-position: ${scan.position}, 0 0;
     }
+}
 
+@container ${is('hover-fill', 'flood')} {
     @media (hover: hover) {
-        button:not(:disabled):hover::after {
+        button:not(:disabled):hover${unfocused}::after {
             --ui-flood: 1;
         }
     }
 }
 
-/* focus-fill: shimmer. It shares the layer with the pointer's light, and the pointer is drawn over
-   the focus, as a press is over the pointer: where the pointer brings a fill of its own to the
-   layer, the sheen waits while the pointer rests on the button and sweeps again when it leaves.
-   Drawn over Glass's spotlight, a focused button under the pointer showed the sheen and no light
-   — measured. */
-@container ${is('focus-fill', 'shimmer')} and (not ${pointerFill}) {
-    button:focus-visible:not([data-fill])::after {${focusShimmer}
+@container ${is('focus-fill', 'flood')} {
+    button:focus-visible::after {
+        --ui-flood: 1;
     }
 }
 
-@container ${is('focus-fill', 'shimmer')} and ${pointerFill} {
-    button:focus-visible:where(:not(:hover)):not([data-fill])::after {${focusShimmer}
+/* focus-fill: shimmer, on the layer the pointer's light is drawn on, which steps aside for it. */
+@container ${is('focus-fill', 'shimmer')} {
+    button:focus-visible:not([data-fill])::after {${focusShimmer}
     }
 }
 
@@ -1214,9 +1332,25 @@ button[data-fill='scan']::after {
    glow the theme gives at rest. */
 @container ${is('hover-shadow', 'none')} or ${is('hover-shadow', 'raise')} or
     ${is('hover-shadow', 'sink')} or ${is('hover-shadow', 'neon')} or
-    ${is('hover-shadow', 'breathe')} or ${is('hover-shadow', 'burst')} {
-    button:not(:disabled):hover::before {
+    ${is('hover-shadow', 'breathe')} or ${is('hover-shadow', 'burst')} or
+    ${is('hover-shadow', 'halo')} or ${is('hover-shadow', 'glow')} or
+    ${is('hover-shadow', 'inner')} or ${is('hover-shadow', 'cast')} {
+    button:not(:disabled):hover${unfocused}::before {
         box-shadow: ${reference('--ui-elevation-control')};
+    }
+}
+
+/* The glow a theme gives the pointer steps aside for the focus, which keeps the one at rest unless
+   it chose the highlight: as specific as the component's own under the pointer, and before every
+   shadow the focus draws on the layer. */
+button:not(:disabled):focus-visible::before {
+    box-shadow: ${reference('--ui-elevation-control')};
+}
+
+/* focus-shadow: highlight, the glow a theme gives the pointer, while the focus stays. */
+@container ${is('focus-shadow', 'highlight')} {
+    button:focus-visible:not([data-shadow])::before {
+        box-shadow: ${reference('--ui-elevation-control-hover')};
     }
 }
 
@@ -1253,9 +1387,7 @@ button[data-fill='scan']::after {
         inset: -1px;
         border-radius: calc(var(--ui-radius) + 1px);
         pointer-events: none;
-        box-shadow:
-            0 2px 4px -1px light-dark(rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6)),
-            0 6px 14px -4px light-dark(rgb(0 0 0 / 0.35), rgb(from var(--ui-color-accent) r g b / 0.45));
+        box-shadow: ${lights.raise};
         opacity: 0;
         transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
     }
@@ -1263,7 +1395,7 @@ button[data-fill='scan']::after {
 
 @media (hover: hover) {
     @container ${is('hover-shadow', 'raise')} {
-        :host(${pointed}:not([disabled]):not([data-shadow]))::before {
+        :host(${pointed}${calm}:not([disabled]):not([data-shadow]))::before {
             opacity: 1;
         }
     }
@@ -1287,24 +1419,25 @@ button[data-fill='scan']::after {
    layer under the button is covered by it, and on the glow's layer it would be written beside a
    theme's glow, which is none where a theme gives none — and a list holding none is no shadow at
    all, measured. A transition rather than an animation, so it leaves the movement's list alone;
-   the shadow takes the first of the button's lengths and curves. In at once for a press, as the
-   pressed colour is; the flood's colour, where it is chosen too, is drawn over it. */
+   the shadow takes the first of the button's lengths and curves, and the blur's glass, after it,
+   the second. In at once for a press, as the pressed colour is; the flood's colour, where it is
+   chosen too, is drawn over it. */
 @container ${is('press-shadow', 'sink')} or ${is('hover-shadow', 'sink')} {
     button {
-        transition-property: background-color, scale, translate, transform, box-shadow;
+        transition-property: background-color, scale, translate, transform, box-shadow, backdrop-filter;
     }
 }
 
 @container ${is('press-shadow', 'sink')} {
     button:not(:disabled):active {
-        box-shadow: inset 0 2px 5px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7));
+        box-shadow: ${lights.sink};
     }
 }
 
 @media (hover: hover) {
     @container ${is('hover-shadow', 'sink')} {
-        button:not(:disabled):hover {
-            box-shadow: inset 0 2px 5px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7));
+        button:not(:disabled):hover${unfocused} {
+            box-shadow: ${lights.sink};
         }
     }
 }
@@ -1349,23 +1482,98 @@ button {
     /* hover-shadow: neon. A lit line round the edge, as a tube is, and a glow that swells from
        close round it to a wide halo and back. */
     @container ${is('hover-shadow', 'neon')} {
-        button:not(:disabled):not([data-shadow]):hover::before {
+        button:not(:disabled):not([data-shadow]):hover${unfocused}::before {
             animation: ui-neon var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-loop) alternate;
         }
     }
 
     /* hover-shadow: breathe. A glow that comes and goes, the movement's breathe's other half. */
     @container ${is('hover-shadow', 'breathe')} {
-        button:not(:disabled):not([data-shadow]):hover::before {
+        button:not(:disabled):not([data-shadow]):hover${unfocused}::before {
             box-shadow: var(--ui-glow), ${breath};
             animation: ui-breathe-glow var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-loop) alternate;
         }
     }
 
     @container ${is('hover-shadow', 'breathe')} and style(--ui-glow: none) {
-        button:not(:disabled):not([data-shadow]):hover::before {
+        button:not(:disabled):not([data-shadow]):hover${unfocused}::before {
             box-shadow: ${breath};
         }
+    }
+}
+
+/* halo and glow, a field's, and cast, the card's at half its size, added to the glow a theme gives
+   the button at rest, on the layer the theme draws it on, as the breathe's light is, and faded in.
+   The cast follows the pointer as it nears, as the card's does, whether it is over the button or
+   not, so it is drawn as strong as the pointer is near rather than under :hover. */
+${[
+    ['hover', 'halo', lights.halo],
+    ['hover', 'glow', lights.glow],
+    ['focus', 'halo', lights.halo],
+    ['focus', 'glow', lights.glow],
+]
+    .map(([moment = '', effect = '', light = '']) => {
+        const state =
+            moment === 'hover'
+                ? `button:not(:disabled):not([data-shadow]):hover${unfocused}::before`
+                : 'button:focus-visible:not([data-shadow])::before';
+
+        return String.raw`@container ${is(`${moment}-shadow`, effect)} {
+    button::before {
+        transition: box-shadow var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    ${state} {
+        box-shadow: var(--ui-glow), ${light};
+    }
+}
+
+@container ${is(`${moment}-shadow`, effect)} and style(--ui-glow: none) {
+    ${state} {
+        box-shadow: ${light};
+    }
+}`;
+    })
+    .join('\n\n')}
+
+@container ${is('hover-shadow', 'cast')} {
+    button:not(:disabled):not([data-shadow])${unfocused}::before,
+    button:not(:disabled):not([data-shadow]):hover${unfocused}::before {
+        box-shadow: var(--ui-glow), ${lights.cast(0.5, 'var(--ui-pointer-near)')};
+    }
+}
+
+@container ${is('hover-shadow', 'cast')} and style(--ui-glow: none) {
+    button:not(:disabled):not([data-shadow])${unfocused}::before,
+    button:not(:disabled):not([data-shadow]):hover${unfocused}::before {
+        box-shadow: ${lights.cast(0.5, 'var(--ui-pointer-near)')};
+    }
+}
+
+@container ${is('hover-shadow', 'inner')} or ${is('focus-shadow', 'inner')} or
+    ${is('focus-shadow', 'sink')} {
+    button {
+        transition-property: background-color, scale, translate, transform, box-shadow, backdrop-filter;
+    }
+}
+
+@media (hover: hover) {
+    @container ${is('hover-shadow', 'inner')} {
+        button:not(:disabled):hover${unfocused} {
+            box-shadow: ${lights.inner('0.75rem')};
+        }
+    }
+}
+
+@container ${is('focus-shadow', 'inner')} {
+    button:focus-visible {
+        box-shadow: ${lights.inner('0.75rem')};
+    }
+}
+
+@container ${is('focus-shadow', 'sink')} {
+    button:focus-visible {
+        box-shadow: ${lights.sink};
     }
 }
 
@@ -1373,17 +1581,14 @@ button {
    layer rests on instead of going out at once. */
 @container ${is('focus-shadow', 'neon')} {
     button:focus-visible:not([data-shadow])::before {
-        animation:
-            ui-neon var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-settle) alternate,
-            ui-neon-rest var(--ui-duration-200) var(--ui-easing-exit)
-                calc(var(--ui-duration-loop) * var(--ui-iteration-settle));
+        animation: ${focal.run('ui-neon var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-settle) alternate, ui-neon-rest var(--ui-duration-200) var(--ui-easing-exit) calc(var(--ui-duration-loop) * var(--ui-iteration-settle))')};
     }
 }
 
 @container ${is('focus-shadow', 'breathe')} {
     button:focus-visible:not([data-shadow])::before {
         box-shadow: var(--ui-glow), ${breath};
-        animation: ui-breathe-glow var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-settle) alternate;
+        animation: ${focal.run('ui-breathe-glow var(--ui-duration-loop) var(--ui-easing-state) var(--ui-iteration-settle) alternate')};
     }
 }
 
@@ -1400,134 +1605,353 @@ button {
    other choice of the kind keeps the edge the theme draws at rest. */
 @container ${is('hover-border', 'none')} or ${is('hover-border', 'edge')} or
     ${is('hover-border', 'orbit')} or ${is('hover-border', 'trace')} or
-    ${is('hover-border', 'comet')} or ${is('hover-border', 'pulse')} or
-    ${is('hover-border', 'shockwave')} or ${is('hover-border', 'bloom')} {
-    button:not(:disabled):hover::after {
+    ${is('hover-border', 'comet')} or ${is('hover-border', 'underline')} or
+    ${is('hover-border', 'sweep')} or ${is('hover-border', 'pulse')} or
+    ${is('hover-border', 'shockwave')} or ${is('hover-border', 'bloom')} or
+    ${is('hover-border', 'explode')} {
+    button:not(:disabled):hover${unfocused}::after {
         border-color: ${reference('--ui-color-border-button')};
     }
 }
 
-/* The edge's band, for the edge and the trace, the rest masked out, as the card's border layer
-   is: 3px, from 2px out to 1px in. The card's is 2px across its edge, half of it over the card's
-   white; half of the button's would be over its own fill, which on a primary is the accent the
-   band is drawn a step from. The orbit runs on the edge itself, as the card's does. */
-@container ${is('hover-border', 'edge')} or ${is('hover-border', 'trace')} {
-    :host::after {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        padding: 3px;
-        border-radius: calc(var(--ui-radius) + 2px);
-        mask:
-            linear-gradient(#000 0 0) content-box exclude,
-            linear-gradient(#000 0 0);
-        pointer-events: none;
+/* The colour a theme gives the pointer's edge steps aside for the focus, as its fill and its glow
+   do, unless the focus chose the highlight: as specific as the component's own, and before the
+   focus's highlight and accent. */
+button:not(:disabled):focus-visible::after {
+    border-color: ${reference('--ui-color-border-button')};
+}
+
+/* accent: the edge the component draws, in the accent, and over the primary's fill in the accent
+   moved off it, as the trace is: the accent over the accent was no edge at all. */
+@container ${is('hover-border', 'accent')} {
+    button:not(:disabled):hover${unfocused}::after {
+        border-color: var(--ui-band-ink, var(--ui-color-accent));
     }
 }
 
-/* hover-border: edge. The card's: the band lit where the pointer is nearest, as near as the
-   pointer engine finds it. The card's light fades out over 14rem, which is about the card's
-   240px; over a button of 67 to 95px it would leave the far side at more than half of the near
-   one, and the band lit nearly all round. So the button's circle is 7rem, whose light fades out
-   about as far across a button as the card's does across the card. Never on a disabled button,
+/* hover-border: underline and sweep, the field's: a line of the accent along the bottom edge,
+   drawn out from the middle or from where the label starts, on the layer the bands are drawn on. */
+@container ${is('hover-border', 'underline')} or ${is('hover-border', 'sweep')} {
+    :host::after {
+        content: '';
+        position: absolute;${line.drawn}
+        pointer-events: none;
+        clip-path: ${line.underline};
+        transition:
+            ${line.transition},
+            ${moving};
+    }
+
+    @media (hover: hover) {
+        :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+            clip-path: inset(0);
+        }
+    }
+}
+
+@container ${is('hover-border', 'sweep')} {
+    :host::after {
+        clip-path: ${line.sweep};
+    }
+
+    :host(:dir(rtl))::after {
+        clip-path: ${line.mirrored};
+    }
+}
+
+/* hover-border: edge. The card's: the orbit's band, on the edge from its outer side in, lit where
+   the pointer is nearest, as near as the pointer engine finds it. Never on a disabled button,
    which the pointer engine measures all the same: the light is how near the pointer is, not
    whether it is over the button, so no :hover keeps it off. */
 @container ${is('hover-border', 'edge')} {
-    :host::after {
-        background: radial-gradient(
-            7rem circle at calc(var(--ui-pointer-x) + 2px) calc(var(--ui-pointer-y) + 2px),
-            ${far},
-            transparent 70%
-        );
+    :host::after {${edged(edge.light)}
         opacity: 0;
+        transition: ${moving};
     }
 
-    :host(:not([disabled]))::after {
+    :host(${calm}:not([disabled]))::after {
         opacity: var(--ui-pointer-near);
     }
 }
 
-/* hover-border: orbit. The card's: a light of the band's colour and the info runs round on the
+/* hover-border: orbit. The card's: a light from the accent round the hue wheel runs round on the
    edge itself and never past it, three laps, and fades. A name means one effect wherever it is
    offered, so a choice made for the page — a theme's taste among them — orbits the card and the
    button alike. */
 @container ${is('hover-border', 'orbit')} {
     :host::after {${onEdge}
         opacity: 0;
-        transition: opacity var(--ui-duration-200) var(--ui-easing-exit);
+        transition:
+            opacity var(--ui-duration-200) var(--ui-easing-exit),
+            ${moving};
     }
 
     @media (hover: hover) {
-        :host(${pointed}:not([disabled]):not([data-border]))::after {
+        :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
             opacity: 1;
             animation: ${orbit.run};
         }
     }
 }
 
-/* hover-border: trace. The card's: the edge drawn round once, clockwise from the top, and
-   undrawn the same way when the pointer leaves — a registered angle, transitioned. */
+/* hover-border: trace. The card's: the edge drawn round once, clockwise from the top, on the
+   orbit's band, and undrawn the same way when the pointer leaves. */
 @container ${is('hover-border', 'trace')} {
-    :host::after {
-        background: conic-gradient(${far} var(--ui-trace), transparent 0);
-        transition: --ui-trace calc(var(--ui-duration-400) * 1.5) var(--ui-easing-move);
+    :host::after {${traced}
     }
 
     @media (hover: hover) {
-        :host(${pointed}:not([disabled]):not([data-border]))::after {
+        :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
             --ui-trace: 360deg;
         }
     }
 }
 
-/* hover-border: comet. A comet of the band's colour and the info runs round the button, 2px
-   clear of its edge so it reads apart from any ring a theme draws there, while the pointer rests;
-   the mask leaves only the 3px track. Paused rather than removed when the pointer leaves, so the
-   next pass picks the comet up where this one left it, which is how the reference keeps a hover
-   loop from jumping back to its start. */
+/* hover-border: comet. A comet from the accent round the hue wheel runs round the button, 2px clear
+   of its edge so it reads apart from any ring a theme draws there, while the pointer rests; the
+   mask leaves only the 3px track. Paused rather than removed when the pointer leaves, so the next
+   pass picks the comet up where this one left it, which is how the reference keeps a hover loop
+   from jumping back to its start. */
 @container ${is('hover-border', 'comet')} {
     :host::after {${clear}
         opacity: 0;
-        transition: opacity var(--ui-duration-200) var(--ui-easing-state);
+        transition:
+            opacity var(--ui-duration-200) var(--ui-easing-state),
+            ${moving};
         animation: ${comet.loop};
     }
 
     @media (hover: hover) {
-        :host(${pointed}:not([disabled]):not([data-border]))::after {
+        :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
             opacity: 1;
             animation-play-state: running;
         }
     }
 }
 
-/* focus-border: orbit and comet. The host cannot see the focus: no engine lets a host match
+/* focus-border: the bands. The host cannot see the focus: no engine lets a host match
    :focus-visible for the control in its shadow root, so it reads the attribute the harness sets
    for :state(focus-visible).
 
-   Each is written under the focus alone, since it shares the layer with the pointer's border:
-   written for the layer, the orbit stood in for Glass's edge under the pointer, a still arc where
-   the light should have followed it, and the comet put Matrix's trace out, at its own inset —
-   measured. And the pointer is drawn over the focus, as a press is over the pointer: where the
-   pointer brings a border of its own to the layer, the focus's waits while the pointer rests on
-   the button and runs its laps again when it leaves. The wait sits under :where(), so the focus
-   weighs what it did, under the press that steps it aside. */
+   Each is written under the focus alone, since it shares the layer with the pointer's band, which
+   steps aside while the focus is there: written for the layer, the orbit stood in for Glass's edge
+   under the pointer, a still arc where the light should have followed it, and the comet put
+   Matrix's trace out, at its own inset — measured. Where both chose one band that holds, it is
+   written alike for each, so it holds from one to the other.
+
+   Where the pointer brings no band of its own, the focus's is the layer's at rest too, unseen, so
+   the focus's lift moves it from where it was, and a line has somewhere to be undrawn from: drawn
+   only as the focus arrived, it stood 2px up at once while the button rose on its transition —
+   measured. */
+@container ${is('focus-border', 'edge')} and (not ${pointerBorder}) {
+    :host::after {${edged(edge.middle)}
+        opacity: 0;
+        transition:
+            opacity var(--ui-duration-200) var(--ui-easing-enter),
+            ${moving};
+    }
+}
+
+@container ${is('focus-border', 'edge')} {
+    :host([data-focus-visible]:not([data-border]))::after {${edged(edge.middle)}
+        opacity: 1;
+    }
+}
+
 @container ${is('focus-border', 'orbit')} and (not ${pointerBorder}) {
+    :host::after {${onEdge}
+        opacity: 0;
+        transition: ${moving};
+    }
+}
+
+@container ${is('focus-border', 'orbit')} {
     :host([data-focus-visible]:not([data-border]))::after {${focusOrbit}
     }
 }
 
-@container ${is('focus-border', 'orbit')} and ${pointerBorder} {
-    :host([data-focus-visible]:where(:not(${pointed})):not([data-border]))::after {${focusOrbit}
+@container ${is('focus-border', 'comet')} and (not ${pointerBorder}) {
+    :host::after {${clear}
+        opacity: 0;
+        transition: ${moving};
     }
 }
 
-@container ${is('focus-border', 'comet')} and (not ${pointerBorder}) {
+@container ${is('focus-border', 'comet')} {
     :host([data-focus-visible]:not([data-border]))::after {${focusComet}
     }
 }
 
-@container ${is('focus-border', 'comet')} and ${pointerBorder} {
-    :host([data-focus-visible]:where(:not(${pointed})):not([data-border]))::after {${focusComet}
+@container ${is('focus-border', 'trace')} and (not ${pointerBorder}) {
+    :host::after {${traced}
+    }
+}
+
+@container ${is('focus-border', 'trace')} {
+    :host([data-focus-visible]:not([data-border]))::after {${traced}
+        opacity: 1;
+        --ui-trace: 360deg;
+    }
+}
+
+@container (${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')}) and (not ${pointerBorder}) {
+    :host::after {
+        content: '';
+        position: absolute;${line.drawn}
+        pointer-events: none;
+        clip-path: ${line.underline};
+        transition:
+            ${line.transition},
+            ${moving};
+    }
+}
+
+@container ${is('focus-border', 'sweep')} and (not ${pointerBorder}) {
+    :host::after {
+        clip-path: ${line.sweep};
+    }
+
+    :host(:dir(rtl))::after {
+        clip-path: ${line.mirrored};
+    }
+}
+
+@container ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')} {
+    :host([data-focus-visible]:not([data-border]))::after {${line.drawn}
+        opacity: 1;
+        clip-path: inset(0);
+    }
+}
+
+/* focus-border: highlight and accent, on the edge the component draws: the colour a theme gives the
+   pointer, or the accent, moved off the primary's fill as the pointer's is, beside the ring. */
+@container ${is('focus-border', 'highlight')} {
+    button:not(:disabled):focus-visible::after {
+        border-color: ${reference('--ui-color-border-button-hover')};
+    }
+}
+
+@container ${is('focus-border', 'accent')} {
+    button:not(:disabled):focus-visible::after {
+        border-color: var(--ui-band-ink, var(--ui-color-accent));
+    }
+}
+
+/* The trace and the edge over a fill, in the accent moved off it, and their corners drawn 2px
+   tighter, so they reach past the fill's own: on the fill's corners exactly, the fill's antialiased
+   curve showed round the line in the fill's colour, which the line moved off it stands apart from,
+   in all three engines. 2px tighter, none of it showed in Chromium and WebKit, and a quarter of it
+   in Firefox — measured. The straight edges are not moved, so nothing is drawn nearer the focus
+   ring there. The accent's edge and the underline's line take the same colour over a fill. */
+${
+    filled === undefined
+        ? ''
+        : String.raw`@container ${is('hover-border', 'trace')} or ${is('focus-border', 'trace')} or
+    ${is('hover-border', 'edge')} or ${is('hover-border', 'accent')} or
+    ${is('focus-border', 'accent')} or ${is('hover-border', 'underline')} or
+    ${is('focus-border', 'underline')} or ${is('hover-border', 'sweep')} or
+    ${is('focus-border', 'sweep')} {
+    :host(${filled}) {
+        --ui-band-ink: ${trace.over(colours.primary.rest)};
+        --ui-band-radius: max(0px, calc(var(--ui-radius) - 2px));
+    }
+}`
+}
+
+/* The layer the pointer and the focus draw their borders on is the button's edge, so it is drawn
+   where the button is held, as a fired effect is: grown, raised, leaned toward the pointer and
+   turned with it, on the button's own transitions, and breathing with it. At the host's size, each
+   stayed where the button had been: the zoom grew the button past the trace and the orbit on its
+   edge, which then stood inside it, and up to the comet clear of it. */
+@container ${pointerBorder} or ${focusBorder} {
+    @media (hover: hover) {
+        @container ${is('hover-move', 'zoom')} {
+            :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+                scale: 1.05;
+            }
+        }
+
+        @container ${is('hover-move', 'lift')} {
+            :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+                translate: 0 -2px;
+            }
+        }
+    }
+
+    @container ${is('hover-move', 'magnetic')} {
+        :host(${calm}:not([disabled]):not([data-border]))::after {
+            translate: calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 6px)
+                calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * 4px);
+        }
+    }
+
+    @container ${is('hover-move', 'tilt')} {
+        :host(${calm}:not([disabled]):not([data-border]))::after {
+            transform: perspective(500px)
+                rotateY(calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 14deg))
+                rotateX(calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * -14deg));
+            scale: calc(1 + var(--ui-pointer-near) * 0.06);
+        }
+    }
+
+    @container ${is('focus-move', 'lift')} {
+        :host([data-focus-visible]:not([data-border]))::after {
+            translate: 0 -2px;
+        }
+    }
+
+    @container ${is('focus-move', 'zoom')} {
+        :host([data-focus-visible]:not([data-border]))::after {
+            scale: 1.05;
+        }
+    }
+}
+
+/* The breathe is an animation, which the layer runs beside the button's from the same moment, after
+   the border's own, which it keeps: the orbit's laps go on, and the comet is still held where it
+   was when the pointer leaves. At the focus, the focus's rounds, under its own names. */
+@media (hover: hover) {
+    @container ${is('hover-move', 'breathe')} {
+        @container ${is('hover-border', 'edge')} or ${is('hover-border', 'trace')} or
+            ${is('hover-border', 'underline')} or ${is('hover-border', 'sweep')} {
+            :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+                animation: ${breathe.loop};
+            }
+        }
+
+        @container ${is('hover-border', 'orbit')} {
+            :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+                animation: ${orbit.run}, ${breathe.loop};
+            }
+        }
+
+        @container ${is('hover-border', 'comet')} {
+            :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+                animation: ${comet.loop}, ${breathe.loop};
+                animation-play-state: running;
+            }
+        }
+    }
+}
+
+@container ${is('focus-move', 'breathe')} {
+    @container ${is('focus-border', 'edge')} or ${is('focus-border', 'trace')} or
+        ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')} {
+        :host([data-focus-visible]:not([data-border]))::after {
+            animation: ${focal.run(breathe.settle)};
+        }
+    }
+
+    @container ${is('focus-border', 'orbit')} {
+        :host([data-focus-visible]:not([data-border]))::after {
+            animation: ${focal.run(`${orbit.run}, ${breathe.settle}`)};
+        }
+    }
+
+    @container ${is('focus-border', 'comet')} {
+        :host([data-focus-visible]:not([data-border]))::after {
+            animation: ${focal.run(`${comet.run}, ${breathe.settle}`)};
+        }
     }
 }
 
@@ -1542,6 +1966,7 @@ button {
     padding: 0;
     border-radius: calc(var(--ui-radius) + 1px);
     color: ${reference('--ui-color-accent')};
+    --ui-thrown-ink: ${reference('--ui-color-border-button')};
     background: none;
     mask: none;
     pointer-events: none;
@@ -1581,9 +2006,7 @@ button {
    from the button. It starts centred on the edge, half over the button: begun just outside,
    the blur left it at half strength where the button ends and strongest 4px out, measured,
    which reads as a gap between the two. */
-:host([data-border='explode'])::after {
-    outline: 8px solid transparent;
-    animation: ui-explode var(--ui-duration-400) var(--ui-easing-state);
+:host([data-border='explode'])::after {${thrown.explode}
 }
 
 /* shockwave and bloom: the ripple, outward, as circles from the button's middle, for as long as
@@ -1595,23 +2018,13 @@ button {
    enter curve, at speed from the start, which the explode's in-out held back while the circle
    was still hidden. Both are ink, which widens no page. */
 :host([data-border='shockwave'])::after,
-:host([data-border='bloom'])::after {
-    inset: auto;
-    left: calc(50% - 1px);
-    top: calc(50% - 1px);
-    width: 2px;
-    height: 2px;
-    border-radius: 1px;
-    z-index: -1;
+:host([data-border='bloom'])::after {${thrown.dot}
 }
 
-:host([data-border='shockwave'])::after {
-    outline: 2px solid transparent;
-    animation: ui-shockwave var(--ui-duration-400) var(--ui-easing-enter);
+:host([data-border='shockwave'])::after {${thrown.shockwave}
 }
 
-:host([data-border='bloom'])::after {
-    animation: ui-bloom var(--ui-duration-400) var(--ui-easing-enter);
+:host([data-border='bloom'])::after {${thrown.bloom}
 }
 
 /* A fired effect on the host's layers is drawn where the button is held: at the size, the turn
@@ -1659,16 +2072,16 @@ button {
 }
 
 @container ${is('hover-move', 'magnetic')} {
-    :host([data-border]:not([disabled]))::after,
-    :host([data-shadow]:not([disabled]))::before {
+    :host([data-border]${calm}:not([disabled]))::after,
+    :host([data-shadow]${calm}:not([disabled]))::before {
         translate: calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 6px)
             calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * 4px);
     }
 }
 
 @container ${is('hover-move', 'tilt')} {
-    :host([data-border]:not([disabled]))::after,
-    :host([data-shadow]:not([disabled]))::before {
+    :host([data-border]${calm}:not([disabled]))::after,
+    :host([data-shadow]${calm}:not([disabled]))::before {
         transform: perspective(500px)
             rotateY(calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 14deg))
             rotateX(calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * -14deg));
@@ -1678,15 +2091,15 @@ button {
 
 @media (hover: hover) {
     @container ${is('hover-move', 'lift')} {
-        :host([data-border]${pointed}:not([disabled]))::after,
-        :host([data-shadow]${pointed}:not([disabled]))::before {
+        :host([data-border]${pointed}${calm}:not([disabled]))::after,
+        :host([data-shadow]${pointed}${calm}:not([disabled]))::before {
             translate: 0 -2px;
         }
     }
 
     @container ${is('hover-move', 'zoom')} {
-        :host([data-border]${pointed}:not([disabled]))::after,
-        :host([data-shadow]${pointed}:not([disabled]))::before {
+        :host([data-border]${pointed}${calm}:not([disabled]))::after,
+        :host([data-shadow]${pointed}${calm}:not([disabled]))::before {
             scale: 1.05;
         }
     }
@@ -1696,6 +2109,13 @@ button {
     :host([data-border][data-focus-visible])::after,
     :host([data-shadow][data-focus-visible])::before {
         translate: 0 -2px;
+    }
+}
+
+@container ${is('focus-move', 'zoom')} {
+    :host([data-border][data-focus-visible])::after,
+    :host([data-shadow][data-focus-visible])::before {
+        scale: 1.05;
     }
 }
 
@@ -1735,147 +2155,20 @@ button {
     transition-duration: 0s;
 }
 
-/* A plain number, which the gradient scales the reach by: Firefox does not interpolate a
-   registered property toward a var(), and a size animated to var(--ui-ripple-reach) jumped from
-   nothing to the whole reach halfway through — measured. */
-@keyframes ui-ripple {
-    from {
-        --ui-ripple-progress: 0;
-        --ui-ripple-alpha: 0.32;
-    }
-    to {
-        --ui-ripple-progress: 1;
-        --ui-ripple-alpha: 0;
-    }
-}
-
-@keyframes ui-burst {
-    from {
-        box-shadow: 0 0 0 0 rgb(from var(--ui-color-accent) r g b / 0.8);
-    }
-    to {
-        box-shadow: 0 0 30px 20px rgb(from var(--ui-color-accent) r g b / 0);
-    }
-}
-
 ${sweeps}
 
-/* The ring is gone by nine tenths; the last tenth only brings the blur back down. */
-@keyframes ui-explode {
-    from {
-        outline-offset: -4px;
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 1);
-        filter: blur(4px);
-    }
-    40% {
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 0.85);
-    }
-    90% {
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 0);
-        filter: blur(16px);
-    }
-    to {
-        outline-offset: 3rem;
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 0);
-        filter: blur(0);
-    }
-}
-
-@keyframes ui-shockwave {
-    from {
-        outline-offset: var(--ui-wave-from);
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 1);
-    }
-    50% {
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 0.7);
-    }
-    to {
-        outline-offset: var(--ui-wave-to);
-        outline-color: rgb(from ${reference('--ui-color-border-button')} r g b / 0);
-    }
-}
-
-@keyframes ui-bloom {
-    from {
-        box-shadow: 0 0 0 var(--ui-wave-from) rgb(from var(--ui-color-accent) r g b / 0.45);
-    }
-    to {
-        box-shadow: 0 0 0 var(--ui-wave-to) rgb(from var(--ui-color-accent) r g b / 0);
-    }
-}
-
-@keyframes ui-glitch {
-    0%, 100% { transform: none; }
-    20% {
-        transform: translate(-4px, 2px) skewX(-5deg);
-        text-shadow: 2px -2px ${reference('--ui-color-danger')};
-    }
-    40% {
-        transform: translate(4px, -2px) skewX(5deg);
-        text-shadow: -2px 2px ${reference('--ui-color-info')};
-    }
-    60% { transform: translate(-2px, -2px) skewX(0deg); }
-    80% { transform: translate(2px, 2px) skewX(3deg); }
-}
-
-@keyframes ui-heartbeat {
-    0%, 28%, 70%, 100% { scale: 1; }
-    14% { scale: 1.24; }
-    42% { scale: 1.18; }
-}
-
-@keyframes ui-rubber {
-    0%, 100% { scale: 1 1; }
-    30% { scale: 1.25 0.75; }
-    40% { scale: 0.75 1.25; }
-    50% { scale: 1.15 0.85; }
-    65% { scale: 0.95 1.05; }
-    75% { scale: 1.05 0.95; }
-}
-
-@keyframes ui-flip-vertical {
-    from { transform: perspective(calc(var(--ui-flip-height) * 10)) rotateX(90deg); }
-    40% { transform: perspective(calc(var(--ui-flip-height) * 10)) rotateX(-20deg); }
-    70% { transform: perspective(calc(var(--ui-flip-height) * 10)) rotateX(10deg); }
-    90% { transform: perspective(calc(var(--ui-flip-height) * 10)) rotateX(-5deg); }
-    to { transform: perspective(calc(var(--ui-flip-height) * 10)) rotateX(0deg); }
-}
-
-@keyframes ui-flip-horizontal {
-    from { transform: perspective(calc(var(--ui-flip-width) * 10)) rotateY(90deg); }
-    40% { transform: perspective(calc(var(--ui-flip-width) * 10)) rotateY(-20deg); }
-    70% { transform: perspective(calc(var(--ui-flip-width) * 10)) rotateY(10deg); }
-    90% { transform: perspective(calc(var(--ui-flip-width) * 10)) rotateY(-5deg); }
-    to { transform: perspective(calc(var(--ui-flip-width) * 10)) rotateY(0deg); }
-}
-
-@keyframes ui-breathe {
-    from { scale: 1; }
-    to { scale: 1.06; }
-}
-
-/* From no light at all, so a loop that settles on an even count leaves the layer on the theme's
-   own glow, with nothing to jump back to. */
-@keyframes ui-breathe-glow {
-    from {
-        --ui-breath: 0;
-    }
-    to {
-        --ui-breath: 1;
-    }
-}
-
-@keyframes ui-orbit {
-    to { --ui-orbit: 360deg; }
-}
-
-@keyframes ui-rest {
-    to { opacity: 0; }
-}
+${laps}
 
 ${sized.wide}
+
+${moves}
+
+${focal.frames(sweeps + laps + sized.wide + moves)}
 `;
 }
+
+/** Why a button leaves the preview out: what it shows is what a click would change. */
+const unchanged = 'a click changes nothing of the button’s own for it to show beforehand.';
 
 /** The moments a button offers, and each kind's effects. */
 export const moments: readonly Moment[] = [
@@ -1944,7 +2237,7 @@ export const moments: readonly Moment[] = [
                     {
                         name: 'ripple',
                         says: 'A circle spreads from where the pointer went down, or from the centre for a key.',
-                        fire: ripple,
+                        fire: spread,
                     },
                     {
                         name: 'scan',
@@ -2026,316 +2319,130 @@ export const moments: readonly Moment[] = [
             },
         ],
     },
-    {
-        name: 'hover',
-        label: 'Pointer over',
-        on: 'enter',
-        kinds: [
-            {
-                name: 'move',
-                label: 'Movement',
-                effects: [
-                    { name: 'none', today: true, says: 'Stays where it is.' },
-                    { name: 'lift', says: 'Rises two pixels.' },
-                    { name: 'zoom', says: 'Grows a little.' },
-                    {
-                        name: 'magnetic',
-                        follows: true,
-                        says: 'Leans a few pixels toward the pointer as it nears.',
-                    },
-                    {
-                        name: 'tilt',
-                        follows: true,
-                        says: 'Turns toward the pointer in depth; with the fill’s spotlight, it catches the light where the pointer is.',
-                    },
-                    {
-                        name: 'breathe',
-                        loops: true,
-                        says: 'Swells and settles; with the shadow’s breathe, a glow comes and goes with it.',
-                    },
-                    {
-                        name: 'heartbeat',
-                        says: 'Once, as the pointer arrives: two beats.',
-                        fire: play('heartbeat', 'move'),
-                    },
-                    {
-                        name: 'rubber',
-                        says: 'Once, as the pointer arrives: stretches and settles.',
-                        fire: play('rubber', 'move'),
-                    },
-                    {
-                        name: 'flip-vertical',
-                        says: 'Once, as the pointer arrives: turns in from edge-on, top over bottom.',
-                        fire: flip('flip-vertical'),
-                    },
-                    {
-                        name: 'flip-horizontal',
-                        says: 'Once, as the pointer arrives: turns in from edge-on, side over side.',
-                        fire: flip('flip-horizontal'),
-                    },
-                    {
-                        name: 'glitch',
-                        says: 'Once, as the pointer arrives: the label jumps and splits. Drawn for Matrix.',
-                        fire: play('glitch', 'move'),
-                    },
-                ],
-            },
-            {
-                name: 'fill',
-                label: 'Fill',
-                effects: [
-                    { name: 'highlight', today: true, says: 'Takes the hover colour.' },
-                    { name: 'none', says: 'Keeps its own colour.' },
-                    {
-                        name: 'spotlight',
-                        follows: true,
-                        says: 'A light under the pointer, fading with distance.',
-                    },
-                    {
-                        name: 'flood',
-                        fire: flood,
-                        says: 'The hover colour spreads from where the pointer came in, and drains toward where it leaves.',
-                    },
-                    {
-                        name: 'shimmer',
-                        loops: true,
-                        says: 'A sheen sweeps across, and comes round again.',
-                    },
-                    {
-                        name: 'ripple',
-                        says: 'Once, as the pointer arrives: a circle spreads from where it came in.',
-                        fire: ripple,
-                    },
-                    {
-                        name: 'scan',
-                        says: 'Once, as the pointer arrives: a band of light crosses the button.',
-                        fire: play('scan', 'fill'),
-                    },
-                ],
-            },
-            {
-                name: 'shadow',
-                label: 'Shadow',
-                effects: [
-                    {
-                        name: 'highlight',
-                        today: true,
-                        says: 'The glow the theme gives the pointer: Matrix’s ring goes solid and its glow doubles. The default theme and Glass give the button none, so under them it changes nothing.',
-                    },
-                    {
-                        name: 'none',
-                        says: 'The glow the theme gives at rest, where it gives one.',
-                    },
-                    {
-                        name: 'raise',
-                        says: 'Stands off the page, a shadow dropping under it.',
-                    },
-                    {
-                        name: 'sink',
-                        says: 'Sinks into the page, its shadow gone inside.',
-                    },
-                    {
-                        name: 'neon',
-                        loops: true,
-                        says: 'A lit line round the edge, its glow swelling to a wide halo and back.',
-                    },
-                    {
-                        name: 'breathe',
-                        loops: true,
-                        says: 'A glow that comes and goes; with the movement’s breathe, the button swells with it.',
-                    },
-                    {
-                        name: 'burst',
-                        says: 'Once, as the pointer arrives: light bursts out around the button.',
-                        fire: play('burst', 'shadow', 'host'),
-                    },
-                ],
-            },
-            {
-                name: 'border',
-                label: 'Border',
-                effects: [
-                    {
-                        name: 'highlight',
-                        today: true,
-                        says: 'The edge takes the colour the theme gives the pointer: Glass’s faint edge goes solid. The default theme and Matrix give none, so under them it changes nothing.',
-                    },
-                    { name: 'none', says: 'The edge the theme draws at rest.' },
-                    {
-                        name: 'edge',
-                        follows: true,
-                        says: 'A band of the edge lights up where the pointer is nearest.',
-                    },
-                    {
-                        name: 'orbit',
-                        settles: true,
-                        says: 'A light runs round on the edge itself, three times, then rests — the card’s.',
-                    },
-                    {
-                        name: 'trace',
-                        says: 'The edge is drawn round once, from the top, and undrawn as the pointer leaves.',
-                    },
-                    {
-                        name: 'comet',
-                        loops: true,
-                        says: 'A comet of light runs round clear of the edge, and waits where it was when the pointer leaves.',
-                    },
-                    {
-                        name: 'pulse',
-                        says: 'Once, as the pointer arrives: a ring leaves the edge.',
-                        fire: play('pulse', 'border'),
-                    },
-                    {
-                        name: 'shockwave',
-                        says: 'Once, as the pointer arrives: a thin circle ripples far out from under the button.',
-                        fire: wave('shockwave'),
-                    },
-                    {
-                        name: 'bloom',
-                        says: 'Once, as the pointer arrives: a filled disc ripples far out from under the button.',
-                        fire: wave('bloom'),
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        name: 'focus',
-        label: 'Focus',
-        on: 'focus',
-        kinds: [
-            {
-                name: 'move',
-                label: 'Movement',
-                effects: [
-                    { name: 'none', today: true, says: 'Stays where it is.' },
-                    {
-                        name: 'lift',
-                        says: 'Stands two pixels up, ring and all, while it has the focus.',
-                    },
-                    {
-                        name: 'breathe',
-                        settles: true,
-                        says: 'Swells and settles, four times, then rests.',
-                    },
-                    {
-                        name: 'heartbeat',
-                        says: 'As focus arrives: two beats.',
-                        fire: play('heartbeat', 'move'),
-                    },
-                    {
-                        name: 'rubber',
-                        says: 'As focus arrives: stretches and settles.',
-                        fire: play('rubber', 'move'),
-                    },
-                    {
-                        name: 'flip-vertical',
-                        says: 'As focus arrives: turns in from edge-on, top over bottom, ring and all.',
-                        fire: flip('flip-vertical'),
-                    },
-                    {
-                        name: 'flip-horizontal',
-                        says: 'As focus arrives: turns in from edge-on, side over side, ring and all.',
-                        fire: flip('flip-horizontal'),
-                    },
-                    {
-                        name: 'glitch',
-                        says: 'As focus arrives: the label jumps and splits. Drawn for Matrix.',
-                        fire: play('glitch', 'move'),
-                    },
-                ],
-            },
-            {
-                name: 'fill',
-                label: 'Fill',
-                effects: [
-                    { name: 'none', today: true, says: 'The button’s own colour.' },
-                    {
-                        name: 'shimmer',
-                        settles: true,
-                        says: 'A sheen sweeps across, four times, then rests.',
-                    },
-                    {
-                        name: 'ripple',
-                        says: 'As focus arrives: a circle spreads from the middle.',
-                        fire: ripple,
-                    },
-                    {
-                        name: 'scan',
-                        says: 'As focus arrives: a band of light crosses the button.',
-                        fire: play('scan', 'fill'),
-                    },
-                ],
-            },
-            {
-                name: 'shadow',
-                label: 'Shadow',
-                effects: [
-                    {
-                        name: 'none',
-                        today: true,
-                        says: 'The theme’s own glow, where it gives one.',
-                    },
-                    {
-                        name: 'raise',
-                        says: 'Stands off the page while it has the focus, a shadow dropping under it.',
-                    },
-                    {
-                        name: 'neon',
-                        settles: true,
-                        says: 'A lit line round the edge, its glow swelling to a wide halo, four times, then rests.',
-                    },
-                    {
-                        name: 'breathe',
-                        settles: true,
-                        says: 'A glow that comes and goes, four times, then rests.',
-                    },
-                    {
-                        name: 'burst',
-                        says: 'As focus arrives: light bursts out around the button.',
-                        fire: play('burst', 'shadow', 'host'),
-                    },
-                ],
-            },
-            {
-                name: 'border',
-                label: 'Border',
-                effects: [
-                    { name: 'none', today: true, says: 'The ring, drawn at once.' },
-                    {
-                        name: 'pulse',
-                        says: 'The ring at once, then a ring of its colour leaves the edge and fades.',
-                        fire: play('pulse-focus', 'border'),
-                    },
-                    {
-                        name: 'explode',
-                        says: 'As focus arrives: a thick ring is thrown far out past the focus ring.',
-                        fire: play('explode', 'border'),
-                    },
-                    {
-                        name: 'shockwave',
-                        says: 'As focus arrives: a thin circle ripples far out past the focus ring.',
-                        fire: wave('shockwave'),
-                    },
-                    {
-                        name: 'bloom',
-                        says: 'As focus arrives: a filled disc ripples far out past the focus ring.',
-                        fire: wave('bloom'),
-                    },
-                    {
-                        name: 'orbit',
-                        settles: true,
-                        says: 'A light runs round on the edge itself, three times, then rests.',
-                    },
-                    {
-                        name: 'comet',
-                        settles: true,
-                        says: 'A comet runs round clear of the edge, over the focus ring, two laps, then fades.',
-                    },
-                ],
-            },
-        ],
-    },
+    hover('button', {
+        move: {
+            draws: [
+                'lift',
+                'zoom',
+                'magnetic',
+                'tilt',
+                'breathe',
+                { name: 'heartbeat', fire: play('heartbeat', 'move') },
+                { name: 'rubber', fire: play('rubber', 'move') },
+                { name: 'flip-vertical', fire: flip('flip-vertical') },
+                { name: 'flip-horizontal', fire: flip('flip-horizontal') },
+                { name: 'glitch', fire: play('glitch', 'move') },
+            ],
+        },
+        fill: {
+            today: 'highlight',
+            draws: [
+                'highlight',
+                'tint',
+                'spotlight',
+                { name: 'flood', fire: flood },
+                'shimmer',
+                { name: 'ripple', fire: spread },
+                { name: 'scan', fire: play('scan', 'fill') },
+                'blur',
+            ],
+            refuses: { preview: unchanged },
+        },
+        shadow: {
+            today: 'highlight',
+            draws: [
+                {
+                    name: 'highlight',
+                    says: 'The glow the theme gives the pointer: Matrix’s ring goes solid and its glow doubles. The default theme and Glass give the button none, so under them it changes nothing.',
+                },
+                'raise',
+                'sink',
+                'halo',
+                'glow',
+                'inner',
+                'cast',
+                'neon',
+                'breathe',
+                { name: 'burst', fire: play('burst', 'shadow', 'host') },
+            ],
+        },
+        border: {
+            today: 'highlight',
+            draws: [
+                {
+                    name: 'highlight',
+                    says: 'The boundary takes the colour the theme gives the pointer: Glass’s faint edge goes solid. The default theme and Matrix give none, so under them it changes nothing.',
+                },
+                'accent',
+                'edge',
+                'orbit',
+                'trace',
+                'comet',
+                'underline',
+                'sweep',
+                { name: 'pulse', fire: play('pulse', 'border') },
+                { name: 'shockwave', fire: wave('shockwave') },
+                { name: 'bloom', fire: wave('bloom') },
+                { name: 'explode', fire: play('explode', 'border') },
+            ],
+        },
+    }),
+    focus('button', {
+        move: {
+            draws: [
+                'lift',
+                'zoom',
+                'breathe',
+                { name: 'heartbeat', fire: play('heartbeat', 'move') },
+                { name: 'rubber', fire: play('rubber', 'move') },
+                { name: 'flip-vertical', fire: flip('flip-vertical') },
+                { name: 'flip-horizontal', fire: flip('flip-horizontal') },
+                { name: 'glitch', fire: play('glitch', 'move') },
+            ],
+        },
+        fill: {
+            draws: [
+                'highlight',
+                'tint',
+                'spotlight',
+                { name: 'flood', fire: centres((host) => inner(host, 'button')) },
+                'shimmer',
+                { name: 'ripple', fire: spread },
+                { name: 'scan', fire: play('scan', 'fill') },
+                'blur',
+            ],
+            refuses: { preview: unchanged },
+        },
+        shadow: {
+            draws: [
+                'highlight',
+                'raise',
+                'sink',
+                'halo',
+                'glow',
+                'inner',
+                'neon',
+                'breathe',
+                { name: 'burst', fire: play('burst', 'shadow', 'host') },
+            ],
+        },
+        border: {
+            draws: [
+                'highlight',
+                'accent',
+                'edge',
+                'orbit',
+                'trace',
+                'comet',
+                'underline',
+                'sweep',
+                { name: 'pulse', fire: play('pulse-focus', 'border') },
+                { name: 'shockwave', fire: wave('shockwave') },
+                { name: 'bloom', fire: wave('bloom') },
+                { name: 'explode', fire: play('explode', 'border') },
+            ],
+        },
+    }),
 ];
 
 /** What a button leaves out of the reference's, and why. */
@@ -2347,10 +2454,6 @@ export const refused: readonly Refusal[] = [
     {
         name: 'squish, on focus',
         why: 'it is the press being held; a focus has nothing held to answer.',
-    },
-    {
-        name: 'spotlight, magnetic and tilt, on focus',
-        why: 'they follow a pointer, and a focus that arrives by keyboard has none.',
     },
     {
         name: 'shake',

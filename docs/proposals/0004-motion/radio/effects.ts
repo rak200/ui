@@ -7,7 +7,7 @@
  * controls share; what is the radio's own is choosing, and the dot a click would leave.
  */
 import { reference } from '../../../../src/reference.js';
-import { keyframes, moments, rules, sized, validation } from '../controls.js';
+import { focal, keyframes, moments, moves, rules, sized, validation } from '../controls.js';
 import { inner, prototype, queries, replay } from '../motion.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
@@ -48,9 +48,11 @@ const sheet = String.raw`
    checkbox's are: an element has one list, so a property this sheet eases goes in with the
    component's. */
 :host input {
-    transition-property: background-color, border-color, scale, backdrop-filter;
-    transition-duration: ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200);
-    transition-timing-function: ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter);
+    transition-property: background-color, border-color, scale, backdrop-filter, translate, transform;
+    transition-duration: ${state}, ${state}, var(--ui-duration-200), var(--ui-duration-200),
+        var(--ui-duration-200), var(--ui-duration-100);
+    transition-timing-function: ${ease}, ${ease}, var(--ui-easing-emphasis), var(--ui-easing-enter),
+        var(--ui-easing-enter), linear;
 }
 
 /* check: fade is what the control does today — the chosen one's fill fades in and the one it
@@ -58,7 +60,8 @@ const sheet = String.raw`
    choice changes at once. */
 @container ${is('check', 'none')} {
     :host input {
-        transition-duration: 0s, 0s, var(--ui-duration-200), var(--ui-duration-200);
+        transition-duration: 0s, 0s, var(--ui-duration-200), var(--ui-duration-200),
+            var(--ui-duration-200), var(--ui-duration-100);
     }
 }
 
@@ -67,9 +70,11 @@ const sheet = String.raw`
    the fill's label, drawn in the colour that reads on the fill. */
 :host input[data-fx='pop'],
 :host input[data-fx='draw'] {
-    transition-property: scale, backdrop-filter;
-    transition-duration: var(--ui-duration-200);
-    transition-timing-function: var(--ui-easing-emphasis), var(--ui-easing-enter);
+    transition-property: scale, backdrop-filter, translate, transform;
+    transition-duration: var(--ui-duration-200), var(--ui-duration-200), var(--ui-duration-200),
+        var(--ui-duration-100);
+    transition-timing-function: var(--ui-easing-emphasis), var(--ui-easing-enter),
+        var(--ui-easing-enter), linear;
 }
 
 input[data-fx='pop']::before {
@@ -87,25 +92,34 @@ input[data-fx='draw']::before {
     animation: ui-draw var(--ui-duration-200) var(--ui-easing-enter);
 }
 
-/* pointer: preview, what a click would do, faintly: the dot, pale, in an empty control. */
+/* pointer: preview, what a click would do, faintly: the dot, pale, in an empty control. At the
+   focus, what Space would do, the same way. */
+@container ${is('hover-fill', 'preview')} or ${is('focus-fill', 'preview')} {
+    :host input:not(:checked)::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        background-color: var(--ui-color-accent);
+        mask-image: ${dot};
+        mask-size: calc(${size} / 2);
+        mask-position: center;
+        mask-repeat: no-repeat;
+        opacity: 0;
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+}
+
 @media (hover: hover) {
     @container ${is('hover-fill', 'preview')} {
-        :host input:not(:checked)::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            background-color: var(--ui-color-accent);
-            mask-image: ${dot};
-            mask-size: calc(${size} / 2);
-            mask-position: center;
-            mask-repeat: no-repeat;
-            opacity: 0;
-            transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
-        }
-
         :host input:not(:checked):hover:not(:disabled)::before {
             opacity: 0.4;
         }
+    }
+}
+
+@container ${is('focus-fill', 'preview')} {
+    :host input:not(:checked):focus-visible::before {
+        opacity: 0.4;
     }
 }
 
@@ -117,6 +131,10 @@ ${rules({
     invalid: ".options[aria-invalid='true'] input",
     filled: ':checked',
     radius: '50%',
+    past: String.raw`
+        /* Half a pixel past the edge of the 24px the radio is drawn at, turned as the switch's is,
+           for Firefox. */
+        transform: scale(calc(25 / 24)) rotate(0.001deg);`,
     label: 'label.option',
     text: "[part='option-label']",
     width: size,
@@ -140,11 +158,17 @@ ${rules({
 
 ${keyframes}
 
+${moves}
+
 ${sized.small}
+
+${focal.frames(keyframes + moves + sized.small)}
 `;
 
 prototype({
     tags: ['ui-radio-group'],
+    // Each choice in the group, so the edge is lit round the one the pointer is nearest.
+    bounded: 'input',
     sheet,
     moments: [
         {

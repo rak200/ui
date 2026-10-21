@@ -17,12 +17,14 @@ const muted = reference('--ui-color-text-muted').cssText;
 
 prototype({
     tags: ['ui-select'],
+    // Under its label, so the edge is lit from where the pointer is in the box round the control.
+    bounded: 'select',
     sheet: (name) =>
         sheet(
             {
                 controls: ['select'],
                 // A select has no read-only state, so its darkening has no second guard.
-                pointed: ':hover:not(:disabled)',
+                able: ':not(:disabled)',
                 // The caret: two triangles the component paints in the control's background, on
                 // a select that is not a list.
                 behind: {

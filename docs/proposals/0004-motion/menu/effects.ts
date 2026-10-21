@@ -13,10 +13,10 @@
  * An exit holds the panel on screen while it runs — `display` and `overlay` transitioned as
  * discrete values — and only when one is chosen, so a menu with no exit still closes at once.
  *
- * **The trigger is a secondary button**, which the component writes out, so it offers the
- * button's effects, under the button's taste in every theme. Its host holds the panel and the
- * items too, so they are answered on the trigger alone: the catalogue names it as its control, and
- * the layers drawn on the host are drawn off the page's record of the pointer on it.
+ * **The trigger is a secondary button**, which the component writes out, so it offers the button's
+ * effects, and takes a theme's taste for them as every button does. Its host holds the panel and
+ * the items too, so they are answered on the trigger alone: the catalogue names it as its control,
+ * and the layers drawn on the host are drawn off the page's record of the pointer on it.
  */
 import { reference } from '../../../../src/reference.js';
 import * as trigger from '../buttons.js';
