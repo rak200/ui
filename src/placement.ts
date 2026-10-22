@@ -43,7 +43,10 @@ export interface Placement {
     readonly side: Side;
     /** The inset to write on the block axis. */
     readonly blockStart: number;
-    /** The inset to write on the inline axis. */
+    /**
+     * The inset to write on the inline axis, counted from the viewport's edge on the overlay's
+     * inline-start side: its left edge left to right, its right edge right to left.
+     */
     readonly inlineStart: number;
 }
 
@@ -65,6 +68,9 @@ function opposite(side: Side): Side {
  * below its button.
  * @param align - `center` for something that points at the anchor, `inline-start` for
  * something that hangs from it.
+ * @param direction - The overlay's computed `direction`, which is what its
+ * `inset-inline-start` resolves against: `rtl` counts the inline axis from the viewport's
+ * right edge, and anything else from its left edge.
  */
 export function place(
     anchor: Box,
@@ -72,19 +78,27 @@ export function place(
     viewport: { readonly width: number; readonly height: number },
     prefer: Side,
     align: Align,
+    direction: string,
 ): Placement {
     const room =
         prefer === 'block-start' ? anchor.top : viewport.height - (anchor.top + anchor.height);
     const side = room >= box.height ? prefer : opposite(prefer);
 
+    // Where the anchor starts, counted from the edge the overlay's own inset is counted from:
+    // right to left, `inset-inline-start` is `right`, and a box measured from the left and
+    // written there opened mirrored across the viewport (#301). Counted from that edge, every
+    // line below holds in both directions, the clamps included: a box wider than the viewport
+    // still starts at the leading edge, which right to left is the right one.
+    const start = direction === 'rtl' ? viewport.width - (anchor.left + anchor.width) : anchor.left;
+
     // Looked up by name rather than compared against one, and that is a measurement rather
-    // than a style: `align === 'center' ? … : anchor.left` sends every OTHER name down the
-    // same arm, so the caller that passes `inline-start` could pass anything at all — an
-    // empty string included — and this would compute the same number. Keyed by the name,
-    // each one reaches its own value and no other name reaches either.
+    // than a style: `align === 'center' ? … : start` sends every OTHER name down the same
+    // arm, so the caller that passes `inline-start` could pass anything at all — an empty
+    // string included — and this would compute the same number. Keyed by the name, each one
+    // reaches its own value and no other name reaches either.
     const lined = {
-        center: anchor.left + anchor.width / 2 - box.width / 2,
-        'inline-start': anchor.left,
+        center: start + anchor.width / 2 - box.width / 2,
+        'inline-start': start,
     }[align];
 
     return {

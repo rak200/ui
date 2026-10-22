@@ -116,21 +116,24 @@ that decision for the whole package.
 
 ## Where the panel lands
 
-It hangs from the trigger's leading edge, flips above when there is no room below, and is
-pulled back inside the viewport at either edge. It writes `data-side` — `block-start` or
-`block-end` — on the panel, so a host who wants a different gap has something to select on.
+It hangs from the trigger's leading edge, which right to left is its right edge, flips above when
+there is no room below, and is pulled back inside the viewport at either edge. It writes `data-side`
+— `block-start` or `block-end` — on the panel, so a host who wants a different gap has something to
+select on.
 
 **It hangs from where the trigger rests**, which is the box the component takes up. A trigger you
 move through `::part(trigger)` — grown under the pointer, say — moves alone, and when it goes back
 the panel is still where it was hung.
 
-**The arithmetic is shared with [`<ui-tooltip>`](tooltip.md)**, which is what issue #23 asked
-for: two answers to one problem is one too many. It lives in one internal module, alongside
-`reference` — the exported `place` takes a `Box` for the anchor and one for the overlay, a
-`Side` to prefer and an `Align` to line up by, and returns a `Placement`: the side it took and
-the two insets to write. A tooltip asks for `block-start` and `center`; a menu asks for
-`block-end` and `inline-start`. Being a function of four boxes rather than of two elements is
-what lets the edges be checked directly, at values a rendered page reaches only by luck.
+**The arithmetic is shared with [`<ui-tooltip>`](tooltip.md)**, which is what issue #23 asked for:
+two answers to one problem is one too many. It lives in one internal module, alongside `reference` —
+the exported `place` takes a `Box` for the anchor and one for the overlay, a `Side` to prefer, an
+`Align` to line up by and the overlay's computed `direction`, and returns a `Placement`: the side it
+took and the two insets to write. The inline one is counted from the edge the overlay's
+`inset-inline-start` is counted from, which right to left is the viewport's right edge. A tooltip
+asks for `block-start` and `center`; a menu asks for `block-end` and `inline-start`. Being a
+function of four boxes rather than of two elements is what lets the edges be checked directly, at
+values a rendered page reaches only by luck.
 
 CSS anchor positioning would do all of it and is deliberately not adopted; `docs/tooltip.md`
 carries that whole argument, and it did not change.

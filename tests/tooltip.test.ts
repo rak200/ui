@@ -1220,6 +1220,43 @@ describe('where it lands', () => {
         expect(tip(host).getAttribute('data-side')).toBe('block-start');
     });
 
+    it('sits centred on its trigger in a right-to-left part of the page', async () => {
+        // Where the tip used to stay at the viewport's left edge, wherever its trigger was.
+        // Far enough in from the right that the tip has room to be centred.
+        const host = await mount(
+            `<div dir="rtl" style="padding-inline-start: 150px">${fixture}</div>`,
+        );
+
+        await userEvent.hover(trigger(host));
+        await painted();
+
+        const anchor = trigger(host).getBoundingClientRect();
+        const box = tip(host).getBoundingClientRect();
+
+        expect(box.bottom).toBeLessThan(anchor.top);
+        expect((box.left + box.right) / 2).toBeCloseTo((anchor.left + anchor.right) / 2, 0);
+    });
+
+    it('sits centred on its trigger in a right-to-left page', async () => {
+        document.documentElement.dir = 'rtl';
+
+        try {
+            // Away from the middle, where a tip mirrored across the viewport would land back
+            // over its own trigger.
+            const host = await mount(`<div style="padding-inline-start: 150px">${fixture}</div>`);
+
+            await userEvent.hover(trigger(host));
+            await painted();
+
+            const anchor = trigger(host).getBoundingClientRect();
+            const box = tip(host).getBoundingClientRect();
+
+            expect((box.left + box.right) / 2).toBeCloseTo((anchor.left + anchor.right) / 2, 0);
+        } finally {
+            document.documentElement.removeAttribute('dir');
+        }
+    });
+
     it('goes above when the room is exactly enough, which is where the boundary sits', async () => {
         // The comparison is `>=`, and this is the input that tells it from `>`: a tip whose
         // height is exactly the room above it fits, flush against the trigger.
