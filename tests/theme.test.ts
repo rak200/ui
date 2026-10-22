@@ -565,6 +565,12 @@ describe("glass's filled controls, as the browser renders them", () => {
         ['--ui-color-border-button', 'dark', 'rgba(255, 255, 255, 0.16)'],
         ['--ui-color-border-button-hover', 'light', 'rgb(0, 0, 0)'],
         ['--ui-color-border-button-hover', 'dark', 'rgb(255, 255, 255)'],
+        ['--ui-color-selected', 'light', 'rgba(51, 65, 85, 0.114)'],
+        ['--ui-color-selected', 'dark', 'rgba(148, 163, 184, 0.114)'],
+        ['--ui-color-selected-contrast', 'light', 'rgb(0, 0, 0)'],
+        ['--ui-color-selected-contrast', 'dark', 'rgb(255, 255, 255)'],
+        ['--ui-color-selected-hover', 'light', 'rgba(51, 65, 85, 0.192)'],
+        ['--ui-color-selected-hover', 'dark', 'rgba(148, 163, 184, 0.192)'],
     ] as const)('writes %s in %s as %s', (token, scheme, value) => {
         expect(underGlass(token, scheme)).toBe(value);
     });
@@ -616,6 +622,13 @@ describe("glass's filled controls, as the browser renders them", () => {
         );
         // A button's edge back to its variant's colour, which this probe paints in black.
         expect(underGlass('--ui-color-border-button', 'light'), 'its edge').toBe('rgb(0, 0, 0)');
+        // And the choice already made in a select's list filled, as the other palettes fill it.
+        expect(underGlass('--ui-color-selected', 'light'), 'the choice made').toBe(
+            'rgb(51, 65, 85)',
+        );
+        expect(underGlass('--ui-color-selected-contrast', 'light'), 'its label').toBe(
+            'color(srgb-linear 1 1 1)',
+        );
     });
 });
 

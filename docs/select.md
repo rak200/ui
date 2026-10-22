@@ -17,6 +17,7 @@ import '@rak200/ui';
 - [In a form](#in-a-form)
 - [In error](#in-error)
 - [Supplementary text](#supplementary-text)
+- [The list, where the engine hands it to the page](#the-list-where-the-engine-hands-it-to-the-page)
 - [What the platform still refuses](#what-the-platform-still-refuses)
 - [Styling](#styling)
 
@@ -114,8 +115,8 @@ same reason and records it.
 **The native element is the decision, not a shortcut.** A custom listbox is an accessibility project
 of its own, and it would have to reimplement the platform picker a phone already opens — which is
 the part a consumer notices most and a library gets wrong most. What is rendered here is a real
-`<select>` with real `<option>`s in it, so the keyboard, the typeahead, the picker and the semantics
-are all still the platform's.
+`<select>` with real `<option>`s in it, so the keyboard, the typeahead, the semantics and the picker a
+phone opens are all still the platform's.
 
 ## In a form
 
@@ -179,37 +180,60 @@ because it is what sent the reader looking; the help second; the handed sentence
 The copy in here is not painted, because the tip is already showing it. Take the tip away and the
 description goes with it.
 
+## The list, where the engine hands it to the page
+
+**Where the engine hands the list to the page, this element draws it.** That is under
+`appearance: base-select`, which Chromium and WebKit have, and a pointer that hovers and is fine,
+`(hover: hover) and (pointer: fine)`. The keyboard and the typeahead stay the platform's there: Enter
+opens the list on the choice already made, the arrows move, a letter finds a choice, Enter chooses,
+and Escape closes without choosing.
+
+- **The list** is a raised surface, as [`<ui-menu>`](menu.md)'s panel is: its glass, its edge, its
+  corner and its lift, half a space from the control, on whichever side the platform hangs it.
+- **A choice** is a menu's item: the hover colour under the pointer, the focus ring inside it, and
+  the muted text when it cannot be made. A group after the first is set off by a line.
+- **The choice already made** is filled, its text and its check in the fill's label, and its focus
+  ring goes round the fill. The arrows move the focus and leave the fill where it is.
+  [Glass](theme.md#glass) tints it instead.
+- **The caret** moves into the icon the base appearance gives the control, the same two triangles in
+  the same place, and turns over while the list is open.
+
+**Everywhere else, the list is the system's**, as the next section describes: in Firefox, which keeps
+the base appearance behind a preference that is off, and on a phone, which keeps the picker it opens.
+A `multiple` control is never drawn here, because its list is in the box.
+[ARCHITECTURE.md](../ARCHITECTURE.md), _The platform owns what the platform is good at_, says why the
+kit draws the list in two engines of three.
+
 ## What the platform still refuses
 
-**The list a click opens is drawn by the operating system**, and the one thing a rule here reaches
-inside it is the colour each choice paints. The box, the caret and the states are this package's;
-the popup, and the highlight on the choice under the pointer, are not. That is the cost of
-delegating to a native `<select>`, and it is the reason to.
-
-`appearance: base-select` hands the list to the page where an engine has it — Chromium and WebKit,
-with Firefox behind a preference that is off. [ARCHITECTURE.md](../ARCHITECTURE.md), _The platform
-owns what the platform is good at_, carries what would reopen the question, and it is Firefox
-shipping it rather than a decision here.
+**Where the system draws the list**, the one thing a rule here reaches inside it is the colour each
+choice paints. The box, the caret and the states are this package's; the popup, and the highlight on
+the choice under the pointer, are not. That is the cost of delegating to a native `<select>`, and it
+is the reason to.
 
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the caret.
 
-| Part               | Token                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------- |
-| surface            | `--ui-color-surface-control`, the surface unless set                                                    |
-| text and the label | `--ui-color-text`, and `--ui-color-text-muted` when disabled                                            |
-| boundary           | `--ui-color-border`, and `--ui-color-text` on hover                                                     |
-| the caret          | `--ui-color-text-muted`                                                                                 |
-| each choice        | `--ui-color-surface`                                                                                    |
-| in error           | `--ui-color-danger`, at `--ui-text-supporting`                                                          |
-| help text          | `--ui-color-text`, at `--ui-text-supporting`                                                            |
-| focus ring         | `--ui-color-focus`                                                                                      |
-| glow               | `--ui-elevation-control`, around the box, lit in the accent, or the danger in error; none when disabled |
-| value in error     | `--ui-color-text-invalid`, which is the text unless a theme writes it                                   |
-| corner             | `--ui-radius`                                                                                           |
-| padding and rhythm | `--ui-space`                                                                                            |
-| motion             | `--ui-duration-state`, `--ui-easing-state`                                                              |
+| Part                              | Token                                                                                                                                               |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| surface                           | `--ui-color-surface-control`, the surface unless set                                                                                                |
+| text and the label                | `--ui-color-text`, and `--ui-color-text-muted` when disabled                                                                                        |
+| boundary                          | `--ui-color-border`, and `--ui-color-text` on hover                                                                                                 |
+| the caret                         | `--ui-color-text-muted`                                                                                                                             |
+| the list                          | `--ui-color-surface-raised` under `--ui-backdrop-raised`, edged in `--ui-color-border-overlay`, lifted by `--ui-elevation-raised` lit in the accent |
+| a choice in it                    | `--ui-color-text`, `--ui-color-hover` under the pointer, `--ui-color-text-muted` when it cannot be made                                             |
+| the choice made                   | `--ui-color-selected`, its text and its check `--ui-color-selected-contrast`, and `--ui-color-selected-hover` under the pointer                     |
+| a group's line                    | `--ui-color-border`                                                                                                                                 |
+| each choice, in the system's list | `--ui-color-surface`                                                                                                                                |
+| in error                          | `--ui-color-danger`, at `--ui-text-supporting`                                                                                                      |
+| help text                         | `--ui-color-text`, at `--ui-text-supporting`                                                                                                        |
+| focus ring                        | `--ui-color-focus`                                                                                                                                  |
+| glow                              | `--ui-elevation-control`, around the box, lit in the accent, or the danger in error; none when disabled                                             |
+| value in error                    | `--ui-color-text-invalid`, which is the text unless a theme writes it                                                                               |
+| corner                            | `--ui-radius`                                                                                                                                       |
+| padding and rhythm                | `--ui-space`                                                                                                                                        |
+| motion                            | `--ui-duration-state`, `--ui-easing-state`                                                                                                          |
 
 The same five parts [`<ui-input>`](input.md#styling) exposes — `stack`, `label`, `control`, `help`
 and `error` — aimed at a `<select>` rather than an `<input>`.
@@ -219,13 +243,14 @@ gradient takes `var()`, while an SVG in a `data:` URI freezes whatever colour is
 [`<ui-checkbox>`](checkbox.md) needs a path for its tick, so it keeps the path as a mask and paints
 the colour under it; a caret is two triangles, and needs neither.
 
-**Each choice paints the surface itself.** The picker takes its colours from the select unless an
-option brings its own, so a fill you make translucent would otherwise be what the open list is drawn
+**In the system's list, each choice paints the surface itself.** That list takes its colours from the
+select unless an option brings its own, so a fill you make translucent would otherwise be what the open list is drawn
 on. In an opaque palette this changes nothing you can see. A `multiple` control is left alone: its
 list is in the box, and the platform marks a chosen option by painting its background, which a
 colour here would paint out.
 
-**It follows the control's direction.** `padding-inline-end` is logical and flips on its own;
+**It follows the control's direction.** `padding-inline-end` is logical and flips on its own, and so
+does the icon the caret is drawn in where the page draws the list. In the background,
 `background-position` has no logical form, so the caret is mirrored explicitly against `:dir(rtl)`.
 
 **It is not drawn on a `multiple` control**, where the list has nothing to open and a chevron would

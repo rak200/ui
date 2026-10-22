@@ -426,8 +426,9 @@ lists what its component leaves out and why. None of it is the Decision, which s
   panel — its surface, its items, its entrances, its exits and its caret, under the menu's tastes —
   while the control stays the component's box, within a pixel, and the keyboard and the typeahead
   stay the platform's, in Chromium and WebKit — measured. The platform places the list and writes
-  nowhere which side it took, so what comes from the trigger's side comes from above. Whether the
-  component takes it up is `ARCHITECTURE.md`'s question, and what that waits on is Firefox.
+  nowhere which side it took, so what comes from the trigger's side comes from above. The component
+  took it up in #303, under a pointer that hovers and is fine, so its surface and the mark on the
+  choice already made are no longer this proposal's, and its entrances, exits and caret still are.
 
 **The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
 under each theme; `today` marks what a component does today. A theme names the pointer, the focus, a
@@ -437,7 +438,7 @@ pointer and the focus, the card and the toast a focus on something they hold; _f
 the textarea, the select, the checkbox, the switch and the radio, which answer an error; and a press
 is answered by the button and the menu's trigger. A component that leaves an effect out does what it
 does today there: the hover colour is the button's today, and the card, the toast and the fields
-leave it out. The select's `enter`, `exit` and `caret` are its list's, where the page draws it.
+leave it out. The select's `enter`, `exit` and `caret` are its list's, where the component draws it.
 
 | Component | Moment            | Default          | Matrix      | Glass       |
 | --------- | ----------------- | ---------------- | ----------- | ----------- |

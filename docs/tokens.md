@@ -155,8 +155,8 @@ curve.
 knows.** The sheet answers `prefers-contrast: more` the way it answers reduced motion: the text, the
 surface, the accent and the focus ring go to black and white, with the dark scheme on pure black.
 The accent's label follows on its own, being derived from the accent, and so do the border and the
-muted text, which mix toward the text. What floats over the page — a dialog, a tip, an open menu —
-is edged in the text itself, and so is a toast, its icon with it. Every pair the text makes with a surface clears 7:1, WCAG's enhanced
+muted text, which mix toward the text. What floats over the page — a dialog, a tip, an open menu, a
+select's drawn list — is edged in the text itself, and so is a toast, its icon with it. Every pair the text makes with a surface clears 7:1, WCAG's enhanced
 level.
 
 **The outcome colours stay where they are.** An error that turned grey would stop saying it is an
@@ -165,7 +165,8 @@ at.
 
 **The states are written out rather than derived.** Over pure black a mix toward the text barely
 moves, and a black or white accent has no room to shade toward, so the hover, the pressed, the
-striped row, the accent's two states and the primary button's are given as values — at the steps the default palette's own
+striped row, the accent's two states, the primary button's and the hover on the choice already made
+in a select's list are given as values — at the steps the default palette's own
 states take. Those values are declared at `:root`, so they reach under a theme of your own too: a
 theme that answers the setting itself declares its own states, or resets them with `initial` to hand
 them back to their formulas.
@@ -297,7 +298,7 @@ A button and the trigger light to `--ui-elevation-control-hover` under the point
 resting glow until a theme writes a brighter one.
 
 **`--ui-elevation-100` takes `currentColor` the same way.** The card and the open menu draw their lift
-on a layer in the accent, and a toast on one in its edge colour, `--ui-color-toast-edge` — its
+on a layer in the accent, a select's drawn list on itself in the accent, and a toast on one in its edge colour, `--ui-color-toast-edge` — its
 variant's, unless you set the name. The tooltip's tip is your own element, so it lights the lift in
 its text. The default palette's lift names its colour, so none of this changes how it renders.
 
@@ -324,10 +325,13 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-color-primary-contrast`    | its label                                     |
 | `--ui-color-primary-hover`       | a primary button under the pointer            |
 | `--ui-color-primary-pressed`     | a primary button being pressed                |
+| `--ui-color-selected`            | the choice already made in a select's list    |
+| `--ui-color-selected-contrast`   | its text and its check                        |
+| `--ui-color-selected-hover`      | that choice under the pointer                 |
 | `--ui-color-hover`               | a neutral surface under the pointer           |
 | `--ui-color-pressed`             | a neutral surface being pressed               |
 | `--ui-color-border`              | the boundary of a control                     |
-| `--ui-color-border-overlay`      | the edge of a dialog, a tip and a menu        |
+| `--ui-color-border-overlay`      | the edge of a dialog, a tip, a menu, a list   |
 | `--ui-color-border-raised`       | the edge of a card                            |
 | `--ui-color-border-button-hover` | the edge a button goes to under the pointer   |
 | `--ui-color-text-invalid`        | the value written in a field in error         |
@@ -364,6 +368,13 @@ accent moves the button; overriding the accent's label or states reaches the che
 not the button, so set the primary's too. A theme fills the button apart from the checked controls
 through them, as [Glass](theme.md#glass) inverts it.
 
+**The choice already made in a select's list has three names of its own**, `--ui-color-selected`,
+`-selected-contrast` and `-selected-hover`, where the page draws the list —
+[`<ui-select>`](select.md#the-list-where-the-engine-hands-it-to-the-page) says where that is. Each
+computes what the accent's own does, from the accent, for the reason the primary button's do, so a
+theme marks the choice apart from the checked controls through them, as
+[Glass](theme.md#glass) tints it.
+
 **The edge of what floats is the boundary under a name of its own.** `--ui-color-border-overlay`
 computes what `--ui-color-border` does, and is a second name because
 [more contrast](#more-contrast) edges a dialog, a tip and a menu in the text while a control's
@@ -372,9 +383,9 @@ setting `--ui-color-border` leaves this one alone: set both to move both. A card
 `--ui-color-border-raised`, is a third name for the same mix, because more contrast leaves it alone.
 
 **A raised surface has a colour of its own**, `--ui-color-surface-raised`, and a filter it lays over
-the page behind it, `--ui-backdrop-raised`: the card, the toast, the tip, the dialog and the open
-menu read both. They are the surface and nothing until something sets them, which is how a theme
-makes those five glass. Not an alpha on `--ui-color-surface`: every derivation mixes the surface, so
+the page behind it, `--ui-backdrop-raised`: the card, the toast, the tip, the dialog, the open menu
+and a select's drawn list read both. They are the surface and nothing until something sets them,
+which is how a theme makes those six glass. Not an alpha on `--ui-color-surface`: every derivation mixes the surface, so
 a translucent one would take the border, the muted text and the hover translucent with it.
 
 **A button's edge is a name of its own, and may soften**, `--ui-color-border-button`, with the edge it
@@ -387,7 +398,8 @@ trigger, nothing on a primary — so each draws what it drew before until someth
 **A control has a fill of its own**, `--ui-color-surface-control`: a field, a select, an empty
 checkbox or radio, a switch that is off, and a table. It is the surface until something sets it, and
 a name apart from the raised surface's, because a control rests on a raised surface and on the page
-alike. A select's choices still paint `--ui-color-surface`, since the platform's picker reads them.
+alike. A select's choices still paint `--ui-color-surface` where the system draws its list, since
+that list reads them.
 
 ## `formulas`
 
@@ -410,6 +422,9 @@ formulas['--ui-duration-state'];
 | `--ui-color-primary-contrast`    | the accent's label                                                |
 | `--ui-color-primary-hover`       | the accent's hover                                                |
 | `--ui-color-primary-pressed`     | the accent's pressed                                              |
+| `--ui-color-selected`            | the accent                                                        |
+| `--ui-color-selected-contrast`   | the accent's label                                                |
+| `--ui-color-selected-hover`      | the accent's hover                                                |
 | `--ui-color-hover`               | the surface, 16% of the way toward the text                       |
 | `--ui-color-pressed`             | the surface, 26% of the way toward the text                       |
 | `--ui-color-border`              | the surface, 50% of the way toward the text                       |

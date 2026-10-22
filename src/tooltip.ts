@@ -68,9 +68,9 @@ function describing(trigger: HTMLElement): string[] {
  * a dependency. Measured in this engine, anchor positioning is **entirely present** —
  * `anchor-name`, `position-anchor`, `position-area` and `position-try-fallbacks` all
  * parse, and an anchored popover really is placed against its anchor rather than merely
- * accepting the rule. It is still not adopted, and the reason is the one `docs/select.md`
- * gives about `appearance: base-select`: a feature one engine has makes a kit look like
- * two kits.
+ * accepting the rule. It is still not adopted, and the reason is the one `ARCHITECTURE.md`
+ * gives under _The platform owns what the platform is good at_: a feature one engine has
+ * makes a kit look like two kits.
  *
  * **Here that is not a cosmetic difference but a broken component.** Measured: a popover
  * whose anchor rules are ignored does not fall back to somewhere near the trigger — it is

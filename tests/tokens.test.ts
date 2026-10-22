@@ -1047,6 +1047,22 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it("keeps the choice already made in a select's list legible, at rest and under the pointer", () => {
+                    // Its text and its check are the fill's own label, on a fill that may let the
+                    // list through, as Glass's tint does.
+                    for (const token of [
+                        '--ui-color-selected',
+                        '--ui-color-selected-hover',
+                    ] as const) {
+                        for (const fill of over(token, palette, scheme)) {
+                            expect(
+                                contrastRatio(paint('--ui-color-selected-contrast'), fill),
+                                token,
+                            ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    }
+                });
+
                 it('keeps the focus ring at 3:1 against the surface — WCAG 1.4.11, which axe cannot see', () => {
                     // `outline-offset` shows the surface on both sides of the ring, so the
                     // surface is what the ring is adjacent to. This is the assertion the shipped
@@ -1086,6 +1102,22 @@ describe('the contrast floors', () => {
                         expect(
                             contrastRatio(at(pressed), at(hover)),
                             'pressed against hover',
+                        ).toBeGreaterThan(1.05);
+                    }
+                });
+
+                it("moves the choice already made in a select's list visibly under the pointer", () => {
+                    // The least difference a real display renders, as above, read over whatever
+                    // the list rests on, which a tint at an opacity lets through.
+                    for (const beside of outside(palette, scheme)) {
+                        const at = (token: DerivedToken | Token): string =>
+                            laid(token, beside, scheme, palette);
+
+                        expect(
+                            contrastRatio(
+                                at('--ui-color-selected-hover'),
+                                at('--ui-color-selected'),
+                            ),
                         ).toBeGreaterThan(1.05);
                     }
                 });

@@ -506,7 +506,7 @@ it one after another with `cascade`, and it is covered back toward the trigger w
 the default theme; it jumps in and flickers out with `glitch` under Matrix, and comes into focus and
 blurs away with `refocus` and `defocus` under Glass; its caret flips over with `flip` in every
 theme; and its trigger, a secondary button, answers a press, the pointer and focus as every button
-does. The select's list, where the page draws it, takes the menu's panel's, so a list and a menu
+does. The select's list, where the component draws it, takes the menu's panel's, so a list and a menu
 open, close and turn their carets alike. The checkbox and the switch share a page and a sheet, and
 each asks for its taste under its own name, `--ui-taste-checkbox-check` and
 `--ui-taste-switch-check`, so one draws while the other springs; an effect only one of them offers,
@@ -691,55 +691,37 @@ more in every theme and scheme. The flash mixes a fifth of the danger into the s
 laying the danger over it, as the drawn controls once did, which took a field's text to 3.14:1 at
 each round's start on Matrix's light page; mixed in, the text held 4.74:1 at the least — measured —
 and the drawn controls take the same flash now, so the two look alike. The select's page draws the
-same effects, from the module the two pages share, `fields.ts`. Its caret is the control's
-background, two triangles the component paints there, so the shimmer and the scan write the list
-again with their light in front of them and move the light alone, through a property of its own: the
-caret stayed where the component puts it, left to right and right to left, under the pointer and at
-the focus, in all three engines. Over the select the label in the accent held 5.4:1 or more, the
-text 4.74:1 at the least at the flash's peak and 15.5:1 or more over Glass's blur — measured.
+same effects, from the module the two pages share, `fields.ts`. Where the system draws the list, its
+caret is the control's background, two triangles the component paints there, so the shimmer and the
+scan write the list again with their light in front of them and move the light alone, through a
+property of its own: the caret stayed where the component puts it, left to right and right to left,
+under the pointer and at the focus, in all three engines. Where the component draws the list, the
+caret is the icon the base appearance gives the control, and the fills paint none. Over the select
+the label in the accent held 5.4:1 or more, the text 4.74:1 at the least at the flash's peak and
+15.5:1 or more over Glass's blur — measured.
 
-**The select's list can be drawn by the page, in two engines of three.** Under
-`appearance: base-select` an engine hands a select's list to the page, and the page's _Draw the
-list_ switch takes it: Chromium 153 and WebKit 26.6 open the list in the page, and Firefox 155 has
-the base appearance behind `dom.select.customizable_select.enabled`, which is off, so there the list
-stays the system's. All the switch writes is under `@supports (appearance: base-select)`: without
-it, Firefox lost the control's caret, which the page moves from the background into the icon the
-base appearance gives the control — measured. The control stays the component's box, the same size,
-its text and its caret within a pixel of where they were in all three engines, though Chromium
-antialiases the text differently. The caret is drawn in that icon so it can turn as the list opens,
-and the one painted in the background goes transparent, under the shimmer and the scan too, which
-paint it again, in Chromium and WebKit. The list is the menu's panel: its surface, its boundary, its
-shadow lit in the accent and its glass. A choice is a menu's item, with the hover colour under the
-pointer and the ring at the focus, and a group after the first is set off by the menu's separator,
-which WebKit's own sheet draws fainter and Chromium's not at all. On the list the choices held
-12.92:1 or more, a group's label as much, a choice under the pointer 8.90:1 and the check beside the
-chosen one 4.25:1, in every theme and scheme, in Chromium, the one engine whose screenshots draw
-Glass's blur — measured. The keyboard stays the platform's: Enter opens the list on the chosen
-choice with its ring, the arrows move, a letter finds a choice, Enter chooses and closes, and Escape
-closes without choosing, in Chromium and WebKit. Opening the list, closing it and the caret are the
-menu's, from the module the two pages share, `panels.ts`, under the menu's tastes. The platform
-places the list, below the control unless there is no room, and writes nowhere which side it took,
-so what comes from the trigger's side comes from above. An exit holds the list in Chromium alone, as
-it holds a tip and a menu's panel: WebKit takes it away at once. With the preference on, Firefox
-opens the list in the page too, and draws the icon a few pixels wide, no check, and the groups'
-labels in italics. On a phone, whether a list in the page takes the place of the system's own was
-not measured.
-
-**A drawn list marks the choice already made: with a fill, and under Glass with a tint.** _Mark the
-current choice_ picks the mark, or leaves it to the theme, read from `:checked`, which is the
-selection rather than the focus: the arrows move the focus and leave the mark where it is. Measured
-in every theme and scheme in Chromium, and in WebKit under the default in the light and Glass in the
-dark. The check alone is today's mark. A tint of the accent behind the choice stood 1.02:1 to 1.39:1
-from a choice under the pointer, because the hover colour is the same kind of value: under Matrix in
-the dark the two are one green, and under Glass, whose accent is slate, both are grey. A ring in the
-accent is drawn in the focus ring's colour in every theme but Matrix in the dark, so only a pixel of
-width tells the chosen choice from the focused one. The fill is the accent with the accent's label
-on it, as a checked box is filled. It stood 2.87:1 or more from a choice under the pointer, and its
-text and its check held 4.94:1 or more, and 4.80:1 under the pointer. Its focus ring goes round it,
-a pixel clear, because inside it the ring would be drawn in the fill's own colour. Left to the
-theme, the mark is the fill, and under Glass the tint, which looked better there by eye, though
-there a choice under the pointer is grey too, and the check is what sets the chosen one apart. Under
-forced colors, in Chromium, the fill goes, as the hover does, and the check stays.
+**The select's list is the component's own now, where the engine hands it to the page** — #303.
+Under `appearance: base-select` and a pointer that hovers and is fine, `src/select.ts` draws it as
+the menu's panel, with the choice already made filled in the accent, and tinted under Glass, through
+three names of its own. This page drew it first, behind a switch, and the component took up what was
+measured here. The control stayed the component's box, its text and its caret within a pixel, in all
+three engines, though Chromium antialiases the text differently. The keyboard stayed the platform's
+in Chromium and WebKit: Enter opens the list on the chosen choice with its ring, the arrows move, a
+letter finds a choice, Enter chooses and closes, and Escape closes without choosing. On the list the
+choices held 12.92:1 or more, a group's label as much, a choice under the pointer 8.90:1 and the
+check beside the chosen one 4.25:1, in every theme and scheme, in Chromium. Everything sits under
+`@supports (appearance: base-select)`: without it, Firefox lost the control's caret, which moves
+from the background into the icon. Of four marks for the choice already made, read from `:checked`,
+the check alone was today's; a tint of the accent stood 1.02:1 to 1.39:1 from a choice under the
+pointer, under Matrix in the dark one green with it and under Glass both grey; a ring in the accent
+was the focus ring's colour in every theme but Matrix in the dark, a pixel thinner; and a fill in
+the accent stood 2.87:1 or more from it, its text and its check at 4.94:1 or more and 4.80:1 under
+the pointer. The fill was chosen, and under Glass the tint, which looked better there by eye. What
+this page adds is how the list opens, closes and turns its caret, from `panels.ts`, under the menu's
+tastes. The platform places the list and writes nowhere which side it took, so what comes from the
+trigger's side comes from above. An exit holds the list in Chromium alone, as it holds a tip and a
+menu's panel: WebKit takes it away at once. With the preference on, Firefox opens the list in the
+page too, and draws the icon a few pixels wide, no check, and the groups' labels in italics.
 
 **A drawn control's effects are sorted by kind, as a field's are.** The checkbox, the switch and the
 radio have the field's kinds — under the pointer a border, a shadow, a fill and their place; at the

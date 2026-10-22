@@ -141,8 +141,8 @@ the trigger, flips below when there is no room, and is pulled back inside the vi
 CSS anchor positioning would do all of it, and in the engine this package's suite measures it is
 entirely present — `anchor-name`, `position-anchor`, `position-area` and `position-try-fallbacks` all
 work, and an anchored popover really is placed against its anchor. It is still not adopted, for the
-reason [`<ui-select>`](select.md) gives about `appearance: base-select`: a feature one engine has
-makes a kit look like two kits.
+reason [ARCHITECTURE.md](../ARCHITECTURE.md) gives under _The platform owns what the platform is good
+at_: a feature one engine has makes a kit look like two kits.
 
 Here the difference is not cosmetic. Measured: a popover whose anchor rules are ignored is
 `position: fixed` at `inset: 0` — the corner of the screen, not near the trigger. And the flip at a

@@ -81,27 +81,28 @@ of what floats over the page go to the text's pole, black or white.
 ## `glass`
 
 The raised surfaces frosted over whatever page is behind them, in both schemes: the card, the toast,
-the tip, the dialog and the open menu.
+the tip, the dialog, the open menu and a select's drawn list.
 
-|                    | light                                                      | dark                                   |
-| ------------------ | ---------------------------------------------------------- | -------------------------------------- |
-| text               | `#000000`                                                  | `#ffffff`                              |
-| accent             | `#334155`                                                  | `#94a3b8`                              |
-| focus ring         | `#334155`                                                  | `#94a3b8`                              |
-| hover              | `#bebebe`                                                  | `#393f4d`                              |
-| pressed            | `#989898`                                                  | `#535965`                              |
-| a raised surface   | white at 0.20                                              | black at 0.20                          |
-| behind it          | `blur(10px) saturate(1.7)`                                 | the same                               |
-| its edge           | white at 0.45                                              | white at 0.16                          |
-| its lift           | a highlight along the top, white at 0.60, and a soft drop  | white at 0.20, the drop darker         |
-| a toast's edge     | its variant's colour at 0.80                               | the same                               |
-| a control's fill   | the surface at 0.20                                        | the same                               |
-| a table's stripe   | its mix at 0.20                                            | the same                               |
-| a checked control  | the accent at 0.80, its mark whole                         | the same                               |
-| the primary button | `#94a3b8` at 0.80, under a black label                     | `#334155` at 0.80, under a white label |
-| a button's edge    | white at 0.45                                              | white at 0.16                          |
-| under the pointer  | the text                                                   | the same                               |
-| a button's lift    | a highlight along the top, white at 0.60, and a short drop | white at 0.20, the drop darker         |
+|                                    | light                                                       | dark                                   |
+| ---------------------------------- | ----------------------------------------------------------- | -------------------------------------- |
+| text                               | `#000000`                                                   | `#ffffff`                              |
+| accent                             | `#334155`                                                   | `#94a3b8`                              |
+| focus ring                         | `#334155`                                                   | `#94a3b8`                              |
+| hover                              | `#bebebe`                                                   | `#393f4d`                              |
+| pressed                            | `#989898`                                                   | `#535965`                              |
+| a raised surface                   | white at 0.20                                               | black at 0.20                          |
+| behind it                          | `blur(10px) saturate(1.7)`                                  | the same                               |
+| its edge                           | white at 0.45                                               | white at 0.16                          |
+| its lift                           | a highlight along the top, white at 0.60, and a soft drop   | white at 0.20, the drop darker         |
+| a toast's edge                     | its variant's colour at 0.80                                | the same                               |
+| a control's fill                   | the surface at 0.20                                         | the same                               |
+| a table's stripe                   | its mix at 0.20                                             | the same                               |
+| a checked control                  | the accent at 0.80, its mark whole                          | the same                               |
+| the primary button                 | `#94a3b8` at 0.80, under a black label                      | `#334155` at 0.80, under a white label |
+| the choice made in a select's list | the accent at 0.112 under the text, 0.192 under the pointer | the same                               |
+| a button's edge                    | white at 0.45                                               | white at 0.16                          |
+| under the pointer                  | the text                                                    | the same                               |
+| a button's lift                    | a highlight along the top, white at 0.60, and a short drop  | white at 0.20, the drop darker         |
 
 **The glass is the scheme's pole at an opacity**, white in the light scheme and black in the dark —
 black rather than the dark surface, because at the same opacity it takes a lighter page. The surface
@@ -114,8 +115,8 @@ opaque in its variant's colour, being the one cue that tells a variant by more t
 **The controls are glass too.** A field, a select, an empty box or radio, a switch that is off and a
 table take their own fill at the glass's opacity, and a table's stripe its mix. Every edge stays
 opaque, so a field keeps the 3:1 its boundary was chosen for, and what is written in it is measured
-over the fill laid on the page and on the glass alike. A select's choices keep the opaque surface,
-because the platform's picker reads them.
+over the fill laid on the page and on the glass alike. Where the system draws a select's list, its
+choices keep the opaque surface, because that list reads them.
 
 **A checked control takes the accent at 0.80, and the primary button is inverted.** A translucent
 fill moves toward its own label, and Glass's accent sits at the far pole from the glass, so its label
@@ -123,6 +124,12 @@ is the glass's own pole: a primary button at an opacity would lose it below 0.72
 slate under a black label in the light scheme, a dark one under a white label in the dark — the fill
 moves away from the label instead, and so does each of its states. A checked box keeps the accent,
 because inverted it fell under 3:1 against the glass even when opaque; its mark is drawn whole.
+
+**The choice already made in a select's list is tinted rather than filled.** The other palettes fill
+it with the accent under the accent's label; here it takes the accent at 0.112 under the text, and at
+0.192 under the pointer, chosen by eye over RFC 0004's prototype, where the fill read heavier on the
+glass. The text keeps its floor over the tint on the page Glass holds over. A choice under the
+pointer is grey too, so on the glass the check is what sets the chosen one apart from it.
 
 **A button's edge softens to the glass's, and a field's does not.** Drawn in the text's colour, a
 secondary button's edge was the hardest line on the glass, and a button's label already identifies
@@ -147,8 +154,9 @@ the 1.25 a state owes.
 
 **When the reader asks for more contrast or for less transparency, glass stops being glass**: every
 raised surface goes back to the opaque surface with nothing behind it, its edge to the boundary and
-its lift to the default palette's, every control's fill and every stripe goes opaque, and a button
-goes back to its variant's edge and no lift. More contrast also edges what floats over the page and a toast in
+its lift to the default palette's, every control's fill and every stripe goes opaque, a button
+goes back to its variant's edge and no lift, and the choice in a select's list is filled with the
+accent, as the other palettes fill it. More contrast also edges what floats over the page and a toast in
 the text, takes the focus ring to the text's pole as the default palette's goes, and writes the
 default palette's neutral states, because Glass's text and surface are the default's there.
 

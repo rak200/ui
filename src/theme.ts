@@ -256,6 +256,13 @@ export const glass: Theme = {
             '--ui-color-primary-contrast': '#000000',
             '--ui-color-primary-hover': 'rgb(160 174 192 / 0.8)',
             '--ui-color-primary-pressed': 'rgb(171 183 199 / 0.8)',
+            // The choice already made in a select's list tinted with the slate under the text,
+            // where the other palettes fill it with the accent: the fill read heavier on the
+            // glass, chosen by eye over RFC 0004's prototype — #303. 14% of the accent at its
+            // 0.80, and 24% under the pointer, as the prototype drew them.
+            '--ui-color-selected': 'rgb(51 65 85 / 0.112)',
+            '--ui-color-selected-contrast': '#000000',
+            '--ui-color-selected-hover': 'rgb(51 65 85 / 0.192)',
             // A button and the menu's trigger edged as the glass is, primary included: drawn in
             // the text's colour, a secondary button's was the hardest line on the glass. A
             // button's label identifies it, so its edge owes no 3:1, where a field's does and
@@ -278,6 +285,9 @@ export const glass: Theme = {
             '--ui-color-primary-contrast': '#ffffff',
             '--ui-color-primary-hover': 'rgb(41 53 70 / 0.8)',
             '--ui-color-primary-pressed': 'rgb(34 44 59 / 0.8)',
+            '--ui-color-selected': 'rgb(148 163 184 / 0.112)',
+            '--ui-color-selected-contrast': '#ffffff',
+            '--ui-color-selected-hover': 'rgb(148 163 184 / 0.192)',
             '--ui-color-border-button': 'rgb(255 255 255 / 0.16)',
             '--ui-color-border-button-hover': '#ffffff',
         },
