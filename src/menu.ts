@@ -552,6 +552,20 @@ export class UiMenu extends LitElement {
                 // Closing without preventing is the whole of the APG rule.
                 this.open = false;
                 return;
+            case ' ':
+                // Part of a search in progress, so a label with a space in it can be typed
+                // whole. Otherwise the key is the item's, as it is anywhere: a button clicks
+                // itself on it, and the click closes the menu as Enter's does. A link is
+                // followed on Enter and never on Space, and an item's activation stays the
+                // platform's, so on a link the key does nothing, and moves no page under the
+                // open menu either.
+                if (this.#typed !== '') {
+                    this.#type(event.key);
+                } else if (event.target instanceof HTMLButtonElement) {
+                    return;
+                }
+
+                break;
             default:
                 if (event.key.length !== 1) {
                     return;

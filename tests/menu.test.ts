@@ -794,6 +794,136 @@ describe('the keys inside it', () => {
     });
 });
 
+describe('choosing from the keyboard', () => {
+    /**
+     * Two labels that share a word, and a link: the shape #298 was measured on, where Space
+     * chose no item at all because the typeahead took it.
+     */
+    const spaced = `
+        <ui-menu>
+            <span slot="trigger">Actions</span>
+            <button type="button">Rename</button>
+            <button type="button">Open</button>
+            <button type="button">Open recent</button>
+            <a href="#linked">Linked page</a>
+        </ui-menu>
+    `;
+
+    /** Counts the clicks an item takes, and keeps a followed link from leaving the test page. */
+    function clicks(target: HTMLElement): { count: number } {
+        const seen = { count: 0 };
+
+        target.addEventListener('click', (event) => {
+            seen.count += 1;
+            event.preventDefault();
+        });
+
+        return seen;
+    }
+
+    it('chooses a button on Enter, and hands the focus back', async () => {
+        const host = await mount(spaced);
+        const element = menu(host);
+        const rename = clicks(item(host, 0));
+        await open(element);
+
+        await userEvent.keyboard('{Enter}');
+        await settle();
+
+        expect(rename.count, 'clicked').toBe(1);
+        expect(element.open).toBe(false);
+        expect(element.shadowRoot?.activeElement).toBe(trigger(element));
+    });
+
+    it('chooses a button on Space, as Enter does', async () => {
+        const host = await mount(spaced);
+        const element = menu(host);
+        const rename = clicks(item(host, 0));
+        await open(element);
+
+        await userEvent.keyboard(' ');
+        await settle();
+
+        expect(rename.count, 'clicked').toBe(1);
+        expect(element.open).toBe(false);
+        expect(element.shadowRoot?.activeElement).toBe(trigger(element));
+    });
+
+    it('leaves Space to the button once a search has been forgotten', async () => {
+        const host = await mount(spaced);
+        const element = menu(host);
+        const opened = clicks(item(host, 1));
+        await open(element);
+
+        await userEvent.keyboard('o');
+
+        expect(focused()).toBe('Open');
+
+        await wait(forgotten);
+        await userEvent.keyboard(' ');
+        await settle();
+
+        expect(opened.count, 'clicked').toBe(1);
+        expect(element.open).toBe(false);
+    });
+
+    it('keeps a space in a search in progress, so a label can be typed whole', async () => {
+        const host = await mount(spaced);
+        const element = menu(host);
+        const opened = clicks(item(host, 1));
+        await open(element);
+
+        await userEvent.keyboard('open r');
+
+        expect(focused()).toBe('Open recent');
+        expect(opened.count, 'the space clicked nothing on its way past').toBe(0);
+        expect(element.open).toBe(true);
+    });
+
+    it('keeps no space for the next letter when no search was in progress', async () => {
+        const host = await mount(spaced);
+        await open(menu(host));
+
+        await userEvent.keyboard('{End}');
+
+        expect(focused()).toBe('Linked page');
+
+        await userEvent.keyboard(' o');
+
+        expect(focused(), 'the letter searches on its own').toBe('Open');
+    });
+
+    it('follows a link on Enter, and hands the focus back', async () => {
+        const host = await mount(spaced);
+        const element = menu(host);
+        const linked = clicks(item(host, 3));
+        await open(element);
+
+        await userEvent.keyboard('{End}{Enter}');
+        await settle();
+
+        expect(linked.count, 'followed').toBe(1);
+        expect(element.open).toBe(false);
+        expect(element.shadowRoot?.activeElement).toBe(trigger(element));
+    });
+
+    it('does nothing with Space on a link, and keeps the page still under the menu', async () => {
+        const host = await mount(spaced);
+        const element = menu(host);
+        const linked = clicks(item(host, 3));
+        await open(element);
+
+        await userEvent.keyboard('{End} ');
+        await settle();
+
+        expect(linked.count, 'not followed').toBe(0);
+        expect(element.open).toBe(true);
+        expect(focused()).toBe('Linked page');
+        // Whether the page could have moved is read off the event, as the arrows' is above.
+        expect(keydown(item(host, 3), ' ').defaultPrevented).toBe(true);
+    });
+});
+
 describe('where the panel lands', () => {
     it('hangs from the trigger, one half-space below it', async () => {
         const host = await mount(fixture);
