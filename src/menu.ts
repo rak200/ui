@@ -730,6 +730,7 @@ export class UiMenu extends LitElement {
             { width: root.clientWidth, height: root.clientHeight },
             'block-end',
             'inline-start',
+            getComputedStyle(this.#panel).direction,
         );
 
         this.#panel.setAttribute(side, placement.side);

@@ -121,6 +121,12 @@ export class UiTooltip extends LitElement {
         slot[name='tip']::slotted(*) {
             position: fixed;
             margin: 0;
+            /* Every inset the script does not write, let go, as the menu's panel lets go of
+               them. A popover is at inset: 0, so the inline inset the script leaves is still 0
+               and the two disagree, which the viewport's direction settles: right to left the
+               script writes right, and a left-to-right page kept left at 0 instead —
+               measured, the tip at the viewport's left edge wherever its trigger was (#301). */
+            inset: auto;
             inline-size: max-content;
             max-inline-size: calc(${reference('--ui-space')} * 40);
             padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
@@ -660,6 +666,7 @@ export class UiTooltip extends LitElement {
             { width: root.clientWidth, height: root.clientHeight },
             'block-start',
             'center',
+            getComputedStyle(tip).direction,
         );
 
         tip.setAttribute(side, placement.side);

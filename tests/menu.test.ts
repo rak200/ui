@@ -965,6 +965,38 @@ describe('where the panel lands', () => {
         expect(box.left).toBeCloseTo(anchor.left, 0);
     });
 
+    it('hangs from the trigger right edge in a right-to-left part of the page', async () => {
+        // Away from the middle, where a panel mirrored across the viewport would land back
+        // under its own trigger: it used to open as far from the left as its trigger is from
+        // the right.
+        const host = await mount(
+            `<div dir="rtl" style="padding-inline-start: 40px">${fixture}</div>`,
+        );
+        await open(menu(host));
+
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(box.top - anchor.bottom).toBeCloseTo(4, 0);
+        expect(box.right).toBeCloseTo(anchor.right, 0);
+    });
+
+    it('hangs from the trigger right edge in a right-to-left page', async () => {
+        document.documentElement.dir = 'rtl';
+
+        try {
+            const host = await mount(`<div style="padding-inline-start: 40px">${fixture}</div>`);
+            await open(menu(host));
+
+            const anchor = trigger(menu(host)).getBoundingClientRect();
+            const box = panel(menu(host)).getBoundingClientRect();
+
+            expect(box.right).toBeCloseTo(anchor.right, 0);
+        } finally {
+            document.documentElement.removeAttribute('dir');
+        }
+    });
+
     it('hangs from where the trigger rests, whatever moves it as it opens', async () => {
         // A host can move the trigger through its part, and a transform is drawn where it went
         // and laid out where it was: grown under the pointer that opens the menu, the trigger
