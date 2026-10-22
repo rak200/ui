@@ -76,6 +76,9 @@ neither closes the menu when clicked.
 | <kbd>↓</kbd> / <kbd>↑</kbd>                        | moves, wrapping at either end                     |
 | <kbd>Home</kbd> / <kbd>End</kbd>                   | jumps to the first or last item                   |
 | a letter                                           | jumps to the next item whose label starts with it |
+| <kbd>Enter</kbd> on an item                        | chooses it: closes, focus back on the trigger     |
+| <kbd>Space</kbd> on a button                       | chooses it, unless a search is in progress        |
+| <kbd>Space</kbd> on a link                         | nothing                                           |
 | <kbd>Esc</kbd>                                     | closes, focus back on the trigger                 |
 | <kbd>Tab</kbd>                                     | closes, focus carries on out of the menu          |
 
@@ -86,6 +89,15 @@ would _not_ do on its own with a panel full of real buttons.
 **Typeahead cycles.** The search starts after the item under the focus and wraps, so pressing
 the same letter twice moves between the items that share it. The buffer is forgotten after
 half a second of no typing, which is the interval the platform's own `<select>` uses.
+
+**A space belongs to a search in progress**, so a label with a space in it can be typed whole:
+`open r` reaches _Open recent_. With no search in progress, <kbd>Space</kbd> is the item's.
+
+**Choosing is the platform's.** <kbd>Enter</kbd> clicks a button and follows a link, and
+<kbd>Space</kbd> clicks a button, as each does anywhere else; the click closes the menu and hands
+the focus back. A link is never followed on <kbd>Space</kbd>, so on one the key does nothing, and
+the menu keeps it from scrolling the page underneath, as it keeps the arrows. The APG lists
+<kbd>Space</kbd> on an item as optional.
 
 ## What the platform does, and what is left
 
