@@ -880,6 +880,34 @@ describe('choosing from the keyboard', () => {
         expect(element.open).toBe(true);
     });
 
+    it('keeps the search going across a space, as across a letter', async () => {
+        // A reader who pauses at the word break is still searching: the space restarts the
+        // clock a letter restarts. Without it the buffer runs out before the r, and a fresh r
+        // finds Rename. Fake timers and the synchronous helper, for the reason the buffer test
+        // above gives.
+        const host = await mount(spaced);
+        const element = menu(host);
+        await open(element);
+
+        const panelOf = panel(element);
+        vi.useFakeTimers();
+
+        try {
+            for (const key of 'open') {
+                keydown(panelOf, key);
+            }
+
+            vi.advanceTimersByTime(rhythm - 100);
+            keydown(panelOf, ' ');
+            vi.advanceTimersByTime(rhythm - 100);
+            keydown(panelOf, 'r');
+
+            expect(focused(), 'the whole of "open r", not a fresh r').toBe('Open recent');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('keeps no space for the next letter when no search was in progress', async () => {
         const host = await mount(spaced);
         await open(menu(host));
