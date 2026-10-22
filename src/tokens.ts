@@ -243,6 +243,15 @@ export const derivedTokens = [
     '--ui-color-primary-contrast',
     '--ui-color-primary-hover',
     '--ui-color-primary-pressed',
+    // The choice already made in a list the page draws, its text and its fill under the
+    // pointer, arriving with `ui-select`'s list — #303. A fill apart from the checked
+    // controls' for the reason the primary button has one: Glass marks the choice with a tint
+    // of its slate under its text, where a checked box keeps the slate itself. Each computes
+    // what the accent's own does, from the accent, because a formula reads grounds only: a host
+    // that marks the choice apart from the accent sets all three.
+    '--ui-color-selected',
+    '--ui-color-selected-contrast',
+    '--ui-color-selected-hover',
     // The purpose the elevation scale is read through, arriving with `ui-card`. `raised`
     // is a role rather than a component: a card is the first surface lifted off the page
     // and will not be the last, and the name a host retunes should not be the name of
@@ -494,6 +503,10 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-color-primary-contrast': label,
     '--ui-color-primary-hover': shade(12),
     '--ui-color-primary-pressed': shade(22),
+    // The accent's own, until a theme marks the choice already made apart from it.
+    '--ui-color-selected': ground('--ui-color-accent'),
+    '--ui-color-selected-contrast': label,
+    '--ui-color-selected-hover': shade(12),
     // 3.39:1 on the light surface and 3.96:1 on the dark one, against a floor of 3. The
     // step below clears neither — 45% is 2.94 in light, which is what a value chosen by
     // eye would have shipped.
@@ -616,6 +629,8 @@ export const moreContrast: Readonly<
     // shade toward, and the formula's hover on black is 1.04:1 from it.
     '--ui-color-primary-hover': ['#333333', '#d6d6d6'],
     '--ui-color-primary-pressed': ['#4d4d4d', '#b3b3b3'],
+    // And the choice already made under the pointer, which is the accent's for the same reason.
+    '--ui-color-selected-hover': ['#333333', '#d6d6d6'],
     // Under the hover, so a row under the pointer is still a change rather than a stripe.
     '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
     // What floats over the page edged in the text, which the mix toward it falls short of.

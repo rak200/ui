@@ -63,8 +63,8 @@ const id = 'description';
  * - `overflow: hidden` clips the content to the box, which `clip-path` then clips to
  *   nothing — so it removes a sliver that is already gone.
  * - `white-space: nowrap` is carried for a claim about how a screen reader reads wrapped
- *   text, and no instrument in this toolchain can read an accessibility tree. By the rule
- *   `docs/select.md` applies to `appearance: base-select`, that is not adopted here.
+ *   text, and no instrument in this toolchain can read an accessibility tree, so it is not
+ *   adopted here: what this package adopts is what it measured.
  *
  * Each of the four that stay does something no other one does, and the suite says which:
  * out of flow, one column wide, one row tall, and painted nowhere.

@@ -28,6 +28,20 @@ const fixture = `
     </ui-select>
 `;
 
+/** A list with groups, a choice already made and one that cannot be made. */
+const grouped = `
+    <ui-select label="Timezone" name="timezone">
+        <ui-optgroup label="Americas">
+            <ui-option value="sao-paulo" selected>São Paulo</ui-option>
+            <ui-option value="new-york">New York</ui-option>
+        </ui-optgroup>
+        <ui-optgroup label="Europe">
+            <ui-option value="lisbon">Lisbon</ui-option>
+            <ui-option value="berlin" disabled>Berlin</ui-option>
+        </ui-optgroup>
+    </ui-select>
+`;
+
 /** Mounts a fixture inside a form and waits for every declaration to settle. */
 async function mount(markup: string): Promise<HTMLFormElement> {
     const form = document.createElement('form');
@@ -113,6 +127,61 @@ function withoutMotion(element: UiSelect): void {
 /** The component's own stylesheet, as text, for the rules no rendering can show. */
 function styleText(tag: string): string {
     return String((customElements.get(tag) as unknown as { styles: unknown }).styles);
+}
+
+/**
+ * The component's sheet as the engine parses it, for what no rendering here can show. This engine
+ * hands the list to the page, so what the sheet draws where the system keeps the list — Firefox,
+ * which keeps the base appearance behind a preference, and a pointer that does not hover — is read
+ * off the sheet rather than rendered.
+ */
+function parsed(): readonly CSSRule[] {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(styleText('ui-select'));
+
+    return [...sheet.cssRules];
+}
+
+/** A rule at the top of the sheet, which holds whoever draws the list. */
+function outside(selector: string): CSSStyleRule {
+    const found = parsed().find(
+        (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule && rule.selectorText === selector,
+    );
+
+    if (found === undefined) {
+        throw new Error(`no rule for ${selector} at the top of the sheet`);
+    }
+
+    return found;
+}
+
+/** One rendered choice, by its value. */
+function option(element: UiSelect, value: string): HTMLOptionElement {
+    const found = box(element).querySelector<HTMLOptionElement>(`option[value='${value}']`);
+
+    if (found === null) {
+        throw new Error(`no option for ${value}`);
+    }
+
+    return found;
+}
+
+/** The caret, in the icon the base appearance gives the control. */
+function icon(element: UiSelect): CSSStyleDeclaration {
+    return getComputedStyle(box(element), '::picker-icon');
+}
+
+/** The list, as the base appearance's pseudo-element reports it. */
+function list(element: UiSelect): CSSStyleDeclaration {
+    return getComputedStyle(box(element), '::picker(select)');
+}
+
+/** Opens the list as a reader does, with the pointer. */
+async function open(element: UiSelect): Promise<void> {
+    await userEvent.click(box(element));
+
+    expect(box(element).matches(':open'), 'the list is open').toBe(true);
 }
 
 /** Moves the pointer out of the way — see `checkbox.test.ts` for why nothing else can. */
@@ -779,20 +848,25 @@ describe('the glow a theme lights', () => {
     });
 });
 
+/**
+ * The caret, in the icon the base appearance gives the control, where this engine hands the list
+ * to the page, and in the background where the system keeps it.
+ */
 describe('the caret', () => {
     it('is drawn from gradients, so its colour stays a token', async () => {
         const form = await mount(fixture);
-        const image = getComputedStyle(box(select(form))).backgroundImage;
+        const image = icon(select(form)).backgroundImage;
 
         expect(image).toContain('linear-gradient');
         expect(image, 'a picture would freeze the colour').not.toContain('url(');
+        expect(getComputedStyle(box(select(form))).backgroundImage, 'and drawn once').toBe('none');
     });
 
     it('takes its colour from the muted token', async () => {
         const form = await mount(fixture);
         select(form).style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
 
-        expect(getComputedStyle(box(select(form))).backgroundImage).toContain('rgb(1, 2, 3)');
+        expect(icon(select(form)).backgroundImage).toContain('rgb(1, 2, 3)');
     });
 
     it('keeps clear of the text, by the room it actually takes', async () => {
@@ -803,30 +877,46 @@ describe('the caret', () => {
         expect(getComputedStyle(box(select(form))).paddingInlineEnd).toBe('35px');
     });
 
-    it('sits at the end, one space in, with the second triangle beside it', async () => {
+    it('sits at the end, one space in, a triangle at each end of the icon', async () => {
         const form = await mount(fixture);
         select(form).style.setProperty('--ui-space', '10px');
 
-        // Two gradients, so two positions: the far triangle a space plus an arm from the
-        // edge, the near one a space. An arm is three quarters of a space, which is 7.5px
-        // here — and the pair is what the padding above leaves room for. The engine
-        // resolves the edge-offset form into a percentage and a calc, which is what a
-        // computed background-position is.
-        expect(getComputedStyle(box(select(form))).backgroundPosition).toBe(
-            'calc(100% - 17.5px) 50%, calc(100% - 10px) 50%',
-        );
+        // An arm is three quarters of a space, which is 7.5px here: the icon is two arms wide
+        // and one tall, where the padding above leaves room for it.
+        const drawn = icon(select(form));
+
+        expect(drawn.position).toBe('absolute');
+        expect(drawn.right).toBe('10px');
+        expect(drawn.width).toBe('15px');
+        expect(drawn.height).toBe('7.5px');
+        expect(drawn.backgroundSize).toBe('7.5px 7.5px, 7.5px 7.5px');
+        expect(drawn.backgroundPosition).toBe('0% 50%, 100% 50%');
     });
 
     it('follows the control to the other side under rtl', async () => {
         const form = await mount(fixture);
-        const ltr = getComputedStyle(box(select(form))).backgroundPosition;
-
+        select(form).style.setProperty('--ui-space', '10px');
         select(form).setAttribute('dir', 'rtl');
         await select(form).updateComplete;
 
-        // Direction is the control's own, and background-position has no logical form —
-        // so the one physical thing in this sheet is mirrored explicitly.
-        expect(getComputedStyle(box(select(form))).backgroundPosition).not.toBe(ltr);
+        // The icon's end is logical, so it changes sides with the control's own direction.
+        expect(icon(select(form)).left).toBe('10px');
+    });
+
+    it('turns over while the list is open, on the state step', async () => {
+        const form = await mount(fixture);
+        const element = select(form);
+
+        element.style.setProperty('--ui-duration-state', '0.3s');
+        element.style.setProperty('--ui-easing-state', 'linear');
+
+        expect(icon(element).transition).toBe('rotate 0.3s linear');
+        expect(icon(element).rotate, 'at rest').toBe('none');
+
+        withoutMotion(element);
+        await open(element);
+
+        expect(icon(element).rotate).toBe('180deg');
     });
 
     it('is not drawn on a list, where it would point at nothing', async () => {
@@ -839,6 +929,19 @@ describe('the caret', () => {
         expect(box(select(form)).multiple).toBe(true);
         expect(getComputedStyle(box(select(form))).backgroundImage).toBe('none');
     });
+
+    it('stays in the background where the system draws the list', () => {
+        // Two triangles in the background, mirrored right to left, since background-position
+        // has no logical form.
+        const caret = outside('select:not([multiple])').style;
+
+        expect(caret.backgroundImage).toContain('linear-gradient');
+        expect(caret.backgroundImage).toContain('var(--ui-color-text-muted');
+        expect(caret.backgroundPosition).toMatch(/^right /);
+        expect(outside('select:not([multiple]):dir(rtl)').style.backgroundPosition).toMatch(
+            /^left /,
+        );
+    });
 });
 
 /**
@@ -849,24 +952,13 @@ describe('the caret', () => {
  * one — an invalid `var()` drops the whole declaration.
  */
 describe('every visual decision it paints is a token', () => {
-    it("fills the box with the controls' own fill, and the choices with the surface", async () => {
-        // The choices paint the surface because the platform's picker reads them, and a fill a
-        // theme made translucent would open a list nobody can read.
+    it("fills the box with the controls' own fill", async () => {
         const form = await mount(fixture);
         const element = select(form);
 
         element.style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3, 0.2)');
-        element.style.setProperty('--ui-color-surface', 'rgb(4, 5, 6)');
 
-        expect(getComputedStyle(box(element)).backgroundColor, 'the box').toBe(
-            'rgba(1, 2, 3, 0.2)',
-        );
-        const [choice] = [...box(element).options];
-
-        expect(
-            choice === undefined ? '' : getComputedStyle(choice).backgroundColor,
-            'a choice',
-        ).toBe('rgb(4, 5, 6)');
+        expect(getComputedStyle(box(element)).backgroundColor).toBe('rgba(1, 2, 3, 0.2)');
     });
     it('paints the boundary and the two supporting texts from their own tokens', async () => {
         const form = await mount(`
@@ -897,32 +989,13 @@ describe('every visual decision it paints is a token', () => {
         expect(help.fontSize, '--ui-text-supporting').toBe('19px');
     });
 
-    it('lets each choice paint the surface, so the picker never takes the fill', async () => {
-        // The picker takes its colours from the select unless an option brings its own, so
-        // a fill a host made translucent would be what the open list is drawn on. Retuned
-        // and read back, so the colour is the name it was written with.
-        const form = await mount(`
-            <ui-select label="C" name="c">
-                <ui-option value="brl">Real</ui-option>
-                <ui-optgroup label="Euro area">
-                    <ui-option value="eur">Euro</ui-option>
-                </ui-optgroup>
-            </ui-select>
-        `);
-        const element = select(form);
-
-        element.style.setProperty('--ui-color-surface', 'rgb(1, 2, 3)');
-
-        const [real, euro] = [...box(element).options].map(
-            (option) => getComputedStyle(option).backgroundColor,
+    it('lets each choice paint the surface where the system draws the list', () => {
+        // The system's list takes its colours from the select unless an option brings its own,
+        // so a fill a host made translucent would be what that list is drawn on. This engine
+        // draws the list itself, so the rule is read off the sheet.
+        expect(outside('select:not([multiple]) :is(option, optgroup)').style.backgroundColor).toBe(
+            'var(--ui-color-surface, #ffffff)',
         );
-        const area = box(element).querySelector('optgroup');
-
-        expect(real, 'a choice').toBe('rgb(1, 2, 3)');
-        expect(area === null ? '' : getComputedStyle(area).backgroundColor, 'a group heading').toBe(
-            'rgb(1, 2, 3)',
-        );
-        expect(euro, 'and a choice inside it').toBe('rgb(1, 2, 3)');
     });
 
     it("leaves a multiple select's choices to the platform, which marks a chosen one", async () => {
@@ -967,6 +1040,304 @@ describe('every visual decision it paints is a token', () => {
             'rgb(1, 2, 3)',
         );
         expect(getComputedStyle(box(select(off))).opacity).toBe('0.5');
+    });
+});
+
+/**
+ * The list the component draws where the engine hands it to the page: this engine, under a
+ * pointer that hovers and is fine, which is the suite's. Each colour on it is retuned and read
+ * back, as the box's are.
+ */
+describe('the list, where the engine hands it to the page', () => {
+    it('takes the base appearance, on the control and on its list', async () => {
+        const form = await mount(fixture);
+
+        expect(getComputedStyle(box(select(form))).appearance).toBe('base-select');
+        expect(list(select(form)).appearance).toBe('base-select');
+    });
+
+    it('leaves a select of several choices alone, which opens nothing', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" multiple>
+                <ui-option value="brl">Real</ui-option>
+            </ui-select>
+        `);
+
+        expect(getComputedStyle(box(select(form))).appearance).toBe('none');
+    });
+
+    it('draws it only under the base appearance and a pointer that hovers and is fine', () => {
+        // Firefox keeps the base appearance behind a preference, and a phone keeps the picker
+        // it opens. Neither can be rendered here, so the condition is read off the sheet.
+        const supports = parsed().filter(
+            (rule): rule is CSSSupportsRule => rule instanceof CSSSupportsRule,
+        );
+        const [condition] = supports;
+        const inside = [...(condition?.cssRules ?? [])];
+
+        expect(supports, 'one condition').toHaveLength(1);
+        expect(condition?.conditionText).toBe('(appearance: base-select)');
+        expect(inside, 'and nothing under it but the pointer').toHaveLength(1);
+        expect(inside[0] instanceof CSSMediaRule ? inside[0].conditionText : '').toBe(
+            '(hover: hover) and (pointer: fine)',
+        );
+    });
+
+    it('raises the list as the menu raises its panel', async () => {
+        const form = await mount(fixture);
+        const element = select(form);
+
+        element.style.setProperty('--ui-space', '10px');
+        element.style.setProperty('--ui-radius', '3px');
+        element.style.setProperty('--ui-color-surface-raised', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(4px)');
+        element.style.setProperty('--ui-color-border-overlay', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-accent', 'rgb(7, 8, 9)');
+        // A shadow in currentColor, as Matrix writes its glow, so the colour it is lit in shows.
+        element.style.setProperty('--ui-elevation-raised', '0 0 0 1px currentColor');
+
+        const drawn = list(element);
+
+        expect(drawn.backgroundColor, '--ui-color-surface-raised').toBe('rgb(1, 2, 3)');
+        expect(drawn.backdropFilter, '--ui-backdrop-raised').toBe('blur(4px)');
+        expect(drawn.borderTopStyle).toBe('solid');
+        expect(drawn.borderTopWidth).toBe('1px');
+        expect(drawn.borderTopColor, '--ui-color-border-overlay').toBe('rgb(4, 5, 6)');
+        expect(drawn.borderTopLeftRadius, '--ui-radius').toBe('3px');
+        expect(drawn.boxShadow, 'lit in the accent').toBe('rgb(7, 8, 9) 0px 0px 0px 1px');
+        expect(drawn.marginTop, 'half a space from the control').toBe('5px');
+        expect(drawn.paddingTop, 'and half a space inside').toBe('5px');
+    });
+
+    it('lays each choice on the list, in the text', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-text', 'rgb(1, 2, 3)');
+
+        const other = getComputedStyle(option(element, 'new-york'));
+        const heading = box(element).querySelector('optgroup');
+
+        expect(other.backgroundColor, 'no surface of its own').toBe('rgba(0, 0, 0, 0)');
+        expect(other.color, '--ui-color-text').toBe('rgb(1, 2, 3)');
+        expect(heading === null ? '' : getComputedStyle(heading).backgroundColor).toBe(
+            'rgba(0, 0, 0, 0)',
+        );
+        expect(heading === null ? '' : getComputedStyle(heading).color).toBe('rgb(1, 2, 3)');
+    });
+
+    it('draws a choice as the menu draws an item', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        element.style.setProperty('--ui-space', '10px');
+        element.style.setProperty('--ui-radius', '3px');
+        element.style.setProperty('--ui-duration-state', '0.3s');
+        element.style.setProperty('--ui-easing-state', 'linear');
+
+        const drawn = getComputedStyle(option(element, 'new-york'));
+
+        expect(drawn.paddingTop).toBe('5px');
+        expect(drawn.paddingInlineStart).toBe('10px');
+        expect(drawn.columnGap, 'between the check and the text').toBe('5px');
+        expect(drawn.borderTopLeftRadius).toBe('3px');
+        expect(drawn.cursor).toBe('pointer');
+        expect(drawn.transition).toBe('background-color 0.3s linear');
+    });
+
+    it('lights a choice under the pointer in the hover colour', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        withoutMotion(element);
+        element.style.setProperty('--ui-color-hover', 'rgb(1, 2, 3)');
+
+        await open(element);
+        await userEvent.hover(option(element, 'new-york'));
+
+        expect(getComputedStyle(option(element, 'new-york')).backgroundColor).toBe('rgb(1, 2, 3)');
+    });
+
+    it('rings the choice the focus is on, inside it', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
+
+        box(element).focus();
+        await userEvent.keyboard('{Enter}');
+        await userEvent.keyboard('{ArrowDown}');
+
+        const ringed = option(element, 'new-york');
+
+        expect(ringed.matches(':focus-visible'), 'the arrow moved the focus').toBe(true);
+        expect(getComputedStyle(ringed).outline).toBe('rgb(1, 2, 3) solid 2px');
+        expect(getComputedStyle(ringed).outlineOffset).toBe('-2px');
+    });
+
+    it('mutes a choice that cannot be made', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        const refused = getComputedStyle(option(element, 'berlin'));
+
+        expect(refused.color).toBe('rgb(1, 2, 3)');
+        expect(refused.cursor).toBe('not-allowed');
+    });
+
+    it('sets a group after the first apart with a line above it', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        element.style.setProperty('--ui-space', '10px');
+        element.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+
+        const [first, second] = [...box(element).querySelectorAll('optgroup')].map((group) =>
+            getComputedStyle(group),
+        );
+
+        expect(first?.borderTopStyle, 'the first has none').toBe('none');
+        expect(second?.borderTopStyle).toBe('solid');
+        expect(second?.borderTopWidth).toBe('1px');
+        expect(second?.borderTopColor, '--ui-color-border').toBe('rgb(1, 2, 3)');
+        expect(second?.marginTop).toBe('5px');
+        expect(second?.paddingTop).toBe('5px');
+        expect(second?.borderBottomStyle, 'and nothing below it').toBe('none');
+    });
+
+    it("fills the choice already made, its text and its check in the fill's label", async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        element.style.setProperty('--ui-color-selected', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-selected-contrast', 'rgb(4, 5, 6)');
+
+        const chosen = option(element, 'sao-paulo');
+
+        expect(getComputedStyle(chosen).backgroundColor, '--ui-color-selected').toBe(
+            'rgb(1, 2, 3)',
+        );
+        expect(getComputedStyle(chosen).color, '--ui-color-selected-contrast').toBe('rgb(4, 5, 6)');
+        expect(getComputedStyle(chosen, '::checkmark').color, 'its check').toBe('rgb(4, 5, 6)');
+        expect(getComputedStyle(option(element, 'new-york')).backgroundColor, 'and only it').toBe(
+            'rgba(0, 0, 0, 0)',
+        );
+    });
+
+    it('moves the fill of the choice already made under the pointer', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        withoutMotion(element);
+        element.style.setProperty('--ui-color-selected-hover', 'rgb(1, 2, 3)');
+
+        await open(element);
+        await userEvent.hover(option(element, 'sao-paulo'));
+
+        expect(getComputedStyle(option(element, 'sao-paulo')).backgroundColor).toBe('rgb(1, 2, 3)');
+    });
+
+    it('rings the choice already made outside its fill, and keeps the fill where the arrows leave it', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        withoutMotion(element);
+        element.style.setProperty('--ui-color-selected', 'rgb(1, 2, 3)');
+
+        box(element).focus();
+        await userEvent.keyboard('{Enter}');
+
+        const chosen = option(element, 'sao-paulo');
+
+        expect(chosen.matches(':focus-visible'), 'the list opens on the choice made').toBe(true);
+        expect(getComputedStyle(chosen).outlineOffset, 'round the fill').toBe('1px');
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(getComputedStyle(chosen).backgroundColor, 'the fill stays').toBe('rgb(1, 2, 3)');
+        expect(
+            getComputedStyle(option(element, 'new-york')).backgroundColor,
+            'and does not follow the focus',
+        ).toBe('rgba(0, 0, 0, 0)');
+    });
+
+    it('chooses as the platform does, and re-dispatches the change', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+        const changes: Event[] = [];
+
+        element.addEventListener('change', (event) => {
+            changes.push(event);
+        });
+
+        await open(element);
+        await userEvent.click(option(element, 'lisbon'));
+
+        expect(element.value).toBe('lisbon');
+        expect(changes).toHaveLength(1);
+        expect(box(element).matches(':open'), 'and the list closes').toBe(false);
+    });
+
+    it('closes on Escape without choosing', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        box(element).focus();
+        await userEvent.keyboard('{Enter}');
+        await userEvent.keyboard('{ArrowDown}');
+        await userEvent.keyboard('{Escape}');
+
+        expect(box(element).matches(':open')).toBe(false);
+        expect(box(element).value, 'the choice is where it was').toBe('sao-paulo');
+    });
+});
+
+/**
+ * Forced colors puts every author colour into the reader's palette, so a choice marked by its fill
+ * alone would stop being marked — for the people who turned the mode on to see states more
+ * clearly.
+ */
+describe('the list under forced colors', () => {
+    async function forcedColors(active: boolean): Promise<void> {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: active ? 'active' : 'none' }],
+        });
+    }
+
+    afterEach(async () => {
+        await forcedColors(false);
+    });
+
+    it('keeps the choice already made apart from the list, and its check apart from its fill', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        await forcedColors(true);
+
+        expect(matchMedia('(forced-colors: active)').matches, 'the mode is on').toBe(true);
+
+        // The fill names Highlight, which the mode keeps, where the accent would be forced to the
+        // Canvas the list is drawn on.
+        const chosen = getComputedStyle(option(element, 'sao-paulo'));
+
+        expect(chosen.backgroundColor).not.toBe(list(element).backgroundColor);
+        expect(getComputedStyle(option(element, 'sao-paulo'), '::checkmark').color).not.toBe(
+            chosen.backgroundColor,
+        );
+    });
+
+    it('says a choice is unavailable in a colour of its own', async () => {
+        const form = await mount(grouped);
+        const element = select(form);
+
+        await forcedColors(true);
+
+        // GrayText, where the muted text would be forced to the text every other choice has.
+        expect(getComputedStyle(option(element, 'berlin')).color).not.toBe(
+            getComputedStyle(option(element, 'lisbon')).color,
+        );
     });
 });
 
@@ -1175,5 +1546,14 @@ describe('accessibility', () => {
 
     it('has no violations right to left', async () => {
         await expectAccessible(await mountStory(RightToLeft, meta, 'RightToLeft'));
+    });
+
+    it('has no violations with its list open', async () => {
+        const form = await mount(grouped);
+
+        await userEvent.click(box(select(form)));
+
+        expect(box(select(form)).matches(':open'), 'the list is open').toBe(true);
+        await expectAccessible(form);
     });
 });

@@ -137,15 +137,17 @@ keyboard activation, the accessible name, disabled semantics and focus behaviour
 job. A `<div role="button">` needs every one of them written by hand, and gets one of them wrong.
 
 **Where an element exists but is half-styleable, the limit is published rather than papered over.**
-`<ui-select>` wraps a native `<select>`, so the picker a phone opens stays the platform's — and the
-drop-down list stays unstyleable, which [docs/select.md](docs/select.md) says in as many words. A
-custom listbox would style it and would have to reimplement that picker, which is the trade RFC 0016
-declined. `appearance: base-select` removes the trade where an engine has it: the engine hands the
-list to the page, and the keyboard and the typeahead stay its own. Chromium and WebKit have it, and
-Firefox has it behind a preference that is off — measured — and RFC 0004's prototypes draw the list
-under it. Adopted before Firefox ships it, the kit's list would open in two engines and the system's
-in the third, which is the kit looking like two kits, so what reopens the question is Firefox
-shipping it rather than a decision here. What a phone opens under it was not measured.
+`<ui-select>` wraps a native `<select>`, so the picker a phone opens stays the platform's. A custom
+listbox would style the drop-down list and would have to reimplement that picker, which is the trade
+RFC 0016 declined. `appearance: base-select` removes the trade where an engine has it: the engine
+hands the list to the page, and the keyboard and the typeahead stay its own. Chromium and WebKit
+have it, and Firefox has it behind a preference that is off — measured — so the kit draws the list
+in two engines and the system's list stays in the third. That is the kit looking like two kits in
+one place, taken on purpose in #303: the list is the one part of the select the kit cannot draw any
+other way short of that listbox, and Firefox's reader keeps a list that works. It is drawn only
+under a pointer that hovers and is fine, so a phone keeps the picker it opens, and what a phone
+opens under the base appearance was not measured. Where the system draws the list, it stays
+unstyleable, which [docs/select.md](docs/select.md) says in as many words.
 
 **Where the platform has the feature but only in one engine, it is measured and declined.**
 `<ui-tooltip>` places itself with thirty lines of script over a `popover`, and CSS anchor positioning

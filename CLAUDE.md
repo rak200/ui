@@ -179,10 +179,11 @@ explains. This file restates none of them.
 - **Why `ui-select` writes the box out instead of sharing `ui-input`'s** — the docblock on
   `src/select.ts`, and `tests/select.test.ts`'s _the box, against the input it has to match_, which
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
-  file records why `appearance: none` is set at all. **Why `appearance: base-select` is not
-  adopted** — in Chromium and WebKit, and behind a preference in Firefox — is
-  [ARCHITECTURE.md](ARCHITECTURE.md), _The platform owns what the platform is good at_; RFC 0004's
-  prototypes draw the list under it.
+  file records why `appearance: none` is set at all. **Why the list is drawn under
+  `appearance: base-select` in two engines of three, and only under a pointer that hovers and is
+  fine** — [ARCHITECTURE.md](ARCHITECTURE.md), _The platform owns what the platform is good at_, and
+  the comment beside the `@supports` block in `src/select.ts`; **why the choice already made has
+  names of its own** is the comment beside `--ui-color-selected` in `src/tokens.ts`.
 - **Why a choice is `<ui-option>` rather than `<option>`** — the docblock on `UiSelect` and on
   `UiDeclaration` in `src/select.ts`, and `docs/select.md`'s _Why the choices are not `<option>`_. A
   `<slot>` inside a `<select>` assigns the nodes and the select sees none of them, measured; and a

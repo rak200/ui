@@ -9,11 +9,6 @@
             .scoped > ui-select {
                 inline-size: 14rem;
             }
-
-            /* The switch beside the box of the select, rather than stretched to its label. */
-            .actions.list {
-                align-items: end;
-            }
         </style>
         <script type="module" src="./effects.ts"></script>
     </head>
@@ -23,13 +18,11 @@
             <h1><code>ui-select</code> — pointer, focus, invalid, open, close, caret</h1>
             <p>
                 A select is a field, so it takes the text field's effects, sorted by the same kinds
-                and drawn the same way, and none of them moves the box. Its list is the platform's
-                popup today. <em>Draw the list</em> hands it to the page through
-                <code>appearance: base-select</code>, which Chromium and WebKit have and Firefox
-                keeps behind a preference: the list then takes the surface of the menu's panel, and
-                opens, closes and turns its caret as the menu does. <em>Mark the current choice</em>
-                picks how the drawn list marks the choice already made; left to the theme, it is a
-                fill, and under Glass a tint. The disabled select answers none of them.
+                and drawn the same way, and none of them moves the box. Where the engine hands the
+                list to the page, through <code>appearance: base-select</code>, and the pointer
+                hovers and is fine, the component draws it as the menu's panel, and here it opens,
+                closes and turns its caret as the menu does: Chromium and WebKit, while Firefox
+                keeps the system's list. The disabled select answers none of them.
             </p>
         </header>
         <main>
@@ -77,16 +70,6 @@
                         <ui-option value="">Choose…</ui-option>
                         <ui-option value="free">Free</ui-option>
                         <ui-option value="pro">Pro</ui-option>
-                    </ui-select>
-                </div>
-                <div class="actions list">
-                    <ui-switch label="Draw the list" data-list></ui-switch>
-                    <ui-select label="Mark the current choice" data-current>
-                        <ui-option value="" selected>The theme's</ui-option>
-                        <ui-option value="check">Check, as today</ui-option>
-                        <ui-option value="tint">Tint</ui-option>
-                        <ui-option value="fill">Fill</ui-option>
-                        <ui-option value="ring">Ring</ui-option>
                     </ui-select>
                 </div>
                 <div class="actions">

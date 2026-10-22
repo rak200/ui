@@ -159,9 +159,12 @@ export class UiOptgroup extends UiDeclaration {
  * a phone already opens — which is the part a consumer notices most and a library gets
  * wrong most. RFC 0016 defers that listbox, and this element is not a step toward it.
  *
- * **What the platform still refuses is documented rather than worked around**, in
- * `docs/select.md`: the drop-down list is drawn by the operating system and no rule here
- * reaches inside it.
+ * **The list is drawn here where the engine hands it to the page**, under the base
+ * appearance and a pointer that hovers and is fine, and it is the system's everywhere else:
+ * in Firefox, which keeps the base appearance behind a preference, and on a phone. Where it
+ * is the system's, no rule here reaches inside it but the colour each choice paints, which
+ * `docs/select.md` says in as many words, and `ARCHITECTURE.md` says why the kit draws it in
+ * two engines of three.
  *
  * ## Why the box is written out rather than shared
  *
@@ -299,8 +302,10 @@ export class UiSelect extends LitElement {
 
            The drop-down only. A multiple select draws its options in the box, where the
            platform marks a chosen one by painting its background, and an author colour on
-           every option would paint that mark out. The highlight on the option under the
-           pointer stays the platform's either way; docs/select.md says so. */
+           every option would paint that mark out. Where the page draws the list, the block
+           at the end of this sheet takes the choices back off the surface; where the system
+           draws it, the highlight on the option under the pointer stays the system's, and
+           docs/select.md says so. */
         select:not([multiple]) :is(option, optgroup) {
             background-color: ${reference('--ui-color-surface')};
         }
@@ -312,6 +317,160 @@ export class UiSelect extends LitElement {
         select[aria-invalid='true'] {
             border-color: ${reference('--ui-color-danger')};
             color: ${reference('--ui-color-text-invalid')};
+        }
+
+        /* The list, drawn here where the engine hands it to the page — the base appearance,
+           which Chromium and WebKit have and Firefox keeps behind a preference that is off —
+           and only under a pointer that hovers and is fine. A phone keeps the picker it opens,
+           which is the promise ARCHITECTURE.md makes, and what a phone opens under the base
+           appearance was not measured. Without either, everything above stands: the system's
+           list, the caret in the background, each choice painting the surface. A select of
+           several choices draws them in the box and opens nothing, so it is left out. */
+        @supports (appearance: base-select) {
+            @media (hover: hover) and (pointer: fine) {
+                select:not([multiple]),
+                select:not([multiple])::picker(select) {
+                    appearance: base-select;
+                }
+
+                /* The box stays the one above. Its caret moves from the background into the
+                   icon the base appearance gives the control, the same two triangles in the
+                   same place, so it can turn over while the list is open, as the menu's caret
+                   does. */
+                select:not([multiple]) {
+                    position: relative;
+                    background-image: none;
+                }
+
+                select:not([multiple])::picker-icon {
+                    content: '';
+                    position: absolute;
+                    inset-inline-end: ${reference('--ui-space')};
+                    inset-block: 0;
+                    margin: auto 0;
+                    padding: 0;
+                    inline-size: calc(${arm} * 2);
+                    block-size: ${arm};
+                    background-image:
+                        linear-gradient(
+                            45deg,
+                            transparent 50%,
+                            ${reference('--ui-color-text-muted')} 50%
+                        ),
+                        linear-gradient(
+                            135deg,
+                            ${reference('--ui-color-text-muted')} 50%,
+                            transparent 50%
+                        );
+                    background-size: ${arm} ${arm};
+                    background-position:
+                        left center,
+                        right center;
+                    background-repeat: no-repeat;
+                    transition: rotate ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')};
+                }
+
+                select:not([multiple]):open::picker-icon {
+                    rotate: 180deg;
+                }
+
+                /* A raised surface, as the menu's panel is: its glass, its edge, its corner and
+                   its shadow, lit in the accent as the panel's is, so the choices take the text
+                   back. Half a space clear of the control, on whichever side the platform
+                   hangs it. */
+                select:not([multiple])::picker(select) {
+                    box-sizing: border-box;
+                    margin: calc(${reference('--ui-space')} / 2) 0;
+                    padding: calc(${reference('--ui-space')} / 2);
+                    border: 1px solid ${reference('--ui-color-border-overlay')};
+                    border-radius: ${reference('--ui-radius')};
+                    background-color: ${reference('--ui-color-surface-raised')};
+                    backdrop-filter: ${reference('--ui-backdrop-raised')};
+                    color: ${reference('--ui-color-accent')};
+                    box-shadow: ${reference('--ui-elevation-raised')};
+                }
+
+                /* Each choice on the list's surface rather than its own, which the rule above
+                   paints for the system's list. */
+                select:not([multiple]) :is(option, optgroup) {
+                    background-color: transparent;
+                    color: ${reference('--ui-color-text')};
+                }
+
+                /* A choice is a menu's item: its padding, its corner, the hover colour under the
+                   pointer and the ring inside it at the focus. */
+                select:not([multiple]) option {
+                    gap: calc(${reference('--ui-space')} / 2);
+                    padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
+                    border-radius: ${reference('--ui-radius')};
+                    cursor: pointer;
+                    transition: background-color ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')};
+                }
+
+                select:not([multiple]) option:not(:disabled):hover {
+                    background-color: ${reference('--ui-color-hover')};
+                }
+
+                select:not([multiple]) option:focus-visible {
+                    outline: 2px solid ${reference('--ui-color-focus')};
+                    outline-offset: -2px;
+                }
+
+                select:not([multiple]) option:disabled {
+                    color: ${reference('--ui-color-text-muted')};
+                    cursor: not-allowed;
+                }
+
+                /* The choice already made, filled, its check and its text in the fill's own
+                   label. Read off :checked, which is the selection rather than the focus: the
+                   arrows move the focus through the list and leave the fill where it is. */
+                select:not([multiple]) option:checked {
+                    background-color: ${reference('--ui-color-selected')};
+                    color: ${reference('--ui-color-selected-contrast')};
+                }
+
+                select:not([multiple]) option:checked:not(:disabled):hover {
+                    background-color: ${reference('--ui-color-selected-hover')};
+                }
+
+                /* Its ring goes round the fill rather than inside it, where it would be drawn in
+                   the fill's own colour in every theme that draws the focus in the accent. */
+                select:not([multiple]) option:checked:focus-visible {
+                    outline-offset: 1px;
+                }
+
+                /* A group after the first is set off by a line, as the menu's separator does,
+                   which WebKit's own sheet draws fainter and Chromium's not at all. */
+                select:not([multiple]) optgroup {
+                    border: none;
+                }
+
+                select:not([multiple]) optgroup:not(:first-child) {
+                    border-block-start: 1px solid ${reference('--ui-color-border')};
+                    margin-block-start: calc(${reference('--ui-space')} / 2);
+                    padding-block-start: calc(${reference('--ui-space')} / 2);
+                }
+
+                /* Forced colors puts every author colour into the reader's palette, and the fill
+                   that marks the choice already made would become the Canvas around it. System
+                   colours are the ones the mode keeps, so the choice names Highlight, as a
+                   checked box does, its text and its check HighlightText, under the pointer
+                   too; and a disabled choice GrayText, the mode's colour for unavailable, which
+                   the muted text above is forced out of. */
+                @media (forced-colors: active) {
+                    select:not([multiple]) option:checked,
+                    select:not([multiple]) option:checked:not(:disabled):hover {
+                        background-color: Highlight;
+                        color: HighlightText;
+                    }
+
+                    select:not([multiple]) option:disabled {
+                        color: GrayText;
+                    }
+                }
+            }
         }
 
         /* The vertical rhythm, written out here rather than shared with src/input.ts for
