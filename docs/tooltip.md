@@ -136,7 +136,9 @@ The tip is a **popover**, so the platform promotes it to the top layer: it escap
 and every stacking context above it, and there is no `z-index` anywhere in this component to tune.
 
 **The placement is this package's, and that is a decision rather than an omission.** It goes above
-the trigger, flips below when there is no room, and is pulled back inside the viewport at either edge.
+the trigger, centred on it, flips below when there is no room, and is pulled back inside the
+viewport at either edge. Right to left it lands where it does left to right, whether the whole page
+reads that way or only the part the trigger is in.
 
 CSS anchor positioning would do all of it, and in the engine this package's suite measures it is
 entirely present — `anchor-name`, `position-anchor`, `position-area` and `position-try-fallbacks` all
