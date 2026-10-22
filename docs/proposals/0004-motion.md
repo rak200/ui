@@ -296,34 +296,37 @@ lists what its component leaves out and why. None of it is the Decision, which s
   button's `highlight`.
 - **Every component draws every border** of the list, under the pointer and at the focus, from one
   definition each, but the line along a drawn control's bottom edge, which is too small and too
-  round to have one. A card answers a focus on something it holds, on layers of its own.
-- **Every component draws every fill it can**, from one definition each. The preview, the card's
-  blur and the hover colour are left out where they cannot be drawn honestly: the hover colour,
-  chosen against a control's label, took a field's placeholder and the card's muted text to 3.28:1.
-  The tint is the card's everywhere, 10% of the accent in the dark scheme where it had been 15%,
-  which left a field's placeholder at 4.43:1 on Glass's dark page; and a field's and the card's
-  lights are their tint rather than the text's colour, so the muted text and the placeholder hold
-  4.54:1 or more under every one.
+  round to have one. A card and a toast answer a focus on something they hold, on layers of their
+  own.
+- **Every component draws every fill it can**, from one definition each. The preview, the card's and
+  the toast's blur and the hover colour are left out where they cannot be drawn honestly: the hover
+  colour, chosen against a control's label, took a field's placeholder and the card's muted text to
+  3.28:1, and a toast's icon, which owes 3:1, to 2.70:1. The tint is the card's everywhere, 10% of
+  the accent in the dark scheme where it had been 15%, which left a field's placeholder at 4.43:1 on
+  Glass's dark page; and a field's and the card's lights are their tint rather than the text's
+  colour, so the muted text and the placeholder hold 4.54:1 or more under every one.
 - **Every component draws every shadow**, from one definition each, each where its component draws
-  its shadows, but the cast at the focus, which is the pointer's direction, and the card's own
-  shadow under the pointer, which no theme gives a raised surface.
+  its shadows, but the cast at the focus, which is the pointer's direction, and the card's and the
+  toast's own shadow under the pointer, which no theme gives a raised surface.
 - **Every component moves as far as it can be moved**, from one definition each, at a give that is a
   share of the button's, so a wide component grows by what a button does: the lean and the tilt are
-  left out at the focus, the flips and the breathe out of a card's content, and out of a field the
-  flips and, where the reader types, the breathe. A card's entrance and its movements are two
-  properties of its host's one list, since one written over the other played the entrance again.
+  left out at the focus, the flips and the breathe out of a card's content and a toast's message,
+  and out of a field the flips and, where the reader types, the breathe. A card's entrance and its
+  movements are two properties of its host's one list, since one written over the other played the
+  entrance again, and so are a toast's, whose movements go on its transform, which no entrance
+  starts from.
 - **At the focus, the pointer's lights start from the middle**: the edge is lit as a pointer in the
   middle would light it, the spotlight is held there, and the flood spreads from there and drains
   back to it. Every effect of the list is now drawn on every component, or left out there with why.
-- **The focus wins.** A component the reader can see the focus on, or a card it is in, is drawn as
-  the focus chose, and the pointer resting on it changes nothing, what the component does there
-  today included — the button's hover colour, a theme's edge and glow under the pointer, a field's
-  and a drawn control's darker boundary — and its arrival fires nothing; a press is drawn over both.
-  The button had drawn the pointer over the focus, and a field and a drawn control the focus over
-  the pointer. An effect both moments chose holds from one to the other where it holds a state,
-  drawn once, and plays again for the focus's arrival where it plays: the focus's keyframes have
-  names of their own, since an element matches an animation by its name, and under the pointer's the
-  focus's took the pointer's over and did not start.
+- **The focus wins.** A component the reader can see the focus on, or a card or a toast it is in, is
+  drawn as the focus chose, and the pointer resting on it changes nothing, what the component does
+  there today included — the button's hover colour, a theme's edge and glow under the pointer, a
+  field's and a drawn control's darker boundary — and its arrival fires nothing; a press is drawn
+  over both. The button had drawn the pointer over the focus, and a field and a drawn control the
+  focus over the pointer. An effect both moments chose holds from one to the other where it holds a
+  state, drawn once, and plays again for the focus's arrival where it plays: the focus's keyframes
+  have names of their own, since an element matches an animation by its name, and under the
+  pointer's the focus's took the pointer's over and did not start.
 - **A kind can qualify an effect instead**: an entrance or an exit takes a direction and a curve
   beside it, `--ui-motion-enter-direction` and `--ui-motion-enter-curve`.
 - **What a component does today is one of its choices**, by name, and `none` is nothing. The focus
@@ -347,7 +350,9 @@ lists what its component leaves out and why. None of it is the Decision, which s
   scale and the dialog's between two of them, a move curve and an emphasis curve, collapsed under
   reduced motion with the rest: shape A arriving with D. A loop needs a period and a count, and the
   count has to collapse as well — with only the period at 0.01ms, an infinite loop runs on in all
-  three engines.
+  three engines. The loops one moment plays together end close to one another, a quicker loop
+  playing more rounds: at four rounds each, an error's split and glitch ended at 960ms and its pulse
+  and flash at 2080ms, in all three engines, and at eight the two end at 1920ms.
 - **A theme brings a taste.** `--ui-taste-<moment>` for the page and
   `--ui-taste-<component>-<moment>` for one component, written on the root under `:where()` and read
   only where no choice is written, so any choice at any scope runs instead of every taste, in all
@@ -415,15 +420,24 @@ lists what its component leaves out and why. None of it is the Decision, which s
   as a state of its own. And the menu now hangs its panel from where the trigger rests, its host's
   box: hung from the trigger as drawn, a panel opened under a movement came to rest anywhere from
   1.6px over the trigger to 7px clear of it — measured.
+- **A select's list can be drawn by the page, in two engines of three.** Under
+  `appearance: base-select` an engine hands the list to the page: Chromium and WebKit do, and
+  Firefox has the base appearance behind a preference that is off. Drawn, the list is the menu's
+  panel — its surface, its items, its entrances, its exits and its caret, under the menu's tastes —
+  while the control stays the component's box, within a pixel, and the keyboard and the typeahead
+  stay the platform's, in Chromium and WebKit — measured. The platform places the list and writes
+  nowhere which side it took, so what comes from the trigger's side comes from above. Whether the
+  component takes it up is `ARCHITECTURE.md`'s question, and what that waits on is Firefox.
 
 **The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
 under each theme; `today` marks what a component does today. A theme names the pointer, the focus, a
 press and an error once, for the page. _Every_ is the button, the menu's trigger, the card, the
-input, the textarea, the select, the checkbox, the switch and the radio, which answer the pointer
-and the focus, the card a focus on something it holds; _form_ is the input, the textarea, the
-select, the checkbox, the switch and the radio, which answer an error; and a press is answered by
-the button and the menu's trigger. A component that leaves an effect out does what it does today
-there: the hover colour is the button's today, and the card and the fields leave it out.
+toast, the input, the textarea, the select, the checkbox, the switch and the radio, which answer the
+pointer and the focus, the card and the toast a focus on something they hold; _form_ is the input,
+the textarea, the select, the checkbox, the switch and the radio, which answer an error; and a press
+is answered by the button and the menu's trigger. A component that leaves an effect out does what it
+does today there: the hover colour is the button's today, and the card, the toast and the fields
+leave it out. The select's `enter`, `exit` and `caret` are its list's, where the page draws it.
 
 | Component | Moment            | Default          | Matrix      | Glass       |
 | --------- | ----------------- | ---------------- | ----------- | ----------- |
@@ -465,6 +479,9 @@ there: the hover colour is the button's today, and the card and the fields leave
 | menu      | `enter`           | cascade          | glitch      | refocus     |
 | menu      | `exit`            | fold             | glitch      | defocus     |
 | menu      | `caret`           | flip             | flip        | flip        |
+| select    | `enter`           | cascade          | glitch      | refocus     |
+| select    | `exit`            | fold             | glitch      | defocus     |
+| select    | `caret`           | flip             | flip        | flip        |
 
 ## Proposed design
 
