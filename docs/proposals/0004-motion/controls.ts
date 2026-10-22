@@ -1732,7 +1732,9 @@ ${(
 /* ——— Invalid. The boundary was already red, and nothing moves: the control stays where the
    reader aimed. Each effect on the control plays a loop that settles, as an error stands for as
    long as the reader leaves it; the message's own play once, but the glitch, which never takes the
-   message away. ——— */
+   message away. The split's and the glitch's rounds are about half the pulse's and the flash's, so
+   they play twice as many and end close to them: at four, the two ended at 960ms while the pulse
+   and the flash ran on to 2080ms, in all three engines — measured. ——— */
 @container ${is('invalid-border', 'pulse')} {
     ${host} ${invalid} {
         --ui-run-error-border: ui-pulse-danger var(--ui-duration-400) var(--ui-easing-enter)
@@ -1753,7 +1755,8 @@ ${(
    shake was left out for. */
 @container ${is('invalid-border', 'split')} {
     ${host} ${invalid} {
-        --ui-run-error-border: ui-split var(--ui-duration-200) linear var(--ui-iteration-settle);
+        --ui-run-error-border: ui-split var(--ui-duration-200) linear
+            calc(var(--ui-iteration-settle) * 2);
     }
 }
 
@@ -1789,7 +1792,7 @@ ${(
 
 @container ${is('invalid-message', 'glitch')} {
     ${host} .error {
-        animation: ui-glitch var(--ui-duration-200) linear var(--ui-iteration-settle);
+        animation: ui-glitch var(--ui-duration-200) linear calc(var(--ui-iteration-settle) * 2);
     }
 }
 `;
@@ -2177,7 +2180,7 @@ export function moments(preview: string): readonly Moment[] {
                         {
                             name: 'split',
                             settles: true,
-                            says: 'The boundary splits into two colours where it is, four times, then rests. Drawn for Matrix.',
+                            says: 'The boundary splits into two colours where it is, eight times, then rests. Drawn for Matrix.',
                         },
                     ],
                 },
@@ -2210,7 +2213,7 @@ export function moments(preview: string): readonly Moment[] {
                         {
                             name: 'glitch',
                             settles: true,
-                            says: 'The message jumps and splits into two colours, four times, then rests. Drawn for Matrix.',
+                            says: 'The message jumps and splits into two colours, eight times, then rests. Drawn for Matrix.',
                         },
                     ],
                 },

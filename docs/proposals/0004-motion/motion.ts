@@ -123,6 +123,10 @@ export interface Catalogue {
      *  change that needs one, so effects of different kinds draw at once: a host has two
      *  pseudo-elements, and a theme already draws on one. */
     readonly layers?: readonly string[];
+    /** The one element the layers are rendered in, where the page's elements share a sheet and
+     *  only one of them is drawn on: a toast, and not the toaster round it. Every one, unless
+     *  named. */
+    readonly layered?: string;
     /** The control in the shadow root that a press, the pointer and focus are answered on, where
      *  the component renders more than the control: the menu's trigger, and not its items, which
      *  are in its host too. Any control in the instance, unless named. */
@@ -362,6 +366,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
             },
             components: {
                 menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
+                select: { enter: 'cascade', exit: 'fold', caret: 'flip' },
                 icon: { enter: 'draw' },
                 table: { hover: 'highlight', enter: 'glow' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
@@ -414,6 +419,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
             },
             components: {
                 menu: { enter: 'glitch', exit: 'glitch' },
+                select: { enter: 'glitch', exit: 'glitch' },
                 icon: { enter: 'pop', hover: 'glitch' },
                 table: { enter: 'glow' },
                 toast: { enter: 'wind', exit: 'wind' },
@@ -462,6 +468,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
             },
             components: {
                 menu: { enter: 'refocus', exit: 'defocus' },
+                select: { enter: 'refocus', exit: 'defocus' },
                 icon: { enter: 'refocus', hover: 'pop' },
                 table: { hover: 'frost', enter: 'glow' },
                 toast: { enter: 'refocus', exit: 'defocus' },
@@ -701,31 +708,74 @@ export function inner(host: Element, selector: string): HTMLElement | null {
     return host.shadowRoot?.querySelector<HTMLElement>(selector) ?? null;
 }
 
+/** The replay each mark on an element last took, so the one a replay cancels clears nothing. */
+const turns = new WeakMap<HTMLElement, Map<string, symbol>>();
+
 /**
  * Plays, from its start, the animation the sheet declares under `[data-fx='name']`, and clears
- * the mark when it ends. **The sheet owns the effect and the script only the moment**: what
- * moves, how far and on which duration token are CSS, so the collapse reaches them, and all
- * the script adds is a start that outlives the state — which S7 found `:active` cannot give.
+ * the mark once that animation is over, ended or cancelled. **The sheet owns the effect and the
+ * script only the moment**: what moves, how far and on which duration token are CSS, so the
+ * collapse reaches them, and all the script adds is a start that outlives the state — which S7
+ * found `:active` cannot give.
  *
  * **One element can carry effects of several kinds at once**, each under a mark of its own, so
- * a mark goes when its own animation ends — `ui-<name>`, the name every sheet here gives it —
- * and not when the first animation on the element or its layers does. Where another animation
+ * a mark goes when its own animation is over — `ui-<name>`, the name every sheet here gives it —
+ * and not when the first animation on the element or its layers is. Where another animation
  * on the element shares the name, the layer the mark's plays on is named too: a drawn control's
  * pointer plays the pulse on the control, and its check plays it on the control's `::after`.
+ *
+ * **A replay takes the mark over**: an effect fired again, or another of the same kind, cancels
+ * the animation the mark was playing, and that animation leaves the mark to the replay.
  */
 export function replay(target: HTMLElement, name: string, mark = 'data-fx', on?: string): void {
     target.removeAttribute(mark);
     // Read layout once, so the removal is seen before the mark comes back: without it the
     // two writes land in the same frame and the animation never restarts.
     target.getBoundingClientRect();
+    const before = new Set(target.getAnimations({ subtree: true }));
     target.setAttribute(mark, name);
 
+    const turn = Symbol(name);
+    const marks = turns.get(target) ?? new Map<string, symbol>();
+    turns.set(target, marks.set(mark, turn));
+
+    const clear = (): void => {
+        if (marks.get(mark) === turn) {
+            target.removeAttribute(mark);
+        }
+    };
+
+    // The animation the mark started, which `getAnimations` has just started by flushing the
+    // mark's style: the one that was not running a moment ago.
+    const started = target
+        .getAnimations({ subtree: true })
+        .find(
+            (animation) =>
+                !before.has(animation) &&
+                animation instanceof CSSAnimation &&
+                animation.animationName === `ui-${name}` &&
+                (on === undefined ||
+                    (animation.effect instanceof KeyframeEffect &&
+                        animation.effect.pseudoElement === on)),
+        );
+
+    if (started !== undefined) {
+        // Cleared when it is cancelled too. An element that stops being drawn cancels its
+        // animation, which fires no end, and before the animation's first frame no event at
+        // all: a dialog closed by one of its buttons left the press's mark on the button, and
+        // opening the dialog again played the press again — measured in all three engines.
+        started.finished.then(clear, clear);
+        return;
+    }
+
+    // None started, the element not drawn or the sheet declaring nothing under the mark, so
+    // the mark waits for its animation's end, whenever one comes.
     const done = (event: AnimationEvent): void => {
         if (
             event.animationName === `ui-${name}` &&
             (on === undefined || event.pseudoElement === on)
         ) {
-            target.removeAttribute(mark);
+            clear();
             target.removeEventListener('animationend', done);
         }
     };
@@ -1371,7 +1421,11 @@ export function prototype(catalogue: Catalogue): Page {
 
         if (root !== null && sheet !== undefined && !root.adoptedStyleSheets.includes(sheet)) {
             root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
-            root.append(...(catalogue.layers ?? []).map(layer));
+
+            if (catalogue.layered === undefined || catalogue.layered === element.localName) {
+                root.append(...(catalogue.layers ?? []).map(layer));
+            }
+
             point(element);
         }
     };

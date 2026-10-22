@@ -1,8 +1,13 @@
 /**
- * `ui-toast` and `ui-toaster`: what the entrance, the exit, the time a toast stays and the stack
- * can do.
+ * `ui-toast` and `ui-toaster`: what the pointer, a focus in a toast, the entrance, the exit, the
+ * time a toast stays and the stack can do.
  *
- * **The entrance and the exit take the card's**, each with a direction and a curve beside it as
+ * **The pointer's and a focus's effects are the card's**, by kind, each but the movement on a layer
+ * the page renders into the toast and not into the toaster, by the rules every surface shares, in
+ * `surfaces.ts`. Its movements go on its transform, and its one list of animations reads its
+ * entrance and its exit from one property and a movement from another, as the card's does.
+ *
+ * **The entrance and the exit take the card's too**, each with a direction and a curve beside it as
  * kinds of their own, and two slides of their own: one that bounces off where it lands, and one
  * that springs past it and back. A toast stands in a corner of the page, so whatever travels
  * comes in from the page's right edge and leaves toward it, unless a direction says otherwise.
@@ -21,6 +26,8 @@
  */
 import { reference } from '../../../../src/reference.js';
 import { UiToast } from '../../../../src/toast.js';
+import { enters, floods, focal, moves, sized, sweeps, waves } from '../controls.js';
+import { focus, hover } from '../moments.js';
 import {
     around,
     chosen,
@@ -28,6 +35,7 @@ import {
     dissolve,
     duration,
     easing,
+    inner,
     pieces,
     prototype,
     queries,
@@ -37,6 +45,7 @@ import {
     type Firing,
     type Order,
 } from '../motion.js';
+import { layered, surface } from '../surfaces.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
 const is = queries('toast');
@@ -44,9 +53,29 @@ const is = queries('toast');
 /** The step the pieces and the grain take, either way, and what holds a toast for them. */
 const step = '--ui-duration-400';
 
-/** The curves the component's own transitions take, which a chosen one stands in for. */
+/** The curves the component's own transitions take, which a chosen one stands in for, and their
+ *  length. */
 const enter = reference('--ui-easing-enter').cssText;
 const exit = reference('--ui-easing-exit').cssText;
+const state = reference('--ui-duration-state').cssText;
+
+/** A toast without a focus the reader can see in it, which the pointer's effects are drawn on,
+ *  since they yield to it; the same toast with the pointer resting on it; and one with such a focus
+ *  in it. Each names the toast, the sheet being the toaster's too. Under :where(), so each weighs
+ *  what it did. */
+const unfocused = ':host(ui-toast:where(:not([data-focus-visible])))';
+const resting = ':host(ui-toast:hover:where(:not([data-focus-visible])))';
+const focused = ':host(ui-toast[data-focus-visible])';
+
+/** Throws a circle out from under the toast, on the pointer's border layer or the focus's. */
+const wave = waves(
+    (host) => host,
+    (host) => inner(host, "[data-layer='border']"),
+);
+const focusWave = waves(
+    (host) => host,
+    (host) => inner(host, "[data-layer='focus-border']"),
+);
 
 /** The colour of the toast's edge, opaque, as its icon is drawn in it. */
 const edge = `rgb(from ${reference('--ui-color-toast-edge').cssText} r g b / 1)`;
@@ -153,26 +182,153 @@ const sheet = String.raw`
     overflow: visible;
 }
 
+/* The toast is what moves, and the layers stack inside it, as a card's do: isolated, so a layer
+   under the message stays over the toast's own fill instead of going behind it.
+
+   What the pointer or a focus in it moves the toast by goes on its transform, which no entrance
+   starts from. The card's go on its translate and its scale too, but the component's rise starts
+   the toast's translate from below, and a transition there at its arrival would outrank an
+   entrance's animation in the cascade. The movement's transition is kept beside whatever an
+   entrance leaves running, on the card's length. */
+:host(ui-toast) {
+    isolation: isolate;
+    --ui-toast-moved: transform var(--ui-duration-200) var(--ui-easing-enter);
+}
+
+/* The host's one list of animations, read, as the card's is, from a property for its entrance and
+   its exit and one for a movement the pointer or the focus plays. A beat, a stretch and a swell go
+   the card's quarter of the button's way: a toast is about as many buttons wide, 320px against the
+   113px of the button that raises one on its page. */
+:host(ui-toast) {
+    animation: var(--ui-toast-passage, none), var(--ui-toast-move, none);
+    --ui-give: 0.25;
+}
+
 /* The component's own transitions, today's rise and sink and the fades that keep them, on the
-   curve a reader chose, or else on the component's. */
+   curve a reader chose, or else on the component's; and on the way in, the movement's beside
+   them. */
 :host(ui-toast:not(.closing)) {
-    transition-timing-function: var(--ui-enter-curve, ${enter});
+    transition:
+        opacity ${state} var(--ui-enter-curve, ${enter}),
+        translate ${state} var(--ui-enter-curve, ${enter}),
+        var(--ui-toast-moved);
 }
 
 :host(ui-toast.closing) {
     transition-timing-function: var(--ui-exit-curve, ${exit});
 }
 
+${layered}
+
+/* The focus wins, as on a card: a toast the reader can see the focus in is drawn as the focus
+   chose, and the pointer resting on it changes nothing, nor does its arrival fire anything. Every
+   hover state sits under hover: hover, as the card's do: a tap leaves :hover on whatever it
+   touched. */
+
+/* hover-move: lift and zoom, a quarter of a rem up or three hundredths larger, as the card's. */
+@media (hover: hover) {
+    @container ${is('hover-move', 'lift')} {
+        ${resting} {
+            transform: translateY(-0.25rem);
+        }
+    }
+
+    @container ${is('hover-move', 'zoom')} {
+        ${resting} {
+            transform: scale(1.03);
+        }
+    }
+}
+
+/* hover-move: tilt, turned toward the pointer, on the card's quick transition, since it follows
+   the pointer; and magnetic, drawn toward the pointer as it nears, half a step at most. */
+@container ${is('hover-move', 'tilt')} {
+    :host(ui-toast) {
+        --ui-toast-moved: transform var(--ui-duration-50) linear;
+    }
+
+    ${unfocused} {
+        transform: perspective(60rem)
+            rotateX(calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * -5deg))
+            rotateY(calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 5deg));
+    }
+}
+
+@container ${is('hover-move', 'magnetic')} {
+    ${unfocused} {
+        transform: translate(
+            calc(var(--ui-pointer-nx) * var(--ui-pointer-near) * 0.5rem),
+            calc(var(--ui-pointer-ny) * var(--ui-pointer-near) * 0.375rem)
+        );
+    }
+}
+
+/* hover-move: heartbeat, rubber and glitch, the button's, once, as the pointer arrives; and at the
+   focus, as the focus arrives in the toast, with its lift and its zoom. The focus's play under
+   their own names, as the card's do. */
+@media (hover: hover) {
+    @container ${is('hover-move', 'heartbeat')} {
+        ${resting} {
+            --ui-toast-move: ui-heartbeat var(--ui-duration-300) var(--ui-easing-state);
+        }
+    }
+
+    @container ${is('hover-move', 'rubber')} {
+        ${resting} {
+            --ui-toast-move: ui-rubber var(--ui-duration-400) linear;
+        }
+    }
+
+    @container ${is('hover-move', 'glitch')} {
+        ${resting} {
+            --ui-toast-move: ui-glitch var(--ui-duration-200) linear;
+        }
+    }
+}
+
+@container ${is('focus-move', 'lift')} {
+    ${focused} {
+        transform: translateY(-0.25rem);
+    }
+}
+
+@container ${is('focus-move', 'zoom')} {
+    ${focused} {
+        transform: scale(1.03);
+    }
+}
+
+@container ${is('focus-move', 'heartbeat')} {
+    ${focused} {
+        --ui-toast-move: ${focal.run('ui-heartbeat var(--ui-duration-300) var(--ui-easing-state)')};
+    }
+}
+
+@container ${is('focus-move', 'rubber')} {
+    ${focused} {
+        --ui-toast-move: ${focal.run('ui-rubber var(--ui-duration-400) linear')};
+    }
+}
+
+@container ${is('focus-move', 'glitch')} {
+    ${focused} {
+        --ui-toast-move: ${focal.run('ui-glitch var(--ui-duration-200) linear')};
+    }
+}
+
+${surface({ is, unfocused, resting, focused, rtl: ':host(ui-toast:dir(rtl))' })}
+
 /* ——— The entrance.
 
    fade and pop start the component's transition from somewhere else. Every other effect is an
    animation, as the card's entrance is, held at its first frame only while it waits; it turns
-   the transition off for its moment, a transition outranking an animation in the cascade. The
+   today's transitions off for its moment, keeping the movement's, a transition outranking an
+   animation in the cascade. The
    direction and the curve are values the keyframes read. Each effect sets its own direction; a
    chosen one comes later in the sheet, and wins. ——— */
 @container ${is('enter', 'none')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
+        transition: var(--ui-toast-moved);
     }
 }
 
@@ -192,7 +348,8 @@ const sheet = String.raw`
         transition:
             opacity var(--ui-duration-200) var(--ui-easing-enter),
             translate var(--ui-duration-200) var(--ui-easing-enter),
-            scale var(--ui-duration-200) var(--ui-easing-emphasis);
+            scale var(--ui-duration-200) var(--ui-easing-emphasis),
+            var(--ui-toast-moved);
     }
 
     @starting-style {
@@ -206,8 +363,8 @@ const sheet = String.raw`
 
 @container ${is('enter', 'zoom')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-zoom var(--ui-duration-200)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-zoom var(--ui-duration-200)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -215,8 +372,8 @@ const sheet = String.raw`
 /* drop: its bounce is its curve, which a chosen one does not replace. */
 @container ${is('enter', 'drop')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-drop var(--ui-duration-400) linear backwards;
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-drop var(--ui-duration-400) linear backwards;
     }
 }
 
@@ -227,8 +384,8 @@ const sheet = String.raw`
     }
 
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-slide var(--ui-duration-300)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-slide var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -241,8 +398,8 @@ const sheet = String.raw`
     }
 
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-slide-bounce var(--ui-duration-400) linear backwards;
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-slide-bounce var(--ui-duration-400) linear backwards;
     }
 }
 
@@ -253,23 +410,23 @@ const sheet = String.raw`
     }
 
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-slide-elastic var(--ui-duration-400) linear backwards;
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-slide-elastic var(--ui-duration-400) linear backwards;
     }
 }
 
 @container ${is('enter', 'flip-vertical')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-flip-vertical var(--ui-duration-300)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-flip-vertical var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
 
 @container ${is('enter', 'flip-horizontal')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-flip-horizontal var(--ui-duration-300)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-flip-horizontal var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -281,8 +438,8 @@ const sheet = String.raw`
     }
 
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-wipe var(--ui-duration-300)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-wipe var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-move)) backwards;
     }
 }
@@ -294,8 +451,8 @@ const sheet = String.raw`
     }
 
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-circle var(--ui-duration-300)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-circle var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -307,16 +464,16 @@ const sheet = String.raw`
     }
 
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-curtain var(--ui-duration-300)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-curtain var(--ui-duration-300)
             var(--ui-enter-curve, var(--ui-easing-move)) backwards;
     }
 }
 
 @container ${is('enter', 'refocus')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
-        animation: ui-enter-refocus calc(var(--ui-duration-300) * 1.25)
+        transition: var(--ui-toast-moved);
+        --ui-toast-passage: ui-enter-refocus calc(var(--ui-duration-300) * 1.25)
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -326,7 +483,7 @@ const sheet = String.raw`
 @container ${is('enter', 'wind')} or ${is('enter', 'converge')} or
     ${is('enter', 'materialize')} or ${is('enter', 'dissolve')} {
     :host(ui-toast:not(.closing)) {
-        transition: none;
+        transition: var(--ui-toast-moved);
     }
 }
 
@@ -351,7 +508,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-zoom var(--ui-duration-150)
+        --ui-toast-passage: ui-exit-zoom var(--ui-duration-150)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -366,7 +523,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-slide var(--ui-duration-200)
+        --ui-toast-passage: ui-exit-slide var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -381,7 +538,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-slide-bounce var(--ui-duration-300) linear forwards;
+        --ui-toast-passage: ui-exit-slide-bounce var(--ui-duration-300) linear forwards;
     }
 }
 
@@ -395,7 +552,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-slide-elastic var(--ui-duration-300) linear forwards;
+        --ui-toast-passage: ui-exit-slide-elastic var(--ui-duration-300) linear forwards;
     }
 }
 
@@ -404,7 +561,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-flip-vertical var(--ui-duration-200)
+        --ui-toast-passage: ui-exit-flip-vertical var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -414,7 +571,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-flip-horizontal var(--ui-duration-200)
+        --ui-toast-passage: ui-exit-flip-horizontal var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -429,7 +586,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-wipe var(--ui-duration-200)
+        --ui-toast-passage: ui-exit-wipe var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-move)) forwards;
     }
 }
@@ -444,7 +601,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-circle var(--ui-duration-200)
+        --ui-toast-passage: ui-exit-circle var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -459,7 +616,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-curtain var(--ui-duration-200)
+        --ui-toast-passage: ui-exit-curtain var(--ui-duration-200)
             var(--ui-exit-curve, var(--ui-easing-move)) forwards;
     }
 }
@@ -469,7 +626,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-exit-defocus calc(var(--ui-duration-200) * 1.25)
+        --ui-toast-passage: ui-exit-defocus calc(var(--ui-duration-200) * 1.25)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
     }
 }
@@ -481,7 +638,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-held var(${step}) linear;
+        --ui-toast-passage: ui-held var(${step}) linear;
     }
 }
 
@@ -491,7 +648,7 @@ const sheet = String.raw`
         opacity: 1;
         translate: 0 0;
         transition: none;
-        animation: ui-kept var(${step}) linear;
+        --ui-toast-passage: ui-kept var(${step}) linear;
     }
 }
 
@@ -981,6 +1138,26 @@ const sheet = String.raw`
         --ui-swept: 0deg;
     }
 }
+
+@keyframes ui-orbit {
+    to {
+        --ui-orbit: 360deg;
+    }
+}
+
+${sized.wide}
+
+${sweeps}
+
+${moves}
+
+${focal.frames(moves)}
+
+@keyframes ui-rest {
+    to {
+        opacity: 0;
+    }
+}
 `;
 
 /** The way a moment's effect travels, a kind of its own beside the effect. */
@@ -1029,10 +1206,159 @@ const curves = (moment: 'enter' | 'exit'): readonly Effect[] => [
     { name: 'ease-in-out', host: true, says: 'Gathers speed, then settles.' },
 ];
 
+/** Why the toast leaves the hover colour out: its icon is drawn in the variant's colour. */
+const hovered =
+    'the hover colour is chosen against a control’s label, and under the toast’s icon, which owes 3:1 as the one thing that tells a variant by more than its colour, it fell to 2.70:1 under Glass in the light scheme, in three variants of four — measured.';
+
+/** Why the toast leaves the theme's own pointer shadow out: there is none for a raised surface. */
+const unlit =
+    'no theme gives a raised surface a shadow of its own under the pointer: the token layer has the toast’s elevation at rest, and none for the pointer.';
+
+/** Why the toast leaves the preview out: what it shows is what a click would change. */
+const unchanged = 'a click on the toast changes nothing of its own for it to show beforehand.';
+
+/** Why the toast leaves the blur out: it is the glass already, wherever a theme makes it glass. */
+const glassy =
+    'the toast is the theme’s glass already: it blurs the page behind it at rest wherever a theme makes it glass, and nothing is left for the effect to add.';
+
+/** Why the toast leaves the breathe out: what it swells is what is being read. */
+const swelled =
+    'it swells and settles the toast’s message round after round, and a toast’s message is what is being read.';
+
+/** Why the toast leaves the flips out. */
+const turned =
+    'it turns the message away from the reader for half its run, and a toast’s message is what is being read: the entrance has it, before there is anything to read.';
+
 prototype({
     tags: ['ui-toast', 'ui-toaster'],
     sheet,
+    layers: ['fill', 'focus-fill', 'shadow', 'focus-shadow', 'border', 'focus-border'],
+    layered: 'ui-toast',
     moments: [
+        {
+            ...hover('toast', {
+                move: {
+                    draws: [
+                        { name: 'lift', host: true },
+                        { name: 'zoom', host: true },
+                        { name: 'magnetic', host: true },
+                        { name: 'tilt', host: true },
+                        { name: 'heartbeat', host: true },
+                        { name: 'rubber', host: true },
+                        { name: 'glitch', host: true },
+                    ],
+                    refuses: {
+                        breathe: swelled,
+                        'flip-vertical': turned,
+                        'flip-horizontal': turned,
+                    },
+                },
+                fill: {
+                    draws: [
+                        'tint',
+                        'spotlight',
+                        {
+                            name: 'flood',
+                            fire: floods((host) => inner(host, "[data-layer='fill']")),
+                        },
+                        'shimmer',
+                        {
+                            name: 'ripple',
+                            fire: enters((host) => inner(host, "[data-layer='fill']")),
+                        },
+                        'scan',
+                    ],
+                    refuses: { highlight: hovered, preview: unchanged, blur: glassy },
+                },
+                shadow: {
+                    draws: [
+                        'raise',
+                        'sink',
+                        'halo',
+                        'glow',
+                        'inner',
+                        'cast',
+                        'neon',
+                        'breathe',
+                        'burst',
+                    ],
+                    refuses: { highlight: unlit },
+                },
+                border: {
+                    draws: [
+                        'highlight',
+                        'accent',
+                        'edge',
+                        'orbit',
+                        'trace',
+                        'comet',
+                        'underline',
+                        'sweep',
+                        'pulse',
+                        { name: 'shockwave', fire: wave('shockwave') },
+                        { name: 'bloom', fire: wave('bloom') },
+                        'explode',
+                    ],
+                },
+            }),
+            only: 'ui-toast',
+        },
+        {
+            ...focus(
+                'toast',
+                {
+                    move: {
+                        draws: [
+                            { name: 'lift', host: true },
+                            { name: 'zoom', host: true },
+                            { name: 'heartbeat', host: true },
+                            { name: 'rubber', host: true },
+                            { name: 'glitch', host: true },
+                        ],
+                        refuses: {
+                            breathe: swelled,
+                            'flip-vertical': turned,
+                            'flip-horizontal': turned,
+                        },
+                    },
+                    fill: {
+                        draws: ['tint', 'spotlight', 'flood', 'shimmer', 'ripple', 'scan'],
+                        refuses: { highlight: hovered, preview: unchanged, blur: glassy },
+                    },
+                    shadow: {
+                        draws: [
+                            'raise',
+                            'sink',
+                            'halo',
+                            'glow',
+                            'inner',
+                            'neon',
+                            'breathe',
+                            'burst',
+                        ],
+                        refuses: { highlight: unlit },
+                    },
+                    border: {
+                        draws: [
+                            'highlight',
+                            'accent',
+                            'edge',
+                            'orbit',
+                            'trace',
+                            'comet',
+                            'underline',
+                            'sweep',
+                            'pulse',
+                            { name: 'shockwave', fire: focusWave('shockwave') },
+                            { name: 'bloom', fire: focusWave('bloom') },
+                            'explode',
+                        ],
+                    },
+                },
+                true,
+            ),
+            only: 'ui-toast',
+        },
         {
             name: 'enter',
             label: 'Entrance',

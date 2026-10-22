@@ -911,7 +911,9 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
 /* ——— Invalid, after the focus, so an error's fill is drawn over a focus's. The boundary was
    already red, and nothing moves: the shake was left out for leaving where the reader aimed. Each
    effect on the field plays a loop that settles, as an error stands for as long as the reader
-   leaves it; the message's own play once, but the glitch, which never takes the message away. ——— */
+   leaves it; the message's own play once, but the glitch, which never takes the message away.
+   The split's and the glitch's rounds are about half the pulse's and the flash's, so they play
+   twice as many and end close to them, as the drawn controls' do. ——— */
 @container ${is('invalid-border', 'pulse')} or ${is('invalid-border', 'glow')} or
     ${is('invalid-border', 'split')} {
     .glow::before {${round}
@@ -935,7 +937,7 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
    glitch splits theirs. */
 @container ${is('invalid-border', 'split')} {
     .glow:has(> [aria-invalid='true'])::before {
-        animation: ui-split var(--ui-duration-200) linear var(--ui-iteration-settle);
+        animation: ui-split var(--ui-duration-200) linear calc(var(--ui-iteration-settle) * 2);
     }
 }
 
@@ -976,7 +978,7 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
 
 @container ${is('invalid-message', 'glitch')} {
     .error {
-        animation: ui-glitch var(--ui-duration-200) linear var(--ui-iteration-settle);
+        animation: ui-glitch var(--ui-duration-200) linear calc(var(--ui-iteration-settle) * 2);
     }
 }
 
@@ -1137,7 +1139,7 @@ export const moments: readonly Moment[] = [
                     {
                         name: 'split',
                         settles: true,
-                        says: 'The boundary splits into two colours where it is, four times, then rests. Drawn for Matrix.',
+                        says: 'The boundary splits into two colours where it is, eight times, then rests. Drawn for Matrix.',
                     },
                 ],
             },
@@ -1174,7 +1176,7 @@ export const moments: readonly Moment[] = [
                     {
                         name: 'glitch',
                         settles: true,
-                        says: 'The message jumps and splits into two colours, four times, then rests. Drawn for Matrix.',
+                        says: 'The message jumps and splits into two colours, eight times, then rests. Drawn for Matrix.',
                     },
                 ],
             },

@@ -186,8 +186,10 @@ inside it is the colour each choice paints. The box, the caret and the states ar
 the popup, and the highlight on the choice under the pointer, are not. That is the cost of
 delegating to a native `<select>`, and it is the reason to.
 
-`ROADMAP.md` carries what would reopen the question, and it is a platform feature arriving broadly
-rather than a decision here.
+`appearance: base-select` hands the list to the page where an engine has it — Chromium and WebKit,
+with Firefox behind a preference that is off. [ARCHITECTURE.md](../ARCHITECTURE.md), _The platform
+owns what the platform is good at_, carries what would reopen the question, and it is Firefox
+shipping it rather than a decision here.
 
 ## Styling
 
