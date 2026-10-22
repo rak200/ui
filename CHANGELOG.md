@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.4](https://github.com/rak200/ui/compare/0.8.3...0.8.4) (2026-10-22)
+
+
+### Features
+
+* **select:** draw the list where the engine hands it to the page ([#304](https://github.com/rak200/ui/issues/304)) ([84a9a61](https://github.com/rak200/ui/commit/84a9a61857657709c926307ac67b5247e7090e49))
+
+
+### Bug Fixes
+
+* **menu,tooltip:** right to left, the panel and the tip open from their triggers ([#307](https://github.com/rak200/ui/issues/307)) ([55d86a6](https://github.com/rak200/ui/commit/55d86a6e4b59770f154730bf7fb11d66d6912764))
+* **menu:** Space chooses a button, and joins the typeahead only while a search is in progress ([#306](https://github.com/rak200/ui/issues/306)) ([787b4e5](https://github.com/rak200/ui/commit/787b4e5f7e934a9db0be7c663f55eedd3db926fb))
+
 ## [0.8.3](https://github.com/rak200/ui/compare/0.8.2...0.8.3) (2026-10-16)
 
 
