@@ -149,15 +149,18 @@ under a pointer that hovers and is fine, so a phone keeps the picker it opens, a
 opens under the base appearance was not measured. Where the system draws the list, it stays
 unstyleable, which [docs/select.md](docs/select.md) says in as many words.
 
-**Where the platform has the feature but only in one engine, it is measured and declined.**
-`<ui-tooltip>` places itself with thirty lines of script over a `popover`, and CSS anchor positioning
-is not adopted even though this package's suite measures it working end to end — an anchored popover
-really is placed against its anchor here. The reason is `<ui-select>`'s, one step harsher: where an
-engine lacks the rules, a popover is `position: fixed` at `inset: 0`, so the failure is a tooltip in
-the corner of the screen rather than one that merely looks different. The flip at a viewport edge is
-`position-try-fallbacks`, so the script would have to exist anyway — and a component with a CSS path
-and a script path is two components. The script goes when the feature is broadly available, and the
-tests do not, because they assert where the tip lands rather than who put it there.
+**Where every engine has the feature but not for long enough, it is measured and waited for.**
+`<ui-tooltip>` and `<ui-menu>` place their popovers with thirty lines of arithmetic in
+`src/placement.ts`. CSS anchor positioning is in all three engines now, and #300 measured it putting
+both overlays where the script puts them, in the arrangements the two are built in. It is still not
+adopted, for two reasons. An engine without the rules shows a popover that is `position: fixed` at
+`inset: 0`, so the failure is an overlay in the corner of the screen rather than one that merely
+looks different — `<ui-select>`'s reason, one step harsher. And the CSS writes nowhere which side it
+took: `data-side` is what a host selects an arrow or a gap on, and only Chromium can read the side
+back from the CSS. A component with a CSS path and a script path is two components, so the script
+goes whole, and not before the properties the CSS would use are Baseline Widely available. The side
+is the second condition: every engine has to be able to read it, unless `data-side` is retired by a
+decision of its own.
 
 **Where no element exists, the component says so rather than pretending one does.** `<ui-switch>` is
 a native checkbox carrying `role="switch"` and a drawing, because there is nothing else for it to

@@ -140,21 +140,16 @@ the trigger, centred on it, flips below when there is no room, and is pulled bac
 viewport at either edge. Right to left it lands where it does left to right, whether the whole page
 reads that way or only the part the trigger is in.
 
-CSS anchor positioning would do all of it, and in the engine this package's suite measures it is
-entirely present — `anchor-name`, `position-anchor`, `position-area` and `position-try-fallbacks` all
-work, and an anchored popover really is placed against its anchor. It is still not adopted, for the
-reason [ARCHITECTURE.md](../ARCHITECTURE.md) gives under _The platform owns what the platform is good
-at_: a feature one engine has makes a kit look like two kits.
-
-Here the difference is not cosmetic. Measured: a popover whose anchor rules are ignored is
-`position: fixed` at `inset: 0` — the corner of the screen, not near the trigger. And the flip at a
-viewport edge _is_ `position-try-fallbacks`, so an engine without it needs the script regardless.
-Adopting the CSS would mean writing the placement **and** a second code path for it.
+CSS anchor positioning would do all of it, and all three engines have it. It is not adopted yet, for
+the two reasons [ARCHITECTURE.md](../ARCHITECTURE.md) gives under _The platform owns what the
+platform is good at_. In an engine without the rules a popover is `position: fixed` at `inset: 0`,
+the corner of the screen rather than near the trigger. And the CSS writes nowhere which side it
+took, which is what [`data-side`](#styling) tells you. The script goes once the properties are
+widely available and every engine can read the side.
 
 A positioning dependency was the other option. It solves scroll containers, virtual anchors and
 continuous auto-update — none of which a tooltip against a real element needs — and it would be this
-package's second runtime dependency. When anchor positioning is broadly available it replaces the
-script, and the tests stay: they assert where the tip lands, not who put it there.
+package's second runtime dependency.
 
 ## On a control you wrote
 

@@ -21,3 +21,16 @@ the Zag adoption, and [ARCHITECTURE.md](ARCHITECTURE.md) is where that argument 
 for the same reason: elevation is a `box-shadow`, so it is neither a colour an emitter can resolve
 nor a value `light-dark()` can carry two of. [ARCHITECTURE.md](ARCHITECTURE.md) says what the web
 does about it; what a second format does is this issue's to decide.
+
+## Placement by CSS anchor positioning (#300)
+
+`<ui-tooltip>` and `<ui-menu>` place their popovers by script, and
+[ARCHITECTURE.md](ARCHITECTURE.md) says what retires it: the properties the CSS would use have to be
+Baseline Widely available, and every engine has to be able to read the side an overlay took, unless
+`data-side` is retired by a decision of its own.
+
+By web-features 3.44.0 the first comes on 2028-08-24. The part of anchor positioning the two would
+use became complete in every engine with Firefox 148, on 2026-02-24, and wide availability is thirty
+months later. The second has no date: only Chromium reads the side back, through anchored container
+queries. RFC 0004's prototypes choose each overlay's direction of travel by `data-side`, so retiring
+it is that proposal's question too.

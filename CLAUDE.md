@@ -152,10 +152,12 @@ explains. This file restates none of them.
   the other two things `appearance: none` made this component's to own — and **the mixed state's
   forced-colors override lives in `UiCheckbox`'s own sheet rather than the shared one**, because a
   later sheet at equal specificity wins; the comment there carries the measurement.
-- **Why `ui-tooltip` places itself instead of adopting CSS anchor positioning** — the docblock on
-  `UiTooltip` in `src/tooltip.ts`, which records both measurements: anchor positioning works end to
-  end in this engine, and an engine without it puts the popover at `inset: 0` rather than near the
-  trigger. `popover="manual"` and the Escape handler carry their reasons beside them, and
+- **Why `ui-tooltip` and `ui-menu` place themselves instead of adopting CSS anchor positioning** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _The platform owns what the platform is good at_, which gives
+  both reasons and what retires the script: an engine without the rules puts a popover at `inset: 0`
+  rather than near the trigger, and the CSS writes nowhere the side `data-side` reports. #300 holds
+  the measurements and the dates, and the docblock on `UiTooltip` in `src/tooltip.ts` keeps the
+  element's own half. `popover="manual"` and the Escape handler carry their reasons beside them, and
   `#complain()` carries the one a reader hits first: a reference written from out here reaches no
   control drawn inside a shadow root, which #156 measured and RFC 0006 answered — so what the
   warning is left pointing at is a trigger **someone else** wrote that does not take the handoff.
