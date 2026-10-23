@@ -229,6 +229,16 @@ describe('the scroll, and the tab stop it takes while it overflows', () => {
         expect(table(second).getAttribute('tabindex'), 'and again for the next').toBe('0');
     });
 
+    it('makes updateComplete itself wait for the stop, with nothing else awaited', async () => {
+        const host = document.createElement('div');
+        host.innerHTML = wide;
+        document.body.append(host);
+
+        await table(host).updateComplete;
+
+        expect(table(host).getAttribute('tabindex')).toBe('0');
+    });
+
     it('is accessible while it overflows', async () => {
         await expectAccessible(await mount(wide));
     });

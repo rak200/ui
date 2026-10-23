@@ -167,7 +167,7 @@ export class UiTable extends LitElement {
      * as each rendered, they took 834ms to render; weighed together, 169ms to render and lay
      * out, against 156ms with the stop written unread.
      */
-    static readonly #rendered: UiTable[] = [];
+    static #rendered = new Set<UiTable>();
 
     /** The pass the tables above are waiting for, while one is pending. */
     static #pass: Promise<void> | undefined;
@@ -205,17 +205,18 @@ export class UiTable extends LitElement {
      * observer's first answer comes a frame later, before that frame is painted.
      */
     override firstUpdated(): void {
-        UiTable.#rendered.push(this);
+        UiTable.#rendered.add(this);
         UiTable.#pass ??= Promise.resolve().then(() => {
+            const tables = [...UiTable.#rendered];
+
+            UiTable.#rendered = new Set();
             UiTable.#pass = undefined;
 
-            const weighed = UiTable.#rendered
-                .splice(0)
-                .map((table) => [table, table.#stop()] as const);
+            const stops = tables.map((table) => table.#stop());
 
-            for (const [table, stop] of weighed) {
-                table.#write(stop);
-            }
+            tables.forEach((table, at) => {
+                table.#write(stops[at] === true);
+            });
         });
     }
 
@@ -292,10 +293,14 @@ export class UiTable extends LitElement {
      * focus, where taking the stop away would drop the focus on the page.
      */
     #stop(): boolean {
+        // The root's own active element rather than the document's, which inside another
+        // component's shadow root is that component.
+        const root = this.getRootNode() as Document | ShadowRoot;
+
         return (
             this.scrollWidth > this.clientWidth ||
             this.scrollHeight > this.clientHeight ||
-            this.matches(':focus')
+            root.activeElement === this
         );
     }
 
@@ -308,7 +313,7 @@ export class UiTable extends LitElement {
         this.#writing = true;
 
         if (stop) {
-            this.setAttribute('tabindex', '0');
+            this.tabIndex = 0;
         } else {
             this.removeAttribute('tabindex');
         }
