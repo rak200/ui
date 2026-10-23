@@ -67,7 +67,7 @@ const meta: Meta<TableArgs> = {
     },
 
     render: ({ caption, rows }): TemplateResult => html`
-        <ui-table aria-label="Invoices">
+        <ui-table>
             <table>
                 <caption>
                     ${caption}
@@ -99,7 +99,7 @@ export const Table: StoryObj<TableArgs> = {};
  */
 export const NoCaption: StoryObj<TableArgs> = {
     render: ({ rows }): TemplateResult => html`
-        <ui-table aria-label="Invoices">
+        <ui-table>
             <table>
                 <thead>
                     <tr>
@@ -117,12 +117,12 @@ export const NoCaption: StoryObj<TableArgs> = {
 /**
  * Wider than the space it is given, which is what the scrolling is for.
  *
- * The element is the scroll container and is focusable, so a reader with no pointer can
- * still reach the columns off the edge — WCAG 2.1.1, and the reason the tab stop exists.
+ * The element is the scroll container, and it takes a tab stop while its table overflows,
+ * so a reader with no pointer can still reach the columns off the edge — WCAG 2.1.1.
  */
 export const Scrolling: StoryObj<TableArgs> = {
     render: ({ rows }): TemplateResult => html`
-        <ui-table aria-label="Invoices, wide" style="max-inline-size: 20rem">
+        <ui-table style="max-inline-size: 20rem">
             <table>
                 <thead>
                     <tr>
@@ -159,7 +159,7 @@ export const Scrolling: StoryObj<TableArgs> = {
  */
 export const RowHeaders: StoryObj<TableArgs> = {
     render: ({ rows }): TemplateResult => html`
-        <ui-table aria-label="Invoices by number">
+        <ui-table>
             <table>
                 <thead>
                     <tr>

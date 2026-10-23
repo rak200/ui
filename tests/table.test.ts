@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { NoCaption, RowHeaders, Scrolling, Table } from '../stories/table.stories.js';
@@ -9,7 +10,7 @@ import type { UiTable } from '../src/table.js';
 
 /** The markup the tests use, unless one needs a different shape. */
 const fixture = `
-    <ui-table aria-label="Invoices">
+    <ui-table>
         <table>
             <caption>Every invoice raised this quarter.</caption>
             <thead>
@@ -19,6 +20,17 @@ const fixture = `
                 <tr><td>0001</td><td>R$ 1.200,00</td></tr>
                 <tr><td>0002</td><td>R$ 840,50</td></tr>
                 <tr><td>0003</td><td>R$ 2.310,00</td></tr>
+            </tbody>
+        </table>
+    </ui-table>
+`;
+
+/** A table wider than its box, which is the one that needs the stop. */
+const wide = `
+    <ui-table style="inline-size: 10rem">
+        <table style="inline-size: 40rem">
+            <tbody>
+                <tr><td>0001</td><td>R$ 1.200,00</td></tr>
             </tbody>
         </table>
     </ui-table>
@@ -48,6 +60,21 @@ function only(host: ParentNode, selector: string): HTMLElement {
 }
 
 const table = (host: ParentNode): UiTable => only(host, 'ui-table') as UiTable;
+
+/** One animation frame. */
+function frame(): Promise<void> {
+    return new Promise((resolve) => {
+        requestAnimationFrame(() => {
+            resolve();
+        });
+    });
+}
+
+/** Lets a change of size reach the element, whose observer answers it in the next frame. */
+async function laidOut(): Promise<void> {
+    await frame();
+    await frame();
+}
 
 /**
  * What a token computes to here, so an assertion names the token rather than its value.
@@ -166,38 +193,190 @@ describe('the rules that have to live in the host tree', () => {
     });
 });
 
-describe('the scroll, and the tab stop it needs', () => {
-    it('scrolls on the element itself, so the host can name what scrolls', async () => {
+describe('the scroll, and the tab stop it takes while it overflows', () => {
+    it('scrolls on the element itself, which is what takes the stop', async () => {
         const host = await mount(fixture);
 
         expect(getComputedStyle(table(host)).overflowX).toBe('auto');
     });
 
-    it('takes a tab stop, because a region nobody can reach is a region nobody can read', async () => {
+    it('takes no stop while its table fits, and a click in a cell leaves the focus alone', async () => {
         const host = await mount(fixture);
+        await laidOut();
+
+        expect(table(host).hasAttribute('tabindex')).toBe(false);
+
+        await userEvent.click(only(host, 'td'));
+
+        expect(document.activeElement, 'nothing took the focus').toBe(document.body);
+    });
+
+    it('takes a stop while its table overflows, because a region nobody can reach is a region nobody can read', async () => {
+        const host = await mount(wide);
+        await laidOut();
 
         expect(table(host).getAttribute('tabindex')).toBe('0');
     });
 
-    it('leaves a tabindex the host wrote alone', async () => {
-        const host = await mount(`
-            <ui-table aria-label="Invoices" tabindex="-1">
-                <table><tbody><tr><td>0001</td></tr></tbody></table>
-            </ui-table>
-        `);
+    it('takes the stop as it renders, so a script that waits for it finds it there', async () => {
+        // Twice, because the second render is the one a pass that never ended would miss.
+        const first = await mount(wide);
 
-        expect(table(host).getAttribute('tabindex'), 'a host decision, not a default').toBe('-1');
+        expect(table(first).getAttribute('tabindex'), 'before any frame has passed').toBe('0');
+
+        const second = await mount(wide);
+
+        expect(table(second).getAttribute('tabindex'), 'and again for the next').toBe('0');
     });
 
-    it('keeps its tabindex across the reconnection a framework performs', async () => {
+    it('is accessible while it overflows', async () => {
+        await expectAccessible(await mount(wide));
+    });
+
+    it('counts a box that overflows downwards as well', async () => {
+        const host = await mount(`
+            <ui-table style="block-size: 3rem">
+                <table><tbody><tr><td>0001</td></tr><tr><td>0002</td></tr></tbody></table>
+            </ui-table>
+        `);
+        await laidOut();
+
+        expect(table(host).getAttribute('tabindex')).toBe('0');
+    });
+
+    it('takes the stop when its table grows past it, and gives it back when the table fits again', async () => {
         const host = await mount(fixture);
+        const inner = only(host, 'table');
+        await laidOut();
+
+        inner.style.inlineSize = '60rem';
+        await laidOut();
+
+        expect(table(host).getAttribute('tabindex'), 'grown past the box').toBe('0');
+
+        inner.style.inlineSize = '';
+        await laidOut();
+
+        expect(table(host).hasAttribute('tabindex'), 'back inside it').toBe(false);
+    });
+
+    it('follows the box as well, which can narrow under a table that stays put', async () => {
+        const host = await mount(`
+            <ui-table style="inline-size: 30rem">
+                <table style="inline-size: 20rem"><tbody><tr><td>0001</td></tr></tbody></table>
+            </ui-table>
+        `);
+        await laidOut();
+
+        expect(table(host).hasAttribute('tabindex')).toBe(false);
+
+        table(host).style.inlineSize = '10rem';
+        await laidOut();
+
+        expect(table(host).getAttribute('tabindex')).toBe('0');
+    });
+
+    it('keeps the stop while it has the focus, and gives it back once the focus has gone', async () => {
+        // Taking the stop from the element that has the focus drops the focus on the page.
+        const host = await mount(`${wide}<button type="button">After</button>`);
         const element = table(host);
+        await laidOut();
+
+        element.focus();
+        only(host, 'table').style.inlineSize = '5rem';
+        await laidOut();
+
+        expect(document.activeElement, 'still where the reader put it').toBe(element);
+        expect(element.getAttribute('tabindex'), 'kept for the focus').toBe('0');
+
+        only(host, 'button').focus();
+        await laidOut();
+
+        expect(element.hasAttribute('tabindex'), 'given back once the focus left').toBe(false);
+    });
+
+    it('keeps the stop with something focusable inside, while it overflows', async () => {
+        const host = await mount(`
+            <ui-table style="inline-size: 10rem">
+                <table style="inline-size: 40rem">
+                    <tbody><tr><td><a href="#0001">0001</a></td><td>R$ 1.200,00</td></tr></tbody>
+                </table>
+            </ui-table>
+        `);
+        await laidOut();
+
+        expect(table(host).getAttribute('tabindex')).toBe('0');
+    });
+
+    it('leaves a tabindex the host wrote alone, whether the table fits or not', async () => {
+        const host = await mount(`
+            ${wide.replace('<ui-table ', '<ui-table tabindex="-1" ')}
+            ${fixture.replace('<ui-table>', '<ui-table tabindex="0">')}
+        `);
+        await laidOut();
+
+        const [overflowing, fitting] = host.querySelectorAll('ui-table');
+
+        expect(overflowing?.getAttribute('tabindex'), 'a host decision, not a default').toBe('-1');
+        expect(fitting?.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('leaves a tabindex the host writes later alone', async () => {
+        const host = await mount(wide);
+        const element = table(host);
+        await laidOut();
+
+        element.setAttribute('tabindex', '-1');
+        only(host, 'table').style.inlineSize = '5rem';
+        await laidOut();
+
+        expect(element.getAttribute('tabindex')).toBe('-1');
+    });
+
+    it("takes the stop back once the host's tabindex is gone", async () => {
+        const host = await mount(wide.replace('<ui-table ', '<ui-table tabindex="-1" '));
+        const element = table(host);
+        await laidOut();
+
+        element.removeAttribute('tabindex');
+
+        expect(element.getAttribute('tabindex'), 'weighed then and there').toBe('0');
+    });
+
+    it('keeps the stop it wrote across the reconnection a framework performs', async () => {
+        const host = await mount(wide);
+        const element = table(host);
+        await laidOut();
 
         element.remove();
         host.append(element);
-        await element.updateComplete;
+        await laidOut();
 
-        expect(element.getAttribute('tabindex')).toBe('0');
+        expect(element.getAttribute('tabindex'), 'still there').toBe('0');
+
+        only(host, 'table').style.inlineSize = '5rem';
+        await laidOut();
+
+        expect(element.hasAttribute('tabindex'), 'and still its own to take away').toBe(false);
+    });
+
+    it('watches a table that replaced the first', async () => {
+        const host = await mount(fixture);
+        const element = table(host);
+        await laidOut();
+
+        const replacement = document.createElement('table');
+        replacement.style.inlineSize = '60rem';
+        replacement.innerHTML = '<tbody><tr><td>0001</td></tr></tbody>';
+        only(host, 'table').replaceWith(replacement);
+        await laidOut();
+
+        expect(element.getAttribute('tabindex'), 'wider than the box').toBe('0');
+
+        replacement.style.inlineSize = '5rem';
+        await laidOut();
+
+        expect(element.hasAttribute('tabindex'), 'and watched as it narrows').toBe(false);
     });
 });
 
@@ -226,8 +405,9 @@ describe('the values, all of which come from the token layer', () => {
     });
 
     it('takes the focus ring from the host', async () => {
-        const host = await mount(fixture);
+        const host = await mount(wide);
         const element = table(host);
+        await laidOut();
 
         element.style.setProperty('--ui-color-focus', 'rgb(4, 5, 6)');
         element.focus();
@@ -308,7 +488,7 @@ describe('the values, all of which come from the token layer', () => {
     it('leaves a thead row unstriped, whatever its position', async () => {
         // Two header rows, so the second one is the `even` a tbody rule would have caught.
         const host = await mount(`
-            <ui-table aria-label="Invoices">
+            <ui-table>
                 <table>
                     <thead>
                         <tr><th scope="col">Number</th></tr>
