@@ -4,7 +4,7 @@
 data, sorts nothing, and selects nothing.
 
 ```html
-<ui-table aria-label="Invoices">
+<ui-table>
   <table>
     <caption>
       Every invoice raised this quarter.
@@ -37,7 +37,7 @@ data, sorts nothing, and selects nothing.
 - [The table is yours](#the-table-is-yours)
 - [What it styles](#what-it-styles)
 - [It is not a data grid](#it-is-not-a-data-grid)
-- [The scroll, and why it takes a tab stop](#the-scroll-and-why-it-takes-a-tab-stop)
+- [The scroll, and when it takes a tab stop](#the-scroll-and-when-it-takes-a-tab-stop)
 - [Where the styles actually live](#where-the-styles-actually-live)
 - [Styling](#styling)
 
@@ -87,20 +87,40 @@ button, a live announcement of the new order, and a state that has to survive be
 A pull request adding a `sortable` attribute here is reopening a design decision, and needs the
 proposal rather than a review.
 
-## The scroll, and why it takes a tab stop
+## The scroll, and when it takes a tab stop
 
-The element scrolls horizontally when its table is wider than the space it has. A region that
-overflows and cannot be reached from a keyboard is unusable from a keyboard — WCAG 2.1.1 — so the
-element makes itself focusable.
+The element scrolls when its table is wider than the space it has, or taller than a height you gave
+it. A region that overflows and cannot be reached from a keyboard is unusable from a keyboard — WCAG
+2.1.1 — so **while it overflows, the element takes a tab stop**. Chromium and Firefox make an
+overflowing box focusable of their own accord and leave one that fits alone; WebKit does neither, so
+the element writes the stop itself, by the same rule, in all three.
 
-It is unconditional. A table that happens to fit still costs one tab stop, and the alternative is
-watching every table's size for the life of the page to save it. **If that trade is wrong for you,
-write your own `tabindex`** — a value you set is left alone, including `tabindex="-1"`.
+- **A table that fits takes no stop**, and a click in one of its cells leaves the focus where it
+  was.
+- **The stop follows the size** of the element and of its table: narrow the page and it arrives,
+  widen it and it goes. While the element has the focus the stop stays, so the focus is never
+  dropped on the page, and it goes once the focus has left.
+- **A table with a link or a control in it still takes the stop while it overflows**, as Firefox
+  does: the box is what scrolls, and what is focusable in it may not be where the reader needs to
+  go.
+- **It is there once the element has rendered.** `updateComplete` waits for it, so a test that runs
+  axe after it finds the stop in place.
 
-**The name is yours too.** A scrollable region wants one, and the only text that could supply it is
-the `<caption>` — which is in your tree, where an `aria-label`/`aria-labelledby` from inside this
-component's shadow root cannot resolve. So write `aria-label` on `<ui-table>`, which is one element
-in one tree with nothing to miswire.
+**Watching costs little, and a page that is not resizing pays nothing.** Measured on pages of 10,
+100 and 500 tables, half of them overflowing: rendering the page and laying it out took 1 to 6 ms
+more with 10 tables, 5 to 9 ms more with 100 and 13 to 27 ms more with 500, across the three
+engines, and each resize with 500 tables took 2 to 3.5 ms.
+
+**A `tabindex` you write is yours**, and left alone; remove it and the element takes the stop back.
+On a table that can overflow, `tabindex="-1"` takes away the only way in from a keyboard, in every
+engine, and axe reports `scrollable-region-focusable`, which is serious.
+
+**It needs no name.** The element claims no role, so it is `generic`, and a focusable `generic` does
+not fail WCAG 4.1.2, which is the WCAG working group's answer in
+[w3c/wcag#3029](https://github.com/w3c/wcag/issues/3029). ARIA prohibits naming a `generic`, so an
+`aria-label` on `<ui-table>` is a name an engine may drop, though Chromium exposes it; the
+`<caption>` is what names your table. If you want the box to be a named region, write
+`role="region"` and the name on it yourself, which makes the name valid.
 
 ## Where the styles actually live
 
