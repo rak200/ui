@@ -229,6 +229,14 @@ describe('the scroll, and the tab stop it takes while it overflows', () => {
         expect(table(second).getAttribute('tabindex'), 'and again for the next').toBe('0');
     });
 
+    it('takes no stop as it renders while its table fits', async () => {
+        // Before any frame, where the observer has not answered yet and could not correct a
+        // stop the first pass wrote by mistake.
+        const host = await mount(fixture);
+
+        expect(table(host).hasAttribute('tabindex'), 'before any frame has passed').toBe(false);
+    });
+
     it('makes updateComplete itself wait for the stop, with nothing else awaited', async () => {
         const host = document.createElement('div');
         host.innerHTML = wide;
