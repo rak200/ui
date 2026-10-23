@@ -65,19 +65,15 @@ function describing(trigger: HTMLElement): string[] {
  * ## Why the placement is written here
  *
  * The issue asked whether a clipping tooltip is solved with CSS anchor positioning or with
- * a dependency. Measured in this engine, anchor positioning is **entirely present** —
- * `anchor-name`, `position-anchor`, `position-area` and `position-try-fallbacks` all
- * parse, and an anchored popover really is placed against its anchor rather than merely
- * accepting the rule. It is still not adopted, and the reason is the one `ARCHITECTURE.md`
- * gives under _The platform owns what the platform is good at_: a feature one engine has
- * makes a kit look like two kits.
+ * a dependency. All three engines have anchor positioning now, and it places the tip where
+ * the script does. It is still not adopted, for the two reasons `ARCHITECTURE.md` gives
+ * under _The platform owns what the platform is good at_, and both are this element's own.
  *
- * **Here that is not a cosmetic difference but a broken component.** Measured: a popover
+ * **Without the rules, the component is broken rather than different.** Measured: a popover
  * whose anchor rules are ignored does not fall back to somewhere near the trigger — it is
- * `position: fixed` at `inset: 0`, which is the corner of the screen. And the flip at a
- * viewport edge is `position-try-fallbacks`, so an engine without it needs the script
- * anyway. Adopting the CSS would mean writing the placement *and* a second code path for
- * it, which is two answers to one problem.
+ * `position: fixed` at `inset: 0`, which is the corner of the screen. **And the CSS writes
+ * nowhere which side it took**, which is what `data-side` hands a host who draws an arrow;
+ * only Chromium can read the side back from the CSS.
  *
  * A positioning dependency was the other option the issue named. It solves scroll
  * containers, virtual anchors and continuous auto-update, none of which a tooltip against
@@ -85,8 +81,8 @@ function describing(trigger: HTMLElement): string[] {
  * RFC 0016's adoption was a *behaviour* library and not a layout one.
  *
  * So the placement is thirty lines of arithmetic, measured at the edges by a suite that
- * runs in a real browser. When anchor positioning is available broadly it replaces them and
- * the tests stay: they assert where the tip lands, not who put it there.
+ * runs in a real browser. They go once the properties the CSS would use are Baseline Widely
+ * available and every engine can read the side.
  *
  * **The arithmetic itself is one module over**, in `src/placement.ts`. It was written here
  * first and moved when `<ui-menu>` needed the same thing pointing the other way — which is

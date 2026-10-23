@@ -3,10 +3,11 @@
  *
  * **One answer to one problem, which is what issue #23 asked for.** `<ui-tooltip>` settled
  * how this package places a `popover` — by hand, over the top layer, with CSS anchor
- * positioning measured as present in this engine and deliberately declined; its docblock
- * carries the whole argument. `<ui-menu>` needs the same thing pointing the other way, so
- * the answer moved here rather than being written twice. A component with two placements is
- * a component that is wrong in one of them.
+ * positioning in every engine and not yet adopted. `ARCHITECTURE.md` says why, and what
+ * retires this module, under _The platform owns what the platform is good at_. `<ui-menu>`
+ * needs the same thing pointing the other way, so the answer moved here rather than
+ * being written twice. A component with two placements is a component that is wrong in
+ * one of them.
  *
  * **Taken as numbers rather than as elements, and that is the floors talking** — the same
  * reason `reservedGutter` in `src/dialog.ts` is handed two widths instead of a window. A

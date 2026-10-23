@@ -147,8 +147,10 @@ asks for `block-start` and `center`; a menu asks for `block-end` and `inline-sta
 function of four boxes rather than of two elements is what lets the edges be checked directly, at
 values a rendered page reaches only by luck.
 
-CSS anchor positioning would do all of it and is deliberately not adopted; `docs/tooltip.md`
-carries that whole argument, and it did not change.
+CSS anchor positioning would do all of it and is not adopted yet, for the reasons
+[`<ui-tooltip>`](tooltip.md#where-it-lands-and-who-put-it-there) gives: an engine without the rules
+puts the panel in the corner of the screen, and the CSS writes nowhere which side it took, which is
+the `data-side` above. The two overlays move together, because they share the arithmetic.
 
 ## Submenus
 
