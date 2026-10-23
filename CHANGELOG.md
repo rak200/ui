@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.5](https://github.com/rak200/ui/compare/0.8.4...0.8.5) (2026-10-23)
+
+
+### Bug Fixes
+
+* **table:** the box takes a tab stop only while its table overflows, and asks for no name ([#308](https://github.com/rak200/ui/issues/308)) ([744d8c8](https://github.com/rak200/ui/commit/744d8c854d2754558d4af49252c751c81159a317))
+
 ## [0.8.4](https://github.com/rak200/ui/compare/0.8.3...0.8.4) (2026-10-22)
 
 
