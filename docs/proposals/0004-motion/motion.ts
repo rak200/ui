@@ -305,9 +305,10 @@ sheets.after(themed);
  * **A theme names each moment once, for the page.** The pointer's and the focus's effects are one
  * list wherever they are answered — `moments.ts` — so a name is one effect on every component, and
  * one that leaves the effect out, with why, does what it does today there; a press is answered by
- * the button alone, and an error by a form's controls. A component's own taste is left for a
- * moment of its own: a check, a menu's panel and caret, a toast, a tooltip, an icon and a table's
- * row.
+ * the button alone, and an error by a form's controls. A component's own taste is left for a moment
+ * of its own: a check, a menu's panel and caret, a toast, a tooltip, an icon and a table's row. A
+ * theme sets a component apart from the page with one too, and only Glass does: the card alone
+ * leans under the pointer.
  *
  * A taste is written in properties of its own, never in the consumer's: `--ui-taste-<moment>` for
  * the page and `--ui-taste-<component>-<moment>` for one component, both on the root, read only
@@ -360,7 +361,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'press-move': 'squish',
                 'press-fill': 'highlight',
                 'press-shadow': 'sink',
-                'press-border': 'bloom',
+                'press-border': 'none',
                 'invalid-border': 'pulse',
                 'invalid-fill': 'flash',
             },
@@ -401,7 +402,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 enter: 'materialize',
                 exit: 'erode',
                 backdrop: 'char-rain',
-                'hover-move': 'zoom',
+                'hover-move': 'none',
                 'hover-fill': 'tint',
                 'hover-shadow': 'glow',
                 'hover-border': 'trace',
@@ -413,7 +414,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'press-move': 'shatter',
                 'press-fill': 'none',
                 'press-shadow': 'fragments',
-                'press-border': 'bloom',
+                'press-border': 'none',
                 'invalid-border': 'split',
                 'invalid-fill': 'none',
             },
@@ -450,7 +451,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 enter: 'dissolve',
                 exit: 'dissolve',
                 backdrop: 'blur',
-                'hover-move': 'tilt',
+                'hover-move': 'none',
                 'hover-fill': 'spotlight',
                 'hover-shadow': 'cast',
                 'hover-border': 'edge',
@@ -462,11 +463,12 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'press-move': 'spring',
                 'press-fill': 'ripple',
                 'press-shadow': 'sink',
-                'press-border': 'pulse',
+                'press-border': 'none',
                 'invalid-border': 'glow',
                 'invalid-fill': 'flash',
             },
             components: {
+                card: { 'hover-move': 'tilt' },
                 menu: { enter: 'refocus', exit: 'defocus' },
                 select: { enter: 'refocus', exit: 'defocus' },
                 icon: { enter: 'refocus', hover: 'pop' },
@@ -1556,42 +1558,16 @@ export function prototype(catalogue: Catalogue): Page {
                     node instanceof HTMLElement && tags.includes(node.localName),
             );
 
-    for (const moment of catalogue.moments) {
-        if (moment.on === undefined) {
-            continue;
-        }
-
-        for (const [type, counts] of triggers(moment.on)) {
-            document.addEventListener(
-                type,
-                (event) => {
-                    const host = hostOf(event);
-
-                    if (
-                        host === undefined ||
-                        !within(event, host) ||
-                        !counts(event, host) ||
-                        disabled(event)
-                    ) {
-                        return;
-                    }
-
-                    for (const slot of slots(moment)) {
-                        running(slot, host)?.fire?.({ host, event });
-                    }
-                },
-                { capture: true },
-            );
-        }
-    }
-
     /*
      * The host's own record of a focus the reader can see, for an effect drawn on the host
      * rather than inside it. No engine lets a host match :focus-visible for a control in its
      * shadow root — it matches :focus and :focus-within, which a click sets too — so the
      * attribute stands in for the custom state a component would set from the same event:
      * :host(:state(focus-visible)). Only for the control the catalogue names, where it names one:
-     * a focus on one of the menu's items is not its trigger's.
+     * a focus on one of the menu's items is not its trigger's. Written before any effect of the
+     * focus fires, so an effect drawn on the host has begun by the time a fired one asks what the
+     * focus began: written after, the ring's none missed the comet a button and a checkbox draw on
+     * the host, and brought the ring back once the burst was over — measured.
      */
     document.addEventListener(
         'focusin',
@@ -1621,6 +1597,35 @@ export function prototype(catalogue: Catalogue): Page {
         },
         { capture: true },
     );
+
+    for (const moment of catalogue.moments) {
+        if (moment.on === undefined) {
+            continue;
+        }
+
+        for (const [type, counts] of triggers(moment.on)) {
+            document.addEventListener(
+                type,
+                (event) => {
+                    const host = hostOf(event);
+
+                    if (
+                        host === undefined ||
+                        !within(event, host) ||
+                        !counts(event, host) ||
+                        disabled(event)
+                    ) {
+                        return;
+                    }
+
+                    for (const slot of slots(moment)) {
+                        running(slot, host)?.fire?.({ host, event });
+                    }
+                },
+                { capture: true },
+            );
+        }
+    }
 
     /*
      * The host's record of a press a key holds, for the same reason: the control is :active while
