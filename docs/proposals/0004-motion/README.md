@@ -135,16 +135,17 @@ muted text and placeholder hold 4.54:1 or more, and the button's labels 4.94:1 o
 schemes — measured. A field's and the card's lights — the spotlight, the flood and the ripple — are
 their tint, as the card's spotlight and flood already were, since a light in the text's colour
 darkens the ground under a placeholder or muted text, where a button's are in its label's colour,
-over a fill the label is set against. Over the primary's fill the button's tint is mixed in plainly,
-since the tint's floor would turn a fill in the accent white. A drawn control's flood and ripple
-start from its middle — a few pixels from where the pointer came in, on a control this small, and
-the one place a group's choices share, as the script hears the group's arrival and not the choice's
-— in the control's own ink, since nothing is written in the box; its preview at the focus shows what
-Space would do. The blur is drawn on the button now, which Glass lets the page through; the button
-takes it on its own transitions, and on the sink's where a press sinks it, which writes the button's
-list again. The card's focus fills draw on a layer of their own. The flood's centre is its own
-rather than the ripple's, which a press throws from where it is at once, and it glides where the
-circle shows, on the button as on the card and a field: on one centre, a press moved a button's
+over a fill the label is set against. The primary's fill is the accent already, so a little more of
+it left the fill as it was — measured, Matrix's `#008f11` under the pointer as at rest — and the
+primary's tint is its hover colour, a step toward the pole with room. A drawn control's flood and
+ripple start from its middle — a few pixels from where the pointer came in, on a control this small,
+and the one place a group's choices share, as the script hears the group's arrival and not the
+choice's — in the control's own ink, since nothing is written in the box; its preview at the focus
+shows what Space would do. The blur is drawn on the button now, which Glass lets the page through;
+the button takes it on its own transitions, and on the sink's where a press sinks it, which writes
+the button's list again. The card's focus fills draw on a layer of their own. The flood's centre is
+its own rather than the ripple's, which a press throws from where it is at once, and it glides where
+the circle shows, on the button as on the card and a field: on one centre, a press moved a button's
 flood still growing from its left edge over to where it was pressed, in Chromium, and the button's
 circle, caught partway, left one edge for the other between two frames, in all three engines —
 measured. Each fill was read where it draws, under the pointer and at the focus, on the button, the
@@ -250,11 +251,60 @@ has a name, and `none` there is nothing: the dialog fades in today, and `none` p
 once. The button answers the pointer in three kinds — the hover colour, and the edge and the glow a
 theme gives the pointer — and the press in one, the pressed colour. Each is its kind's `highlight`,
 which renders with no choice, and any other effect of the kind takes its place. The focus ring is
-not a choice: it is where the reader is, and every focus effect adds to it. The checkbox, the switch
-and the radio fade to a new state today, which is their check's `fade`, and darken under the
-pointer, which is their pointer's border `highlight`. Their pointer, their focus and an error are
-sorted by kind, as a field's are, and the three offer the same effects, drawn alike from rules their
-two pages share, as the components draw the three controls alike.
+its own kind's `solid`, which every component with a ring draws today. The checkbox, the switch and
+the radio fade to a new state today, which is their check's `fade`, and darken under the pointer,
+which is their pointer's border `highlight`. Their pointer, their focus and an error are sorted by
+kind, as a field's are, and the three offer the same effects, drawn alike from rules their two pages
+share, as the components draw the three controls alike.
+
+**The ring is a kind of the focus's alone**, on every component the focus is on: the button and the
+menu's trigger, the fields, and the checkbox, the switch and the radio. It thins with `slim`, 4px
+off the boundary rather than 2px, thickens with `bold`, hugs the boundary with `tight`, goes 4px
+inside it with `inset` — in the label's colour on the button, which stands off the fill, and nowhere
+on a drawn control, whose box is barely wider than its mark — and breaks into `dashed` or `double`
+lines. It swells off the boundary and back with `breathe` and closes in from further out with
+`implode`, each from a ring the reader can already see on the first frame, since a ring that arrives
+late says late where the reader is; `trace` and `refocus` are listed and not drawn yet. Each is
+drawn on the outline the component already draws, and where the component plays animations of its
+own on that element, the ring's is listed beside them, so the movement's breathe and the ring's play
+together. On the button that list is a property every rule animating the button reads, as a field's
+is: the ring's written as the button's animation took the place of a movement fired as the focus
+arrives, Matrix's glitch among them — measured in all three engines.
+
+**Two are flown over the page instead**, since an outline is drawn round its own element and moves
+only with it. `glitch` shakes the ring where it is, a pixel or three each way every few frames, and
+splits it into the danger and the info, the colours the movement's glitch splits into; `glide`
+brings it over from the control the reader saw it on last. Both fly one ring of the page's own, in
+the top layer so it flies over a modal dialog as well, laid where the control's ring is and moved
+with the control frame by frame while the control's outline is put away; once it lands, the outline
+is back where the flown ring was. The glide leaves only from the control the focus left for this
+one, as the departure names it, and never after a time: WebKit dispatched the arrival 36ms to 65ms
+after the departure, the page's style work in between, and later still on a slower machine —
+measured. A focus from nowhere the reader saw — a click on a button, a script's, the page's first —
+has its ring at once, as every focus has under reduced motion and in forced colours, where nothing
+flies.
+
+**Its `none` takes the ring away where a shadow or a border the focus holds stays round the
+component** — the halo, the glow, the raise, the trace or the edge — **and stands it aside while one
+the focus plays**: the neon, the breathe, the orbit and the comet for a few rounds, the burst and
+the rings thrown out once. The ring is back once everything the focus started has settled, or as
+soon as the focus leaves, so where nothing stays the focus is still never left unseen: under Glass
+the ring is away for the five seconds the neon and the orbit take, and under Matrix for the comet's.
+What the focus started is what the engine plays, the animations still waiting to start as the focus
+arrives, whatever they are named — the comet plays under the orbit's name — and the page writes the
+host's record of the focus before any effect fires: written after, the comet a button and a checkbox
+draw on the host had not begun when the ring asked, and the ring came back with the burst. In forced
+colours the ring never goes.
+
+Measured in Chromium on the button, a field and a checkbox with the ring taken away, under every
+theme and scheme, once each effect had settled: the five held changed at least the control's
+perimeter in pixels by 1.1:1 or more, the glow and the halo six times that or more — but the raise
+round a drawn control, three quarters of its box under Glass in the dark, so a drawn control's ring
+stands aside for the other four; the inner light, the sink, the accent and the lines along the
+bottom left little or nothing, the highlight what the theme gives the pointer, which can be nothing,
+and what plays nothing once it has played. None of the five reaches the 3:1 WCAG 1.4.11 asks of a
+focus indicator in a light scheme, and the review took that, for a soft halo round a component with
+no ring drawn over it.
 
 **A press is drawn over the pointer.** A press that brings a colour shows it over the pointer's, and
 one that brings none keeps the pointer's; the press's `none` takes away the colour a touch is
@@ -446,34 +496,33 @@ that leaves the effect out, with why, does what it does today there; a press is 
 button alone, and an error by a form's controls. Under the pointer, the default theme keeps each
 where it is, raises it with `raise`, sends a ring out from it with `pulse` and gives the button and
 the drawn controls the hover colour with `highlight`, which the card, the toast and the fields leave
-out; Matrix grows each with `zoom`, tints it with `tint`, lights it with `glow` and draws its
-boundary round with `trace`; and Glass leans each with `tilt`, lights its fill and its boundary
-where the pointer is with `spotlight` and `edge` and casts its shadow away from the pointer with
-`cast`. At the focus, the default theme lifts each with `lift` and `raise`, sends a pulse out across
-the ring with `pulse` and takes a label to the accent with `accent`; Matrix makes what it shows jump
-and split with `glitch`, sends a band of light across it with `scan`, bursts light out round it with
-`burst`, runs a comet round over the ring with `comet` and lights a label with `glow`; and Glass
-leaves it where it is, sweeps a sheen across it with `shimmer`, lights a line round it that glows
-out and back with `neon`, runs a light round on its boundary with `orbit` and leaves a label as it
-is. A press shrinks the button with `squish`, sinks it with `sink`, takes the pressed colour with
-`highlight` and throws a disc out from under it with `bloom` under the default theme; breaks it with
-`shatter`, leaves its colour alone, throws chips of the accent off its edge with `fragments` and
-throws the disc out with `bloom` under Matrix; and springs it in with `spring`, spreads a circle
-from where it was pressed with `ripple`, sinks it with `sink` and sends a ring out from its edge
-with `pulse` under Glass. In error the default theme sends a red ring out from the control with
-`pulse` and tints it red with `flash`, Matrix splits its boundary in two colours where it is with
-`split`, and Glass holds a red light round it with `glow` and tints it with `flash`; each that loops
-runs for about two seconds and rests, as a loop does for a state that stands for as long as the
-reader leaves it, and the message comes as it does today under all three. Where the default theme
-names an effect for a moment another theme leaves alone, that theme names `none`, or the default
-theme's would run there: Glass's movement and label at the focus, and Matrix's fill at a press and
-in error. On a field and a drawn control the boundary still darkens under the pointer as it does
-today, beneath whichever band a theme names: only `none` takes that away, and `accent` puts the
-accent in its place. The card and the toast answer a focus on something they hold with the theme's
-focus, as every component answers its own. Each theme's taste ran, with nothing chosen, in all three
-engines: the default theme's pointer on a field, a checkbox and the card, its focus on the button
-and in the card, a press and an error; Matrix's focus on a field and a checkbox; Glass's pointer on
-a checkbox and focus on a field; and each theme's pointer on the toast and focus in it.
+out; Matrix tints each with `tint`, lights it with `glow` and draws its boundary round with `trace`;
+and Glass lights the fill and the boundary of each where the pointer is with `spotlight` and `edge`,
+casts its shadow away from the pointer with `cast`, and leans the card alone with `tilt`. At the
+focus, the default theme lifts each with `lift` and `raise`, sends a pulse out across the ring with
+`pulse` and takes a label to the accent with `accent`; Matrix makes what it shows jump and split
+with `glitch`, sends a band of light across it with `scan`, bursts light out round it with `burst`,
+runs a comet round over the ring with `comet` and lights a label with `glow`; and Glass leaves it
+where it is, sweeps a sheen across it with `shimmer`, lights a line round it that glows out and back
+with `neon`, runs a light round on its boundary with `orbit` and leaves a label as it is. A press
+shrinks the button with `squish`, sinks it with `sink` and takes the pressed colour with `highlight`
+under the default theme; breaks it with `shatter`, leaves its colour alone and throws chips of the
+accent off its edge with `fragments` under Matrix; and springs it in with `spring`, spreads a circle
+from where it was pressed with `ripple` and sinks it with `sink` under Glass. Under all three it
+leaves its edge as the theme draws it. In error the default theme sends a red ring out from the
+control with `pulse` and tints it red with `flash`, Matrix splits its boundary in two colours where
+it is with `split`, and Glass holds a red light round it with `glow` and tints it with `flash`; each
+that loops runs for about two seconds and rests, as a loop does for a state that stands for as long
+as the reader leaves it, and the message comes as it does today under all three. Where the default
+theme names an effect for a moment another theme leaves alone, that theme names `none`, or the
+default theme's would run there: Glass's movement and label at the focus, and Matrix's fill at a
+press and in error. On a field and a drawn control the boundary still darkens under the pointer as
+it does today, beneath whichever band a theme names: only `none` takes that away, and `accent` puts
+the accent in its place. The card and the toast answer a focus on something they hold with the
+theme's focus, as every component answers its own. Each theme's taste ran, with nothing chosen, in
+all three engines: the default theme's pointer on a field, a checkbox and the card, its focus on the
+button and in the card, a press and an error; Matrix's focus on a field and a checkbox; Glass's
+pointer on a checkbox and focus on a field; and each theme's pointer on the toast and focus in it.
 
 **A component can have a taste of its own**, for a moment no other answers the same way, and it runs
 over the page's there. A theme that names a moment for the page clears the default theme's taste for

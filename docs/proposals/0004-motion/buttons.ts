@@ -24,19 +24,21 @@
  */
 import { reference } from '../../../src/reference.js';
 import {
+    aside,
     breathe,
     centres,
     comet,
     edge,
     flooded,
     floods,
+    flights,
     focal,
     glass,
     lights,
     line,
-    mixed,
     moves,
     orbit,
+    ringRules,
     ripple,
     scan,
     sheen,
@@ -89,7 +91,7 @@ const colours = {
         pressed: reference('--ui-color-primary-pressed').cssText,
         ink: reference('--ui-color-primary-contrast').cssText,
         sheen: sheen.on(reference('--ui-color-primary').cssText),
-        tint: mixed(reference('--ui-color-primary').cssText),
+        tint: reference('--ui-color-primary-hover').cssText,
     },
     secondary: {
         rest: reference('--ui-color-surface-control').cssText,
@@ -1009,12 +1011,12 @@ ${each(
    are the danger and the info, which that theme's dark scheme makes a terminal's red and
    cyan. */
 button[data-move='glitch'] {
-    animation: ui-glitch var(--ui-duration-200) linear;
+    animation: ui-glitch var(--ui-duration-200) linear, var(--ui-run-ring, none);
 }
 
 /* heartbeat: two beats outward. It only grows, so the pointer that pressed it stays on it. */
 button[data-move='heartbeat'] {
-    animation: ui-heartbeat var(--ui-duration-300) var(--ui-easing-state);
+    animation: ui-heartbeat var(--ui-duration-300) var(--ui-easing-state), var(--ui-run-ring, none);
 }
 
 /* rubber squashes the button inside the shadow root and leaves the host's box where it was, so
@@ -1022,7 +1024,7 @@ button[data-move='heartbeat'] {
    listens for still arrives — measured in all three engines, with the press starting it. The
    native button misses that click; nothing outside it can tell. */
 button[data-move='rubber'] {
-    animation: ui-rubber var(--ui-duration-400) linear;
+    animation: ui-rubber var(--ui-duration-400) linear, var(--ui-run-ring, none);
 }
 
 /* flip: the reference's clean flip, turning in from edge-on and rocking past its face, less
@@ -1039,11 +1041,11 @@ button[data-move='rubber'] {
    brought its near edge so far forward that it stood 142px tall, three and a half times the
    button, and widened the page by 26px in Chromium and Firefox — measured. */
 button[data-move='flip-vertical'] {
-    animation: ui-flip-vertical calc(var(--ui-duration-400) * 1.5) var(--ui-easing-enter);
+    animation: ui-flip-vertical calc(var(--ui-duration-400) * 1.5) var(--ui-easing-enter), var(--ui-run-ring, none);
 }
 
 button[data-move='flip-horizontal'] {
-    animation: ui-flip-horizontal calc(var(--ui-duration-400) * 1.5) var(--ui-easing-enter);
+    animation: ui-flip-horizontal calc(var(--ui-duration-400) * 1.5) var(--ui-easing-enter), var(--ui-run-ring, none);
 }
 
 /* hover-move: lift. Two pixels: the target moves under a pointer that is already on it, so the
@@ -1117,7 +1119,7 @@ button[data-move='flip-horizontal'] {
    the reader reads. */
 @container ${is('focus-move', 'breathe')} {
     button:focus-visible:not([data-move]) {
-        animation: ${focal.run(breathe.settle)};
+        animation: ${focal.run(breathe.settle)}, var(--ui-run-ring, none);
     }
 }
 
@@ -1152,8 +1154,10 @@ ${every()} {
     }
 }
 
-/* tint: a little of the accent in the button's own fill, in the hover colour's place: a field's
-   over the secondary's surface, and mixed in plainly over the primary's fill. */
+/* tint: a little of the accent in the button's own fill, in the hover colour's place, over the
+   secondary's surface as over a field's. The primary's fill is the accent already, so a little more
+   of it left the fill as it was — measured, Matrix's #008f11 and #00ff00 under the pointer as at
+   rest — and the primary takes its hover colour instead, a step toward the pole with room. */
 @container ${is('hover-fill', 'tint')} {
     ${every()} {
         --ui-fill-hovered: var(--ui-fill-tint);
@@ -2155,6 +2159,26 @@ ${
     transition-duration: 0s;
 }
 
+/* The ring's movements, in a property of their own that every rule animating the button lists
+   beside its own animation, as a field's kinds are listed: an element plays one list, and the
+   ring's written as the button's animation took the place of a movement fired on the focus's
+   arrival, Matrix's glitch among them — measured. Under :where(), so where the button plays
+   nothing else, the ring's plays alone, and anything else written for the button wins. */
+:where(button:focus-visible) {
+    animation: var(--ui-run-ring, none);
+}
+
+${ringRules(
+    'button:focus-visible',
+    is,
+    'var(--ui-ink)',
+    (query, run) => String.raw`@container ${query} {
+    button:focus-visible {
+        --ui-run-ring: ${run};
+    }
+}`,
+)}
+
 ${sweeps}
 
 ${laps}
@@ -2442,15 +2466,25 @@ export const moments: readonly Moment[] = [
                 { name: 'explode', fire: play('explode', 'border') },
             ],
         },
+        ring: {
+            draws: [
+                aside('button'),
+                'slim',
+                'bold',
+                'tight',
+                'inset',
+                'dashed',
+                'double',
+                'breathe',
+                'implode',
+                ...flights('button'),
+            ],
+        },
     }),
 ];
 
 /** What a button leaves out of the reference's, and why. */
 export const refused: readonly Refusal[] = [
-    {
-        name: 'none, of the focus ring',
-        why: 'the ring is where the reader is, not motion: a focus nobody can see is the commonest way a control stops being usable by keyboard, so every focus effect adds to the ring and none takes it away.',
-    },
     {
         name: 'squish, on focus',
         why: 'it is the press being held; a focus has nothing held to answer.',

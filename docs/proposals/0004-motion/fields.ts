@@ -15,10 +15,12 @@
  */
 import { reference } from '../../../src/reference.js';
 import {
+    aside,
     centres,
     comet,
     edge,
     enters,
+    flights,
     flooded,
     floods,
     focal,
@@ -28,6 +30,7 @@ import {
     line,
     moves,
     orbit,
+    ringRules,
     ripple,
     scan,
     sheen,
@@ -203,14 +206,15 @@ export function sheet({ controls, able, behind }: Fields, name: string): string 
 }
 
 /* The control's transitions, for what the kinds change on it, and its one list of animations,
-   read from the four kinds that animate it: the pointer's fill, the shadow, which the pointer's
-   and the focus's take in turn, the focus's fill, and an error's fill. The focus's play under its
-   own names, so its arrival starts them where the pointer's played the same. */
+   read from the five kinds that animate it: the pointer's fill, the shadow, which the pointer's
+   and the focus's take in turn, the focus's fill, an error's fill, and the focus's ring. The
+   focus's play under its own names, so its arrival starts them where the pointer's played the
+   same. */
 ${both('')} {
     transition-property: border-color, box-shadow, background-color, backdrop-filter;
     transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-200), var(--ui-duration-200), var(--ui-duration-200);
     transition-timing-function: var(--ui-easing-state), var(--ui-easing-enter), var(--ui-easing-enter), var(--ui-easing-enter);
-    animation: var(--ui-run-hover, none), var(--ui-run-shadow, none), var(--ui-run-fill, none), var(--ui-run-error, none);
+    animation: var(--ui-run-hover, none), var(--ui-run-shadow, none), var(--ui-run-fill, none), var(--ui-run-error, none), var(--ui-run-ring, none);
 }
 
 /* hover-move: the field moved under the pointer, never while it has the focus, which the reader
@@ -982,6 +986,17 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
     }
 }
 
+${ringRules(
+    both(':focus-visible'),
+    is,
+    reference('--ui-color-focus').cssText,
+    (query, run) => String.raw`@container ${query} {
+    ${both(':focus-visible')} {
+        --ui-run-ring: ${run};
+    }
+}`,
+)}
+
 ${keyframes}
 
 ${moves}
@@ -1117,6 +1132,20 @@ export const moments: readonly Moment[] = [
             ],
         },
         label: { draws: ['accent', 'glow'] },
+        ring: {
+            draws: [
+                aside('input, textarea, select'),
+                'slim',
+                'bold',
+                'tight',
+                'inset',
+                'dashed',
+                'double',
+                'breathe',
+                'implode',
+                ...flights('input, textarea, select'),
+            ],
+        },
     }),
     {
         name: 'invalid',

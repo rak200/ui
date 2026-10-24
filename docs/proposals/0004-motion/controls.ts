@@ -17,8 +17,8 @@
  * all.
  */
 import { reference } from '../../../src/reference.js';
-import { focus, hover } from './moments.js';
-import { replay, type Firing, type Moment } from './motion.js';
+import { focus, held, hover, played, type Own } from './moments.js';
+import { chosen, duration, easing, replay, still, type Firing, type Moment } from './motion.js';
 
 /** Where one element's shared rules apply. */
 export interface Drawn {
@@ -345,11 +345,6 @@ export const tinted = (surface: string, strength = '1'): string => String.raw`li
     )
 )`;
 
-/** A little of the accent mixed into a fill that is no surface, a button's primary, whose label is
- *  set against the fill itself: the tint's floor would turn a fill in the accent white. */
-export const mixed = (fill: string): string =>
-    `color-mix(in oklab, var(--ui-color-accent) 6%, ${fill})`;
-
 /** How far a flood's circle has grown, on the layer or on the `::after` it is drawn on, as the
  *  button's is: the layer's own stays at nothing there, and read off it alone, the button's circle
  *  never showed, so it never glided — measured. */
@@ -434,6 +429,535 @@ export const focal = {
     /** An animation list, played under the focus's names. */
     run: (run: string): string => run.replaceAll(/(?<![\w-])ui-(?=[a-z])/gu, 'ui-focus-'),
 } as const;
+
+/**
+ * The ring's movements on the outline, as every component that draws its own ring plays them. Each
+ * moves a ring the reader can already see and none takes it away, since the ring says where the
+ * reader is: the implode starts faint and further out, and the breathe settles, four rounds and it
+ * rests. Under reduced motion each is the ring at once.
+ */
+export const ring = {
+    breathe:
+        'ui-ring-breathe var(--ui-duration-loop) var(--ui-easing-move) var(--ui-iteration-settle)',
+    implode: 'ui-ring-implode var(--ui-duration-400) var(--ui-easing-enter)',
+    frames: String.raw`
+@keyframes ui-ring-breathe {
+    50% {
+        outline-offset: 5px;
+    }
+}
+
+@keyframes ui-ring-implode {
+    from {
+        outline-offset: 14px;
+        outline-color: color-mix(in srgb, ${reference('--ui-color-focus').cssText} 40%, transparent);
+    }
+}`,
+} as const;
+
+/**
+ * The ring's rules for one component, on the selector its ring is drawn on: what each effect of the
+ * ring's list does to the outline the component draws. `is` is the component's style query and
+ * `ink` the colour an inset ring is drawn in, which has to stand off what it is drawn over. `play`
+ * writes a movement's rule from its query and its animation, as the component lists the animations
+ * of that element: an element plays one list, so where the component's own animate it, the ring's
+ * is listed beside them. `skip` names the effects the component refuses, which get no rule, and
+ * `holds` the shadows and borders its ring stands aside for, {@link held} unless the component
+ * measured fewer of them staying round it.
+ */
+export function ringRules(
+    on: string,
+    is: (moment: string, effect: string) => string,
+    ink: string,
+    play: (query: string, run: string) => string = (query, run) => String.raw`@container ${query} {
+    ${on} {
+        animation: ${run};
+    }
+}`,
+    skip: readonly string[] = [],
+    holds: { readonly shadow: readonly string[]; readonly border: readonly string[] } = held,
+): string {
+    const kept = `(${[
+        ...holds.shadow.map((effect) => is('focus-shadow', effect)),
+        ...holds.border.map((effect) => is('focus-border', effect)),
+    ].join(' or ')})`;
+    const drawn = Object.entries({
+        slim: ['outline-width: 1px;', 'outline-offset: 4px;'],
+        bold: ['outline-width: 3px;'],
+        tight: ['outline-offset: 0;'],
+        inset: ['outline-offset: -6px;', `outline-color: ${ink};`],
+        dashed: ['outline-style: dashed;'],
+        double: ['outline-style: double;', 'outline-width: 4px;'],
+    })
+        .filter(([effect]) => !skip.includes(effect))
+        .map(
+            ([effect, declarations]) => String.raw`@container ${is('focus-ring', effect)} {
+    ${on} {
+        ${declarations.join('\n        ')}
+    }
+}`,
+        )
+        .join('\n\n');
+    const played = (['breathe', 'implode'] as const)
+        .filter((effect) => !skip.includes(effect))
+        .map((effect) => play(is('focus-ring', effect), ring[effect]))
+        .join('\n\n');
+
+    return String.raw`
+/* ——— The ring, the outline the component draws at the focus. ——— */
+
+/* none: the ring stands aside where a shadow or a border the focus holds stays round the component,
+   ${holds.shadow.join(', ')}, ${holds.border.join(' or ')}, and nowhere else, so the focus is never
+   left unseen; and never in forced colours, where shadows are gone and the ring is all that is left. */
+@media (forced-colors: none) {
+    @container ${is('focus-ring', 'none')} and ${kept} {
+        ${on} {
+            outline-style: none;
+        }
+    }
+}
+
+/* slim, bold, tight, inset, dashed and double: the ring drawn otherwise, and at once. The slim ring
+   stands further off and the inset one further in, 4px clear of the boundary either way rather than
+   the ring's 2px, as the review asked. A double ring needs the width for its two lines and the gap
+   between them. */
+${drawn}
+
+${played}
+
+${ring.frames}
+`;
+}
+
+/**
+ * The ring flown over the page, for the two effects an outline cannot draw: the glide, which leaves
+ * the control the focus left and lands on the one it reached, and the glitch, which shakes. An
+ * outline is drawn round its own element and moves only with it, so both fly one ring of the page's
+ * own, laid where the control's ring is and moved with the control frame by frame while its outline
+ * is put away; once it lands the outline is back where the flown ring was, so the ring the reader
+ * sees from the first frame is the ring that stays. It flies in the top layer, so a ring on a modal
+ * dialog's controls flies over the dialog as well. A focus from nowhere the reader saw — a click on
+ * a button, a script's, the page's first — has its ring at once, as every focus does under reduced
+ * motion and in forced colours, where nothing flies.
+ */
+const flight = String.raw`
+/* The flown ring, as the outline draws it: its width and colour, no box of its own, and nothing a
+   pointer lands on. The popover's own box, which the top layer would draw, is taken away. */
+[data-ring] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border: var(--ui-ring-width) solid var(--ui-ring-colour);
+    background: none;
+    overflow: visible;
+    pointer-events: none;
+}
+
+/* glitch: the ring shaken in steps, a pixel or three each way every few frames, and split three
+   times into the danger and the info thrown either way, the movement's glitch's colours; it ends
+   where the ring is. */
+[data-ring='glitch'] {
+    animation: ui-ring-shake var(--ui-duration-400) steps(1, end);
+}
+
+[data-ring='glitch']::before,
+[data-ring='glitch']::after {
+    content: '';
+    position: absolute;
+    inset: calc(-1 * var(--ui-ring-width));
+    border: var(--ui-ring-width) solid;
+    border-radius: inherit;
+    opacity: 0;
+    animation: ui-ring-split var(--ui-duration-400) steps(1, end);
+}
+
+[data-ring='glitch']::before {
+    --ui-ring-split: -1;
+    border-color: ${reference('--ui-color-danger').cssText};
+}
+
+[data-ring='glitch']::after {
+    --ui-ring-split: 1;
+    border-color: ${reference('--ui-color-info').cssText};
+}
+
+@keyframes ui-ring-shake {
+    0% {
+        translate: -2px 0;
+    }
+    8% {
+        translate: 2px 1px;
+    }
+    16% {
+        translate: -3px -1px;
+    }
+    25% {
+        translate: 1px 0;
+    }
+    33% {
+        translate: 3px 1px;
+    }
+    41% {
+        translate: -1px -1px;
+    }
+    50% {
+        translate: 2px 0;
+    }
+    58% {
+        translate: -2px 1px;
+    }
+    66% {
+        translate: 1px -1px;
+    }
+    75% {
+        translate: -1px 0;
+    }
+    83% {
+        translate: 1px 0;
+    }
+    91% {
+        translate: none;
+    }
+}
+
+@keyframes ui-ring-split {
+    8%,
+    33%,
+    58% {
+        opacity: 0.8;
+        translate: calc(var(--ui-ring-split) * 3px) 0;
+    }
+    16%,
+    41%,
+    66% {
+        opacity: 0;
+    }
+}`;
+
+/** A ring as an outline draws it round an element: its outer edge on the page, and each corner's
+ *  radius, top left first. */
+interface Round {
+    readonly x: number;
+    readonly y: number;
+    readonly width: number;
+    readonly height: number;
+    readonly corners: readonly number[];
+}
+
+/** The ring an outline `width` wide and `offset` off the boundary draws round the element where it
+ *  is now, moved and grown with it, its corners round as the element's and a square one square. */
+function round(element: Element, width: number, offset: number): Round {
+    const box = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    const out = offset + width;
+
+    return {
+        x: box.x - out,
+        y: box.y - out,
+        width: box.width + 2 * out,
+        height: box.height + 2 * out,
+        corners: [
+            style.borderTopLeftRadius,
+            style.borderTopRightRadius,
+            style.borderBottomRightRadius,
+            style.borderBottomLeftRadius,
+        ].map((corner) => {
+            const length = Number.parseFloat(corner);
+            const drawn = corner.endsWith('%')
+                ? (length / 100) * Math.min(box.width, box.height)
+                : length;
+
+            return drawn > 0 ? Math.max(0, drawn + out) : 0;
+        }),
+    };
+}
+
+/** Whether a node is the target or in it, through every shadow root between the two. */
+function inside(target: EventTarget, node: Node): boolean {
+    for (
+        let at: Node | null = node;
+        at !== null;
+        at = at instanceof ShadowRoot ? at.host : at.parentNode
+    ) {
+        if (at === target) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/** The ring `progress` of the way from one ring to another. */
+function between(from: Round, to: Round, progress: number): Round {
+    const along = (start: number, end: number): number => start + (end - start) * progress;
+
+    return {
+        x: along(from.x, to.x),
+        y: along(from.y, to.y),
+        width: along(from.width, to.width),
+        height: along(from.height, to.height),
+        corners: to.corners.map((corner, index) => along(from.corners[index] ?? corner, corner)),
+    };
+}
+
+/** The control the reader can see the focus on, while it has it. */
+let seen: Element | undefined;
+
+/**
+ * Where the ring the reader saw last was when the focus left it — round the control it left, or
+ * the flown ring where it had got to, if it was still landing — and where the focus went, as far
+ * as the document can see into it: the host of the control it reached. A glide leaves from here
+ * only for the control the focus went to, and never after a time: WebKit dispatched the arrival a
+ * further 36ms to 65ms after the departure, the work of the page's style in between, and more on a
+ * slower machine — measured — so a time is too short there and long enough to fly from a focus
+ * that went nowhere elsewhere.
+ */
+let left:
+    | {
+          readonly control: Element;
+          readonly to: EventTarget | null;
+          readonly from: (width: number, offset: number) => Round | undefined;
+      }
+    | undefined;
+
+/** The ring in the air, if one is: the control it lands on, where it is, and its end. */
+let flying: { readonly control: HTMLElement; now: Round; readonly end: () => void } | undefined;
+
+/** The page's flown ring, made the first time a ring flies: one, since the focus is on one control
+ *  at a time. */
+let flier: HTMLElement | undefined;
+
+document.addEventListener(
+    'focusin',
+    (event) => {
+        const target = event.composedPath()[0];
+        seen = target instanceof Element && target.matches(':focus-visible') ? target : undefined;
+    },
+    { capture: true },
+);
+document.addEventListener(
+    'focusout',
+    (event) => {
+        const target = event.composedPath()[0];
+        const to = event.relatedTarget;
+
+        if (flying !== undefined && flying.control === target) {
+            const { control, now } = flying;
+            flying.end();
+            left = { control, to, from: () => now };
+        } else if (target instanceof Element && target === seen) {
+            // Not where it is no longer drawn: a closed dialog's control is a box of nothing.
+            left = {
+                control: target,
+                to,
+                from: (width, offset) =>
+                    target.getClientRects().length === 0 ? undefined : round(target, width, offset),
+            };
+        } else {
+            left = undefined;
+        }
+
+        seen = undefined;
+    },
+    { capture: true },
+);
+
+/** The flown ring, laid in the page the first time one flies. */
+function aloft(): HTMLElement {
+    if (flier !== undefined) {
+        return flier;
+    }
+
+    const sheet = document.createElement('style');
+    sheet.textContent = flight;
+    document.head.append(sheet);
+    const layer = document.createElement('div');
+    layer.popover = 'manual';
+    layer.ariaHidden = 'true';
+    layer.dataset['ring'] = '';
+    document.body.append(layer);
+    flier = layer;
+
+    return layer;
+}
+
+/** Lays the flown ring over a ring. */
+function lay(layer: HTMLElement, ring: Round): void {
+    layer.style.left = `${ring.x.toFixed(2)}px`;
+    layer.style.top = `${ring.y.toFixed(2)}px`;
+    layer.style.width = `${ring.width.toFixed(2)}px`;
+    layer.style.height = `${ring.height.toFixed(2)}px`;
+    layer.style.borderRadius = ring.corners.map((corner) => `${corner.toFixed(2)}px`).join(' ');
+}
+
+/**
+ * Flies the ring onto the control the focus has reached, where the control is one `selector`
+ * names: the glide from the ring the reader saw last, and the glitch on the control's own. How long
+ * it flies is a token, so the collapse reaches it, and so is the glide's curve, which the clock
+ * takes: an animation with no keyframes runs on it, and its progress is already eased — measured in
+ * all three engines.
+ */
+function flies(effect: 'glide' | 'glitch', selector: string): (firing: Firing) => void {
+    return ({ event }) => {
+        const control = event.composedPath()[0];
+
+        if (
+            !(control instanceof HTMLElement) ||
+            !control.matches(selector) ||
+            still() ||
+            matchMedia('(forced-colors: active)').matches
+        ) {
+            return;
+        }
+
+        const style = getComputedStyle(control);
+        const width = Number.parseFloat(style.outlineWidth);
+        const offset = Number.parseFloat(style.outlineOffset);
+        const last =
+            left !== undefined &&
+            left.to !== null &&
+            left.control !== control &&
+            inside(left.to, control)
+                ? left
+                : undefined;
+        const from = effect === 'glide' ? last?.from(width, offset) : undefined;
+
+        if (style.outlineStyle === 'none' || (effect === 'glide' && from === undefined)) {
+            return;
+        }
+
+        const layer = aloft();
+
+        // Put down first, so the glitch begins again rather than going on.
+        if (flying !== undefined) {
+            flying.end();
+            layer.getBoundingClientRect();
+        }
+
+        const where = (): Round => round(control, width, offset);
+        const start = from ?? where();
+        layer.style.setProperty('--ui-ring-width', `${width.toFixed(2)}px`);
+        layer.style.setProperty('--ui-ring-colour', style.outlineColor);
+        lay(layer, start);
+        layer.dataset['ring'] = effect;
+        layer.showPopover();
+        control.style.setProperty('outline-style', 'none');
+
+        const clock = layer.animate(null, {
+            duration: duration(
+                control,
+                effect === 'glide' ? '--ui-duration-300' : '--ui-duration-400',
+            ),
+            easing: effect === 'glide' ? easing(control, '--ui-easing-move') : 'linear',
+        });
+        const trip: { readonly control: HTMLElement; now: Round; readonly end: () => void } = {
+            control,
+            now: start,
+            end: () => {
+                if (flying !== trip) {
+                    return;
+                }
+
+                flying = undefined;
+                clock.cancel();
+                control.style.removeProperty('outline-style');
+                layer.dataset['ring'] = '';
+                layer.hidePopover();
+            },
+        };
+        flying = trip;
+
+        const step = (): void => {
+            const progress = clock.effect?.getComputedTiming().progress;
+
+            if (flying !== trip || progress === null || progress === undefined) {
+                return;
+            }
+
+            trip.now = from === undefined ? where() : between(from, where(), progress);
+            lay(layer, trip.now);
+            requestAnimationFrame(step);
+        };
+
+        requestAnimationFrame(step);
+        clock.finished.then(trip.end, () => undefined);
+    };
+}
+
+/** The turn each control's ring was last stood aside on, so the end of an earlier one brings back
+ *  nothing. */
+const turns = new WeakMap<HTMLElement, symbol>();
+
+/**
+ * The ring's `none`, for the control `selector` names, where nothing the focus holds stays round
+ * the component — where something does, the sheet has taken the ring away already. While one of the
+ * shadows and borders {@link played} plays, the ring stands aside, and it is back once every
+ * animation the focus started has settled, or as soon as the focus leaves. Those are the ones still
+ * waiting to start as the focus arrives, whatever they are named: the comet plays under the orbit's
+ * name, and both fade under a third. Never under reduced motion, where they settle at once, nor in
+ * forced colours, where they are gone and the ring is all that is left.
+ */
+export function aside(selector: string): Own {
+    return {
+        name: 'none',
+        fire: ({ host, event }) => {
+            const control = event.composedPath()[0];
+
+            if (
+                !(control instanceof HTMLElement) ||
+                !control.matches(selector) ||
+                still() ||
+                matchMedia('(forced-colors: active)').matches ||
+                getComputedStyle(control).outlineStyle === 'none'
+            ) {
+                return;
+            }
+
+            const plays =
+                played.shadow.includes(chosen(host, 'focus-shadow')) ||
+                played.border.includes(chosen(host, 'focus-border'));
+            const started = [
+                ...host.getAnimations({ subtree: true }),
+                ...(host.shadowRoot?.getAnimations() ?? []),
+            ].filter(
+                (animation) =>
+                    animation.pending &&
+                    Number.isFinite(
+                        animation.effect?.getComputedTiming().endTime ?? Number.POSITIVE_INFINITY,
+                    ),
+            );
+
+            if (!plays || started.length === 0) {
+                return;
+            }
+
+            const turn = Symbol('aside');
+            turns.set(control, turn);
+            control.style.setProperty('outline-style', 'none');
+
+            const back = (): void => {
+                if (turns.get(control) === turn) {
+                    turns.delete(control);
+                    control.style.removeProperty('outline-style');
+                }
+            };
+
+            void Promise.allSettled(started.map((animation) => animation.finished)).then(back);
+            control.addEventListener('blur', back, { once: true });
+        },
+    };
+}
+
+/** The ring's effects flown over the page, as every component that draws its own ring offers them,
+ *  on the control `selector` names. */
+export function flights(selector: string): readonly Own[] {
+    return [
+        { name: 'glitch', fire: flies('glitch', selector) },
+        { name: 'glide', fire: flies('glide', selector) },
+    ];
+}
 
 /**
  * Publishes where the pointer came onto a component, for a ripple to spread from, held to the box.
@@ -828,8 +1352,9 @@ export function rules({
     return String.raw`
 /* The control's one list of animations, read from the kinds that animate it, each from a property
    of its own, so none takes another's away: the pointer's border, shadow, fill and movement, the
-   focus's border, shadow, fill and movement, and an error's border and fill. The focus's play
-   under its own names, so its arrival starts them where the pointer's played the same. A movement
+   focus's border, shadow, fill and movement, an error's border and fill, and the focus's ring.
+   The focus's play under its own names, so its arrival starts them where the pointer's played the
+   same. A movement
    the control plays is the button's, at the button's give, a drawn control being as small as one,
    and a flip turns it at its own side. A ring is added to the glow a theme lights the control
    with rather than drawn in its place: added, a shadow list goes beside the one under it in all
@@ -847,8 +1372,9 @@ ${host} input {
         var(--ui-run-focus-fill, none),
         var(--ui-run-focus-move, none),
         var(--ui-run-error-border, none),
-        var(--ui-run-error-fill, none);
-    animation-composition: add, add, replace, replace, add, add, add, replace, replace, add, replace;
+        var(--ui-run-error-fill, none),
+        var(--ui-run-focus-ring, none);
+    animation-composition: add, add, replace, replace, add, add, add, replace, replace, add, replace, replace;
     --ui-flip-width: ${width};
     --ui-flip-height: ${height};
 }
@@ -1795,6 +2321,19 @@ ${(
         animation: ui-glitch var(--ui-duration-200) linear calc(var(--ui-iteration-settle) * 2);
     }
 }
+
+${ringRules(
+    `${host} input:focus-visible`,
+    is,
+    reference('--ui-color-focus').cssText,
+    (query, run) => String.raw`@container ${query} {
+    ${host} input:focus-visible {
+        --ui-run-focus-ring: ${run};
+    }
+}`,
+    ['inset'],
+    { shadow: held.shadow.filter((effect) => effect !== 'raise'), border: held.border },
+)}
 `;
 }
 
@@ -2158,6 +2697,22 @@ export function moments(preview: string): readonly Moment[] {
                 refuses: lined,
             },
             label: { draws: ['accent', 'glow'] },
+            ring: {
+                draws: [
+                    aside('input'),
+                    'slim',
+                    'bold',
+                    'tight',
+                    'dashed',
+                    'double',
+                    'breathe',
+                    'implode',
+                    ...flights('input'),
+                ],
+                refuses: {
+                    inset: 'the box is barely wider than its mark, so a ring inside it would be drawn on the mark.',
+                },
+            },
         }),
         {
             name: 'invalid',
