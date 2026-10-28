@@ -1288,6 +1288,7 @@ prototype({
                     draws: [
                         'highlight',
                         'accent',
+                        'rainbow',
                         'edge',
                         'orbit',
                         'trace',
@@ -1342,6 +1343,7 @@ prototype({
                         draws: [
                             'highlight',
                             'accent',
+                            'rainbow',
                             'edge',
                             'orbit',
                             'trace',

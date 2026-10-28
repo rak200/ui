@@ -18,7 +18,16 @@
  */
 import { reference } from '../../../src/reference.js';
 import { focus, held, hover, played, type Own } from './moments.js';
-import { chosen, duration, easing, replay, still, type Firing, type Moment } from './motion.js';
+import {
+    chosen,
+    duration,
+    easing,
+    heard,
+    replay,
+    still,
+    type Firing,
+    type Moment,
+} from './motion.js';
 
 /** Where one element's shared rules apply. */
 export interface Drawn {
@@ -62,9 +71,14 @@ export const lights = {
             0 6px 14px -4px light-dark(rgb(0 0 0 / 0.35), rgb(from var(--ui-color-accent) r g b / 0.45))`,
     /** The button's sink: its shadow gone inside, as if pressed into the page. */
     sink: 'inset 0 2px 5px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7))',
-    /** A light of the accent held inside the boundary, its blur at the scale of what it lights. */
-    inner: (blur: string): string =>
-        `inset 0 0 0 1px var(--ui-color-accent), inset 0 0 ${blur} rgb(from var(--ui-color-accent) r g b / 0.22)`,
+    /** A light of the accent held inside the boundary: a line along its inside and the glow's light
+     *  from it, its blur and its spread at the scale of what it lights. Over a fill, in the colour a
+     *  component gives its bands there, `--ui-band-ink`. */
+    inner: (blur: string, spread: string): string => {
+        const colour = 'var(--ui-band-ink, var(--ui-color-accent))';
+
+        return `inset 0 0 0 1px ${colour}, inset 0 0 ${blur} ${spread} rgb(from ${colour} r g b / 0.5)`;
+    },
     /**
      * The card's cast, at `scale` of the card's: the pointer as a light, the shadow falling away from
      * it the further the further the pointer is from the middle, and on a dark page, where a shadow
@@ -213,6 +227,29 @@ export const trace = {
      */
     over: off,
     transition: '--ui-trace calc(var(--ui-duration-400) * 1.5) var(--ui-easing-move)',
+} as const;
+
+/**
+ * The rainbow, as every component that offers it draws it: a line, the boundary's or the ring's,
+ * turned round the hue wheel at its own lightness and chroma, so at every hue it stands off what is
+ * round it about as that colour does, and back to it, where it rests at the focus. Never the fill:
+ * turned under a label, the reference's rainbow took the primary's white label to 3.79:1. A turn
+ * takes two loops, 2.4s; under the pointer it turns for as long as the pointer rests, and at the
+ * focus, which can rest for minutes, twice, in the time a loop that settles takes.
+ */
+export const rainbow = {
+    /** `colour`, `--ui-turn` degrees round the hue wheel from its own hue. */
+    colour: (colour: string): string => `oklch(from ${colour} l c calc(h + var(--ui-turn)))`,
+    /** Under the pointer. */
+    loop: 'ui-turn calc(var(--ui-duration-loop) * 2) linear var(--ui-iteration-loop)',
+    /** At the focus. */
+    run: 'ui-turn calc(var(--ui-duration-loop) * 2) linear calc(var(--ui-iteration-settle) / 2)',
+    frames: String.raw`
+@keyframes ui-turn {
+    to {
+        --ui-turn: 360;
+    }
+}`,
 } as const;
 
 /**
@@ -433,13 +470,16 @@ export const focal = {
 /**
  * The ring's movements on the outline, as every component that draws its own ring plays them. Each
  * moves a ring the reader can already see and none takes it away, since the ring says where the
- * reader is: the implode starts faint and further out, and the breathe settles, four rounds and it
- * rests. Under reduced motion each is the ring at once.
+ * reader is: the implode starts faint and further out, the breathe settles, four rounds and it
+ * rests, and the rainbow turns the ring's colour as {@link rainbow} turns a line, twice, and rests
+ * on it. Under reduced motion each is the ring at once.
  */
 export const ring = {
     breathe:
         'ui-ring-breathe var(--ui-duration-loop) var(--ui-easing-move) var(--ui-iteration-settle)',
     implode: 'ui-ring-implode var(--ui-duration-400) var(--ui-easing-enter)',
+    rainbow:
+        'ui-ring-turn calc(var(--ui-duration-loop) * 2) linear calc(var(--ui-iteration-settle) / 2)',
     frames: String.raw`
 @keyframes ui-ring-breathe {
     50% {
@@ -452,18 +492,26 @@ export const ring = {
         outline-offset: 14px;
         outline-color: color-mix(in srgb, ${reference('--ui-color-focus').cssText} 40%, transparent);
     }
+}
+
+@keyframes ui-ring-turn {
+    to {
+        --ui-turn: 360;
+    }
 }`,
 } as const;
 
 /**
  * The ring's rules for one component, on the selector its ring is drawn on: what each effect of the
  * ring's list does to the outline the component draws. `is` is the component's style query and
- * `ink` the colour an inset ring is drawn in, which has to stand off what it is drawn over. `play`
- * writes a movement's rule from its query and its animation, as the component lists the animations
- * of that element: an element plays one list, so where the component's own animate it, the ring's
- * is listed beside them. `skip` names the effects the component refuses, which get no rule, and
- * `holds` the shadows and borders its ring stands aside for, {@link held} unless the component
- * measured fewer of them staying round it.
+ * `ink` the colour an inset ring is drawn in, which has to stand off what it is drawn over; the
+ * ring stands 2px inside an edge drawn 1px wide, and a component whose edge is drawn otherwise, or
+ * not at all, says how far in it goes in `--ui-ring-inset`. `play` writes a movement's rule from
+ * its query and its animation, as the component lists the animations of that element: an element
+ * plays one list, so where the component's own animate it, the ring's is listed beside them.
+ * `skip` names the effects the component refuses, which get no rule, and `holds` the shadows and
+ * borders its ring stands aside for, {@link held} unless the component measured fewer of them
+ * staying round it.
  */
 export function ringRules(
     on: string,
@@ -485,9 +533,10 @@ export function ringRules(
         slim: ['outline-width: 1px;', 'outline-offset: 4px;'],
         bold: ['outline-width: 3px;'],
         tight: ['outline-offset: 0;'],
-        inset: ['outline-offset: -6px;', `outline-color: ${ink};`],
+        inset: ['outline-offset: var(--ui-ring-inset, -5px);', `outline-color: ${ink};`],
         dashed: ['outline-style: dashed;'],
         double: ['outline-style: double;', 'outline-width: 4px;'],
+        rainbow: [`outline-color: ${rainbow.colour(reference('--ui-color-focus').cssText)};`],
     })
         .filter(([effect]) => !skip.includes(effect))
         .map(
@@ -498,7 +547,7 @@ export function ringRules(
 }`,
         )
         .join('\n\n');
-    const played = (['breathe', 'implode'] as const)
+    const played = (['breathe', 'implode', 'rainbow'] as const)
         .filter((effect) => !skip.includes(effect))
         .map((effect) => play(is('focus-ring', effect), ring[effect]))
         .join('\n\n');
@@ -518,9 +567,13 @@ export function ringRules(
 }
 
 /* slim, bold, tight, inset, dashed and double: the ring drawn otherwise, and at once. The slim ring
-   stands further off and the inset one further in, 4px clear of the boundary either way rather than
-   the ring's 2px, as the review asked. A double ring needs the width for its two lines and the gap
-   between them. */
+   stands 4px clear of the boundary rather than the ring's 2px, and the inset one 2px inside the
+   edge, as the review asked: 3px inside the boundary where the edge is drawn 1px wide, and as far
+   in as the component says in --ui-ring-inset where it is drawn otherwise. Not further in: an
+   outline's corner is the boundary's less how far in it is drawn, so 4px inside the button's 6px
+   corner squared the ring, which then boxed the primary's label in. A double ring needs the width
+   for its two lines and the gap between them. The rainbow's colour is the focus's turned by its
+   movement below, which turns it twice and rests where it began. */
 ${drawn}
 
 ${played}
@@ -530,15 +583,17 @@ ${ring.frames}
 }
 
 /**
- * The ring flown over the page, for the two effects an outline cannot draw: the glide, which leaves
- * the control the focus left and lands on the one it reached, and the glitch, which shakes. An
- * outline is drawn round its own element and moves only with it, so both fly one ring of the page's
- * own, laid where the control's ring is and moved with the control frame by frame while its outline
- * is put away; once it lands the outline is back where the flown ring was, so the ring the reader
- * sees from the first frame is the ring that stays. It flies in the top layer, so a ring on a modal
- * dialog's controls flies over the dialog as well. A focus from nowhere the reader saw — a click on
- * a button, a script's, the page's first — has its ring at once, as every focus does under reduced
- * motion and in forced colours, where nothing flies.
+ * The ring flown over the page, for the effects an outline cannot draw: the glide, which leaves the
+ * control the focus left and lands on the one it reached; the glitch, which shakes; the trace,
+ * drawn round; and the refocus, which comes out of a blur and goes back into one. An outline is
+ * drawn round its own element, whole and sharp, and moves only with it, so each flies one ring of
+ * the page's own, laid where the control's ring is and moved with the control frame by frame while
+ * its outline is put away; once it lands the outline is back where the flown ring was, so the ring
+ * the reader sees from the first frame is the ring that stays. The refocus blurs away on a second
+ * ring, since the next control's may be coming into focus meanwhile. Both fly in the top layer, so
+ * a ring on a modal dialog's controls flies over the dialog as well. A glide from nowhere the
+ * reader saw — a click on a button, a script's, the page's first — is the ring at once, as every
+ * one is under reduced motion and in forced colours, where nothing flies.
  */
 const flight = String.raw`
 /* The flown ring, as the outline draws it: its width and colour, no box of its own, and nothing a
@@ -581,6 +636,57 @@ const flight = String.raw`
 [data-ring='glitch']::after {
     --ui-ring-split: 1;
     border-color: ${reference('--ui-color-info').cssText};
+}
+
+/* trace: the ring drawn round once, clockwise from the top, in the time and on the curve the
+   border's trace is drawn in: the ring cut to the angle reached. From nothing, the one ring that
+   is not whole from the first frame: the review chose it over the ring drawn over a faint one. */
+[data-ring='trace'] {
+    mask: conic-gradient(#000 var(--ui-trace), transparent 0);
+    animation: ui-ring-trace calc(var(--ui-duration-400) * 1.5) var(--ui-easing-move) forwards;
+}
+
+/* refocus: the ring brought into focus from a blur as the focus arrives, and blurred away on the
+   second ring as it leaves, in the times and on the curves a surface's refocus and defocus take. A
+   blur sized to a line, where a surface's is half a rem, and the ring at its full strength as it
+   arrives, since the ring is there from the first frame; it fades only as it goes, over the second
+   half, as a surface's defocus does. */
+[data-ring='refocus'] {
+    animation: ui-ring-sharpen calc(var(--ui-duration-200) * 1.25) var(--ui-easing-enter);
+}
+
+[data-ring='blur'] {
+    animation:
+        ui-ring-blur calc(var(--ui-duration-200) * 1.25) var(--ui-easing-exit) forwards,
+        ui-ring-fade calc(var(--ui-duration-200) * 0.625) var(--ui-easing-exit)
+            calc(var(--ui-duration-200) * 0.625) forwards;
+}
+
+@keyframes ui-ring-trace {
+    from {
+        --ui-trace: 0deg;
+    }
+    to {
+        --ui-trace: 360deg;
+    }
+}
+
+@keyframes ui-ring-sharpen {
+    from {
+        filter: blur(3px);
+    }
+}
+
+@keyframes ui-ring-blur {
+    to {
+        filter: blur(3px);
+    }
+}
+
+@keyframes ui-ring-fade {
+    to {
+        opacity: 0;
+    }
 }
 
 @keyframes ui-ring-shake {
@@ -708,11 +814,14 @@ let seen: Element | undefined;
 /**
  * Where the ring the reader saw last was when the focus left it — round the control it left, or
  * the flown ring where it had got to, if it was still landing — and where the focus went, as far
- * as the document can see into it: the host of the control it reached. A glide leaves from here
- * only for the control the focus went to, and never after a time: WebKit dispatched the arrival a
- * further 36ms to 65ms after the departure, the work of the page's style in between, and more on a
- * slower machine — measured — so a time is too short there and long enough to fly from a focus
- * that went nowhere elsewhere.
+ * as the departure's listener can see into it: the host of the control it reached, or the control
+ * itself where the focus moved inside one shadow root, as between a radio group's controls, which
+ * the document never hears of: heard from the document alone, the ring the reader saw last stayed
+ * round the control the focus came into the group on, and nothing glided out of it. A glide leaves
+ * from here only for the control the focus went to, and never after a time: WebKit dispatched the
+ * arrival a further 36ms to 65ms after the departure, the work of the page's style in between, and
+ * more on a slower machine — measured — so a time is too short there and long enough to fly from a
+ * focus that went nowhere elsewhere.
  */
 let left:
     | {
@@ -729,56 +838,52 @@ let flying: { readonly control: HTMLElement; now: Round; readonly end: () => voi
  *  at a time. */
 let flier: HTMLElement | undefined;
 
-document.addEventListener(
-    'focusin',
-    (event) => {
-        const target = event.composedPath()[0];
-        seen = target instanceof Element && target.matches(':focus-visible') ? target : undefined;
-    },
-    { capture: true },
-);
-document.addEventListener(
-    'focusout',
-    (event) => {
-        const target = event.composedPath()[0];
-        const to = event.relatedTarget;
+/** The ring blurring away, the refocus's, made the first time one does, and its end while it does:
+ *  one, since the focus leaves one control at a time; a later departure puts an earlier down. */
+let fader: HTMLElement | undefined;
+let fading: (() => void) | undefined;
 
-        if (flying !== undefined && flying.control === target) {
-            const { control, now } = flying;
-            flying.end();
-            left = { control, to, from: () => now };
-        } else if (target instanceof Element && target === seen) {
-            // Not where it is no longer drawn: a closed dialog's control is a box of nothing.
-            left = {
-                control: target,
-                to,
-                from: (width, offset) =>
-                    target.getClientRects().length === 0 ? undefined : round(target, width, offset),
-            };
-        } else {
-            left = undefined;
-        }
+heard('focusin', (event) => {
+    const target = event.composedPath()[0];
+    seen = target instanceof Element && target.matches(':focus-visible') ? target : undefined;
+});
+heard('focusout', (event) => {
+    const target = event.composedPath()[0];
+    const to = event.relatedTarget;
 
-        seen = undefined;
-    },
-    { capture: true },
-);
-
-/** The flown ring, laid in the page the first time one flies. */
-function aloft(): HTMLElement {
-    if (flier !== undefined) {
-        return flier;
+    if (flying !== undefined && flying.control === target) {
+        const { control, now } = flying;
+        flying.end();
+        left = { control, to, from: () => now };
+    } else if (target instanceof Element && target === seen) {
+        // Not where it is no longer drawn: a closed dialog's control is a box of nothing.
+        left = {
+            control: target,
+            to,
+            from: (width, offset) =>
+                target.getClientRects().length === 0 ? undefined : round(target, width, offset),
+        };
+    } else {
+        left = undefined;
     }
 
-    const sheet = document.createElement('style');
-    sheet.textContent = flight;
-    document.head.append(sheet);
+    seen = undefined;
+});
+
+/** A ring of the page's own, laid in the page; the first brings the sheet the flown rings are drawn
+ *  by. */
+function aloft(): HTMLElement {
+    if (flier === undefined && fader === undefined) {
+        const sheet = document.createElement('style');
+        sheet.textContent = flight;
+        document.head.append(sheet);
+    }
+
     const layer = document.createElement('div');
     layer.popover = 'manual';
     layer.ariaHidden = 'true';
     layer.dataset['ring'] = '';
     document.body.append(layer);
-    flier = layer;
 
     return layer;
 }
@@ -792,15 +897,25 @@ function lay(layer: HTMLElement, ring: Round): void {
     layer.style.borderRadius = ring.corners.map((corner) => `${corner.toFixed(2)}px`).join(' ');
 }
 
+/** How long each flown ring flies, as a duration token, which the collapse reaches, and how many of
+ *  it: as long as the sheet's animation of it runs, so the outline is back as that ends. */
+const airborne = {
+    glide: ['--ui-duration-300', 1],
+    glitch: ['--ui-duration-400', 1],
+    trace: ['--ui-duration-400', 1.5],
+    refocus: ['--ui-duration-200', 1.25],
+} as const;
+
 /**
  * Flies the ring onto the control the focus has reached, where the control is one `selector`
- * names: the glide from the ring the reader saw last, and the glitch on the control's own. How long
- * it flies is a token, so the collapse reaches it, and so is the glide's curve, which the clock
- * takes: an animation with no keyframes runs on it, and its progress is already eased — measured in
- * all three engines.
+ * names: the glide from the ring the reader saw last, and the glitch, the trace and the refocus on
+ * the control's own, which a refocused ring blurs away from as the focus leaves, unless the reader
+ * has chosen another ring by then. The glide's curve is a token too, which the clock takes: an
+ * animation with no keyframes runs on it, and its progress is already eased — measured in all
+ * three engines.
  */
-function flies(effect: 'glide' | 'glitch', selector: string): (firing: Firing) => void {
-    return ({ event }) => {
+function flies(effect: keyof typeof airborne, selector: string): (firing: Firing) => void {
+    return ({ host, event }) => {
         const control = event.composedPath()[0];
 
         if (
@@ -815,6 +930,7 @@ function flies(effect: 'glide' | 'glitch', selector: string): (firing: Firing) =
         const style = getComputedStyle(control);
         const width = Number.parseFloat(style.outlineWidth);
         const offset = Number.parseFloat(style.outlineOffset);
+        const colour = style.outlineColor;
         const last =
             left !== undefined &&
             left.to !== null &&
@@ -828,9 +944,9 @@ function flies(effect: 'glide' | 'glitch', selector: string): (firing: Firing) =
             return;
         }
 
-        const layer = aloft();
+        const layer = (flier ??= aloft());
 
-        // Put down first, so the glitch begins again rather than going on.
+        // Put down first, so what the sheet plays begins again rather than going on.
         if (flying !== undefined) {
             flying.end();
             layer.getBoundingClientRect();
@@ -839,17 +955,15 @@ function flies(effect: 'glide' | 'glitch', selector: string): (firing: Firing) =
         const where = (): Round => round(control, width, offset);
         const start = from ?? where();
         layer.style.setProperty('--ui-ring-width', `${width.toFixed(2)}px`);
-        layer.style.setProperty('--ui-ring-colour', style.outlineColor);
+        layer.style.setProperty('--ui-ring-colour', colour);
         lay(layer, start);
         layer.dataset['ring'] = effect;
         layer.showPopover();
         control.style.setProperty('outline-style', 'none');
 
+        const [token, times] = airborne[effect];
         const clock = layer.animate(null, {
-            duration: duration(
-                control,
-                effect === 'glide' ? '--ui-duration-300' : '--ui-duration-400',
-            ),
+            duration: duration(control, token) * times,
             easing: effect === 'glide' ? easing(control, '--ui-easing-move') : 'linear',
         });
         const trip: { readonly control: HTMLElement; now: Round; readonly end: () => void } = {
@@ -883,7 +997,59 @@ function flies(effect: 'glide' | 'glitch', selector: string): (firing: Firing) =
 
         requestAnimationFrame(step);
         clock.finished.then(trip.end, () => undefined);
+
+        if (effect === 'refocus') {
+            control.addEventListener(
+                'blur',
+                () => {
+                    if (chosen(host, 'focus-ring') === 'refocus' && !still()) {
+                        blurs(control, width, offset, colour);
+                    }
+                },
+                { once: true },
+            );
+        }
     };
+}
+
+/**
+ * Blurs away the ring a control drew, the refocus's, as the focus leaves it: on a ring of its own,
+ * laid where the control's was, `width` wide, `offset` off the boundary and in `colour`, which the
+ * control has stopped drawing by then. Not where the control is no longer drawn: a closed dialog's
+ * control is a box of nothing.
+ */
+function blurs(control: Element, width: number, offset: number, colour: string): void {
+    if (control.getClientRects().length === 0) {
+        return;
+    }
+
+    const layer = (fader ??= aloft());
+
+    // Put down first, so the blur begins again rather than going on.
+    if (fading !== undefined) {
+        fading();
+        layer.getBoundingClientRect();
+    }
+
+    layer.style.setProperty('--ui-ring-width', `${width.toFixed(2)}px`);
+    layer.style.setProperty('--ui-ring-colour', colour);
+    lay(layer, round(control, width, offset));
+    layer.dataset['ring'] = 'blur';
+    layer.showPopover();
+
+    const clock = layer.animate(null, { duration: duration(control, '--ui-duration-200') * 1.25 });
+    const end = (): void => {
+        if (fading !== end) {
+            return;
+        }
+
+        fading = undefined;
+        clock.cancel();
+        layer.dataset['ring'] = '';
+        layer.hidePopover();
+    };
+    fading = end;
+    clock.finished.then(end, () => undefined);
 }
 
 /** The turn each control's ring was last stood aside on, so the end of an earlier one brings back
@@ -956,6 +1122,8 @@ export function flights(selector: string): readonly Own[] {
     return [
         { name: 'glitch', fire: flies('glitch', selector) },
         { name: 'glide', fire: flies('glide', selector) },
+        { name: 'trace', fire: flies('trace', selector) },
+        { name: 'refocus', fire: flies('refocus', selector) },
     ];
 }
 
@@ -1260,8 +1428,10 @@ export function rules({
             )
             .join(',\n        ');
 
-    /** The pointer's layer on a label the pointer rests on. */
+    /** The pointer's layer on a label the pointer rests on, and on one round a control that is
+     *  not in error. */
     const resting = under(':hover', ['::before']);
+    const sound = under(':hover', [`:not(:has(> input:is(${invalid})))::before`]);
 
     /** What a movement under the pointer moves: the control and the label's two layers, which are
      *  its boundary. */
@@ -1301,7 +1471,8 @@ export function rules({
     const ink = reference('--ui-color-text').cssText;
     const marked = reference('--ui-color-accent-contrast').cssText;
 
-    /** The tint over an empty control's surface, and a ripple from a control's middle in an ink. */
+    /** The tint over an empty control's surface, which a full one takes the deeper accent in place
+     *  of, and a ripple from a control's middle in an ink. */
     const surfaceTint = tinted(reference('--ui-color-surface-control').cssText);
     const middle = (each: string): string => ripple.image(ripple.ink(each), '50% 50%');
 
@@ -1545,6 +1716,25 @@ ${host} ${label}::before {
         }
     }
 
+    /* border: rainbow, the button's: the trace's band, whole, its colour turned round the hue wheel
+       for as long as the pointer rests, and the control's fill and mark as they were. Never round
+       a control in error, whose boundary stays red. */
+    @container ${is('hover-border', 'rainbow')} {
+        ${host} ${label}::before {${out(0)}
+            padding: ${trace.width}px;
+            background: ${rainbow.colour(`var(--ui-band-ink, ${far})`)};
+            opacity: 0;
+            transition:
+                opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-state')},
+                ${growing};
+        }
+
+        ${sound} {
+            opacity: 1;
+            animation: ${rainbow.loop};
+        }
+    }
+
     /* border: edge, the card's: the band lit where the pointer is nearest, from where the pointer
        is in the control's own box, which the pointer engine writes on the label. Never on a
        disabled control, and yielding to the focus, as the other bands do. */
@@ -1609,7 +1799,7 @@ ${host} ${label}::before {
         [
             ['raise', lights.raise],
             ['sink', lights.sink],
-            ['inner', lights.inner('0.375rem')],
+            ['inner', lights.inner('0.375rem', '0.0625rem')],
         ] as const
     )
         .map(
@@ -1679,13 +1869,16 @@ ${host} ${label}::before {
     }
 
     /* fill: highlight, the hover colour, and on a full control the deeper accent it hovers in;
-       tint, the card's, a little of the accent in an empty control's fill. Both yield to the focus,
-       as the other fills do, and are drawn after the border's rules, so a full control's fill is
-       the fill kind's to choose. */
+       tint, the card's, a little of the accent in an empty control's fill, and the same deeper
+       accent in a full one's, as the button's primary takes its hover colour: that fill is the
+       accent already, and drawn in the empty control's tint it lost the accent under the pointer,
+       and the mark on it with it — measured, under Matrix. Both yield to the focus, as the other
+       fills do, and are drawn after the border's rules, so a full control's fill is the fill
+       kind's to choose. */
     @container ${is('hover-fill', 'highlight')} {${coloured(pointer, hover, deeper)}
     }
 
-    @container ${is('hover-fill', 'tint')} {${coloured(pointer, surfaceTint)}
+    @container ${is('hover-fill', 'tint')} {${coloured(pointer, surfaceTint, deeper)}
     }
 
     /* fill: spotlight, the button's: a light of the control's ink where the pointer is, from where
@@ -1798,6 +1991,12 @@ ${host} ${label}::before {
     @container ${is('hover-move', 'breathe')} and ${is('hover-border', 'orbit')} {
         ${resting} {
             animation: ${orbit.run}, ${breathe.loop};
+        }
+    }
+
+    @container ${is('hover-move', 'breathe')} and ${is('hover-border', 'rainbow')} {
+        ${sound} {
+            animation: ${rainbow.loop}, ${breathe.loop};
         }
     }
 
@@ -1937,6 +2136,21 @@ ${host} ${invalid}${focusing} {
     }
 }
 
+/* border: rainbow, the pointer's, twice round, and at rest in the trace's colour; never round a
+   control in error, whose boundary stays red, as the accent leaves it. */
+@container ${is('focus-border', 'rainbow')} {
+    ${lit}::after {${out(0)}
+        padding: ${trace.width}px;
+        background: ${rainbow.colour(`var(--ui-band-ink, ${far})`)};
+        animation: ${rainbow.run};
+        transition: ${growing};
+    }
+
+    ${lit}:has(> input:is(${invalid}))::after {
+        visibility: hidden;
+    }
+}
+
 /* border: trace, the pointer's: the boundary drawn round once inside the ring, from the top, and
    undrawn the same way as the focus leaves. */
 @container ${is('focus-border', 'trace')} {
@@ -1994,7 +2208,8 @@ ${host} ${invalid}${focusing} {
    switch and the radio, with the line half a pixel wider, what was left was half as strong or
    less — measured. */
 @container ${is('hover-border', 'trace')} or ${is('focus-border', 'trace')} or
-    ${is('hover-border', 'edge')} or ${is('focus-border', 'edge')} {
+    ${is('hover-border', 'edge')} or ${is('focus-border', 'edge')} or
+    ${is('hover-border', 'rainbow')} or ${is('focus-border', 'rainbow')} {
     ${host} ${label}:has(> input${filled}) {
         --ui-band-ink: ${trace.over('var(--ui-color-accent)')};
     }
@@ -2020,7 +2235,15 @@ ${host} ${invalid}${focusing} {
    small. */
 @container ${is('focus-shadow', 'inner')} {
     ${host} input:focus-visible {
-        --ui-lit-inner: ${lights.inner('0.375rem')};
+        --ui-lit-inner: ${lights.inner('0.375rem', '0.0625rem')};
+    }
+}
+
+/* The inner light over a full control, in the accent moved off its fill, as the trace is: in the
+   accent, over the accent, none of it showed — measured. */
+@container ${is('hover-shadow', 'inner')} or ${is('focus-shadow', 'inner')} {
+    ${host} input${filled} {
+        --ui-band-ink: ${trace.over('var(--ui-color-accent)')};
     }
 }
 
@@ -2076,7 +2299,7 @@ ${host} ${invalid}${focusing} {
             ['glow', '--ui-lit-focus', lights.glow],
             ['raise', '--ui-lit-focus', lights.raise],
             ['sink', '--ui-lit-focus', lights.sink],
-            ['inner', '--ui-lit-inner', lights.inner('0.375rem')],
+            ['inner', '--ui-lit-inner', lights.inner('0.375rem', '0.0625rem')],
         ] as const
     )
         .map(
@@ -2135,7 +2358,7 @@ ${host} ${invalid}${focusing} {
 @container ${is('focus-fill', 'highlight')} {${coloured(focusing, hover, deeper)}
 }
 
-@container ${is('focus-fill', 'tint')} {${coloured(focusing, surfaceTint)}
+@container ${is('focus-fill', 'tint')} {${coloured(focusing, surfaceTint, deeper)}
 }
 
 @container ${is('focus-fill', 'ripple')} {${drawn(':focus-visible', middle)}
@@ -2222,6 +2445,12 @@ ${host} ${invalid}${focusing} {
 @container ${is('focus-move', 'breathe')} and ${is('focus-border', 'orbit')} {
     ${lit}::after {
         animation: ${orbit.run}, ${breathe.settle};
+    }
+}
+
+@container ${is('focus-move', 'breathe')} and ${is('focus-border', 'rainbow')} {
+    ${lit}::after {
+        animation: ${rainbow.run}, ${breathe.settle};
     }
 }
 
@@ -2340,6 +2569,8 @@ ${ringRules(
 /** The keyframes those rules play, and a field's: once in a sheet, however many elements it
  *  draws. */
 export const keyframes = String.raw`
+${rainbow.frames}
+
 /* From a fifth of the danger mixed into the surface rather than the danger laid over it, since a
    field has text in it to read: laid over, it took the text of a field in error to 3.14:1 at each
    round's start, on Matrix's light page, and mixed in, to 4.74:1 at the least, in every theme and
@@ -2374,6 +2605,54 @@ export const keyframes = String.raw`
         box-shadow:
             1px 0 0 0 var(--ui-color-danger),
             -1px 0 0 0 var(--ui-color-info);
+    }
+}
+
+/* A field's boundary shaken in steps, as the ring's glitch shakes the ring, and the boundary it
+   lies over clear while it does. */
+@keyframes ui-shake {
+    0% {
+        translate: -2px 0;
+    }
+    8% {
+        translate: 2px 1px;
+    }
+    16% {
+        translate: -3px -1px;
+    }
+    25% {
+        translate: 1px 0;
+    }
+    33% {
+        translate: 3px 1px;
+    }
+    41% {
+        translate: -1px -1px;
+    }
+    50% {
+        translate: 2px 0;
+    }
+    58% {
+        translate: -2px 1px;
+    }
+    66% {
+        translate: 1px -1px;
+    }
+    75% {
+        translate: -1px 0;
+    }
+    83% {
+        translate: 1px 0;
+    }
+    91% {
+        translate: none;
+    }
+}
+
+@keyframes ui-clear {
+    from,
+    to {
+        border-color: transparent;
     }
 }
 
@@ -2626,6 +2905,7 @@ export function moments(preview: string): readonly Moment[] {
                         says: 'The boundary darkens on an empty control, and the fill deepens on a full one.',
                     },
                     'accent',
+                    'rainbow',
                     'edge',
                     'orbit',
                     'trace',
@@ -2685,6 +2965,7 @@ export function moments(preview: string): readonly Moment[] {
                 draws: [
                     'highlight',
                     'accent',
+                    'rainbow',
                     'edge',
                     'orbit',
                     'trace',
@@ -2707,6 +2988,7 @@ export function moments(preview: string): readonly Moment[] {
                     'double',
                     'breathe',
                     'implode',
+                    'rainbow',
                     ...flights('input'),
                 ],
                 refuses: {

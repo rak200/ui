@@ -851,6 +851,7 @@ const page = prototype({
                 draws: [
                     'highlight',
                     'accent',
+                    'rainbow',
                     'edge',
                     'orbit',
                     'trace',
@@ -893,6 +894,7 @@ const page = prototype({
                     draws: [
                         'highlight',
                         'accent',
+                        'rainbow',
                         'edge',
                         'orbit',
                         'trace',

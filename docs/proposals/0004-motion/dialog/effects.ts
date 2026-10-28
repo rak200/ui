@@ -208,6 +208,88 @@ const assemble =
         });
     };
 
+/** What the reader last acted on: the control the focus was on as a key went down, or what the
+ *  pointer pressed, since a button a click does not focus, as WebKit's is not, is still where the
+ *  reader was. */
+let acted: Element | undefined;
+
+document.addEventListener(
+    'pointerdown',
+    (event) => {
+        const target = event.composedPath()[0];
+        acted = target instanceof Element ? target : undefined;
+    },
+    { capture: true },
+);
+document.addEventListener(
+    'keydown',
+    () => {
+        let at = document.activeElement;
+
+        while (at?.shadowRoot?.activeElement) {
+            at = at.shadowRoot.activeElement;
+        }
+
+        acted = at ?? undefined;
+    },
+    { capture: true },
+);
+
+/**
+ * The reveal's circle: where it grows from, the middle of what the reader opened the dialog from,
+ * in the dialog's own box, and how far, 3rem past the corner farthest from there, as the circle's
+ * reaches past the farthest from the middle. From the middle where it was opened from nothing the
+ * reader acted on, as a script's call is, or from inside the dialog.
+ */
+const reveal = ({ host }: Firing): void => {
+    const dialog = inner(host, 'dialog');
+    const from = acted;
+    acted = undefined;
+
+    if (dialog === null) {
+        return;
+    }
+
+    dialog.style.removeProperty('--ui-reveal-at');
+    dialog.style.removeProperty('--ui-reveal-to');
+
+    let within = false;
+
+    for (
+        let at: Node | null = from ?? null;
+        at !== null;
+        at = at instanceof ShadowRoot ? at.host : at.parentNode
+    ) {
+        within ||= at === host;
+    }
+
+    if (
+        from === undefined ||
+        within ||
+        !from.isConnected ||
+        from.getClientRects().length === 0 ||
+        !navigator.userActivation.isActive
+    ) {
+        return;
+    }
+
+    const box = dialog.getBoundingClientRect();
+    const opener = from.getBoundingClientRect();
+    const x = opener.x + opener.width / 2 - box.x;
+    const y = opener.y + opener.height / 2 - box.y;
+    const far = Math.max(
+        ...[
+            [0, 0],
+            [box.width, 0],
+            [0, box.height],
+            [box.width, box.height],
+        ].map(([cx = 0, cy = 0]) => Math.hypot(cx - x, cy - y)),
+    );
+    const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    dialog.style.setProperty('--ui-reveal-at', `${x.toFixed(1)}px ${y.toFixed(1)}px`);
+    dialog.style.setProperty('--ui-reveal-to', `${(far + 3 * rem).toFixed(1)}px`);
+};
+
 /**
  * The panel broken into pieces as the dialog closes: the reference's disintegration, forward.
  * The pieces are beside the dialog rather than in it, and the dialog closes as the last goes.
@@ -356,6 +438,16 @@ const sheet = String.raw`
     dialog[open]:not(.closing) {
         transition: none;
         animation: ui-enter-circle var(${step})
+            var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
+    }
+}
+
+/* reveal: the circle's, grown from what the reader opened the dialog from, as the script works it
+   out, or from its middle. */
+@container ${is('enter', 'reveal')} {
+    dialog[open]:not(.closing) {
+        transition: none;
+        animation: ui-enter-reveal var(${step})
             var(--ui-enter-curve, var(--ui-easing-enter)) backwards;
     }
 }
@@ -1071,6 +1163,16 @@ dialog.closing > [data-rain] {
     }
 }
 
+/* The circle's, from where the script put it, and out as far: from the middle without one. */
+@keyframes ui-enter-reveal {
+    from {
+        clip-path: circle(0 at var(--ui-reveal-at, 50% 50%));
+    }
+    to {
+        clip-path: circle(var(--ui-reveal-to, calc(70.71% + 3rem)) at var(--ui-reveal-at, 50% 50%));
+    }
+}
+
 /* From a line through the middle outward, across the axis it travels on. */
 @keyframes ui-enter-curtain {
     from {
@@ -1305,6 +1407,11 @@ prototype({
                             says: 'Uncovered by a circle growing from its middle, or from the edge a direction leaves.',
                         },
                         {
+                            name: 'reveal',
+                            says: 'Uncovered by a circle growing from what opened it: the control the focus was on, or the one the pointer pressed; from its middle when nothing was.',
+                            fire: reveal,
+                        },
+                        {
                             name: 'curtain',
                             directed: true,
                             says: 'Uncovered from its middle outward, as a curtain opens: across it, or up and down for those directions.',
@@ -1461,10 +1568,6 @@ prototype({
         {
             name: 'liquid',
             why: 'the page behind rippling, its lens moved for as long as the dialog is open. That can be minutes, and WCAG 2.2.2 lets motion run five seconds before a reader must be able to stop it, which here only closing the dialog would do.',
-        },
-        {
-            name: 'reveal from the click',
-            why: 'a circle that opens from where the trigger was clicked needs the point, which the dialog does not have: it is opened by a call, from a key as often as from a pointer.',
         },
         {
             name: 'shake',

@@ -18,11 +18,12 @@
  *
  * **The ring is a kind of the focus's alone**, and only of a component the focus is on: nothing
  * under the pointer has one, nor does a card round what has the focus in it. Its today's is the ring
- * every control draws, `solid`, and every effect of it shows a ring from the first frame, since the
- * ring says where the reader is and a ring that arrives late says it late. Its `none` takes the ring
- * away where a shadow or a border the focus holds stays round the component, and stands it aside
- * while one the focus plays, until it has settled; never in forced colours, where those are gone and
- * the ring is all that is left.
+ * every control draws, `solid`, and every effect of it but the trace shows a ring from the first
+ * frame, since the ring says where the reader is and a ring that arrives late says it late; the
+ * review chose the trace drawn from nothing. Its `none` takes the ring away where a shadow or a
+ * border the focus holds stays round the component, and stands it aside while one the focus plays,
+ * until it has settled; never in forced colours, where those are gone and the ring is all that is
+ * left.
  */
 import type { Effect, Firing, Kind as Shown, Moment } from './motion.js';
 
@@ -348,6 +349,18 @@ const listed: Readonly<Record<Kind, readonly Listed[]>> = {
             },
         },
         {
+            name: 'rainbow',
+            hover: {
+                loops: true,
+                says: 'The boundary’s colour turns round the hue wheel for as long as the pointer rests; the fill and the label keep theirs.',
+            },
+            focus: {
+                settles: true,
+                says: ({ ring }) =>
+                    `${ring ? 'The ring, and inside it the boundary, whose' : 'The boundary’s'} colour turns round the hue wheel, twice, then rests.`,
+            },
+        },
+        {
             name: 'edge',
             hover: {
                 follows: true,
@@ -483,7 +496,8 @@ const listed: Readonly<Record<Kind, readonly Listed[]>> = {
 
 /**
  * The ring's list, the focus's alone: what the ring a component draws round itself does as the
- * focus arrives and while it stays. Every one shows a ring from the first frame.
+ * focus arrives and while it stays. Every one shows a ring from the first frame but the trace,
+ * which draws it from nothing, as the review chose.
  */
 const ringed: readonly { readonly name: string; readonly focus: Rendition }[] = [
     {
@@ -501,7 +515,9 @@ const ringed: readonly { readonly name: string; readonly focus: Rendition }[] = 
     { name: 'tight', focus: { says: 'The ring on the boundary, with no gap.' } },
     {
         name: 'inset',
-        focus: { says: 'The ring 4px inside the boundary, in the colour of what it is on.' },
+        focus: {
+            says: 'The ring 2px inside the edge, in a colour off the fill and the edge both.',
+        },
     },
     { name: 'dashed', focus: { says: 'The ring in dashes.' } },
     { name: 'double', focus: { says: 'The ring as two thin lines.' } },
@@ -513,6 +529,13 @@ const ringed: readonly { readonly name: string; readonly focus: Rendition }[] = 
         name: 'implode',
         focus: {
             says: 'As the focus arrives: the ring closes in from further out, faint, and holds.',
+        },
+    },
+    {
+        name: 'rainbow',
+        focus: {
+            settles: true,
+            says: 'The ring’s colour turns round the hue wheel, twice, then rests where it began.',
         },
     },
     {
@@ -530,7 +553,7 @@ const ringed: readonly { readonly name: string; readonly focus: Rendition }[] = 
     {
         name: 'trace',
         focus: {
-            says: 'As the focus arrives: the ring drawn round once, from the top, over a faint one.',
+            says: 'As the focus arrives: the ring drawn round once, from the top.',
         },
     },
     {
@@ -546,15 +569,16 @@ const ringed: readonly { readonly name: string; readonly focus: Rendition }[] = 
  * the ring's `none` stands aside for for as long. Measured in Chromium on the button, a
  * field and a checkbox with the ring taken away, under each theme and scheme, as what each leaves
  * once it settles: these change at least the control's perimeter in pixels by 1.1:1 or more, the
- * glow and the halo six times that or more, and none reaches the 3:1 WCAG 1.4.11 asks of a focus
- * indicator in a light scheme, which the review took. On a drawn control the raise changes three
- * quarters of the box's perimeter under Glass in the dark, so a drawn control's ring stands aside
- * for the other four. The highlight leaves what the theme gives the pointer, which can be nothing;
- * the inner light, the sink, the neon, the breathe, the accent and the lines along the bottom leave
- * little or nothing; and what plays once leaves nothing.
+ * glow and the halo six times that or more and the inner light four, which holds in all three
+ * engines and round the switch and the radio too, and none reaches the 3:1 WCAG 1.4.11 asks of a
+ * focus indicator in a light scheme, which the review took. On a drawn control the raise changes
+ * three quarters of the box's perimeter under Glass in the dark, so a drawn control's ring stands
+ * aside for the other five. The highlight leaves what the theme gives the pointer, which can be
+ * nothing; the sink, the neon, the breathe, the accent and the lines along the bottom leave little
+ * or nothing; and what plays once leaves nothing.
  */
 export const held = {
-    shadow: ['halo', 'glow', 'raise'],
+    shadow: ['halo', 'glow', 'raise', 'inner'],
     border: ['trace', 'edge'],
 } as const;
 

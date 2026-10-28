@@ -20,6 +20,7 @@ import {
     comet,
     edge,
     enters,
+    far,
     flights,
     flooded,
     floods,
@@ -30,6 +31,7 @@ import {
     line,
     moves,
     orbit,
+    rainbow,
     ringRules,
     ripple,
     scan,
@@ -101,6 +103,13 @@ const traced = String.raw`${band}
         border-radius: inherit;
         background: ${trace.light};
         transition: ${trace.transition};`;
+
+/** The rainbow's band, the trace's, whole, in the trace's colour turned round the hue wheel. */
+const turning = String.raw`${band}
+        inset: 0;
+        padding: ${trace.width}px;
+        border-radius: inherit;
+        background: ${rainbow.colour(`var(--ui-band-ink, ${far})`)};`;
 
 /** The comet's band, clear of the boundary. */
 const clear = String.raw`${band}
@@ -206,15 +215,15 @@ export function sheet({ controls, able, behind }: Fields, name: string): string 
 }
 
 /* The control's transitions, for what the kinds change on it, and its one list of animations,
-   read from the five kinds that animate it: the pointer's fill, the shadow, which the pointer's
-   and the focus's take in turn, the focus's fill, an error's fill, and the focus's ring. The
-   focus's play under its own names, so its arrival starts them where the pointer's played the
-   same. */
+   read from the six kinds that animate it: the pointer's fill, the shadow, which the pointer's
+   and the focus's take in turn, the focus's fill, an error's fill and its border, and the focus's
+   ring. The focus's play under their own names, so its arrival starts them where the pointer's
+   played the same. */
 ${both('')} {
     transition-property: border-color, box-shadow, background-color, backdrop-filter;
     transition-duration: ${reference('--ui-duration-state')}, var(--ui-duration-200), var(--ui-duration-200), var(--ui-duration-200);
     transition-timing-function: var(--ui-easing-state), var(--ui-easing-enter), var(--ui-easing-enter), var(--ui-easing-enter);
-    animation: var(--ui-run-hover, none), var(--ui-run-shadow, none), var(--ui-run-fill, none), var(--ui-run-error, none), var(--ui-run-ring, none);
+    animation: var(--ui-run-hover, none), var(--ui-run-shadow, none), var(--ui-run-fill, none), var(--ui-run-error, none), var(--ui-run-error-border, none), var(--ui-run-ring, none);
 }
 
 /* hover-move: the field moved under the pointer, never while it has the focus, which the reader
@@ -376,6 +385,21 @@ ${both('')} {
         }
     }
 
+    /* rainbow, the button's: the trace's band, whole, its colour turned round the hue wheel for as
+       long as the pointer rests, and the field's fill and text as they were. On the same layer,
+       shown as the orbit is. */
+    @container ${is('hover-border', 'rainbow')} {
+        ${free} {${turning}
+            opacity: var(--ui-shown);
+            transition: --ui-shown ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
+        }
+
+        ${resting} {
+            --ui-shown: 1;
+            animation: ${rainbow.loop};
+        }
+    }
+
     /* edge, the card's: the band lit where the pointer is nearest, from where the pointer is in the
        box round the control, which the pointer engine writes on that box. On the same layer, on a
        field the pointer can change, and yielding to an error and to the focus as the bands do. */
@@ -479,7 +503,7 @@ ${both('')} {
 
     @container ${is('hover-shadow', 'inner')} {
         ${both(unfocused)} {
-            box-shadow: ${lights.inner('0.75rem')};
+            box-shadow: ${lights.inner('0.75rem', '0.125rem')};
         }
     }
 
@@ -673,6 +697,20 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
     }
 }
 
+/* rainbow, the pointer's, faded in, twice round, and at rest in the trace's colour. Not on a field
+   in error, whose boundary stays red, as the accent leaves it. */
+@container ${is('focus-border', 'rainbow')} {
+    .glow::after {${turning}
+        opacity: 0;
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    .glow:has(> :focus-visible:not([aria-invalid='true']))::after {
+        opacity: 1;
+        animation: ${focal.run(rainbow.run)};
+    }
+}
+
 /* edge, the pointer's: the band lit as a pointer in the middle of the field would light it, faded
    in. */
 @container ${is('focus-border', 'edge')} {
@@ -767,7 +805,7 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
 /* inner: lit from inside the boundary rather than round it. */
 @container ${is('focus-shadow', 'inner')} {
     ${both(':focus-visible')} {
-        box-shadow: ${lights.inner('0.75rem')};
+        box-shadow: ${lights.inner('0.75rem', '0.125rem')};
     }
 }
 
@@ -913,13 +951,14 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
 }
 
 /* ——— Invalid, after the focus, so an error's fill is drawn over a focus's. The boundary was
-   already red, and nothing moves: the shake was left out for leaving where the reader aimed. Each
-   effect on the field plays a loop that settles, as an error stands for as long as the reader
-   leaves it; the message's own play once, but the glitch, which never takes the message away.
-   The split's and the glitch's rounds are about half the pulse's and the flash's, so they play
-   twice as many and end close to them, as the drawn controls' do. ——— */
+   already red, and the field never moves: the reference's shake took it from where the reader
+   aimed, so the shake here is the boundary's, where it is. Each effect on the field plays a loop
+   that settles, as an error stands for as long as the reader leaves it, but the shake, which plays
+   once, as the reference's did; the message's own play once, but the glitch, which never takes the
+   message away. The split's and the glitch's rounds are about half the pulse's and the flash's, so
+   they play twice as many and end close to them, as the drawn controls' do. ——— */
 @container ${is('invalid-border', 'pulse')} or ${is('invalid-border', 'glow')} or
-    ${is('invalid-border', 'split')} {
+    ${is('invalid-border', 'split')} or ${is('invalid-border', 'shake')} {
     .glow::before {${round}
     }
 }
@@ -942,6 +981,20 @@ ${both(":focus-visible:not(:disabled)[aria-invalid='true']")} {
 @container ${is('invalid-border', 'split')} {
     .glow:has(> [aria-invalid='true'])::before {
         animation: ui-split var(--ui-duration-200) linear calc(var(--ui-iteration-settle) * 2);
+    }
+}
+
+/* shake: the boundary shaken a pixel or three each way, in the half second the reference's shake
+   took, on the layer an error's border draws on, over the boundary; the field's own is clear for as
+   long, so the line that moves is the only one there, and at rest the two lie one over the other. */
+@container ${is('invalid-border', 'shake')} {
+    ${both("[aria-invalid='true']")} {
+        --ui-run-error-border: ui-clear var(--ui-duration-400);
+    }
+
+    .glow:has(> [aria-invalid='true'])::before {
+        box-shadow: inset 0 0 0 1px var(--ui-color-danger);
+        animation: ui-shake var(--ui-duration-400) steps(1, end);
     }
 }
 
@@ -1071,6 +1124,7 @@ export const moments: readonly Moment[] = [
             draws: [
                 { name: 'highlight', says: 'The boundary darkens to the text’s colour.' },
                 'accent',
+                'rainbow',
                 'edge',
                 'orbit',
                 'trace',
@@ -1119,6 +1173,7 @@ export const moments: readonly Moment[] = [
             draws: [
                 'highlight',
                 'accent',
+                'rainbow',
                 'edge',
                 'orbit',
                 'trace',
@@ -1143,6 +1198,7 @@ export const moments: readonly Moment[] = [
                 'double',
                 'breathe',
                 'implode',
+                'rainbow',
                 ...flights('input, textarea, select'),
             ],
         },
@@ -1169,6 +1225,10 @@ export const moments: readonly Moment[] = [
                         name: 'split',
                         settles: true,
                         says: 'The boundary splits into two colours where it is, eight times, then rests. Drawn for Matrix.',
+                    },
+                    {
+                        name: 'shake',
+                        says: 'The boundary shakes, a pixel or three each way, for half a second; the field and its text stay where they are.',
                     },
                 ],
             },
@@ -1215,10 +1275,6 @@ export const moments: readonly Moment[] = [
 
 /** What a field leaves out, whichever field it is. */
 export const refused: readonly Refusal[] = [
-    {
-        name: 'shake',
-        why: 'the reference measured 7px of travel for half a second: the field leaves where the reader aimed, and the red boundary already says what the shake says.',
-    },
     {
         name: 'message slide',
         why: 'a message that opens and pushes the next field down moves the reader’s next target, which the reference measured; the space is reserved instead, and that is layout, not an effect.',
