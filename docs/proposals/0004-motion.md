@@ -297,19 +297,22 @@ lists what its component leaves out and why. None of it is the Decision, which s
 - **The ring is a kind of the focus's alone**, `--ui-motion-focus-ring`, on every component the
   focus is on — the button and the menu's trigger, the fields, the drawn controls — and on none that
   answers a focus within. Its today's is `solid`. It thins, thickens, hugs or goes inside the
-  boundary, breaks into dashes or two lines, swells or closes in, shakes, or glides over from the
-  control the reader saw it on last, each from a ring the reader can see on the first frame, since
-  the ring is the affordance the transition lists above keep from being delayed. It is drawn on the
-  outline the component already draws, the one kind on an element another kind animates, so its
-  animation is listed beside theirs. The shake and the glide, which an outline cannot draw, fly one
-  ring of the page's own in the top layer, laid over the control's while its outline is put away,
-  and never under reduced motion or in forced colours. Its `none` takes the ring away where the
-  focus holds a halo, a glow, a raise, a trace or an edge, which each leave at least the control's
+  boundary, breaks into dashes or two lines, swells, closes in or turns round the hue wheel, shakes,
+  glides over from the control the reader saw it on last, is drawn round from the top, or comes into
+  focus from a blur and blurs away as the focus leaves, each but the drawn one from a ring the
+  reader can see on the first frame, since the ring is the affordance the transition lists above
+  keep from being delayed; the review chose the trace drawn from nothing over one drawn over a faint
+  ring. It is drawn on the outline the component already draws, the one kind on an element another
+  kind animates, so its animation is listed beside theirs. The shake, the glide, the trace and the
+  refocus, which an outline cannot draw, fly one ring of the page's own in the top layer, laid over
+  the control's while its outline is put away — the refocus a second as it blurs away — and never
+  under reduced motion or in forced colours. Its `none` takes the ring away where the focus holds a
+  halo, a glow, a raise, an inner light, a trace or an edge, which each leave at least the control's
   perimeter changed by 1.1:1 once settled — measured in Chromium on the button, a field and a
   checkbox, under every theme and scheme, but the raise round a drawn control, which a drawn
   control's ring does not stand aside for — and stands it aside while the focus's neon, breathe,
   orbit, comet, burst or a ring thrown out plays, until everything the focus started has settled, so
-  the focus is never left unseen; and never in forced colours. None of the five reaches the 3:1 WCAG
+  the focus is never left unseen; and never in forced colours. None of the six reaches the 3:1 WCAG
   1.4.11 asks of a focus indicator in a light scheme, and the review took that, for a soft halo
   round a component with no ring drawn over it.
 - **Every component draws every border** of the list, under the pointer and at the focus, from one
@@ -461,51 +464,51 @@ the button and the menu's trigger. A component that leaves an effect out does wh
 there: the hover colour is the button's today, and the card, the toast and the fields leave it out.
 The select's `enter`, `exit` and `caret` are its list's, where the component draws it.
 
-| Component | Moment            | Default          | Matrix       | Glass        |
-| --------- | ----------------- | ---------------- | ------------ | ------------ |
-| every     | `hover-move`      | none, today      | none, today  | none, today  |
-| every     | `hover-fill`      | highlight        | tint         | spotlight    |
-| every     | `hover-shadow`    | raise            | glow         | cast         |
-| every     | `hover-border`    | pulse            | trace        | edge         |
-| every     | `focus-move`      | lift             | glitch       | none, today  |
-| every     | `focus-fill`      | none, today      | scan         | shimmer      |
-| every     | `focus-shadow`    | raise            | burst        | neon         |
-| every     | `focus-border`    | pulse            | comet        | orbit        |
-| every     | `focus-label`     | accent           | glow         | none, today  |
-| ringed    | `focus-ring`      | solid, today     | solid, today | solid, today |
-| button    | `press-move`      | squish           | shatter      | spring       |
-| button    | `press-fill`      | highlight, today | none         | ripple       |
-| button    | `press-shadow`    | sink             | fragments    | sink         |
-| button    | `press-border`    | none, today      | none, today  | none, today  |
-| form      | `invalid-border`  | pulse            | split        | glow         |
-| form      | `invalid-fill`    | flash            | none, today  | flash        |
-| form      | `invalid-message` | none, today      | none, today  | none, today  |
-| card      | `hover-move`      | none, today      | none, today  | tilt         |
-| card      | `enter`           | fade             | materialize  | dissolve     |
-| card      | `exit`            | fade             | erode        | dissolve     |
-| checkbox  | `check`           | draw             | draw         | draw         |
-| switch    | `check`           | spring           | spring       | spring       |
-| radio     | `check`           | pop              | pop          | pop          |
-| dialog    | `enter`           | fade, today      | materialize  | dissolve     |
-| dialog    | `exit`            | fade, today      | erode        | dissolve     |
-| dialog    | `backdrop`        | fade, today      | char-rain    | blur         |
-| toast     | `enter`           | slide-elastic    | wind         | refocus      |
-| toast     | `exit`            | slide            | wind         | defocus      |
-| toast     | `dwell`           | ring             | ring         | ring         |
-| toaster   | `stack`           | spring           | spring       | spring       |
-| table     | `hover`           | highlight        | highlight    | frost        |
-| table     | `enter`           | glow             | glow         | glow         |
-| icon      | `enter`           | draw             | pop          | refocus      |
-| icon      | `hover`           | glow             | glitch       | pop          |
-| tooltip   | `enter`           | rise             | typing       | refocus      |
-| tooltip   | `exit`            | sink             | glitch       | defocus      |
-| tooltip   | `next`            | glide            | glide        | glide        |
-| menu      | `enter`           | cascade          | glitch       | refocus      |
-| menu      | `exit`            | fold             | glitch       | defocus      |
-| menu      | `caret`           | flip             | flip         | flip         |
-| select    | `enter`           | cascade          | glitch       | refocus      |
-| select    | `exit`            | fold             | glitch       | defocus      |
-| select    | `caret`           | flip             | flip         | flip         |
+| Component | Moment            | Default          | Matrix      | Glass       |
+| --------- | ----------------- | ---------------- | ----------- | ----------- |
+| every     | `hover-move`      | none, today      | none, today | none, today |
+| every     | `hover-fill`      | highlight        | tint        | spotlight   |
+| every     | `hover-shadow`    | raise            | glow        | cast        |
+| every     | `hover-border`    | pulse            | trace       | edge        |
+| every     | `focus-move`      | lift             | glitch      | none, today |
+| every     | `focus-fill`      | none, today      | scan        | shimmer     |
+| every     | `focus-shadow`    | raise            | burst       | neon        |
+| every     | `focus-border`    | pulse            | comet       | orbit       |
+| every     | `focus-label`     | accent           | glow        | none, today |
+| ringed    | `focus-ring`      | glide            | glitch      | refocus     |
+| button    | `press-move`      | squish           | shatter     | spring      |
+| button    | `press-fill`      | highlight, today | none        | ripple      |
+| button    | `press-shadow`    | sink             | none, today | sink        |
+| button    | `press-border`    | none, today      | none, today | none, today |
+| form      | `invalid-border`  | pulse            | split       | glow        |
+| form      | `invalid-fill`    | flash            | none, today | flash       |
+| form      | `invalid-message` | none, today      | none, today | none, today |
+| card      | `hover-move`      | none, today      | none, today | tilt        |
+| card      | `enter`           | fade             | materialize | dissolve    |
+| card      | `exit`            | fade             | erode       | dissolve    |
+| checkbox  | `check`           | draw             | draw        | draw        |
+| switch    | `check`           | spring           | spring      | spring      |
+| radio     | `check`           | pop              | pop         | pop         |
+| dialog    | `enter`           | fade, today      | materialize | dissolve    |
+| dialog    | `exit`            | fade, today      | erode       | dissolve    |
+| dialog    | `backdrop`        | fade, today      | char-rain   | blur        |
+| toast     | `enter`           | slide-elastic    | wind        | refocus     |
+| toast     | `exit`            | slide            | wind        | defocus     |
+| toast     | `dwell`           | ring             | ring        | ring        |
+| toaster   | `stack`           | spring           | spring      | spring      |
+| table     | `hover`           | highlight        | highlight   | frost       |
+| table     | `enter`           | glow             | glow        | glow        |
+| icon      | `enter`           | draw             | pop         | refocus     |
+| icon      | `hover`           | glow             | glitch      | pop         |
+| tooltip   | `enter`           | rise             | typing      | refocus     |
+| tooltip   | `exit`            | sink             | glitch      | defocus     |
+| tooltip   | `next`            | glide            | glide       | glide       |
+| menu      | `enter`           | cascade          | glitch      | refocus     |
+| menu      | `exit`            | fold             | glitch      | defocus     |
+| menu      | `caret`           | flip             | flip        | flip        |
+| select    | `enter`           | cascade          | glitch      | refocus     |
+| select    | `exit`            | fold             | glitch      | defocus     |
+| select    | `caret`           | flip             | flip        | flip        |
 
 ## Proposed design
 

@@ -262,6 +262,7 @@ const registered = [
     ['--ui-ripple-alpha', '<number>', '0'],
     ['--ui-orbit', '<angle>', '0deg'],
     ['--ui-trace', '<angle>', '0deg'],
+    ['--ui-turn', '<number>', '0'],
     ['--ui-flood', '<number>', '0'],
     ['--ui-flood-x', '<length>', '0px'],
     ['--ui-flood-y', '<length>', '0px'],
@@ -358,6 +359,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'focus-shadow': 'raise',
                 'focus-border': 'pulse',
                 'focus-label': 'accent',
+                'focus-ring': 'glide',
                 'press-move': 'squish',
                 'press-fill': 'highlight',
                 'press-shadow': 'sink',
@@ -411,9 +413,10 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'focus-shadow': 'burst',
                 'focus-border': 'comet',
                 'focus-label': 'glow',
+                'focus-ring': 'glitch',
                 'press-move': 'shatter',
                 'press-fill': 'none',
-                'press-shadow': 'fragments',
+                'press-shadow': 'none',
                 'press-border': 'none',
                 'invalid-border': 'split',
                 'invalid-fill': 'none',
@@ -460,6 +463,7 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'focus-shadow': 'neon',
                 'focus-border': 'orbit',
                 'focus-label': 'none',
+                'focus-ring': 'refocus',
                 'press-move': 'spring',
                 'press-fill': 'ripple',
                 'press-shadow': 'sink',
@@ -708,6 +712,73 @@ export function still(): boolean {
 /** The element in a shadow root a fired effect animates. */
 export function inner(host: Element, selector: string): HTMLElement | null {
     return host.shadowRoot?.querySelector<HTMLElement>(selector) ?? null;
+}
+
+/** What listens for the focus's events with {@link heard}, in the order each asked, and the shadow
+ *  roots already listened to for the moves that stay inside them. */
+const hearers: {
+    readonly type: 'focusin' | 'focusout';
+    readonly listener: (event: FocusEvent, root: ShadowRoot | undefined) => void;
+}[] = [];
+const listened = new WeakSet<ShadowRoot>();
+
+/**
+ * Listens for the focus's `focusin` or `focusout` wherever the focus moves: on the document, where
+ * every moment is listened for, and on each shadow root the focus has been in, for a move that
+ * stays inside it. Such a move's event stops at the root, since the host keeps the focus, so the
+ * document never hears it: an arrow key moving the focus between a radio group's controls, in all
+ * three engines. Each event is heard once, where it stops, and `root` is the shadow root it
+ * stopped at, where it stopped at one.
+ */
+export function heard(
+    type: 'focusin' | 'focusout',
+    listener: (event: FocusEvent, root: ShadowRoot | undefined) => void,
+): void {
+    if (hearers.length === 0) {
+        document.addEventListener('focusin', listen, { capture: true });
+    }
+
+    hearers.push({ type, listener });
+    document.addEventListener(
+        type,
+        (event) => {
+            listener(event, undefined);
+        },
+        { capture: true },
+    );
+}
+
+/** Listens to each shadow root an event came through that is not listened to yet, for the focus's
+ *  moves that stay inside it, and hands each to what asked for it. */
+function listen(event: Event): void {
+    for (const root of event.composedPath()) {
+        if (!(root instanceof ShadowRoot) || listened.has(root)) {
+            continue;
+        }
+
+        listened.add(root);
+
+        for (const type of ['focusin', 'focusout'] as const) {
+            root.addEventListener(
+                type,
+                (moved) => {
+                    // Only a move that stopped here: one that went on is heard further out.
+                    if (!(moved instanceof FocusEvent) || moved.composedPath().at(-1) !== root) {
+                        return;
+                    }
+
+                    listen(moved);
+
+                    for (const hearer of hearers) {
+                        if (hearer.type === type) {
+                            hearer.listener(moved, root);
+                        }
+                    }
+                },
+                { capture: true },
+            );
+        }
+    }
 }
 
 /** The replay each mark on an element last took, so the one a replay cancels clears nothing. */
@@ -1359,11 +1430,14 @@ export function prototype(catalogue: Catalogue): Page {
     const answering = (host: HTMLElement): Element | null =>
         catalogue.control === undefined ? host : inner(host, catalogue.control);
 
-    /** Whether an event happened on that control. */
-    const within = (event: Event, host: HTMLElement): boolean => {
+    /** Whether an event happened on that control: on its path, or, for a move of the focus that
+     *  stopped at `root`, inside the instance that is the control. */
+    const within = (event: Event, host: HTMLElement, root?: ShadowRoot): boolean => {
         const control = answering(host);
 
-        return control !== null && event.composedPath().includes(control);
+        return (
+            control !== null && (event.composedPath().includes(control) || control === root?.host)
+        );
     };
 
     /*
@@ -1549,14 +1623,13 @@ export function prototype(catalogue: Catalogue): Page {
         }
     }).observe(document.body, { childList: true, subtree: true });
 
-    /** The instance an event happened in, if it is one of this catalogue's. */
-    const hostOf = (event: Event): HTMLElement | undefined =>
-        event
-            .composedPath()
-            .find(
-                (node): node is HTMLElement =>
-                    node instanceof HTMLElement && tags.includes(node.localName),
-            );
+    /** The instance an event happened in, if it is one of this catalogue's: on its path, or the
+     *  host of the shadow root a move of the focus stopped at, `root`. */
+    const hostOf = (event: Event, root?: ShadowRoot): HTMLElement | undefined =>
+        [...event.composedPath(), ...(root === undefined ? [] : [root.host])].find(
+            (node): node is HTMLElement =>
+                node instanceof HTMLElement && tags.includes(node.localName),
+        );
 
     /*
      * The host's own record of a focus the reader can see, for an effect drawn on the host
@@ -1567,23 +1640,21 @@ export function prototype(catalogue: Catalogue): Page {
      * a focus on one of the menu's items is not its trigger's. Written before any effect of the
      * focus fires, so an effect drawn on the host has begun by the time a fired one asks what the
      * focus began: written after, the ring's none missed the comet a button and a checkbox draw on
-     * the host, and brought the ring back once the burst was over — measured.
+     * the host, and brought the ring back once the burst was over — measured. Rewritten as the
+     * focus moves inside the host, which a click on another of a radio group's controls leaves
+     * without one.
      */
-    document.addEventListener(
-        'focusin',
-        (event) => {
-            const host = hostOf(event);
-            const target = event.composedPath()[0];
+    heard('focusin', (event, root) => {
+        const host = hostOf(event, root);
+        const target = event.composedPath()[0];
 
-            if (host !== undefined && target instanceof Element) {
-                host.toggleAttribute(
-                    'data-focus-visible',
-                    within(event, host) && target.matches(':focus-visible'),
-                );
-            }
-        },
-        { capture: true },
-    );
+        if (host !== undefined && target instanceof Element) {
+            host.toggleAttribute(
+                'data-focus-visible',
+                within(event, host, root) && target.matches(':focus-visible'),
+            );
+        }
+    });
     document.addEventListener(
         'focusout',
         (event) => {
@@ -1604,26 +1675,30 @@ export function prototype(catalogue: Catalogue): Page {
         }
 
         for (const [type, counts] of triggers(moment.on)) {
-            document.addEventListener(
-                type,
-                (event) => {
-                    const host = hostOf(event);
+            const answer = (event: Event, root?: ShadowRoot): void => {
+                const host = hostOf(event, root);
 
-                    if (
-                        host === undefined ||
-                        !within(event, host) ||
-                        !counts(event, host) ||
-                        disabled(event)
-                    ) {
-                        return;
-                    }
+                if (
+                    host === undefined ||
+                    !within(event, host, root) ||
+                    !counts(event, host) ||
+                    disabled(event)
+                ) {
+                    return;
+                }
 
-                    for (const slot of slots(moment)) {
-                        running(slot, host)?.fire?.({ host, event });
-                    }
-                },
-                { capture: true },
-            );
+                for (const slot of slots(moment)) {
+                    running(slot, host)?.fire?.({ host, event });
+                }
+            };
+
+            // The focus is heard as it moves inside an instance too: an arrow key takes it to
+            // another of a radio group's controls, which is a focus arriving.
+            if (type === 'focusin') {
+                heard(type, answer);
+            } else {
+                document.addEventListener(type, answer, { capture: true });
+            }
         }
     }
 

@@ -7,8 +7,8 @@
  * around it, so every scope reaches it.
  */
 import { reference } from '../../../../src/reference.js';
-import { scan, sheen, shimmer, sweeps } from '../controls.js';
-import { prototype, queries } from '../motion.js';
+import { scan, sheen, shimmer, sized, sweeps } from '../controls.js';
+import { duration, prototype, queries, still, type Firing } from '../motion.js';
 
 /** The query each effect is drawn under: the consumer's choice, else the theme's taste. */
 const is = queries('table');
@@ -137,7 +137,71 @@ const sheet = String.raw`
     }
 }
 
-${sweeps}`;
+/* pulse: the button's ring of the accent, leaving the row as it arrives, on a ring of the page's
+   own in the top layer, laid over the row by the script. Drawn round the row, it ran over the rows
+   above and below and the table's frame cut it off at the sides, and drawn inside the row, WebKit
+   painted none of it — measured. Flown, nothing cuts it, and it still crosses the rows round it
+   for as long as it takes, which the review took. */
+[data-row-pulse] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    overflow: visible;
+    pointer-events: none;
+    animation: ui-pulse var(--ui-duration-400) var(--ui-easing-enter);
+}
+
+${sweeps}
+
+${sized.wide}`;
+
+/** The ring a row pulses with, laid in the page the first time one does, and the end of the pulse
+ *  it is on. */
+let pulsed: HTMLElement | undefined;
+let pulsing: (() => void) | undefined;
+
+/** Sends the pulse out from the row the host added, laid over the row where it is drawn. Never
+ *  under reduced motion, nor in forced colours, where a shadow is not drawn. */
+const pulse = ({ host, event }: Firing): void => {
+    const row = event.target;
+
+    if (
+        !(row instanceof HTMLTableRowElement) ||
+        still() ||
+        matchMedia('(forced-colors: active)').matches
+    ) {
+        return;
+    }
+
+    pulsing?.();
+    const ring = (pulsed ??= document.body.appendChild(
+        Object.assign(document.createElement('div'), { popover: 'manual', ariaHidden: 'true' }),
+    ));
+    const box = row.getBoundingClientRect();
+    ring.style.left = `${box.x.toFixed(2)}px`;
+    ring.style.top = `${box.y.toFixed(2)}px`;
+    ring.style.width = `${box.width.toFixed(2)}px`;
+    ring.style.height = `${box.height.toFixed(2)}px`;
+    ring.dataset['rowPulse'] = '';
+    ring.showPopover();
+
+    const clock = ring.animate(null, { duration: duration(host, '--ui-duration-400') });
+    const end = (): void => {
+        if (pulsing !== end) {
+            return;
+        }
+
+        pulsing = undefined;
+        clock.cancel();
+        delete ring.dataset['rowPulse'];
+        ring.hidePopover();
+    };
+    pulsing = end;
+    clock.finished.then(end, () => undefined);
+};
 
 prototype({
     tags: ['ui-table'],
@@ -168,10 +232,16 @@ prototype({
         {
             name: 'enter',
             label: 'A row added',
+            on: 'added',
             effects: [
                 { name: 'none', today: true, says: 'The row is there.' },
                 { name: 'fade', says: 'The row fades in.' },
                 { name: 'glow', says: 'The row arrives in the accent’s tint, which drains away.' },
+                {
+                    name: 'pulse',
+                    says: 'A ring of the accent leaves the row as it arrives, over the rows round it, and no frame cuts it off.',
+                    fire: pulse,
+                },
             ],
         },
     ],
@@ -184,12 +254,22 @@ prototype({
             name: 'numbers rolling',
             why: 'a figure that counts up to its value shows values that were never true on the way; the reference’s page on changing data argues it out.',
         },
-        {
-            name: 'pulse, on a row',
-            why: 'a row has no room round it: a ring leaving it ran over the rows above and below, and the table’s frame cut it off at the sides, in all three engines; drawn inside the row instead, WebKit painted none of it — measured.',
-        },
     ],
 });
+
+// A row the host adds, announced from the row, so the moment's effect plays on the table it is
+// added to.
+for (const body of document.querySelectorAll('ui-table tbody')) {
+    new MutationObserver((records) => {
+        for (const record of records) {
+            for (const node of record.addedNodes) {
+                if (node instanceof HTMLTableRowElement) {
+                    node.dispatchEvent(new Event('added', { bubbles: true }));
+                }
+            }
+        }
+    }).observe(body, { childList: true });
+}
 
 let added = 0;
 

@@ -29,6 +29,7 @@ import {
     centres,
     comet,
     edge,
+    far,
     flooded,
     floods,
     flights,
@@ -38,6 +39,7 @@ import {
     line,
     moves,
     orbit,
+    rainbow,
     ringRules,
     ripple,
     scan,
@@ -810,6 +812,19 @@ const traced = String.raw`
             ${trace.transition},
             ${moving};`;
 
+/** The rainbow's band, the trace's, whole, in the trace's colour turned round the hue wheel. */
+const turning = String.raw`
+        content: '';
+        position: absolute;
+        inset: 0;
+        padding: ${trace.width}px;
+        border-radius: var(--ui-band-radius, var(--ui-radius));
+        background: ${rainbow.colour(`var(--ui-band-ink, ${far})`)};
+        mask:
+            linear-gradient(#000 0 0) content-box exclude,
+            linear-gradient(#000 0 0);
+        pointer-events: none;`;
+
 /** The comet's band, clear of the edge, over where the focus ring is drawn. */
 const clear = String.raw`
         content: '';
@@ -848,7 +863,7 @@ const focusComet = String.raw`${clear}
         animation: ${focal.run(comet.run)};
         transition: ${moving};`;
 
-/** The orbit's laps and the fade it rests by. */
+/** The orbit's laps and the fade it rests by, and the rainbow's turns. */
 const laps = String.raw`
 @keyframes ui-orbit {
     to { --ui-orbit: 360deg; }
@@ -856,7 +871,8 @@ const laps = String.raw`
 
 @keyframes ui-rest {
     to { opacity: 0; }
-}`;
+}
+${rainbow.frames}`;
 
 /** The shimmer's sheen, in the button's own colour for it. */
 const sheened = String.raw`
@@ -905,10 +921,10 @@ export function sheet({ variants, hovered, filled }: Buttons, name: string): str
         drawn.map(([variant, selector]) => `${selector}${block(variant)}`).join('\n\n');
 
     /** The pointer's borders that hold the edge's layer while the pointer rests on the button. */
-    const pointerBorder = `(${is('hover-border', 'edge')} or ${is('hover-border', 'orbit')} or ${is('hover-border', 'trace')} or ${is('hover-border', 'comet')} or ${is('hover-border', 'underline')} or ${is('hover-border', 'sweep')})`;
+    const pointerBorder = `(${is('hover-border', 'edge')} or ${is('hover-border', 'orbit')} or ${is('hover-border', 'trace')} or ${is('hover-border', 'comet')} or ${is('hover-border', 'underline')} or ${is('hover-border', 'sweep')} or ${is('hover-border', 'rainbow')})`;
 
     /** The focus's borders that hold the same layer while the focus stays. */
-    const focusBorder = `(${is('focus-border', 'edge')} or ${is('focus-border', 'orbit')} or ${is('focus-border', 'trace')} or ${is('focus-border', 'comet')} or ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')})`;
+    const focusBorder = `(${is('focus-border', 'edge')} or ${is('focus-border', 'orbit')} or ${is('focus-border', 'trace')} or ${is('focus-border', 'comet')} or ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')} or ${is('focus-border', 'rainbow')})`;
 
     return String.raw`
 /* Every property the movement moves, transitioned once, and the blur's glass, on the fill's
@@ -1564,15 +1580,27 @@ ${[
 @media (hover: hover) {
     @container ${is('hover-shadow', 'inner')} {
         button:not(:disabled):hover${unfocused} {
-            box-shadow: ${lights.inner('0.75rem')};
+            box-shadow: ${lights.inner('0.75rem', '0.125rem')};
         }
     }
 }
 
 @container ${is('focus-shadow', 'inner')} {
     button:focus-visible {
-        box-shadow: ${lights.inner('0.75rem')};
+        box-shadow: ${lights.inner('0.75rem', '0.125rem')};
     }
+}
+
+/* The inner light over the primary's fill, in the accent moved off it, as the trace is: in the
+   accent, over a fill that is the accent, none of it showed — measured. */
+${
+    filled === undefined
+        ? ''
+        : String.raw`@container ${is('hover-shadow', 'inner')} or ${is('focus-shadow', 'inner')} {
+    :host(${filled}) {
+        --ui-band-ink: ${trace.over(colours.primary.rest)};
+    }
+}`
 }
 
 @container ${is('focus-shadow', 'sink')} {
@@ -1612,7 +1640,7 @@ ${[
     ${is('hover-border', 'comet')} or ${is('hover-border', 'underline')} or
     ${is('hover-border', 'sweep')} or ${is('hover-border', 'pulse')} or
     ${is('hover-border', 'shockwave')} or ${is('hover-border', 'bloom')} or
-    ${is('hover-border', 'explode')} {
+    ${is('hover-border', 'explode')} or ${is('hover-border', 'rainbow')} {
     button:not(:disabled):hover${unfocused}::after {
         border-color: ${reference('--ui-color-border-button')};
     }
@@ -1711,6 +1739,26 @@ button:not(:disabled):focus-visible::after {
     }
 }
 
+/* hover-border: rainbow. The trace's band, whole, over the edge the theme draws, its colour turned
+   round the hue wheel for as long as the pointer rests: the fill and the label keep theirs, so the
+   label keeps the contrast the reference's rainbow, turning the fill, took from it. In and out on
+   the state's step. */
+@container ${is('hover-border', 'rainbow')} {
+    :host::after {${turning}
+        opacity: 0;
+        transition:
+            opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-state')},
+            ${moving};
+    }
+
+    @media (hover: hover) {
+        :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+            opacity: 1;
+            animation: ${rainbow.loop};
+        }
+    }
+}
+
 /* hover-border: comet. A comet from the accent round the hue wheel runs round the button, 2px clear
    of its edge so it reads apart from any ring a theme draws there, while the pointer rests; the
    mask leaves only the 3px track. Paused rather than removed when the pointer leaves, so the next
@@ -1798,6 +1846,22 @@ button:not(:disabled):focus-visible::after {
     }
 }
 
+@container ${is('focus-border', 'rainbow')} and (not ${pointerBorder}) {
+    :host::after {${turning}
+        opacity: 0;
+        transition:
+            opacity var(--ui-duration-200) var(--ui-easing-enter),
+            ${moving};
+    }
+}
+
+@container ${is('focus-border', 'rainbow')} {
+    :host([data-focus-visible]:not([data-border]))::after {${turning}
+        opacity: 1;
+        animation: ${focal.run(rainbow.run)};
+    }
+}
+
 @container (${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')}) and (not ${pointerBorder}) {
     :host::after {
         content: '';
@@ -1854,7 +1918,8 @@ ${
     ${is('hover-border', 'edge')} or ${is('hover-border', 'accent')} or
     ${is('focus-border', 'accent')} or ${is('hover-border', 'underline')} or
     ${is('focus-border', 'underline')} or ${is('hover-border', 'sweep')} or
-    ${is('focus-border', 'sweep')} {
+    ${is('focus-border', 'sweep')} or ${is('hover-border', 'rainbow')} or
+    ${is('focus-border', 'rainbow')} {
     :host(${filled}) {
         --ui-band-ink: ${trace.over(colours.primary.rest)};
         --ui-band-radius: max(0px, calc(var(--ui-radius) - 2px));
@@ -1935,6 +2000,12 @@ ${
                 animation-play-state: running;
             }
         }
+
+        @container ${is('hover-border', 'rainbow')} {
+            :host(${pointed}${calm}:not([disabled]):not([data-border]))::after {
+                animation: ${rainbow.loop}, ${breathe.loop};
+            }
+        }
     }
 }
 
@@ -1955,6 +2026,12 @@ ${
     @container ${is('focus-border', 'comet')} {
         :host([data-focus-visible]:not([data-border]))::after {
             animation: ${focal.run(`${comet.run}, ${breathe.settle}`)};
+        }
+    }
+
+    @container ${is('focus-border', 'rainbow')} {
+        :host([data-focus-visible]:not([data-border]))::after {
+            animation: ${focal.run(`${rainbow.run}, ${breathe.settle}`)};
         }
     }
 }
@@ -2171,13 +2248,35 @@ ${
 ${ringRules(
     'button:focus-visible',
     is,
-    'var(--ui-ink)',
+    'var(--ui-ring-ink, currentColor)',
     (query, run) => String.raw`@container ${query} {
     button:focus-visible {
         --ui-run-ring: ${run};
     }
 }`,
 )}
+
+/* The inset ring, 2px inside the edge the reader sees, in a colour that stands off the fill and
+   the edge both: the label's, which is the button's own colour. Where no theme colours the edge,
+   each variant draws it in its own colour: a primary's is nothing, so its ring stands 2px off the
+   fill's end, 4px in rather than 5, and a secondary's is its label's, so its ring takes the focus
+   colour, as a field's does. The eye counts from the line it sees: 3px of fill read as farther in
+   than 2px past an edge, and an edge and a ring in one colour, 2px apart, as one heavier line.
+   Neither in Glass, which colours the edge on both variants, nor in forced colours, which draw it
+   on both and the ring in the system's colour. */
+@media (forced-colors: none) {
+    @container style(--ui-color-border-button: currentColor) {
+${each((variant) =>
+    variant === 'primary'
+        ? String.raw` {
+    --ui-ring-inset: -4px;
+}`
+        : String.raw` {
+    --ui-ring-ink: ${reference('--ui-color-focus').cssText};
+}`,
+)}
+    }
+}
 
 ${sweeps}
 
@@ -2398,6 +2497,7 @@ export const moments: readonly Moment[] = [
                     says: 'The boundary takes the colour the theme gives the pointer: Glass’s faint edge goes solid. The default theme and Matrix give none, so under them it changes nothing.',
                 },
                 'accent',
+                'rainbow',
                 'edge',
                 'orbit',
                 'trace',
@@ -2454,6 +2554,7 @@ export const moments: readonly Moment[] = [
             draws: [
                 'highlight',
                 'accent',
+                'rainbow',
                 'edge',
                 'orbit',
                 'trace',
@@ -2477,6 +2578,7 @@ export const moments: readonly Moment[] = [
                 'double',
                 'breathe',
                 'implode',
+                'rainbow',
                 ...flights('button'),
             ],
         },
@@ -2522,8 +2624,8 @@ export const refused: readonly Refusal[] = [
         why: 'turns the fill the reference’s blue, red and green under a label that stays white: 3.15, 3.82 and 2.10 to 1, all three under the 4.5 the label owes.',
     },
     {
-        name: 'rainbow',
-        why: 'a hue rotation keeps the fill’s lightness only roughly: the primary’s white label falls to 3.79:1 at 120°, and is under 4.5:1 for about two fifths of every turn — measured in three engines.',
+        name: 'rainbow, on the fill',
+        why: 'a hue rotation keeps the fill’s lightness only roughly: the primary’s white label falls to 3.79:1 at 120°, and is under 4.5:1 for about two fifths of every turn — measured in three engines. The rainbow turns the edge and the ring instead, which no label is drawn over.',
     },
     {
         name: 'smoke',

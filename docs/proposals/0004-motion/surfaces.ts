@@ -13,9 +13,11 @@ import { reference } from '../../../src/reference.js';
 import {
     comet,
     edge,
+    far,
     lights,
     line,
     orbit,
+    rainbow,
     ripple,
     scan,
     sheen,
@@ -157,7 +159,7 @@ ${(
     [
         ['sink', lights.sink],
         ['halo', lights.halo],
-        ['inner', lights.inner('0.75rem')],
+        ['inner', lights.inner('0.75rem', '0.125rem')],
     ] as const
 )
     .map(
@@ -216,7 +218,7 @@ ${(
         ['sink', `box-shadow: ${lights.sink};`],
         ['halo', `box-shadow: ${lights.halo};`],
         ['glow', `box-shadow: ${glowing};`],
-        ['inner', `box-shadow: ${lights.inner('0.75rem')};`],
+        ['inner', `box-shadow: ${lights.inner('0.75rem', '0.125rem')};`],
     ] as const
 )
     .map(
@@ -474,6 +476,23 @@ ${(
     }
 }
 
+/* hover-border: rainbow. The band in the trace's colour turned round the hue wheel for as long as
+   the pointer rests, in and out on the state's step, and what the surface holds as it was: the
+   definition every component that offers it draws. */
+@container ${is('hover-border', 'rainbow')} {
+    [data-layer='border'] {
+        background: ${rainbow.colour(`var(--ui-band-ink, ${far})`)};
+        transition: opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
+    }
+
+    @media (hover: hover) {
+        ${resting} [data-layer='border'] {
+            opacity: 1;
+            animation: ${rainbow.loop};
+        }
+    }
+}
+
 /* hover-border: orbit. A light from the accent round the hue wheel runs round the band, on the
    boundary and never past it, three laps, and then it fades. */
 @container ${is('hover-border', 'orbit')} {
@@ -692,6 +711,19 @@ ${(
     }
 }
 
+/* rainbow: the pointer's, faded in, twice round, and at rest in the trace's colour. */
+@container ${is('focus-border', 'rainbow')} {
+    [data-layer='focus-border'] {
+        background: ${rainbow.colour(`var(--ui-band-ink, ${far})`)};
+        transition: opacity var(--ui-duration-200) var(--ui-easing-enter);
+    }
+
+    ${focused} [data-layer='focus-border'] {
+        opacity: 1;
+        animation: ${rainbow.run};
+    }
+}
+
 /* comet: the pointer's, two laps and then it fades, as at every focus. */
 @container ${is('focus-border', 'comet')} {
     [data-layer='focus-border'] {
@@ -783,5 +815,7 @@ ${(
         ),
     )
     .join('\n\n')}
+
+${rainbow.frames}
 `;
 }
