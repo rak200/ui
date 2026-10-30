@@ -454,26 +454,32 @@ lists what its component leaves out and why. None of it is the Decision, which s
 
 **The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
 under each theme; `today` marks what a component does today. A theme names the pointer, the focus, a
-press and an error once, for the page, and Glass sets one component apart: the card leans under the
-pointer, and nothing else does. _Every_ is the button, the menu's trigger, the card, the toast, the
-input, the textarea, the select, the checkbox, the switch and the radio, which answer the pointer
-and the focus, the card and the toast a focus on something they hold; _ringed_ is the same less the
-card and the toast, the components with a ring of their own; _form_ is the input, the textarea, the
-select, the checkbox, the switch and the radio, which answer an error; and a press is answered by
+press and an error once, for the page, and each sets components apart: the default theme keeps the
+fields' darkening under the pointer, Glass leans the card alone there, and Matrix tints the card,
+the toast and the fields at the focus, where they leave its hover colour out. _Every_ is the button,
+the menu's trigger, the card, the toast, the input, the textarea, the select, the checkbox, the
+switch and the radio, which answer the pointer and the focus, the card and the toast a focus on
+something they hold; _ringed_ is the same less the card and the toast, the components with a ring of
+their own; _form_ is the input, the textarea, the select, the checkbox, the switch and the radio,
+which answer an error; _field_ is the input, the textarea and the select; and a press is answered by
 the button and the menu's trigger. A component that leaves an effect out does what it does today
 there: the hover colour is the button's today, and the card, the toast and the fields leave it out.
-The select's `enter`, `exit` and `caret` are its list's, where the component draws it.
+The border under the pointer is `none` under the default theme and Matrix, which takes away the
+darkening a field and a drawn control answer the pointer with today, but on a field under the
+default theme: without it a field's one answer to the pointer there was the raise, its hover colour
+being left out and its tint, held light, leaving a white field 1.07:1 from itself. The select's
+`enter`, `exit` and `caret` are its list's, where the component draws it.
 
 | Component | Moment            | Default          | Matrix      | Glass       |
 | --------- | ----------------- | ---------------- | ----------- | ----------- |
 | every     | `hover-move`      | none, today      | none, today | none, today |
 | every     | `hover-fill`      | highlight        | tint        | spotlight   |
 | every     | `hover-shadow`    | raise            | glow        | cast        |
-| every     | `hover-border`    | pulse            | trace       | edge        |
-| every     | `focus-move`      | lift             | glitch      | none, today |
-| every     | `focus-fill`      | none, today      | scan        | shimmer     |
-| every     | `focus-shadow`    | raise            | burst       | neon        |
-| every     | `focus-border`    | pulse            | comet       | orbit       |
+| every     | `hover-border`    | none             | none        | edge        |
+| every     | `focus-move`      | lift             | none, today | none, today |
+| every     | `focus-fill`      | none, today      | highlight   | shimmer     |
+| every     | `focus-shadow`    | raise            | burst       | inner       |
+| every     | `focus-border`    | none, today      | none, today | none, today |
 | every     | `focus-label`     | accent           | glow        | none, today |
 | ringed    | `focus-ring`      | glide            | glitch      | refocus     |
 | button    | `press-move`      | squish           | shatter     | spring      |
@@ -483,7 +489,10 @@ The select's `enter`, `exit` and `caret` are its list's, where the component dra
 | form      | `invalid-border`  | pulse            | split       | glow        |
 | form      | `invalid-fill`    | flash            | none, today | flash       |
 | form      | `invalid-message` | none, today      | none, today | none, today |
+| field     | `hover-border`    | highlight, today | none        | edge        |
+| field     | `focus-fill`      | none, today      | tint        | shimmer     |
 | card      | `hover-move`      | none, today      | none, today | tilt        |
+| card      | `focus-fill`      | none, today      | tint        | shimmer     |
 | card      | `enter`           | fade             | materialize | dissolve    |
 | card      | `exit`            | fade             | erode       | dissolve    |
 | checkbox  | `check`           | draw             | draw        | draw        |
@@ -492,6 +501,7 @@ The select's `enter`, `exit` and `caret` are its list's, where the component dra
 | dialog    | `enter`           | fade, today      | materialize | dissolve    |
 | dialog    | `exit`            | fade, today      | erode       | dissolve    |
 | dialog    | `backdrop`        | fade, today      | char-rain   | blur        |
+| toast     | `focus-fill`      | none, today      | tint        | shimmer     |
 | toast     | `enter`           | slide-elastic    | wind        | refocus     |
 | toast     | `exit`            | slide            | wind        | defocus     |
 | toast     | `dwell`           | ring             | ring        | ring        |

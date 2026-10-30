@@ -65,6 +65,14 @@ export const lights = {
     glow: '0 0 0.75rem 0.125rem rgb(from var(--ui-color-accent) r g b / 0.5)',
     /** The same light in the danger, for an error. */
     danger: '0 0 0.75rem 0.125rem rgb(from var(--ui-color-danger) r g b / 0.5)',
+    /** The halo and the glow as strong as `strength`, for a layer with no opacity of its own to
+     *  fade them by: the button's, where a theme draws its glow too. */
+    shown: {
+        halo: (strength: string): string =>
+            `0 0 0 0.5rem rgb(from var(--ui-color-accent) r g b / calc(0.16 * ${strength}))`,
+        glow: (strength: string): string =>
+            `0 0 0.75rem 0.125rem rgb(from var(--ui-color-accent) r g b / calc(0.5 * ${strength}))`,
+    },
     /** The button's raise: a drop under it, which on a dark page, where a shadow barely shows, is
      *  the accent's. */
     raise: String.raw`0 2px 4px -1px light-dark(rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6)),
