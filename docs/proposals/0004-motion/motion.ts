@@ -272,6 +272,8 @@ const registered = [
     ['--ui-scan', '<length-percentage>', '-80%'],
     ['--ui-shimmer', '<length-percentage>', '150%'],
     ['--ui-shown', '<number>', '0'],
+    ['--ui-shown-halo', '<number>', '0'],
+    ['--ui-shown-glow', '<number>', '0'],
 ] as const;
 
 for (const [name, syntax, initialValue] of registered) {
@@ -308,8 +310,9 @@ sheets.after(themed);
  * one that leaves the effect out, with why, does what it does today there; a press is answered by
  * the button alone, and an error by a form's controls. A component's own taste is left for a moment
  * of its own: a check, a menu's panel and caret, a toast, a tooltip, an icon and a table's row. A
- * theme sets a component apart from the page with one too, and only Glass does: the card alone
- * leans under the pointer.
+ * theme sets a component apart from the page with one too: the default theme keeps a field's
+ * boundary darkening under the pointer, Glass leans the card alone there, and Matrix tints the
+ * card, the toast and the fields at the focus, where they leave its hover colour out.
  *
  * A taste is written in properties of its own, never in the consumer's: `--ui-taste-<moment>` for
  * the page and `--ui-taste-<component>-<moment>` for one component, both on the root, read only
@@ -354,10 +357,10 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 hover: 'glow',
                 'hover-fill': 'highlight',
                 'hover-shadow': 'raise',
-                'hover-border': 'pulse',
+                'hover-border': 'none',
                 'focus-move': 'lift',
                 'focus-shadow': 'raise',
-                'focus-border': 'pulse',
+                'focus-border': 'none',
                 'focus-label': 'accent',
                 'focus-ring': 'glide',
                 'press-move': 'squish',
@@ -368,8 +371,15 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'invalid-fill': 'flash',
             },
             components: {
+                input: { 'hover-border': 'highlight' },
+                textarea: { 'hover-border': 'highlight' },
                 menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
-                select: { enter: 'cascade', exit: 'fold', caret: 'flip' },
+                select: {
+                    enter: 'cascade',
+                    exit: 'fold',
+                    caret: 'flip',
+                    'hover-border': 'highlight',
+                },
                 icon: { enter: 'draw' },
                 table: { hover: 'highlight', enter: 'glow' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
@@ -407,11 +417,11 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-move': 'none',
                 'hover-fill': 'tint',
                 'hover-shadow': 'glow',
-                'hover-border': 'trace',
-                'focus-move': 'glitch',
-                'focus-fill': 'scan',
+                'hover-border': 'none',
+                'focus-move': 'none',
+                'focus-fill': 'highlight',
                 'focus-shadow': 'burst',
-                'focus-border': 'comet',
+                'focus-border': 'none',
                 'focus-label': 'glow',
                 'focus-ring': 'glitch',
                 'press-move': 'shatter',
@@ -422,11 +432,14 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'invalid-fill': 'none',
             },
             components: {
+                card: { 'focus-fill': 'tint' },
+                input: { 'focus-fill': 'tint' },
+                textarea: { 'focus-fill': 'tint' },
                 menu: { enter: 'glitch', exit: 'glitch' },
-                select: { enter: 'glitch', exit: 'glitch' },
+                select: { enter: 'glitch', exit: 'glitch', 'focus-fill': 'tint' },
                 icon: { enter: 'pop', hover: 'glitch' },
                 table: { enter: 'glow' },
-                toast: { enter: 'wind', exit: 'wind' },
+                toast: { enter: 'wind', exit: 'wind', 'focus-fill': 'tint' },
                 tooltip: { enter: 'typing', exit: 'glitch' },
             },
         },
@@ -460,8 +473,8 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 'hover-border': 'edge',
                 'focus-move': 'none',
                 'focus-fill': 'shimmer',
-                'focus-shadow': 'neon',
-                'focus-border': 'orbit',
+                'focus-shadow': 'inner',
+                'focus-border': 'none',
                 'focus-label': 'none',
                 'focus-ring': 'refocus',
                 'press-move': 'spring',
@@ -1020,6 +1033,13 @@ const breaking = new WeakMap<
  * the instance in the tree, so they inherit what its content inherits. They are inert and hidden
  * from a reader of the page, who meets the surface whole: transparent while the pieces come
  * together, never removed. For a reader who asked for less motion there are no pieces.
+ *
+ * A copy is drawn by its component's own sheet alone: the page's, which each instance is given, is
+ * no use to a copy, which answers nothing. Given it, Matrix's copies of a card and of the button in
+ * it took 456 to 511ms of style in one task as the card arrived and 265 to 341 as it left, and the
+ * button that added or removed it stood in pieces through the task, since a script moves its
+ * shatter. Without it, 92 and 102ms, and a copy drew the card as it was to within its text's
+ * antialiasing — measured.
  */
 export function pieces(how: Pieces): void {
     const { host, surface, together } = how;
@@ -1485,9 +1505,15 @@ export function prototype(catalogue: Catalogue): Page {
     };
 
     /** Adopts the element's sheet into one instance's shadow root, once, renders its layers there
-     *  after what the component rendered, and listens to the control it names. */
+     *  after what the component rendered, and listens to the control it names. Not into a copy an
+     *  effect makes of one to draw with, which answers nothing and is drawn by the component's own
+     *  sheet: the pieces' note. */
     const adopt = async (element: Element): Promise<void> => {
-        if (catalogue.where === 'document' || !(element instanceof LitElement)) {
+        if (
+            catalogue.where === 'document' ||
+            !(element instanceof LitElement) ||
+            element.closest('[data-fragments]') !== null
+        ) {
             return;
         }
 

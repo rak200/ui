@@ -332,12 +332,12 @@ component** — the halo, the glow, the raise, the inner light, the trace or the
 it aside while one the focus plays**: the neon, the breathe, the orbit and the comet for a few
 rounds, the burst and the rings thrown out once. The ring is back once everything the focus started
 has settled, or as soon as the focus leaves, so where nothing stays the focus is still never left
-unseen: under Glass the ring is away for the five seconds the neon and the orbit take, and under
-Matrix for the comet's. What the focus started is what the engine plays, the animations still
-waiting to start as the focus arrives, whatever they are named — the comet plays under the orbit's
-name — and the page writes the host's record of the focus before any effect fires: written after,
-the comet a button and a checkbox draw on the host had not begun when the ring asked, and the ring
-came back with the burst. In forced colours the ring never goes.
+unseen: under Matrix the ring is away for the half second its burst takes. What the
+focus started is what the engine plays, the animations still waiting to start as the focus arrives,
+whatever they are named — the comet plays under the orbit's name — and the page writes the host's
+record of the focus before any effect fires: written after, the comet a button and a checkbox draw
+on the host had not begun when the ring asked, and the ring came back with the burst. In forced
+colours the ring never goes.
 
 Measured in Chromium on the button, a field and a checkbox with the ring taken away, under every
 theme and scheme, once each effect had settled: the six held changed at least the control's
@@ -475,7 +475,11 @@ CSS cannot do it alone, all in `motion.ts`:
   into a region and start a clock of its own. It is cut as near square as thirty-six pieces allow,
   where six by six cut a toast into slivers 7px high, and its pieces go after its toaster: beside
   the toast they are assigned to none of the toaster's slots, and showed nothing in Chromium and
-  Firefox, measured. The dissolve,
+  Firefox, measured. Every copy is drawn by its component's own sheet alone, never by the one the
+  page gives each instance, which a copy has no use for: given it, Matrix's copies of an arriving
+  card and of the button in it took 456 to 511ms of style in one task, through which the
+  side-by-side page's button stood in pieces, since a script moves its shatter; without it, 92ms,
+  and a copy drew the card as it was to within its text's antialiasing, measured. The dissolve,
   the card's and the dialog's, is the reference's cheaper way, with no copy at all: noise becomes
   the surface's alpha through a filter whose threshold a script moves, across the span where the
   grain changes — half the reference's sweep changed nothing, measured. The filter goes in the
@@ -491,7 +495,7 @@ goes on running in all three engines, and Firefox draws it at a different phase 
 
 **Every page has a theme control, a scheme control and a reduced-motion switch.** The theme is
 selected the way a host selects one, by the attribute and the theme's block after the token sheet,
-so an effect drawn for a theme — the button's glitch, for Matrix — is judged where it belongs. Under
+so an effect drawn for a theme — the ring's glitch, for Matrix — is judged where it belongs. Under
 Glass, which lets the page through, the stage is a page with colour and a grid on it, inside the
 limits the theme is measured over: over the token sheet's white alone, the glass was white on white.
 The switch collapses every duration the way the reader's own setting does, so the second state of
@@ -538,17 +542,19 @@ the focus's effects are one list wherever they are answered, so a name is one ef
 the menu's trigger, the card, the toast, the fields and the drawn controls alike, and a component
 that leaves the effect out, with why, does what it does today there; a press is answered by the
 button alone, and an error by a form's controls. Under the pointer, the default theme keeps each
-where it is, raises it with `raise`, sends a ring out from it with `pulse` and gives the button and
-the drawn controls the hover colour with `highlight`, which the card, the toast and the fields leave
-out; Matrix tints each with `tint`, lights it with `glow` and draws its boundary round with `trace`;
-and Glass lights the fill and the boundary of each where the pointer is with `spotlight` and `edge`,
-casts its shadow away from the pointer with `cast`, and leans the card alone with `tilt`. At the
-focus, the default theme lifts each with `lift` and `raise`, sends a pulse out across the ring with
-`pulse` and takes a label to the accent with `accent`; Matrix makes what it shows jump and split
-with `glitch`, sends a band of light across it with `scan`, bursts light out round it with `burst`,
-runs a comet round over the ring with `comet` and lights a label with `glow`; and Glass leaves it
-where it is, sweeps a sheen across it with `shimmer`, lights a line round it that glows out and back
-with `neon`, runs a light round on its boundary with `orbit` and leaves a label as it is. The ring,
+where it is, raises it with `raise`, keeps its boundary as it is at rest with `none`, a field's
+apart, which darkens as it does today with `highlight`, and gives the
+button and the drawn controls the hover colour with `highlight`, which the card, the toast and the
+fields leave out; Matrix tints each with `tint`, lights it with `glow` and keeps its boundary as it
+is at rest with `none`; and Glass lights the fill and the boundary of each where the pointer is with
+`spotlight` and `edge`, casts its shadow away from the pointer with `cast`, and leans the card alone
+with `tilt`. At the focus, the default theme lifts each with `lift` and `raise`, leaves its boundary
+as it is with `none` and takes a label to the accent with `accent`; Matrix leaves it where it is and
+its boundary as it is, bursts light out round it with `burst`, lights a label with `glow`, gives the
+button and the drawn controls the hover colour with `highlight` and the card, the toast and the
+fields a little of the accent with `tint`, its glitch left to the ring; and Glass leaves it where it
+is and its boundary as it is, sweeps a sheen across it with `shimmer`, holds a light of the accent
+inside its boundary with `inner` and leaves a label as it is. The ring,
 on each component that draws one of its own, glides over from the control the reader saw it on last
 with `glide` under the default theme, shakes and splits with `glitch` under Matrix, and comes into
 focus from a blur and blurs away as the focus leaves with `refocus` under Glass. A press shrinks the
@@ -561,18 +567,23 @@ error the default theme sends a red ring out from the control with `pulse` and t
 light round it with `glow` and tints it with `flash`; each that loops runs for about two seconds and
 rests, as a loop does for a state that stands for as long as the reader leaves it, and the message
 comes as it does today under all three. Where the default theme names an effect for a moment another
-theme leaves alone, that theme names `none`, or the default theme's would run there: Glass's
-movement and label at the focus, and Matrix's fill and shadow at a press and its fill in error. On a
-field and a drawn control the boundary still darkens under the pointer as it does today, beneath
-whichever band a theme names: only `none` takes that away, and `accent` puts the accent in its
-place. The card and the toast answer a focus on something they hold with the theme's focus, as every
-component answers its own. Each theme's taste ran, with nothing chosen, in all three engines: the
-default theme's pointer on a field, a checkbox and the card, its focus on the button and in the
-card, a press and an error; Matrix's focus on a field and a checkbox; Glass's pointer on a checkbox
-and focus on a field; each theme's pointer on the toast and focus in it; each theme's ring, Tab by
-Tab along the buttons, the fields and the checkboxes and into a radio group, and from choice to
-choice in it but in WebKit, whose arrow keys move the focus with no ring the reader sees; and
-Matrix's press, which throws nothing off the button or the menu's trigger.
+theme leaves alone, that theme names `none`, or the default theme's would run there: the movement
+at the focus under both, Glass's label there, and Matrix's fill and shadow at a press and its fill
+in error. On a field and a drawn control the boundary still darkens under the pointer as it does
+today, beneath Glass's edge: only `none` takes that away, as it does under Matrix, and under the
+default theme on a drawn control, and `accent` puts the accent in its place. The default theme
+keeps a field's: without it, a field's one answer to the pointer there was the raise, its hover
+colour being left out and its tint, held light, leaving a white field 1.07:1 from itself —
+measured. The card and the toast answer a focus on
+something they hold with the theme's focus, as every component answers its own. Each theme's taste
+ran, with nothing chosen. In all three engines: the default theme's press and error; Glass's
+pointer on a checkbox; each theme's ring, Tab by Tab along the buttons, the fields and the
+checkboxes and into a radio group, and from choice to choice in it but in WebKit, whose arrow keys
+move the focus with no ring the reader sees; and Matrix's press, which throws nothing off the
+button or the menu's trigger. In Chromium and Firefox, with WebKit unmeasured there: the default
+theme's pointer on a field, a checkbox and the card, and its focus on the button and in the card;
+Matrix's focus on a field and a checkbox; Glass's focus on a field; and each theme's pointer on the
+toast and focus in it.
 
 **A component can have a taste of its own**, for a moment no other answers the same way, and it runs
 over the page's there. A theme that names a moment for the page clears the default theme's taste for

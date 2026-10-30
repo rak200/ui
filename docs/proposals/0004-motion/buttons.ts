@@ -926,6 +926,12 @@ export function sheet({ variants, hovered, filled }: Buttons, name: string): str
     /** The focus's borders that hold the same layer while the focus stays. */
     const focusBorder = `(${is('focus-border', 'edge')} or ${is('focus-border', 'orbit')} or ${is('focus-border', 'trace')} or ${is('focus-border', 'comet')} or ${is('focus-border', 'underline')} or ${is('focus-border', 'sweep')} or ${is('focus-border', 'rainbow')})`;
 
+    /** The pointer's shadows that light the layer a theme draws its glow on, the focus's, and the
+     *  halo and the glow drawn there, each as strong as a number of its own. */
+    const pointerLight = `(${is('hover-shadow', 'halo')} or ${is('hover-shadow', 'glow')})`;
+    const focusLight = `(${is('focus-shadow', 'halo')} or ${is('focus-shadow', 'glow')})`;
+    const lit = `${lights.shown.halo('var(--ui-shown-halo)')}, ${lights.shown.glow('var(--ui-shown-glow)')}`;
+
     return String.raw`
 /* Every property the movement moves, transitioned once, and the blur's glass, on the fill's
    length and curve, which the list's fifth entry takes. Nothing here moves until an effect asks it
@@ -1523,34 +1529,54 @@ button {
 }
 
 /* halo and glow, a field's, and cast, the card's at half its size, added to the glow a theme gives
-   the button at rest, on the layer the theme draws it on, as the breathe's light is, and faded in.
-   The cast follows the pointer as it nears, as the card's does, whether it is over the button or
-   not, so it is drawn as strong as the pointer is near rather than under :hover. */
+   the button at rest, on the layer the theme draws it on, as the breathe's light is. The cast
+   follows the pointer as it nears, as the card's does, whether it is over the button or not, so it
+   is drawn as strong as the pointer is near rather than under :hover.
+
+   The halo and the glow fade as the breathe's light does, by their strength alone: a registered
+   number each, so a light both moments chose holds from one to the other. Faded as a shadow, they
+   took the theme's glow with them, since Chromium carried Matrix's, written from currentColor,
+   through transparent for the length of the transition: the button's ring and glow went out as the
+   pointer came and again as it left — measured. So the layer draws both wherever either moment
+   chose one, at rest too, where neither has any strength. Where another shadow takes the layer, a
+   light goes at once, as the theme's own glow under the pointer does. */
+@container ${pointerLight} or ${focusLight} {
+    button::before {
+        box-shadow: var(--ui-glow), ${lit};
+        transition:
+            --ui-shown-halo var(--ui-duration-200) var(--ui-easing-enter),
+            --ui-shown-glow var(--ui-duration-200) var(--ui-easing-enter);
+    }
+}
+
+@container (${pointerLight} or ${focusLight}) and style(--ui-glow: none) {
+    button::before {
+        box-shadow: ${lit};
+    }
+}
+
 ${[
-    ['hover', 'halo', lights.halo],
-    ['hover', 'glow', lights.glow],
-    ['focus', 'halo', lights.halo],
-    ['focus', 'glow', lights.glow],
+    ['hover', 'halo'],
+    ['hover', 'glow'],
+    ['focus', 'halo'],
+    ['focus', 'glow'],
 ]
-    .map(([moment = '', effect = '', light = '']) => {
+    .map(([moment = '', effect = '']) => {
         const state =
             moment === 'hover'
                 ? `button:not(:disabled):not([data-shadow]):hover${unfocused}::before`
                 : 'button:focus-visible:not([data-shadow])::before';
 
         return String.raw`@container ${is(`${moment}-shadow`, effect)} {
-    button::before {
-        transition: box-shadow var(--ui-duration-200) var(--ui-easing-enter);
-    }
-
     ${state} {
-        box-shadow: var(--ui-glow), ${light};
+        --ui-shown-${effect}: 1;
+        box-shadow: var(--ui-glow), ${lit};
     }
 }
 
 @container ${is(`${moment}-shadow`, effect)} and style(--ui-glow: none) {
     ${state} {
-        box-shadow: ${light};
+        box-shadow: ${lit};
     }
 }`;
     })
