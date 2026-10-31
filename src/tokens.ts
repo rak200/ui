@@ -113,6 +113,12 @@ export const tokens = [
     // settles back, which is what a press let go of does.
     '--ui-duration-200',
     '--ui-easing-emphasis',
+    // The step and the curve the focus ring's glide arrives with: a ring flown from one control
+    // to the next crosses a distance, so it takes longer than an effect that stays put. No
+    // component reads the step — they read `--ui-duration-travel`. The curve is a move's, quick
+    // out of the gate and slowing into place, as anything travelling between two points does.
+    '--ui-duration-300',
+    '--ui-easing-move',
     // The icon category, arriving with `ui-icon` rather than with the twelve components
     // that will eventually hold one. Two names, because an adopted set has exactly two
     // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
@@ -209,6 +215,10 @@ export const derivedTokens = [
     // `--ui-duration-state` is one, and apart from it because the two answer different things:
     // a host who wants livelier effects and the same colour changes moves this one.
     '--ui-duration-effect',
+    // How long something takes to travel from one place to another — RFC 0004's: the focus ring
+    // glided from the control the reader saw it on last. Apart from the effect's, since a
+    // crossing is as long as its distance asks and an effect is not.
+    '--ui-duration-travel',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -374,6 +384,11 @@ export const defaults: Readonly<Record<Token, string>> = {
     // Past the end by half again and back: a curve the platform has no keyword for, so the
     // one place this layer writes a `cubic-bezier`.
     '--ui-easing-emphasis': 'cubic-bezier(0.3, 1.5, 0.5, 1)',
+    // 360ms, the prototypes' step for the ring's glide, and the review's.
+    '--ui-duration-300': '360ms',
+    // Fast out of the gate and slow into place, as the platform's own `ease` is, but settling
+    // longer, which is what a ring landing on a control wants.
+    '--ui-easing-move': 'cubic-bezier(0.4, 0, 0.2, 1)',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
     // Two layers rather than one, which is what makes a shadow read as *lift* instead of
@@ -498,6 +513,7 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-duration-state': ground('--ui-duration-100'),
     // A plain reference, as the state's is: the scale is where the value lives.
     '--ui-duration-effect': ground('--ui-duration-200'),
+    '--ui-duration-travel': ground('--ui-duration-300'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast
@@ -672,14 +688,15 @@ export const moreContrast: Readonly<
  * An entry arrives with the first component that draws the effect it names, as a token
  * arrives with the first component that reads it — `tests/tokens.test.ts` refuses one no
  * component draws. Each is the button's today: a drop shadow under the pointer and at the
- * focus, two pixels up at the focus, and a press that squeezes the button and sinks its shadow
- * inside.
+ * focus, two pixels up at the focus, the focus ring glided over from the control the reader saw
+ * it on last, and a press that squeezes the button and sinks its shadow inside.
  */
 export const taste: Taste = {
     page: {
         'hover-shadow': 'raise',
         'focus-move': 'lift',
         'focus-shadow': 'raise',
+        'focus-ring': 'glide',
         'press-move': 'squish',
         'press-shadow': 'sink',
     },

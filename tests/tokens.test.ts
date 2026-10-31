@@ -508,6 +508,7 @@ describe('tokenStyleSheet', () => {
                 'hover-shadow': 'raise',
                 'focus-move': 'lift',
                 'focus-shadow': 'raise',
+                'focus-ring': 'glide',
                 'press-move': 'squish',
                 'press-shadow': 'sink',
             },
@@ -743,6 +744,7 @@ describe('the references components write', () => {
     it.each([
         ['--ui-duration-state', '--ui-duration-100'],
         ['--ui-duration-effect', '--ui-duration-200'],
+        ['--ui-duration-travel', '--ui-duration-300'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
     ] as const)('reads %s rather than the step under it', (name, step) => {

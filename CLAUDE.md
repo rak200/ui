@@ -35,6 +35,7 @@ src/
 ├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
+├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
 ├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
@@ -56,6 +57,7 @@ tests/               # mirrors src/, one test file per unit
 ├── motion.test.ts
 ├── placement.test.ts
 ├── radio.test.ts
+├── ring.test.ts
 ├── select.test.ts
 ├── table.test.ts
 ├── theme.test.ts
@@ -300,6 +302,14 @@ explains. This file restates none of them.
   and a press win over both** — the comments beside the rules in `src/button.ts`, and
   `docs/button.md`'s _Motion_. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.
+- **Why the focus ring's glide is a popover the page owns, and why the script only reads what the
+  sheet decided** — the docblock on `src/ring.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md), _Which
+  effect runs is the consumer's_. A component hands the ring `--ui-fx-ring: glide` and the flight's
+  time and curve on its control, under the glide's query and `:focus-visible`, and binds `arrive()`
+  to its focus. **The module keeps no guard a mutant can turn into a throw on an unasserted path**:
+  the departure from nowhere is a sentinel rather than `undefined`, and where the focus went is read
+  off the arrival's composed path rather than walked to `null` — a throw no test fails on is graded
+  as an error, which fails the floor.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

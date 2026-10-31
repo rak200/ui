@@ -2,6 +2,7 @@ import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { Description } from './description.js';
 import { query } from './motion.js';
 import { reference } from './reference.js';
+import { arrive, watch } from './ring.js';
 
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
@@ -16,7 +17,7 @@ export type ButtonVariant = 'primary' | 'secondary';
  */
 const drawn = query('button');
 
-/** The effects the button draws, each by the moment it answers. */
+/** The effects the button draws on itself, each by the moment it answers. */
 const effects = [
     ['hover-shadow', 'raise'],
     ['focus-shadow', 'raise'],
@@ -242,6 +243,22 @@ export class UiButton extends LitElement {
                 box-shadow: ${sink};
             }
         }
+
+        /* The focus ring glided over from the control the reader saw it on last, which the
+           page's ring flies — src/ring.ts. The sheet decides and the script only reads what it
+           decided: the choice while the reader can see the focus, and the flight's time and curve
+           resolved on the button, so a host's own time reaches the flight and the collapse takes
+           it to nothing. Never in forced colours, where the ring is the system's and nothing
+           flies. */
+        @media (forced-colors: none) {
+            @container ${unsafeCSS(drawn('focus-ring', 'glide'))} {
+                button:focus-visible {
+                    --ui-fx-ring: glide;
+                    --ui-fx-ring-time: ${reference('--ui-duration-travel')};
+                    --ui-fx-ring-curve: ${reference('--ui-easing-move')};
+                }
+            }
+        }
     `;
 
     /** The properties Lit observes on this element. */
@@ -280,6 +297,15 @@ export class UiButton extends LitElement {
      */
     readonly #description = new Description(this);
 
+    /**
+     * Starts watching the page's focus as the first button connects, so the ring the reader saw
+     * before the button's first focus is already recorded when the glide needs it.
+     */
+    override connectedCallback(): void {
+        super.connectedCallback();
+        watch();
+    }
+
     /** A native `<button>` around the default slot, described by what a tooltip hands it. */
     override render(): TemplateResult {
         return html`
@@ -288,6 +314,7 @@ export class UiButton extends LitElement {
                 ?disabled=${this.disabled}
                 aria-describedby=${this.#description.described()}
                 part="button"
+                @focus=${arrive}
             >
                 <slot></slot>
             </button>

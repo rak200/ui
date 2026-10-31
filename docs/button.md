@@ -142,6 +142,7 @@ the effect's name:
 | `--ui-motion-hover-shadow` | `raise`                   | a drop shadow under the pointer                     |
 | `--ui-motion-focus-shadow` | `raise`                   | the same drop, while the focus stays                |
 | `--ui-motion-focus-move`   | `lift`                    | two pixels up, the focus ring with it               |
+| `--ui-motion-focus-ring`   | `glide`                   | the ring glided over from the control seen last     |
 | `--ui-motion-press-move`   | `squish`                  | squeezed to 96%, springing back once let go         |
 | `--ui-motion-press-shadow` | `sink`                    | its shadow sunk inside, as if pressed into the page |
 
@@ -167,11 +168,22 @@ letting go runs each effect back, the squeeze along `--ui-easing-emphasis`, whic
 rest. The shadow under the pointer is drawn only where the pointer can hover, so a tap on a touch
 screen leaves none behind. A disabled button draws no effect.
 
-Each effect moves over `--ui-duration-effect`, which collapses with every other duration under
-`prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once. An engine
-without container style queries — Firefox before 151, inside the
-[browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect, and the button does
-what it did before effects existed.
+**The glide is flown by a ring of the page's own.** An outline is drawn round its own element and
+moves only with it, so a ring that leaves one control and lands on the button is a popover laid in
+the top layer: it takes the button's outline, width and colour, starts where the ring the reader saw
+last was, follows the button frame by frame — lifting with it — and hides as it lands, where the
+button's own outline is back. It is `aria-hidden` and takes no pointer, and it is styled on itself,
+so your page needs no sheet for it. It leaves only from a ring the reader saw, for where the focus
+went: a click, a script's focus or the page's first focus brings the ring at once. The button binds
+one internal helper, `arrive()` in `src/ring.ts`, to its focus, and calls `watch()` as it connects,
+so the ring seen before its first focus is already recorded.
+
+Each effect moves over `--ui-duration-effect`, and the glide over `--ui-duration-travel` along
+`--ui-easing-move`, and both collapse with every other duration under
+`prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once, and the ring
+does not fly. Nor does it in forced colours. An engine without container style queries — Firefox
+before 151, inside the [browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect,
+and the button does what it did before effects existed.
 
 ## Styling
 

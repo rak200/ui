@@ -162,8 +162,10 @@ curve.
 `--ui-duration-200`. The two purposes answer different things — a state recolours a component, an
 effect moves it — so a host who wants livelier effects moves one and keeps the colour changes as
 they were. `--ui-easing-emphasis` is the curve a press let go of springs back along, past its rest
-and back. Which effect runs is a choice rather than a token, and [`taste`](#taste) is the default
-one.
+and back. **Something that travels has a third**, `--ui-duration-travel` over `--ui-duration-300`,
+because a crossing takes as long as its distance asks — the focus ring glided from one control to
+the next — and it moves along `--ui-easing-move`, quick out of the gate and slow into place. Which
+effect runs is a choice rather than a token, and [`taste`](#taste) is the default one.
 
 ## More contrast
 
@@ -248,6 +250,8 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-easing-exit`         | the curve it leaves along                                         |
 | `--ui-duration-200`        | the second step of the duration scale                             |
 | `--ui-easing-emphasis`     | the curve that runs past its end and settles back                 |
+| `--ui-duration-300`        | the third step of the duration scale                              |
+| `--ui-easing-move`         | the curve something travelling between two places follows         |
 | `--ui-icon-size`           | how big a glyph is drawn                                          |
 | `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
 | `--ui-elevation-100`       | the first step of the elevation scale                             |
@@ -334,34 +338,35 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                            | Covers                                        |
-| -------------------------------- | --------------------------------------------- |
-| `--ui-color-accent-contrast`     | every mark on the accent                      |
-| `--ui-color-accent-hover`        | a checked control under the pointer           |
-| `--ui-color-accent-pressed`      | the step past the hover                       |
-| `--ui-color-primary`             | the fill of a primary button                  |
-| `--ui-color-primary-contrast`    | its label                                     |
-| `--ui-color-primary-hover`       | a primary button under the pointer            |
-| `--ui-color-primary-pressed`     | a primary button being pressed                |
-| `--ui-color-selected`            | the choice already made in a select's list    |
-| `--ui-color-selected-contrast`   | its text and its check                        |
-| `--ui-color-selected-hover`      | that choice under the pointer                 |
-| `--ui-color-hover`               | a neutral surface under the pointer           |
-| `--ui-color-pressed`             | a neutral surface being pressed               |
-| `--ui-color-border`              | the boundary of a control                     |
-| `--ui-color-border-overlay`      | the edge of a dialog, a tip, a menu, a list   |
-| `--ui-color-border-raised`       | the edge of a card                            |
-| `--ui-color-border-button-hover` | the edge a button goes to under the pointer   |
-| `--ui-color-text-invalid`        | the value written in a field in error         |
-| `--ui-color-text-muted`          | text that is not a value yet                  |
-| `--ui-duration-state`            | how long a state change takes                 |
-| `--ui-duration-effect`           | how long an effect a moment fires takes       |
-| `--ui-elevation-raised`          | a surface lifted off the page                 |
-| `--ui-elevation-control-hover`   | the glow a button lights to under the pointer |
-| `--ui-text-supporting`           | text that explains what is beside it          |
-| `--ui-color-surface-muted`       | a second surface tone, for grouping           |
-| `--ui-color-surface-raised`      | the colour of a raised surface                |
-| `--ui-color-surface-control`     | the fill of a control, and of a table         |
+| Token                            | Covers                                         |
+| -------------------------------- | ---------------------------------------------- |
+| `--ui-color-accent-contrast`     | every mark on the accent                       |
+| `--ui-color-accent-hover`        | a checked control under the pointer            |
+| `--ui-color-accent-pressed`      | the step past the hover                        |
+| `--ui-color-primary`             | the fill of a primary button                   |
+| `--ui-color-primary-contrast`    | its label                                      |
+| `--ui-color-primary-hover`       | a primary button under the pointer             |
+| `--ui-color-primary-pressed`     | a primary button being pressed                 |
+| `--ui-color-selected`            | the choice already made in a select's list     |
+| `--ui-color-selected-contrast`   | its text and its check                         |
+| `--ui-color-selected-hover`      | that choice under the pointer                  |
+| `--ui-color-hover`               | a neutral surface under the pointer            |
+| `--ui-color-pressed`             | a neutral surface being pressed                |
+| `--ui-color-border`              | the boundary of a control                      |
+| `--ui-color-border-overlay`      | the edge of a dialog, a tip, a menu, a list    |
+| `--ui-color-border-raised`       | the edge of a card                             |
+| `--ui-color-border-button-hover` | the edge a button goes to under the pointer    |
+| `--ui-color-text-invalid`        | the value written in a field in error          |
+| `--ui-color-text-muted`          | text that is not a value yet                   |
+| `--ui-duration-state`            | how long a state change takes                  |
+| `--ui-duration-effect`           | how long an effect a moment fires takes        |
+| `--ui-duration-travel`           | how long something takes to cross to its place |
+| `--ui-elevation-raised`          | a surface lifted off the page                  |
+| `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
+| `--ui-text-supporting`           | text that explains what is beside it           |
+| `--ui-color-surface-muted`       | a second surface tone, for grouping            |
+| `--ui-color-surface-raised`      | the colour of a raised surface                 |
+| `--ui-color-surface-control`     | the fill of a control, and of a table          |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -534,6 +539,7 @@ taste.page['press-move']; // 'squish'
 | `hover-shadow` | `raise`  | a drop shadow under the pointer                    |
 | `focus-shadow` | `raise`  | the same drop, at the focus                        |
 | `focus-move`   | `lift`   | two pixels up at the focus, the ring with it       |
+| `focus-ring`   | `glide`  | the ring glided over from the control seen last    |
 | `press-move`   | `squish` | squeezed under a press, springing back once let go |
 | `press-shadow` | `sink`   | its shadow sunk inside under a press               |
 
