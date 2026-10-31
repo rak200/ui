@@ -37,7 +37,7 @@
  * Internal — it is not re-exported from `src/index.ts`.
  */
 
-import { kinds } from './motion.js';
+import { kinds, milliseconds } from './motion.js';
 
 /** A ring's four corners, clockwise from the top left. */
 type Corners = readonly [number, number, number, number];
@@ -157,13 +157,6 @@ function between(from: Round, to: Round, progress: number): Round {
             along(from.corners[3], to.corners[3]),
         ],
     };
-}
-
-/** A duration as CSS writes one, in milliseconds. */
-function milliseconds(value: string): number {
-    const time = Number.parseFloat(value);
-
-    return value.endsWith('ms') ? time : time * 1000;
 }
 
 /** One of the glitch's lines, thrown `aside` off the ring it is drawn over, and hidden. */

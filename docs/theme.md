@@ -75,10 +75,9 @@ edge: 6.47:1 on the field's white and 7.37 on its black.
 
 **Its taste answers in light where the default theme's moves.** Under the pointer a button takes a
 tint of the accent and glows; at the focus it takes its hover colour and a burst of light, its ring
-glitches rather than gliding, and it does not lift; and a press brings no colour of its own and sinks
-nothing. Each `none` in it takes back an effect the default theme's taste names, which would
-otherwise run under Matrix too. The press keeps the default theme's squeeze: the shatter RFC 0004
-chose for it is not drawn yet, and a taste names only what some component draws.
+glitches rather than gliding, and it does not lift; and a press shatters it rather than squeezing
+it, brings no colour of its own and sinks nothing. Each `none` in it takes back an effect the
+default theme's taste names, which would otherwise run under Matrix too.
 
 | Moment         | Effect      |
 | -------------- | ----------- |
@@ -88,6 +87,7 @@ chose for it is not drawn yet, and a taste names only what some component draws.
 | `focus-fill`   | `highlight` |
 | `focus-shadow` | `burst`     |
 | `focus-ring`   | `glitch`    |
+| `press-move`   | `shatter`   |
 | `press-fill`   | `none`      |
 | `press-shadow` | `none`      |
 
@@ -246,8 +246,9 @@ Components read the names through one internal helper, `query()` in `src/motion.
 the condition a component draws each effect under. The same module keeps `kinds`, the prefixes of
 the three kinds of `--ui-` name that are not tokens: `--ui-motion-` for a choice, `--ui-taste-` for
 a taste, and `--ui-fx-` for a property an effect animates, which only this package writes and a host
-never sets. And it keeps `tasteBlock()`, which writes a taste as CSS for `themeStyleSheet()` and
-`tokenStyleSheet()` alike.
+never sets. It keeps `tasteBlock()`, which writes a taste as CSS for `themeStyleSheet()` and
+`tokenStyleSheet()` alike, and `milliseconds()`, which reads a duration a sheet hands a script in
+either unit CSS has, for the focus ring's flights and the shatter.
 
 ## `themeStyleSheet`
 
