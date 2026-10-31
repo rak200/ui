@@ -158,6 +158,29 @@ read.** The mutation floor is 100% and is never lowered, so a catalogue multipli
 of effects, by the number of components that offer them, by the reduced-motion axis. That number
 belongs in the proposal before the catalogue is designed, not after.
 
+> **Counted on the prototypes, by Stryker's own instrumenter: the catalogue alone makes nearly three
+> times the mutants the whole library does.** Today's `src/` makes 2,051. The prototypes' code makes
+> 9,617, and 3,895 of them are the page's — the panel, the lists it describes, each page's
+> demonstration — which leaves 5,722 to the catalogue: 2,316 in the sheets, seven in eight of them a
+> string of the CSS, which a test kills only by reading back what it draws, as the two above were;
+> and 3,406 in the scripts that run an effect. The button's own sheet and scripts make 1,118, where
+> `src/button.ts` makes 34, before anything it shares with the other components.
+>
+> **The catalogue draws 1,178 effects a component does not draw today**, counted on every element
+> each is drawn on, and each has both sides of the reduced-motion axis to check — it plays, and it
+> collapses — while 60 of them are loops whose count has to collapse too: 2,416 checks. The test
+> that kills the two above took 146ms in a headless Chromium, so as tests of their own the checks
+> would add about six minutes to a suite the pipeline runs in about one.
+>
+> **The pipeline pays for it in time.** The last ten pull requests that mutated anything, #276 to
+> #308, ran 203 mutants at about 1.4s each, every mutant running its own test file first and
+> stopping at its first failure, and the mutation job stops at 60 minutes. At that rate the
+> catalogue takes over two hours, so it cannot arrive in one pull request: one holds about 2,400
+> mutants, and fewer as the suite grows, since a component's checks go into the file its mutants
+> run first. The count is of the prototypes' code, which writes an effect once for every component
+> that draws it, and a component's own module could write it otherwise.
+> `tests/manual/catalogue-cost.mjs` is the step.
+
 ### The visual reference, and why this file does not link it
 
 The reference animations live in a repository that is **private**, and public documentation here
