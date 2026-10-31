@@ -1,4 +1,4 @@
-import { LitElement, css, html, unsafeCSS, type CSSResult, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { Description } from './description.js';
 import { query } from './motion.js';
 import { reference } from './reference.js';
@@ -6,13 +6,15 @@ import { reference } from './reference.js';
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
 
-/** The condition one of the button's effects is drawn under, by moment and effect — RFC 0004. */
+/**
+ * The condition one of the button's effects is drawn under, by moment and effect — RFC 0004.
+ *
+ * Each sheet below wraps it in `unsafeCSS` where it uses it, rather than through a helper of this
+ * module's own: the sheet is built once, at import, so a helper's body is code no test calls
+ * while it runs, and the one mutant that empties it took the import down, which the runner grades
+ * as a survivor — measured, on this module's first run.
+ */
 const drawn = query('button');
-
-/** {@link drawn}, as CSS a sheet can take. */
-function is(moment: string, effect: string): CSSResult {
-    return unsafeCSS(drawn(moment, effect));
-}
 
 /** The effects the button draws, each by the moment it answers. */
 const effects = [
@@ -207,21 +209,21 @@ export class UiButton extends LitElement {
            pointer resting there changes nothing — and the :where() keeps this rule at a press's
            weight, so a press, written after it, is drawn over it. */
         @media (hover: hover) {
-            @container ${is('hover-shadow', 'raise')} {
+            @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
                 button:not(:disabled):hover:where(:not(:focus-visible)) {
                     box-shadow: ${raise};
                 }
             }
         }
 
-        @container ${is('focus-shadow', 'raise')} {
+        @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             button:focus-visible {
                 box-shadow: ${raise};
             }
         }
 
         /* Two pixels up, the ring with it, for as long as the focus stays. */
-        @container ${is('focus-move', 'lift')} {
+        @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
             button:focus-visible {
                 translate: 0 -2px;
             }
@@ -229,13 +231,13 @@ export class UiButton extends LitElement {
 
         /* The press: transitions rather than animations, so letting go runs them back where an
            animation would be cut short the moment the press ended — RFC 0004's S7. */
-        @container ${is('press-move', 'squish')} {
+        @container ${unsafeCSS(drawn('press-move', 'squish'))} {
             button:not(:disabled):active {
                 scale: 0.96;
             }
         }
 
-        @container ${is('press-shadow', 'sink')} {
+        @container ${unsafeCSS(drawn('press-shadow', 'sink'))} {
             button:not(:disabled):active {
                 box-shadow: ${sink};
             }
