@@ -10,7 +10,7 @@ import '../src/button.js';
 import '../src/tooltip.js';
 import type { UiButton } from '../src/button.js';
 import { tokenStyleSheet } from '../src/tokens.js';
-import { matrix, themeStyleSheet } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 
 /** Mounts a `<ui-button>` and waits for its first render. */
 async function mount(html: string): Promise<UiButton> {
@@ -812,8 +812,10 @@ describe("the effects the default theme's taste names", () => {
         ['hover-shadow', 'raise'],
         ['hover-shadow', 'glow'],
         ['focus-shadow', 'raise'],
+        ['focus-shadow', 'inner'],
         ['focus-move', 'lift'],
         ['press-move', 'squish'],
+        ['press-move', 'spring'],
         ['press-shadow', 'sink'],
     ] as const)(
         'transitions what the effects move once %s is %s, and only then',
@@ -1255,7 +1257,7 @@ describe("the effects Matrix's taste names", () => {
         },
     );
 
-    it.each(['none', 'raise', 'burst'])(
+    it.each(['none', 'raise', 'burst', 'inner'])(
         "keeps the theme's resting glow at the focus where the focus's shadow is %s",
         async (effect) => {
             const element = await still();
@@ -1511,6 +1513,103 @@ describe("the effects Matrix's taste names", () => {
             ],
             'over the flourish, on the curve an arrival takes',
         ).toEqual(['0.52s', 'ease-out']);
+    });
+});
+
+/** The effects Glass's taste names, chosen one at a time and then read off the theme itself. */
+describe("the effects Glass's taste names", () => {
+    /** What the browser computes `value` to for `property`, on an element of the page. */
+    function resolved(property: string, value: string): string {
+        const probe = document.createElement('div');
+        probe.style.setProperty(property, value);
+        document.body.append(probe);
+
+        try {
+            return getComputedStyle(probe).getPropertyValue(property);
+        } finally {
+            probe.remove();
+        }
+    }
+
+    /** Moves the pointer off every button, so a read is not a hovered one. */
+    async function away(): Promise<void> {
+        await cdp().send('Input.dispatchMouseEvent', {
+            type: 'mouseMoved',
+            x: innerWidth - 1,
+            y: innerHeight - 1,
+            buttons: 0,
+        });
+    }
+
+    beforeEach(async () => {
+        await away();
+    });
+
+    it('holds a light inside the boundary at the focus, in the accent on a secondary button', async () => {
+        const element = await still('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-motion-focus-shadow', 'inner');
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+
+        await userEvent.tab();
+
+        expect(moved(element)[0]).toBe(
+            'rgb(10, 20, 30) 0px 0px 0px 1px inset, color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px inset',
+        );
+    });
+
+    it('moves the light toward the label on a primary button, whose fill is the accent already', async () => {
+        const element = await still();
+        element.style.setProperty('--ui-motion-focus-shadow', 'inner');
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        element.style.setProperty('--ui-color-primary-contrast', 'rgb(250, 250, 250)');
+
+        await userEvent.tab();
+
+        const line = resolved(
+            'color',
+            'color-mix(in oklab, rgb(10, 20, 30), rgb(250, 250, 250) 40%)',
+        );
+
+        expect(moved(element)[0].startsWith(`${line} 0px 0px 0px 1px inset, `)).toBe(true);
+    });
+
+    it('springs a press in further than the squeeze, and lets it go on the spring', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.style.setProperty('--ui-motion-press-move', 'spring');
+
+        await press(inner(element), true);
+
+        expect(getComputedStyle(inner(element)).scale, 'pressed in').toBe('0.9');
+
+        await press(inner(element), false);
+
+        const styles = getComputedStyle(inner(element));
+        const curve = resolved(
+            'transition-timing-function',
+            'linear(0, 0.38 8%, 0.83 17%, 1.06 24%, 1.13 30%, 1.08 39%, 0.99 51%, 0.97 62%, 1 82%, 1)',
+        );
+
+        expect(styles.transitionDuration, 'over the flourish').toBe('0.15s, 0.24s, 0.24s, 0.52s');
+        expect(styles.transitionTimingFunction, 'on the spring').toBe(
+            `ease-in-out, ease-out, ease-out, ${curve}`,
+        );
+    });
+
+    it("reads Glass's taste off the theme: the light held inside, and a spring", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+        const element = await still('<ui-button variant="secondary">Cancel</ui-button>');
+        element.parentElement?.setAttribute('data-ui-theme', glass.name);
+
+        await userEvent.tab();
+
+        expect(moved(element)[0], 'a light inside').toMatch(/ inset$/);
+        expect(moved(element)[1], 'no lift').toBe('none');
+
+        await press(inner(element), true);
+
+        expect(moved(element)[2], 'sprung in').toBe('0.9');
     });
 });
 

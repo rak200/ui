@@ -146,11 +146,13 @@ the effect's name:
 | `--ui-motion-focus-fill`   | `highlight` | the hover colour, while the focus stays                   |
 | `--ui-motion-focus-shadow` | `raise`     | the same drop, while the focus stays                      |
 | `--ui-motion-focus-shadow` | `burst`     | light bursting out round the button as the focus arrives  |
+| `--ui-motion-focus-shadow` | `inner`     | a light along the inside of its edge, at the focus        |
 | `--ui-motion-focus-move`   | `lift`      | two pixels up, the focus ring with it                     |
 | `--ui-motion-focus-ring`   | `glide`     | the ring glided over from the control seen last           |
 | `--ui-motion-focus-ring`   | `glitch`    | the ring shaken and split in two as the focus arrives     |
 | `--ui-motion-press-move`   | `squish`    | squeezed to 96%, springing back once let go               |
 | `--ui-motion-press-move`   | `shatter`   | broken into pieces where it was pressed, until let go     |
+| `--ui-motion-press-move`   | `spring`    | pressed to 90%, let go on a spring past its rest          |
 | `--ui-motion-press-shadow` | `sink`      | its shadow sunk inside, as if pressed into the page       |
 
 **Where you choose nothing, the theme's taste runs.** The default theme's — the
@@ -158,7 +160,8 @@ the effect's name:
 focus, lifts it at the focus, glides the ring over and squeezes and sinks it under a press. Under
 [Matrix](theme.md#matrix) the button tints and glows under the pointer, takes its hover colour and a
 burst at the focus without lifting, its ring glitching there, and shatters under a press, with
-neither a colour nor a sinking shadow.
+neither a colour nor a sinking shadow. Under [Glass](theme.md#glass) it keeps a light along its
+inside at the focus without lifting, and a press springs it back.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
 every button, or one. A name the button does not offer draws nothing, and the button does what it
@@ -199,6 +202,10 @@ the focus's shadow does the same.
 darkening would have spent, and it stays at least 0.6 opaque over a fill a theme lets the page
 through. A primary's fill is the accent already, so its tint is the hover colour it goes to anyway.
 
+**The inner light is the accent's**, a line along the inside of the edge and its light from it.
+Over the primary's fill, which is the accent already, the accent is moved two fifths toward the
+label, which stands off that fill.
+
 **The burst is an animation**: it starts each time the reader sees the focus arrive, plays out on its
 own and leaves nothing behind while the focus stays. Only the light round the button moves, so the
 label keeps its contrast throughout.
@@ -227,8 +234,9 @@ which makes no `:active`, breaks nothing. The button binds one internal helper, 
 `src/shatter.ts`, to its `pointerdown` and its `keydown`.
 
 Each effect moves over `--ui-duration-effect`, the shatter's pieces going back along
-`--ui-easing-move`; the glide over `--ui-duration-travel` along `--ui-easing-move`; and the burst and
-the glitch over `--ui-duration-flourish`. All of them collapse with every other duration under
+`--ui-easing-move`; the glide over `--ui-duration-travel` along `--ui-easing-move`; and the burst, the
+glitch and the spring a press lets go on over `--ui-duration-flourish`, the spring along a curve of
+its own. All of them collapse with every other duration under
 `prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once, the ring does
 not fly, no burst shows and nothing breaks. Nor does the ring fly or the burst show in forced
 colours. An engine without

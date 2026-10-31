@@ -27,8 +27,10 @@ const effects = [
     ['hover-shadow', 'raise'],
     ['hover-shadow', 'glow'],
     ['focus-shadow', 'raise'],
+    ['focus-shadow', 'inner'],
     ['focus-move', 'lift'],
     ['press-move', 'squish'],
+    ['press-move', 'spring'],
     ['press-shadow', 'sink'],
 ] as const;
 
@@ -58,7 +60,7 @@ const pointerShadow = unsafeCSS(
 
 /** Where a choice for the focus's shadow does the same at the focus, which wins over the pointer. */
 const focusShadow = unsafeCSS(
-    ['none', 'raise', 'burst'].map((effect) => drawn('focus-shadow', effect)).join(' or '),
+    ['none', 'raise', 'burst', 'inner'].map((effect) => drawn('focus-shadow', effect)).join(' or '),
 );
 
 /**
@@ -71,6 +73,31 @@ const raise = css`0 2px 4px -1px light-dark(rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6))
 
 /** The sink: the shadow gone inside, as if the button were pressed into the page. */
 const sink = css`inset 0 2px 5px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7))`;
+
+/** The accent moved toward a primary's label, which stands off the fill the accent is. */
+const offPrimary = css`color-mix(
+    in oklab,
+    ${reference('--ui-color-accent')},
+    ${reference('--ui-color-primary-contrast')} 40%
+)`;
+
+/**
+ * The inner light: a line of the accent along the inside of the boundary, and its light from it.
+ * Over the primary's fill, which is the accent already, the accent is moved toward the label: in
+ * the accent itself, over a fill that is the accent, none of it showed — measured for RFC 0004.
+ */
+const inner = css`inset 0 0 0 1px ${reference('--ui-color-accent')},
+    inset 0 0 0.75rem 0.125rem rgb(from ${reference('--ui-color-accent')} r g b / 0.5)`;
+
+/** The inner light over the primary's fill. */
+const innerOnPrimary = css`inset 0 0 0 1px ${offPrimary},
+    inset 0 0 0.75rem 0.125rem rgb(from ${offPrimary} r g b / 0.5)`;
+
+/**
+ * The reference's spring, which a press lets go on: a `linear()` curve, which passes its rest and
+ * comes back as no `cubic-bezier()` can, settled by four fifths of the way.
+ */
+const spring = css`linear(0, 0.38 8%, 0.83 17%, 1.06 24%, 1.13 30%, 1.08 39%, 0.99 51%, 0.97 62%, 1 82%, 1)`;
 
 /** The glow: a light of the accent, blurred round the button's boundary. */
 const glow = css`0 0 0.75rem 0.125rem rgb(from ${reference('--ui-color-accent')} r g b / 0.5)`;
@@ -379,6 +406,17 @@ export class UiButton extends LitElement {
             }
         }
 
+        /* inner: the light held inside the boundary, for as long as the focus stays. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'inner'))} {
+            button.secondary:focus-visible {
+                box-shadow: ${inner};
+            }
+
+            button.primary:focus-visible {
+                box-shadow: ${innerOnPrimary};
+            }
+        }
+
         /* burst: light bursting out round the button as the reader sees the focus arrive, and
            gone. An animation, so it starts each time the focus is seen arriving and plays out
            on its own; nothing holds once it is over. Only the light round the button moves: the
@@ -413,6 +451,24 @@ export class UiButton extends LitElement {
         @container ${unsafeCSS(drawn('press-move', 'squish'))} {
             button:not(:disabled):active {
                 scale: 0.96;
+            }
+        }
+
+        /* spring: pressed in further than the squish, and let go on the reference's spring over
+           a flourish's time, which plays out on its own once the press ends. In at once, as the
+           squish is: a press takes every duration to 0s while it holds. */
+        @container ${unsafeCSS(drawn('press-move', 'spring'))} {
+            button {
+                transition-duration:
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-effect')},
+                    ${reference('--ui-duration-effect')}, ${reference('--ui-duration-flourish')};
+                transition-timing-function:
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-enter')},
+                    ${reference('--ui-easing-enter')}, ${spring};
+            }
+
+            button:not(:disabled):active {
+                scale: 0.9;
             }
         }
 

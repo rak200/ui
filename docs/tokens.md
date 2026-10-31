@@ -166,8 +166,8 @@ and back. **Something that travels has a third**, `--ui-duration-travel` over `-
 because a crossing takes as long as its distance asks — the focus ring glided from one control to
 the next — and it moves along `--ui-easing-move`, quick out of the gate and slow into place. **A
 flourish has a fourth**, `--ui-duration-flourish` over `--ui-duration-400`: an effect that plays out
-on its own once a moment fires it, the burst of light at the focus and the ring's glitch, which runs
-longer than an effect that holds for as long as its moment does. Which effect runs is a choice rather than a token, and
+on its own once a moment fires it — the burst of light at the focus, the ring's glitch, the spring a
+press lets go on — which runs longer than an effect that holds for as long as its moment does. Which effect runs is a choice rather than a token, and
 [`taste`](#taste) is the default one.
 
 ## More contrast

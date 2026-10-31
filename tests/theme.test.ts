@@ -304,7 +304,7 @@ describe("a theme's taste", () => {
 
     it('writes no block for a theme with no taste, or with an empty one', () => {
         const empty: readonly Theme[] = [
-            glass,
+            { name: tasteful.name, values: tasteful.values },
             { ...tasteful, taste: {} },
             { ...tasteful, taste: { page: {}, components: { card: {} } } },
         ];
