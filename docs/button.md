@@ -150,14 +150,15 @@ the effect's name:
 | `--ui-motion-focus-ring`   | `glide`     | the ring glided over from the control seen last           |
 | `--ui-motion-focus-ring`   | `glitch`    | the ring shaken and split in two as the focus arrives     |
 | `--ui-motion-press-move`   | `squish`    | squeezed to 96%, springing back once let go               |
+| `--ui-motion-press-move`   | `shatter`   | broken into pieces where it was pressed, until let go     |
 | `--ui-motion-press-shadow` | `sink`      | its shadow sunk inside, as if pressed into the page       |
 
 **Where you choose nothing, the theme's taste runs.** The default theme's — the
 [`taste`](tokens.md#taste) the token sheet carries — raises the button under the pointer and at the
 focus, lifts it at the focus, glides the ring over and squeezes and sinks it under a press. Under
 [Matrix](theme.md#matrix) the button tints and glows under the pointer, takes its hover colour and a
-burst at the focus without lifting, its ring glitching there, and answers a press with neither a
-colour nor a sinking shadow.
+burst at the focus without lifting, its ring glitching there, and shatters under a press, with
+neither a colour nor a sinking shadow.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
 every button, or one. A name the button does not offer draws nothing, and the button does what it
@@ -215,10 +216,21 @@ three times into two lines thrown 3px either way, in `--ui-color-danger` and `--
 button binds one internal helper, `arrive()` in `src/ring.ts`, to its focus, and calls `watch()` as
 it connects, so the ring seen before its first focus is already recorded.
 
-Each effect moves over `--ui-duration-effect`, the glide over `--ui-duration-travel` along
-`--ui-easing-move`, and the burst and the glitch over `--ui-duration-flourish`, and all of them
-collapse with every other duration under `prefers-reduced-motion: reduce`: the button still rises,
-lifts and sinks, at once, the ring does not fly and no burst shows. Nor does either in forced
+**The shatter is a filter over the button**, which no sheet can draw: it cuts the button as it is
+drawn into a dozen or so pieces, smallest where the pointer struck it — the middle, for Space — and
+holds each a couple of pixels off until the press is let go, when they go back together. Only what
+the button draws solid breaks, so a theme's glow stays whole under the pieces, and through the
+cracks shows whatever is under the button. The filter goes in the button's own shadow root and is
+gone once the pieces are together. It answers what the other press effects answer: a pointer's
+primary button and Space, held until the pointer comes up or Space does or the focus leaves; Enter,
+which makes no `:active`, breaks nothing. The button binds one internal helper, `press()` in
+`src/shatter.ts`, to its `pointerdown` and its `keydown`.
+
+Each effect moves over `--ui-duration-effect`, the shatter's pieces going back along
+`--ui-easing-move`; the glide over `--ui-duration-travel` along `--ui-easing-move`; and the burst and
+the glitch over `--ui-duration-flourish`. All of them collapse with every other duration under
+`prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once, the ring does
+not fly, no burst shows and nothing breaks. Nor does the ring fly or the burst show in forced
 colours. An engine without
 container style queries — Firefox before 151, inside the
 [browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect, and the button does what

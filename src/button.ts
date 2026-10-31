@@ -3,6 +3,7 @@ import { Description } from './description.js';
 import { query } from './motion.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
+import { press } from './shatter.js';
 
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
@@ -421,6 +422,21 @@ export class UiButton extends LitElement {
             }
         }
 
+        /* The shatter, which a filter draws as the press lands — src/shatter.ts. The sheet decides
+           and the script only reads what it decided: the choice on a button that can be used, and
+           the time and curve its pieces go back together on, so a host's own time reaches them
+           and the collapse takes it to nothing. Before the press, which the script reads as it
+           lands. A move's curve, which does not pass its end: on one that does, the pieces settled
+           a pixel either way of where they came to rest, and the cracks flickered — measured for
+           RFC 0004. */
+        @container ${unsafeCSS(drawn('press-move', 'shatter'))} {
+            button:not(:disabled) {
+                --ui-fx-press: shatter;
+                --ui-fx-press-time: ${reference('--ui-duration-effect')};
+                --ui-fx-press-curve: ${reference('--ui-easing-move')};
+            }
+        }
+
         /* The focus ring glided over from the control the reader saw it on last, which the
            page's ring flies — src/ring.ts. The sheet decides and the script only reads what it
            decided: the choice while the reader can see the focus, and the flight's time and curve
@@ -505,6 +521,8 @@ export class UiButton extends LitElement {
                 aria-describedby=${this.#description.described()}
                 part="button"
                 @focus=${arrive}
+                @pointerdown=${press}
+                @keydown=${press}
             >
                 <slot></slot>
             </button>

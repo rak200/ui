@@ -1406,6 +1406,75 @@ describe("the effects Matrix's taste names", () => {
         }
     });
 
+    it('hands the press the shatter, its time and its curve, while the button can be used', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        choose(element, { 'press-move': 'shatter' });
+
+        const handed = (): string[] =>
+            ['', '-time', '-curve'].map((name) =>
+                getComputedStyle(inner(element)).getPropertyValue(`--ui-fx-press${name}`),
+            );
+
+        expect(handed()).toEqual(['shatter', '240ms', 'cubic-bezier(0.4, 0, 0.2, 1)']);
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(handed(), 'disabled').toEqual(['', '', '']);
+    });
+
+    it('breaks under a press into pieces a filter cuts, and is whole once let go', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        choose(element, { 'press-move': 'shatter' });
+
+        await press(inner(element), true);
+
+        expect(inner(element).style.filter, 'in pieces').toBe('url("#ui-break")');
+        expect(element.shadowRoot?.querySelector('svg filter'), 'its filter').not.toBeNull();
+
+        await press(inner(element), false);
+
+        const [going] = inner(element)
+            .getAnimations()
+            .filter((animation) => !(animation instanceof CSSTransition));
+
+        going?.finish();
+        await going?.finished;
+
+        expect(inner(element).style.filter, 'whole').toBe('');
+    });
+
+    it('breaks nothing under reduced motion, as it squeezes nothing', async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+        });
+
+        try {
+            sheet();
+            const element = await mount('<ui-button>Save</ui-button>');
+            choose(element, { 'press-move': 'shatter' });
+
+            await press(inner(element), true);
+
+            expect(inner(element).style.filter).toBe('');
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it("shatters under a press where Matrix's taste runs, rather than squeezing", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+        document.body.append(style);
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.parentElement?.setAttribute('data-ui-theme', matrix.name);
+
+        await press(inner(element), true);
+
+        expect(inner(element).style.filter).toBe('url("#ui-break")');
+        expect(getComputedStyle(inner(element)).scale).toBe('none');
+    });
+
     it("reads Matrix's taste off the theme: light where the default theme's moves", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
@@ -1423,11 +1492,7 @@ describe("the effects Matrix's taste names", () => {
         await press(inner(element), true);
 
         expect(background(element), 'no colour of its own under a press').toMatch(/^oklch\(0\.98 /);
-        expect(moved(element), 'nothing sunk; the squeeze stands until the shatter').toEqual([
-            shadow,
-            'none',
-            '0.96',
-        ]);
+        expect(moved(element), 'nothing sunk, and no squeeze').toEqual([shadow, 'none', 'none']);
 
         await press(inner(element), false);
         await away(true);

@@ -89,6 +89,17 @@ export function query(component: string): (moment: string, effect: string) => st
 }
 
 /**
+ * A duration a sheet hands a script, in milliseconds, written in either unit CSS has: the time an
+ * effect drawn in script reads off the element its sheet chose it on, so a host's own time and the
+ * collapse reach it as they reach the sheet.
+ */
+export function milliseconds(value: string): number {
+    const time = Number.parseFloat(value);
+
+    return value.endsWith('ms') ? time : time * 1000;
+}
+
+/**
  * A taste as CSS: its declarations under `:where()` of `selector`, the page's moments first and
  * then each component's, or an empty string where the taste names none.
  *

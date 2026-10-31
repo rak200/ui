@@ -496,7 +496,9 @@ shakes it over the control's own. **The sheet decides and the script reads**: a 
 ring its flight, and its time, only where its query chose that flight and the reader can see the
 focus. So the ring cannot fly where the sheet
 draws nothing — in an engine without style queries, in forced colours — and under reduced motion
-it finds the collapse in the time it is handed, never in the media query.
+it finds the collapse in the time it is handed, never in the media query. **The shatter is read the
+same way and drawn nowhere but the button**: a filter in the button's own shadow root cuts it as it
+is drawn, since no sheet can cut an element, for as long as the press the sheet chose it for.
 
 ### A shadow follows the scheme only through its colour
 
