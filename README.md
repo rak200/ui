@@ -72,8 +72,9 @@ which one you are looking at.
 
 The reference lives in [docs/](docs/README.md) — one page per unit. The playground shows the
 components; `docs/` is what describes them. It renders under the token sheet a host inserts, and
-its toolbar switches the colour scheme — so what the site shows is what a page gets, in both
-schemes rather than one.
+its toolbar switches the colour scheme, the shipped theme and reduced motion — so what the site
+shows is what a page gets, in both schemes, under each theme, and for a reader who asked for less
+motion.
 
 ## Status
 

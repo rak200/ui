@@ -1,7 +1,7 @@
 /**
  * What every story renders under.
  *
- * Three entries, and none of them is ordinary configuration.
+ * Four entries, and none of them is ordinary configuration.
  *
  * **The token sheet is here because without it the site shows the fallbacks rather than
  * the tokens.** Every component writes `var(--ui-token, fallback)`, and a fallback is a
@@ -20,12 +20,20 @@
  * it: a theme is the attribute `data-ui-theme`, written on the same root the scheme is, with
  * the theme's own block inserted where the token sheet is. A host does the same two things.
  *
+ * **The reduced-motion control is the token sheet's own collapse, written out**, which RFC
+ * 0004 put first in its rollout: the second state of every effect is the one easiest to ship
+ * broken, because nobody sees it by accident. A page cannot set `prefers-reduced-motion`, so
+ * the control does what the reader's setting does instead, and declares everything the
+ * sheet's reduced-motion rule declares with the condition taken off. A script finds the
+ * collapse in a value the collapse sets, never in the media query — the proposal's fifth
+ * question — so it stands still under the control as it does under the setting.
+ *
  * **`.storybook/main.ts` says the configuration surface stays as small as RFC 0001 allows,
  * and this grows it.** The trade is stated rather than skipped: a component kit whose site
  * can only be seen in one of the two schemes it ships is showing half of itself.
  */
 
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import { tokenStyleSheet } from '../src/tokens.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import type { Preview } from '@storybook/web-components-vite';
@@ -58,6 +66,37 @@ const themes: ReadonlyMap<string, Theme> = new Map([
 function themed(theme: Theme): HTMLStyleElement {
     const element = document.createElement('style');
     element.textContent = themeStyleSheet(theme);
+
+    return element;
+}
+
+/**
+ * What the token sheet declares for a reader who asked for less motion, with the condition
+ * taken off, built the way {@link sheet} builds the sheet itself.
+ *
+ * **Read out of the sheet rather than restated**, so the control collapses what the reader's
+ * setting collapses and nothing else: every duration today, and whatever the collapse grows
+ * to — RFC 0004 widens it to a loop's count — with no second list here to fall out of step.
+ * The rule is found by its condition rather than by its place in the sheet, and a sheet
+ * without one throws: a control that quietly collapsed nothing would show the very motion it
+ * exists to take away.
+ */
+function reduced(): HTMLStyleElement {
+    const parsed = new CSSStyleSheet();
+    parsed.replaceSync(tokenStyleSheet());
+
+    const rule = [...parsed.cssRules].find(
+        (candidate): candidate is CSSMediaRule =>
+            candidate instanceof CSSMediaRule &&
+            candidate.conditionText === '(prefers-reduced-motion: reduce)',
+    );
+
+    if (rule === undefined) {
+        throw new Error('the token sheet carries no rule for prefers-reduced-motion');
+    }
+
+    const element = document.createElement('style');
+    element.textContent = [...rule.cssRules].map((inner) => inner.cssText).join('\n');
 
     return element;
 }
@@ -95,9 +134,27 @@ const preview: Preview = {
                 dynamicTitle: true,
             },
         },
+        motion: {
+            description: 'Whether the preview renders as for a reader who asked for less motion',
+            toolbar: {
+                title: 'Motion',
+                icon: 'lightning',
+                // An empty value for the reader's own setting, which writes nothing and leaves
+                // it in force, as the scheme's *System* does. Named apart from that one, since
+                // the toolbar shows the chosen title and two buttons reading *System* side by
+                // side would say nothing. No item turns the motion back on over a reader who
+                // asked for less: it would undo their setting, and the first item already shows
+                // it to every reader who did not.
+                items: [
+                    { value: '', title: 'System motion', icon: 'lightning' },
+                    { value: 'reduce', title: 'Reduced motion', icon: 'lightningoff' },
+                ],
+                dynamicTitle: true,
+            },
+        },
     },
 
-    initialGlobals: { scheme: 'light dark', theme: '' },
+    initialGlobals: { scheme: 'light dark', theme: '', motion: '' },
 
     decorators: [
         (story, context): TemplateResult => {
@@ -114,13 +171,17 @@ const preview: Preview = {
 
             if (theme === undefined) {
                 delete document.documentElement.dataset['uiTheme'];
-
-                return html`${sheet()}${story()}`;
+            } else {
+                document.documentElement.dataset['uiTheme'] = theme.name;
             }
 
-            document.documentElement.dataset['uiTheme'] = theme.name;
+            // In the story rather than on the root, which the collapse needs no more than the
+            // token sheet does, so it goes with the story that carried it. Last of the three,
+            // since at equal specificity the later rule wins.
+            const palette = theme === undefined ? nothing : themed(theme);
+            const motion = String(context.globals['motion']) === 'reduce' ? reduced() : nothing;
 
-            return html`${sheet()}${themed(theme)}${story()}`;
+            return html`${sheet()}${palette}${motion}${story()}`;
         },
     ],
 

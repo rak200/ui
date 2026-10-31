@@ -9,6 +9,7 @@ import { expectAccessible } from './a11y.js';
 import { contrastRatio } from './contrast.js';
 import { mountStory } from './stories.js';
 import meta, { DarkScheme, Defaults, Derived, YourOwnTheme } from '../stories/tokens.stories.js';
+import buttonMeta, { Primary } from '../stories/button.stories.js';
 import {
     darkScheme,
     defaults,
@@ -1482,5 +1483,73 @@ describe('what the playground renders under', () => {
         // scheme written on a wrapper would leave a dark component on a light page. The
         // default is the reader's own setting, which is what the sheet already declares.
         expect(document.documentElement.style.colorScheme).toBe('light dark');
+    });
+});
+
+/**
+ * The playground's reduced-motion control, which RFC 0004 put first in its rollout: the
+ * second state of every effect is the one easiest to ship broken, because nobody sees it by
+ * accident.
+ *
+ * A page cannot ask for less motion on the reader's behalf, so the control writes what the
+ * reader's setting would — the sheet's own reduced-motion rule, without its condition. What
+ * it has to collapse is read off that rule here too, so the check follows the collapse as it
+ * grows, as the control does.
+ */
+describe('the reduced-motion control the playground carries', () => {
+    /** Every name the reader's setting collapses. */
+    const collapsed = [...declarations(styleRule(reducedMotion().cssRules[0])).keys()];
+
+    /** A duration as the story's tree resolves it, in seconds, with no fallback behind it. */
+    function resolved(container: HTMLElement, name: string): number {
+        const probe = document.createElement('div');
+        probe.style.transitionDuration = `var(${name})`;
+        container.append(probe);
+
+        return Number.parseFloat(getComputedStyle(probe).transitionDuration);
+    }
+
+    /** How long the button a story rendered takes to change colour, in seconds. */
+    function transition(container: HTMLElement): number {
+        const button = container.querySelector('ui-button')?.shadowRoot?.querySelector('button');
+
+        if (button === null || button === undefined) {
+            throw new Error('the story rendered no button');
+        }
+
+        return Number.parseFloat(getComputedStyle(button).transitionDuration);
+    }
+
+    it("collapses every name the reader's setting collapses when the toolbar asks for less motion", async () => {
+        const container = await mountStory(Defaults, meta, 'Defaults', { motion: 'reduce' });
+
+        // Short but not zero, as the setting leaves it. A derived name nobody declared
+        // resolves to no duration at all, and a ground left alone to its own.
+        expect(collapsed.length).toBeGreaterThan(1);
+
+        for (const name of collapsed) {
+            expect(resolved(container, name), name).toBeGreaterThan(0);
+            expect(resolved(container, name), name).toBeLessThan(0.001);
+        }
+    });
+
+    it('takes the time out of a component a story renders, as the setting does', async () => {
+        const container = await mountStory(Primary, buttonMeta, 'Primary', { motion: 'reduce' });
+
+        expect(transition(container)).toBeGreaterThan(0);
+        expect(transition(container)).toBeLessThan(0.001);
+    });
+
+    it('leaves the motion to the reader by default, and nothing behind once a story goes', async () => {
+        await mountStory(Primary, buttonMeta, 'Primary', { motion: 'reduce' });
+        document.body.replaceChildren();
+
+        // The collapse went with the story that carried it, so the next one, asking for
+        // nothing, moves on the step the sheet declares. Read through the purpose the button
+        // reads, which only the collapse declares: a collapse left in the head would still be
+        // in force there, where the next story's sheet redeclares the step and hides it.
+        const container = await mountStory(Primary, buttonMeta, 'Primary');
+
+        expect(transition(container)).toBe(0.15);
     });
 });
