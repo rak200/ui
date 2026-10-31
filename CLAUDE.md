@@ -32,6 +32,7 @@ src/
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
 ├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
+├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
@@ -52,6 +53,7 @@ tests/               # mirrors src/, one test file per unit
 ├── icon.test.ts
 ├── input.test.ts
 ├── menu.test.ts
+├── motion.test.ts
 ├── placement.test.ts
 ├── radio.test.ts
 ├── select.test.ts
@@ -284,6 +286,12 @@ explains. This file restates none of them.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
+- **Which `--ui-` names are not tokens, and how a component asks for an effect** — the docblock on
+  `src/motion.ts`, which keeps the three kinds RFC 0004 added (a consumer's choice, a theme's taste,
+  and a property an effect animates under `--ui-fx-`, which a host never sets) and the `query()`
+  each effect is drawn under. It imports no Lit, for `src/reference.ts`'s reason, because
+  `src/theme.ts` reads the taste's names from it. The gate in `tests/tokens.test.ts` lets a
+  component's sheet name a token or one of the three kinds, and nothing else.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

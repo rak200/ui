@@ -10,6 +10,7 @@ the scheme — is in [tokens.md](tokens.md#themes); this page is the shipped one
 - [`matrix`](#matrix)
 - [`glass`](#glass)
 - [`Theme`](#theme)
+  - [`Taste`](#taste)
 - [`themeStyleSheet`](#themestylesheet)
 - [Your own theme](#your-own-theme)
 
@@ -172,6 +173,7 @@ interface Theme {
   readonly dark?: Readonly<Partial<Record<Token | DerivedToken, string>>>;
   readonly more?: Readonly<Partial<Record<Token | DerivedToken, readonly [string, string]>>>;
   readonly translucent?: Pick<Theme, 'values' | 'dark'>;
+  readonly taste?: Taste;
 }
 ```
 
@@ -182,6 +184,7 @@ interface Theme {
 | `dark`        | the values that differ in the dark scheme — colours only, as `darkScheme`                                                                |
 | `more`        | its answer to `prefers-contrast: more`, a light and a dark value per name                                                                |
 | `translucent` | what it makes translucent, in the shape of `values` and `dark`, set aside for the reader who asks for more contrast or less transparency |
+| `taste`       | which motion effect each moment runs where nobody chose one — [below](#taste)                                                            |
 
 A derived role belongs in `values` only where the theme needs a different mix than the formula
 gives; the floors then measure what it wrote. **A name in `translucent` may be in `values` too**, at
@@ -189,6 +192,38 @@ its opaque value: that is the value it goes back to when the translucency stands
 not goes back to its default — Glass gives its accent both, and its raised surfaces only the
 translucent one. Data first, because a target that is not CSS reads the
 values rather than parsing a stylesheet back into them.
+
+### `Taste`
+
+Which motion effect each moment runs where a consumer has chosen none — RFC 0004's taste. A moment
+is something a component answers, such as the pointer arriving, named the way a component offers it:
+`hover-fill` is the fill under the pointer.
+
+```ts
+interface Taste {
+  readonly page?: Readonly<Record<string, string>>;
+  readonly components?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+}
+```
+
+| Field        | Holds                                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `page`       | the effect each moment runs on every component that offers it, by moment                       |
+| `components` | the effect a moment runs on one component, by its tag less `ui-`, over the page's for that one |
+
+**A choice always runs instead.** A consumer chooses with `--ui-motion-<moment>`, at any scope, and
+a component reads its theme's taste only where no choice is written. A name a component does not
+offer runs nothing there, and the component does what it does today.
+
+**No component offers an effect yet, and no shipped theme carries a taste.** RFC 0004's rollout
+puts the mechanism first and draws the effects the three themes' tastes name after it, a component
+at a time, so a taste written today changes nothing until the component it names offers that effect.
+
+Components read the names through one internal helper, `query()` in `src/motion.ts`, which writes
+the condition a component draws each effect under. The same module keeps `kinds`, the prefixes of
+the three kinds of `--ui-` name that are not tokens: `--ui-motion-` for a choice, `--ui-taste-` for
+a taste, and `--ui-fx-` for a property an effect animates, which only this package writes and a host
+never sets.
 
 ## `themeStyleSheet`
 
@@ -228,6 +263,19 @@ declares wins on its own element, and one it leaves alone is the reader's settin
 Each name goes back to the theme's opaque value, or with `initial` to its default. The answer to more
 contrast comes after it, so where it names one of these it wins. Reduced transparency is known to
 Chromium only; elsewhere the translucency stands down for more contrast alone.
+
+**A taste goes in a block of its own, under `:where()`**, after the values:
+
+```css
+:where([data-ui-theme='yours']) {
+  --ui-taste-hover-fill: glow;
+  --ui-taste-card-hover-move: tilt;
+}
+```
+
+The page's moments come first, then each component's. Under `:where()` the block has no specificity,
+so a rule you write for a taste outweighs the theme's whatever order the sheets are in. A theme with
+no taste writes no block.
 
 ## Your own theme
 

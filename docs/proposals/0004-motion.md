@@ -582,9 +582,11 @@ host reads.
 which a consumer writes; the taste, `--ui-taste-…`, which a theme writes; and the properties the
 effects animate, which only the package writes, and registers. `tests/tokens.test.ts` refuses a
 `--ui-` name in a component's sheet that is no token, and under `--ui-` a name has so far always
-been a token a host may set, which the third kind is not. So the mechanism declares the first two
-to that gate as kinds of their own, and settles where the third lives, before a sheet draws an
-effect.
+been a token a host may set, which the third kind is not. So the mechanism declares all three to
+that gate as kinds of their own, and the third lives under `--ui-fx-`: one prefix for everything
+the package names, with the kind saying what a host may write — chosen over a prefix of its own,
+which would have kept `--ui-` meaning _a host may set this_ at the cost of a second namespace.
+`src/motion.ts` keeps the three prefixes.
 
 **Set aside:**
 
@@ -683,6 +685,12 @@ where a sheet does (question 5); and the names that are not tokens are declared 
 table names and the taste's own properties are public from the first release that draws them, and
 renaming one after it is a break. Any other effect is named for good when a consumer asks for it.
 
+**Narrowed the same day, as step 3 began**: the mechanism ships declarative, and each piece of the
+script the effects share — the pointer engine, the triggers, the focus and press states, the pieces
+and the grain — arrives with the first effect that runs it, as the tokens and the tastes do. That
+script made over 3,400 mutants in the prototypes, past what one pull request holds, and with no
+effect yet nothing would judge it but fixtures. The animated properties take `--ui-fx-`.
+
 **What it costs, named here rather than discovered in the rollout.**
 
 - **The default motion changes for every host.** The default theme's taste runs wherever nothing is
@@ -716,15 +724,17 @@ cannot see — another engine, a frame — is measured as the Study's steps meas
    The five questions that issue leaves open — where the floor is stated, which floor, in what
    terms, how it moves and whether anything checks it — are decided before it is written.
 3. **The mechanism** — the query each sheet draws under, the taste rendered into each theme's block,
-   the properties the effects animate, registered, the script they share, and the names that are
-   not tokens declared to the gate, with where the animated ones live (question 1) — with no effect
-   yet. It brings no token and no taste either: each theme's taste is empty, and the suite drives
-   the rendering with a theme of its own.
+   and the names that are not tokens declared to the gate, the animated ones under `--ui-fx-`
+   (question 1) — with no effect yet. It brings no token, no taste and no script: each theme's
+   taste is empty, and the suite drives the query and the rendering with a component and a theme
+   of its own.
 4. **The themes' tastes, a component at a time**, each pull request inside the mutation job's budget
    — about 2,400 mutants at today's rate — the button first, since the lights and the ring it draws
    are what the fields and the drawn controls share. Each brings the names its effects read
    (question 4): a duration step and the purpose over it, a curve, the loop's count, the collapse
    widening to it with the first loop, and each theme's taste for the moments the component draws.
+   And each brings the script its effects run where the script is not there yet, with the
+   properties it animates, registered (question 5).
 5. **The rest of the catalogue, on demand**: an effect from the prototypes when a consumer asks for
    it, with its tests. It has no last effect, so the index marks this proposal `Implemented` with
    the pull request that finishes step 4, which closes #318.
@@ -742,7 +752,8 @@ entrances take their direction from `data-side`, so retiring it touches both.
 
 ### Built
 
-| Step | Pull request                                  | What landed                                                                        |
-| ---- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 1    | [#321](https://github.com/rak200/ui/pull/321) | the playground's reduced-motion control: the sheet's own collapse, in the story    |
-| 2    | [#323](https://github.com/rak200/ui/pull/323) | the floor in `ARCHITECTURE.md`, and below it the line container style queries draw |
+| Step | Pull request                                  | What landed                                                                             |
+| ---- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1    | [#321](https://github.com/rak200/ui/pull/321) | the playground's reduced-motion control: the sheet's own collapse, in the story         |
+| 2    | [#323](https://github.com/rak200/ui/pull/323) | the floor in `ARCHITECTURE.md`, and below it the line container style queries draw      |
+| 3    | [#325](https://github.com/rak200/ui/pull/325) | `query()` and `kinds` in `src/motion.ts`, a theme's `taste`, and the gate's three kinds |

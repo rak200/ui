@@ -11,8 +11,8 @@ a container style query, and each shipped theme brings a taste of its own as dat
 mechanism and the effects the three themes' tastes name; the rest of the catalogue stays in the
 prototypes under `docs/proposals/0004-motion/` until a consumer asks for an effect. Five steps, in
 an order that is the rule: the playground's reduced-motion control, the floor written down, the
-mechanism, the tastes a component at a time, each bringing the tokens its effects read, then the
-catalogue on demand.
+mechanism, the tastes a component at a time, each bringing the tokens and the script its effects
+need, then the catalogue on demand.
 
 ## Design tokens beyond the web (#24)
 

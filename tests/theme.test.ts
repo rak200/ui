@@ -14,6 +14,7 @@ import tokensMeta, {
 } from '../stories/tokens.stories.js';
 import buttonMeta, { Primary } from '../stories/button.stories.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import { kinds } from '../src/motion.js';
 import '../src/button.js';
 import '../src/input.js';
 import '../src/checkbox.js';
@@ -263,6 +264,82 @@ describe('themeStyleSheet', () => {
 
     it('emits one declaration per line for a translucent theme too', () => {
         for (const line of themeStyleSheet(frosted).split('\n')) {
+            expect(line.split(';').length, line).toBeLessThanOrEqual(2);
+        }
+    });
+});
+
+/**
+ * A theme with a taste — RFC 0004's — written here, since no shipped theme carries one until an
+ * effect it names is drawn: an effect for two moments on the page, and one each for two
+ * components apart from it.
+ */
+const tasteful: Theme = {
+    name: 'tasteful',
+    values: { '--ui-radius': '2px' },
+    taste: {
+        page: { 'hover-fill': 'glow', 'focus-ring': 'trace' },
+        components: { card: { 'hover-move': 'tilt' }, input: { 'focus-fill': 'tint' } },
+    },
+};
+
+describe("a theme's taste", () => {
+    it('writes it in a block of its own under :where(), the page first, then each component', () => {
+        const rule = parsed(tasteful).cssRules[1];
+
+        expect(rule instanceof CSSStyleRule ? rule.selectorText : '').toBe(
+            ':where([data-ui-theme="tasteful"])',
+        );
+        expect([...declarations(rule)]).toEqual([
+            [`${kinds.taste}hover-fill`, 'glow'],
+            [`${kinds.taste}focus-ring`, 'trace'],
+            [`${kinds.taste}card-hover-move`, 'tilt'],
+            [`${kinds.taste}input-focus-fill`, 'tint'],
+        ]);
+    });
+
+    it('writes it after the values and before the answer to more contrast', () => {
+        expect(conditions(tasteful)).toEqual(['', '', '(prefers-contrast: more)']);
+    });
+
+    it('writes no block for a theme with no taste, or with an empty one', () => {
+        const empty: readonly Theme[] = [
+            matrix,
+            glass,
+            { ...tasteful, taste: {} },
+            { ...tasteful, taste: { page: {}, components: { card: {} } } },
+        ];
+
+        for (const theme of empty) {
+            expect(themeStyleSheet(theme), theme.name).not.toContain(':where(');
+        }
+    });
+
+    it("lets a host's rule for a taste outweigh the theme's, whichever sheet comes last", () => {
+        // The theme's sheet goes in after the host's, which is the order a cascade by
+        // specificity alone would let the theme win.
+        const host = document.createElement('style');
+        host.textContent = `div { ${kinds.taste}hover-fill: none; }`;
+
+        const theme = document.createElement('style');
+        theme.textContent = themeStyleSheet(tasteful);
+
+        const region = document.createElement('div');
+        region.dataset['uiTheme'] = tasteful.name;
+        document.body.append(host, theme, region);
+
+        const read = (name: string): string =>
+            getComputedStyle(region).getPropertyValue(name).trim();
+
+        expect(read(`${kinds.taste}hover-fill`), "the host's").toBe('none');
+        expect(
+            read(`${kinds.taste}card-hover-move`),
+            "the theme's, where the host wrote none",
+        ).toBe('tilt');
+    });
+
+    it('emits one declaration per line, as the rest of the sheet does', () => {
+        for (const line of themeStyleSheet(tasteful).split('\n')) {
             expect(line.split(';').length, line).toBeLessThanOrEqual(2);
         }
     });
