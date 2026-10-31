@@ -83,6 +83,12 @@ async function press(element: Element, down: boolean): Promise<void> {
 
 afterEach(async () => {
     await press(document.body, false);
+
+    // A ring still in the air lands, so nothing flies on into the next test.
+    for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+        flight.finish();
+    }
+
     document.body.replaceChildren();
 });
 
@@ -848,6 +854,90 @@ describe("the effects the default theme's taste names", () => {
         expect(getComputedStyle(inner(element)).transitionDuration, 'let go').toBe(
             '0.15s, 0.24s, 0.24s, 0.24s',
         );
+    });
+
+    /**
+     * A native button before the component, whose ring the glide leaves from, and the component
+     * itself, under the token sheet — so under the default theme's taste, which glides the ring.
+     */
+    async function line(): Promise<UiButton> {
+        sheet();
+        const before = document.createElement('button');
+        before.textContent = 'Before';
+        document.body.append(before);
+
+        return mount('<ui-button>Save</ui-button>');
+    }
+
+    /** Whether the page's ring is in the air. */
+    function flying(): boolean {
+        return document.querySelector('[data-ui-ring]:popover-open') !== null;
+    }
+
+    /** What the button's sheet hands the page's ring, read where the script reads it. */
+    function handed(element: UiButton): readonly [ring: string, time: string, curve: string] {
+        const styles = getComputedStyle(inner(element));
+
+        return [
+            styles.getPropertyValue('--ui-fx-ring'),
+            styles.getPropertyValue('--ui-fx-ring-time'),
+            styles.getPropertyValue('--ui-fx-ring-curve'),
+        ];
+    }
+
+    it('glides the focus ring over from the control before it', async () => {
+        const element = await line();
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(flying(), "the page's ring in the air").toBe(true);
+        expect(inner(element).style.outlineStyle, "the button's own put away").toBe('none');
+    });
+
+    it('hands the ring the glide, its time and its curve, while the reader can see the focus', async () => {
+        const element = await line();
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(handed(element)).toEqual(['glide', '360ms', 'cubic-bezier(0.4, 0, 0.2, 1)']);
+    });
+
+    it('hands it nothing where the focus came by the pointer, which draws no ring', async () => {
+        const element = await line();
+
+        await userEvent.click(inner(element));
+
+        expect(handed(element)).toEqual(['', '', '']);
+        expect(flying()).toBe(false);
+    });
+
+    it('glides nothing where a host chose another ring', async () => {
+        const element = await line();
+        element.style.setProperty('--ui-motion-focus-ring', 'none');
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(flying()).toBe(false);
+    });
+
+    it.each([
+        ['forced colours', 'forced-colors', 'active'],
+        ['reduced motion', 'prefers-reduced-motion', 'reduce'],
+    ])('glides nothing under %s', async (_setting, name, value) => {
+        await cdp().send('Emulation.setEmulatedMedia', { features: [{ name, value }] });
+
+        try {
+            await line();
+            await userEvent.tab();
+            await userEvent.tab();
+
+            expect(flying()).toBe(false);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
     });
 });
 

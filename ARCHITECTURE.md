@@ -473,15 +473,25 @@ it does not offer draws nothing.
 **Where nobody chose, a theme's taste runs**: data beside its palette, and the default theme's
 stands under every theme, as its values do. That makes it the package's motion. On a page that
 inserts the token sheet and chooses nothing, the button rises under the pointer and at the focus,
-lifts at the focus, and squeezes and sinks under a press, which RFC 0004 accepted as the cost of
-having motion at all. An effect enters the catalogue with the first component that draws it,
-bringing the tokens and the script it needs: _a category arrives with the component that consumes
-it_, applied to an effect. The rest waits in the proposal's prototypes until someone asks for it.
+lifts at the focus, takes its focus ring glided over from the control before it, and squeezes and
+sinks under a press, which RFC 0004 accepted as the cost of having motion at all. An effect enters
+the catalogue with the first component that draws it, bringing the tokens and the script it needs:
+_a category arrives with the component that consumes it_, applied to an effect. The rest waits in
+the proposal's prototypes until someone asks for it.
 
 **Each component draws its effects in its own shadow root, under a container style query** on the
 moment. An engine without style queries matches none of them and keeps the component's own motion
 — [The browser floor](#the-browser-floor). Reduced motion stays one rule: every effect moves over a
 duration token, so the collapse that takes every duration to `0.01ms` takes the effects with it.
+
+**The focus ring's glide is the one thing the package lays in the page.** An outline is drawn round
+its own element and moves only with it, so a ring that leaves one control and lands on another is a
+popover of the page's own, in the top layer: `aria-hidden`, out of the pointer's way, styled on
+itself so the page needs no sheet, and standing in for the control's outline until it lands. **The
+sheet decides and the script reads**: a control hands the ring the glide, and its time, only where
+its query chose the glide and the reader can see the focus. So the ring cannot fly where the sheet
+draws nothing — in an engine without style queries, in forced colours — and under reduced motion
+it finds the collapse in the time it is handed, never in the media query.
 
 ### A shadow follows the scheme only through its colour
 
