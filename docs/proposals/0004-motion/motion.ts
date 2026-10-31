@@ -196,10 +196,11 @@ const pages = [
 
 /**
  * The steps and curves the catalogue needs and the token layer does not have yet, shaped on
- * the reference's five-step scale, and a loop's period and count. Placeholders, collapsed with
- * the rest under reduced motion, and by the frame's switch too, so a reader can see the second
- * state of every effect. One step is not the reference's: `--ui-duration-150`, between two of
- * its steps, which every effect the dialog offers takes.
+ * the reference's five-step scale, and a loop's period and count. Each enters the token layer
+ * at this value with the first effect that reads it, as the proposal's fourth question says.
+ * Collapsed with the rest under reduced motion, and by the frame's switch too, so a reader can
+ * see the second state of every effect. One step is not the reference's: `--ui-duration-150`,
+ * between two of its steps, which every effect the dialog offers takes.
  *
  * **A loop's count is a token for the reason its period is.** Collapsing the period alone leaves
  * an infinite loop running in all three engines, tens of thousands of iterations in a third of

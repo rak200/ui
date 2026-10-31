@@ -9,9 +9,10 @@ Which effect runs becomes a choice a consumer writes: one custom property per mo
 the narrowest choice wins. Each component draws the effects it offers in its own shadow root, under
 a container style query, and each shipped theme brings a taste of its own as data. What ships is the
 mechanism and the effects the three themes' tastes name; the rest of the catalogue stays in the
-prototypes under `docs/proposals/0004-motion/` until a consumer asks for an effect. Six steps, in an
-order that is the rule: the playground's reduced-motion control, the floor written down, the tokens,
-the mechanism, the tastes a component at a time, then the catalogue on demand.
+prototypes under `docs/proposals/0004-motion/` until a consumer asks for an effect. Five steps, in
+an order that is the rule: the playground's reduced-motion control, the floor written down, the
+mechanism, the tastes a component at a time, each bringing the tokens its effects read, then the
+catalogue on demand.
 
 ## Design tokens beyond the web (#24)
 
