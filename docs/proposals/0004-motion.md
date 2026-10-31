@@ -739,3 +739,9 @@ components that read it.
 wait on the button's effects again, against the components as they ship, after step 4. And
 [#300](https://github.com/rak200/ui/issues/300) is this proposal's question too: the overlays'
 entrances take their direction from `data-side`, so retiring it touches both.
+
+### Built
+
+| Step | Pull request                                  | What landed                                                                     |
+| ---- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1    | [#321](https://github.com/rak200/ui/pull/321) | the playground's reduced-motion control: the sheet's own collapse, in the story |

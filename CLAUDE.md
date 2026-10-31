@@ -80,7 +80,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── toast.stories.ts
 ├── tooltip.stories.ts
 └── tokens.stories.ts
-.storybook/          # main.ts (the build), preview.ts (the sheet, the scheme control), manager.ts (the stamp)
+.storybook/          # main.ts (the build), preview.ts (the sheet, its three controls), manager.ts (the stamp)
 docs/                # one page per unit, indexed by docs/README.md
 ```
 
@@ -273,7 +273,10 @@ explains. This file restates none of them.
   every test that ran after; a rule reaches `:root` from wherever the `<style>` sits. The scheme
   control beside it is one `color-scheme` write and no class swap, which is RFC 0002 item 2 being
   spent rather than a mechanism of its own — and it is written on the root element because the
-  preview's background is the canvas's, not the story's.
+  preview's background is the canvas's, not the story's. **The reduced-motion control is the
+  sheet's own collapse, written out**, since a page cannot set the media feature: the docblock on
+  `reduced()` says why the rule is read out of the sheet rather than restated, and it goes into the
+  story as the sheet does.
 - **Which token categories exist, and when a new one may enter** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _A category arrives with the component that consumes it_. A name in no declared category fails
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
