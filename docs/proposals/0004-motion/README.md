@@ -44,8 +44,8 @@ components, so a choice made for the page reaches every component that offers th
 others keep what they do today; so a name means one effect wherever it is offered. The button's
 `orbit` runs round on its edge and its `edge` lights the part of it nearest the pointer, as the
 card's do; the comet it ran clear of the edge is `comet`, and its burst of light is `burst`, `glow`
-being the light of the accent round a card or a field. The names are placeholders; the shape is the
-proposal.
+being the light of the accent round a card or a field. The names the themes' tastes use ship as
+written — the proposal's Decision says so — and any other is settled when its effect is asked for.
 
 **A moment can come by kind.** Where a component's effects for one moment change different things
 — where the element is, its shadow, its fill, its border — each kind is a property of its own:

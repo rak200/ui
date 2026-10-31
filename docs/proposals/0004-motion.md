@@ -61,8 +61,8 @@ the one mechanism that protects the reader, which the Study measures below.
 
 |                                                               |                                                                                                                   |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `transition:` declarations                                    | 15, across 8 modules                                                                                              |
-| properties actually moved                                     | 20: `background-color` ×7, `border-color` ×7, `opacity` ×3, `background-position` ×1, `rotate` ×1, `translate` ×1 |
+| `transition:` declarations                                    | 17, across 8 modules                                                                                              |
+| properties actually moved                                     | 22: `background-color` ×8, `border-color` ×7, `opacity` ×3, `rotate` ×2, `background-position` ×1, `translate` ×1 |
 | `@keyframes`                                                  | **0**                                                                                                             |
 | `animation:`                                                  | **0**                                                                                                             |
 | `pointermove`, `mousemove`, `requestAnimationFrame` in `src/` | **0**                                                                                                             |
@@ -408,9 +408,11 @@ lists what its component leaves out and why. The Decision below takes it as the 
   menu's panel and caret, a toast, a tooltip, an icon and a table's row. A theme sets a component
   apart from the page with one too: the default theme keeps a field's darkening under the pointer,
   Glass leans the card alone there and raises the toast with its boundary as it is at rest, and
-  Matrix tints the card, the toast and the fields at the focus. That is RFC 0003's answer, that a
-  theme may bring a category whose default is the identity, spent on motion — B falling out of D as
-  a block of choices under one selector.
+  Matrix tints the card, the toast and the fields at the focus. That is B falling out of D as a
+  block of choices under one selector, but not RFC 0003's answer, that a theme may bring a category
+  whose default is the identity: the default theme's taste stands under every theme and changes what
+  every host's components do, so the category arrives as any other does, with the components that
+  read it.
 - **An effect never rewrites the text it animates.** A toast's message is in the live region it is
   announced through, and a tooltip hands its trigger its sentence again whenever the tip's text
   changes. The tooltip's typing hides what is not typed yet with a highlight drawn in no colour
@@ -487,9 +489,10 @@ the menu's trigger, the card, the toast, the input, the textarea, the select, th
 switch and the radio, which answer the pointer and the focus, the card and the toast a focus on
 something they hold; _ringed_ is the same less the card and the toast, the components with a ring of
 their own; _form_ is the input, the textarea, the select, the checkbox, the switch and the radio,
-which answer an error; _field_ is the input, the textarea and the select; and a press is answered by
-the button and the menu's trigger. A component that leaves an effect out does what it does today
-there: the hover colour is the button's today, and the card, the toast and the fields leave it out.
+which answer an error and have a label apart from the control; _field_ is the input, the textarea
+and the select; and a press is answered by the button and the menu's trigger. A component that
+leaves an effect out does what it does today there: the hover colour is the button's today, and the
+card, the toast and the fields leave it out.
 The border under the pointer is `none` under the default theme and Matrix, which takes away the
 darkening a field and a drawn control answer the pointer with today, but on a field under the
 default theme: without it a field's one answer to the pointer there was the raise, its hover colour
@@ -506,7 +509,7 @@ being left out and its tint, held light, leaving a white field 1.07:1 from itsel
 | every     | `focus-fill`      | none, today      | highlight   | shimmer     |
 | every     | `focus-shadow`    | raise            | burst       | inner       |
 | every     | `focus-border`    | none, today      | none, today | none, today |
-| every     | `focus-label`     | accent           | glow        | none, today |
+| form      | `focus-label`     | accent           | glow        | none, today |
 | ringed    | `focus-ring`      | glide            | glitch      | refocus     |
 | button    | `press-move`      | squish           | shatter     | spring      |
 | button    | `press-fill`      | highlight, today | none        | ripple      |
@@ -575,6 +578,14 @@ host alone. Drawing each surface inside its shadow root would lift the limit, at
 contracts the first delivery does not need: the themes' tastes are written on the root, which every
 host reads.
 
+**Three kinds of name the mechanism brings are not tokens**: the choice, `--ui-motion-<moment>`,
+which a consumer writes; the taste, `--ui-taste-…`, which a theme writes; and the properties the
+effects animate, which only the package writes, and registers. `tests/tokens.test.ts` refuses a
+`--ui-` name in a component's sheet that is no token, and under `--ui-` a name has so far always
+been a token a host may set, which the third kind is not. So the mechanism declares the first two
+to that gate as kinds of their own, and settles where the third lives, before a sheet draws an
+effect.
+
 **Set aside:**
 
 - _A alone_ — more steps and curves make today's motion slower or softer, never different, which is
@@ -622,6 +633,13 @@ own, `--ui-iteration-*`, which the collapse takes to one as it takes every durat
 the period alone collapsed, an infinite loop runs on in all three engines. The collapse stays one
 mechanism, its filter widened from one category to two.
 
+**Each name arrives with the first effect that reads it** — _a category arrives with the component
+that consumes it_, held to the tokens as question 2 holds the effects to it, and what
+`src/tokens.ts` already says of a step no component has judged. A step takes the value the review
+judged it at in the prototypes. A purpose is named in the pull request whose effect reads it, since
+the prototypes read the steps themselves, and so is where a loop's period lives, which they write as
+a literal, `1.2s`, off the scale. The collapse widens to the count with the first loop.
+
 ### 5 — Script where CSS has no primitive, and nowhere else
 
 **The script is the Study's list** — a trigger for an effect that outlives its state (S7), the
@@ -629,6 +647,11 @@ pointer engine for the lights that follow the pointer (S3), a focus and a press 
 an arrival and a departure, the pieces and the grain, and per component what only it needs — each
 run only for an effect that is chosen and offered. The pointer engine reads no duration token, so it
 looks for the collapse itself, and for a pointer that cannot hover, and does nothing under either.
+
+**A script finds the collapse where a sheet does, in a value the collapse sets, and never in the
+media query**, so the reader's setting, a host's own collapse and the playground's control are one
+switch. Asking the query, a script plays on under the other two, which is why the prototypes' frame
+reads an attribute of its own beside it.
 
 ### 6 — A theme brings a taste, as data
 
@@ -651,6 +674,14 @@ when a consumer asks for it.
   an effect needs asks for the same support first.
 - **Questions 4 to 6** — the tokens as steps, purposes over them and a count; script only where CSS
   has no primitive; a theme's taste as data.
+
+**Amended on 2026-10-31, before any step was built**, where a review found the rollout at odds with
+rules the repository already writes: each token and each theme's taste arrives with the first effect
+that reads it (question 4), so the tokens are no step of their own; a script finds the collapse
+where a sheet does (question 5); and the names that are not tokens are declared to the gate
+(question 1). **The names the tastes use ship as written**: each moment's property, each effect the
+table names and the taste's own properties are public from the first release that draws them, and
+renaming one after it is a break. Any other effect is named for good when a consumer asks for it.
 
 **What it costs, named here rather than discovered in the rollout.**
 
@@ -678,24 +709,33 @@ cannot see — another engine, a frame — is measured as the Study's steps meas
 
 1. **The playground's reduced-motion control**, beside the scheme control
    [#120](https://github.com/rak200/ui/issues/120) put there: the second state of every effect is
-   the one easiest to ship broken, because nobody sees it by accident.
+   the one easiest to ship broken, because nobody sees it by accident. It collapses the tokens, as
+   the reader's setting does, so what a script draws collapses under it too (question 5).
 2. **The floor written down** — #311's question, answered with the package's floor and, beside it,
    what the effects need: container style queries, below which a component keeps today's motion.
-3. **The tokens** — the steps, the purposes over them, the two curves and the loop's count — inside
-   the collapse, its filter widened to the count. Nothing moves yet.
-4. **The mechanism** — the query each sheet draws under, the taste as theme data rendered into each
-   theme's block, the properties the effects animate, registered, and the script they share — with
-   no effect yet.
-5. **The themes' tastes, a component at a time**, each pull request inside the mutation job's budget
+   The five questions that issue leaves open — where the floor is stated, which floor, in what
+   terms, how it moves and whether anything checks it — are decided before it is written.
+3. **The mechanism** — the query each sheet draws under, the taste rendered into each theme's block,
+   the properties the effects animate, registered, the script they share, and the names that are
+   not tokens declared to the gate, with where the animated ones live (question 1) — with no effect
+   yet. It brings no token and no taste either: each theme's taste is empty, and the suite drives
+   the rendering with a theme of its own.
+4. **The themes' tastes, a component at a time**, each pull request inside the mutation job's budget
    — about 2,400 mutants at today's rate — the button first, since the lights and the ring it draws
-   are what the fields and the drawn controls share.
-6. **The rest of the catalogue, on demand**: an effect from the prototypes when a consumer asks for
-   it, with its tests.
+   are what the fields and the drawn controls share. Each brings the names its effects read
+   (question 4): a duration step and the purpose over it, a curve, the loop's count, the collapse
+   widening to it with the first loop, and each theme's taste for the moments the component draws.
+5. **The rest of the catalogue, on demand**: an effect from the prototypes when a consumer asks for
+   it, with its tests. It has no last effect, so the index marks this proposal `Implemented` with
+   the pull request that finishes step 4, which closes #318.
 
-**One dependency is met.** [RFC 0003](0003-themes.md) answered that a theme may bring a category
-whose default is the identity, so a choice is a value a theme carries like any other.
+**One dependency is met.** [RFC 0003](0003-themes.md) made a theme data the package ships, rendered
+into a block of its own, so a taste is a value a theme carries as it carries its palette. Its other
+answer, that a theme may bring a category whose default is the identity, is not the one a taste
+rests on: the default theme's is not the identity, and arrives as step 4 brings it, with the
+components that read it.
 
 **Two issues wait on this.** [#292](https://github.com/rak200/ui/issues/292) measures the dialog's
-wait on the button's effects again, against the components as they ship, after step 5. And
+wait on the button's effects again, against the components as they ship, after step 4. And
 [#300](https://github.com/rak200/ui/issues/300) is this proposal's question too: the overlays'
 entrances take their direction from `data-side`, so retiring it touches both.
