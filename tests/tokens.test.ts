@@ -22,6 +22,7 @@ import {
     type Token,
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
+import { kinds } from '../src/motion.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { UiButton } from '../src/button.js';
 import { UiCard } from '../src/card.js';
@@ -638,9 +639,33 @@ describe('the references components write', () => {
         expect(mentioned.length).toBeGreaterThan(0);
     });
 
-    it('names only tokens that exist', () => {
+    /**
+     * Whether a name is of a kind RFC 0004 declares and no token is: a choice, a taste, or a
+     * property an effect animates — `src/motion.ts` says what each is.
+     */
+    function ofAKind(name: string): boolean {
+        return Object.values(kinds).some((prefix) => name.startsWith(prefix));
+    }
+
+    it('names only tokens that exist, or names of a kind that is not a token', () => {
         for (const name of mentioned) {
-            expect(declared, name).toContain(name);
+            expect(declared.includes(name) || ofAKind(name), name).toBe(true);
+        }
+    });
+
+    it('declares three kinds that are not tokens, and nothing else passes as one', () => {
+        expect(ofAKind('--ui-motion-hover-fill'), 'a choice').toBe(true);
+        expect(ofAKind('--ui-taste-card-hover-move'), 'a taste').toBe(true);
+        expect(ofAKind('--ui-fx-pointer-x'), 'an animated property').toBe(true);
+        // A near miss of each, and a name nobody declared, which a category refuses too.
+        expect(ofAKind('--ui-motions-hover-fill'), 'a near miss').toBe(false);
+        expect(ofAKind('--ui-tastes'), 'another').toBe(false);
+        expect(ofAKind('--ui-z-100'), 'a name in no kind').toBe(false);
+    });
+
+    it('keeps the kinds apart from the tokens, so no token reads as one', () => {
+        for (const name of declared) {
+            expect(ofAKind(name), name).toBe(false);
         }
     });
 
