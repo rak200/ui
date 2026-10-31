@@ -1355,6 +1355,57 @@ describe("the effects Matrix's taste names", () => {
         }
     });
 
+    /** Whether the page's ring is in the air. */
+    function aloft(): boolean {
+        return document.querySelector('[data-ui-ring]:popover-open') !== null;
+    }
+
+    it("hands the ring the glitch, its time, a straight clock and its two lines' colours", async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        choose(element, { 'focus-ring': 'glitch' });
+        element.style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-info', 'rgb(4, 5, 6)');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(
+            ['', '-time', '-curve', '-left', '-right'].map((name) =>
+                styles.getPropertyValue(`--ui-fx-ring${name}`),
+            ),
+        ).toEqual(['glitch', '520ms', 'linear', 'rgb(1, 2, 3)', 'rgb(4, 5, 6)']);
+    });
+
+    it("glitches the ring on the page's first focus, which no glide flies from", async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        choose(element, { 'focus-ring': 'glitch' });
+
+        await userEvent.tab();
+
+        expect(aloft(), "the page's ring in the air").toBe(true);
+        expect(inner(element).style.outlineStyle, "the button's own put away").toBe('none');
+    });
+
+    it.each([
+        ['forced colours', 'forced-colors', 'active'],
+        ['reduced motion', 'prefers-reduced-motion', 'reduce'],
+    ])('glitches nothing under %s', async (_setting, name, value) => {
+        await cdp().send('Emulation.setEmulatedMedia', { features: [{ name, value }] });
+
+        try {
+            sheet();
+            const element = await mount('<ui-button>Save</ui-button>');
+            choose(element, { 'focus-ring': 'glitch' });
+
+            await userEvent.tab();
+
+            expect(aloft()).toBe(false);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
     it("reads Matrix's taste off the theme: light where the default theme's moves", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
@@ -1387,6 +1438,7 @@ describe("the effects Matrix's taste names", () => {
         );
         expect(moved(element)[1], 'no lift').toBe('none');
         expect(burst(element), 'a burst').toBeDefined();
+        expect(aloft(), 'the ring glitching, from a focus no glide would fly from').toBe(true);
         expect(
             [
                 getComputedStyle(inner(element)).animationDuration,

@@ -304,11 +304,12 @@ explains. This file restates none of them.
   as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
   component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.
-- **Why the focus ring's glide is a popover the page owns, and why the script only reads what the
-  sheet decided** — the docblock on `src/ring.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md), _Which
-  effect runs is the consumer's_. A component hands the ring `--ui-fx-ring: glide` and the flight's
-  time and curve on its control, under the glide's query and `:focus-visible`, and binds `arrive()`
-  to its focus. **The module keeps no guard a mutant can turn into a throw on an unasserted path**:
+- **Why the focus ring's glide and glitch are a popover the page owns, and why the script only
+  reads what the sheet decided** — the docblock on `src/ring.ts`, and
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Which effect runs is the consumer's_. A component hands the
+  ring `--ui-fx-ring: glide` or `glitch` and the flight's time and curve on its control — the
+  glitch's two colours too — under that effect's query and `:focus-visible`, and binds `arrive()` to
+  its focus. **The module keeps no guard a mutant can turn into a throw on an unasserted path**:
   the departure from nowhere is a sentinel rather than `undefined`, and where the focus went is read
   off the arrival's composed path rather than walked to `null` — a throw no test fails on is graded
   as an error, which fails the floor.

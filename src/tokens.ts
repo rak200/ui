@@ -224,8 +224,9 @@ export const derivedTokens = [
     // crossing is as long as its distance asks and an effect is not.
     '--ui-duration-travel',
     // How long a flourish takes — RFC 0004's: an effect a moment fires that plays out on its own
-    // and is gone, the light bursting round a button the focus reached. Apart from the effect's,
-    // which holds for as long as its moment does and moves back when it ends.
+    // and is gone, the light bursting round a button the focus reached and its ring's glitch.
+    // Apart from the effect's, which holds for as long as its moment does and moves back when it
+    // ends.
     '--ui-duration-flourish',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
