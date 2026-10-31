@@ -800,6 +800,10 @@ const glassy =
 const swelled =
     'it swells and settles the card’s content round after round, and a card’s content is what is being read.';
 
+/** Why the card leaves the glide out: nothing tells it what it came from, or waits for it back. */
+const unopened =
+    'a dialog glides from the control that opened it and back into it, where the focus goes back to; a card arrives where its host puts it, from nothing it can know, and could only guess from the last press, wrongly whenever it came for another reason.';
+
 /** Why the card leaves the flips out. */
 const turned =
     'it turns the content away from the reader for half its run, and a card’s content is what is being read: the entrance has it, before there is anything to read.';
@@ -962,6 +966,11 @@ const page = prototype({
                             says: 'Uncovered by a circle growing from its middle, or from the edge a direction leaves.',
                         },
                         {
+                            name: 'glide',
+                            says: 'Glides from what opened it, at that control’s size and in its place, to its own.',
+                            refused: unopened,
+                        },
+                        {
                             name: 'curtain',
                             host: true,
                             directed: true,
@@ -1074,6 +1083,11 @@ const page = prototype({
                             host: true,
                             directed: true,
                             says: 'Covered as a circle closes on its middle, or on the edge a direction goes to.',
+                        },
+                        {
+                            name: 'glide',
+                            says: 'Glides back into what opened it, where the focus goes back to.',
+                            refused: unopened,
                         },
                         {
                             name: 'curtain',

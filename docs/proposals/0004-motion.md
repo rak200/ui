@@ -299,7 +299,7 @@ Hypotheses, each unrun until it is run.
 The prototypes were reviewed page by page, each choice judged in Chromium, Firefox and WebKit, and
 the review has been building shape D. What it settled is below, each point with what it rests on;
 [the prototypes' README](0004-motion/README.md) carries every measurement in full, and each page
-lists what its component leaves out and why. None of it is the Decision, which stays open below.
+lists what its component leaves out and why. The Decision below takes it as the design's detail.
 
 - **A choice is one custom property per moment, and its value is the effect's name.**
   `--ui-motion-<moment>`, inherited, so the page, a region, a component type and one instance choose
@@ -406,9 +406,11 @@ lists what its component leaves out and why. None of it is the Decision, which s
   focus's effects are one list wherever they are answered, a press is the button's alone and an
   error a form's controls' — and a component's own taste is left for a moment of its own: a check, a
   menu's panel and caret, a toast, a tooltip, an icon and a table's row. A theme sets a component
-  apart from the page with one too, and only Glass does: the card alone leans under the pointer.
-  That is RFC 0003's answer, that a theme may bring a category whose default is the identity, spent
-  on motion — B falling out of D as a block of choices under one selector.
+  apart from the page with one too: the default theme keeps a field's darkening under the pointer,
+  Glass leans the card alone there and raises the toast with its boundary as it is at rest, and
+  Matrix tints the card, the toast and the fields at the focus. That is RFC 0003's answer, that a
+  theme may bring a category whose default is the identity, spent on motion — B falling out of D as
+  a block of choices under one selector.
 - **An effect never rewrites the text it animates.** A toast's message is in the live region it is
   announced through, and a tooltip hands its trigger its sentence again whenever the tip's text
   changes. The tooltip's typing hides what is not typed yet with a highlight drawn in no colour
@@ -478,8 +480,9 @@ lists what its component leaves out and why. None of it is the Decision, which s
 **The tastes the review chose**, which run wherever nothing is chosen, read off each page's choices
 under each theme; `today` marks what a component does today. A theme names the pointer, the focus, a
 press and an error once, for the page, and each sets components apart: the default theme keeps the
-fields' darkening under the pointer, Glass leans the card alone there, and Matrix tints the card,
-the toast and the fields at the focus, where they leave its hover colour out. _Every_ is the button,
+fields' darkening under the pointer, Glass leans the card alone there and raises the toast with its
+boundary as it is at rest, and Matrix tints the card, the toast and the fields at the focus, where
+they leave its hover colour out. _Every_ is the button,
 the menu's trigger, the card, the toast, the input, the textarea, the select, the checkbox, the
 switch and the radio, which answer the pointer and the focus, the card and the toast a focus on
 something they hold; _ringed_ is the same less the card and the toast, the components with a ring of
@@ -524,6 +527,8 @@ being left out and its tint, held light, leaving a white field 1.07:1 from itsel
 | dialog    | `enter`           | fade, today      | materialize | dissolve    |
 | dialog    | `exit`            | fade, today      | erode       | dissolve    |
 | dialog    | `backdrop`        | fade, today      | char-rain   | blur        |
+| toast     | `hover-shadow`    | raise            | glow        | raise       |
+| toast     | `hover-border`    | none, today      | none, today | none, today |
 | toast     | `focus-fill`      | none, today      | tint        | shimmer     |
 | toast     | `enter`           | slide-elastic    | wind        | refocus     |
 | toast     | `exit`            | slide            | wind        | defocus     |
@@ -545,8 +550,9 @@ being left out and its tint, held light, leaving a white field 1.07:1 from itsel
 
 ## Proposed design
 
-**Not written** — it waits on the Study choosing between A, B, C and D. What is already fixed is
-what any answer has to hold:
+**One recommendation per question**, each resting on the Study above. What the review settled is the
+design's detail — each point there is a rule of it — and this section does not restate it. What was
+fixed before the Study began binds every answer:
 
 - Motion is named by purpose, per item 9. A catalogue does not get to ship speed names.
 - Every effect the package ships collapses under `prefers-reduced-motion`, through one mechanism
@@ -554,22 +560,142 @@ what any answer has to hold:
 - No effect the package offers can remove a focus affordance or delay one, whatever a host selects.
 - A host's own motion stays as reachable as it is now — one selector, one custom property.
 
+### 1 — The catalogue is the package's, and which effect runs is the consumer's
+
+**Shape D, with A inside it and B falling out of it.** What each effect is stays decided where a
+finding decided it — the ring nothing delays, the press that is over with the finger, the text kept
+at 4.5:1 — and which one runs is a value the consumer writes: one custom property per moment, by
+kind where a moment has several, inherited, so the page, a region, a component type and one
+instance choose apart and the narrowest wins (S6). A component draws each effect it offers in its
+own shadow root, under a style query on its moment (S5), and what it does today is one choice among
+them, by name, which a host keeps by writing it.
+
+**S8 stays marked.** An effect drawn on the card's or the toast's host misses a choice made on that
+host alone. Drawing each surface inside its shadow root would lift the limit, at a change to two
+contracts the first delivery does not need: the themes' tastes are written on the root, which every
+host reads.
+
+**Set aside:**
+
+- _A alone_ — more steps and curves make today's motion slower or softer, never different, which is
+  the variety the Motivation asks for.
+- _B alone_ — a named set chooses every moment at once, where the Motivation chooses each apart;
+  under D it is a block of choices under one selector, which is what a theme's taste is.
+- _C_ — hooks hand a host the findings to keep, which moves them from decided to documented.
+
+### 2 — What ships first is the mechanism, and what the themes choose
+
+**The catalogue the prototypes draw costs nearly three times the library's mutants**, and more than
+two hours of the mutation job at today's rate — the count is in the Study — so it cannot arrive at
+once, and most of it has no consumer yet. The package ships the mechanism — the choices, the tastes,
+the tokens and the script the effects share — and the effects the three themes' tastes name in the
+table above, on the components they name them for. The rest of the catalogue stays in the
+prototypes, described and measured, and an effect arrives when a consumer asks for it, with its
+tests: _a category arrives with the component that consumes it_, applied to an effect.
+
+**Set aside:**
+
+- _The whole catalogue_ — 1,178 effects a component does not draw today, most chosen by nobody, each
+  owing its checks.
+- _The effects a sheet draws alone_ — four in ten of the catalogue's mutants, but it takes away what
+  Matrix and Glass chose: the shatter, the pieces, the wind, the typing, and every light that
+  follows the pointer.
+
+### 3 — An engine without style queries keeps today's motion
+
+**Container style queries are Baseline from Firefox 151** (S6). By the specification, an engine
+without them never matches a rule written under one, so each component does what it does today and a
+choice costs the effect and nothing else; no engine without them was measured. That is
+`<ui-select>`'s reason for taking the base appearance where an engine has it, not anchor
+positioning's for waiting, since nothing breaks. The script an effect needs asks the engine for the
+same support before it runs, so no script draws part of an effect its sheet does not. The floor this
+sets goes wherever #311 decides the package's goes.
+
+### 4 — The tokens the catalogue reads are steps, purposes and a count
+
+**A arrives with D** (S2). The duration scale gains the steps the prototypes declare — four on the
+reference's five-step scale and the dialog's between two of them — and, as today, no component
+reads a step: each effect reads a purpose that points into the scale, as `--ui-duration-state`
+points at `--ui-duration-100`, where the prototypes read the steps themselves. Two curves join the
+three, a move and an emphasis. A loop takes a period and a count, and the count is a category of its
+own, `--ui-iteration-*`, which the collapse takes to one as it takes every duration to 0.01ms: with
+the period alone collapsed, an infinite loop runs on in all three engines. The collapse stays one
+mechanism, its filter widened from one category to two.
+
+### 5 — Script where CSS has no primitive, and nowhere else
+
+**The script is the Study's list** — a trigger for an effect that outlives its state (S7), the
+pointer engine for the lights that follow the pointer (S3), a focus and a press state on the host,
+an arrival and a departure, the pieces and the grain, and per component what only it needs — each
+run only for an effect that is chosen and offered. The pointer engine reads no duration token, so it
+looks for the collapse itself, and for a pointer that cannot hover, and does nothing under either.
+
+### 6 — A theme brings a taste, as data
+
+**Each shipped theme carries its taste as it carries its palette**: data, rendered into its block,
+in properties of their own — `--ui-taste-<moment>` and `--ui-taste-<component>-<moment>` — that a
+component reads only where no choice is written. The default theme's taste stands under every theme,
+as its tokens do. **It is the package's motion**, so shipping it changes what every host's
+components do when nothing is chosen, which the Decision names as a cost.
+
 ## Decision
 
-**Not reached.**
+**Accepted** on 2026-10-30, with the recommendations above taken as written. The prototypes stay
+the catalogue's reference: what each settled is in the Study, and an effect leaves them for `src/`
+when a consumer asks for it.
+
+- **Question 1 — shape D**, with A inside it and B falling out of it; S8 stays marked.
+- **Question 2 — the mechanism and the themes' tastes ship first**, and the rest of the catalogue
+  arrives with a consumer that asks for an effect.
+- **Question 3 — an engine without container style queries keeps today's motion**, and the script
+  an effect needs asks for the same support first.
+- **Questions 4 to 6** — the tokens as steps, purposes over them and a count; script only where CSS
+  has no primitive; a theme's taste as data.
+
+**What it costs, named here rather than discovered in the rollout.**
+
+- **The default motion changes for every host.** The default theme's taste runs wherever nothing is
+  chosen: under the pointer a component raises, at the focus it lifts and the ring glides over, a
+  press squishes the button, an error pulses and flashes, and the card and the overlays come and go
+  as the table says. Each collapses under reduced motion, and a host keeps today's by naming it.
+- **The gate grows with every effect that ships.** The first delivery is the themes' part of the
+  catalogue, and each later effect brings its own mutants, and its checks on both sides of the
+  reduced-motion axis.
+- **A focus indicator below WCAG 1.4.11's 3:1 is a host's choice away.** The ring's `none` stands
+  aside for a halo, a glow, a raise, an inner light, a trace or an edge, none of which reaches 3:1
+  in a light scheme, which the review took. No theme's taste chooses it.
+- **The runtime grows** by the pointer engine, the triggers and the pieces, each run only for an
+  effect that is chosen.
+
+**What this does not decide** is when any step is built. The rollout is ordered and each step makes
+the next possible; none is scheduled here.
 
 ## Rollout
 
-**Not written**, and for the reason [RFC 0003](0003-themes.md) gives: a Rollout describes what an
-accepted design needs, and there is no accepted design.
+Tracked in [#318](https://github.com/rak200/ui/issues/318). Ordered, each step shippable alone.
+Verification is not listed per step: the floors require it of every commit here, and what the suite
+cannot see — another engine, a frame — is measured as the Study's steps measure it.
 
-Two dependencies are already visible.
+1. **The playground's reduced-motion control**, beside the scheme control
+   [#120](https://github.com/rak200/ui/issues/120) put there: the second state of every effect is
+   the one easiest to ship broken, because nobody sees it by accident.
+2. **The floor written down** — #311's question, answered with the package's floor and, beside it,
+   what the effects need: container style queries, below which a component keeps today's motion.
+3. **The tokens** — the steps, the purposes over them, the two curves and the loop's count — inside
+   the collapse, its filter widened to the count. Nothing moves yet.
+4. **The mechanism** — the query each sheet draws under, the taste as theme data rendered into each
+   theme's block, the properties the effects animate, registered, and the script they share — with
+   no effect yet.
+5. **The themes' tastes, a component at a time**, each pull request inside the mutation job's budget
+   — about 2,400 mutants at today's rate — the button first, since the lights and the ring it draws
+   are what the fields and the drawn controls share.
+6. **The rest of the catalogue, on demand**: an effect from the prototypes when a consumer asks for
+   it, with its tests.
 
-**[RFC 0003](0003-themes.md) has answered.** Its question 2 — may a theme bring a token category
-when the theme, not a component, is the consumer — was decided yes, when the category's default is
-the identity. So B is open, and under D a choice is a value a theme can carry like any other.
+**One dependency is met.** [RFC 0003](0003-themes.md) answered that a theme may bring a category
+whose default is the identity, so a choice is a value a theme carries like any other.
 
-**[#120](https://github.com/rak200/ui/issues/120) did half of what this needs.** It put a scheme
-control in the playground; there is still no way to see a story under reduced motion there, and a
-motion catalogue cannot be reviewed without one: the second state of every effect is the one that is
-easiest to ship broken, because nobody sees it by accident.
+**Two issues wait on this.** [#292](https://github.com/rak200/ui/issues/292) measures the dialog's
+wait on the button's effects again, against the components as they ship, after step 5. And
+[#300](https://github.com/rak200/ui/issues/300) is this proposal's question too: the overlays'
+entrances take their direction from `data-side`, so retiring it touches both.

@@ -117,6 +117,13 @@ transition running to the colour a control now has runs on whatever duration it 
 measured. The dialog can `reveal` itself from what opened it, a circle grown from the control the
 focus was on as a key went down or the one the pointer pressed, which a click need not focus —
 Safari's does not — and from its middle where a script's call opened it with no gesture behind it.
+It can `glide` from that control too, as the ring glides between controls: the panel starts at the
+control's size and in its place, scaled as one so its text keeps its shape and cut to the control's
+box and corners, reaches its own place on the dialog's one step, and goes back into the control as
+it closes, where the focus goes back to; with nothing to start from, it is the zoom. The opening's
+first frame and the closing's last are centred on the control, at its width, in Chromium and Firefox
+under every theme — measured. The card leaves it out: it arrives where its host puts it, and nothing
+tells it what it came from.
 And a table's added row can `pulse`, a ring of the accent flown in the top layer, which the table's
 frame no longer cuts at the sides and which WebKit paints, where drawn in the row it painted none;
 it still crosses the rows round it for the pulse's half second, which the review took.
@@ -548,7 +555,8 @@ button and the drawn controls the hover colour with `highlight`, which the card,
 fields leave out; Matrix tints each with `tint`, lights it with `glow` and keeps its boundary as it
 is at rest with `none`; and Glass lights the fill and the boundary of each where the pointer is with
 `spotlight` and `edge`, casts its shadow away from the pointer with `cast`, and leans the card alone
-with `tilt`. At the focus, the default theme lifts each with `lift` and `raise`, leaves its boundary
+with `tilt`, while it raises the toast with `raise` and keeps the toast's boundary as it is at rest
+with `none`. At the focus, the default theme lifts each with `lift` and `raise`, leaves its boundary
 as it is with `none` and takes a label to the accent with `accent`; Matrix leaves it where it is and
 its boundary as it is, bursts light out round it with `burst`, lights a label with `glow`, gives the
 button and the drawn controls the hover colour with `highlight` and the card, the toast and the
