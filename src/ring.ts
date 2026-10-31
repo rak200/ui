@@ -44,12 +44,6 @@ interface Round {
     readonly corners: Corners;
 }
 
-/** Where the ring the reader saw last was when the focus left it, and what the focus went to. */
-interface Departure {
-    readonly to: EventTarget;
-    readonly from: (width: number, offset: number) => Round | undefined;
-}
-
 /** The ring in the air: the control it lands on, where it is now, and its landing. */
 interface Trip {
     readonly control: HTMLElement;
@@ -57,11 +51,8 @@ interface Trip {
     readonly end: () => void;
 }
 
-/**
- * A departure from no ring the reader saw, which no glide leaves from: toward a target of its own,
- * which is on no arrival's path.
- */
-const nowhere: Departure = { to: new EventTarget(), from: () => undefined };
+/** A target on no arrival's path: where a focus that left no ring the reader saw went. */
+const nowhere = new EventTarget();
 
 /** The time under which the collapse took the flight: reduced motion's 0.01ms, or none at all. */
 const collapsed = 0.01;
@@ -69,17 +60,17 @@ const collapsed = 0.01;
 /** The control the reader can see the focus on, while it has it. */
 let seen: Element | undefined;
 
-/** The ring the reader saw last, as the focus left it. */
-let left: Departure = nowhere;
+/** What the focus went to as it left the ring the reader saw last. */
+let towards: EventTarget = nowhere;
+
+/** Where that ring was, for an outline `width` wide and `offset` off its control. */
+let ringed: (width: number, offset: number) => Round | undefined = () => undefined;
 
 /** The ring in the air, if one is. */
 let flying: Trip | undefined;
 
 /** The page's flown ring, made the first time one flies, and again if the page took it away. */
 let flier: HTMLElement | undefined;
-
-/** Whether the page's focus is being watched yet. */
-let watching = false;
 
 /**
  * One corner of the ring an outline `out` past the boundary draws: round as the element's, and a
@@ -141,7 +132,7 @@ function aloft(): HTMLElement {
     const ring = document.createElement('div');
     ring.popover = 'manual';
     ring.ariaHidden = 'true';
-    ring.dataset['uiRing'] = '';
+    ring.toggleAttribute('data-ui-ring');
     ring.style.cssText =
         'position:fixed;inset:auto;margin:0;padding:0;box-sizing:border-box;border-style:solid;background:none;overflow:visible;pointer-events:none';
     document.body.append(ring);
@@ -158,56 +149,51 @@ function lay(ring: HTMLElement, at: Round): void {
     ring.style.borderRadius = at.corners.map((one) => `${String(one)}px`).join(' ');
 }
 
-/**
- * Watches the page's focus, once: where the reader can see it, and where its ring was as it left.
- * A component that offers the glide calls this as it connects, so the departure before its first
- * arrival is already recorded. Capturing, so a page that stops either event on its way up does not
- * stop it reaching here.
- */
-export function watch(): void {
-    if (watching) {
-        return;
+/** Where the reader can see the focus arrive. */
+function heardIn(event: FocusEvent): void {
+    const target = event.composedPath()[0] as Element;
+
+    seen = target.matches(':focus-visible') ? target : undefined;
+}
+
+/** Where the focus left a ring the reader saw, and what it went to. */
+function heardOut(event: FocusEvent): void {
+    const target = event.composedPath()[0] as Element;
+    const to = event.relatedTarget ?? nowhere;
+
+    if (flying?.control === target) {
+        // Leaving while the ring is still landing: it goes on from where it had got to.
+        const { now } = flying;
+
+        flying.end();
+        towards = to;
+        ringed = () => now;
+    } else if (target === seen) {
+        towards = to;
+        // Not where it is no longer drawn: a closed dialog's control is a box of nothing.
+        ringed = (width, offset) =>
+            target.getClientRects().length === 0 ? undefined : round(target, width, offset);
+    } else {
+        towards = nowhere;
     }
 
-    watching = true;
-    document.addEventListener(
-        'focusin',
-        (event) => {
-            const target = event.composedPath()[0] as Element;
+    seen = undefined;
+}
 
-            seen = target.matches(':focus-visible') ? target : undefined;
-        },
-        true,
-    );
-    document.addEventListener(
-        'focusout',
-        (event) => {
-            const target = event.composedPath()[0] as Element;
-            const to = event.relatedTarget ?? nowhere.to;
-
-            if (flying?.control === target) {
-                // Leaving while the ring is still landing: it goes on from where it had got to.
-                const { now } = flying;
-
-                flying.end();
-                left = { to, from: () => now };
-            } else if (target === seen) {
-                // Not where it is no longer drawn: a closed dialog's control is a box of nothing.
-                left = {
-                    to,
-                    from: (width, offset) =>
-                        target.getClientRects().length === 0
-                            ? undefined
-                            : round(target, width, offset),
-                };
-            } else {
-                left = nowhere;
-            }
-
-            seen = undefined;
-        },
-        true,
-    );
+/**
+ * Watches the page's focus: where the reader can see it, and where its ring was as it left. A
+ * component that offers the glide calls this as it connects, so the departure before its first
+ * arrival is already recorded; a second call adds nothing, since a listener added twice is one.
+ * Capturing, so a page that stops either event on its way up does not stop it reaching here.
+ */
+export function watch(): void {
+    // Stryker disable next-line BooleanLiteral: the capturing listener an earlier run added is
+    // still on the page in the warm process Stryker switches mutants in, and heardIn records the
+    // same element whichever phase runs it, so a bubbling one added beside it changes nothing a
+    // test can see. Outside the runner's reach, not an equivalent mutant: the departure's flag
+    // beside it is killed, since heardOut run twice forgets the ring it had just recorded.
+    document.addEventListener('focusin', heardIn, true);
+    document.addEventListener('focusout', heardOut, true);
 }
 
 /**
@@ -223,7 +209,7 @@ export function arrive(event: FocusEvent): void {
     const offset = Number.parseFloat(style.outlineOffset);
     const time = milliseconds(style.getPropertyValue(`${kinds.animated}ring-time`));
     // Only for where the focus went: the departure's target is the control or a host around it.
-    const from = path.includes(left.to) ? left.from(width, offset) : undefined;
+    const from = path.includes(towards) ? ringed(width, offset) : undefined;
 
     if (
         style.getPropertyValue(`${kinds.animated}ring`) !== 'glide' ||
@@ -240,11 +226,11 @@ export function arrive(event: FocusEvent): void {
     flier = ring;
     ring.style.borderWidth = `${String(width)}px`;
     ring.style.borderColor = style.outlineColor;
-    lay(ring, from);
     ring.showPopover();
     control.style.setProperty('outline-style', 'none');
 
-    // An effect with no keyframes is a clock, its progress already eased by the curve.
+    // An effect with no keyframes is a clock, its progress already eased by the curve. The ring is
+    // laid by the first frame's step, which runs before that frame is painted.
     const timing = new KeyframeEffect(ring, null, {
         duration: time,
         easing: style.getPropertyValue(`${kinds.animated}ring-curve`),

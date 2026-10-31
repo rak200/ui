@@ -156,6 +156,18 @@ describe('the ring the page flies', () => {
         });
     });
 
+    it('reads a time written in milliseconds as one, as well as one in seconds', async () => {
+        const { from, to } = mount();
+
+        to.style.setProperty('--ui-fx-ring-time', '10000ms');
+
+        await userEvent.tab();
+        await userEvent.tab();
+        await hold(5000);
+
+        expect(laid()[0]).toBeCloseTo((around(from, 0)[0] + around(to, 6)[0]) / 2);
+    });
+
     it('follows the control if it moves while the ring is on its way', async () => {
         const { from, to } = mount();
 
@@ -248,14 +260,42 @@ describe('the ring the page flies', () => {
         expect(aloft()).toBe(false);
     });
 
-    it('flies nothing where the sheet chose no glide', async () => {
+    it('flies nothing where the sheet chose no glide, though it hands over a time', async () => {
         const { to } = mount();
 
-        to.classList.remove('glides');
+        // The time and the curve stay as the sheet hands them over; only the choice is gone.
+        to.style.setProperty('--ui-fx-ring', 'none');
 
         await userEvent.tab();
         await userEvent.tab();
 
+        expect(aloft()).toBe(false);
+    });
+
+    it('puts the ring down where the focus leaves it for a control that does not glide', async () => {
+        const { to } = mount();
+
+        await userEvent.tab();
+        await userEvent.tab();
+        await hold(5000);
+        await userEvent.tab({ shift: true });
+
+        expect(aloft(), 'down').toBe(false);
+        expect(to.style.outlineStyle, 'the outline its own again').toBe('');
+    });
+
+    it('forgets the ring the reader saw once the focus moves on from one they did not', async () => {
+        const { from, to, on } = mount();
+
+        await userEvent.tab();
+        // Two pointer focuses: the first leaves the ring the reader saw toward this very control,
+        // and the second, from a ring nobody saw, has to forget it.
+        await userEvent.click(to);
+        await userEvent.click(on);
+        await userEvent.tab({ shift: true });
+
+        expect(document.activeElement).toBe(to);
+        expect(from.matches(':focus'), 'the ring seen first is long gone').toBe(false);
         expect(aloft()).toBe(false);
     });
 
