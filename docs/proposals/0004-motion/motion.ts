@@ -311,8 +311,9 @@ sheets.after(themed);
  * the button alone, and an error by a form's controls. A component's own taste is left for a moment
  * of its own: a check, a menu's panel and caret, a toast, a tooltip, an icon and a table's row. A
  * theme sets a component apart from the page with one too: the default theme keeps a field's
- * boundary darkening under the pointer, Glass leans the card alone there, and Matrix tints the
- * card, the toast and the fields at the focus, where they leave its hover colour out.
+ * boundary darkening under the pointer, Glass leans the card alone there and raises the toast with
+ * its boundary as it is at rest, and Matrix tints the card, the toast and the fields at the focus,
+ * where they leave its hover colour out.
  *
  * A taste is written in properties of its own, never in the consumer's: `--ui-taste-<moment>` for
  * the page and `--ui-taste-<component>-<moment>` for one component, both on the root, read only
@@ -490,7 +491,12 @@ const tastes: ReadonlyMap<string, Taste> = new Map([
                 select: { enter: 'refocus', exit: 'defocus' },
                 icon: { enter: 'refocus', hover: 'pop' },
                 table: { hover: 'frost', enter: 'glow' },
-                toast: { enter: 'refocus', exit: 'defocus' },
+                toast: {
+                    enter: 'refocus',
+                    exit: 'defocus',
+                    'hover-shadow': 'raise',
+                    'hover-border': 'none',
+                },
                 tooltip: { enter: 'refocus', exit: 'defocus' },
             },
         },

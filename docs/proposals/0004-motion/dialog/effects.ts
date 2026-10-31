@@ -235,23 +235,23 @@ document.addEventListener(
     { capture: true },
 );
 
+/** What a reader opens a dialog from: the control round the label or the icon they pressed. */
+const controls =
+    'button, a[href], input, select, textarea, summary, [role="button"], [role="menuitem"]';
+
+/** What each dialog was opened from, as its opening found it, kept for its exit: the focus goes
+ *  back there as the dialog closes. */
+const openers = new WeakMap<HTMLElement, Element>();
+
 /**
- * The reveal's circle: where it grows from, the middle of what the reader opened the dialog from,
- * in the dialog's own box, and how far, 3rem past the corner farthest from there, as the circle's
- * reaches past the farthest from the middle. From the middle where it was opened from nothing the
- * reader acted on, as a script's call is, or from inside the dialog.
+ * What the reader opened a dialog from, as it opens: what they last acted on, taken up the tree
+ * it is drawn in to the control it is part of — the button round the icon the pointer pressed.
+ * Nothing where that is inside the dialog, gone or not drawn, or where no gesture is behind the
+ * opening, as none is behind a script's call. Read once, so an opening after it finds nothing.
  */
-const reveal = ({ host }: Firing): void => {
-    const dialog = inner(host, 'dialog');
+function openedFrom(host: HTMLElement): Element | undefined {
     const from = acted;
     acted = undefined;
-
-    if (dialog === null) {
-        return;
-    }
-
-    dialog.style.removeProperty('--ui-reveal-at');
-    dialog.style.removeProperty('--ui-reveal-to');
 
     let within = false;
 
@@ -270,6 +270,90 @@ const reveal = ({ host }: Firing): void => {
         from.getClientRects().length === 0 ||
         !navigator.userActivation.isActive
     ) {
+        return undefined;
+    }
+
+    for (let at: Element | null = from; at !== null;) {
+        if (at.matches(controls)) {
+            return at;
+        }
+
+        const root = at.getRootNode();
+        at = at.assignedSlot ?? at.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+    }
+
+    return from;
+}
+
+/**
+ * The glide's flight: from the control the dialog was opened from, at its size and in its place,
+ * to the panel's own, and as the dialog closes back into that control, which the focus goes back
+ * to. The panel is scaled as one, so its text keeps its shape — as far as it takes to cover the
+ * control, then cut to the control's box and corners across the side it covers past it. Measured
+ * with nothing written, which the keyframes read as the panel where it rests. From, and back to, a
+ * little smaller in its own place, as the zoom is, where it was opened from nothing, or where that
+ * control is gone or no longer drawn by the time it closes.
+ */
+const glide = ({ host }: Firing): void => {
+    const dialog = inner(host, 'dialog');
+
+    if (dialog === null) {
+        return;
+    }
+
+    for (const name of ['--ui-glide-at', '--ui-glide-scale', '--ui-glide-cut']) {
+        dialog.style.removeProperty(name);
+    }
+
+    const from = openers.get(host);
+
+    if (from === undefined || !from.isConnected || from.getClientRects().length === 0) {
+        dialog.style.setProperty('--ui-glide-scale', '0.96');
+
+        return;
+    }
+
+    const box = dialog.getBoundingClientRect();
+    const control = from.getBoundingClientRect();
+    const scale = Math.max(control.width / box.width, control.height / box.height);
+    const x = control.x + control.width / 2 - (box.x + box.width / 2);
+    const y = control.y + control.height / 2 - (box.y + box.height / 2);
+    const across = (box.width - control.width / scale) / 2;
+    const down = (box.height - control.height / scale) / 2;
+    const radius = getComputedStyle(
+        from.shadowRoot?.querySelector(controls) ?? from,
+    ).borderTopLeftRadius;
+    const corner =
+        (radius.endsWith('%')
+            ? (Number.parseFloat(radius) / 100) * Math.min(control.width, control.height)
+            : Number.parseFloat(radius)) / scale;
+    const round = (Number.isFinite(corner) ? corner : 0).toFixed(1);
+    dialog.style.setProperty('--ui-glide-at', `${x.toFixed(1)}px ${y.toFixed(1)}px`);
+    dialog.style.setProperty('--ui-glide-scale', scale.toFixed(4));
+    dialog.style.setProperty(
+        '--ui-glide-cut',
+        `inset(${down.toFixed(1)}px ${across.toFixed(1)}px round ${round}px)`,
+    );
+};
+
+/**
+ * The reveal's circle: where it grows from, the middle of what the reader opened the dialog from,
+ * in the dialog's own box, and how far, 3rem past the corner farthest from there, as the circle's
+ * reaches past the farthest from the middle. From the middle where it was opened from nothing the
+ * reader acted on, as a script's call is, or from inside the dialog.
+ */
+const reveal = ({ host }: Firing): void => {
+    const dialog = inner(host, 'dialog');
+    const from = openers.get(host);
+
+    if (dialog === null) {
+        return;
+    }
+
+    dialog.style.removeProperty('--ui-reveal-at');
+    dialog.style.removeProperty('--ui-reveal-to');
+
+    if (from === undefined) {
         return;
     }
 
@@ -452,6 +536,16 @@ const sheet = String.raw`
     }
 }
 
+/* glide: flown from what the reader opened the dialog from, as the script works it out, on the
+   curve the ring's glide flies on. */
+@container ${is('enter', 'glide')} {
+    dialog[open]:not(.closing) {
+        transition: none;
+        animation: ui-enter-glide var(${step})
+            var(--ui-enter-curve, var(--ui-easing-move)) backwards;
+    }
+}
+
 @container ${is('enter', 'curtain')} {
     dialog {
         --ui-enter-x: 1;
@@ -576,6 +670,16 @@ const sheet = String.raw`
         transition: none;
         animation: ui-exit-circle var(--ui-exit-length)
             var(--ui-exit-curve, var(--ui-easing-exit)) forwards;
+    }
+}
+
+@container ${is('exit', 'glide')} {
+    dialog.closing {
+        --ui-exit-length: var(${step});
+        opacity: 1;
+        transition: none;
+        animation: ui-exit-glide var(--ui-exit-length)
+            var(--ui-exit-curve, var(--ui-easing-move)) forwards;
     }
 }
 
@@ -1173,6 +1277,24 @@ dialog.closing > [data-rain] {
     }
 }
 
+/* From the control the script measured, at its size and in its place and cut to its shape, out to
+   3rem past the panel as the reveals end, and there by a quarter of the way. With nothing written
+   it starts where the panel rests, which is where the script measures it. */
+@keyframes ui-enter-glide {
+    from {
+        opacity: 0;
+        translate: var(--ui-glide-at, 0 0);
+        scale: var(--ui-glide-scale, 1);
+        clip-path: var(--ui-glide-cut, inset(-3rem));
+    }
+    25% {
+        opacity: 1;
+    }
+    to {
+        clip-path: inset(-3rem);
+    }
+}
+
 /* From a line through the middle outward, across the axis it travels on. */
 @keyframes ui-enter-curtain {
     from {
@@ -1267,6 +1389,22 @@ dialog.closing > [data-rain] {
         clip-path: circle(
             0 at calc(50% + var(--ui-exit-x) * 50%) calc(50% + var(--ui-exit-y) * 50%)
         );
+    }
+}
+
+/* Back into the control the script measured, the entrance run the other way. */
+@keyframes ui-exit-glide {
+    from {
+        clip-path: inset(-3rem);
+    }
+    75% {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        translate: var(--ui-glide-at, 0 0);
+        scale: var(--ui-glide-scale, 1);
+        clip-path: var(--ui-glide-cut, inset(-3rem));
     }
 }
 
@@ -1412,6 +1550,11 @@ prototype({
                             fire: reveal,
                         },
                         {
+                            name: 'glide',
+                            says: 'Glides from what opened it, at that control’s size and in its place, to its own: the control the focus was on, or the one the pointer pressed; from a little smaller when nothing was.',
+                            fire: glide,
+                        },
+                        {
                             name: 'curtain',
                             directed: true,
                             says: 'Uncovered from its middle outward, as a curtain opens: across it, or up and down for those directions.',
@@ -1486,6 +1629,11 @@ prototype({
                             name: 'circle',
                             directed: true,
                             says: 'Covered as a circle closes on its middle, or on the edge a direction goes to.',
+                        },
+                        {
+                            name: 'glide',
+                            says: 'Glides back into what opened it, where the focus goes back to; getting a little smaller where that is gone.',
+                            fire: glide,
                         },
                         {
                             name: 'curtain',
@@ -1909,6 +2057,18 @@ for (const host of document.querySelectorAll('ui-dialog')) {
 
         const announce = (moment: 'opening' | 'closing'): void => {
             restore(dialog);
+
+            // Found at every opening, whatever the entrance: an exit may fly back to it.
+            if (moment === 'opening') {
+                const from = openedFrom(host);
+
+                if (from === undefined) {
+                    openers.delete(host);
+                } else {
+                    openers.set(host, from);
+                }
+            }
+
             dialog.dispatchEvent(new Event(moment, { bubbles: true, composed: true }));
         };
 

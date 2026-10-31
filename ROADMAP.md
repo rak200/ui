@@ -3,6 +3,16 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
+## Motion, as RFC 0004 accepted it (#318)
+
+Which effect runs becomes a choice a consumer writes: one custom property per moment, inherited, so
+the narrowest choice wins. Each component draws the effects it offers in its own shadow root, under
+a container style query, and each shipped theme brings a taste of its own as data. What ships is the
+mechanism and the effects the three themes' tastes name; the rest of the catalogue stays in the
+prototypes under `docs/proposals/0004-motion/` until a consumer asks for an effect. Six steps, in an
+order that is the rule: the playground's reduced-motion control, the floor written down, the tokens,
+the mechanism, the tastes a component at a time, then the catalogue on demand.
+
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
