@@ -229,6 +229,11 @@ export const matrix: Theme = {
  *
  * Under more contrast or reduced transparency, glass stops being glass: what it makes
  * translucent stands down, and the edges and the toasts go to the text's pole.
+ *
+ * **Its taste holds the light inside the glass.** At the focus a button keeps a light along its
+ * inside and does not lift; and a press springs it back, further in than the default theme's
+ * squeeze. The rest of what the review chose for it is not drawn yet, and a taste names only what
+ * some component draws.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -335,5 +340,14 @@ export const glass: Theme = {
         '--ui-color-hover': ['#d9d9d9', '#282828'],
         '--ui-color-pressed': ['#c1c1c1', '#3d3d3d'],
         '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
+    },
+    // The review's, read off each page under this theme — RFC 0004. The `none` takes back the
+    // default theme's lift, which would otherwise run here too.
+    taste: {
+        page: {
+            'focus-move': 'none',
+            'focus-shadow': 'inner',
+            'press-move': 'spring',
+        },
     },
 };
