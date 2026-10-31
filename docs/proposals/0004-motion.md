@@ -742,6 +742,7 @@ entrances take their direction from `data-side`, so retiring it touches both.
 
 ### Built
 
-| Step | Pull request                                  | What landed                                                                     |
-| ---- | --------------------------------------------- | ------------------------------------------------------------------------------- |
-| 1    | [#321](https://github.com/rak200/ui/pull/321) | the playground's reduced-motion control: the sheet's own collapse, in the story |
+| Step | Pull request                                  | What landed                                                                        |
+| ---- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 1    | [#321](https://github.com/rak200/ui/pull/321) | the playground's reduced-motion control: the sheet's own collapse, in the story    |
+| 2    | [#323](https://github.com/rak200/ui/pull/323) | the floor in `ARCHITECTURE.md`, and below it the line container style queries draw |
