@@ -215,15 +215,18 @@ interface Taste {
 a component reads its theme's taste only where no choice is written. A name a component does not
 offer runs nothing there, and the component does what it does today.
 
-**No component offers an effect yet, and no shipped theme carries a taste.** RFC 0004's rollout
-puts the mechanism first and draws the effects the three themes' tastes name after it, a component
-at a time, so a taste written today changes nothing until the component it names offers that effect.
+**The default theme's taste stands under every theme**, as its values do: the token sheet carries
+it, as [`taste`](tokens.md#taste), and a theme's own replaces it moment by moment where the theme
+names one. **No shipped theme carries a taste of its own yet.** RFC 0004's rollout draws the effects
+the three themes' tastes name a component at a time, [the button](button.md#motion) first, so a
+taste written today changes nothing until the component it names offers that effect.
 
 Components read the names through one internal helper, `query()` in `src/motion.ts`, which writes
 the condition a component draws each effect under. The same module keeps `kinds`, the prefixes of
 the three kinds of `--ui-` name that are not tokens: `--ui-motion-` for a choice, `--ui-taste-` for
 a taste, and `--ui-fx-` for a property an effect animates, which only this package writes and a host
-never sets.
+never sets. And it keeps `tasteBlock()`, which writes a taste as CSS for `themeStyleSheet()` and
+`tokenStyleSheet()` alike.
 
 ## `themeStyleSheet`
 

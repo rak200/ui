@@ -16,6 +16,8 @@
  * freezes, which is measured rather than feared.
  */
 
+import { tasteBlock, type Taste } from './motion.js';
+
 /**
  * The token names this package defines, as they appear in CSS — the *ground* half: the
  * names that have a default and are emitted at `:root`.
@@ -104,6 +106,13 @@ export const tokens = [
     // judges it against something is a claim this package does not make.
     '--ui-easing-enter',
     '--ui-easing-exit',
+    // The step and the curve RFC 0004's effects arrive with, beside the button that draws the
+    // first of them. The step is the one the review judged those effects at in the prototypes,
+    // longer than a state's, since an effect moves a component where a state only recolours it;
+    // no component reads it — they read `--ui-duration-effect`. The curve runs past its end and
+    // settles back, which is what a press let go of does.
+    '--ui-duration-200',
+    '--ui-easing-emphasis',
     // The icon category, arriving with `ui-icon` rather than with the twelve components
     // that will eventually hold one. Two names, because an adopted set has exactly two
     // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
@@ -195,6 +204,11 @@ export type Token = (typeof tokens)[number];
  */
 export const derivedTokens = [
     '--ui-duration-state',
+    // How long an effect a moment fires takes — RFC 0004's: a component raised under the
+    // pointer, lifted at the focus, pressed in. A purpose over the scale for the reason
+    // `--ui-duration-state` is one, and apart from it because the two answer different things:
+    // a host who wants livelier effects and the same colour changes moves this one.
+    '--ui-duration-effect',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -355,6 +369,11 @@ export const defaults: Readonly<Record<Token, string>> = {
     // and quick to be gone, so a dismissal does not linger over a decision already made.
     '--ui-easing-enter': 'ease-out',
     '--ui-easing-exit': 'ease-in',
+    // 240ms, the prototypes' step for the effects a moment fires, and the review's.
+    '--ui-duration-200': '240ms',
+    // Past the end by half again and back: a curve the platform has no keyword for, so the
+    // one place this layer writes a `cubic-bezier`.
+    '--ui-easing-emphasis': 'cubic-bezier(0.3, 1.5, 0.5, 1)',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
     // Two layers rather than one, which is what makes a shadow read as *lift* instead of
@@ -477,6 +496,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // A formula may be a plain reference. A purpose points into the scale; the scale is
     // where the number lives, and a host who wants slower state changes moves the step.
     '--ui-duration-state': ground('--ui-duration-100'),
+    // A plain reference, as the state's is: the scale is where the value lives.
+    '--ui-duration-effect': ground('--ui-duration-200'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast
@@ -639,6 +660,31 @@ export const moreContrast: Readonly<
     '--ui-color-toast-edge': ['#000000', '#ffffff'],
 };
 
+/**
+ * The default theme's taste — RFC 0004's: the effect each moment runs where nobody chose one.
+ *
+ * **It stands under every theme, as {@link defaults} does**, so {@link tokenStyleSheet} writes
+ * it at `:root` and a shipped theme's own taste replaces it moment by moment where the theme
+ * names one. **It is the package's motion**: each entry changes what a component does on every
+ * page that inserts the sheet and chooses nothing, which RFC 0004's Decision names as a cost,
+ * and a host keeps a component as it was by choosing `none` for the moment.
+ *
+ * An entry arrives with the first component that draws the effect it names, as a token
+ * arrives with the first component that reads it — `tests/tokens.test.ts` refuses one no
+ * component draws. Each is the button's today: a drop shadow under the pointer and at the
+ * focus, two pixels up at the focus, and a press that squeezes the button and sinks its shadow
+ * inside.
+ */
+export const taste: Taste = {
+    page: {
+        'hover-shadow': 'raise',
+        'focus-move': 'lift',
+        'focus-shadow': 'raise',
+        'press-move': 'squish',
+        'press-shadow': 'sink',
+    },
+};
+
 /** The category every duration name shares, which is what reduced motion collapses. */
 const duration = '--ui-duration-';
 
@@ -666,6 +712,9 @@ const duration = '--ui-duration-';
  *
  * **More contrast is answered here too**, from {@link moreContrast} and for the same
  * reason: it is the reader's setting, so no component should have to learn it exists.
+ *
+ * **The default theme's {@link taste} comes last**, under `:where(:root)`, so a host's rule for
+ * a taste outweighs it wherever that rule is written.
  */
 export function tokenStyleSheet(): string {
     const grounds = tokens
@@ -693,5 +742,6 @@ export function tokenStyleSheet(): string {
         `:root {\n  color-scheme: light dark;\n${grounds}\n}`,
         `@media (prefers-reduced-motion: reduce) {\n  :root {\n${collapsed}\n  }\n}`,
         `@media (prefers-contrast: more) {\n  :root {\n${contrasted}\n  }\n}`,
+        tasteBlock(':root', taste),
     ].join('\n\n');
 }

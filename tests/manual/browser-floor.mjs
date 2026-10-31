@@ -82,10 +82,15 @@ const drawnList =
 /** Why a cursor moves no floor. */
 const noCursor = 'iOS draws no cursor, and an iPad shows its own pointer instead';
 
+/** The key a container style query is dated by, which every motion effect is drawn under. */
+const styleQueries = 'css.at-rules.container.style_queries_for_custom_properties';
+
 /** The keys a reading set aside, each with why it does not move the floor. */
 const heard = {
     'api.CustomElementRegistry.get':
         "Safari's is partial for customized built-in elements alone, and src/tooltip.ts asks only for a name with a hyphen, an autonomous element's",
+    [styleQueries]:
+        "every motion effect is drawn under src/motion.ts's query, and an engine without style queries matches none of them, so each component keeps today's motion",
     'css.at-rules.media.prefers-reduced-transparency':
         'only Chromium knows it, and src/theme.ts lists it beside prefers-contrast: more, so an engine without it still answers the list through the other',
     'css.properties.appearance.base-select': drawnList,
@@ -385,6 +390,21 @@ for (const file of files) {
 
             if (key !== undefined) {
                 use(key, source, node.getStart());
+            }
+
+            // A call to the query RFC 0004's effects are drawn under is a container style query,
+            // whose condition reaches the sheet interpolated, where no pattern can read it.
+            if (ts.isCallExpression(node.parent) && node.parent.expression === node) {
+                const symbol = checker.getSymbolAtLocation(node);
+                const original =
+                    symbol !== undefined && symbol.flags & ts.SymbolFlags.Alias
+                        ? checker.getAliasedSymbol(symbol)
+                        : symbol;
+                const declared = original?.declarations?.[0]?.getSourceFile().fileName ?? '';
+
+                if (original?.name === 'query' && /[\\/]src[\\/]motion\.ts$/.test(declared)) {
+                    use(styleQueries, source, node.getStart());
+                }
             }
         }
 

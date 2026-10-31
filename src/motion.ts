@@ -9,13 +9,32 @@
  * refuses any `--ui-` name in a component's sheet that is neither a token nor of one of these
  * kinds, so a fourth cannot enter by accident.
  *
- * **This module imports no Lit**, for the reason `src/reference.ts` gives for `src/tokens.ts`:
- * `src/theme.ts` reads the taste's names from here, and a theme is data a target that is not the
- * web reads too. A component wraps the query in `unsafeCSS` where it draws one.
+ * **This module imports no Lit, and imports nothing at all**, for the reason `src/reference.ts`
+ * gives for `src/tokens.ts`: `src/tokens.ts` and `src/theme.ts` read the taste's shape and names
+ * from here, and both are data a target that is not the web reads too. A component wraps the
+ * query in `unsafeCSS` where it draws one.
  *
- * Internal — it is not re-exported from `src/index.ts`: what a consumer writes is the property,
- * never the code that builds its name.
+ * Internal — it is not re-exported from `src/index.ts`, but for {@link Taste}, which is a theme's
+ * shape: what a consumer writes is the property, never the code that builds its name.
  */
+
+/**
+ * What a theme chooses where a consumer has chosen nothing — RFC 0004's taste: an effect for a
+ * moment on every component, and for one component apart from the page.
+ *
+ * Read only where no choice is written, so any choice a consumer makes, at any scope, runs
+ * instead. The names are a moment's and an effect's, as a component offers them; one a component
+ * does not offer runs nothing there, and the component does what it does today.
+ */
+export interface Taste {
+    /** The effect each moment runs on every component that offers it, by moment. */
+    readonly page?: Readonly<Record<string, string>>;
+    /**
+     * The effect a moment runs on one component, by the component's tag less `ui-`, over the
+     * page's.
+     */
+    readonly components?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+}
 
 /**
  * The prefix of each kind of name that is not a token.
@@ -62,4 +81,27 @@ export function query(component: string): (moment: string, effect: string) => st
 
         return `(style(${chosen}: ${effect}) or ((not style(${chosen})) and (style(${own}: ${effect}) or ((not style(${own})) and style(${page}: ${effect})))))`;
     };
+}
+
+/**
+ * A taste as CSS: its declarations under `:where()` of `selector`, the page's moments first and
+ * then each component's, or an empty string where the taste names none.
+ *
+ * **Under `:where()`, so the block has no specificity**: a rule a host writes for a taste
+ * outweighs it whatever order the sheets are in, as a host's choice already does by being a
+ * different property. `tokenStyleSheet()` writes the default theme's at `:root`, and
+ * `themeStyleSheet()` a shipped theme's under the attribute that selects it.
+ */
+export function tasteBlock(selector: string, taste: Taste | undefined): string {
+    const page = Object.entries(taste?.page ?? {}).map(
+        ([moment, effect]) => `  ${kinds.taste}${moment}: ${effect};`,
+    );
+    const components = Object.entries(taste?.components ?? {}).flatMap(([component, moments]) =>
+        Object.entries(moments).map(
+            ([moment, effect]) => `  ${kinds.taste}${component}-${moment}: ${effect};`,
+        ),
+    );
+    const lines = [...page, ...components];
+
+    return lines.length === 0 ? '' : `:where(${selector}) {\n${lines.join('\n')}\n}`;
 }

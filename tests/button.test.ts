@@ -9,6 +9,7 @@ import meta, { Disabled, Primary, Secondary, States } from '../stories/button.st
 import '../src/button.js';
 import '../src/tooltip.js';
 import type { UiButton } from '../src/button.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** Mounts a `<ui-button>` and waits for its first render. */
 async function mount(html: string): Promise<UiButton> {
@@ -658,6 +659,195 @@ describe('the description a tooltip hands over', () => {
         );
 
         await expectAccessible(host);
+    });
+});
+
+/**
+ * RFC 0004's effects, which the button is the first to draw: the default theme's taste raises it
+ * under the pointer and at the focus, lifts it at the focus, and squeezes it and sinks its shadow
+ * under a press. Each reads a choice or a taste, so each is read here with one written — the
+ * token sheet's taste, a consumer's choice, or the button's own taste.
+ */
+describe("the effects the default theme's taste names", () => {
+    /** The raise, as the browser serialises it in the light scheme. */
+    const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
+
+    /** The sink, the same way. */
+    const sunk = 'rgba(0, 0, 0, 0.35) 0px 2px 5px 0px inset';
+
+    /** Inserts the sheet a host inserts, which carries the default theme's taste. */
+    function sheet(): void {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+    }
+
+    /**
+     * Mounts a button with every duration taken out, the host's own knob, so a read is where an
+     * effect lands rather than a frame on its way there.
+     */
+    async function still(markup = '<ui-button>Save</ui-button>'): Promise<UiButton> {
+        const element = await mount(markup);
+        element.style.setProperty('--ui-duration-state', '0s');
+        element.style.setProperty('--ui-duration-effect', '0s');
+
+        return element;
+    }
+
+    /** What the effects move on the real button, as it is painted now. */
+    function moved(element: UiButton): readonly [shadow: string, translate: string, scale: string] {
+        const styles = getComputedStyle(inner(element));
+
+        return [styles.boxShadow, styles.translate, styles.scale];
+    }
+
+    it('moves nothing new where nothing is chosen, as before', async () => {
+        const element = await still();
+
+        await userEvent.hover(inner(element));
+        await press(inner(element), true);
+
+        expect(moved(element)).toEqual(['none', 'none', 'none']);
+    });
+
+    it('raises the button under the pointer', async () => {
+        sheet();
+        const element = await still();
+
+        await userEvent.hover(inner(element));
+
+        expect(moved(element)).toEqual([raised, 'none', 'none']);
+    });
+
+    it('raises it and lifts it two pixels, ring and all, at the focus', async () => {
+        sheet();
+        const element = await still();
+
+        await userEvent.tab();
+
+        expect(moved(element)).toEqual([raised, '0px -2px', 'none']);
+    });
+
+    it('squeezes it and sinks its shadow under a press, drawn over the pointer', async () => {
+        sheet();
+        const element = await still();
+
+        await userEvent.hover(inner(element));
+        await press(inner(element), true);
+
+        expect(moved(element)).toEqual([sunk, 'none', '0.96']);
+    });
+
+    it('lets the focus win: a pointer resting on a focused button changes nothing', async () => {
+        sheet();
+        const element = await still();
+        element.style.setProperty('--ui-motion-focus-shadow', 'none');
+
+        await userEvent.tab();
+        await userEvent.hover(inner(element));
+
+        expect(moved(element)[0], 'the focus chose no shadow').toBe('none');
+    });
+
+    it('moves nothing that cannot be used', async () => {
+        sheet();
+        const element = await still('<ui-button disabled>Unavailable</ui-button>');
+
+        await userEvent.hover(inner(element));
+        await press(inner(element), true);
+
+        expect(moved(element)).toEqual(['none', 'none', 'none']);
+    });
+
+    it('keeps the button as it was where a host chooses none for each moment', async () => {
+        sheet();
+        const element = await still();
+
+        for (const moment of ['hover-shadow', 'press-move', 'press-shadow']) {
+            element.style.setProperty(`--ui-motion-${moment}`, 'none');
+        }
+
+        await userEvent.hover(inner(element));
+        await press(inner(element), true);
+
+        expect(moved(element)).toEqual(['none', 'none', 'none']);
+    });
+
+    it("answers a choice on one instance, and the button's own taste over the page's", async () => {
+        const element = await still();
+        element.style.setProperty('--ui-motion-press-move', 'squish');
+        element.style.setProperty('--ui-taste-press-shadow', 'none');
+        element.style.setProperty('--ui-taste-button-press-shadow', 'sink');
+
+        await press(inner(element), true);
+
+        expect(moved(element)).toEqual([sunk, 'none', '0.96']);
+    });
+
+    it('draws the wider layer of the raise in the accent on a dark page', async () => {
+        sheet();
+        const element = await still();
+        element.style.colorScheme = 'dark';
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+
+        await userEvent.hover(inner(element));
+
+        const [shadow] = moved(element);
+
+        expect(shadow).toContain('rgba(0, 0, 0, 0.6) 0px 2px 4px -1px');
+        // Relative colour syntax resolves to a colour the browser writes in sRGB's own terms.
+        expect(shadow).toContain(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.45) 0px 6px 14px -4px',
+        );
+    });
+
+    it.each([
+        ['hover-shadow', 'raise'],
+        ['focus-shadow', 'raise'],
+        ['focus-move', 'lift'],
+        ['press-move', 'squish'],
+        ['press-shadow', 'sink'],
+    ] as const)(
+        'transitions what the effects move once %s is %s, and only then',
+        async (moment, effect) => {
+            const element = await mount('<ui-button>Save</ui-button>');
+
+            element.style.setProperty(`--ui-motion-${moment}`, effect);
+
+            expect(getComputedStyle(inner(element)).transitionProperty).toBe(
+                'background-color, box-shadow, translate, scale',
+            );
+        },
+    );
+
+    it('moves each property on its own token, the squeeze on the emphasis curve', async () => {
+        sheet();
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.style.setProperty('--ui-duration-state', '3ms');
+        element.style.setProperty('--ui-duration-effect', '7ms');
+        element.style.setProperty('--ui-easing-state', 'step-end');
+        element.style.setProperty('--ui-easing-enter', 'ease');
+        element.style.setProperty('--ui-easing-emphasis', 'linear');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.transitionDuration).toBe('0.003s, 0.007s, 0.007s, 0.007s');
+        expect(styles.transitionTimingFunction).toBe('steps(1), ease, ease, linear');
+    });
+
+    it('lands a press at once and lets it go over the effect', async () => {
+        sheet();
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        await press(inner(element), true);
+
+        expect(getComputedStyle(inner(element)).transitionDuration, 'pressed').toBe('0s');
+
+        await press(inner(element), false);
+
+        expect(getComputedStyle(inner(element)).transitionDuration, 'let go').toBe(
+            '0.15s, 0.24s, 0.24s, 0.24s',
+        );
     });
 });
 

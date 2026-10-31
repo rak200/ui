@@ -18,6 +18,7 @@ export {
     formulas,
     darkScheme,
     moreContrast,
+    taste,
     tokenStyleSheet,
     type Token,
     type DerivedToken,
