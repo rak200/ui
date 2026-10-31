@@ -288,10 +288,18 @@ explains. This file restates none of them.
   `tests/tokens.test.ts`, so the scheme is checked rather than described.
 - **Which `--ui-` names are not tokens, and how a component asks for an effect** — the docblock on
   `src/motion.ts`, which keeps the three kinds RFC 0004 added (a consumer's choice, a theme's taste,
-  and a property an effect animates under `--ui-fx-`, which a host never sets) and the `query()`
-  each effect is drawn under. It imports no Lit, for `src/reference.ts`'s reason, because
-  `src/theme.ts` reads the taste's names from it. The gate in `tests/tokens.test.ts` lets a
-  component's sheet name a token or one of the three kinds, and nothing else.
+  and a property an effect animates under `--ui-fx-`, which a host never sets), the `query()` each
+  effect is drawn under, and the `Taste` shape with `tasteBlock()`, which writes one. It imports
+  nothing, for `src/reference.ts`'s reason, because `src/tokens.ts` and `src/theme.ts` read from it.
+  The gate in `tests/tokens.test.ts` lets a component's sheet name a token or one of the three
+  kinds, and nothing else, and refuses a taste that names an effect no component draws.
+- **Who owns a component's motion, and what the default theme's taste is** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _Which effect runs is the consumer's_, and the docblock on
+  `taste` in `src/tokens.ts`, which says why it stands under every theme. **Why the button draws its
+  effects on the real `<button>`, transitions them only once one is chosen, and lets the focus win
+  and a press win over both** — the comments beside the rules in `src/button.ts`, and
+  `docs/button.md`'s _Motion_. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
+  container style query, which it sets aside: an engine without one keeps today's motion.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

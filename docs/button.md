@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [`ButtonVariant`](#buttonvariant)
 - [Supplementary text](#supplementary-text)
 - [Interaction states](#interaction-states)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-button>`
@@ -129,6 +130,48 @@ ui-button {
 
 Under `prefers-reduced-motion: reduce` every duration collapses in the token sheet, and this
 component never learns why.
+
+## Motion
+
+The button answers the pointer, the focus and a press with an **effect**, and which effect runs is
+yours to choose — RFC 0004. Each moment comes by kind, a custom property apiece, and its value is
+the effect's name:
+
+| Property                   | Effects the button offers | What it draws                                       |
+| -------------------------- | ------------------------- | --------------------------------------------------- |
+| `--ui-motion-hover-shadow` | `raise`                   | a drop shadow under the pointer                     |
+| `--ui-motion-focus-shadow` | `raise`                   | the same drop, while the focus stays                |
+| `--ui-motion-focus-move`   | `lift`                    | two pixels up, the focus ring with it               |
+| `--ui-motion-press-move`   | `squish`                  | squeezed to 96%, springing back once let go         |
+| `--ui-motion-press-shadow` | `sink`                    | its shadow sunk inside, as if pressed into the page |
+
+**Where you choose nothing, the theme's taste runs**, and the default theme's — the
+[`taste`](tokens.md#taste) the token sheet carries — names every effect above. So a page that
+inserts the sheet gets them all, and `none` keeps the button as it was for one moment:
+
+```css
+/* No movement under a press, on every button. */
+ui-button {
+  --ui-motion-press-move: none;
+}
+```
+
+A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
+every button, or one. A name the button does not offer draws nothing, and the button does what it
+does today there.
+
+**The focus wins.** A button the reader can see the focus on is drawn as the focus chose, and the
+pointer resting on it changes nothing, since a reader who came by the keyboard may have left the
+pointer where it was. **A press is drawn over both**, and lands at once, as the pressed colour does;
+letting go runs each effect back, the squeeze along `--ui-easing-emphasis`, which springs past its
+rest. The shadow under the pointer is drawn only where the pointer can hover, so a tap on a touch
+screen leaves none behind. A disabled button draws no effect.
+
+Each effect moves over `--ui-duration-effect`, which collapses with every other duration under
+`prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once. An engine
+without container style queries — Firefox before 151, inside the
+[browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect, and the button does
+what it did before effects existed.
 
 ## Styling
 

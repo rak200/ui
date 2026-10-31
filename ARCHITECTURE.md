@@ -460,6 +460,29 @@ That is the argument for motion being tokens at all, and it is stronger than the
 hardcoded `150ms` is not merely un-overridable, it is an accessibility defect that every component
 would otherwise have to fix on its own.
 
+### Which effect runs is the consumer's
+
+A component answers the pointer, the focus and a press with an **effect**, and which one runs is a
+custom property written per moment — `--ui-motion-press-move: squish` — inherited, so the page, a
+region, every instance of a component and one instance choose apart and the narrowest wins
+(RFC 0004). **What an effect is stays the package's.** The ring nothing delays, the press that lands
+with the finger and the text kept at 4.5:1 are written into each effect, and a choice picks among
+effects rather than retuning one. `none` keeps a component as it was for that moment, and a name
+it does not offer draws nothing.
+
+**Where nobody chose, a theme's taste runs**: data beside its palette, and the default theme's
+stands under every theme, as its values do. That makes it the package's motion. On a page that
+inserts the token sheet and chooses nothing, the button rises under the pointer and at the focus,
+lifts at the focus, and squeezes and sinks under a press, which RFC 0004 accepted as the cost of
+having motion at all. An effect enters the catalogue with the first component that draws it,
+bringing the tokens and the script it needs: _a category arrives with the component that consumes
+it_, applied to an effect. The rest waits in the proposal's prototypes until someone asks for it.
+
+**Each component draws its effects in its own shadow root, under a container style query** on the
+moment. An engine without style queries matches none of them and keeps the component's own motion
+— [The browser floor](#the-browser-floor). Reduced motion stays one rule: every effect moves over a
+duration token, so the collapse that takes every duration to `0.01ms` takes the effects with it.
+
 ### A shadow follows the scheme only through its colour
 
 `light-dark()` takes **colours**, so a ground whose value is a shadow has no dark value beside it

@@ -1,26 +1,10 @@
-import { kinds } from './motion.js';
+import { tasteBlock, type Taste } from './motion.js';
 import { derivedTokens, moreContrast, type DerivedToken, type Token } from './tokens.js';
+
+export type { Taste } from './motion.js';
 
 /** A name a theme may set: a ground, or a derived role it overrides. */
 type Named = Token | DerivedToken;
-
-/**
- * What a theme chooses where a consumer has chosen nothing — RFC 0004's taste: an effect for a
- * moment on every component, and for one component apart from the page.
- *
- * Read only where no choice is written, so any choice a consumer makes, at any scope, runs
- * instead. The names are a moment's and an effect's, as a component offers them; one a component
- * does not offer runs nothing there, and the component does what it does today.
- */
-export interface Taste {
-    /** The effect each moment runs on every component that offers it, by moment. */
-    readonly page?: Readonly<Record<string, string>>;
-    /**
-     * The effect a moment runs on one component, by the component's tag less `ui-`, over the
-     * page's.
-     */
-    readonly components?: Readonly<Record<string, Readonly<Record<string, string>>>>;
-}
 
 /**
  * A named set of decisions, as data, for {@link themeStyleSheet} to render.
@@ -60,20 +44,6 @@ export interface Theme {
     readonly taste?: Taste;
 }
 
-/** A taste's declarations: the page's, then each component's. */
-function tasted(taste: Taste | undefined): string[] {
-    const page = Object.entries(taste?.page ?? {}).map(
-        ([moment, effect]) => `  ${kinds.taste}${moment}: ${effect};`,
-    );
-    const components = Object.entries(taste?.components ?? {}).flatMap(([component, moments]) =>
-        Object.entries(moments).map(
-            ([moment, effect]) => `  ${kinds.taste}${component}-${moment}: ${effect};`,
-        ),
-    );
-
-    return [...page, ...components];
-}
-
 /** One declaration, a value with its dark one where it has one. */
 function declare(name: string, light: string, dark: string | undefined): string {
     return `  ${name}: ${dark === undefined ? light : `light-dark(${light}, ${dark})`};`;
@@ -110,9 +80,8 @@ function declared(set: Pick<Theme, 'values' | 'dark'>): Map<string, string> {
  * transparency, so the glass would never show anywhere else. The answer to more contrast
  * comes after, so where it names one of these, it wins.
  *
- * **Its taste goes in a block of its own, under `:where()`**, so a rule a host writes for a taste
- * outweighs the theme's whatever order the sheets are in, as a host's choice already does by
- * being a different property. A theme with no taste writes no block.
+ * **Its taste goes in a block of its own, under `:where()`**, which `tasteBlock()` in
+ * `src/motion.ts` writes and says why. A theme with no taste writes no block.
  */
 export function themeStyleSheet(theme: Theme): string {
     const selector = `[data-ui-theme='${theme.name}']`;
@@ -132,11 +101,11 @@ export function themeStyleSheet(theme: Theme): string {
         ...Object.entries(answered).map(([name, [light, dark]]) => declare(name, light, dark)),
         ...resets.map((name) => `  ${name}: initial;`),
     ].map((line) => `  ${line}`);
-    const taste = tasted(theme.taste);
+    const taste = tasteBlock(selector, theme.taste);
 
     return [
         `${selector} {\n${[...values.values()].join('\n')}\n}`,
-        ...(taste.length === 0 ? [] : [`:where(${selector}) {\n${taste.join('\n')}\n}`]),
+        ...(taste === '' ? [] : [taste]),
         ...(quiet.length === 0
             ? []
             : [

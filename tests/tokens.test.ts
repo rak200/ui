@@ -16,6 +16,7 @@ import {
     derivedTokens,
     formulas,
     moreContrast,
+    taste,
     tokens,
     tokenStyleSheet,
     type DerivedToken,
@@ -484,7 +485,33 @@ describe('tokenStyleSheet', () => {
     });
 
     it('parses as CSS the browser actually applies', () => {
-        expect(parsed().cssRules.length).toBe(3);
+        expect(parsed().cssRules.length).toBe(4);
+    });
+
+    it("writes the default theme's taste last, at :root under :where(), the page's first", () => {
+        // Last, so the three rules above keep their places; under :where(), so a host's rule
+        // for a taste outweighs it wherever that rule is written.
+        const rule = styleRule(parsed().cssRules[3]);
+
+        expect(rule.selectorText).toBe(':where(:root)');
+        expect([...declarations(rule)]).toEqual(
+            Object.entries(taste.page ?? {}).map(([moment, effect]) => [
+                `${kinds.taste}${moment}`,
+                effect,
+            ]),
+        );
+    });
+
+    it("takes the button's effects as the default theme's taste, the package's motion", () => {
+        expect(taste).toEqual({
+            page: {
+                'hover-shadow': 'raise',
+                'focus-move': 'lift',
+                'focus-shadow': 'raise',
+                'press-move': 'squish',
+                'press-shadow': 'sink',
+            },
+        });
     });
 
     it('answers more contrast with every name the answer moves, both schemes in one value', () => {
@@ -531,9 +558,15 @@ describe('tokenStyleSheet', () => {
 
         // `:root {`, the scheme axis, one line per token, `}`; a blank line; the media
         // rule, its own `:root {`, one line per duration, and the two closing braces; a
-        // blank line, and the contrast rule laid out the same way.
+        // blank line, and the contrast rule laid out the same way; a blank line, and the
+        // taste's block, its selector, one line per moment and its brace.
         expect(lines.length).toBe(
-            tokens.length + durations.length + Object.keys(moreContrast).length + 13,
+            tokens.length +
+                durations.length +
+                Object.keys(moreContrast).length +
+                13 +
+                Object.keys(taste.page ?? {}).length +
+                3,
         );
     });
 });
@@ -669,6 +702,24 @@ describe('the references components write', () => {
         }
     });
 
+    it('names in a taste only effects some component draws', () => {
+        // A taste is read through the queries the components draw under, so an entry no
+        // query asks for runs nothing anywhere: a misspelling there costs the effect and says
+        // nothing. The default theme's and every shipped theme's, which have none yet.
+        const asked = [taste, matrix.taste, glass.taste].flatMap((one) => [
+            ...Object.entries(one?.page ?? {}),
+            ...Object.values(one?.components ?? {}).flatMap((moments) => Object.entries(moments)),
+        ]);
+
+        expect(asked.length, 'some taste to check').toBeGreaterThan(0);
+
+        for (const [moment, effect] of asked) {
+            expect(styles, `${moment}: ${effect}`).toContain(
+                `style(${kinds.choice}${moment}: ${effect})`,
+            );
+        }
+    });
+
     it('carries the fallback the layer declares, never a copy of it', () => {
         for (const name of declared) {
             const expected = String(reference(name as Token | DerivedToken));
@@ -691,6 +742,7 @@ describe('the references components write', () => {
     // row, and a scale that arrives without a purpose has nothing to add.
     it.each([
         ['--ui-duration-state', '--ui-duration-100'],
+        ['--ui-duration-effect', '--ui-duration-200'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
     ] as const)('reads %s rather than the step under it', (name, step) => {

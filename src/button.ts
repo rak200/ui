@@ -1,9 +1,43 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { Description } from './description.js';
+import { query } from './motion.js';
 import { reference } from './reference.js';
 
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
+
+/**
+ * The condition one of the button's effects is drawn under, by moment and effect — RFC 0004.
+ *
+ * Each sheet below wraps it in `unsafeCSS` where it uses it, rather than through a helper of this
+ * module's own: the sheet is built once, at import, so a helper's body is code no test calls
+ * while it runs, and the one mutant that empties it took the import down, which the runner grades
+ * as a survivor — measured, on this module's first run.
+ */
+const drawn = query('button');
+
+/** The effects the button draws, each by the moment it answers. */
+const effects = [
+    ['hover-shadow', 'raise'],
+    ['focus-shadow', 'raise'],
+    ['focus-move', 'lift'],
+    ['press-move', 'squish'],
+    ['press-shadow', 'sink'],
+] as const;
+
+/** True wherever any of the button's effects is chosen, by a consumer or a taste. */
+const moving = unsafeCSS(effects.map(([moment, effect]) => drawn(moment, effect)).join(' or '));
+
+/**
+ * The raise: a drop under the button, two layers as the elevation step's are. On a dark page,
+ * where a shadow barely shows, the wider layer is the accent's.
+ */
+const raise = css`0 2px 4px -1px light-dark(rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6)),
+    0 6px 14px -4px
+        light-dark(rgb(0 0 0 / 0.35), rgb(from ${reference('--ui-color-accent')} r g b / 0.45))`;
+
+/** The sink: the shadow gone inside, as if the button were pressed into the page. */
+const sink = css`inset 0 2px 5px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7))`;
 
 /**
  * A button.
@@ -146,6 +180,67 @@ export class UiButton extends LitElement {
         button.secondary:not(:disabled):active {
             background: ${reference('--ui-color-pressed')};
             transition-duration: 0s;
+        }
+
+        /* RFC 0004's effects. Which one runs is a consumer's choice, or a theme's taste where
+           nobody chose: src/motion.ts says how, and the button draws each under its query. All
+           of them are drawn on the real button, where the pointer, the focus and the press are
+           the platform's own states — a press by Space included, which the host never sees.
+
+           What they move transitions only once one of them is chosen, so with none the colour
+           is still the only thing that moves. A press lands at once, since the two rules above
+           take every duration to 0s while it holds, and letting go runs each property back on
+           its own length and curve: the squeeze springs past its rest on the emphasis curve. */
+        @container ${moving} {
+            button {
+                transition-property: background-color, box-shadow, translate, scale;
+                transition-duration:
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-effect')},
+                    ${reference('--ui-duration-effect')}, ${reference('--ui-duration-effect')};
+                transition-timing-function:
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-enter')},
+                    ${reference('--ui-easing-enter')}, ${reference('--ui-easing-emphasis')};
+            }
+        }
+
+        /* The raise under the pointer, which only a pointer that hovers can ask for: a tap on a
+           touch screen leaves the hover behind, and the shadow would stay with it. The focus
+           wins — a button the reader can see the focus on is drawn as the focus chose, and a
+           pointer resting there changes nothing — and the :where() keeps this rule at a press's
+           weight, so a press, written after it, is drawn over it. */
+        @media (hover: hover) {
+            @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
+                button:not(:disabled):hover:where(:not(:focus-visible)) {
+                    box-shadow: ${raise};
+                }
+            }
+        }
+
+        @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
+            button:focus-visible {
+                box-shadow: ${raise};
+            }
+        }
+
+        /* Two pixels up, the ring with it, for as long as the focus stays. */
+        @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
+            button:focus-visible {
+                translate: 0 -2px;
+            }
+        }
+
+        /* The press: transitions rather than animations, so letting go runs them back where an
+           animation would be cut short the moment the press ended — RFC 0004's S7. */
+        @container ${unsafeCSS(drawn('press-move', 'squish'))} {
+            button:not(:disabled):active {
+                scale: 0.96;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('press-shadow', 'sink'))} {
+            button:not(:disabled):active {
+                box-shadow: ${sink};
+            }
         }
     `;
 

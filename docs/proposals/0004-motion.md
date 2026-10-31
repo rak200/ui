@@ -757,3 +757,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 1    | [#321](https://github.com/rak200/ui/pull/321) | the playground's reduced-motion control: the sheet's own collapse, in the story         |
 | 2    | [#323](https://github.com/rak200/ui/pull/323) | the floor in `ARCHITECTURE.md`, and below it the line container style queries draw      |
 | 3    | [#325](https://github.com/rak200/ui/pull/325) | `query()` and `kinds` in `src/motion.ts`, a theme's `taste`, and the gate's three kinds |
+| 4    | [#326](https://github.com/rak200/ui/pull/326) | the button's default taste: raise, lift, squish and sink, with `--ui-duration-effect`   |

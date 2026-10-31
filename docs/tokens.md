@@ -5,7 +5,15 @@
 The design tokens — the single source of truth for the visual language.
 
 ```js
-import { tokens, derivedTokens, defaults, formulas, darkScheme, tokenStyleSheet } from '@rak200/ui';
+import {
+  tokens,
+  derivedTokens,
+  defaults,
+  formulas,
+  darkScheme,
+  taste,
+  tokenStyleSheet,
+} from '@rak200/ui';
 ```
 
 ## Contents
@@ -23,6 +31,7 @@ import { tokens, derivedTokens, defaults, formulas, darkScheme, tokenStyleSheet 
 - [`formulas`](#formulas)
 - [`darkScheme`](#darkscheme)
 - [`moreContrast`](#morecontrast)
+- [`taste`](#taste)
 - [`tokenStyleSheet`](#tokenstylesheet)
 - [`Token`](#token)
 - [`DerivedToken`](#derivedtoken)
@@ -149,6 +158,13 @@ a naming scheme that turns _inserting a step_ into a rename is a scheme that bre
 change. Duration and easing are separate names so that changing a speed does not mean restating a
 curve.
 
+**An effect has a purpose of its own**, `--ui-duration-effect`, over a second step,
+`--ui-duration-200`. The two purposes answer different things — a state recolours a component, an
+effect moves it — so a host who wants livelier effects moves one and keeps the colour changes as
+they were. `--ui-easing-emphasis` is the curve a press let go of springs back along, past its rest
+and back. Which effect runs is a choice rather than a token, and [`taste`](#taste) is the default
+one.
+
 ## More contrast
 
 **A reader who asks for more contrast gets it in every component, and nothing in a component
@@ -230,6 +246,8 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-easing-state`        | the curve a state change follows                                  |
 | `--ui-easing-enter`        | the curve an overlay arrives along                                |
 | `--ui-easing-exit`         | the curve it leaves along                                         |
+| `--ui-duration-200`        | the second step of the duration scale                             |
+| `--ui-easing-emphasis`     | the curve that runs past its end and settles back                 |
 | `--ui-icon-size`           | how big a glyph is drawn                                          |
 | `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
 | `--ui-elevation-100`       | the first step of the elevation scale                             |
@@ -337,6 +355,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-color-text-invalid`        | the value written in a field in error         |
 | `--ui-color-text-muted`          | text that is not a value yet                  |
 | `--ui-duration-state`            | how long a state change takes                 |
+| `--ui-duration-effect`           | how long an effect a moment fires takes       |
 | `--ui-elevation-raised`          | a surface lifted off the page                 |
 | `--ui-elevation-control-hover`   | the glow a button lights to under the pointer |
 | `--ui-text-supporting`           | text that explains what is beside it          |
@@ -500,11 +519,43 @@ a target that is not CSS reads two values instead of parsing `light-dark()`. It 
 as well as grounds — the states, which [More contrast](#more-contrast) says why it writes out.
 [`tokenStyleSheet()`](#tokenstylesheet) composes it into the sheet.
 
+## `taste`
+
+The default theme's taste — RFC 0004's: which motion effect each moment runs where nobody chose one,
+in the shape a theme's [`Taste`](theme.md#taste) takes.
+
+```js
+taste.page['hover-shadow']; // 'raise'
+taste.page['press-move']; // 'squish'
+```
+
+| Moment         | Effect   | On the button                                      |
+| -------------- | -------- | -------------------------------------------------- |
+| `hover-shadow` | `raise`  | a drop shadow under the pointer                    |
+| `focus-shadow` | `raise`  | the same drop, at the focus                        |
+| `focus-move`   | `lift`   | two pixels up at the focus, the ring with it       |
+| `press-move`   | `squish` | squeezed under a press, springing back once let go |
+| `press-shadow` | `sink`   | its shadow sunk inside under a press               |
+
+**It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
+moment by moment, and **it is the package's motion**: each entry changes what a component does on a
+page that inserts the sheet and chooses nothing. A choice runs instead, at any scope:
+
+```css
+:root {
+  --ui-motion-press-move: none;
+}
+```
+
+`none` keeps a component as it was for that moment. An entry arrives with the first component that
+draws the effect it names — [the button](button.md#motion) draws every one here — and the suite
+refuses an entry no component draws.
+
 ## `tokenStyleSheet`
 
 Every token as CSS, for a host that wants them without importing a component. Returns the text of a
-`:root` block, the reduced-motion rule beside it and the answer to `prefers-contrast: more` after
-both; the host inserts them however it prefers.
+`:root` block, the reduced-motion rule beside it, the answer to `prefers-contrast: more` after both,
+and the default theme's [`taste`](#taste) last; the host inserts them however it prefers.
 
 ```js
 tokenStyleSheet();
@@ -523,7 +574,11 @@ tokenStyleSheet();
 // @media (prefers-contrast: more) {
 //   :root {
 //     --ui-color-accent: light-dark(#000000, #ffffff);
-//     … } }'
+//     … } }
+//
+// :where(:root) {
+//   --ui-taste-hover-shadow: raise;
+//   … }'
 ```
 
 A token with a dark value is emitted as a `light-dark()` pair; one without is emitted plain. The
