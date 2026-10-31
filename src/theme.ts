@@ -140,9 +140,8 @@ export function themeStyleSheet(theme: Theme): string {
  * **Its taste answers in light where the default theme's moves.** Under the pointer a button
  * takes a tint of the accent and glows, in the place of the ring and glow the theme lights it
  * to; at the focus it takes its hover colour and a burst of light, its ring glitches rather than
- * gliding, and it does not lift; and a press brings no colour of its own and sinks nothing. The
- * press keeps the default theme's squeeze: the shatter the review chose for it is not drawn yet,
- * and a taste names only what some component draws.
+ * gliding, and it does not lift; and a press shatters it rather than squeezing it, brings no
+ * colour of its own and sinks nothing.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -203,6 +202,7 @@ export const matrix: Theme = {
             'focus-fill': 'highlight',
             'focus-shadow': 'burst',
             'focus-ring': 'glitch',
+            'press-move': 'shatter',
             'press-fill': 'none',
             'press-shadow': 'none',
         },

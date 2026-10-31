@@ -36,6 +36,7 @@ src/
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
+├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
 ├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
@@ -58,6 +59,7 @@ tests/               # mirrors src/, one test file per unit
 ├── placement.test.ts
 ├── radio.test.ts
 ├── ring.test.ts
+├── shatter.test.ts
 ├── select.test.ts
 ├── table.test.ts
 ├── theme.test.ts
@@ -313,6 +315,13 @@ explains. This file restates none of them.
   the departure from nowhere is a sentinel rather than `undefined`, and where the focus went is read
   off the arrival's composed path rather than walked to `null` — a throw no test fails on is graded
   as an error, which fails the floor.
+- **Why the shatter is a filter over the button, what of the button it breaks, and when it lets
+  go** — the docblock on `src/shatter.ts`. A component hands it `--ui-fx-press: shatter` and the
+  pieces' return time and curve on its control while it can be used, and binds `press()` to its
+  `pointerdown` and `keydown`. **`tests/shatter.test.ts` dispatches its pointer events rather than
+  driving the pointer**: a driven pointer lands where the frame the suite runs in is drawn, which the
+  runner scales, and the cut depends on the exact point struck. It pins `Math.random` for the same
+  reason, so each cut plan is one a test can state in full.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in
