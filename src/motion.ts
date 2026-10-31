@@ -58,10 +58,15 @@ export const kinds = {
  *
  * True where the consumer chose that effect for the moment at any scope; or, where they chose
  * nothing, where the component's own taste names it; or, where that is unwritten too, where the
- * page's taste does. A choice of any other name — `none`, an effect the component does not offer,
- * a misspelling — matches no query, so the component does what it does today: a choice costs the
+ * page's taste does. A choice of any other name — an effect the component does not offer, a
+ * misspelling — matches no query, so the component does what it does today: a choice costs the
  * effect and nothing else. The queries ask the element's ancestors, never the element itself, so
  * an effect drawn on a host misses a choice written on that host alone — RFC 0004's S8.
+ *
+ * **`none` is nothing**, RFC 0004 says. Where a component answered a moment with nothing before
+ * effects existed, it matches no query and the component does what it did. Where it answered
+ * with something of its own — the button's colour under a press — the component draws `none` as
+ * it draws an effect, and takes that away.
  *
  * Each `not` sits in parentheses of its own, which the grammar asks for: without them Chromium
  * and WebKit dropped the rule and Firefox read only its first half — measured for RFC 0004.

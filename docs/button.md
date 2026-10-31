@@ -106,7 +106,8 @@ A secondary button is filled with `--ui-color-surface-control`, the fill every c
 
 **A theme can light a button as well**, through `--ui-elevation-control` at rest and
 `--ui-elevation-control-hover` under the pointer, both drawn in the accent on a layer over the
-button. Both are `none` in the default palette, and a disabled button lights nothing — see
+button — the second where nothing is chosen for the pointer's shadow, as [Motion](#motion) says.
+Both are `none` in the default palette, and a disabled button lights nothing — see
 [tokens](tokens.md#a-shadow-written-in-currentcolor-is-lit-in-its-elements-colour).
 
 Three of those are deliberate rather than incidental. The pressed colour lands instantly because a
@@ -137,36 +138,67 @@ The button answers the pointer, the focus and a press with an **effect**, and wh
 yours to choose — RFC 0004. Each moment comes by kind, a custom property apiece, and its value is
 the effect's name:
 
-| Property                   | Effects the button offers | What it draws                                       |
-| -------------------------- | ------------------------- | --------------------------------------------------- |
-| `--ui-motion-hover-shadow` | `raise`                   | a drop shadow under the pointer                     |
-| `--ui-motion-focus-shadow` | `raise`                   | the same drop, while the focus stays                |
-| `--ui-motion-focus-move`   | `lift`                    | two pixels up, the focus ring with it               |
-| `--ui-motion-focus-ring`   | `glide`                   | the ring glided over from the control seen last     |
-| `--ui-motion-press-move`   | `squish`                  | squeezed to 96%, springing back once let go         |
-| `--ui-motion-press-shadow` | `sink`                    | its shadow sunk inside, as if pressed into the page |
+| Property                   | Effect      | What it draws                                             |
+| -------------------------- | ----------- | --------------------------------------------------------- |
+| `--ui-motion-hover-fill`   | `tint`      | a little of the accent in the fill, under the pointer     |
+| `--ui-motion-hover-shadow` | `raise`     | a drop shadow under the pointer                           |
+| `--ui-motion-hover-shadow` | `glow`      | a light of the accent round the button, under the pointer |
+| `--ui-motion-focus-fill`   | `highlight` | the hover colour, while the focus stays                   |
+| `--ui-motion-focus-shadow` | `raise`     | the same drop, while the focus stays                      |
+| `--ui-motion-focus-shadow` | `burst`     | light bursting out round the button as the focus arrives  |
+| `--ui-motion-focus-move`   | `lift`      | two pixels up, the focus ring with it                     |
+| `--ui-motion-focus-ring`   | `glide`     | the ring glided over from the control seen last           |
+| `--ui-motion-press-move`   | `squish`    | squeezed to 96%, springing back once let go               |
+| `--ui-motion-press-shadow` | `sink`      | its shadow sunk inside, as if pressed into the page       |
 
-**Where you choose nothing, the theme's taste runs**, and the default theme's — the
-[`taste`](tokens.md#taste) the token sheet carries — names every effect above. So a page that
-inserts the sheet gets them all, and `none` keeps the button as it was for one moment:
+**Where you choose nothing, the theme's taste runs.** The default theme's — the
+[`taste`](tokens.md#taste) the token sheet carries — raises the button under the pointer and at the
+focus, lifts it at the focus, glides the ring over and squeezes and sinks it under a press. Under
+[Matrix](theme.md#matrix) the button tints and glows under the pointer, takes its hover colour and a
+burst at the focus without lifting, and answers a press with neither a colour nor a sinking shadow.
+
+A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
+every button, or one. A name the button does not offer draws nothing, and the button does what it
+does today there.
+
+**`none` is nothing.** Where the button answered a moment with nothing before effects existed —
+every move, the ring's flight, the focus's fill, a press's shadow — `none` keeps it as it was. Where
+it answered with something of its own, `none` takes that away: the hover colour under the pointer
+(`hover-fill`), the pressed colour under a press (`press-fill`) and a theme's glow under the pointer
+(`hover-shadow`), which Matrix alone lights. `highlight` names what the button did there, and brings
+it back:
 
 ```css
 /* No movement under a press, on every button. */
 ui-button {
   --ui-motion-press-move: none;
 }
+
+/* The pressed colour back, under Matrix. */
+[data-ui-theme='matrix'] ui-button {
+  --ui-motion-press-fill: highlight;
+}
 ```
 
-A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
-every button, or one. A name the button does not offer draws nothing, and the button does what it
-does today there.
-
 **The focus wins.** A button the reader can see the focus on is drawn as the focus chose, and the
-pointer resting on it changes nothing, since a reader who came by the keyboard may have left the
-pointer where it was. **A press is drawn over both**, and lands at once, as the pressed colour does;
-letting go runs each effect back, the squeeze along `--ui-easing-emphasis`, which springs past its
-rest. The shadow under the pointer is drawn only where the pointer can hover, so a tap on a touch
-screen leaves none behind. A disabled button draws no effect.
+pointer resting on it changes nothing the focus chose for, since a reader who came by the keyboard
+may have left the pointer where it was. **A press is drawn over both**, and lands at once, as the
+pressed colour does; letting go runs each effect back, the squeeze along `--ui-easing-emphasis`,
+which springs past its rest. The shadow under the pointer is drawn only where the pointer can hover,
+so a tap on a touch screen leaves none behind. A disabled button draws no effect.
+
+**A theme's glow under the pointer is that moment's answer from before effects existed**, so any
+choice for the pointer's shadow takes its place and the glow the button rests with stays: under
+Matrix the button glows in the accent rather than its ring going solid. At the focus, a choice for
+the focus's shadow does the same.
+
+**The tint is held light** in the light scheme, so the label keeps the contrast the hover colour's
+darkening would have spent, and it stays at least 0.6 opaque over a fill a theme lets the page
+through. A primary's fill is the accent already, so its tint is the hover colour it goes to anyway.
+
+**The burst is an animation**: it starts each time the reader sees the focus arrive, plays out on its
+own and leaves nothing behind while the focus stays. Only the light round the button moves, so the
+label keeps its contrast throughout.
 
 **The glide is flown by a ring of the page's own.** An outline is drawn round its own element and
 moves only with it, so a ring that leaves one control and lands on the button is a popover laid in
@@ -178,12 +210,13 @@ went: a click, a script's focus or the page's first focus brings the ring at onc
 one internal helper, `arrive()` in `src/ring.ts`, to its focus, and calls `watch()` as it connects,
 so the ring seen before its first focus is already recorded.
 
-Each effect moves over `--ui-duration-effect`, and the glide over `--ui-duration-travel` along
-`--ui-easing-move`, and both collapse with every other duration under
-`prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once, and the ring
-does not fly. Nor does it in forced colours. An engine without container style queries — Firefox
-before 151, inside the [browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect,
-and the button does what it did before effects existed.
+Each effect moves over `--ui-duration-effect`, the glide over `--ui-duration-travel` along
+`--ui-easing-move`, and the burst over `--ui-duration-flourish`, and all of them collapse with every
+other duration under `prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at
+once, the ring does not fly and no burst shows. Nor does either in forced colours. An engine without
+container style queries — Firefox before 151, inside the
+[browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect, and the button does what
+it did before effects existed.
 
 ## Styling
 

@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cdp } from 'vitest/browser';
+import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession`, and the compiler sees that
 // augmentation only if this module is in the program. `vitest.config.js` imports the
 // provider, but a JS config file is not — so without this line `cdp().send` is a type
@@ -23,7 +23,7 @@ import {
     type Token,
 } from '../src/tokens.js';
 import { reference } from '../src/reference.js';
-import { kinds } from '../src/motion.js';
+import { kinds, type Taste } from '../src/motion.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { UiButton } from '../src/button.js';
 import { UiCard } from '../src/card.js';
@@ -234,7 +234,11 @@ function laid(
     scheme: Scheme,
     palette: Palette,
 ): string {
-    const value = String(reference(token));
+    return layered(String(reference(token)), backdrop, scheme, palette);
+}
+
+/** A colour as CSS writes it, `value`, as it shows over the opaque `backdrop` — `laid`'s way. */
+function layered(value: string, backdrop: string, scheme: Scheme, palette: Palette): string {
     const colour = sRGB(
         computed('background-color', `rgb(from ${value} r g b / 1)`, scheme, palette),
     );
@@ -253,6 +257,44 @@ function laid(
     );
 
     return `#${channels.join('')}`;
+}
+
+/**
+ * The tint a secondary button takes under the pointer where it is chosen, resolved in `scheme`
+ * under `palette`. RFC 0004's tint is an effect, which a choice picks rather than a host retunes,
+ * so it is no token: it is read off a button that draws it.
+ */
+async function tint(scheme: Scheme, palette: Palette): Promise<string> {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet() + palette.sheet;
+
+    const host = document.createElement('div');
+    host.style.colorScheme = scheme;
+
+    if (palette.theme !== undefined) {
+        host.dataset['uiTheme'] = palette.theme;
+    }
+
+    host.innerHTML = `<ui-button variant="secondary" style="${kinds.choice}hover-fill: tint; --ui-duration-state: 0s">Cancel</ui-button>`;
+    document.body.append(style, host);
+
+    try {
+        const button = host.querySelector('ui-button');
+        await button?.updateComplete;
+
+        const control = button?.shadowRoot?.querySelector('button');
+
+        if (control === null || control === undefined) {
+            throw new Error('the button rendered no control');
+        }
+
+        await userEvent.hover(control);
+
+        return getComputedStyle(control).backgroundColor;
+    } finally {
+        style.remove();
+        host.remove();
+    }
 }
 
 /** The page under a palette: the one it documents holding over, or the surface a host paints. */
@@ -703,21 +745,53 @@ describe('the references components write', () => {
         }
     });
 
+    /** A taste's entries: each moment, the effect it names, and the component it is for, if one. */
+    function entries(one: Taste | undefined): (readonly [string, string, string?])[] {
+        return [
+            ...Object.entries(one?.page ?? {}).map(([moment, effect]) => [moment, effect] as const),
+            ...Object.entries(one?.components ?? {}).flatMap(([component, moments]) =>
+                Object.entries(moments).map(
+                    ([moment, effect]) => [moment, effect, component] as const,
+                ),
+            ),
+        ];
+    }
+
+    /** Whether some component draws `effect` for `moment`, which is what a taste is read through. */
+    function drawn(moment: string, effect: string): boolean {
+        return styles.includes(`style(${kinds.choice}${moment}: ${effect})`);
+    }
+
     it('names in a taste only effects some component draws', () => {
         // A taste is read through the queries the components draw under, so an entry no
         // query asks for runs nothing anywhere: a misspelling there costs the effect and says
-        // nothing. The default theme's and every shipped theme's, which have none yet.
-        const asked = [taste, matrix.taste, glass.taste].flatMap((one) => [
-            ...Object.entries(one?.page ?? {}),
-            ...Object.values(one?.components ?? {}).flatMap((moments) => Object.entries(moments)),
-        ]);
+        // nothing. The default theme's, which every theme's stands on.
+        expect(entries(taste).length, 'some taste to check').toBeGreaterThan(0);
 
-        expect(asked.length, 'some taste to check').toBeGreaterThan(0);
+        for (const [moment, effect] of entries(taste)) {
+            expect(drawn(moment, effect), `${moment}: ${effect}`).toBe(true);
+        }
+    });
 
-        for (const [moment, effect] of asked) {
-            expect(styles, `${moment}: ${effect}`).toContain(
-                `style(${kinds.choice}${moment}: ${effect})`,
-            );
+    it("names in a theme's taste what some component draws, or none for what the default's names", () => {
+        // A theme's `none` is the one entry that asks for nothing on purpose: the default
+        // theme's taste stands under every theme, so taking one of its effects back is the
+        // only way a theme does without it. Anywhere the default names nothing it takes
+        // nothing back, and is one more name no query reads.
+        const themed = [matrix, glass].flatMap((theme) => entries(theme.taste));
+        const back = (moment: string, component?: string): boolean =>
+            (taste.components?.[component ?? '']?.[moment] ?? taste.page?.[moment]) !== undefined;
+
+        expect(
+            themed.filter(([, effect]) => effect === 'none').length,
+            'some none to check',
+        ).toBeGreaterThan(0);
+
+        for (const [moment, effect, component] of themed) {
+            expect(
+                drawn(moment, effect) || (effect === 'none' && back(moment, component)),
+                `${component ?? 'page'} ${moment}: ${effect}`,
+            ).toBe(true);
         }
     });
 
@@ -745,6 +819,7 @@ describe('the references components write', () => {
         ['--ui-duration-state', '--ui-duration-100'],
         ['--ui-duration-effect', '--ui-duration-200'],
         ['--ui-duration-travel', '--ui-duration-300'],
+        ['--ui-duration-flourish', '--ui-duration-400'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
     ] as const)('reads %s rather than the step under it', (name, step) => {
@@ -1251,6 +1326,19 @@ describe('the contrast floors', () => {
                         for (const fill of over(token, palette, scheme)) {
                             expect(contrastRatio(label, fill), token).toBeGreaterThanOrEqual(4.5);
                         }
+                    }
+                });
+
+                it('keeps a secondary button legible on the tint under the pointer', async () => {
+                    // Its label against the tint, laid over whatever the button rests on: the
+                    // tint stays at least 0.6 opaque over a fill a theme lets the page through.
+                    const label = paint('--ui-color-text');
+                    const tinted = await tint(scheme, palette);
+
+                    for (const beside of outside(palette, scheme)) {
+                        expect(
+                            contrastRatio(label, layered(tinted, beside, scheme, palette)),
+                        ).toBeGreaterThanOrEqual(4.5);
                     }
                 });
 

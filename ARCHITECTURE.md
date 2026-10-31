@@ -467,14 +467,17 @@ custom property written per moment — `--ui-motion-press-move: squish` — inhe
 region, every instance of a component and one instance choose apart and the narrowest wins
 (RFC 0004). **What an effect is stays the package's.** The ring nothing delays, the press that lands
 with the finger and the text kept at 4.5:1 are written into each effect, and a choice picks among
-effects rather than retuning one. `none` keeps a component as it was for that moment, and a name
-it does not offer draws nothing.
+effects rather than retuning one. A name a component does not offer draws nothing. **`none` is
+nothing**: where a component answered a moment with nothing before effects existed it keeps the
+component as it was, and where it answered with something of its own — the button's colour under a
+press — the component draws `none` and takes that away, while `highlight` names what it did.
 
 **Where nobody chose, a theme's taste runs**: data beside its palette, and the default theme's
 stands under every theme, as its values do. That makes it the package's motion. On a page that
 inserts the token sheet and chooses nothing, the button rises under the pointer and at the focus,
 lifts at the focus, takes its focus ring glided over from the control before it, and squeezes and
-sinks under a press, which RFC 0004 accepted as the cost of having motion at all. An effect enters
+sinks under a press, which RFC 0004 accepted as the cost of having motion at all. A shipped theme's
+taste replaces it moment by moment, and names `none` where it wants nothing in place of an effect. An effect enters
 the catalogue with the first component that draws it, bringing the tokens and the script it needs:
 _a category arrives with the component that consumes it_, applied to an effect. The rest waits in
 the proposal's prototypes until someone asks for it.

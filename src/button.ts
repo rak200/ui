@@ -17,17 +17,48 @@ export type ButtonVariant = 'primary' | 'secondary';
  */
 const drawn = query('button');
 
-/** The effects the button draws on itself, each by the moment it answers. */
+/**
+ * The effects that move the button's shadow, its place or its size, each by the moment it
+ * answers. Its fill always moves on the state's own transition, and the burst is an animation,
+ * which needs none.
+ */
 const effects = [
     ['hover-shadow', 'raise'],
+    ['hover-shadow', 'glow'],
     ['focus-shadow', 'raise'],
     ['focus-move', 'lift'],
     ['press-move', 'squish'],
     ['press-shadow', 'sink'],
 ] as const;
 
-/** True wherever any of the button's effects is chosen, by a consumer or a taste. */
+/** True wherever any of those is chosen, by a consumer or a taste. */
 const moving = unsafeCSS(effects.map(([moment, effect]) => drawn(moment, effect)).join(' or '));
+
+/** Where the fill under the pointer is the tint. */
+const pointerTint = unsafeCSS(drawn('hover-fill', 'tint'));
+
+/** Where the pointer leaves the fill as it rests. */
+const pointerNone = unsafeCSS(drawn('hover-fill', 'none'));
+
+/** Where the fill at the focus is the hover colour. */
+const focusHighlight = unsafeCSS(drawn('focus-fill', 'highlight'));
+
+/** Where a press brings no colour of its own. */
+const pressNone = unsafeCSS(drawn('press-fill', 'none'));
+
+/**
+ * Where a choice for the pointer's shadow takes the place of the glow a theme lights a button
+ * with under the pointer, which is that moment's answer from before effects existed: `none`
+ * among them, since `none` is nothing.
+ */
+const pointerShadow = unsafeCSS(
+    ['none', 'raise', 'glow'].map((effect) => drawn('hover-shadow', effect)).join(' or '),
+);
+
+/** Where a choice for the focus's shadow does the same at the focus, which wins over the pointer. */
+const focusShadow = unsafeCSS(
+    ['none', 'raise', 'burst'].map((effect) => drawn('focus-shadow', effect)).join(' or '),
+);
 
 /**
  * The raise: a drop under the button, two layers as the elevation step's are. On a dark page,
@@ -39,6 +70,25 @@ const raise = css`0 2px 4px -1px light-dark(rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6))
 
 /** The sink: the shadow gone inside, as if the button were pressed into the page. */
 const sink = css`inset 0 2px 5px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7))`;
+
+/** The glow: a light of the accent, blurred round the button's boundary. */
+const glow = css`0 0 0.75rem 0.125rem rgb(from ${reference('--ui-color-accent')} r g b / 0.5)`;
+
+/**
+ * The tint: a little of the accent in a secondary button's own fill. Held light in the light
+ * scheme, which keeps the label's contrast where the hover colour's darkening would have spent
+ * it, and at least 0.6 opaque over a fill a theme lets the page through, as Glass's is.
+ */
+const tint = css`light-dark(
+    oklch(
+        from color-mix(in oklab, ${reference('--ui-color-surface-control')} 88%, ${reference('--ui-color-accent')})
+            max(l, 0.98) c h / max(alpha, 0.6)
+    ),
+    oklch(
+        from color-mix(in oklab, ${reference('--ui-color-surface-control')} 90%, ${reference('--ui-color-accent')})
+            l c h / max(alpha, 0.6)
+    )
+)`;
 
 /**
  * A button.
@@ -204,15 +254,120 @@ export class UiButton extends LitElement {
             }
         }
 
-        /* The raise under the pointer, which only a pointer that hovers can ask for: a tap on a
-           touch screen leaves the hover behind, and the shadow would stay with it. The focus
-           wins — a button the reader can see the focus on is drawn as the focus chose, and a
-           pointer resting there changes nothing — and the :where() keeps this rule at a press's
-           weight, so a press, written after it, is drawn over it. */
+        /* The fill, where a choice changed it. The colours above stay what every moment nobody
+           chose draws, and what an engine without style queries draws. The pointer's and the
+           focus's rules here stand out of a press, so the press, which is drawn over both, keeps
+           its own; the focus's come after the pointer's, which it wins over.
+
+           tint: a little of the accent in the secondary's fill. The primary's fill is the accent
+           already, and a little more of it left the fill as it was — measured for RFC 0004 on
+           Matrix's primary — so its tint is the hover colour it already goes to. */
+        @container ${pointerTint} {
+            button.secondary:not(:disabled):hover:not(:active) {
+                background: ${tint};
+            }
+        }
+
+        /* none under the pointer: nothing, so the fill stays as it rests. */
+        @container ${pointerNone} {
+            button.primary:not(:disabled):hover:not(:active) {
+                background: ${reference('--ui-color-primary')};
+            }
+
+            button.secondary:not(:disabled):hover:not(:active) {
+                background: ${reference('--ui-color-surface-control')};
+            }
+        }
+
+        /* highlight at the focus: the hover colour, for as long as the focus stays. */
+        @container ${focusHighlight} {
+            button.primary:not(:disabled):focus-visible:not(:active) {
+                background: ${reference('--ui-color-primary-hover')};
+            }
+
+            button.secondary:not(:disabled):focus-visible:not(:active) {
+                background: ${reference('--ui-color-hover')};
+            }
+        }
+
+        /* none under a press: no colour of its own, so the fill stays as the pointer and the
+           focus left it — at rest, then under the pointer, then at the focus, each over the
+           last, as the colours above are. */
+        @container ${pressNone} {
+            button.primary:not(:disabled):active {
+                background: ${reference('--ui-color-primary')};
+            }
+
+            button.secondary:not(:disabled):active {
+                background: ${reference('--ui-color-surface-control')};
+            }
+
+            button.primary:not(:disabled):hover:active {
+                background: ${reference('--ui-color-primary-hover')};
+            }
+
+            button.secondary:not(:disabled):hover:active {
+                background: ${reference('--ui-color-hover')};
+            }
+        }
+
+        @container ${pressNone} and ${pointerTint} {
+            button.secondary:not(:disabled):hover:active {
+                background: ${tint};
+            }
+        }
+
+        @container ${pressNone} and ${pointerNone} {
+            button.primary:not(:disabled):hover:active {
+                background: ${reference('--ui-color-primary')};
+            }
+
+            button.secondary:not(:disabled):hover:active {
+                background: ${reference('--ui-color-surface-control')};
+            }
+        }
+
+        @container ${pressNone} and ${focusHighlight} {
+            button.primary:not(:disabled):focus-visible:active {
+                background: ${reference('--ui-color-primary-hover')};
+            }
+
+            button.secondary:not(:disabled):focus-visible:active {
+                background: ${reference('--ui-color-hover')};
+            }
+        }
+
+        /* The glow a theme lights a button with under the pointer is that moment's answer from
+           before effects existed, so a choice for the pointer's shadow takes its place, and the
+           glow the button rests with stays under it. At the focus a choice for the focus's
+           shadow does, since the focus wins. */
+        @container ${pointerShadow} {
+            button:not(:disabled):hover::before {
+                box-shadow: ${reference('--ui-elevation-control')};
+            }
+        }
+
+        @container ${focusShadow} {
+            button:not(:disabled):focus-visible::before {
+                box-shadow: ${reference('--ui-elevation-control')};
+            }
+        }
+
+        /* The raise and the glow under the pointer, which only a pointer that hovers can ask
+           for: a tap on a touch screen leaves the hover behind, and the shadow would stay with
+           it. The focus wins — a button the reader can see the focus on is drawn as the focus
+           chose, and a pointer resting there changes nothing — and the :where() keeps these
+           rules at a press's weight, so a press, written after them, is drawn over them. */
         @media (hover: hover) {
             @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
                 button:not(:disabled):hover:where(:not(:focus-visible)) {
                     box-shadow: ${raise};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-shadow', 'glow'))} {
+                button:not(:disabled):hover:where(:not(:focus-visible)) {
+                    box-shadow: ${glow};
                 }
             }
         }
@@ -220,6 +375,28 @@ export class UiButton extends LitElement {
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             button:focus-visible {
                 box-shadow: ${raise};
+            }
+        }
+
+        /* burst: light bursting out round the button as the reader sees the focus arrive, and
+           gone. An animation, so it starts each time the focus is seen arriving and plays out
+           on its own; nothing holds once it is over. Only the light round the button moves: the
+           reference brightens the button itself at the peak too, and on the light scheme's
+           primary that took the white label from 5.17:1 to 2.32:1 — measured for RFC 0004. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'burst'))} {
+            button:focus-visible {
+                animation: ui-burst ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @keyframes ui-burst {
+            from {
+                box-shadow: 0 0 0 0 rgb(from ${reference('--ui-color-accent')} r g b / 0.8);
+            }
+
+            to {
+                box-shadow: 0 0 15px 10px rgb(from ${reference('--ui-color-accent')} r g b / 0);
             }
         }
 

@@ -119,6 +119,10 @@ export const tokens = [
     // out of the gate and slowing into place, as anything travelling between two points does.
     '--ui-duration-300',
     '--ui-easing-move',
+    // The step the burst at the focus arrives with: a light that plays out on its own once a
+    // moment fires it, rather than holding as long as the moment does, and so longer than an
+    // effect that holds. No component reads it — they read `--ui-duration-flourish`.
+    '--ui-duration-400',
     // The icon category, arriving with `ui-icon` rather than with the twelve components
     // that will eventually hold one. Two names, because an adopted set has exactly two
     // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
@@ -219,6 +223,10 @@ export const derivedTokens = [
     // glided from the control the reader saw it on last. Apart from the effect's, since a
     // crossing is as long as its distance asks and an effect is not.
     '--ui-duration-travel',
+    // How long a flourish takes — RFC 0004's: an effect a moment fires that plays out on its own
+    // and is gone, the light bursting round a button the focus reached. Apart from the effect's,
+    // which holds for as long as its moment does and moves back when it ends.
+    '--ui-duration-flourish',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -389,6 +397,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     // Fast out of the gate and slow into place, as the platform's own `ease` is, but settling
     // longer, which is what a ring landing on a control wants.
     '--ui-easing-move': 'cubic-bezier(0.4, 0, 0.2, 1)',
+    // 520ms, the prototypes' step for the burst, and the review's.
+    '--ui-duration-400': '520ms',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
     // Two layers rather than one, which is what makes a shadow read as *lift* instead of
@@ -514,6 +524,7 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // A plain reference, as the state's is: the scale is where the value lives.
     '--ui-duration-effect': ground('--ui-duration-200'),
     '--ui-duration-travel': ground('--ui-duration-300'),
+    '--ui-duration-flourish': ground('--ui-duration-400'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast

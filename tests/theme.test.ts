@@ -233,8 +233,8 @@ describe('themeStyleSheet', () => {
         expect(lines[Object.keys(sample.values).length + 2], 'the blank line between').toBe('');
     });
 
-    it('emits the two rules the browser applies, and only those', () => {
-        expect(parsed(matrix).cssRules).toHaveLength(2);
+    it('emits the rules the browser applies, and only those: values, taste and answer', () => {
+        expect(parsed(matrix).cssRules).toHaveLength(3);
     });
 
     it('puts a translucent value in place of the opaque one, declaring each name once', () => {
@@ -304,7 +304,6 @@ describe("a theme's taste", () => {
 
     it('writes no block for a theme with no taste, or with an empty one', () => {
         const empty: readonly Theme[] = [
-            matrix,
             glass,
             { ...tasteful, taste: {} },
             { ...tasteful, taste: { page: {}, components: { card: {} } } },
@@ -418,6 +417,8 @@ describe('a theme, as the browser renders it', () => {
         },
     );
 
+    // Asked for by `highlight`, the name of what the button did under the pointer before
+    // effects existed: the theme's own taste glows the button there instead.
     it.each([
         // The ring goes solid and the glow doubles: 0.45 to 0.9 on white, and 0.54 to solid
         // on black, where doubling stops.
@@ -433,6 +434,7 @@ describe('a theme, as the browser renders it', () => {
         const host = document.createElement('div');
         host.dataset['uiTheme'] = matrix.name;
         host.style.colorScheme = scheme;
+        host.style.setProperty('--ui-motion-hover-shadow', 'highlight');
         host.innerHTML = '<ui-button>Save</ui-button>';
         document.body.append(style, host);
 
