@@ -300,7 +300,9 @@ explains. This file restates none of them.
   `taste` in `src/tokens.ts`, which says why it stands under every theme. **Why the button draws its
   effects on the real `<button>`, transitions them only once one is chosen, and lets the focus win
   and a press win over both** — the comments beside the rules in `src/button.ts`, and
-  `docs/button.md`'s _Motion_. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
+  `docs/button.md`'s _Motion_. **Why `none` takes the pressed colour away where it keeps the lift
+  as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
+  component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.
 - **Why the focus ring's glide is a popover the page owns, and why the script only reads what the
   sheet decided** — the docblock on `src/ring.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md), _Which

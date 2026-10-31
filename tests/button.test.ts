@@ -10,6 +10,7 @@ import '../src/button.js';
 import '../src/tooltip.js';
 import type { UiButton } from '../src/button.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { matrix, themeStyleSheet } from '../src/theme.js';
 
 /** Mounts a `<ui-button>` and waits for its first render. */
 async function mount(html: string): Promise<UiButton> {
@@ -674,38 +675,38 @@ describe('the description a tooltip hands over', () => {
  * under a press. Each reads a choice or a taste, so each is read here with one written — the
  * token sheet's taste, a consumer's choice, or the button's own taste.
  */
+/** Inserts the sheet a host inserts, which carries the default theme's taste. */
+function sheet(): void {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet();
+    document.body.append(style);
+}
+
+/**
+ * Mounts a button with every duration taken out, the host's own knob, so a read is where an
+ * effect lands rather than a frame on its way there.
+ */
+async function still(markup = '<ui-button>Save</ui-button>'): Promise<UiButton> {
+    const element = await mount(markup);
+    element.style.setProperty('--ui-duration-state', '0s');
+    element.style.setProperty('--ui-duration-effect', '0s');
+
+    return element;
+}
+
+/** What the effects move on the real button, as it is painted now. */
+function moved(element: UiButton): readonly [shadow: string, translate: string, scale: string] {
+    const styles = getComputedStyle(inner(element));
+
+    return [styles.boxShadow, styles.translate, styles.scale];
+}
+
 describe("the effects the default theme's taste names", () => {
     /** The raise, as the browser serialises it in the light scheme. */
     const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
 
     /** The sink, the same way. */
     const sunk = 'rgba(0, 0, 0, 0.35) 0px 2px 5px 0px inset';
-
-    /** Inserts the sheet a host inserts, which carries the default theme's taste. */
-    function sheet(): void {
-        const style = document.createElement('style');
-        style.textContent = tokenStyleSheet();
-        document.body.append(style);
-    }
-
-    /**
-     * Mounts a button with every duration taken out, the host's own knob, so a read is where an
-     * effect lands rather than a frame on its way there.
-     */
-    async function still(markup = '<ui-button>Save</ui-button>'): Promise<UiButton> {
-        const element = await mount(markup);
-        element.style.setProperty('--ui-duration-state', '0s');
-        element.style.setProperty('--ui-duration-effect', '0s');
-
-        return element;
-    }
-
-    /** What the effects move on the real button, as it is painted now. */
-    function moved(element: UiButton): readonly [shadow: string, translate: string, scale: string] {
-        const styles = getComputedStyle(inner(element));
-
-        return [styles.boxShadow, styles.translate, styles.scale];
-    }
 
     it('moves nothing new where nothing is chosen, as before', async () => {
         const element = await still();
@@ -765,7 +766,7 @@ describe("the effects the default theme's taste names", () => {
         expect(moved(element)).toEqual(['none', 'none', 'none']);
     });
 
-    it('keeps the button as it was where a host chooses none for each moment', async () => {
+    it('draws nothing where a host chooses none for each moment', async () => {
         sheet();
         const element = await still();
 
@@ -809,6 +810,7 @@ describe("the effects the default theme's taste names", () => {
 
     it.each([
         ['hover-shadow', 'raise'],
+        ['hover-shadow', 'glow'],
         ['focus-shadow', 'raise'],
         ['focus-move', 'lift'],
         ['press-move', 'squish'],
@@ -938,6 +940,460 @@ describe("the effects the default theme's taste names", () => {
         } finally {
             await cdp().send('Emulation.setEmulatedMedia', { features: [] });
         }
+    });
+});
+
+/**
+ * The effects Matrix's taste names, chosen one at a time on a button whose colours are retuned
+ * to values a read can tell apart, and then read off the theme itself.
+ */
+describe("the effects Matrix's taste names", () => {
+    const variants = [
+        ['primary', '<ui-button>Save</ui-button>'],
+        ['secondary', '<ui-button variant="secondary">Cancel</ui-button>'],
+    ] as const;
+
+    /** Each variant's colour at rest, under the pointer and pressed, as `colours` retunes them. */
+    const painted = {
+        primary: { rest: 'rgb(10, 0, 0)', hover: 'rgb(20, 0, 0)', pressed: 'rgb(30, 0, 0)' },
+        secondary: { rest: 'rgb(0, 10, 0)', hover: 'rgb(0, 20, 0)', pressed: 'rgb(0, 30, 0)' },
+    } as const;
+
+    /** Retunes the button's six colours to `painted`'s, through the names a host has. */
+    function colours(element: UiButton): void {
+        element.style.setProperty('--ui-color-primary', painted.primary.rest);
+        element.style.setProperty('--ui-color-primary-hover', painted.primary.hover);
+        element.style.setProperty('--ui-color-primary-pressed', painted.primary.pressed);
+        element.style.setProperty('--ui-color-surface-control', painted.secondary.rest);
+        element.style.setProperty('--ui-color-hover', painted.secondary.hover);
+        element.style.setProperty('--ui-color-pressed', painted.secondary.pressed);
+    }
+
+    /** Chooses an effect for each moment named, on the one button. */
+    function choose(element: UiButton, choices: Readonly<Record<string, string>>): void {
+        for (const [moment, effect] of Object.entries(choices)) {
+            element.style.setProperty(`--ui-motion-${moment}`, effect);
+        }
+    }
+
+    /** The channels of an `oklch()` the browser computed: lightness, chroma, hue, opacity. */
+    function oklch(colour: string): readonly [number, number, number, number] {
+        const match = /^oklch\(([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/.exec(colour);
+
+        if (match === null) {
+            throw new Error(`not an oklch() colour: ${colour}`);
+        }
+
+        return [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4] ?? '1')];
+    }
+
+    /**
+     * The pointer at the corner of the page furthest from a mounted button, which is laid at the
+     * nearest one: pressed there and let go, if `click`, so the next Tab starts from the page.
+     */
+    async function away(click = false): Promise<void> {
+        const at = { x: innerWidth - 1, y: innerHeight - 1 };
+
+        await cdp().send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...at, buttons: 0 });
+
+        if (click) {
+            for (const type of ['mousePressed', 'mouseReleased'] as const) {
+                await cdp().send('Input.dispatchMouseEvent', {
+                    type,
+                    ...at,
+                    button: 'left',
+                    buttons: type === 'mousePressed' ? 1 : 0,
+                    clickCount: 1,
+                });
+            }
+        }
+    }
+
+    /** Holds Space down on whatever has the focus, which makes a button `:active` with no pointer. */
+    async function space(down: boolean): Promise<void> {
+        await cdp().send('Input.dispatchKeyEvent', {
+            type: down ? 'keyDown' : 'keyUp',
+            key: ' ',
+            code: 'Space',
+            windowsVirtualKeyCode: 32,
+        });
+    }
+
+    /** What the layer a theme's glow is drawn on computes to. */
+    function lit(element: UiButton): string {
+        return getComputedStyle(inner(element), '::before').boxShadow;
+    }
+
+    /** The burst, if one is playing on the button. */
+    function burst(element: UiButton): CSSAnimation | undefined {
+        return inner(element)
+            .getAnimations()
+            .find(
+                (animation): animation is CSSAnimation =>
+                    animation instanceof CSSAnimation && animation.animationName === 'ui-burst',
+            );
+    }
+
+    beforeEach(async () => {
+        await away();
+    });
+
+    it('tints a secondary button under the pointer, a little of the accent held light', async () => {
+        const element = await still('<ui-button variant="secondary">Cancel</ui-button>');
+        choose(element, { 'hover-fill': 'tint' });
+        element.style.setProperty('--ui-color-surface-control', 'rgb(255, 255, 255)');
+        element.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+
+        await userEvent.hover(inner(element));
+
+        const [lightness, chroma, hue, opacity] = oklch(background(element));
+
+        // An eighth of the accent's chroma in white, at the accent's own hue, lifted to 0.98.
+        expect(lightness).toBe(0.98);
+        expect(chroma).toBeCloseTo(0.0376, 3);
+        expect(hue).toBeCloseTo(264.1, 1);
+        expect(opacity).toBe(1);
+    });
+
+    it('tints it a tenth of the accent in the dark scheme, where nothing holds it light', async () => {
+        const element = await still('<ui-button variant="secondary">Cancel</ui-button>');
+        choose(element, { 'hover-fill': 'tint' });
+        element.style.colorScheme = 'dark';
+        element.style.setProperty('--ui-color-surface-control', 'rgb(0, 0, 0)');
+        element.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+
+        await userEvent.hover(inner(element));
+
+        const [lightness, chroma, hue] = oklch(background(element));
+
+        expect(lightness).toBeCloseTo(0.0452, 3);
+        expect(chroma).toBeCloseTo(0.0313, 3);
+        expect(hue).toBeCloseTo(264.1, 1);
+    });
+
+    it.each(['light', 'dark'])(
+        'keeps the tint at least 0.6 opaque over a fill the page shows through, in %s',
+        async (scheme) => {
+            const element = await still('<ui-button variant="secondary">Cancel</ui-button>');
+            choose(element, { 'hover-fill': 'tint' });
+            element.style.colorScheme = scheme;
+            element.style.setProperty('--ui-color-surface-control', 'rgb(255 255 255 / 0.2)');
+
+            await userEvent.hover(inner(element));
+
+            expect(oklch(background(element))[3]).toBeCloseTo(0.6, 5);
+        },
+    );
+
+    it('tints a primary button the hover colour it already goes to', async () => {
+        const element = await still();
+        colours(element);
+        choose(element, { 'hover-fill': 'tint' });
+
+        await userEvent.hover(inner(element));
+
+        expect(background(element)).toBe(painted.primary.hover);
+    });
+
+    it.each(variants)(
+        'leaves a %s button as it rests under the pointer where the pointer chose none',
+        async (variant, markup) => {
+            const element = await still(markup);
+            colours(element);
+            choose(element, { 'hover-fill': 'none' });
+
+            await userEvent.hover(inner(element));
+
+            expect(background(element)).toBe(painted[variant].rest);
+        },
+    );
+
+    it.each(variants)(
+        'fills a %s button with its hover colour at the focus, over the pointer',
+        async (variant, markup) => {
+            const element = await still(markup);
+            colours(element);
+            choose(element, { 'focus-fill': 'highlight', 'hover-fill': 'none' });
+
+            await userEvent.tab();
+
+            expect(background(element), 'at the focus').toBe(painted[variant].hover);
+
+            await userEvent.hover(inner(element));
+
+            expect(background(element), 'the pointer resting on it').toBe(painted[variant].hover);
+        },
+    );
+
+    it.each(variants)(
+        'keeps a press on a %s button its own colour, over the pointer and the focus',
+        async (variant, markup) => {
+            const element = await still(markup);
+            colours(element);
+            choose(element, { 'hover-fill': 'tint', 'focus-fill': 'highlight' });
+
+            await userEvent.tab();
+            await userEvent.hover(inner(element));
+            await press(inner(element), true);
+
+            expect(background(element)).toBe(painted[variant].pressed);
+        },
+    );
+
+    it.each([
+        ['primary', 'nothing', '<ui-button>Save</ui-button>', {}],
+        ['secondary', 'nothing', '<ui-button variant="secondary">Cancel</ui-button>', {}],
+        [
+            'secondary',
+            'the tint',
+            '<ui-button variant="secondary">Cancel</ui-button>',
+            { 'hover-fill': 'tint' },
+        ],
+        ['primary', 'none', '<ui-button>Save</ui-button>', { 'hover-fill': 'none' }],
+        [
+            'secondary',
+            'none',
+            '<ui-button variant="secondary">Cancel</ui-button>',
+            { 'hover-fill': 'none' },
+        ],
+    ] as const)(
+        'leaves a %s button as the pointer left it under a press with no colour, where the pointer chose %s',
+        async (_variant, _choice, markup, choices) => {
+            const element = await still(markup);
+            colours(element);
+            choose(element, { ...choices, 'press-fill': 'none' });
+
+            await userEvent.hover(inner(element));
+
+            const hovered = background(element);
+
+            await press(inner(element), true);
+
+            expect(background(element)).toBe(hovered);
+        },
+    );
+
+    it.each([
+        ['primary', 'nothing', 'rest', '<ui-button>Save</ui-button>', {}],
+        ['secondary', 'nothing', 'rest', '<ui-button variant="secondary">Cancel</ui-button>', {}],
+        [
+            'primary',
+            'the highlight',
+            'hover',
+            '<ui-button>Save</ui-button>',
+            { 'focus-fill': 'highlight' },
+        ],
+        [
+            'secondary',
+            'the highlight',
+            'hover',
+            '<ui-button variant="secondary">Cancel</ui-button>',
+            { 'focus-fill': 'highlight' },
+        ],
+    ] as const)(
+        'leaves a %s button as the focus left it under a press with no colour, where the focus chose %s',
+        async (variant, _choice, state, markup, choices) => {
+            const element = await still(markup);
+            colours(element);
+            choose(element, { ...choices, 'press-fill': 'none' });
+
+            await userEvent.tab();
+            await space(true);
+
+            try {
+                expect(inner(element).matches(':active'), 'pressed by Space').toBe(true);
+                expect(background(element)).toBe(painted[variant][state]);
+            } finally {
+                await space(false);
+            }
+        },
+    );
+
+    it('glows under the pointer, a light of the accent round its boundary', async () => {
+        const element = await still();
+        choose(element, { 'hover-shadow': 'glow' });
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+
+        await userEvent.hover(inner(element));
+
+        expect(moved(element)[0]).toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px',
+        );
+    });
+
+    it('lets the focus win over the glow, and a press be drawn over it', async () => {
+        const element = await still();
+        choose(element, { 'hover-shadow': 'glow', 'press-shadow': 'sink' });
+
+        await userEvent.tab();
+        await userEvent.hover(inner(element));
+
+        expect(moved(element)[0], 'the focus chose no shadow').toBe('none');
+
+        await press(inner(element), true);
+
+        expect(moved(element)[0], 'pressed').toBe('rgba(0, 0, 0, 0.35) 0px 2px 5px 0px inset');
+    });
+
+    /** Gives the button a theme's glow, its resting ring 1px wide and its pointer's 2px. */
+    function glowing(element: UiButton): void {
+        element.style.setProperty('--ui-elevation-control', '0 0 0 1px currentColor');
+        element.style.setProperty('--ui-elevation-control-hover', '0 0 0 2px currentColor');
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+    }
+
+    it.each(['none', 'raise', 'glow'])(
+        "keeps the theme's resting glow under the pointer where the pointer's shadow is %s",
+        async (effect) => {
+            const element = await still();
+            glowing(element);
+            choose(element, { 'hover-shadow': effect });
+
+            await userEvent.hover(inner(element));
+
+            expect(lit(element)).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+        },
+    );
+
+    it.each(['none', 'raise', 'burst'])(
+        "keeps the theme's resting glow at the focus where the focus's shadow is %s",
+        async (effect) => {
+            const element = await still();
+            glowing(element);
+            choose(element, { 'focus-shadow': effect });
+
+            await userEvent.tab();
+            await userEvent.hover(inner(element));
+
+            expect(lit(element)).toBe('rgb(1, 2, 3) 0px 0px 0px 1px');
+        },
+    );
+
+    it("lights the theme's pointer glow where nobody chose, at the focus as under the pointer", async () => {
+        const element = await still();
+        glowing(element);
+
+        await userEvent.tab();
+        await userEvent.hover(inner(element));
+
+        expect(lit(element)).toBe('rgb(1, 2, 3) 0px 0px 0px 2px');
+    });
+
+    it('bursts light round the button as the reader sees the focus arrive', async () => {
+        const element = await still();
+        choose(element, { 'focus-shadow': 'burst' });
+        element.style.setProperty('--ui-duration-flourish', '10s');
+        element.style.setProperty('--ui-easing-enter', 'linear');
+
+        await userEvent.tab();
+
+        const playing = burst(element);
+
+        expect(playing, 'the burst').toBeDefined();
+        expect(getComputedStyle(inner(element)).animationDuration).toBe('10s');
+        expect(getComputedStyle(inner(element)).animationTimingFunction).toBe('linear');
+
+        playing?.pause();
+
+        for (const [at, shadow] of [
+            [0, /\/ 0\.8\) 0px 0px 0px 0px$/],
+            [5000, /\/ 0\.4\) 0px 0px 7\.5px 5px$/],
+        ] as const) {
+            if (playing !== undefined) {
+                playing.currentTime = at;
+            }
+
+            expect(moved(element)[0], String(at)).toMatch(shadow);
+        }
+    });
+
+    it('bursts nothing where the focus came by the pointer, which draws no ring', async () => {
+        const element = await still();
+        choose(element, { 'focus-shadow': 'burst' });
+
+        await userEvent.click(inner(element));
+
+        expect(burst(element)).toBeUndefined();
+    });
+
+    it('takes the time out of the burst under reduced motion, with every other duration', async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+        });
+
+        try {
+            sheet();
+            const element = await mount('<ui-button>Save</ui-button>');
+            choose(element, { 'focus-shadow': 'burst' });
+
+            await userEvent.tab();
+
+            const time = Number.parseFloat(getComputedStyle(inner(element)).animationDuration);
+
+            expect(time).toBeGreaterThan(0);
+            expect(time).toBeLessThan(0.001);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it('draws no burst in forced colours, where the system draws the focus', async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            const element = await still();
+            choose(element, { 'focus-shadow': 'burst' });
+
+            await userEvent.tab();
+            burst(element)?.pause();
+
+            expect(moved(element)[0]).toBe('none');
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it("reads Matrix's taste off the theme: light where the default theme's moves", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+        document.body.append(style);
+        const element = await still('<ui-button variant="secondary">Cancel</ui-button>');
+        element.parentElement?.setAttribute('data-ui-theme', matrix.name);
+
+        await userEvent.hover(inner(element));
+
+        const [shadow] = moved(element);
+
+        expect(oklch(background(element))[0], 'tinted, held light').toBe(0.98);
+        expect(shadow, 'glowing').toMatch(/0px 0px 12px 2px$/);
+
+        await press(inner(element), true);
+
+        expect(background(element), 'no colour of its own under a press').toMatch(/^oklch\(0\.98 /);
+        expect(moved(element), 'nothing sunk; the squeeze stands until the shatter').toEqual([
+            shadow,
+            'none',
+            '0.96',
+        ]);
+
+        await press(inner(element), false);
+        await away(true);
+        await userEvent.tab();
+
+        expect(background(element), "the theme's hover colour at the focus").toBe(
+            'rgb(207, 217, 206)',
+        );
+        expect(moved(element)[1], 'no lift').toBe('none');
+        expect(burst(element), 'a burst').toBeDefined();
+        expect(
+            [
+                getComputedStyle(inner(element)).animationDuration,
+                getComputedStyle(inner(element)).animationTimingFunction,
+            ],
+            'over the flourish, on the curve an arrival takes',
+        ).toEqual(['0.52s', 'ease-out']);
     });
 });
 

@@ -164,8 +164,11 @@ effect moves it — so a host who wants livelier effects moves one and keeps the
 they were. `--ui-easing-emphasis` is the curve a press let go of springs back along, past its rest
 and back. **Something that travels has a third**, `--ui-duration-travel` over `--ui-duration-300`,
 because a crossing takes as long as its distance asks — the focus ring glided from one control to
-the next — and it moves along `--ui-easing-move`, quick out of the gate and slow into place. Which
-effect runs is a choice rather than a token, and [`taste`](#taste) is the default one.
+the next — and it moves along `--ui-easing-move`, quick out of the gate and slow into place. **A
+flourish has a fourth**, `--ui-duration-flourish` over `--ui-duration-400`: an effect that plays out
+on its own once a moment fires it, the burst of light at the focus, which runs longer than an effect
+that holds for as long as its moment does. Which effect runs is a choice rather than a token, and
+[`taste`](#taste) is the default one.
 
 ## More contrast
 
@@ -252,6 +255,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-easing-emphasis`     | the curve that runs past its end and settles back                 |
 | `--ui-duration-300`        | the third step of the duration scale                              |
 | `--ui-easing-move`         | the curve something travelling between two places follows         |
+| `--ui-duration-400`        | the fourth step of the duration scale                             |
 | `--ui-icon-size`           | how big a glyph is drawn                                          |
 | `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
 | `--ui-elevation-100`       | the first step of the elevation scale                             |
@@ -361,6 +365,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-duration-state`            | how long a state change takes                  |
 | `--ui-duration-effect`           | how long an effect a moment fires takes        |
 | `--ui-duration-travel`           | how long something takes to cross to its place |
+| `--ui-duration-flourish`         | how long a flourish takes                      |
 | `--ui-elevation-raised`          | a surface lifted off the page                  |
 | `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
 | `--ui-text-supporting`           | text that explains what is beside it           |

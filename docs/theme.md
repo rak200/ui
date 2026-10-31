@@ -67,10 +67,28 @@ edge's colour, and the tip, which is your own element, in its text.
 
 **The controls wear the same ring and glow**, through `--ui-elevation-control`, at the same
 strengths. It is written in `currentColor`, so a control is lit in its own colour: the green of the
-accent, and the danger when it is invalid. **A button lights up under the pointer**: its ring goes
-solid and its glow doubles, because the fills' own hovers barely move in this green. **An invalid field
-writes its value in the danger**, inside its red edge: 6.47:1 on the field's white and 7.37 on its
-black.
+accent, and the danger when it is invalid. **A button lights up under the pointer**, because the
+fills' own hovers barely move in this green: the theme's taste glows it there, and where you choose
+`highlight` for the pointer's shadow its ring goes solid and its glow doubles instead, through
+`--ui-elevation-control-hover`. **An invalid field writes its value in the danger**, inside its red
+edge: 6.47:1 on the field's white and 7.37 on its black.
+
+**Its taste answers in light where the default theme's moves.** Under the pointer a button takes a
+tint of the accent and glows; at the focus it takes its hover colour and a burst of light, and does
+not lift; and a press brings no colour of its own and sinks nothing. Each `none` in it takes back an
+effect the default theme's taste names, which would otherwise run under Matrix too. The ring keeps
+the default theme's glide and the press its squeeze: the glitch and the shatter RFC 0004 chose for
+them are not drawn yet, and a taste names only what some component draws.
+
+| Moment         | Effect      |
+| -------------- | ----------- |
+| `hover-fill`   | `tint`      |
+| `hover-shadow` | `glow`      |
+| `focus-move`   | `none`      |
+| `focus-fill`   | `highlight` |
+| `focus-shadow` | `burst`     |
+| `press-fill`   | `none`      |
+| `press-shadow` | `none`      |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
@@ -217,9 +235,11 @@ offer runs nothing there, and the component does what it does today.
 
 **The default theme's taste stands under every theme**, as its values do: the token sheet carries
 it, as [`taste`](tokens.md#taste), and a theme's own replaces it moment by moment where the theme
-names one. **No shipped theme carries a taste of its own yet.** RFC 0004's rollout draws the effects
-the three themes' tastes name a component at a time, [the button](button.md#motion) first, so a
-taste written today changes nothing until the component it names offers that effect.
+names one. So a theme that wants nothing where the default theme has an effect names `none` there,
+which is nothing. [Matrix](#matrix) carries a taste of its own; Glass does not yet. RFC 0004's
+rollout draws the effects the three themes' tastes name a component at a time,
+[the button](button.md#motion) first, so a taste written today changes nothing until the component it
+names offers that effect.
 
 Components read the names through one internal helper, `query()` in `src/motion.ts`, which writes
 the condition a component draws each effect under. The same module keeps `kinds`, the prefixes of
