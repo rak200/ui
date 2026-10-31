@@ -487,12 +487,14 @@ moment. An engine without style queries matches none of them and keeps the compo
 — [The browser floor](#the-browser-floor). Reduced motion stays one rule: every effect moves over a
 duration token, so the collapse that takes every duration to `0.01ms` takes the effects with it.
 
-**The focus ring's glide is the one thing the package lays in the page.** An outline is drawn round
-its own element and moves only with it, so a ring that leaves one control and lands on another is a
-popover of the page's own, in the top layer: `aria-hidden`, out of the pointer's way, styled on
-itself so the page needs no sheet, and standing in for the control's outline until it lands. **The
-sheet decides and the script reads**: a control hands the ring the glide, and its time, only where
-its query chose the glide and the reader can see the focus. So the ring cannot fly where the sheet
+**The focus ring's flights are the one thing the package lays in the page.** An outline is drawn
+round its own element and moves only with it, so a ring that leaves one control and lands on
+another, or jumps about its own, is a popover of the page's own, in the top layer: `aria-hidden`,
+out of the pointer's way, styled on itself so the page needs no sheet, and standing in for the
+control's outline until it lands. The glide flies it from the ring the reader saw last; the glitch
+shakes it over the control's own. **The sheet decides and the script reads**: a control hands the
+ring its flight, and its time, only where its query chose that flight and the reader can see the
+focus. So the ring cannot fly where the sheet
 draws nothing — in an engine without style queries, in forced colours — and under reduced motion
 it finds the collapse in the time it is handed, never in the media query.
 

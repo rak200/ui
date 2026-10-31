@@ -74,11 +74,11 @@ fills' own hovers barely move in this green: the theme's taste glows it there, a
 edge: 6.47:1 on the field's white and 7.37 on its black.
 
 **Its taste answers in light where the default theme's moves.** Under the pointer a button takes a
-tint of the accent and glows; at the focus it takes its hover colour and a burst of light, and does
-not lift; and a press brings no colour of its own and sinks nothing. Each `none` in it takes back an
-effect the default theme's taste names, which would otherwise run under Matrix too. The ring keeps
-the default theme's glide and the press its squeeze: the glitch and the shatter RFC 0004 chose for
-them are not drawn yet, and a taste names only what some component draws.
+tint of the accent and glows; at the focus it takes its hover colour and a burst of light, its ring
+glitches rather than gliding, and it does not lift; and a press brings no colour of its own and sinks
+nothing. Each `none` in it takes back an effect the default theme's taste names, which would
+otherwise run under Matrix too. The press keeps the default theme's squeeze: the shatter RFC 0004
+chose for it is not drawn yet, and a taste names only what some component draws.
 
 | Moment         | Effect      |
 | -------------- | ----------- |
@@ -87,6 +87,7 @@ them are not drawn yet, and a taste names only what some component draws.
 | `focus-move`   | `none`      |
 | `focus-fill`   | `highlight` |
 | `focus-shadow` | `burst`     |
+| `focus-ring`   | `glitch`    |
 | `press-fill`   | `none`      |
 | `press-shadow` | `none`      |
 

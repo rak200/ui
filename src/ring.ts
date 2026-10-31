@@ -1,23 +1,24 @@
 /**
  * The ring the page flies — RFC 0004's: the focus ring carried over from the control the reader
- * saw it on last to the one the focus reached, for the effects an outline cannot draw.
+ * saw it on last to the one the focus reached, or shaken where it is, for the effects an outline
+ * cannot draw.
  *
  * **An outline is drawn round its own element, whole and sharp, and moves only with it**, so a ring
- * that leaves one control and lands on another is one ring of the page's own: a popover laid where
- * the control's ring is, moved with the control frame by frame while the control's outline is put
- * away, and hidden itself once it lands, where the outline is back. The ring the reader sees from
- * the first frame is the ring that stays.
+ * that leaves one control and lands on another, or jumps about its own, is one ring of the page's
+ * own: a popover laid where the control's ring is, moved with the control frame by frame while the
+ * control's outline is put away, and hidden itself once it lands, where the outline is back. The
+ * ring the reader sees from the first frame is the ring that stays.
  *
  * **In the top layer**, so a ring on a modal dialog's controls flies over the dialog as well, and
  * **styled on the node**, as `src/description.ts`'s clip is, so the host's page needs no sheet for
  * it. `aria-hidden`, and nothing a pointer lands on: it says nothing the control's own ring does
  * not.
  *
- * **The sheet decides, and this only reads.** A component declares `--ui-fx-ring: glide` on its
- * control while the reader can see the focus on it, under the glide's query, with the flight's
- * time and curve resolved there too. So the ring flies exactly where the sheet chose it — a choice
- * at any scope, or a theme's taste — and never in an engine without style queries or in forced
- * colours, which the sheet leaves out. Under reduced motion the time is the collapse's 0.01ms and
+ * **The sheet decides, and this only reads.** A component declares `--ui-fx-ring` on its control
+ * while the reader can see the focus on it — `glide` or `glitch`, under that effect's query — with
+ * the flight's time and curve resolved there too, and for the glitch the colours of its two lines.
+ * So the ring flies exactly where the sheet chose it — a choice at any scope, or a theme's taste —
+ * and never in an engine without style queries or in forced colours, which the sheet leaves out. Under reduced motion the time is the collapse's 0.01ms and
  * nothing flies, the ring being there at once: the collapse is found in a value it sets, never in
  * the media query, which is what RFC 0004's fifth question asks.
  *
@@ -26,6 +27,12 @@
  * else — a click, a script's focus, the page's first — is the ring at once. Never after a time:
  * WebKit dispatched the arrival 36ms to 65ms after the departure, measured for RFC 0004, so a time
  * is too short there and long enough elsewhere to fly from a focus that went nowhere.
+ *
+ * **A glitch shakes the control's own ring**, wherever the focus came from: jumped a pixel or three
+ * each way at each step, split three times into two lines thrown either way, and back where the
+ * control's ring is before it lands. Drawn a frame at a time from the flight's clock, as the glide
+ * is laid, so the shake stays on a control that moves while it plays. The lines' colours are
+ * handed over as written, and resolved in the control's own scheme, which the ring takes.
  *
  * Internal — it is not re-exported from `src/index.ts`.
  */
@@ -51,6 +58,38 @@ interface Trip {
     readonly end: () => void;
 }
 
+/** The page's flown ring, and the two lines a glitch splits it into. */
+interface Flier {
+    readonly ring: HTMLElement;
+    /** The line thrown left, and the one thrown right. */
+    readonly lines: readonly [HTMLElement, HTMLElement];
+}
+
+/**
+ * The glitch's shake: how far the ring jumps, and the point of the flight it holds there until —
+ * RFC 0004's, a step about every twelfth. Past the last, it is back where the control's ring is.
+ */
+const shake: readonly (readonly [jump: string, until: number])[] = [
+    ['-2px 0', 0.08],
+    ['2px 1px', 0.16],
+    ['-3px -1px', 0.25],
+    ['1px 0', 0.33],
+    ['3px 1px', 0.41],
+    ['-1px -1px', 0.5],
+    ['2px 0', 0.58],
+    ['-2px 1px', 0.66],
+    ['1px -1px', 0.75],
+    ['-1px 0', 0.83],
+    ['1px 0', 0.91],
+];
+
+/** The spans of the flight a glitch splits the ring in, each from where it starts to where it ends. */
+const splits: readonly (readonly [start: number, end: number])[] = [
+    [0.08, 0.16],
+    [0.33, 0.41],
+    [0.58, 0.66],
+];
+
 /** A target on no arrival's path: where a focus that left no ring the reader saw went. */
 const nowhere = new EventTarget();
 
@@ -70,7 +109,7 @@ let ringed: (width: number, offset: number) => Round | undefined = () => undefin
 let flying: Trip | undefined;
 
 /** The page's flown ring, made the first time one flies, and again if the page took it away. */
-let flier: HTMLElement | undefined;
+let flier: Flier | undefined;
 
 /**
  * One corner of the ring an outline `out` past the boundary draws: round as the element's, and a
@@ -127,17 +166,40 @@ function milliseconds(value: string): number {
     return value.endsWith('ms') ? time : time * 1000;
 }
 
-/** The page's flown ring, laid in the page and styled on itself. */
-function aloft(): HTMLElement {
+/** One of the glitch's lines, thrown `aside` off the ring it is drawn over, and hidden. */
+function line(aside: string): HTMLElement {
+    const drawn = document.createElement('div');
+    drawn.style.cssText =
+        'position:absolute;box-sizing:border-box;border-style:solid;border-radius:inherit;opacity:0;pointer-events:none';
+    drawn.style.translate = aside;
+
+    return drawn;
+}
+
+/** The page's flown ring, laid in the page and styled on itself, with the glitch's two lines. */
+function aloft(): Flier {
     const ring = document.createElement('div');
+    const lines = [line('-3px 0'), line('3px 0')] as const;
     ring.popover = 'manual';
     ring.ariaHidden = 'true';
     ring.toggleAttribute('data-ui-ring');
     ring.style.cssText =
         'position:fixed;inset:auto;margin:0;padding:0;box-sizing:border-box;border-style:solid;background:none;overflow:visible;pointer-events:none';
+    ring.append(...lines);
     document.body.append(ring);
 
-    return ring;
+    return { ring, lines };
+}
+
+/** Shakes the flown ring and shows its lines as the glitch has them at `progress`. */
+function jolt({ ring, lines }: Flier, progress: number): void {
+    const shown = splits.some(([start, end]) => start <= progress && progress < end);
+
+    ring.style.translate = shake.find(([, until]) => progress < until)?.[0] ?? 'none';
+
+    for (const one of lines) {
+        one.style.opacity = shown ? '0.8' : '0';
+    }
 }
 
 /** Lays the flown ring over a ring. */
@@ -197,35 +259,48 @@ export function watch(): void {
 }
 
 /**
- * Flies the page's ring onto the control a `focus` event reached, from the ring the reader saw
- * last, where the control's sheet chose the glide. Anywhere else it does nothing, and the control's
- * own ring is there at once. Its listener's event, so a component binds it as it is.
+ * Flies the page's ring onto the control a `focus` event reached, where the control's sheet chose a
+ * flight: the glide from the ring the reader saw last, or the glitch over the control's own.
+ * Anywhere else it does nothing, and the control's own ring is there at once. Its listener's event,
+ * so a component binds it as it is.
  */
 export function arrive(event: FocusEvent): void {
     const path = event.composedPath();
     const control = path[0] as HTMLElement;
     const style = getComputedStyle(control);
+    const kind = style.getPropertyValue(`${kinds.animated}ring`);
     const width = Number.parseFloat(style.outlineWidth);
     const offset = Number.parseFloat(style.outlineOffset);
     const time = milliseconds(style.getPropertyValue(`${kinds.animated}ring-time`));
-    // Only for where the focus went: the departure's target is the control or a host around it.
-    const from = path.includes(towards) ? ringed(width, offset) : undefined;
+    // The glide only for where the focus went: the departure's target is the control or a host
+    // around it. The glitch wherever the focus came from, since it starts where it lands.
+    const left = kind === 'glide' && path.includes(towards) ? ringed(width, offset) : undefined;
+    const from = kind === 'glitch' ? round(control, width, offset) : left;
 
-    if (
-        style.getPropertyValue(`${kinds.animated}ring`) !== 'glide' ||
-        !(time > collapsed) ||
-        from === undefined
-    ) {
+    if (!(time > collapsed) || from === undefined) {
         return;
     }
 
     flying?.end();
 
-    const ring = flier?.isConnected === true ? flier : aloft();
+    const drawn = flier?.ring.isConnected === true ? flier : aloft();
+    const { ring, lines } = drawn;
+    const [thrownLeft, thrownRight] = lines;
 
-    flier = ring;
+    flier = drawn;
     ring.style.borderWidth = `${String(width)}px`;
     ring.style.borderColor = style.outlineColor;
+    ring.style.colorScheme = style.colorScheme;
+    ring.style.removeProperty('translate');
+    thrownLeft.style.borderColor = style.getPropertyValue(`${kinds.animated}ring-left`);
+    thrownRight.style.borderColor = style.getPropertyValue(`${kinds.animated}ring-right`);
+
+    for (const one of lines) {
+        one.style.inset = `${String(-width)}px`;
+        one.style.borderWidth = `${String(width)}px`;
+        one.style.opacity = '0';
+    }
+
     ring.showPopover();
     control.style.setProperty('outline-style', 'none');
 
@@ -252,14 +327,23 @@ export function arrive(event: FocusEvent): void {
 
     flying = trip;
 
+    // The glide is laid along the way from where it left; the glitch stays on the control's ring,
+    // wherever the control has got to, and is shaken there.
     const step = (): void => {
         if (flying === trip) {
+            const progress = timing.getComputedTiming().progress ?? 1;
+
             trip.now = between(
                 from,
                 round(control, width, offset),
-                timing.getComputedTiming().progress ?? 1,
+                kind === 'glitch' ? 1 : progress,
             );
             lay(ring, trip.now);
+
+            if (kind === 'glitch') {
+                jolt(drawn, progress);
+            }
+
             requestAnimationFrame(step);
         }
     };

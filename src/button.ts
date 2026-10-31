@@ -435,6 +435,19 @@ export class UiButton extends LitElement {
                     --ui-fx-ring-curve: ${reference('--ui-easing-move')};
                 }
             }
+
+            /* The glitch, which the page's ring plays over the button's own: shaken, and split
+               into two lines thrown either way in the danger and the info, RFC 0004's glitch
+               colours. A flourish, on a straight clock, since its steps are counted along it. */
+            @container ${unsafeCSS(drawn('focus-ring', 'glitch'))} {
+                button:focus-visible {
+                    --ui-fx-ring: glitch;
+                    --ui-fx-ring-time: ${reference('--ui-duration-flourish')};
+                    --ui-fx-ring-curve: linear;
+                    --ui-fx-ring-left: ${reference('--ui-color-danger')};
+                    --ui-fx-ring-right: ${reference('--ui-color-info')};
+                }
+            }
         }
     `;
 

@@ -365,6 +365,17 @@ describe('the ring the page flies', () => {
         expect(aloft()).toBe(true);
     });
 
+    it('flies nothing where the sheet chose a flight this does not know', async () => {
+        const { to } = mount();
+
+        to.style.setProperty('--ui-fx-ring', 'tumble');
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(aloft()).toBe(false);
+    });
+
     it('lays a ring again where the page took the last one away', async () => {
         mount();
 
@@ -382,4 +393,229 @@ describe('the ring the page flies', () => {
 
         expect(aloft()).toBe(true);
     });
+});
+
+/** A plain control, one whose ring glitches, and one whose ring glides, as `glitching` lays them. */
+interface Glitching {
+    readonly before: HTMLButtonElement;
+    readonly shook: HTMLButtonElement;
+    readonly after: HTMLButtonElement;
+}
+
+/**
+ * Three controls on a line, the middle one glitching: while the reader can see the focus on it,
+ * it carries what a component's sheet declares under the glitch's query — the choice, a flight long
+ * enough to read partway on a straight clock, and its two lines' colours. The last one glides.
+ */
+function glitching(): Glitching {
+    const host = document.createElement('div');
+    host.innerHTML = `
+        <style>
+            button { margin: 24px; border-radius: 0; outline: none; }
+            button:focus-visible { outline: 2px solid rgb(1, 2, 3); outline-offset: 2px; }
+            .glitches { border-radius: 6px; }
+            .glitches:focus-visible {
+                --ui-fx-ring: glitch;
+                --ui-fx-ring-time: 10s;
+                --ui-fx-ring-curve: linear;
+                --ui-fx-ring-left: rgb(200, 0, 0);
+                --ui-fx-ring-right: rgb(0, 0, 200);
+            }
+            .glides:focus-visible {
+                --ui-fx-ring: glide;
+                --ui-fx-ring-time: 10s;
+                --ui-fx-ring-curve: linear;
+            }
+        </style>
+        <button id="before">Before</button>
+        <button id="shook" class="glitches">Shook</button>
+        <button id="after" class="glides">After</button>`;
+    document.body.append(host);
+    watch();
+
+    const pick = (id: string): HTMLButtonElement => {
+        const control = host.querySelector<HTMLButtonElement>(`#${id}`);
+
+        if (control === null) {
+            throw new Error(`no #${id}`);
+        }
+
+        control.addEventListener('focus', arrive);
+
+        return control;
+    };
+
+    return { before: pick('before'), shook: pick('shook'), after: pick('after') };
+}
+
+/** The two lines the glitch splits the flown ring into: the one thrown left, then the right. */
+function lines(): readonly HTMLElement[] {
+    return [...flown().children] as HTMLElement[];
+}
+
+/** Takes the focus onto the glitching control from a pointer's focus, which leaves no ring seen. */
+async function shake({ before }: Glitching): Promise<void> {
+    await userEvent.click(before);
+    await userEvent.tab();
+}
+
+describe('the glitch the page flies', () => {
+    it("shakes the control's own ring, wherever the focus came from", async () => {
+        const controls = glitching();
+
+        await shake(controls);
+        await hold(0);
+
+        expect(aloft()).toBe(true);
+        expect(getComputedStyle(controls.shook).outlineStyle).toBe('none');
+        expect(flown().style.translate).toBe('-2px');
+
+        const ring = around(controls.shook, 6);
+
+        laid().forEach((value, index) => {
+            expect(value, String(index)).toBeCloseTo(ring[index] ?? 0, 3);
+        });
+    });
+
+    it('jumps a step at a time, and is back where the ring is before it lands', async () => {
+        await shake(glitching());
+
+        // Each step's middle, of a 10s flight, and one step's own first moment, which is that
+        // step's rather than the last one's. As the style writes them back: no zero for y.
+        for (const [at, jump] of [
+            [400, '-2px'],
+            [800, '2px 1px'],
+            [1200, '2px 1px'],
+            [2000, '-3px -1px'],
+            [2900, '1px'],
+            [3700, '3px 1px'],
+            [4500, '-1px -1px'],
+            [5400, '2px'],
+            [6200, '-2px 1px'],
+            [7000, '1px -1px'],
+            [7900, '-1px'],
+            [8700, '1px'],
+            [9500, 'none'],
+        ] as const) {
+            await hold(at);
+
+            expect(flown().style.translate, String(at)).toBe(jump);
+        }
+    });
+
+    it('shows its two lines three times, each span from its first moment until its end', async () => {
+        await shake(glitching());
+
+        for (const [at, shown] of [
+            [400, '0'],
+            [800, '0.8'],
+            [1200, '0.8'],
+            [1600, '0'],
+            [2400, '0'],
+            [3700, '0.8'],
+            [4100, '0'],
+            [5000, '0'],
+            [6200, '0.8'],
+            [6700, '0'],
+            [9000, '0'],
+        ] as const) {
+            await hold(at);
+
+            expect(
+                lines().map((line) => line.style.opacity),
+                String(at),
+            ).toEqual([shown, shown]);
+        }
+    });
+
+    it('draws the lines over the ring in the colours handed over, thrown 3px either way', async () => {
+        await shake(glitching());
+        await hold(1200);
+
+        const radius = getComputedStyle(flown()).borderTopLeftRadius;
+
+        expect(
+            lines().map((line) => {
+                const style = getComputedStyle(line);
+
+                return [
+                    style.position,
+                    style.borderTopColor,
+                    style.borderTopWidth,
+                    style.translate,
+                    style.top,
+                    style.left,
+                    style.borderTopLeftRadius,
+                ];
+            }),
+        ).toEqual([
+            ['absolute', 'rgb(200, 0, 0)', '2px', '-3px', '-2px', '-2px', radius],
+            ['absolute', 'rgb(0, 0, 200)', '2px', '3px', '-2px', '-2px', radius],
+        ]);
+    });
+
+    it("resolves the lines' colours in the control's own scheme, which the ring takes", async () => {
+        const controls = glitching();
+        controls.shook.parentElement?.style.setProperty('color-scheme', 'dark');
+        controls.shook.style.setProperty(
+            '--ui-fx-ring-left',
+            'light-dark(rgb(1, 1, 1), rgb(2, 2, 2))',
+        );
+
+        await shake(controls);
+        await hold(1200);
+
+        expect(getComputedStyle(lines()[0] ?? flown()).borderTopColor).toBe('rgb(2, 2, 2)');
+    });
+
+    it('follows the control if it moves while the ring shakes', async () => {
+        const controls = glitching();
+
+        await shake(controls);
+        await hold(1200);
+        controls.shook.style.translate = '0 40px';
+        await hold(1200);
+
+        expect(laid()[1]).toBeCloseTo(around(controls.shook, 6)[1]);
+    });
+
+    it("lands where the control's ring is, and gives the outline back", async () => {
+        const controls = glitching();
+
+        await shake(controls);
+
+        const flight = clock();
+
+        flight.finish();
+        await flight.finished;
+
+        expect(aloft(), 'landed').toBe(false);
+        expect(getComputedStyle(controls.shook).outlineStyle, 'the outline').toBe('solid');
+    });
+
+    it('lets a glide after it fly unshaken, its lines put away', async () => {
+        await shake(glitching());
+        await hold(1200);
+        await userEvent.tab();
+        await hold(0);
+
+        expect(aloft(), 'the glide in the air').toBe(true);
+        expect(flown().style.translate, 'unshaken').toBe('');
+        expect(
+            lines().map((line) => line.style.opacity),
+            'its lines put away',
+        ).toEqual(['0', '0']);
+    });
+
+    it.each(['0.01ms', '0s'])(
+        'shakes nothing where the collapse, or a host, took the flight to %s',
+        async (time) => {
+            const controls = glitching();
+            controls.shook.style.setProperty('--ui-fx-ring-time', time);
+
+            await shake(controls);
+
+            expect(aloft()).toBe(false);
+        },
+    );
 });
