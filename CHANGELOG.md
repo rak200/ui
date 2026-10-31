@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.6](https://github.com/rak200/ui/compare/0.8.5...0.8.6) (2026-10-31)
+
+
+### Features
+
+* a theme carries a motion taste, and RFC 0004's effects get the query they draw under ([#325](https://github.com/rak200/ui/issues/325)) ([aad7d1c](https://github.com/rak200/ui/commit/aad7d1cf58de782c2b8397a658b95dbee7613ed8))
+* **button:** Matrix's taste, in light — a tint, a glow, a burst and a press with no colour ([#328](https://github.com/rak200/ui/issues/328)) ([d8de0ee](https://github.com/rak200/ui/commit/d8de0ee20c15c2065ff8d4ca3fe811b0a7b88036))
+* **button:** the first effects and the default taste — raise, lift, squish and sink ([#326](https://github.com/rak200/ui/issues/326)) ([46394c3](https://github.com/rak200/ui/commit/46394c3032a2d4e26dd78f5bd51e1b501a750a9a))
+* **button:** the focus ring glides over from the control the reader saw it on last ([#327](https://github.com/rak200/ui/issues/327)) ([60dde56](https://github.com/rak200/ui/commit/60dde5656bb9f95306bcf0cdb3c8264fe25e1c57))
+* **button:** the focus ring glitches under Matrix, shaken and split into the danger and the info ([#329](https://github.com/rak200/ui/issues/329)) ([57cab5c](https://github.com/rak200/ui/commit/57cab5c694a1f0b1eb36630cbebcc431bb13f3c9))
+* the playground reduces motion on request, collapsing what the reader's setting collapses ([#321](https://github.com/rak200/ui/issues/321)) ([d008ea4](https://github.com/rak200/ui/commit/d008ea4e58e2875f87ad08490f46bc2e316a9952))
+
 ## [0.8.5](https://github.com/rak200/ui/compare/0.8.4...0.8.5) (2026-10-23)
 
 
