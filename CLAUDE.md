@@ -161,6 +161,10 @@ explains. This file restates none of them.
   `#complain()` carries the one a reader hits first: a reference written from out here reaches no
   control drawn inside a shadow root, which #156 measured and RFC 0006 answered — so what the
   warning is left pointing at is a trigger **someone else** wrote that does not take the handoff.
+- **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
+  _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
+  raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its
+  `heard` and `carried` lists keep each reading's reasons beside the keys they excuse or add.
 - **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
   `UiCard` in `src/card.ts`, beside each. Only a shadow's colour can follow the scheme, and the
   default shadow writes one colour that all but vanishes on a dark page, so the derived boundary is

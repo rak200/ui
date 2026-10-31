@@ -173,6 +173,42 @@ draws the mixed state it was never asked for, floors itself at 24×24, and names
 `forced-colors` block. That list is the price of the decision rather than a set of extras, and it is
 the reason a component takes the drawing over only where the alternative is worse.
 
+## The browser floor
+
+**Chrome and Edge 125, Firefox 129 and Safari 18.2, or 18.3 on iOS**, and the same numbers on
+Android. It is where everything renders as it was measured — the contrast floors, the focus ring and
+every drawing the suite asserts — and the features `src/` uses with nothing to fall back to set it:
+
+| Feature                                                         | Chrome | Firefox | Safari              | Without it                                                                   |
+| --------------------------------------------------------------- | ------ | ------- | ------------------- | ---------------------------------------------------------------------------- |
+| `popover` — the tooltip, the menu, the toaster                  | 114    | 125     | 17, and 18.3 on iOS | the overlay never opens; before iOS 18.3, a tap outside leaves the menu open |
+| `ElementInternals.states` — the checkbox, the switch            | 125    | 126     | 17.4                | writing the checked state throws                                             |
+| `light-dark()` — every colour token's two schemes               | 123    | 120     | 17.5                | a colour that reads one is unset                                             |
+| relative colour syntax — the accent's label, the shipped themes | 125    | 128     | 18                  | the same                                                                     |
+| `@starting-style` — the dialog's and the toast's entrances      | 117    | 129     | 17.5                | no entrance                                                                  |
+| `backdrop-filter` — the raised surfaces                         | 76     | 103     | 18                  | no blur behind a raised surface                                              |
+| `scrollbar-gutter` — the dialog's scroll lock                   | 94     | 97      | 18.2                | the page shifts by a scrollbar's width while it is locked                    |
+
+**It is the floor where the accessibility bar holds, not the lowest one where nothing throws.** That
+one is Chrome 125, Firefox 126 and Safari 17.4, the first two rows, and it was set aside because a
+colour token that resolves to nothing takes the contrast floors with it. Nothing below the floor was
+measured.
+
+**A feature newer than the floor either leaves a component as it was where it is missing, or raises
+the floor.** The select's drawn list sits under `@supports (appearance: base-select)`, and an engine
+without it keeps the system's list. RFC 0004's motion effects will draw under container style
+queries, which need Chrome 111, Firefox 151 and Safari 18: inside the floor, Firefox 129 to 150
+lacks them, and keeps each component's own motion.
+
+**The floor moves as an ordinary change.** A feature that raises it enters `src/` in a pull request
+that moves the floor here and in [README.md](README.md), and names the new floor in its title, which
+is what the changelog carries. It is not marked as a break.
+
+**Nothing in CI checks it.** The suite runs in Chromium alone, and the CSS lives in Lit's templates
+inside TypeScript. `tests/manual/browser-floor.mjs` is the check a person runs: it finds what each
+feature `src/` uses needs, by web-features' compat keys, and says whether the floor still follows.
+These numbers are web-features 3.44.0's, and the step reproduces them from `src/`.
+
 ## A relationship needs one tree scope
 
 Where a component wires an ARIA relationship between elements — a label to a control, help text to
