@@ -196,6 +196,60 @@ describe('where a press cuts the button', () => {
         ]);
     });
 
+    it('cuts first the cells largest for how near the point they lie, the first of equals first', async () => {
+        const button = await mount(80, 32);
+
+        pointer(button, 20, 16, true);
+
+        // Eight pieces, where its area asks for no more, with cells still big enough to cut: so
+        // which cells were cut is the order they were claimed in. Four cells claim the same at the
+        // sixth cut and three at the seventh, and the first of them goes each time.
+        expect(pieces(button)).toEqual([
+            [-70, -72, 88, 76, -2, -4],
+            [-70, 6, 88, 8, -2, -2],
+            [20, -72, 20, 76, 0, -4],
+            [20, 6, 20, 8, 0, -2],
+            [-70, 16, 88, 84, -2, 0],
+            [20, 16, 20, 84, 0, 0],
+            [42, -70, 108, 84, 2, -2],
+            [42, 16, 108, 84, 2, 0],
+        ]);
+    });
+
+    it('measures how near a cell lies from its middle, down as well as across', async () => {
+        const button = await mount(80, 32);
+
+        pointer(button, 20, 28, true);
+
+        // Struck near the bottom: the lower half's cells are nearer, and cut before the upper.
+        expect(pieces(button)).toEqual([
+            [-68, -68, 86, 82, -2, -2],
+            [20, -68, 20, 82, 0, -2],
+            [-68, 14, 86, 8, -2, -2],
+            [-68, 24, 86, 74, -2, 0],
+            [20, 14, 20, 8, 0, -2],
+            [20, 24, 20, 74, 0, 0],
+            [42, -68, 106, 82, 2, -2],
+            [42, 16, 106, 82, 2, 0],
+        ]);
+    });
+
+    it('strikes the middle for Space on its way down as well as across', async () => {
+        vi.spyOn(Math, 'random').mockReturnValue(0.75);
+        const button = await mount(20, 20);
+        button.focus();
+
+        await key(true);
+
+        // The first cut three fifths down, below the middle: the side under it is pushed off.
+        expect(pieces(button)).toEqual([
+            [-67, -67, 79, 79, 0, 0],
+            [14, -66, 75, 79, 2, 1],
+            [-66, 14, 79, 75, 1, 2],
+            [15, 15, 75, 75, 3, 3],
+        ]);
+    });
+
     it.each([
         [200, 40, 16],
         [100, 40, 11],
@@ -327,6 +381,11 @@ describe('the press it holds for', () => {
 
         expect(pieces(button)[0]).toEqual([-68.5, -68.5, 78, 78, -0.5, -0.5]);
         expect(pieces(button)[5]).toEqual([31, -68.5, 78, 78, 1, -0.5]);
+
+        // And frame after frame: nine tenths back, the 4px is 0.4px, on the half pixel.
+        await hold(button, 9000);
+
+        expect(pieces(button)[5]).toEqual([30.5, -68, 78, 78, 0.5, 0]);
     });
 
     it('takes the filter away once the pieces are together, and breaks anew on the next press', async () => {
