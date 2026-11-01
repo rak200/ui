@@ -501,7 +501,11 @@ focus. So the ring cannot fly where the sheet
 draws nothing — in an engine without style queries, in forced colours — and under reduced motion
 it finds the collapse in the time it is handed, never in the media query. **The shatter is read the
 same way and drawn nowhere but the button**: a filter in the button's own shadow root cuts it as it
-is drawn, since no sheet can cut an element, for as long as the press the sheet chose it for.
+is drawn, since no sheet can cut an element, for as long as the press the sheet chose it for. **So is
+the pointer engine**, which hands a control where the pointer is a frame at a time while a light
+that follows it is chosen: the sheet hands it a duration it reads no other way, only where the
+pointer can hover, so it finds the collapse there and follows nothing a touch screen or a reader who
+asked for less motion would see.
 
 ### A shadow follows the scheme only through its colour
 

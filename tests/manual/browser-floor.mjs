@@ -97,6 +97,8 @@ const heard = {
         'only Chromium knows it, and src/theme.ts lists it beside prefers-contrast: more, so an engine without it still answers the list through the other',
     'css.properties.appearance.base-select': drawnList,
     'css.properties.cursor.not-allowed': noCursor,
+    'css.properties.mask.content-box':
+        "Safari reads no content-box in the standard mask, and src/button.ts cuts the edge's band with Safari's own prefixed mask first, which reads it, and the standard one after, which the other engines take and Safari drops",
     'css.properties.cursor.pointer': noCursor,
     'css.properties.resize':
         'iOS recognises it and does nothing, so a textarea there is not resized by hand',

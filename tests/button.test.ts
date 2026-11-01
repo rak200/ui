@@ -1111,6 +1111,19 @@ describe("the effects Matrix's taste names", () => {
     );
 
     it.each(variants)(
+        'leaves a %s button as it rests under the pointer where the spotlight lights it',
+        async (variant, markup) => {
+            const element = await still(markup);
+            colours(element);
+            element.style.setProperty('--ui-motion-hover-fill', 'spotlight');
+
+            await userEvent.hover(inner(element));
+
+            expect(background(element)).toBe(painted[variant].rest);
+        },
+    );
+
+    it.each(variants)(
         'fills a %s button with its hover colour at the focus, over the pointer',
         async (variant, markup) => {
             const element = await still(markup);
@@ -1244,7 +1257,7 @@ describe("the effects Matrix's taste names", () => {
         element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
     }
 
-    it.each(['none', 'raise', 'glow'])(
+    it.each(['none', 'raise', 'glow', 'cast'])(
         "keeps the theme's resting glow under the pointer where the pointer's shadow is %s",
         async (effect) => {
             const element = await still();
@@ -1709,6 +1722,181 @@ describe("the effects Glass's taste names", () => {
         } finally {
             await cdp().send('Emulation.setEmulatedMedia', { features: [] });
         }
+    });
+
+    /**
+     * A button 100px by 40px, its pointer's lights chosen as `choices` says, with the pointer
+     * brought over it at `x`, `y` in its own pixels and a frame let pass, so the engine has handed
+     * it where the pointer is.
+     */
+    async function followed(
+        choices: Readonly<Record<string, string>>,
+        x: number,
+        y: number,
+        markup = '<ui-button>Save</ui-button>',
+    ): Promise<UiButton> {
+        const style = document.createElement('style');
+        style.textContent =
+            'ui-button::part(button) { box-sizing: border-box; width: 100px; height: 40px; }';
+        document.body.append(style);
+        const element = await mount(markup);
+
+        for (const [moment, effect] of Object.entries(choices)) {
+            element.style.setProperty(`--ui-motion-${moment}`, effect);
+        }
+
+        const box = inner(element).getBoundingClientRect();
+
+        inner(element).dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                composed: true,
+                clientX: box.left + x,
+                clientY: box.top + y,
+            }),
+        );
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+                resolve();
+            });
+        });
+
+        return element;
+    }
+
+    /** The edge's band, on a layer of its own. */
+    function band(element: UiButton): HTMLElement {
+        const edge = element.shadowRoot?.querySelector<HTMLElement>('.edge');
+
+        if (edge === null || edge === undefined) {
+            throw new Error('the button rendered no band');
+        }
+
+        return edge;
+    }
+
+    it.each(['hover-fill: spotlight', 'hover-shadow: cast', 'hover-border: edge'])(
+        "hands the pointer engine an effect's time where %s, and only while the button can be used",
+        async (choice) => {
+            const [moment = '', effect = ''] = choice.split(': ');
+            const element = await mount('<ui-button>Save</ui-button>');
+            const handed = (): string =>
+                getComputedStyle(inner(element)).getPropertyValue('--ui-fx-follow');
+
+            expect(handed(), 'nothing chosen').toBe('');
+
+            element.style.setProperty(`--ui-motion-${moment}`, effect);
+
+            expect(handed(), 'chosen').toBe('240ms');
+
+            element.disabled = true;
+            await element.updateComplete;
+
+            expect(handed(), 'disabled').toBe('');
+        },
+    );
+
+    it('lights the layer under the label where the pointer is, a quarter the sheen and 4rem out', async () => {
+        const element = await followed({ 'hover-fill': 'spotlight' }, 30, 10);
+
+        expect(getComputedStyle(inner(element), '::after').backgroundImage).toMatch(
+            /^radial-gradient\(64px at 30px 10px, .+ \/ 0\.24\), rgba\(0, 0, 0, 0\)\)$/,
+        );
+    });
+
+    it('casts a shadow away from the pointer, as strong as the pointer is near', async () => {
+        const element = await followed({ 'hover-shadow': 'cast' }, 75, 10);
+
+        // Halfway right and halfway up: the shadow falls left and down, and on a light page
+        // the light that spills round the pointer's side is none.
+        expect(moved(element)[0]).toBe(
+            'rgba(0, 0, 0, 0.3) -4px 8px 14px -2px, rgba(0, 0, 0, 0) 6px -6px 24px 2px',
+        );
+    });
+
+    it("spills the accent round the pointer's side of the button on a dark page", async () => {
+        const element = await followed({ 'hover-shadow': 'cast' }, 75, 10);
+        element.style.colorScheme = 'dark';
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+
+        expect(moved(element)[0]).toBe(
+            'rgba(0, 0, 0, 0.85) -4px 8px 14px -2px, color(srgb 0.0392157 0.0784314 0.117647 / 0.35) 6px -6px 24px 2px',
+        );
+    });
+
+    it('lights a band on the edge where the pointer is nearest, as strong as the pointer is near', async () => {
+        const element = await followed({ 'hover-border': 'edge' }, 30, 10);
+        const style = getComputedStyle(band(element));
+
+        expect(style.opacity).toBe('1');
+        expect(style.backgroundImage).toMatch(/^radial-gradient\(100% 100% at 30px 10px, /);
+        expect([style.top, style.paddingTop, style.position]).toEqual(['-1px', '2px', 'absolute']);
+    });
+
+    it('lets the focus win over the lights, and lights nothing on a button that cannot be used', async () => {
+        const element = await followed(
+            { 'hover-fill': 'spotlight', 'hover-shadow': 'cast', 'hover-border': 'edge' },
+            30,
+            10,
+        );
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(band(element)).opacity, 'band').toBe('0');
+        expect(moved(element)[0], 'cast').toBe('none');
+        expect(getComputedStyle(inner(element), '::after').backgroundImage, 'spotlight').toBe(
+            'none',
+        );
+    });
+
+    it.each(['edge', 'none'])(
+        "keeps the edge as it rests under the pointer where the pointer's border is %s",
+        async (effect) => {
+            const element = await still();
+            element.style.setProperty('--ui-color-border-button', 'rgb(1, 2, 3)');
+            element.style.setProperty('--ui-color-border-button-hover', 'rgb(4, 5, 6)');
+            element.style.setProperty('--ui-motion-hover-border', effect);
+
+            await userEvent.hover(inner(element));
+
+            expect(getComputedStyle(inner(element), '::after').borderTopColor).toBe('rgb(1, 2, 3)');
+        },
+    );
+
+    it("follows the pointer where Glass's taste runs: a light, a shadow and a band", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+        const element = await followed(
+            {},
+            30,
+            10,
+            '<ui-button variant="secondary">Cancel</ui-button>',
+        );
+        element.parentElement?.setAttribute('data-ui-theme', glass.name);
+
+        // The theme's taste reaches the button once its region is Glass's: brought over it again.
+        const box = inner(element).getBoundingClientRect();
+
+        inner(element).dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                composed: true,
+                clientX: box.left + 30,
+                clientY: box.top + 10,
+            }),
+        );
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+                resolve();
+            });
+        });
+
+        expect(getComputedStyle(band(element)).opacity, 'band').toBe('1');
+        expect(getComputedStyle(inner(element), '::after').backgroundImage, 'spotlight').toMatch(
+            /^radial-gradient/,
+        );
+        expect(moved(element)[0], 'cast').toMatch(/px/);
     });
 
     it("sweeps the sheen where Glass's taste runs", async () => {

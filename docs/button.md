@@ -142,8 +142,11 @@ the effect's name:
 | Property                   | Effect      | What it draws                                             |
 | -------------------------- | ----------- | --------------------------------------------------------- |
 | `--ui-motion-hover-fill`   | `tint`      | a little of the accent in the fill, under the pointer     |
+| `--ui-motion-hover-fill`   | `spotlight` | a light where the pointer is, as strong as it is near     |
 | `--ui-motion-hover-shadow` | `raise`     | a drop shadow under the pointer                           |
 | `--ui-motion-hover-shadow` | `glow`      | a light of the accent round the button, under the pointer |
+| `--ui-motion-hover-shadow` | `cast`      | a shadow cast away from the pointer, as near as it is     |
+| `--ui-motion-hover-border` | `edge`      | a band lit along the edge nearest the pointer             |
 | `--ui-motion-focus-fill`   | `highlight` | the hover colour, while the focus stays                   |
 | `--ui-motion-focus-fill`   | `shimmer`   | a sheen swept across it four times, at the focus          |
 | `--ui-motion-focus-shadow` | `raise`     | the same drop, while the focus stays                      |
@@ -163,9 +166,9 @@ the effect's name:
 focus, lifts it at the focus, glides the ring over and squeezes and sinks it under a press. Under
 [Matrix](theme.md#matrix) the button tints and glows under the pointer, takes its hover colour and a
 burst at the focus without lifting, its ring glitching there, and shatters under a press, with
-neither a colour nor a sinking shadow. Under [Glass](theme.md#glass) it keeps a light along its
-inside at the focus without lifting, a sheen sweeping across it and its ring coming into focus
-there, and a press springs it back.
+neither a colour nor a sinking shadow. Under [Glass](theme.md#glass) it takes a light, a shadow
+and a band that follow the pointer, keeps a light along its inside at the focus without lifting, a
+sheen sweeping across it and its ring coming into focus there, and a press springs it back.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
 every button, or one. A name the button does not offer draws nothing, and the button does what it
@@ -174,8 +177,9 @@ does today there.
 **`none` is nothing.** Where the button answered a moment with nothing before effects existed —
 every move, the ring's flight, the focus's fill, a press's shadow — `none` keeps it as it was. Where
 it answered with something of its own, `none` takes that away: the hover colour under the pointer
-(`hover-fill`), the pressed colour under a press (`press-fill`) and a theme's glow under the pointer
-(`hover-shadow`), which Matrix alone lights. `highlight` names what the button did there, and brings
+(`hover-fill`), the pressed colour under a press (`press-fill`), a theme's glow under the pointer
+(`hover-shadow`), which Matrix alone lights, and a theme's edge under the pointer
+(`hover-border`), which Glass alone draws. `highlight` names what the button did there, and brings
 it back:
 
 ```css
@@ -209,6 +213,18 @@ through. A primary's fill is the accent already, so its tint is the hover colour
 **The inner light is the accent's**, a line along the inside of the edge and its light from it.
 Over the primary's fill, which is the accent already, the accent is moved two fifths toward the
 label, which stands off that fill.
+
+**The spotlight, the cast and the edge follow the pointer.** One listener on the page hands the
+button where the pointer is, a frame at a time, from the moment the pointer comes over it until it
+is 96px away, the lights fading out over that distance. The spotlight is a light 4rem across where
+the pointer is, on the layer under the label, in the shimmer's light at a quarter of its strength, so
+the label keeps its 4.5:1 under it; it takes the hover colour's place. The cast is a shadow on the
+button that falls away from the pointer, and on a dark page the accent spills round the side the
+pointer is on. The edge is a band 2px wide on the edge, lit where the pointer is nearest, on a layer
+of its own so the band can be cut to the edge; it takes the place of the edge a theme gives the
+pointer. All three follow only where the pointer can hover and the button can be used, never under
+reduced motion, and the focus wins over all three. The button binds one internal helper,
+`follow()` in `src/pointer.ts`, to its `pointerover`.
 
 **The shimmer is a sheen swept across the button**, ten degrees off upright and three quarters as
 wide as the button, four rounds of `--ui-duration-loop` and then at rest before the start: a focus
