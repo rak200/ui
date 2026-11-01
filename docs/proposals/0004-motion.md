@@ -763,3 +763,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#329](https://github.com/rak200/ui/pull/329) | Matrix's ring: the glitch, flown by the page's ring, its lines in the danger and info   |
 | 4    | [#330](https://github.com/rak200/ui/pull/330) | Matrix's press: the shatter, a filter in the button's own tree, and its taste complete  |
 | 4    | [#331](https://github.com/rak200/ui/pull/331) | Glass's taste begins: the inner light at the focus and the press's spring               |
+| 4    | [#332](https://github.com/rak200/ui/pull/332) | Glass's ring: the refocus, out of a blur and into one on a second ring of the page's    |
