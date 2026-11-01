@@ -19,6 +19,7 @@ import '@rak200/ui';
 - [Supplementary text](#supplementary-text)
 - [Events](#events)
 - [Selecting on state](#selecting-on-state)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-input>`
@@ -201,6 +202,38 @@ takes part in them. `required`, `readonly` and `disabled` reflect, so their attr
 **Do not select on `[error]`.** It reflects, and a reflected string whose default is empty is
 written as `error=""` — which a presence selector matches on every element, error or not.
 `:invalid` is what you want.
+
+## Motion
+
+**A field answers the pointer and the focus with RFC 0004's effects**, as
+[`<ui-button>`](button.md#motion) does, and **nothing moves the control on its own**: you are typing
+there, so an effect changes what is round the control, or moves the box it sits in, its ring with
+it. Each is chosen by a custom property per moment, and where you choose nothing the theme's taste
+runs:
+
+| Property                   | Effect  | What it draws                                         |
+| -------------------------- | ------- | ----------------------------------------------------- |
+| `--ui-motion-hover-shadow` | `raise` | the button's drop shadow under the control            |
+| `--ui-motion-focus-shadow` | `raise` | the same drop, while the focus stays                  |
+| `--ui-motion-focus-move`   | `lift`  | the box round the control two pixels up, ring and all |
+| `--ui-motion-focus-ring`   | `glide` | the ring glided over from the control seen last       |
+
+**The default theme's taste raises a field under the pointer and at the focus, lifts it at the
+focus and glides its ring over**, and the boundary still darkens under the pointer, as it did.
+Under [Matrix](theme.md#matrix) and [Glass](theme.md#glass) a field does what it did before effects
+existed, until their effects for a field are drawn: a name a field does not offer draws nothing.
+
+**The pointer's effects are drawn on a field the pointer can change**, never one that is disabled or
+read-only, only where the pointer can hover, and **the focus wins**: in a field the focus is where
+you are acting, so a pointer resting there changes nothing. A theme's taste reaches a field under
+its own name, `--ui-taste-input-<moment>` or `--ui-taste-textarea-<moment>`, over the page's.
+
+Each effect moves over `--ui-duration-effect` on `--ui-easing-enter`, and the glide over
+`--ui-duration-travel` on `--ui-easing-move`; all of them collapse under
+`prefers-reduced-motion: reduce`, and the ring does not fly in forced colours. What they move
+transitions only once one is chosen, so with none the boundary is still the only thing that moves.
+They are drawn by one internal sheet, `fieldEffects()` in `src/effects.ts`, which the two elements
+and [`<ui-select>`](select.md#motion) adopt after their own.
 
 ## Styling
 

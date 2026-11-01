@@ -9,6 +9,7 @@ import meta, { Constrained, Disabled, Invalid, Multiline, Text } from '../storie
 import '../src/input.js';
 import '../src/tooltip.js';
 import type { UiInput, UiTextarea } from '../src/input.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
 type Field = UiInput | UiTextarea;
@@ -835,6 +836,114 @@ describe('the interaction states', () => {
  * `description.test.ts` and the composition in `src/description.ts`; what these are about
  * is that a third id joins the two this element has always had, at the end.
  */
+/**
+ * A field's effects — RFC 0004's — which the pair adopts from `src/effects.ts` under each one's own
+ * taste name. What each effect draws is graded on a field of the suite's own in
+ * `tests/effects.test.ts`; what these are about is that both elements draw it.
+ */
+describe("a field's effects, which the pair adopts", () => {
+    /** The button's drop, as the engine computes it on a light page. */
+    const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
+
+    afterEach(() => {
+        // A ring still in the air lands, so nothing flies on into the next test.
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
+    });
+
+    /** The box round a field's control, which a theme's glow is drawn on and the lift moves. */
+    function glow(element: HTMLElement): HTMLElement {
+        const found = element.shadowRoot?.querySelector<HTMLElement>('.glow') ?? null;
+
+        if (found === null) {
+            throw new Error(`${element.tagName} rendered no box round its control`);
+        }
+
+        return found;
+    }
+
+    /** Takes every duration the effects move over out, on the region round the fixture. */
+    function stilled(form: HTMLElement): void {
+        form.style.setProperty('--ui-duration-effect', '0s');
+        form.style.setProperty('--ui-duration-state', '0s');
+    }
+
+    /** Whether the page's ring is in the air. */
+    function aloft(): boolean {
+        return document.querySelector('[data-ui-ring]:popover-open') !== null;
+    }
+
+    it.each([
+        ['ui-input', '--ui-taste-input-focus-move', '--ui-taste-textarea-focus-move'],
+        ['ui-textarea', '--ui-taste-textarea-focus-move', '--ui-taste-input-focus-move'],
+    ])(
+        "draws them on %s under its own taste name, and not under the other's",
+        async (tag, own, other) => {
+            const form = await mount(`<${tag} label="Note"></${tag}>`);
+            stilled(form);
+            form.style.setProperty(other, 'lift');
+
+            await userEvent.tab();
+
+            expect(getComputedStyle(glow(field(form))).translate, "the other's").toBe('none');
+
+            form.style.setProperty(own, 'lift');
+
+            expect(getComputedStyle(glow(field(form))).translate, 'its own').toBe('0px -2px');
+        },
+    );
+
+    it.each([
+        ['ui-input', 'disabled'],
+        ['ui-input', 'readonly'],
+        ['ui-textarea', 'readonly'],
+    ])(
+        'raises no %s under the pointer that is %s, which its sheet guards against',
+        async (tag, state) => {
+            const form = await mount(`<${tag} label="Note" ${state}></${tag}>`);
+            stilled(form);
+            form.style.setProperty('--ui-motion-hover-shadow', 'raise');
+
+            await userEvent.hover(box(field(form)));
+
+            expect(getComputedStyle(box(field(form))).boxShadow).toBe('none');
+        },
+    );
+
+    it.each([
+        ['ui-input', 'ui-textarea'],
+        ['ui-textarea', 'ui-input'],
+    ])('glides the ring from a %s to a %s, which hands it the flight', async (first, second) => {
+        const form = await mount(
+            `<${first} label="First"></${first}><${second} label="Second"></${second}>`,
+        );
+        form.style.setProperty('--ui-motion-focus-ring', 'glide');
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it("raises a field under the pointer, and raises and lifts it at the focus, under the default theme's taste", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+        const form = await mount(fixture);
+        stilled(form);
+
+        await userEvent.hover(box(field(form)));
+
+        expect(getComputedStyle(box(field(form))).boxShadow, 'under the pointer').toBe(raised);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(box(field(form))).boxShadow, 'at the focus').toBe(raised);
+        expect(getComputedStyle(glow(field(form))).translate, 'lifted').toBe('0px -2px');
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: Field, detail: unknown): boolean {

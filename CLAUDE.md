@@ -28,7 +28,7 @@ src/
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
-├── effects.ts       # a button's effects — internal, one sheet built for each component that is a button
+├── effects.ts       # the effects a component draws — internal, one sheet for each kind: a button's, a field's
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
@@ -318,7 +318,12 @@ explains. This file restates none of them.
   button, and what a component that adopts it gives it** — the docblock on `src/effects.ts`.
   `buttonEffects()` is a function where the note on `drawn` beside it keeps helpers out of the
   sheet, and its docblock says why this one is safe: emptied, it hands Lit no sheet, so the component
-  fails as it renders rather than the import failing, which the runner grades as a survivor. **Why `none` takes the pressed colour away where it keeps the lift
+  fails as it renders rather than the import failing, which the runner grades as a survivor. **Why a
+  field's effects are a sheet of their own, and why it moves the box rather than the control** — the
+  docblock on `fieldEffects()` in `src/effects.ts`. It names the control by the component, and takes
+  the guard the pointer's effects carry from each, so the select's sheet names no read-only guard, as
+  `tests/select.test.ts` asks. Each field's `watch()` call is set aside from mutation for the warm
+  runner's reason, which the comment beside it gives. **Why `none` takes the pressed colour away where it keeps the lift
   as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
   component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.

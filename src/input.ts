@@ -1,5 +1,7 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
+import { fieldEffects } from './effects.js';
 import { reference } from './reference.js';
+import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
 
 /**
@@ -133,6 +135,12 @@ const field = css`
 `;
 
 /**
+ * What a text control is when the pointer can change it, besides under it: the two guards the
+ * darkening above carries, for its reasons, which a field's effects carry too.
+ */
+const typed = ':not(:disabled):not([readonly])';
+
+/**
  * Omitted rather than written blank, which is a rule and not a preference.
  *
  * An empty attribute is not a neutral one: `pattern=""` is the empty expression and
@@ -254,6 +262,20 @@ class UiTextField extends LitElement {
      * carries the whole of it, and the constructor is where it has to be built.
      */
     readonly #description = new Description(this);
+
+    /**
+     * Starts watching the page's focus as the first field connects, so the ring the reader saw
+     * before the field's first focus is already recorded when the glide needs it.
+     */
+    override connectedCallback(): void {
+        super.connectedCallback();
+        // Stryker disable next-line CallExpression: watch() adds the page's two listeners, and in
+        // the warm process Stryker switches mutants in, a run before has already added them, so the
+        // call gone changes nothing a test can see. Outside the runner's reach, not an equivalent
+        // mutant: on a page with fields and nothing else that watches, nothing would add them, and
+        // the ring would never glide to a field.
+        watch();
+    }
 
     /** The validity, taken from the control that computed it. */
     #publish(control: HTMLInputElement | HTMLTextAreaElement): void {
@@ -407,7 +429,7 @@ class UiTextField extends LitElement {
  */
 export class UiInput extends UiTextField {
     /** The styles its shadow root adopts. */
-    static override readonly styles: CSSResult = field;
+    static override readonly styles: CSSResult[] = [field, fieldEffects('input', typed)];
 
     /** The properties Lit observes on this element. */
     static override readonly properties = {
@@ -461,6 +483,7 @@ export class UiInput extends UiTextField {
                 ?readonly=${this.readonly}
                 aria-invalid=${this.invalid()}
                 aria-describedby=${this.described()}
+                @focus=${arrive}
                 @input=${this.typed}
                 @change=${this.changed}
             />
@@ -491,6 +514,7 @@ export class UiTextarea extends UiTextField {
                 resize: vertical;
             }
         `,
+        fieldEffects('textarea', typed),
     ];
 
     /** The properties Lit observes on this element. */
@@ -520,6 +544,7 @@ export class UiTextarea extends UiTextField {
                 ?readonly=${this.readonly}
                 aria-invalid=${this.invalid()}
                 aria-describedby=${this.described()}
+                @focus=${arrive}
                 @input=${this.typed}
                 @change=${this.changed}
             ></textarea>

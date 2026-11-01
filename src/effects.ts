@@ -1,6 +1,8 @@
 /**
- * A button's effects — RFC 0004's: what the pointer, the focus and a press do to a button, as one
- * sheet that a component which is a button adopts.
+ * The effects a component draws — RFC 0004's: one sheet for each kind of control, which a
+ * component of that kind adopts. A button's, for what the pointer, the focus and a press do to it;
+ * and a field's, for what the pointer and the focus do to a control a reader types or chooses in,
+ * {@link fieldEffects}, which the rest of this docblock leaves to its own.
  *
  * **Built for a component, under its own taste name.** A theme's taste reaches a component by its
  * tag — the button's is `--ui-taste-button-<moment>`, the menu's `--ui-taste-menu-<moment>` — so
@@ -192,6 +194,16 @@ const tint = css`light-dark(
             l c h / max(alpha, 0.6)
     )
 )`;
+
+/**
+ * The effects that move a field's shadow or its place, each by the moment it answers: what a
+ * field's boundary transitions with once one of them is chosen.
+ */
+const fieldMoves = [
+    ['hover-shadow', 'raise'],
+    ['focus-shadow', 'raise'],
+    ['focus-move', 'lift'],
+] as const;
 
 /**
  * A press on a button: breaks it, and spreads its ripple, wherever its sheet chose either. One
@@ -698,6 +710,101 @@ export function buttonEffects(component: string): CSSResult {
                     --ui-fx-ring-time: ${reference('--ui-duration-effect')};
                     --ui-fx-ring-curve: ${reference('--ui-easing-enter')};
                     --ui-fx-ring-exit: ${reference('--ui-easing-exit')};
+                }
+            }
+        }
+    `;
+}
+
+/**
+ * The sheet of a field's effects, for the component whose tag less `ui-` is `component`: each
+ * effect drawn under that component's query, so its own taste reaches it — the input's, the
+ * textarea's and the select's. `able` is what the control is when the pointer can change it,
+ * besides under it: not disabled, and where the reader types, not read-only — a select has no
+ * read-only to guard against, so its sheet names none.
+ *
+ * **What it asks of the component.** Its control is the element `component` names — an `<input>`,
+ * a `<textarea>` or a `<select>` — and the one child of a `.glow` box in its shadow root, the box a
+ * theme's glow is drawn on, with the control's size and corner; and `arrive()` is bound to the
+ * control's focus, with `watch()` called as the component connects. The sheet comes after the
+ * component's own.
+ *
+ * **Nothing moves the control on its own.** A field is where the reference measured motion getting in the way
+ * of the reader, who is typing or choosing there: an effect changes what is round the control, or
+ * moves the box it sits in, the ring with it. The pointer's effects are drawn on a field the
+ * pointer can change and yield to the focus, which in a field is where the reader is acting.
+ *
+ * Built once for each component, as it is defined: a function, and safe as one, for the reason
+ * {@link buttonEffects} gives.
+ */
+export function fieldEffects(component: string, able: string): CSSResult {
+    /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
+    const drawn = query(component);
+
+    /** The control, the element the component's name names. */
+    const control = unsafeCSS(component);
+
+    /** What the control is when the pointer can change it. */
+    const pointable = unsafeCSS(able);
+
+    /** True wherever any of the effects that move a field is chosen, by a consumer or a taste. */
+    const moving = unsafeCSS(
+        fieldMoves.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
+    return css`
+        /* What they move transitions only once one of them is chosen, so with none the boundary
+           is still the only thing that moves: the shadow on the control's own, and the place on
+           the box round it, each over an effect's time on the curve an arrival takes. */
+        @container ${moving} {
+            ${control} {
+                transition-property: border-color, box-shadow;
+                transition-duration:
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-effect')};
+                transition-timing-function:
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-enter')};
+            }
+
+            .glow {
+                transition: translate ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        /* raise: the button's drop, under the control, on a field the pointer can change — not one
+           that cannot be used or written in — which only a pointer that hovers can ask for: a tap
+           leaves the hover behind, and the shadow would stay with it. The focus wins. */
+        @media (hover: hover) {
+            @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
+                ${control}:hover${pointable}:not(:focus-visible) {
+                    box-shadow: ${raise};
+                }
+            }
+        }
+
+        @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
+            ${control}:focus-visible {
+                box-shadow: ${raise};
+            }
+        }
+
+        /* lift: the box round the control two pixels up, the control and its ring with it, for as
+           long as the focus stays. */
+        @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
+            .glow:has(> :focus-visible) {
+                translate: 0 -2px;
+            }
+        }
+
+        /* The focus ring glided over from the control the reader saw it on last, which the page's
+           ring flies — src/ring.ts — as the button hands it the flight: the choice while the
+           reader can see the focus, and its time and curve, never in forced colours. */
+        @media (forced-colors: none) {
+            @container ${unsafeCSS(drawn('focus-ring', 'glide'))} {
+                ${control}:focus-visible {
+                    --ui-fx-ring: glide;
+                    --ui-fx-ring-time: ${reference('--ui-duration-travel')};
+                    --ui-fx-ring-curve: ${reference('--ui-easing-move')};
                 }
             }
         }

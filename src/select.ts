@@ -1,5 +1,7 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
+import { fieldEffects } from './effects.js';
 import { reference } from './reference.js';
+import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
 
 /**
@@ -188,49 +190,50 @@ export class UiOptgroup extends UiDeclaration {
  */
 export class UiSelect extends LitElement {
     /** The styles its shadow root adopts. */
-    static override readonly styles: CSSResult = css`
-        :host {
-            display: block;
-        }
+    static override readonly styles: CSSResult[] = [
+        css`
+            :host {
+                display: block;
+            }
 
-        /* What a theme's glow is drawn on, around the box for the reason src/input.ts gives
+            /* What a theme's glow is drawn on, around the box for the reason src/input.ts gives
            beside its own, which tests/select.test.ts compares as it compares the box. */
-        .glow {
-            display: grid;
-            border-radius: ${reference('--ui-radius')};
-            color: ${reference('--ui-color-accent')};
-            box-shadow: ${reference('--ui-elevation-control')};
-        }
+            .glow {
+                display: grid;
+                border-radius: ${reference('--ui-radius')};
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${reference('--ui-elevation-control')};
+            }
 
-        .glow:has(> [aria-invalid='true']) {
-            color: ${reference('--ui-color-danger')};
-        }
+            .glow:has(> [aria-invalid='true']) {
+                color: ${reference('--ui-color-danger')};
+            }
 
-        .glow:has(> :disabled) {
-            box-shadow: none;
-        }
+            .glow:has(> :disabled) {
+                box-shadow: none;
+            }
 
-        /* The box, which src/input.ts also draws and tests/select.test.ts compares. */
-        select {
-            box-sizing: border-box;
-            inline-size: 100%;
-            font: inherit;
-            font-family: ${reference('--ui-font')};
-            color: ${reference('--ui-color-text')};
-            background-color: ${reference('--ui-color-surface-control')};
-            border: 1px solid ${reference('--ui-color-border')};
-            border-radius: ${reference('--ui-radius')};
-            padding: ${reference('--ui-space')};
-            /* A select opens something when clicked, so it is a pointer rather than a
+            /* The box, which src/input.ts also draws and tests/select.test.ts compares. */
+            select {
+                box-sizing: border-box;
+                inline-size: 100%;
+                font: inherit;
+                font-family: ${reference('--ui-font')};
+                color: ${reference('--ui-color-text')};
+                background-color: ${reference('--ui-color-surface-control')};
+                border: 1px solid ${reference('--ui-color-border')};
+                border-radius: ${reference('--ui-radius')};
+                padding: ${reference('--ui-space')};
+                /* A select opens something when clicked, so it is a pointer rather than a
                caret — the one place this box disagrees with the input's on purpose. */
-            cursor: pointer;
-            /* Only the boundary moves. The focus ring is deliberately not in this list,
+                cursor: pointer;
+                /* Only the boundary moves. The focus ring is deliberately not in this list,
                for the reason src/button.ts gives beside its own. */
-            transition: border-color ${reference('--ui-duration-state')}
-                ${reference('--ui-easing-state')};
-        }
+                transition: border-color ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
 
-        /* Taking the platform's own drawing off is what makes the box possible at all: a
+            /* Taking the platform's own drawing off is what makes the box possible at all: a
            select left at appearance: auto keeps the operating system's chevron and, off
            this engine, ignores much of what is set above — so the control beside a text
            field would stop matching it exactly where a kit is supposed to. What that
@@ -238,13 +241,13 @@ export class UiSelect extends LitElement {
 
            It does NOT cost the picker. appearance: none changes how the closed control
            is painted and nothing about what opens, so a phone still opens its own wheel. */
-        select {
-            appearance: none;
-            padding-inline-end: ${clearance};
-            background-repeat: no-repeat;
-        }
+            select {
+                appearance: none;
+                padding-inline-end: ${clearance};
+                background-repeat: no-repeat;
+            }
 
-        /* The caret is two triangles rather than a picture, and that is what keeps its
+            /* The caret is two triangles rather than a picture, and that is what keeps its
            colour a token: gradients take var(), and an SVG in a data: URI would
            freeze whatever colour was drawn into it. src/checkbox.ts needs a path for its
            tick, so it keeps the path as a mask and paints the colour under it; a caret is
@@ -252,49 +255,57 @@ export class UiSelect extends LitElement {
 
            A multiple select is a list rather than a drop-down, and a caret on a list
            points at nothing, so it is guarded rather than drawn everywhere. */
-        select:not([multiple]) {
-            background-image:
-                linear-gradient(45deg, transparent 50%, ${reference('--ui-color-text-muted')} 50%),
-                linear-gradient(135deg, ${reference('--ui-color-text-muted')} 50%, transparent 50%);
-            background-size: ${arm} ${arm};
-            background-position:
-                right calc(${reference('--ui-space')} + ${arm}) center,
-                right ${reference('--ui-space')} center;
-        }
+            select:not([multiple]) {
+                background-image:
+                    linear-gradient(
+                        45deg,
+                        transparent 50%,
+                        ${reference('--ui-color-text-muted')} 50%
+                    ),
+                    linear-gradient(
+                        135deg,
+                        ${reference('--ui-color-text-muted')} 50%,
+                        transparent 50%
+                    );
+                background-size: ${arm} ${arm};
+                background-position:
+                    right calc(${reference('--ui-space')} + ${arm}) center,
+                    right ${reference('--ui-space')} center;
+            }
 
-        /* Direction is the control's own, not the page's, and background-position has no
+            /* Direction is the control's own, not the page's, and background-position has no
            logical form — so the one physical thing in this sheet is mirrored explicitly.
            The padding needs no rule: padding-inline-end already follows. Measured, both
            halves. */
-        select:not([multiple]):dir(rtl) {
-            background-position:
-                left ${reference('--ui-space')} center,
-                left calc(${reference('--ui-space')} + ${arm}) center;
-        }
+            select:not([multiple]):dir(rtl) {
+                background-position:
+                    left ${reference('--ui-space')} center,
+                    left calc(${reference('--ui-space')} + ${arm}) center;
+            }
 
-        /* The boundary completes the mix it already started, the same way ui-input's does
+            /* The boundary completes the mix it already started, the same way ui-input's does
            and against the same token.
 
            There is no [readonly] guard here and its absence is measured rather than
            forgotten: readOnly is not a property of a select at all, so the input's
            second guard would be a rule about an attribute the platform never sets. */
-        select:hover:not(:disabled) {
-            border-color: ${reference('--ui-color-text')};
-        }
+            select:hover:not(:disabled) {
+                border-color: ${reference('--ui-color-text')};
+            }
 
-        /* A visible focus ring is not decoration: removing it is the single most common
+            /* A visible focus ring is not decoration: removing it is the single most common
            way a component stops being usable by keyboard. */
-        select:focus-visible {
-            outline: 2px solid ${reference('--ui-color-focus')};
-            outline-offset: 2px;
-        }
+            select:focus-visible {
+                outline: 2px solid ${reference('--ui-color-focus')};
+                outline-offset: 2px;
+            }
 
-        select:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
+            select:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
 
-        /* The choices paint the surface themselves. The picker takes its colours from the
+            /* The choices paint the surface themselves. The picker takes its colours from the
            select unless an option brings its own, so a select whose fill a host made
            translucent opens a list nobody can read — RFC 0003 measured it in the dark
            scheme. In every opaque palette this renders exactly as before. The text needs
@@ -306,202 +317,204 @@ export class UiSelect extends LitElement {
            at the end of this sheet takes the choices back off the surface; where the system
            draws it, the highlight on the option under the pointer stays the system's, and
            docs/select.md says so. */
-        select:not([multiple]) :is(option, optgroup) {
-            background-color: ${reference('--ui-color-surface')};
-        }
+            select:not([multiple]) :is(option, optgroup) {
+                background-color: ${reference('--ui-color-surface')};
+            }
 
-        /* Read off the control's own aria-invalid, which this element now writes: it is
+            /* Read off the control's own aria-invalid, which this element now writes: it is
            the same source a screen reader uses. Not :host([error]) — a reflected string
            property whose default is empty puts an empty attribute on the host, and an
            attribute-presence selector matches every element. Measured on ui-checkbox. */
-        select[aria-invalid='true'] {
-            border-color: ${reference('--ui-color-danger')};
-            color: ${reference('--ui-color-text-invalid')};
-        }
+            select[aria-invalid='true'] {
+                border-color: ${reference('--ui-color-danger')};
+                color: ${reference('--ui-color-text-invalid')};
+            }
 
-        /* The list, drawn here where the engine hands it to the page — the base appearance,
+            /* The list, drawn here where the engine hands it to the page — the base appearance,
            which Chromium and WebKit have and Firefox keeps behind a preference that is off —
            and only under a pointer that hovers and is fine. A phone keeps the picker it opens,
            which is the promise ARCHITECTURE.md makes, and what a phone opens under the base
            appearance was not measured. Without either, everything above stands: the system's
            list, the caret in the background, each choice painting the surface. A select of
            several choices draws them in the box and opens nothing, so it is left out. */
-        @supports (appearance: base-select) {
-            @media (hover: hover) and (pointer: fine) {
-                select:not([multiple]),
-                select:not([multiple])::picker(select) {
-                    appearance: base-select;
-                }
+            @supports (appearance: base-select) {
+                @media (hover: hover) and (pointer: fine) {
+                    select:not([multiple]),
+                    select:not([multiple])::picker(select) {
+                        appearance: base-select;
+                    }
 
-                /* The box stays the one above. Its caret moves from the background into the
+                    /* The box stays the one above. Its caret moves from the background into the
                    icon the base appearance gives the control, the same two triangles in the
                    same place, so it can turn over while the list is open, as the menu's caret
                    does. */
-                select:not([multiple]) {
-                    position: relative;
-                    background-image: none;
-                }
+                    select:not([multiple]) {
+                        position: relative;
+                        background-image: none;
+                    }
 
-                select:not([multiple])::picker-icon {
-                    content: '';
-                    position: absolute;
-                    inset-inline-end: ${reference('--ui-space')};
-                    inset-block: 0;
-                    margin: auto 0;
-                    padding: 0;
-                    inline-size: calc(${arm} * 2);
-                    block-size: ${arm};
-                    background-image:
-                        linear-gradient(
-                            45deg,
-                            transparent 50%,
-                            ${reference('--ui-color-text-muted')} 50%
-                        ),
-                        linear-gradient(
-                            135deg,
-                            ${reference('--ui-color-text-muted')} 50%,
-                            transparent 50%
-                        );
-                    background-size: ${arm} ${arm};
-                    background-position:
-                        left center,
-                        right center;
-                    background-repeat: no-repeat;
-                    transition: rotate ${reference('--ui-duration-state')}
-                        ${reference('--ui-easing-state')};
-                }
+                    select:not([multiple])::picker-icon {
+                        content: '';
+                        position: absolute;
+                        inset-inline-end: ${reference('--ui-space')};
+                        inset-block: 0;
+                        margin: auto 0;
+                        padding: 0;
+                        inline-size: calc(${arm} * 2);
+                        block-size: ${arm};
+                        background-image:
+                            linear-gradient(
+                                45deg,
+                                transparent 50%,
+                                ${reference('--ui-color-text-muted')} 50%
+                            ),
+                            linear-gradient(
+                                135deg,
+                                ${reference('--ui-color-text-muted')} 50%,
+                                transparent 50%
+                            );
+                        background-size: ${arm} ${arm};
+                        background-position:
+                            left center,
+                            right center;
+                        background-repeat: no-repeat;
+                        transition: rotate ${reference('--ui-duration-state')}
+                            ${reference('--ui-easing-state')};
+                    }
 
-                select:not([multiple]):open::picker-icon {
-                    rotate: 180deg;
-                }
+                    select:not([multiple]):open::picker-icon {
+                        rotate: 180deg;
+                    }
 
-                /* A raised surface, as the menu's panel is: its glass, its edge, its corner and
+                    /* A raised surface, as the menu's panel is: its glass, its edge, its corner and
                    its shadow, lit in the accent as the panel's is, so the choices take the text
                    back. Half a space clear of the control, on whichever side the platform
                    hangs it. */
-                select:not([multiple])::picker(select) {
-                    box-sizing: border-box;
-                    margin: calc(${reference('--ui-space')} / 2) 0;
-                    padding: calc(${reference('--ui-space')} / 2);
-                    border: 1px solid ${reference('--ui-color-border-overlay')};
-                    border-radius: ${reference('--ui-radius')};
-                    background-color: ${reference('--ui-color-surface-raised')};
-                    backdrop-filter: ${reference('--ui-backdrop-raised')};
-                    color: ${reference('--ui-color-accent')};
-                    box-shadow: ${reference('--ui-elevation-raised')};
-                }
+                    select:not([multiple])::picker(select) {
+                        box-sizing: border-box;
+                        margin: calc(${reference('--ui-space')} / 2) 0;
+                        padding: calc(${reference('--ui-space')} / 2);
+                        border: 1px solid ${reference('--ui-color-border-overlay')};
+                        border-radius: ${reference('--ui-radius')};
+                        background-color: ${reference('--ui-color-surface-raised')};
+                        backdrop-filter: ${reference('--ui-backdrop-raised')};
+                        color: ${reference('--ui-color-accent')};
+                        box-shadow: ${reference('--ui-elevation-raised')};
+                    }
 
-                /* Each choice on the list's surface rather than its own, which the rule above
+                    /* Each choice on the list's surface rather than its own, which the rule above
                    paints for the system's list. */
-                select:not([multiple]) :is(option, optgroup) {
-                    background-color: transparent;
-                    color: ${reference('--ui-color-text')};
-                }
+                    select:not([multiple]) :is(option, optgroup) {
+                        background-color: transparent;
+                        color: ${reference('--ui-color-text')};
+                    }
 
-                /* A choice is a menu's item: its padding, its corner, the hover colour under the
+                    /* A choice is a menu's item: its padding, its corner, the hover colour under the
                    pointer and the ring inside it at the focus. */
-                select:not([multiple]) option {
-                    gap: calc(${reference('--ui-space')} / 2);
-                    padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
-                    border-radius: ${reference('--ui-radius')};
-                    cursor: pointer;
-                    transition: background-color ${reference('--ui-duration-state')}
-                        ${reference('--ui-easing-state')};
-                }
+                    select:not([multiple]) option {
+                        gap: calc(${reference('--ui-space')} / 2);
+                        padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
+                        border-radius: ${reference('--ui-radius')};
+                        cursor: pointer;
+                        transition: background-color ${reference('--ui-duration-state')}
+                            ${reference('--ui-easing-state')};
+                    }
 
-                select:not([multiple]) option:not(:disabled):hover {
-                    background-color: ${reference('--ui-color-hover')};
-                }
+                    select:not([multiple]) option:not(:disabled):hover {
+                        background-color: ${reference('--ui-color-hover')};
+                    }
 
-                select:not([multiple]) option:focus-visible {
-                    outline: 2px solid ${reference('--ui-color-focus')};
-                    outline-offset: -2px;
-                }
+                    select:not([multiple]) option:focus-visible {
+                        outline: 2px solid ${reference('--ui-color-focus')};
+                        outline-offset: -2px;
+                    }
 
-                select:not([multiple]) option:disabled {
-                    color: ${reference('--ui-color-text-muted')};
-                    cursor: not-allowed;
-                }
+                    select:not([multiple]) option:disabled {
+                        color: ${reference('--ui-color-text-muted')};
+                        cursor: not-allowed;
+                    }
 
-                /* The choice already made, filled, its check and its text in the fill's own
+                    /* The choice already made, filled, its check and its text in the fill's own
                    label. Read off :checked, which is the selection rather than the focus: the
                    arrows move the focus through the list and leave the fill where it is. */
-                select:not([multiple]) option:checked {
-                    background-color: ${reference('--ui-color-selected')};
-                    color: ${reference('--ui-color-selected-contrast')};
-                }
+                    select:not([multiple]) option:checked {
+                        background-color: ${reference('--ui-color-selected')};
+                        color: ${reference('--ui-color-selected-contrast')};
+                    }
 
-                select:not([multiple]) option:checked:not(:disabled):hover {
-                    background-color: ${reference('--ui-color-selected-hover')};
-                }
+                    select:not([multiple]) option:checked:not(:disabled):hover {
+                        background-color: ${reference('--ui-color-selected-hover')};
+                    }
 
-                /* Its ring goes round the fill rather than inside it, where it would be drawn in
+                    /* Its ring goes round the fill rather than inside it, where it would be drawn in
                    the fill's own colour in every theme that draws the focus in the accent. */
-                select:not([multiple]) option:checked:focus-visible {
-                    outline-offset: 1px;
-                }
+                    select:not([multiple]) option:checked:focus-visible {
+                        outline-offset: 1px;
+                    }
 
-                /* A group after the first is set off by a line, as the menu's separator does,
+                    /* A group after the first is set off by a line, as the menu's separator does,
                    which WebKit's own sheet draws fainter and Chromium's not at all. */
-                select:not([multiple]) optgroup {
-                    border: none;
-                }
+                    select:not([multiple]) optgroup {
+                        border: none;
+                    }
 
-                select:not([multiple]) optgroup:not(:first-child) {
-                    border-block-start: 1px solid ${reference('--ui-color-border')};
-                    margin-block-start: calc(${reference('--ui-space')} / 2);
-                    padding-block-start: calc(${reference('--ui-space')} / 2);
-                }
+                    select:not([multiple]) optgroup:not(:first-child) {
+                        border-block-start: 1px solid ${reference('--ui-color-border')};
+                        margin-block-start: calc(${reference('--ui-space')} / 2);
+                        padding-block-start: calc(${reference('--ui-space')} / 2);
+                    }
 
-                /* Forced colors puts every author colour into the reader's palette, and the fill
+                    /* Forced colors puts every author colour into the reader's palette, and the fill
                    that marks the choice already made would become the Canvas around it. System
                    colours are the ones the mode keeps, so the choice names Highlight, as a
                    checked box does, its text and its check HighlightText, under the pointer
                    too; and a disabled choice GrayText, the mode's colour for unavailable, which
                    the muted text above is forced out of. */
-                @media (forced-colors: active) {
-                    select:not([multiple]) option:checked,
-                    select:not([multiple]) option:checked:not(:disabled):hover {
-                        background-color: Highlight;
-                        color: HighlightText;
-                    }
+                    @media (forced-colors: active) {
+                        select:not([multiple]) option:checked,
+                        select:not([multiple]) option:checked:not(:disabled):hover {
+                            background-color: Highlight;
+                            color: HighlightText;
+                        }
 
-                    select:not([multiple]) option:disabled {
-                        color: GrayText;
+                        select:not([multiple]) option:disabled {
+                            color: GrayText;
+                        }
                     }
                 }
             }
-        }
 
-        /* The vertical rhythm, written out here rather than shared with src/input.ts for
+            /* The vertical rhythm, written out here rather than shared with src/input.ts for
            the reason the docblock above gives about the box — and compared by
            tests/select.test.ts on the same terms. */
-        .stack {
-            display: flex;
-            flex-direction: column;
-            gap: calc(${reference('--ui-space')} / 2);
-        }
+            .stack {
+                display: flex;
+                flex-direction: column;
+                gap: calc(${reference('--ui-space')} / 2);
+            }
 
-        label {
-            color: ${reference('--ui-color-text')};
-        }
+            label {
+                color: ${reference('--ui-color-text')};
+            }
 
-        :host([disabled]) label {
-            color: ${reference('--ui-color-text-muted')};
-        }
+            :host([disabled]) label {
+                color: ${reference('--ui-color-text-muted')};
+            }
 
-        .help {
-            color: ${reference('--ui-color-text')};
-            font-size: ${reference('--ui-text-supporting')};
-        }
+            .help {
+                color: ${reference('--ui-color-text')};
+                font-size: ${reference('--ui-text-supporting')};
+            }
 
-        /* Colour is not the only cue — the message says what is wrong, and aria-invalid
+            /* Colour is not the only cue — the message says what is wrong, and aria-invalid
            marks the control whatever the styling does. */
-        .error {
-            color: ${reference('--ui-color-danger')};
-            font-size: ${reference('--ui-text-supporting')};
-        }
-    `;
+            .error {
+                color: ${reference('--ui-color-danger')};
+                font-size: ${reference('--ui-text-supporting')};
+            }
+        `,
+        fieldEffects('select', ':not(:disabled)'),
+    ];
 
     /** Takes part in the form it sits in. */
     static readonly formAssociated = true;
@@ -590,9 +603,19 @@ export class UiSelect extends LitElement {
         this.requestUpdate();
     };
 
-    /** Redraws when a choice's properties change, which a slot cannot report. */
+    /**
+     * Redraws when a choice's properties change, which a slot cannot report; and starts watching
+     * the page's focus as the first select connects, so the ring the reader saw before its first
+     * focus is already recorded when the glide needs it.
+     */
     override connectedCallback(): void {
         super.connectedCallback();
+        // Stryker disable next-line CallExpression: watch() adds the page's two listeners, and in
+        // the warm process Stryker switches mutants in, a run before has already added them, so the
+        // call gone changes nothing a test can see. Outside the runner's reach, not an equivalent
+        // mutant: on a page with selects and nothing else that watches, nothing would add them, and
+        // the ring would never glide to a select.
+        watch();
 
         // The half a slot cannot report: a property write on a choice. It reaches here by
         // bubbling, because the choices are this element's own light-DOM children.
@@ -752,6 +775,7 @@ export class UiSelect extends LitElement {
                         ?multiple=${this.multiple}
                         aria-invalid=${this.error === '' ? nothing : 'true'}
                         aria-describedby=${this.#described()}
+                        @focus=${arrive}
                         @change=${this.#changed}
                     >
                         ${[...this.children].map((node) => this.#draw(node, chosen))}

@@ -478,8 +478,9 @@ press — the component draws `none` and takes that away, while `highlight` name
 stands under every theme, as its values do. That makes it the package's motion. On a page that
 inserts the token sheet and chooses nothing, the button — and the menu's trigger, which is one —
 rises under the pointer and at the focus, lifts at the focus, takes its focus ring glided over from
-the control before it, and squeezes and sinks under a press, which RFC 0004 accepted as the cost of
-having motion at all. A shipped theme's
+the control before it, and squeezes and sinks under a press; and a field rises under the pointer and
+at the focus, its box lifting there rather than the control the reader types in, and takes its ring
+glided over. RFC 0004 accepted that as the cost of having motion at all. A shipped theme's
 taste replaces it moment by moment, and names `none` where it wants nothing in place of an effect. An effect enters
 the catalogue with the first component that draws it, bringing the tokens and the script it needs:
 _a category arrives with the component that consumes it_, applied to an effect. The rest waits in
