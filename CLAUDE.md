@@ -331,7 +331,9 @@ explains. This file restates none of them.
   the floors in `tests/tokens.test.ts` that measure the placeholder against it. **Why a field's control reads one list of
   animations from a property per kind** — the comment beside that rule in `src/effects.ts`: the
   focus's burst and an error's flash both animate the control, and two rules writing `animation`
-  leave one unplayed. **Why `none` takes the pressed colour away where it keeps the lift
+  leave one unplayed. **Why a field's pointer engine is bound to the box round the control rather
+  than to the control** — the comment beside the hand-off there: the box's own layer draws the
+  band, and it reads where the pointer is only from an ancestor. **Why `none` takes the pressed colour away where it keeps the lift
   as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
   component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.

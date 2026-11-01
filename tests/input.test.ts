@@ -875,6 +875,82 @@ describe("a field's effects, which the pair adopts", () => {
         return document.querySelector('[data-ui-ring]:popover-open') !== null;
     }
 
+    /** A frame, after which the pointer engine has written what the moves before it asked for. */
+    async function frame(): Promise<void> {
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+                resolve();
+            });
+        });
+    }
+
+    /** The pointer coming over `target` at `x`, `y` in its own pixels, and a frame let pass. */
+    async function over(target: HTMLElement, x: number, y: number): Promise<void> {
+        const rect = target.getBoundingClientRect();
+
+        target.dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                composed: true,
+                clientX: rect.left + x,
+                clientY: rect.top + y,
+            }),
+        );
+        await frame();
+    }
+
+    /** The pointer far off every field, so the engine lets go before the next test. */
+    async function away(): Promise<void> {
+        document.dispatchEvent(
+            new PointerEvent('pointermove', { clientX: -10000, clientY: -10000 }),
+        );
+        await frame();
+    }
+
+    // Never stilled: the engine reads its time off the box, and a time of nothing is the
+    // collapse's, under which nothing follows.
+    it.each(['ui-input', 'ui-textarea'])(
+        'hands the box round the control of a %s where the pointer is, which lights its band',
+        async (tag) => {
+            const form = await mount(`<${tag} label="Note"></${tag}>`);
+            form.style.setProperty('--ui-motion-hover-border', 'edge');
+
+            const element = field(form);
+
+            try {
+                await over(box(element), 20, 10);
+
+                expect(glow(element).style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
+                expect(getComputedStyle(glow(element), '::before').opacity).toBe('1');
+            } finally {
+                await away();
+            }
+        },
+    );
+
+    it("follows the pointer under Glass's taste: the tint where it is, a shadow cast and a band", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+
+        const form = await mount('<ui-input label="Amount"></ui-input>');
+        form.dataset['uiTheme'] = glass.name;
+
+        const element = field(form);
+
+        try {
+            await over(box(element), 20, 10);
+
+            expect(getComputedStyle(box(element)).backgroundImage, 'the tint').toMatch(
+                /^radial-gradient\(256px at /,
+            );
+            expect(getComputedStyle(box(element)).boxShadow, 'a shadow cast').toMatch(/px/);
+            expect(getComputedStyle(glow(element), '::before').opacity, 'a band').toBe('1');
+        } finally {
+            await away();
+        }
+    });
+
     it.each([
         ['ui-input', '--ui-taste-input-focus-move', '--ui-taste-textarea-focus-move'],
         ['ui-textarea', '--ui-taste-textarea-focus-move', '--ui-taste-input-focus-move'],

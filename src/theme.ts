@@ -250,8 +250,8 @@ export const matrix: Theme = {
  * back, further in than the default theme's squeeze, and spreads a circle from where it landed in
  * the place of the pressed colour. A field keeps a light along its inside at the focus, a sheen
  * sweeps across it and its ring comes into focus from a blur, its label as it is; in error it holds
- * a light of the danger round it and flashes its fill. A field's lights under the pointer are not
- * drawn yet.
+ * a light of the danger round it and flashes its fill. Under the pointer a field takes its tint
+ * where the pointer is, a shadow cast away from it and a band along its boundary nearest it.
  */
 export const glass: Theme = {
     name: 'glass',

@@ -167,6 +167,27 @@ const ripple = css`radial-gradient(
 )`;
 
 /**
+ * The spotlight over a field: its tint where the pointer is, as strong as the pointer is near, out
+ * over 16rem, as the card draws it. A field's lights are its tint, since a light in the text's
+ * colour darkened the ground under the placeholder past 4.5:1 where it fell — measured for RFC
+ * 0004 — and over the tint every palette's text and placeholder hold it.
+ */
+const spotlitTint = css`radial-gradient(
+    16rem circle at var(--ui-fx-pointer-x, -999px) var(--ui-fx-pointer-y, -999px),
+    light-dark(
+        oklch(
+            from color-mix(in oklab, ${reference('--ui-color-surface-control')} 88%, ${reference('--ui-color-accent')})
+                max(l, 0.98) c h / calc(max(alpha, 0.6) * var(--ui-fx-pointer-near, 0))
+        ),
+        oklch(
+            from color-mix(in oklab, ${reference('--ui-color-surface-control')} 90%, ${reference('--ui-color-accent')})
+                l c h / calc(max(alpha, 0.6) * var(--ui-fx-pointer-near, 0))
+        )
+    ),
+    transparent 70%
+)`;
+
+/**
  * The accent pushed toward the pole further from the page — darker on a light one, lighter on a
  * dark one — which the edge's band is drawn in over a surface, so it stands apart from an edge
  * that is the accent already, as a glowing theme's is.
@@ -760,6 +781,15 @@ export function fieldEffects(component: string, able: string): CSSResult {
         fieldMoves.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
     );
 
+    /** True wherever a light that follows the pointer is chosen, which the engine follows for. */
+    const following = unsafeCSS(
+        [
+            drawn('hover-fill', 'spotlight'),
+            drawn('hover-shadow', 'cast'),
+            drawn('hover-border', 'edge'),
+        ].join(' or '),
+    );
+
     return css`
         /* What they move transitions only once one of them is chosen, so with none the boundary
            is still the only thing that moves: the shadow and the fill on the control's own, and
@@ -835,6 +865,72 @@ export function fieldEffects(component: string, able: string): CSSResult {
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             ${control}:focus-visible {
                 box-shadow: ${raise};
+            }
+        }
+
+        /* The lights that follow the pointer, which the pointer engine follows for — src/pointer.ts
+           — bound to the box round the control, so the control and the box's own layer both read
+           where the pointer is. Handed a duration it reads no other way, where the sheet chose a
+           light, the pointer can hover and can change the field, so the collapse takes it to
+           nothing and nothing follows. */
+        @media (hover: hover) {
+            @container ${following} {
+                .glow:has(> ${control}${pointable}) {
+                    --ui-fx-follow: ${reference('--ui-duration-effect')};
+                }
+            }
+        }
+
+        /* spotlight: the field's tint where the pointer is, as strong as it is near, at rest as
+           under the pointer, as the button's light is. In front of what the control hands over as
+           behind it. The focus wins. */
+        @container ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
+            ${control}${pointable}:not(:focus-visible) {
+                background-image: ${spotlitTint}, var(--ui-fx-behind, none);
+                background-size: auto, var(--ui-fx-behind-size, auto);
+                background-position:
+                    0 0,
+                    var(--ui-fx-behind-position, 0 0);
+                background-repeat: no-repeat;
+            }
+        }
+
+        /* cast: the button's, on the control's own shadow, as strong as the pointer is near,
+           whether it is over the field or not. The focus wins. */
+        @container ${unsafeCSS(drawn('hover-shadow', 'cast'))} {
+            ${control}${pointable}:not(:focus-visible) {
+                box-shadow: ${cast};
+            }
+        }
+
+        /* edge: a band in the accent pushed off the page, lit along the boundary nearest the
+           pointer and as strong as it is near, on the layer round the box — the one an error's
+           border draws on, which the band leaves to a field in error. Cut to the band as the
+           button's is, Safari's prefixed mask first and the standard one after, for the reason the
+           button's gives. The focus wins. */
+        @container ${unsafeCSS(drawn('hover-border', 'edge'))} {
+            .glow:not(:has(> [aria-invalid='true']))::before {
+                padding: 2px;
+                background: radial-gradient(
+                    ellipse 100% 100% at var(--ui-fx-pointer-x, -999px)
+                        var(--ui-fx-pointer-y, -999px),
+                    ${far},
+                    transparent
+                );
+                -webkit-mask:
+                    linear-gradient(#000 0 0) content-box,
+                    linear-gradient(#000 0 0);
+                -webkit-mask-composite: xor;
+                mask:
+                    linear-gradient(#000 0 0) content-box exclude,
+                    linear-gradient(#000 0 0);
+                opacity: 0;
+            }
+
+            .glow:has(
+                    > ${control}${pointable}:not(:focus-visible):not([aria-invalid='true'])
+                )::before {
+                opacity: var(--ui-fx-pointer-near, 0);
             }
         }
 
@@ -973,9 +1069,10 @@ export function fieldEffects(component: string, able: string): CSSResult {
             }
         }
 
-        /* The layer an error's border draws on: round the box, which it is laid out against, and
-           taking no pointer, so the field itself never moves. */
-        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} or ${unsafeCSS(drawn('invalid-border', 'split'))} or ${unsafeCSS(drawn('invalid-border', 'glow'))} {
+        /* The layer an error's border draws on, and the pointer's band on a field with no error:
+           round the box, which it is laid out against, and taking no pointer, so the field itself
+           never moves. */
+        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} or ${unsafeCSS(drawn('invalid-border', 'split'))} or ${unsafeCSS(drawn('invalid-border', 'glow'))} or ${unsafeCSS(drawn('hover-border', 'edge'))} {
             .glow {
                 position: relative;
             }

@@ -773,3 +773,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#340](https://github.com/rak200/ui/pull/340) | the fields' form moments: the label's accent, the pulse and the flash, its dip accepted |
 | 4    | [#341](https://github.com/rak200/ui/pull/341) | Matrix's fields: tint, glow, no darkening, burst, glitch, the label's glow and split    |
 | 4    | [#342](https://github.com/rak200/ui/pull/342) | Glass's fields at the focus and in error, and the text's halo, which retires the dip    |
+| 4    | [#343](https://github.com/rak200/ui/pull/343) | Glass's fields under the pointer: the tint's spotlight, the cast and the edge           |

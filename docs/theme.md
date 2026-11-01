@@ -187,7 +187,9 @@ than the default theme's squeeze, and spreads a circle from where it landed in t
 pressed colour. A field keeps a light along its inside at the focus, a sheen sweeps across it and its
 ring comes into focus from a blur, its label as it is; in error it holds a light of the danger round
 it and flashes its fill. Each `none` takes back an effect the default theme's taste names, which
-would otherwise run under Glass too. A field's lights under the pointer are not drawn yet.
+would otherwise run under Glass too. Under the pointer a field takes its tint where the pointer
+is, a shadow cast away from it and a band along its boundary nearest it, as a button takes its
+own.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |

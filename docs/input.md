@@ -211,27 +211,30 @@ there, so an effect changes what is round the control, or moves the box it sits 
 it. Each is chosen by a custom property per moment, and where you choose nothing the theme's taste
 runs:
 
-| Property                     | Effect    | What it draws                                             |
-| ---------------------------- | --------- | --------------------------------------------------------- |
-| `--ui-motion-hover-fill`     | `tint`    | a little of the accent in the fill, under the pointer     |
-| `--ui-motion-hover-shadow`   | `raise`   | the button's drop shadow under the control                |
-| `--ui-motion-hover-shadow`   | `glow`    | a light of the accent round the control                   |
-| `--ui-motion-hover-border`   | `none`    | the boundary as it rests, its darkening taken away        |
-| `--ui-motion-focus-fill`     | `tint`    | the same tint, while the focus stays                      |
-| `--ui-motion-focus-fill`     | `shimmer` | the button's sheen swept across it four times             |
-| `--ui-motion-focus-shadow`   | `raise`   | the same drop, while the focus stays                      |
-| `--ui-motion-focus-shadow`   | `burst`   | light bursting out round the control as it arrives        |
-| `--ui-motion-focus-shadow`   | `inner`   | a light along the inside of its edge                      |
-| `--ui-motion-focus-move`     | `lift`    | the box round the control two pixels up, ring and all     |
-| `--ui-motion-focus-ring`     | `glide`   | the ring glided over from the control seen last           |
-| `--ui-motion-focus-ring`     | `glitch`  | the ring shaken and split in two as the focus arrives     |
-| `--ui-motion-focus-ring`     | `refocus` | the ring out of a blur as the focus arrives, and into one |
-| `--ui-motion-focus-label`    | `accent`  | the label in the accent, a fifth of the text in it        |
-| `--ui-motion-focus-label`    | `glow`    | a light of the accent behind the label                    |
-| `--ui-motion-invalid-border` | `pulse`   | a band of the danger sent out from a field in error       |
-| `--ui-motion-invalid-border` | `split`   | the boundary split into the danger and the info           |
-| `--ui-motion-invalid-border` | `glow`    | a light of the danger held round a field in error         |
-| `--ui-motion-invalid-fill`   | `flash`   | a field in error tinted from the danger, and back         |
+| Property                     | Effect      | What it draws                                             |
+| ---------------------------- | ----------- | --------------------------------------------------------- |
+| `--ui-motion-hover-fill`     | `tint`      | a little of the accent in the fill, under the pointer     |
+| `--ui-motion-hover-fill`     | `spotlight` | the tint where the pointer is, as strong as it is near    |
+| `--ui-motion-hover-shadow`   | `raise`     | the button's drop shadow under the control                |
+| `--ui-motion-hover-shadow`   | `glow`      | a light of the accent round the control                   |
+| `--ui-motion-hover-shadow`   | `cast`      | a shadow cast away from the pointer, as near as it is     |
+| `--ui-motion-hover-border`   | `none`      | the boundary as it rests, its darkening taken away        |
+| `--ui-motion-hover-border`   | `edge`      | a band lit along the boundary nearest the pointer         |
+| `--ui-motion-focus-fill`     | `tint`      | the same tint, while the focus stays                      |
+| `--ui-motion-focus-fill`     | `shimmer`   | the button's sheen swept across it four times             |
+| `--ui-motion-focus-shadow`   | `raise`     | the same drop, while the focus stays                      |
+| `--ui-motion-focus-shadow`   | `burst`     | light bursting out round the control as it arrives        |
+| `--ui-motion-focus-shadow`   | `inner`     | a light along the inside of its edge                      |
+| `--ui-motion-focus-move`     | `lift`      | the box round the control two pixels up, ring and all     |
+| `--ui-motion-focus-ring`     | `glide`     | the ring glided over from the control seen last           |
+| `--ui-motion-focus-ring`     | `glitch`    | the ring shaken and split in two as the focus arrives     |
+| `--ui-motion-focus-ring`     | `refocus`   | the ring out of a blur as the focus arrives, and into one |
+| `--ui-motion-focus-label`    | `accent`    | the label in the accent, a fifth of the text in it        |
+| `--ui-motion-focus-label`    | `glow`      | a light of the accent behind the label                    |
+| `--ui-motion-invalid-border` | `pulse`     | a band of the danger sent out from a field in error       |
+| `--ui-motion-invalid-border` | `split`     | the boundary split into the danger and the info           |
+| `--ui-motion-invalid-border` | `glow`      | a light of the danger held round a field in error         |
+| `--ui-motion-invalid-fill`   | `flash`     | a field in error tinted from the danger, and back         |
 
 **The default theme's taste raises a field under the pointer and at the focus, lifts it at the
 focus and glides its ring over**, and the boundary still darkens under the pointer, as it did. **A
@@ -241,11 +244,20 @@ times, each round a `--ui-duration-flourish`, and rests — an error stands for 
 it. The message comes as it did. **Under [Matrix](theme.md#matrix)** a field tints and glows under
 the pointer, and its boundary no longer darkens there; at the focus it takes the tint and a burst of
 light, its ring glitches and its label glows; and in error its boundary splits into the danger and
-the info, and its fill stays as it is. **Under [Glass](theme.md#glass)** a field keeps a light along
-its inside at the focus, a sheen sweeps across it four times and its ring comes into focus from a
-blur, its label staying as it is; and in error it holds a light of the danger round it and flashes
-its fill. Its pointer's lights are not drawn yet — a name a field does not offer draws nothing — so
-it answers the pointer as it did before effects existed.
+the info, and its fill stays as it is. **Under [Glass](theme.md#glass)** a field takes its tint
+where the pointer is, a shadow cast away from it and a band lit along its boundary nearest it; it
+keeps a light along its inside at the focus, a sheen sweeps across it four times and its ring comes
+into focus from a blur, its label staying as it is; and in error it holds a light of the danger
+round it and flashes its fill.
+
+**The spotlight, the cast and the edge follow the pointer**, as the button's do: the pointer engine
+hands the box round the control where the pointer is, a frame at a time, from the moment it comes
+over the field until it is 96px away, and each light fades over that distance. The spotlight is the
+field's tint rather than the button's light, since a light any stronger darkened the ground under
+the placeholder past 4.5:1. The band is drawn on the layer round the box, the one an error's border
+draws on, and leaves it to a field in error. All three follow only where the pointer can hover and
+can change the field, never under reduced motion, and the focus wins over all three. The box binds
+`follow()` from `src/pointer.ts` to its `pointerover`.
 
 **The label's accent has a fifth of the text in it**, so it clears 4.5:1 in every theme and scheme,
 where the accent alone fell under it. **The flash mixes a fifth of the danger into the fill** rather
