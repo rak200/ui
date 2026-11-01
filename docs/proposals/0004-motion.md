@@ -765,3 +765,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#331](https://github.com/rak200/ui/pull/331) | Glass's taste begins: the inner light at the focus and the press's spring               |
 | 4    | [#332](https://github.com/rak200/ui/pull/332) | Glass's ring: the refocus, out of a blur and into one on a second ring of the page's    |
 | 4    | [#333](https://github.com/rak200/ui/pull/333) | Glass's shimmer, with `--ui-duration-loop`, `--ui-iteration-settle` and the collapse    |
+| 4    | [#334](https://github.com/rak200/ui/pull/334) | Glass's pointer: the engine in `src/pointer.ts`, with the spotlight, cast and edge      |
