@@ -17,6 +17,7 @@ import '@rak200/ui';
 - [Where the panel lands](#where-the-panel-lands)
 - [Submenus](#submenus)
 - [Supplementary text](#supplementary-text)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-menu>`
@@ -185,6 +186,25 @@ which is the trigger. Opening the menu does not disturb it.
 The copy in here is not painted, because the tip is already showing it. Take the tip away and the
 description goes with it.
 
+## Motion
+
+**The trigger answers as the secondary button it is.** It takes every effect a
+[`<ui-button>`](button.md#motion) answers the pointer, the focus and a press with — the raise, the
+lift, the ring's glide, the squeeze and the sink under the default theme; the tint, the glow, the
+burst, the glitch and the shatter under Matrix; the spotlight, the cast, the edge, the inner light,
+the shimmer, the refocus, the spring and the ripple under Glass. They are drawn by the same sheet,
+in the same colours and on the same layers, and the suite measures the trigger against a secondary
+button in every state rather than trusting the two to agree.
+
+**A choice reaches it as it reaches a button**: `--ui-motion-<moment>`, written on the page, a
+region, every menu or one. **A theme's taste reaches it under the menu's own name**,
+`--ui-taste-menu-<moment>`, over the page's, so a theme that sets the menu apart sets its trigger
+apart with it. The shipped themes name the pointer, the focus and a press once, for the page, so the
+trigger moves as every button does.
+
+**The panel's entrance and exit, and the caret's flip, are the menu's own moments**, and not drawn
+yet: the panel opens and closes at once, as it did, and the caret turns over as it did.
+
 ## Styling
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
@@ -208,11 +228,12 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | focus ring            | `--ui-color-focus`                                                                                          |
 | trigger glow          | `--ui-elevation-control`, and `--ui-elevation-control-hover` under the pointer, in the accent               |
 | motion                | `--ui-duration-state`, `--ui-easing-state`                                                                  |
+| trigger effects       | a secondary [`<ui-button>`](button.md#motion)'s, by [`--ui-motion-*`](#motion) and `--ui-taste-menu-*`      |
 
 **No new category arrives with this component**, which `ROADMAP.md` predicted: a menu is a
 surface over a page, and elevation, the boundary and the derived neutrals were all already
-here. It is the third overlay in a row to name no `z-index`, because the top layer is the
-platform's.
+here. It is the third overlay in a row to stack with no `z-index`, because the top layer is the
+platform's: the one the sheet names lays the trigger's own layer under its label.
 
 | Part                       | Aims at    |
 | -------------------------- | ---------- |

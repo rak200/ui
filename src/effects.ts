@@ -3,10 +3,10 @@
  * sheet that a component which is a button adopts.
  *
  * **Built for a component, under its own taste name.** A theme's taste reaches a component by its
- * tag — the button's is `--ui-taste-button-<moment>` — so {@link buttonEffects} builds the sheet
- * for the component it is given. One sheet rather than one in each component, since a second
- * component that is a button would otherwise write all of it out again, and stay in step with the
- * first only by being compared with it.
+ * tag — the button's is `--ui-taste-button-<moment>`, the menu's `--ui-taste-menu-<moment>` — so
+ * {@link buttonEffects} builds the sheet for the component it is given. `ui-button` adopts it, and
+ * so does the menu's trigger, a secondary button the menu writes out, as RFC 0004's prototype drew
+ * it: one sheet rather than one in each, which would stay in step only by being compared.
  *
  * **What it asks of the component.** Its control is the `button` in its shadow root, with a class
  * of `primary` or `secondary`, laid out against itself and a stacking context of its own, with the

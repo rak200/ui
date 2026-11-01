@@ -234,7 +234,13 @@ explains. This file restates none of them.
   same docblock carries what `popover="auto"` gives — the layer, light dismissal, Escape — and
   the one thing it measurably does not: **the focus does not come back** across the shadow
   boundary, so `#give()` writes the return trip and only for the two ways out that leave the
-  reader inside the menu.
+  reader inside the menu. **Why the trigger answers the button's effects, and under the menu's
+  taste name** — the comment beside its box in `src/menu.ts` and the docblock on
+  `src/effects.ts`: it adopts `buttonEffects('menu')` after its own sheet, takes the `secondary`
+  class and the band, and binds the four scripts as `ui-button` binds them. `tests/menu.test.ts`
+  measures it against a secondary `ui-button` state by state, with every duration the sheet moves
+  over taken out — and never a script's, whose time of nothing is the collapse's, under which
+  nothing runs.
 - **Why the placement is a module rather than a method** — `src/placement.ts`, which issue #23
   asked for in as many words. `ui-tooltip` wrote it first and `ui-menu` needed it pointing the
   other way; it takes boxes rather than elements for the reason `reservedGutter` in
