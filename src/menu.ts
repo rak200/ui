@@ -1,7 +1,10 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
 import { place, type Box } from './placement.js';
 import { Description } from './description.js';
+import { buttonEffects, pressed } from './effects.js';
+import { follow } from './pointer.js';
 import { reference } from './reference.js';
+import { arrive, watch } from './ring.js';
 
 /**
  * The panel's id, and it needs no counter behind it.
@@ -60,6 +63,19 @@ function caret(): SVGSVGElement {
 }
 
 /**
+ * The span the edge's band is drawn on, which the button's effects ask of a button: a layer of the
+ * trigger's own, since the band is cut to the edge. Hidden, as the caret is: it says nothing.
+ */
+function band(): HTMLSpanElement {
+    const edge = document.createElement('span');
+
+    edge.className = 'edge';
+    edge.setAttribute('aria-hidden', 'true');
+
+    return edge;
+}
+
+/**
  * A menu button: one trigger, one menu, and the ARIA relationship between them.
  *
  * **The trigger is rendered here rather than slotted, which is the opposite of every other
@@ -109,212 +125,225 @@ function caret(): SVGSVGElement {
  */
 export class UiMenu extends LitElement {
     /** The styles its shadow root adopts. */
-    static override readonly styles = css`
-        :host {
-            display: inline-block;
-        }
+    static override readonly styles = [
+        css`
+            :host {
+                display: inline-block;
+            }
 
-        /* The trigger is a secondary ui-button, written out rather than shared — the same
-           trade src/select.ts made against ui-input's box, and answered the same way: the
+            /* The trigger is a secondary ui-button, its box written out rather than shared — the
+           same trade src/select.ts made against ui-input's box, and answered the same way: the
            duplication is real, and tests/menu.test.ts measures this box against that one
            rather than trusting the two to stay in step. Sharing would mean either slotting
            a ui-button, which puts the ARIA relationship back in the consumer's hands, or a
-           mixin, which is a second inheritance axis for one rule set. */
-        button {
-            display: inline-flex;
-            align-items: center;
-            gap: calc(${reference('--ui-space')} / 2);
-            font: inherit;
-            font-family: ${reference('--ui-font')};
-            border: 1px solid transparent;
-            border-radius: ${reference('--ui-radius')};
-            padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 2);
-            background: ${reference('--ui-color-surface-control')};
-            color: ${reference('--ui-color-text')};
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            transition: background-color ${reference('--ui-duration-state')}
-                ${reference('--ui-easing-state')};
-            /* What a theme's glow is laid out against. */
-            position: relative;
-        }
+           mixin, which is a second inheritance axis for one rule set. Its effects are not
+           written out: they are the sheet src/effects.ts builds for every component that is
+           a button, adopted after this one under the menu's own taste name, and measured
+           against the button's in the same suite. */
+            button {
+                display: inline-flex;
+                align-items: center;
+                gap: calc(${reference('--ui-space')} / 2);
+                font: inherit;
+                font-family: ${reference('--ui-font')};
+                border: 1px solid transparent;
+                border-radius: ${reference('--ui-radius')};
+                padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 2);
+                background: ${reference('--ui-color-surface-control')};
+                color: ${reference('--ui-color-text')};
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                transition: background-color ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+                /* What a theme's glow is laid out against, and a stacking context of its own, so
+               the layer under the label is drawn over the trigger's fill, as src/button.ts
+               lays it. */
+                position: relative;
+                isolation: isolate;
+            }
 
-        /* What a theme's glow is drawn on, as src/button.ts draws it and for its reason. */
-        button::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            color: ${reference('--ui-color-accent')};
-            box-shadow: ${reference('--ui-elevation-control')};
-        }
+            /* What a theme's glow is drawn on, as src/button.ts draws it and for its reason. */
+            button::before {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                border-radius: inherit;
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${reference('--ui-elevation-control')};
+            }
 
-        button:hover {
-            background: ${reference('--ui-color-hover')};
-        }
+            button:hover {
+                background: ${reference('--ui-color-hover')};
+            }
 
-        button:hover::before {
-            box-shadow: ${reference('--ui-elevation-control-hover')};
-        }
+            button:hover::before {
+                box-shadow: ${reference('--ui-elevation-control-hover')};
+            }
 
-        /* The edge and a theme's lift, on a layer in the text, as src/button.ts draws a
+            /* The edge and a theme's lift, on a layer in the text, as src/button.ts draws a
            secondary button's and for its reason. */
-        button::after {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border: 1px solid ${reference('--ui-color-border-button')};
-            border-radius: inherit;
-            box-shadow: ${reference('--ui-elevation-button')};
-            transition: border-color ${reference('--ui-duration-state')}
-                ${reference('--ui-easing-state')};
-        }
+            button::after {
+                content: '';
+                position: absolute;
+                /* Under the label, so what a fill effect paints on this layer lights the fill and
+               never the label, as src/button.ts lays it. */
+                z-index: -1;
+                inset: -1px;
+                border: 1px solid ${reference('--ui-color-border-button')};
+                border-radius: inherit;
+                box-shadow: ${reference('--ui-elevation-button')};
+                transition: border-color ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
 
-        button:hover::after {
-            border-color: ${reference('--ui-color-border-button-hover')};
-        }
+            button:hover::after {
+                border-color: ${reference('--ui-color-border-button-hover')};
+            }
 
-        /* Zero rather than a second token, for the reason src/button.ts states beside its
+            /* Zero rather than a second token, for the reason src/button.ts states beside its
            own: a press is over in about 100ms, so an entering transition of 150ms would
            land after the finger has left. */
-        button:active {
-            background: ${reference('--ui-color-pressed')};
-            transition-duration: 0s;
-        }
+            button:active {
+                background: ${reference('--ui-color-pressed')};
+                transition-duration: 0s;
+            }
 
-        button:focus-visible {
-            outline: 2px solid ${reference('--ui-color-focus')};
-            outline-offset: 2px;
-        }
+            button:focus-visible {
+                outline: 2px solid ${reference('--ui-color-focus')};
+                outline-offset: 2px;
+            }
 
-        /* One dimension, not two: an svg carrying a viewBox is a replaced element with an
+            /* One dimension, not two: an svg carrying a viewBox is a replaced element with an
            intrinsic ratio, so a square glyph given a width takes the same height from it.
            src/toast.ts carries the measurement that made this a rule. */
-        svg {
-            flex: none;
-            inline-size: ${reference('--ui-icon-size')};
-            stroke-width: ${reference('--ui-icon-stroke')};
-            color: ${reference('--ui-color-text-muted')};
-            transition: rotate ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
-        }
+            svg {
+                flex: none;
+                inline-size: ${reference('--ui-icon-size')};
+                stroke-width: ${reference('--ui-icon-stroke')};
+                color: ${reference('--ui-color-text-muted')};
+                transition: rotate ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
 
-        :host([open]) svg {
-            rotate: 180deg;
-        }
+            :host([open]) svg {
+                rotate: 180deg;
+            }
 
-        /* The panel's own box. position: fixed is what the popover already is; it is
+            /* The panel's own box. position: fixed is what the popover already is; it is
            restated because the script writes the two insets against the viewport, and a
            reader of those lines should not have to know which stylesheet made them mean
            that. */
-        [popover] {
-            position: fixed;
-            margin: 0;
-            inset: auto;
-            box-sizing: border-box;
-            min-inline-size: max-content;
-            max-inline-size: calc(${reference('--ui-space')} * 44);
-            padding: calc(${reference('--ui-space')} / 2);
-            /* Not the popover's own overflow: auto. The boundary's layer below reaches a pixel
+            [popover] {
+                position: fixed;
+                margin: 0;
+                inset: auto;
+                box-sizing: border-box;
+                min-inline-size: max-content;
+                max-inline-size: calc(${reference('--ui-space')} * 44);
+                padding: calc(${reference('--ui-space')} / 2);
+                /* Not the popover's own overflow: auto. The boundary's layer below reaches a pixel
                past the padding box on purpose, and that gave every open panel a pixel to
                scroll and a scrollbar to show it — measured, 121×109 of 122×110. A menu is as
                tall as its items, so nothing here scrolls. */
-            overflow: visible;
-            /* Here rather than under :popover-open with the display: a host that holds the
+                overflow: visible;
+                /* Here rather than under :popover-open with the display: a host that holds the
                panel through its close with a transition of display keeps the display, and a
                direction scoped to the open state let go of it first — measured, the items
                laid out in a row, 280×63 for 123×111, for the whole of the exit. */
-            flex-direction: column;
-            border: 1px solid ${reference('--ui-color-border-overlay')};
-            border-radius: ${reference('--ui-radius')};
-            /* A raised surface, as a card is. */
-            background: ${reference('--ui-color-surface-raised')};
-            backdrop-filter: ${reference('--ui-backdrop-raised')};
-            color: ${reference('--ui-color-text')};
-            font-family: ${reference('--ui-font')};
-        }
+                flex-direction: column;
+                border: 1px solid ${reference('--ui-color-border-overlay')};
+                border-radius: ${reference('--ui-radius')};
+                /* A raised surface, as a card is. */
+                background: ${reference('--ui-color-surface-raised')};
+                backdrop-filter: ${reference('--ui-backdrop-raised')};
+                color: ${reference('--ui-color-text')};
+                font-family: ${reference('--ui-font')};
+            }
 
-        /* Lifted and bounded both, for the reason src/card.ts gives: a shadow is one value
+            /* Lifted and bounded both, for the reason src/card.ts gives: a shadow is one value
            in both schemes and does almost nothing on a dark page, where the derived
            boundary is what separates the surface from what is under it. On a layer in the
            accent, as the card's is and for its reason, which takes no pointer so the items
            are still what is chosen. */
-        [popover]::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            pointer-events: none;
-            color: ${reference('--ui-color-accent')};
-            box-shadow: ${reference('--ui-elevation-raised')};
-        }
+            [popover]::before {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                border-radius: inherit;
+                pointer-events: none;
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${reference('--ui-elevation-raised')};
+            }
 
-        /* display is named under :popover-open and nowhere else, and that is the trap
+            /* display is named under :popover-open and nowhere else, and that is the trap
            src/dialog.ts fell into once: the user agent hides a closed popover with
            display: none, and an author rule naming display unconditionally outranks it. */
-        [popover]:popover-open {
-            display: flex;
-        }
+            [popover]:popover-open {
+                display: flex;
+            }
 
-        /* The gap between the panel and its trigger, in CSS because it is a token and the
+            /* The gap between the panel and its trigger, in CSS because it is a token and the
            script has no way to resolve one: a custom property reads back as it was
            written, so 0.5rem would arrive at a function that needs pixels. */
-        [popover][data-side='block-end'] {
-            translate: 0 calc(${reference('--ui-space')} / 2);
-        }
+            [popover][data-side='block-end'] {
+                translate: 0 calc(${reference('--ui-space')} / 2);
+            }
 
-        [popover][data-side='block-start'] {
-            translate: 0 calc(${reference('--ui-space')} / -2);
-        }
+            [popover][data-side='block-start'] {
+                translate: 0 calc(${reference('--ui-space')} / -2);
+            }
 
-        /* An item is the host's own control, reached through ::slotted — so what is set
+            /* An item is the host's own control, reached through ::slotted — so what is set
            here is the only thing this component decides about it: that it fills the row,
            reads left to right, and answers a pointer. */
-        ::slotted(button),
-        ::slotted(a) {
-            display: block;
-            inline-size: 100%;
-            box-sizing: border-box;
-            text-align: start;
-            font: inherit;
-            border: none;
-            border-radius: ${reference('--ui-radius')};
-            padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
-            background: none;
-            color: inherit;
-            text-decoration: none;
-            cursor: pointer;
-            transition: background-color ${reference('--ui-duration-state')}
-                ${reference('--ui-easing-state')};
-        }
+            ::slotted(button),
+            ::slotted(a) {
+                display: block;
+                inline-size: 100%;
+                box-sizing: border-box;
+                text-align: start;
+                font: inherit;
+                border: none;
+                border-radius: ${reference('--ui-radius')};
+                padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
+                background: none;
+                color: inherit;
+                text-decoration: none;
+                cursor: pointer;
+                transition: background-color ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
 
-        /* The :not() guards are measured rather than assumed, the same way src/button.ts
+            /* The :not() guards are measured rather than assumed, the same way src/button.ts
            measured its own: a disabled control still matches :hover, so without them an
            item that cannot be chosen would light up under a pointer. */
-        ::slotted(button:not(:disabled):hover),
-        ::slotted(a:not([aria-disabled='true']):hover) {
-            background: ${reference('--ui-color-hover')};
-        }
+            ::slotted(button:not(:disabled):hover),
+            ::slotted(a:not([aria-disabled='true']):hover) {
+                background: ${reference('--ui-color-hover')};
+            }
 
-        ::slotted(button:focus-visible),
-        ::slotted(a:focus-visible) {
-            outline: 2px solid ${reference('--ui-color-focus')};
-            outline-offset: -2px;
-        }
+            ::slotted(button:focus-visible),
+            ::slotted(a:focus-visible) {
+                outline: 2px solid ${reference('--ui-color-focus')};
+                outline-offset: -2px;
+            }
 
-        ::slotted(button:disabled),
-        ::slotted([aria-disabled='true']) {
-            color: ${reference('--ui-color-text-muted')};
-            cursor: not-allowed;
-        }
+            ::slotted(button:disabled),
+            ::slotted([aria-disabled='true']) {
+                color: ${reference('--ui-color-text-muted')};
+                cursor: not-allowed;
+            }
 
-        /* An hr already claims role="separator" — measured — so the platform owns what it
+            /* An hr already claims role="separator" — measured — so the platform owns what it
            means and this owns only what it looks like. */
-        ::slotted(hr) {
-            border: none;
-            border-block-start: 1px solid ${reference('--ui-color-border')};
-            margin: calc(${reference('--ui-space')} / 2) 0;
-        }
-    `;
+            ::slotted(hr) {
+                border: none;
+                border-block-start: 1px solid ${reference('--ui-color-border')};
+                margin: calc(${reference('--ui-space')} / 2) 0;
+            }
+        `,
+        buttonEffects('menu'),
+    ];
 
     /** The properties Lit observes on this element. */
     static override readonly properties = {
@@ -409,7 +438,15 @@ export class UiMenu extends LitElement {
         // copy of it.
         trigger.setAttribute('popovertarget', panelId);
         trigger.addEventListener('keydown', this.#onTriggerKey);
-        trigger.append(slot('trigger'), caret());
+        // A secondary button's effects, which the trigger answers as that button does: the
+        // sheet draws them by the class and on the band, and the scripts they need are bound
+        // as ui-button binds them — src/effects.ts says what it asks of a button.
+        trigger.className = 'secondary';
+        trigger.addEventListener('focus', arrive);
+        trigger.addEventListener('pointerover', follow);
+        trigger.addEventListener('pointerdown', pressed);
+        trigger.addEventListener('keydown', pressed);
+        trigger.append(slot('trigger'), caret(), band());
 
         panel.id = panelId;
         panel.setAttribute('part', 'menu');
@@ -423,6 +460,15 @@ export class UiMenu extends LitElement {
         const items = slot();
         items.addEventListener('slotchange', this.#wire);
         panel.append(items);
+    }
+
+    /**
+     * Starts watching the page's focus as the first menu connects, so the ring the reader saw
+     * before the trigger's first focus is already recorded when the glide needs it.
+     */
+    override connectedCallback(): void {
+        super.connectedCallback();
+        watch();
     }
 
     /** Drops the listeners an open panel holds on the window. */

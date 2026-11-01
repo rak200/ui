@@ -10,7 +10,8 @@ import '../src/menu.js';
 import '../src/button.js';
 import '../src/tooltip.js';
 import { reference } from '../src/reference.js';
-import type { DerivedToken, Token } from '../src/tokens.js';
+import { tokenStyleSheet, type DerivedToken, type Token } from '../src/tokens.js';
+import { glass, themeStyleSheet } from '../src/theme.js';
 import type { UiMenu } from '../src/menu.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -307,9 +308,13 @@ describe('ui-menu', () => {
         await open(menu(host));
 
         expect(getComputedStyle(panel(menu(host))).zIndex).toBe('auto');
+        // The one z-index the sheet names is the trigger's layer under its label: -1, inside the
+        // trigger's own stacking context, which lifts nothing over the page.
         expect(
-            String((customElements.get('ui-menu') as unknown as { styles: unknown }).styles),
-        ).not.toContain('z-index');
+            String((customElements.get('ui-menu') as unknown as { styles: unknown }).styles).match(
+                /z-index:[^;]+/g,
+            ),
+        ).toEqual(['z-index: -1']);
     });
 
     it('is accessible, closed and open', async () => {
@@ -1578,6 +1583,343 @@ describe('the edge, and the lift a theme gives', () => {
         expect(edged(element).transitionProperty).toBe('border-color');
         expect(edged(element).transitionDuration).toBe('0.4s');
         expect(edged(element).transitionTimingFunction).toBe('linear');
+    });
+});
+
+/**
+ * The button's effects, which the trigger answers as the secondary button it is — RFC 0004.
+ *
+ * Measured against a secondary `ui-button` rather than asserted value by value, as the box is
+ * above: the two adopt one sheet, so the check is that the trigger is drawn as the button is in
+ * every state, and `tests/button.test.ts` pins what the button draws.
+ */
+describe("the button's effects, which the trigger answers as a secondary button does", () => {
+    /**
+     * Every duration the sheet's effects move over, taken out so a read is where an effect lands.
+     * Never for a script's effect: each reads its time off the trigger, and a time of nothing is
+     * the collapse's, under which nothing flies, follows, breaks or spreads.
+     */
+    const stilled = {
+        '--ui-duration-effect': '0s',
+        '--ui-duration-state': '0s',
+        '--ui-duration-flourish': '0s',
+    } as const;
+
+    /** The colours and lights a theme gives, retuned so each effect shows wherever it draws. */
+    const tuned = {
+        ...stilled,
+        '--ui-elevation-control': '0 0 0 1px currentColor',
+        '--ui-elevation-control-hover': '0 0 0 2px currentColor',
+        '--ui-color-border-button': 'rgb(1, 2, 3)',
+        '--ui-color-border-button-hover': 'rgb(4, 5, 6)',
+        '--ui-color-surface-control': 'rgb(250, 250, 250)',
+        '--ui-color-hover': 'rgb(7, 8, 9)',
+        '--ui-color-pressed': 'rgb(10, 11, 12)',
+        '--ui-color-accent': 'rgb(0, 0, 255)',
+    } as const;
+
+    /** A secondary button labelled as the trigger is. */
+    const secondary = '<ui-button variant="secondary">Actions</ui-button>';
+
+    afterEach(() => {
+        // A ring still in the air lands, so nothing flies on into the next test.
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
+    });
+
+    /** Mounts `markup` with the effects `choices` names, and the tokens `tokens` sets. */
+    async function chosen(
+        markup: string,
+        choices: Readonly<Record<string, string>>,
+        tokens: Readonly<Record<string, string>> = {},
+    ): Promise<HTMLElement> {
+        const host = await mount(markup);
+
+        for (const [name, value] of Object.entries(tokens)) {
+            host.style.setProperty(name, value);
+        }
+
+        for (const [moment, effect] of Object.entries(choices)) {
+            host.style.setProperty(`--ui-motion-${moment}`, effect);
+        }
+
+        return host;
+    }
+
+    /** The control a mounted fixture holds: the menu's trigger, or the button's own. */
+    function control(host: HTMLElement): HTMLElement {
+        const owner = only(host, 'ui-menu, ui-button');
+
+        return inner(owner, 'button');
+    }
+
+    /** What the effects paint on a control as it is now: on it, and on its two layers. */
+    function painted(target: HTMLElement): readonly string[] {
+        const own = getComputedStyle(target);
+        const before = getComputedStyle(target, '::before');
+        const after = getComputedStyle(target, '::after');
+
+        return [
+            own.backgroundColor,
+            own.boxShadow,
+            own.translate,
+            own.scale,
+            own.animationName,
+            own.isolation,
+            before.boxShadow,
+            after.borderTopColor,
+            after.backgroundImage,
+            after.animationName,
+            after.zIndex,
+        ];
+    }
+
+    /** What a control's effects paint at rest, under the pointer, at the focus and pressed. */
+    async function states(target: HTMLElement): Promise<readonly (readonly string[])[]> {
+        const rest = painted(target);
+
+        await userEvent.hover(target);
+
+        const hovered = painted(target);
+
+        await parkPointer();
+        await userEvent.tab();
+
+        const focused = painted(target);
+
+        target.blur();
+        await press(target, true);
+
+        const held = painted(target);
+
+        await press(target, false);
+        await parkPointer();
+
+        return [rest, hovered, focused, held];
+    }
+
+    it.each([
+        [
+            "the default theme's taste",
+            {
+                'hover-shadow': 'raise',
+                'focus-move': 'lift',
+                'focus-shadow': 'raise',
+                'press-move': 'squish',
+                'press-shadow': 'sink',
+            },
+        ],
+        [
+            "Matrix's",
+            {
+                'hover-fill': 'tint',
+                'hover-shadow': 'glow',
+                'focus-fill': 'highlight',
+                'focus-shadow': 'burst',
+                'press-fill': 'none',
+            },
+        ],
+        [
+            "Glass's",
+            {
+                'focus-move': 'none',
+                'focus-fill': 'shimmer',
+                'focus-shadow': 'inner',
+                'press-move': 'spring',
+            },
+        ],
+        [
+            'none for every moment a theme answers',
+            {
+                'hover-fill': 'none',
+                'hover-shadow': 'none',
+                'hover-border': 'none',
+                'press-fill': 'none',
+            },
+        ],
+    ])('draws the trigger as a secondary button, under %s', async (_whose, choices) => {
+        const trigger = await chosen(fixture, choices, tuned);
+        const mine = await states(control(trigger));
+
+        trigger.remove();
+
+        const button = await chosen(secondary, choices, tuned);
+        const theirs = await states(control(button));
+
+        expect(mine).toEqual(theirs);
+    });
+
+    it.each([
+        ['hover-fill', 'spotlight', ['--ui-fx-follow']],
+        ['press-move', 'shatter', ['--ui-fx-press', '--ui-fx-press-time', '--ui-fx-press-curve']],
+        ['press-fill', 'ripple', ['--ui-fx-ripple-time', '--ui-fx-ripple-curve']],
+    ])(
+        'hands the scripts what a secondary button hands them, where %s is %s',
+        async (moment, effect, names) => {
+            const handed = (host: HTMLElement): readonly string[] =>
+                names.map((name) => getComputedStyle(control(host)).getPropertyValue(name));
+            const trigger = await chosen(fixture, { [moment]: effect });
+            const button = await chosen(secondary, { [moment]: effect });
+
+            expect(
+                handed(trigger).every((value) => value !== ''),
+                'something handed',
+            ).toBe(true);
+            expect(handed(trigger)).toEqual(handed(button));
+        },
+    );
+
+    it.each(['glide', 'glitch', 'refocus'])(
+        'hands the ring what a secondary button hands it at the focus, where the ring is %s',
+        async (effect) => {
+            const handed = async (host: HTMLElement): Promise<readonly string[]> => {
+                await userEvent.tab();
+
+                const styles = getComputedStyle(control(host));
+
+                return ['', '-time', '-curve'].map((name) =>
+                    styles.getPropertyValue(`--ui-fx-ring${name}`),
+                );
+            };
+            const trigger = await chosen(fixture, { 'focus-ring': effect });
+            const mine = await handed(trigger);
+
+            trigger.remove();
+
+            const button = await chosen(secondary, { 'focus-ring': effect });
+
+            expect(mine[0], 'the ring chosen').toBe(effect);
+            expect(mine).toEqual(await handed(button));
+        },
+    );
+
+    it("flies the page's ring to the trigger as the focus arrives there", async () => {
+        await chosen(fixture, { 'focus-ring': 'glitch' });
+
+        await userEvent.tab();
+
+        expect(document.querySelector('[data-ui-ring]:popover-open')).not.toBeNull();
+    });
+
+    it('hands the trigger where the pointer is, and lights its band there', async () => {
+        const host = await chosen(fixture, { 'hover-border': 'edge' });
+        const target = control(host);
+        const box = target.getBoundingClientRect();
+
+        target.dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                composed: true,
+                clientX: box.left + 20,
+                clientY: box.top + 10,
+            }),
+        );
+        await settle();
+
+        try {
+            expect(target.style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
+            expect(getComputedStyle(inner(menu(host), '.edge')).opacity).toBe('1');
+        } finally {
+            // Far off, so the engine lets go of the trigger before the next test.
+            document.dispatchEvent(
+                new PointerEvent('pointermove', { clientX: -10000, clientY: -10000 }),
+            );
+            await settle();
+        }
+    });
+
+    it('spreads a ripple from where the pointer pressed the trigger, and from the middle for a key', async () => {
+        const host = await chosen(fixture, { 'press-fill': 'ripple' });
+        const target = control(host);
+        const box = target.getBoundingClientRect();
+
+        target.dispatchEvent(
+            new PointerEvent('pointerdown', {
+                bubbles: true,
+                composed: true,
+                button: 0,
+                clientX: box.left + box.width / 4,
+                clientY: box.top + box.height / 2,
+            }),
+        );
+
+        expect(target.hasAttribute('data-ripple'), 'spreading').toBe(true);
+        expect(target.style.getPropertyValue('--ui-fx-ripple-x'), 'where it was pressed').toBe(
+            '25%',
+        );
+
+        keydown(target, ' ');
+
+        expect(target.style.getPropertyValue('--ui-fx-ripple-x'), 'from the middle').toBe('50%');
+    });
+
+    it('breaks the trigger under a press, where the shatter is chosen', async () => {
+        const host = await chosen(fixture, { 'press-move': 'shatter' });
+        const target = control(host);
+        const box = target.getBoundingClientRect();
+        const at = { clientX: box.left + 20, clientY: box.top + 10 };
+
+        target.dispatchEvent(
+            new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0, ...at }),
+        );
+
+        try {
+            expect(target.style.filter).toBe('url("#ui-break")');
+        } finally {
+            window.dispatchEvent(new PointerEvent('pointerup', at));
+        }
+    });
+
+    it.each([
+        ["the menu's own taste", '--ui-taste-menu-focus-move', '0px -2px'],
+        ["the button's", '--ui-taste-button-focus-move', 'none'],
+    ])('reads %s for the trigger', async (_whose, name, translate) => {
+        const host = await chosen(fixture, {}, stilled);
+        host.style.setProperty(name, 'lift');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control(host)).translate).toBe(translate);
+    });
+
+    it('draws the band on a span of the trigger a reader is not told of, as the caret is', async () => {
+        const host = await mount(fixture);
+        const edge = inner(menu(host), '.edge');
+
+        expect(edge.parentElement, 'in the trigger').toBe(trigger(menu(host)));
+        expect(edge.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it("answers Glass's taste on the trigger: a light inside at the focus, a spring and a ripple", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+
+        // The press's spring and the light inside land at once; the ripple keeps its own time,
+        // a flourish's, which it reads.
+        const host = await chosen(
+            fixture,
+            {},
+            {
+                '--ui-duration-effect': '0s',
+                '--ui-duration-state': '0s',
+            },
+        );
+        host.setAttribute('data-ui-theme', glass.name);
+
+        const target = control(host);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(target).boxShadow, 'a light inside').toMatch(/ inset$/);
+        expect(getComputedStyle(target).translate, 'no lift').toBe('none');
+
+        target.blur();
+        await press(target, true);
+
+        expect(getComputedStyle(target).scale, 'sprung in').toBe('0.9');
+        expect(target.hasAttribute('data-ripple'), 'a ripple').toBe(true);
     });
 });
 

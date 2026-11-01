@@ -289,8 +289,10 @@ container style queries — Firefox before 151, inside the
 it did before effects existed.
 
 **Every effect here is drawn by one internal sheet**, `buttonEffects()` in `src/effects.ts`, which
-the button adopts after its own, built under the button's taste name. The shatter's `press()` and
-the ripple's `spread()` reach the button through one listener from the same module, `pressed()`.
+the button adopts after its own, built under the button's taste name; the
+[menu's trigger](menu.md#motion) adopts the same sheet under the menu's. The shatter's `press()`
+and the ripple's `spread()` reach the button through one listener from the same module,
+`pressed()`.
 
 ## Styling
 
