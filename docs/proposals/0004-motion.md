@@ -770,3 +770,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#336](https://github.com/rak200/ui/pull/336) | the button's effects as one sheet built per component, in `src/effects.ts`              |
 | 4    | [#337](https://github.com/rak200/ui/pull/337) | the menu's trigger: the button's effects, adopted as `buttonEffects('menu')`            |
 | 4    | [#339](https://github.com/rak200/ui/pull/339) | the fields' default: `fieldEffects()`, the raise, the box's lift and the ring's glide   |
+| 4    | [#340](https://github.com/rak200/ui/pull/340) | the fields' form moments: the label's accent, the pulse and the flash, its dip accepted |

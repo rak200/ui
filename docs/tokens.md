@@ -547,14 +547,17 @@ taste.page['hover-shadow']; // 'raise'
 taste.page['press-move']; // 'squish'
 ```
 
-| Moment         | Effect   | On the button                                      |
-| -------------- | -------- | -------------------------------------------------- |
-| `hover-shadow` | `raise`  | a drop shadow under the pointer                    |
-| `focus-shadow` | `raise`  | the same drop, at the focus                        |
-| `focus-move`   | `lift`   | two pixels up at the focus, the ring with it       |
-| `focus-ring`   | `glide`  | the ring glided over from the control seen last    |
-| `press-move`   | `squish` | squeezed under a press, springing back once let go |
-| `press-shadow` | `sink`   | its shadow sunk inside under a press               |
+| Moment           | Effect   | What it draws                                       |
+| ---------------- | -------- | --------------------------------------------------- |
+| `hover-shadow`   | `raise`  | a drop shadow under the pointer                     |
+| `focus-shadow`   | `raise`  | the same drop, at the focus                         |
+| `focus-move`     | `lift`   | two pixels up at the focus, the ring with it        |
+| `focus-ring`     | `glide`  | the ring glided over from the control seen last     |
+| `focus-label`    | `accent` | a field's label in the accent, at the focus         |
+| `press-move`     | `squish` | squeezed under a press, springing back once let go  |
+| `press-shadow`   | `sink`   | its shadow sunk inside under a press                |
+| `invalid-border` | `pulse`  | a band of the danger sent out from a field in error |
+| `invalid-fill`   | `flash`  | a field in error tinted from the danger, and back   |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
@@ -567,10 +570,10 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 ```
 
 `none` keeps a component as it was for that moment. An entry arrives with the first component that
-draws the effect it names — [the button](button.md#motion) draws every one here — and the suite
-refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each as the button
-does, and [a field](input.md#motion) answers the pointer's and the focus's, its box lifting rather
-than the control.
+draws the effect it names — [the button](button.md#motion) draws the pointer's, the focus's and a
+press's, and [a field](input.md#motion) the pointer's, the focus's, its label's and an error's — and
+the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
+button answers as the button does, and a field's box lifts rather than its control.
 
 ## `tokenStyleSheet`
 

@@ -733,8 +733,11 @@ export const taste: Taste = {
         'focus-move': 'lift',
         'focus-shadow': 'raise',
         'focus-ring': 'glide',
+        'focus-label': 'accent',
         'press-move': 'squish',
         'press-shadow': 'sink',
+        'invalid-border': 'pulse',
+        'invalid-fill': 'flash',
     },
 };
 

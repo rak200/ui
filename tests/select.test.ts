@@ -1494,6 +1494,31 @@ describe("a field's effects, which the select adopts", () => {
         expect(aloft()).toBe(true);
     });
 
+    it("answers an error and the focus under the default theme's taste: a band, a flash and the label", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+        const form = await mount(fixture.replace('<ui-select', '<ui-select error="Pick one."'));
+        stilled(form);
+
+        expect(getComputedStyle(glow(select(form)), '::before').animationName, 'the pulse').toBe(
+            'ui-pulse-danger',
+        );
+        expect(getComputedStyle(control(form)).animationName, 'the flash').toBe('ui-flash');
+
+        const label = select(form).shadowRoot?.querySelector('label') ?? null;
+
+        if (label === null) {
+            throw new Error('the select rendered no label');
+        }
+
+        const resting = getComputedStyle(label).color;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(label).color, 'the label at the focus').not.toBe(resting);
+    });
+
     it("raises the select under the pointer, and raises and lifts it at the focus, under the default theme's taste", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet();

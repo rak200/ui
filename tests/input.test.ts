@@ -10,6 +10,7 @@ import '../src/input.js';
 import '../src/tooltip.js';
 import type { UiInput, UiTextarea } from '../src/input.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
 type Field = UiInput | UiTextarea;
@@ -941,6 +942,85 @@ describe("a field's effects, which the pair adopts", () => {
 
         expect(getComputedStyle(box(field(form))).boxShadow, 'at the focus').toBe(raised);
         expect(getComputedStyle(glow(field(form))).translate, 'lifted').toBe('0px -2px');
+    });
+});
+
+/**
+ * A form's own moments on a field — RFC 0004's — under the default theme's taste, and what the two
+ * shipped themes take back of it.
+ */
+describe("a form's moments on a field", () => {
+    /** Inserts the token sheet, and a theme's after it where one is named. */
+    function sheet(theme?: Theme): void {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
+        document.body.append(style);
+    }
+
+    /** The box round a field's control, which an error's band is drawn round. */
+    function glow(element: Field): HTMLElement {
+        const found = element.renderRoot.querySelector<HTMLElement>('.glow');
+
+        if (found === null) {
+            throw new Error('the field rendered no box round its control');
+        }
+
+        return found;
+    }
+
+    /** Mounts a field in error under `theme`, every duration the effects move over taken out. */
+    async function erring(theme?: Theme): Promise<Field> {
+        sheet(theme);
+
+        const form = await mount('<ui-input label="Amount" error="Wrong."></ui-input>');
+        form.style.setProperty('--ui-duration-effect', '0s');
+        form.style.setProperty('--ui-duration-state', '0s');
+
+        if (theme !== undefined) {
+            form.dataset['uiTheme'] = theme.name;
+        }
+
+        return field(form);
+    }
+
+    it("answers an error under the default theme's taste: a band sent out, and the fill flashed", async () => {
+        const element = await erring();
+
+        expect(getComputedStyle(glow(element), '::before').animationName, 'the pulse').toBe(
+            'ui-pulse-danger',
+        );
+        expect(getComputedStyle(box(element)).animationName, 'the flash').toBe('ui-flash');
+    });
+
+    it("takes the label to the accent at the focus under the default theme's taste", async () => {
+        const element = await erring();
+        const resting = getComputedStyle(part(element, 'label')).color;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(part(element, 'label')).color).not.toBe(resting);
+    });
+
+    it("keeps a field in error's fill as it is under Matrix, whose taste takes the flash back", async () => {
+        const element = await erring(matrix);
+
+        expect(getComputedStyle(box(element)).animationName, 'no flash').toBe('none');
+        // The default theme's pulse stands under Matrix until its own split is drawn.
+        expect(getComputedStyle(glow(element), '::before').animationName, 'the pulse').toBe(
+            'ui-pulse-danger',
+        );
+    });
+
+    it('keeps the label as it is at the focus under Glass, whose taste takes the accent back', async () => {
+        const element = await erring(glass);
+        const resting = getComputedStyle(part(element, 'label')).color;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(part(element, 'label')).color).toBe(resting);
+        expect(getComputedStyle(box(element)).animationName, 'the flash, which Glass keeps').toBe(
+            'ui-flash',
+        );
     });
 });
 

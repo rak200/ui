@@ -110,7 +110,7 @@ function field(
     able: string,
     choices: Readonly<Record<string, string>>,
     attributes = '',
-): { host: HTMLElement; control: HTMLElement; box: HTMLElement } {
+): { host: HTMLElement; control: HTMLElement; box: HTMLElement; label: HTMLElement } {
     const host = document.createElement('div');
     const root = host.attachShadow({ mode: 'open', delegatesFocus: true });
     const sheet = fieldEffects(component, able).styleSheet;
@@ -120,7 +120,7 @@ function field(
     }
 
     root.adoptedStyleSheets = [sheet];
-    root.innerHTML = `<span class="glow" style="display: grid"><${component} ${attributes}></${component}></span>`;
+    root.innerHTML = `<label for="control">Name</label><span class="glow" style="display: grid"><${component} id="control" ${attributes}></${component}></span>`;
     host.style.setProperty('--ui-duration-effect', '0s');
     host.style.setProperty('--ui-duration-state', '0s');
 
@@ -132,12 +132,42 @@ function field(
 
     const control = root.querySelector<HTMLElement>(component);
     const box = root.querySelector<HTMLElement>('.glow');
+    const label = root.querySelector<HTMLElement>('label');
 
-    if (control === null || box === null) {
+    if (control === null || box === null || label === null) {
         throw new Error('the fixture holds no field');
     }
 
-    return { host, control, box };
+    return { host, control, box, label };
+}
+
+/** What the engine computes `value` to as a colour, on an element of the page. */
+function colour(value: string): string {
+    const probe = document.createElement('div');
+    probe.style.color = value;
+    document.body.append(probe);
+
+    try {
+        return getComputedStyle(probe).color;
+    } finally {
+        probe.remove();
+    }
+}
+
+/** The one CSS animation named `name` running on `target` or a layer of it. */
+function running(target: HTMLElement, name: string): CSSAnimation {
+    const found = target
+        .getAnimations({ subtree: true })
+        .find(
+            (animation): animation is CSSAnimation =>
+                animation instanceof CSSAnimation && animation.animationName === name,
+        );
+
+    if (found === undefined) {
+        throw new Error(`no ${name} running`);
+    }
+
+    return found;
 }
 
 /** A text control's guard, as `src/input.ts` hands it over. */
@@ -260,6 +290,136 @@ describe("a field's effects", () => {
         } finally {
             await cdp().send('Emulation.setEmulatedMedia', { features: [] });
         }
+    });
+
+    it('moves the label on its own transition where the accent is chosen for it', () => {
+        const { host, label } = field('input', typed, { 'focus-label': 'accent' });
+        host.style.setProperty('--ui-duration-effect', '0.2s');
+        host.style.setProperty('--ui-easing-state', 'linear');
+
+        const styles = getComputedStyle(label);
+
+        expect([
+            styles.transitionProperty,
+            styles.transitionDuration,
+            styles.transitionTimingFunction,
+        ]).toEqual(['color', '0.2s', 'linear']);
+    });
+
+    it('takes the label to the accent at the focus, with a fifth of the text in it', async () => {
+        const { host, label } = field('input', typed, { 'focus-label': 'accent' });
+        host.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+        host.style.setProperty('--ui-color-text', 'rgb(0, 0, 0)');
+
+        const resting = getComputedStyle(label).color;
+
+        await userEvent.tab();
+
+        const mixed = colour('color-mix(in oklab, rgb(0, 0, 255) 80%, rgb(0, 0, 0))');
+
+        expect(getComputedStyle(label).color, 'at the focus').toBe(mixed);
+        expect(resting, 'before it').not.toBe(mixed);
+    });
+
+    it('sends a band of the danger out from a field in error, rounds of a flourish that settle', () => {
+        const { host, box } = field(
+            'input',
+            typed,
+            { 'invalid-border': 'pulse' },
+            'aria-invalid="true"',
+        );
+        host.style.setProperty('--ui-duration-flourish', '0.5s');
+        host.style.setProperty('--ui-easing-enter', 'ease-in');
+        host.style.setProperty('--ui-iteration-settle', '3');
+
+        const layer = getComputedStyle(box, '::before');
+
+        expect([
+            layer.animationName,
+            layer.animationDuration,
+            layer.animationTimingFunction,
+            layer.animationIterationCount,
+        ]).toEqual(['ui-pulse-danger', '0.5s', 'ease-in', '3']);
+        expect(
+            [layer.position, layer.top, layer.left, layer.pointerEvents],
+            'a layer round the box, which takes no pointer',
+        ).toEqual(['absolute', '0px', '0px', 'none']);
+        expect(getComputedStyle(box).position, 'the box it is laid out against').toBe('relative');
+    });
+
+    it('draws the band from the boundary out to 12px, fading from half the danger to nothing', () => {
+        const { host, box } = field(
+            'input',
+            typed,
+            { 'invalid-border': 'pulse' },
+            'aria-invalid="true"',
+        );
+        host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        host.style.setProperty('--ui-duration-flourish', '10s');
+        host.style.setProperty('--ui-easing-enter', 'linear');
+
+        const pulse = running(box, 'ui-pulse-danger');
+
+        pulse.pause();
+        pulse.currentTime = 0;
+
+        // An animated shadow's colour is computed in the space it moves through.
+        const danger = (opacity: number): string =>
+            colour(`oklab(from rgb(200, 0, 0) l a b / ${String(opacity)})`);
+
+        expect(getComputedStyle(box, '::before').boxShadow, 'leaving').toBe(
+            `${danger(0.5)} 0px 0px 0px 0px`,
+        );
+
+        pulse.currentTime = 5000;
+
+        expect(getComputedStyle(box, '::before').boxShadow, 'halfway').toBe(
+            `${danger(0.25)} 0px 0px 0px 6px`,
+        );
+    });
+
+    it('tints a field in error from a fifth of the danger back to its fill, rounds that settle', () => {
+        const { host, control } = field(
+            'input',
+            typed,
+            { 'invalid-fill': 'flash' },
+            'aria-invalid="true"',
+        );
+        host.style.setProperty('--ui-duration-flourish', '0.5s');
+        host.style.setProperty('--ui-easing-exit', 'linear');
+        host.style.setProperty('--ui-iteration-settle', '3');
+
+        const styles = getComputedStyle(control);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationIterationCount,
+        ]).toEqual(['ui-flash', '0.5s', 'linear', '3']);
+
+        host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        host.style.setProperty('--ui-color-surface-control', 'rgb(255, 255, 255)');
+        host.style.setProperty('--ui-duration-flourish', '10s');
+
+        const flash = running(control, 'ui-flash');
+
+        flash.pause();
+        flash.currentTime = 0;
+
+        expect(getComputedStyle(control).backgroundColor).toBe(
+            colour('color-mix(in oklab, rgb(200, 0, 0) 20%, rgb(255, 255, 255))'),
+        );
+    });
+
+    it('sends nothing out and tints nothing where the field is not in error', () => {
+        const { control, box } = field('input', typed, {
+            'invalid-border': 'pulse',
+            'invalid-fill': 'flash',
+        });
+
+        expect(getComputedStyle(box, '::before').animationName, 'the band').toBe('none');
+        expect(getComputedStyle(control).animationName, 'the fill').toBe('none');
     });
 
     it.each([

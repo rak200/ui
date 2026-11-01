@@ -333,6 +333,98 @@ async function sheen(scheme: Scheme, palette: Palette, variant: string): Promise
     }
 }
 
+/**
+ * Mounts `markup` under `palette` in `scheme`, with the token sheet, hands its one field to `read`,
+ * and takes it all away again.
+ */
+async function under<T>(
+    scheme: Scheme,
+    palette: Palette,
+    markup: string,
+    read: (field: HTMLElement) => Promise<T>,
+): Promise<T> {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet() + palette.sheet;
+
+    const host = document.createElement('div');
+    host.style.colorScheme = scheme;
+
+    if (palette.theme !== undefined) {
+        host.dataset['uiTheme'] = palette.theme;
+    }
+
+    host.innerHTML = markup;
+    document.body.append(style, host);
+
+    try {
+        const field = host.querySelector('ui-input');
+
+        if (field === null) {
+            throw new Error('no field in the markup');
+        }
+
+        await field.updateComplete;
+
+        return await read(field);
+    } finally {
+        style.remove();
+        host.remove();
+    }
+}
+
+/**
+ * A field's label at the focus, where the accent is chosen for it, resolved in `scheme` under
+ * `palette` — an effect's, so read off a field rather than a token, as the tint is.
+ */
+async function labelled(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-input label="Name" style="${kinds.choice}focus-label: accent; --ui-duration-effect: 0s"></ui-input>`,
+        async (field) => {
+            const label = field.shadowRoot?.querySelector('label') ?? null;
+
+            if (label === null) {
+                throw new Error('the field rendered no label');
+            }
+
+            await userEvent.tab();
+
+            return getComputedStyle(label).color;
+        },
+    );
+}
+
+/**
+ * A field in error's fill at the start of a flash, where the flash is chosen for it, resolved in
+ * `scheme` under `palette`: its first frame held still, read off the field, as the label is.
+ */
+async function flashed(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-input label="Name" error="Wrong." style="${kinds.choice}invalid-fill: flash; --ui-duration-flourish: 10s"></ui-input>`,
+        (field) => {
+            const control = field.shadowRoot?.querySelector('input') ?? null;
+            const flash = control
+                ?.getAnimations()
+                .find(
+                    (animation) =>
+                        animation instanceof CSSAnimation && animation.animationName === 'ui-flash',
+                );
+
+            if (control === null || flash === undefined) {
+                throw new Error('no flash on the field in error');
+            }
+
+            flash.pause();
+            flash.currentTime = 0;
+
+            return Promise.resolve(getComputedStyle(control).backgroundColor);
+        },
+    );
+}
+
 /** The page under a palette: the one it documents holding over, or the surface a host paints. */
 function page(palette: Palette, scheme: Scheme): string {
     return (
@@ -598,15 +690,18 @@ describe('tokenStyleSheet', () => {
         );
     });
 
-    it("takes the button's effects as the default theme's taste, the package's motion", () => {
+    it("takes the button's and the fields' effects as the default theme's taste, the package's motion", () => {
         expect(taste).toEqual({
             page: {
                 'hover-shadow': 'raise',
                 'focus-move': 'lift',
                 'focus-shadow': 'raise',
                 'focus-ring': 'glide',
+                'focus-label': 'accent',
                 'press-move': 'squish',
                 'press-shadow': 'sink',
+                'invalid-border': 'pulse',
+                'invalid-fill': 'flash',
             },
         });
     });
@@ -1416,6 +1511,46 @@ describe('the contrast floors', () => {
                             expect(
                                 contrastRatio(paint(label), layered(swept, under, scheme, palette)),
                             ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    },
+                );
+
+                it("keeps a field's label legible where the accent takes it at the focus", async () => {
+                    // A label is text, laid on whatever the field rests on. The accent alone fell
+                    // under 4.5:1 on Matrix's light page and Glass's dark one, and a fifth of the
+                    // text mixed in clears it everywhere, RFC 0004 measured.
+                    const label = await labelled(scheme, palette);
+
+                    for (const beside of outside(palette, scheme)) {
+                        expect(
+                            contrastRatio(layered(label, beside, scheme, palette), beside),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
+                // The flash's first frame is the most of the danger it mixes in, laid over
+                // whatever the field rests on: an effect that colours the ground under text keeps
+                // the text's 4.5:1, RFC 0004 says, and the text typed in does. The placeholder is
+                // the one exception the package accepts: its colour was chosen to clear 4.5:1 at
+                // rest and no more, so the first frames of each round take it under — 3.84:1 on
+                // the default palette's light page, 3.49 on Matrix's, 4.06 on Glass's dark one,
+                // and under any share of the danger that still shows on Matrix's. Held to 3:1, so
+                // the dip accepted is not a dip unbounded.
+                it.each([
+                    ['its text', '--ui-color-text-invalid', 4.5],
+                    ['its placeholder, the one dip accepted', '--ui-color-text-muted', 3],
+                ] as const)(
+                    "keeps a field in error legible at each flash's start, %s",
+                    async (_what, token, floor) => {
+                        const start = await flashed(scheme, palette);
+
+                        for (const beside of outside(palette, scheme)) {
+                            expect(
+                                contrastRatio(
+                                    paint(token),
+                                    layered(start, beside, scheme, palette),
+                                ),
+                            ).toBeGreaterThanOrEqual(floor);
                         }
                     },
                 );
