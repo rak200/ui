@@ -768,3 +768,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#334](https://github.com/rak200/ui/pull/334) | Glass's pointer: the engine in `src/pointer.ts`, with the spotlight, cast and edge      |
 | 4    | [#335](https://github.com/rak200/ui/pull/335) | Glass's press: the ripple, started in `src/ripple.ts` and drawn by the sheet            |
 | 4    | [#336](https://github.com/rak200/ui/pull/336) | the button's effects as one sheet built per component, in `src/effects.ts`              |
+| 4    | [#337](https://github.com/rak200/ui/pull/337) | the menu's trigger: the button's effects, adopted as `buttonEffects('menu')`            |
