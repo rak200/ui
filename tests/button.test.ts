@@ -1155,74 +1155,83 @@ describe("the effects Matrix's taste names", () => {
         },
     );
 
-    it.each([
-        ['primary', 'nothing', '<ui-button>Save</ui-button>', {}],
-        ['secondary', 'nothing', '<ui-button variant="secondary">Cancel</ui-button>', {}],
-        [
-            'secondary',
-            'the tint',
-            '<ui-button variant="secondary">Cancel</ui-button>',
-            { 'hover-fill': 'tint' },
-        ],
-        ['primary', 'none', '<ui-button>Save</ui-button>', { 'hover-fill': 'none' }],
-        [
-            'secondary',
-            'none',
-            '<ui-button variant="secondary">Cancel</ui-button>',
-            { 'hover-fill': 'none' },
-        ],
-    ] as const)(
-        'leaves a %s button as the pointer left it under a press with no colour, where the pointer chose %s',
-        async (_variant, _choice, markup, choices) => {
-            const element = await still(markup);
-            colours(element);
-            choose(element, { ...choices, 'press-fill': 'none' });
+    // `none` takes the pressed colour away, and the ripple takes its place.
+    describe.each(['none', 'ripple'])('a press whose fill is %s', (fill) => {
+        it.each([
+            ['primary', 'nothing', '<ui-button>Save</ui-button>', {}],
+            ['secondary', 'nothing', '<ui-button variant="secondary">Cancel</ui-button>', {}],
+            [
+                'secondary',
+                'the tint',
+                '<ui-button variant="secondary">Cancel</ui-button>',
+                { 'hover-fill': 'tint' },
+            ],
+            ['primary', 'none', '<ui-button>Save</ui-button>', { 'hover-fill': 'none' }],
+            [
+                'secondary',
+                'none',
+                '<ui-button variant="secondary">Cancel</ui-button>',
+                { 'hover-fill': 'none' },
+            ],
+        ] as const)(
+            'leaves a %s button as the pointer left it under the press, where the pointer chose %s',
+            async (_variant, _choice, markup, choices) => {
+                const element = await still(markup);
+                colours(element);
+                choose(element, { ...choices, 'press-fill': fill });
 
-            await userEvent.hover(inner(element));
+                await userEvent.hover(inner(element));
 
-            const hovered = background(element);
+                const hovered = background(element);
 
-            await press(inner(element), true);
+                await press(inner(element), true);
 
-            expect(background(element)).toBe(hovered);
-        },
-    );
+                expect(background(element)).toBe(hovered);
+            },
+        );
 
-    it.each([
-        ['primary', 'nothing', 'rest', '<ui-button>Save</ui-button>', {}],
-        ['secondary', 'nothing', 'rest', '<ui-button variant="secondary">Cancel</ui-button>', {}],
-        [
-            'primary',
-            'the highlight',
-            'hover',
-            '<ui-button>Save</ui-button>',
-            { 'focus-fill': 'highlight' },
-        ],
-        [
-            'secondary',
-            'the highlight',
-            'hover',
-            '<ui-button variant="secondary">Cancel</ui-button>',
-            { 'focus-fill': 'highlight' },
-        ],
-    ] as const)(
-        'leaves a %s button as the focus left it under a press with no colour, where the focus chose %s',
-        async (variant, _choice, state, markup, choices) => {
-            const element = await still(markup);
-            colours(element);
-            choose(element, { ...choices, 'press-fill': 'none' });
+        it.each([
+            ['primary', 'nothing', 'rest', '<ui-button>Save</ui-button>', {}],
+            [
+                'secondary',
+                'nothing',
+                'rest',
+                '<ui-button variant="secondary">Cancel</ui-button>',
+                {},
+            ],
+            [
+                'primary',
+                'the highlight',
+                'hover',
+                '<ui-button>Save</ui-button>',
+                { 'focus-fill': 'highlight' },
+            ],
+            [
+                'secondary',
+                'the highlight',
+                'hover',
+                '<ui-button variant="secondary">Cancel</ui-button>',
+                { 'focus-fill': 'highlight' },
+            ],
+        ] as const)(
+            'leaves a %s button as the focus left it under the press, where the focus chose %s',
+            async (variant, _choice, state, markup, choices) => {
+                const element = await still(markup);
+                colours(element);
+                choose(element, { ...choices, 'press-fill': fill });
 
-            await userEvent.tab();
-            await space(true);
+                await userEvent.tab();
+                await space(true);
 
-            try {
-                expect(inner(element).matches(':active'), 'pressed by Space').toBe(true);
-                expect(background(element)).toBe(painted[variant][state]);
-            } finally {
-                await space(false);
-            }
-        },
-    );
+                try {
+                    expect(inner(element).matches(':active'), 'pressed by Space').toBe(true);
+                    expect(background(element)).toBe(painted[variant][state]);
+                } finally {
+                    await space(false);
+                }
+            },
+        );
+    });
 
     it('glows under the pointer, a light of the accent round its boundary', async () => {
         const element = await still();
@@ -1924,6 +1933,153 @@ describe("the effects Glass's taste names", () => {
         expect(moved(element)[0], 'cast').toMatch(/px/);
     });
 
+    /** The pointer's primary button going down over the button at `x`, `y` in its own pixels. */
+    function struck(element: UiButton, x: number, y: number): void {
+        const box = inner(element).getBoundingClientRect();
+
+        inner(element).dispatchEvent(
+            new PointerEvent('pointerdown', {
+                bubbles: true,
+                composed: true,
+                button: 0,
+                clientX: box.left + x,
+                clientY: box.top + y,
+            }),
+        );
+    }
+
+    /** The ripple's circle, if one is spreading on the button's layer under its label. */
+    function circle(element: UiButton): Animation | undefined {
+        return inner(element)
+            .getAnimations({ subtree: true })
+            .find((animation) =>
+                (animation.effect as KeyframeEffect | null)
+                    ?.getKeyframes()
+                    .some((frame) => '--ui-fx-ripple' in frame),
+            );
+    }
+
+    /** Holds the circle at `time` milliseconds into its spread. */
+    function held(element: UiButton, time: number): void {
+        const spreading = circle(element);
+
+        if (spreading === undefined) {
+            throw new Error('no circle is spreading');
+        }
+
+        spreading.pause();
+        spreading.currentTime = time;
+    }
+
+    it("hands the ripple a flourish's time and the curve an arrival takes, while the button can be used", async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        const handed = (): readonly string[] =>
+            ['time', 'curve'].map((name) =>
+                getComputedStyle(inner(element)).getPropertyValue(`--ui-fx-ripple-${name}`),
+            );
+
+        expect(handed(), 'nothing chosen').toEqual(['', '']);
+
+        element.style.setProperty('--ui-motion-press-fill', 'ripple');
+
+        expect(handed(), 'chosen').toEqual(['520ms', 'ease-out']);
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(handed(), 'disabled').toEqual(['', '']);
+    });
+
+    it("spreads a circle of the sheen's light from where it was pressed, on the layer under the label", async () => {
+        const element = await followed({ 'press-fill': 'ripple' }, 30, 10);
+        element.style.setProperty('--ui-easing-enter', 'linear');
+        element.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+        element.style.setProperty('--ui-color-primary-contrast', 'rgb(255, 255, 255)');
+
+        struck(element, 30, 10);
+        held(element, 0);
+
+        const sheen = getComputedStyle(inner(element)).getPropertyValue('--ui-fx-sheen');
+        const light = (strength: number): string =>
+            resolved('color', `rgb(from ${sheen} r g b / ${String(strength)})`);
+        const layer = getComputedStyle(inner(element), '::after');
+
+        expect(layer.backgroundImage, 'a point, a third as strong as the sheen').toBe(
+            `radial-gradient(circle at 30% 25%, ${light(0.32)} 0%, rgba(0, 0, 0, 0) calc(0% + 1px))`,
+        );
+        expect(layer.backgroundRepeat).toBe('no-repeat');
+
+        held(element, 260);
+
+        expect(
+            getComputedStyle(inner(element), '::after').backgroundImage,
+            'halfway to the farthest corner, and half as strong',
+        ).toBe(
+            `radial-gradient(circle at 30% 25%, ${light(0.16)} 50%, rgba(0, 0, 0, 0) calc(50% + 1px))`,
+        );
+    });
+
+    it('draws the circle over the spotlight, whose light it adds to', async () => {
+        const element = await followed(
+            { 'hover-fill': 'spotlight', 'press-fill': 'ripple' },
+            30,
+            10,
+        );
+
+        struck(element, 30, 10);
+
+        expect(getComputedStyle(inner(element), '::after').backgroundImage).toMatch(
+            /^radial-gradient\(circle at 30% 25%, .+\), radial-gradient\(64px at 30px 10px, .+\)$/,
+        );
+    });
+
+    it("draws the circle in the shimmer's place at the focus, which sweeps on underneath and shows again", async () => {
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-motion-focus-fill', 'shimmer');
+        element.style.setProperty('--ui-motion-press-fill', 'ripple');
+
+        await userEvent.tab();
+
+        const sweeping = shimmer(element);
+
+        inner(element).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' }));
+
+        const layer = getComputedStyle(inner(element), '::after');
+
+        // From the middle, which a gradient's position is unless it says otherwise.
+        expect(layer.backgroundImage, 'the circle alone').toMatch(
+            /^radial-gradient\(circle, color\(srgb [^)]+\) [\d.]+%, rgba\(0, 0, 0, 0\) calc\([\d.]+% \+ 1px\)\)$/,
+        );
+        expect([layer.backgroundSize, layer.backgroundPosition], "the sweep's let go").toEqual([
+            'auto',
+            '0% 0%',
+        ]);
+        expect(shimmer(element), 'sweeping on').toBe(sweeping);
+
+        const spreading = circle(element);
+
+        spreading?.finish();
+        await spreading?.finished;
+
+        expect(
+            getComputedStyle(inner(element), '::after').backgroundImage,
+            'the sweep again',
+        ).toMatch(/^linear-gradient/);
+    });
+
+    it("spreads the ripple where Glass's taste runs", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.parentElement?.setAttribute('data-ui-theme', glass.name);
+
+        struck(element, 30, 10);
+
+        expect(circle(element)).toBeDefined();
+        expect(inner(element).hasAttribute('data-ripple')).toBe(true);
+    });
+
     it("sweeps the sheen where Glass's taste runs", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
@@ -1936,7 +2092,7 @@ describe("the effects Glass's taste names", () => {
         expect(shimmer(element)).toBeDefined();
     });
 
-    it("reads Glass's taste off the theme: the light held inside, and a spring", async () => {
+    it("reads Glass's taste off the theme: the light held inside, a spring, and no pressed colour", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
         document.body.append(style);
@@ -1948,9 +2104,14 @@ describe("the effects Glass's taste names", () => {
         expect(moved(element)[0], 'a light inside').toMatch(/ inset$/);
         expect(moved(element)[1], 'no lift').toBe('none');
 
+        const resting = background(element);
+
         await press(inner(element), true);
 
         expect(moved(element)[2], 'sprung in').toBe('0.9');
+        // The spotlight leaves the fill under the pointer, and the ripple takes the pressed
+        // colour's place: the fill stays as it rests.
+        expect(background(element), 'no pressed colour').toBe(resting);
     });
 });
 

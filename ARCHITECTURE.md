@@ -505,7 +505,9 @@ is drawn, since no sheet can cut an element, for as long as the press the sheet 
 the pointer engine**, which hands a control where the pointer is a frame at a time while a light
 that follows it is chosen: the sheet hands it a duration it reads no other way, only where the
 pointer can hover, so it finds the collapse there and follows nothing a touch screen or a reader who
-asked for less motion would see.
+asked for less motion would see. **So is the ripple**, a circle the sheet draws and the script starts
+as a press lands, on the time and curve the sheet hands it: a click is over before an effect drawn
+under `:active` could play out, and RFC 0004's S7 measured it cut short.
 
 ### A shadow follows the scheme only through its colour
 

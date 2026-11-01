@@ -4,6 +4,7 @@ import { query } from './motion.js';
 import { reference } from './reference.js';
 import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
+import { spread } from './ripple.js';
 import { press } from './shatter.js';
 import { farPole } from './tokens.js';
 
@@ -54,8 +55,14 @@ const pointerRest = unsafeCSS(
 /** Where the fill at the focus is the hover colour. */
 const focusHighlight = unsafeCSS(drawn('focus-fill', 'highlight'));
 
-/** Where a press brings no colour of its own. */
-const pressNone = unsafeCSS(drawn('press-fill', 'none'));
+/**
+ * Where a press brings no colour of its own: `none`, and the ripple, whose circle is the press's
+ * answer in the pressed colour's place. Parenthesised whole, so it can be joined to another
+ * condition by `and`.
+ */
+const pressRest = unsafeCSS(
+    `(${['none', 'ripple'].map((effect) => drawn('press-fill', effect)).join(' or ')})`,
+);
 
 /**
  * Where a choice for the pointer's shadow takes the place of the glow a theme lights a button
@@ -189,6 +196,28 @@ const cast = css`calc(var(--ui-fx-pointer-nx, 0) * -0.5rem)
         )`;
 
 /**
+ * The spotlight: a light where the pointer is, a quarter as strong as the sheen and fading out over
+ * 4rem, as strong as the pointer is near.
+ */
+const spotlight = css`radial-gradient(
+    circle 4rem at var(--ui-fx-pointer-x, -999px) var(--ui-fx-pointer-y, -999px),
+    rgb(from var(--ui-fx-sheen) r g b / calc(var(--ui-fx-pointer-near, 0) * 0.24)),
+    transparent
+)`;
+
+/**
+ * The ripple: a circle of the sheen's light from where the press landed, as far out toward the
+ * farthest corner as it has spread — src/ripple.ts spreads it. A third as strong as it starts, as
+ * RFC 0004's prototype drew it, and faded to nothing as it reaches the corner.
+ */
+const ripple = css`radial-gradient(
+    circle farthest-corner at var(--ui-fx-ripple-x) var(--ui-fx-ripple-y),
+    rgb(from var(--ui-fx-sheen) r g b / calc((1 - var(--ui-fx-ripple)) * 0.32))
+        calc(var(--ui-fx-ripple) * 100%),
+    transparent calc(var(--ui-fx-ripple) * 100% + 1px)
+)`;
+
+/**
  * The accent pushed toward the pole further from the page — darker on a light one, lighter on a
  * dark one — which the edge's band is drawn in over a surface, so it stands apart from an edge
  * that is the accent already, as a glowing theme's is.
@@ -216,6 +245,15 @@ const tint = css`light-dark(
             l c h / max(alpha, 0.6)
     )
 )`;
+
+/**
+ * A press on the button: breaks it, and spreads its ripple, wherever the sheet chose either. One
+ * listener for both, since the button's template binds one to an event.
+ */
+function pressed(event: PointerEvent | KeyboardEvent): void {
+    press(event);
+    spread(event);
+}
 
 /**
  * A button.
@@ -422,10 +460,11 @@ export class UiButton extends LitElement {
             }
         }
 
-        /* none under a press: no colour of its own, so the fill stays as the pointer and the
-           focus left it — at rest, then under the pointer, then at the focus, each over the
-           last, as the colours above are. */
-        @container ${pressNone} {
+        /* none under a press, and the ripple, whose circle takes the pressed colour's place: no
+           colour of its own, so the fill stays as the pointer and the focus left it — at rest,
+           then under the pointer, then at the focus, each over the last, as the colours above
+           are. */
+        @container ${pressRest} {
             button.primary:not(:disabled):active {
                 background: ${reference('--ui-color-primary')};
             }
@@ -443,13 +482,13 @@ export class UiButton extends LitElement {
             }
         }
 
-        @container ${pressNone} and ${pointerTint} {
+        @container ${pressRest} and ${pointerTint} {
             button.secondary:not(:disabled):hover:active {
                 background: ${tint};
             }
         }
 
-        @container ${pressNone} and ${pointerRest} {
+        @container ${pressRest} and ${pointerRest} {
             button.primary:not(:disabled):hover:active {
                 background: ${reference('--ui-color-primary')};
             }
@@ -459,7 +498,7 @@ export class UiButton extends LitElement {
             }
         }
 
-        @container ${pressNone} and ${focusHighlight} {
+        @container ${pressRest} and ${focusHighlight} {
             button.primary:not(:disabled):focus-visible:active {
                 background: ${reference('--ui-color-primary-hover')};
             }
@@ -499,11 +538,7 @@ export class UiButton extends LitElement {
            focus wins. */
         @container ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
             button:not(:disabled):where(:not(:focus-visible))::after {
-                background-image: radial-gradient(
-                    circle 4rem at var(--ui-fx-pointer-x, -999px) var(--ui-fx-pointer-y, -999px),
-                    rgb(from var(--ui-fx-sheen) r g b / calc(var(--ui-fx-pointer-near, 0) * 0.24)),
-                    transparent
-                );
+                background-image: ${spotlight};
             }
         }
 
@@ -584,6 +619,33 @@ export class UiButton extends LitElement {
 
             to {
                 --ui-fx-shimmer: -50%;
+            }
+        }
+
+        /* ripple: a circle spread once from where the press landed, which src/ripple.ts starts as
+           it lands. The sheet decides and the script only reads: the time and curve on a button
+           that can be used, so a host's own time reaches the circle and the collapse takes it to
+           nothing — a flourish's, on the curve an arrival takes. While the circle spreads it is the
+           picture on the layer under the label, in the place of the shimmer's sweep, which runs on
+           underneath and shows again once it is over; and over the spotlight, whose light and the
+           circle's stay inside the sheen's strength together, so the label keeps its 4.5:1 under
+           both as under the sheen. After the shimmer and the spotlight, which it outranks there. */
+        @container ${unsafeCSS(drawn('press-fill', 'ripple'))} {
+            button:not(:disabled) {
+                --ui-fx-ripple-time: ${reference('--ui-duration-flourish')};
+                --ui-fx-ripple-curve: ${reference('--ui-easing-enter')};
+            }
+
+            button[data-ripple]::after {
+                background: ${ripple} no-repeat;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('press-fill', 'ripple'))} and ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
+            button[data-ripple]:where(:not(:focus-visible))::after {
+                background:
+                    ${ripple} no-repeat,
+                    ${spotlight};
             }
         }
 
@@ -813,8 +875,8 @@ export class UiButton extends LitElement {
                 part="button"
                 @focus=${arrive}
                 @pointerover=${follow}
-                @pointerdown=${press}
-                @keydown=${press}
+                @pointerdown=${pressed}
+                @keydown=${pressed}
             >
                 <slot></slot>
                 <span class="edge" aria-hidden="true"></span>
