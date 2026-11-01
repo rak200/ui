@@ -167,20 +167,24 @@ past the grey, or a light page behind dark glass, does not, and nothing here mea
 has the most room of anything on the glass, so a page that looks fine under it can still be past
 the limit.
 
-**Its taste holds the light inside the glass.** At the focus a button keeps a light along its
-inside, a sheen sweeps across it four times, and it does not lift, and its ring comes into focus
-from a blur and blurs away as the focus leaves; a press springs it back, further in than the default theme's squeeze. The `none` takes back
-the default theme's lift, which would otherwise run under Glass too. The rest of what RFC 0004 chose
-for Glass is not drawn yet, and a taste names only what some component draws: until it is, the
-default theme's raise under the pointer and highlight under a press stand under it.
+**Its taste holds the light inside the glass.** Under the pointer a button takes a light where the
+pointer is, a shadow cast away from it and a band lit along its edge nearest it. At the focus it
+keeps a light along its inside, a sheen sweeps across it four times, its ring comes into focus from a
+blur and blurs away as the focus leaves, and it does not lift. A press springs it back, further in
+than the default theme's squeeze. The `none` takes back the default theme's lift, which would
+otherwise run under Glass too. The press's ripple is not drawn yet, and a taste names only what some
+component draws: until it is, the default theme's pressed colour stands under it.
 
-| Moment         | Effect    |
-| -------------- | --------- |
-| `focus-move`   | `none`    |
-| `focus-fill`   | `shimmer` |
-| `focus-shadow` | `inner`   |
-| `focus-ring`   | `refocus` |
-| `press-move`   | `spring`  |
+| Moment         | Effect      |
+| -------------- | ----------- |
+| `hover-fill`   | `spotlight` |
+| `hover-shadow` | `cast`      |
+| `hover-border` | `edge`      |
+| `focus-move`   | `none`      |
+| `focus-fill`   | `shimmer`   |
+| `focus-shadow` | `inner`     |
+| `focus-ring`   | `refocus`   |
+| `press-move`   | `spring`    |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

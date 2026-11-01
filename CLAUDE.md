@@ -34,6 +34,7 @@ src/
 ├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
 ├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
+├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
@@ -57,6 +58,7 @@ tests/               # mirrors src/, one test file per unit
 ├── menu.test.ts
 ├── motion.test.ts
 ├── placement.test.ts
+├── pointer.test.ts
 ├── radio.test.ts
 ├── ring.test.ts
 ├── shatter.test.ts
@@ -322,6 +324,11 @@ explains. This file restates none of them.
   page, so it is set aside from mutation for `customElements.define`'s reason. The sheen's floor runs
   over every palette in `tests/tokens.test.ts`, read off a button rather than a token, as the tint's
   is.
+- **Why the pointer's lights are handed their point by one engine, why the edge's band is an
+  element of its own, and why its mask is written twice** — the docblock on `src/pointer.ts`, and the
+  comments beside `.edge` in `src/button.ts`. `tests/pointer.test.ts` dispatches its points and
+  parks the real pointer at the far corner first, since a real pointer left over a control as it is
+  laid gets a `pointerover` of the browser's own.
 - **Why the shatter is a filter over the button, what of the button it breaks, and when it lets
   go** — the docblock on `src/shatter.ts`. A component hands it `--ui-fx-press: shatter` and the
   pieces' return time and curve on its control while it can be used, and binds `press()` to its

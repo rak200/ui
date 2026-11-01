@@ -2,6 +2,7 @@ import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { Description } from './description.js';
 import { query } from './motion.js';
 import { reference } from './reference.js';
+import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { press } from './shatter.js';
 import { farPole } from './tokens.js';
@@ -41,8 +42,14 @@ const moving = unsafeCSS(effects.map(([moment, effect]) => drawn(moment, effect)
 /** Where the fill under the pointer is the tint. */
 const pointerTint = unsafeCSS(drawn('hover-fill', 'tint'));
 
-/** Where the pointer leaves the fill as it rests. */
-const pointerNone = unsafeCSS(drawn('hover-fill', 'none'));
+/**
+ * Where the pointer leaves the fill as it rests: `none`, and the spotlight, whose light is the
+ * pointer's answer in the hover colour's place. Parenthesised whole, so it can be joined to another
+ * condition by `and`.
+ */
+const pointerRest = unsafeCSS(
+    `(${['none', 'spotlight'].map((effect) => drawn('hover-fill', effect)).join(' or ')})`,
+);
 
 /** Where the fill at the focus is the hover colour. */
 const focusHighlight = unsafeCSS(drawn('focus-fill', 'highlight'));
@@ -56,7 +63,24 @@ const pressNone = unsafeCSS(drawn('press-fill', 'none'));
  * among them, since `none` is nothing.
  */
 const pointerShadow = unsafeCSS(
-    ['none', 'raise', 'glow'].map((effect) => drawn('hover-shadow', effect)).join(' or '),
+    ['none', 'raise', 'glow', 'cast'].map((effect) => drawn('hover-shadow', effect)).join(' or '),
+);
+
+/**
+ * Where the edge under the pointer is left as it rests: `none`, and the edge, whose band is the
+ * pointer's answer in the place of the edge a theme gives the pointer.
+ */
+const pointerBorder = unsafeCSS(
+    ['none', 'edge'].map((effect) => drawn('hover-border', effect)).join(' or '),
+);
+
+/** Where a light that follows the pointer is chosen, which the pointer engine follows it for. */
+const following = unsafeCSS(
+    [
+        drawn('hover-fill', 'spotlight'),
+        drawn('hover-shadow', 'cast'),
+        drawn('hover-border', 'edge'),
+    ].join(' or '),
 );
 
 /** Where a choice for the focus's shadow does the same at the focus, which wins over the pointer. */
@@ -145,6 +169,34 @@ try {
     // Registered already, by another copy of this package on the page, which stands.
 }
 // Stryker restore all
+
+/**
+ * The cast: the pointer as a light, the shadow falling away from it the further the further the
+ * pointer is from the middle, and on a dark page, where a shadow barely shows, the light spilling
+ * round the side the pointer is on — as strong as the pointer is near, at half the card's size.
+ */
+const cast = css`calc(var(--ui-fx-pointer-nx, 0) * -0.5rem)
+        calc(var(--ui-fx-pointer-ny, 0) * -0.5rem + 0.25rem) 0.875rem -0.125rem
+        light-dark(
+            rgb(0 0 0 / calc(0.3 * var(--ui-fx-pointer-near, 0))),
+            rgb(0 0 0 / calc(0.85 * var(--ui-fx-pointer-near, 0)))
+        ),
+    calc(var(--ui-fx-pointer-nx, 0) * 0.75rem) calc(var(--ui-fx-pointer-ny, 0) * 0.75rem) 1.5rem
+        0.125rem
+        light-dark(
+            transparent,
+            rgb(from ${reference('--ui-color-accent')} r g b / calc(0.35 * var(--ui-fx-pointer-near, 0)))
+        )`;
+
+/**
+ * The accent pushed toward the pole further from the page — darker on a light one, lighter on a
+ * dark one — which the edge's band is drawn in over a surface, so it stands apart from an edge
+ * that is the accent already, as a glowing theme's is.
+ */
+const far = css`light-dark(
+    oklch(from ${reference('--ui-color-accent')} calc(l - 0.1) c h),
+    oklch(from ${reference('--ui-color-accent')} calc(l + 0.2) c h)
+)`;
 
 /** The glow: a light of the accent, blurred round the button's boundary. */
 const glow = css`0 0 0.75rem 0.125rem rgb(from ${reference('--ui-color-accent')} r g b / 0.5)`;
@@ -349,7 +401,7 @@ export class UiButton extends LitElement {
         }
 
         /* none under the pointer: nothing, so the fill stays as it rests. */
-        @container ${pointerNone} {
+        @container ${pointerRest} {
             button.primary:not(:disabled):hover:not(:active) {
                 background: ${reference('--ui-color-primary')};
             }
@@ -397,7 +449,7 @@ export class UiButton extends LitElement {
             }
         }
 
-        @container ${pressNone} and ${pointerNone} {
+        @container ${pressNone} and ${pointerRest} {
             button.primary:not(:disabled):hover:active {
                 background: ${reference('--ui-color-primary')};
             }
@@ -417,20 +469,99 @@ export class UiButton extends LitElement {
             }
         }
 
+        /* The light drawn under the label, the shimmer's sheen and the spotlight's at its own
+           strength, and the edge's band, in each variant's colours for them. */
+        button.primary {
+            --ui-fx-sheen: ${sheenOnPrimary};
+            --ui-fx-band: ${offPrimary};
+        }
+
+        button.secondary {
+            --ui-fx-sheen: ${sheenOverSurface};
+            --ui-fx-band: ${far};
+        }
+
+        /* The lights that follow the pointer, which the pointer engine follows for — src/
+           pointer.ts — where the sheet chose one, the pointer can hover and the button can be
+           used. The sheet decides and the script reads: it is handed a duration it reads no other
+           way, so the collapse takes it to nothing and nothing follows. */
+        @media (hover: hover) {
+            @container ${following} {
+                button:not(:disabled) {
+                    --ui-fx-follow: ${reference('--ui-duration-effect')};
+                }
+            }
+        }
+
+        /* spotlight: a light where the pointer is, a quarter as strong as the sheen and fading out
+           over 4rem, as strong as the pointer is near. On the layer under the label, in the light
+           the sheen is drawn in, so the label keeps its 4.5:1 under it as under the sheen. The
+           focus wins. */
+        @container ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
+            button:not(:disabled):where(:not(:focus-visible))::after {
+                background-image: radial-gradient(
+                    circle 4rem at var(--ui-fx-pointer-x, -999px) var(--ui-fx-pointer-y, -999px),
+                    rgb(from var(--ui-fx-sheen) r g b / calc(var(--ui-fx-pointer-near, 0) * 0.24)),
+                    transparent
+                );
+            }
+        }
+
+        /* cast: the pointer's shadow, on the button's own, at rest as under the pointer, since it
+           is as strong as the pointer is near. The focus wins, and a press is drawn over it. */
+        @container ${unsafeCSS(drawn('hover-shadow', 'cast'))} {
+            button:not(:disabled):where(:not(:focus-visible)) {
+                box-shadow: ${cast};
+            }
+        }
+
+        /* edge: a band on the edge from its outer side in, lit where the pointer is nearest and as
+           strong as the pointer is near — on a layer of its own, since the band is cut to the edge
+           and the layer under the label carries the lights cut to nothing. The focus wins. */
+        .edge {
+            position: absolute;
+            inset: -1px;
+            padding: 2px;
+            border-radius: inherit;
+            background: radial-gradient(
+                ellipse 100% 100% at var(--ui-fx-pointer-x, -999px) var(--ui-fx-pointer-y, -999px),
+                var(--ui-fx-band),
+                transparent
+            );
+            /* Cut to the band: the box less its content box. Safari reads no content-box in the
+               mask, prefixed or not, but its own prefixed mask's, so that one comes first and the
+               standard one after it, which the other engines take and Safari drops. */
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask:
+                linear-gradient(#000 0 0) content-box exclude,
+                linear-gradient(#000 0 0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @container ${unsafeCSS(drawn('hover-border', 'edge'))} {
+            button:not(:disabled):where(:not(:focus-visible)) .edge {
+                opacity: var(--ui-fx-pointer-near, 0);
+            }
+        }
+
+        /* The edge a theme gives the pointer is that moment's answer from before effects existed,
+           so the band, or none, takes its place: the edge stays as it rests. */
+        @container ${pointerBorder} {
+            button:not(:disabled):hover::after {
+                border-color: ${reference('--ui-color-border-button')};
+            }
+        }
+
         /* shimmer: a sheen swept across the button at the focus, ten degrees off upright and
            three quarters as wide as the button, from before its start to past its end, four
            rounds of the loop's period, and then at rest before the start: a focus can rest for
            minutes, and four rounds stay inside the five seconds a loop that settles keeps to. On
            the layer under the label, through a property of its own. */
         @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
-            button.primary {
-                --ui-fx-sheen: ${sheenOnPrimary};
-            }
-
-            button.secondary {
-                --ui-fx-sheen: ${sheenOverSurface};
-            }
-
             button:focus-visible::after {
                 background-image: linear-gradient(
                     100deg,
@@ -681,10 +812,12 @@ export class UiButton extends LitElement {
                 aria-describedby=${this.#description.described()}
                 part="button"
                 @focus=${arrive}
+                @pointerover=${follow}
                 @pointerdown=${press}
                 @keydown=${press}
             >
                 <slot></slot>
+                <span class="edge" aria-hidden="true"></span>
             </button>
             ${this.#description.carrier()}
         `;
