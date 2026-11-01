@@ -28,6 +28,7 @@ src/
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
+├── effects.ts       # a button's effects — internal, one sheet built for each component that is a button
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
@@ -54,6 +55,7 @@ tests/               # mirrors src/, one test file per unit
 ├── checkbox.test.ts
 ├── description.test.ts
 ├── dialog.test.ts
+├── effects.test.ts
 ├── icon.test.ts
 ├── input.test.ts
 ├── menu.test.ts
@@ -305,8 +307,12 @@ explains. This file restates none of them.
   [ARCHITECTURE.md](ARCHITECTURE.md), _Which effect runs is the consumer's_, and the docblock on
   `taste` in `src/tokens.ts`, which says why it stands under every theme. **Why the button draws its
   effects on the real `<button>`, transitions them only once one is chosen, and lets the focus win
-  and a press win over both** — the comments beside the rules in `src/button.ts`, and
-  `docs/button.md`'s _Motion_. **Why `none` takes the pressed colour away where it keeps the lift
+  and a press win over both** — the comments beside the rules in `src/effects.ts`, and
+  `docs/button.md`'s _Motion_. **Why those rules are one sheet built for each component that is a
+  button, and what a component that adopts it gives it** — the docblock on `src/effects.ts`.
+  `buttonEffects()` is a function where the note on `drawn` beside it keeps helpers out of the
+  sheet, and its docblock says why this one is safe: emptied, it hands Lit no sheet, so the component
+  fails as it renders rather than the import failing, which the runner grades as a survivor. **Why `none` takes the pressed colour away where it keeps the lift
   as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
   component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.
@@ -321,14 +327,15 @@ explains. This file restates none of them.
   as an error, which fails the floor.
 - **Why the shimmer's sheen is the accent moved off the label rather than the prototype's, why the
   layer it sweeps lies under the label, and why its property is registered in script** — the
-  docblock on the sheens in `src/button.ts`, which carries the measurement, the comment beside
-  `button::after` there, and the comment beside `CSS.registerProperty`: a registration is one per
-  page, so it is set aside from mutation for `customElements.define`'s reason. The sheen's floor runs
+  docblock on the sheens in `src/effects.ts`, which carries the measurement, the comment beside
+  `button::after` in `src/button.ts`, and the comment beside `CSS.registerProperty` in
+  `src/effects.ts`: a registration is one per page, so it is set aside from mutation for
+  `customElements.define`'s reason. The sheen's floor runs
   over every palette in `tests/tokens.test.ts`, read off a button rather than a token, as the tint's
   is.
 - **Why the pointer's lights are handed their point by one engine, why the edge's band is an
   element of its own, and why its mask is written twice** — the docblock on `src/pointer.ts`, and the
-  comments beside `.edge` in `src/button.ts`. `tests/pointer.test.ts` dispatches its points and
+  comments beside `.edge` in `src/effects.ts`. `tests/pointer.test.ts` dispatches its points and
   parks the real pointer at the far corner first, since a real pointer left over a control as it is
   laid gets a `pointerover` of the browser's own.
 - **Why the shatter is a filter over the button, what of the button it breaks, and when it lets
@@ -340,10 +347,10 @@ explains. This file restates none of them.
   reason, so each cut plan is one a test can state in full.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
-  beside the ripple's rules in `src/button.ts`. A component hands it `--ui-fx-ripple-time` and
+  beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and
   `-curve` on its control while it can be used, draws the circle under `[data-ripple]`, and binds
-  `spread()` to its `pointerdown` and `keydown` — the button through one listener that calls the
-  shatter's too. `tests/ripple.test.ts` holds a circle's `finished` before cancelling it: a
+  `spread()` to its `pointerdown` and `keydown` — a button through `pressed()` in `src/effects.ts`,
+  one listener that calls the shatter's too. `tests/ripple.test.ts` holds a circle's `finished` before cancelling it: a
   cancelled animation hands out a new promise, which never settles.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
