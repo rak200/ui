@@ -1833,6 +1833,31 @@ describe("the effects Glass's taste names", () => {
         expect([style.top, style.paddingTop, style.position]).toEqual(['-1px', '2px', 'absolute']);
     });
 
+    it.each([
+        ['light', 'calc(l - 0.1)'],
+        ['dark', 'calc(l + 0.2)'],
+    ])(
+        "draws a secondary button's band in the accent moved away from the page, in the %s scheme",
+        async (scheme, lightness) => {
+            const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+            element.style.colorScheme = scheme;
+            element.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+
+            const probe = (value: string): string => {
+                const painted = document.createElement('div');
+                painted.style.colorScheme = scheme;
+                painted.style.color = value;
+                document.body.append(painted);
+
+                return getComputedStyle(painted).color;
+            };
+
+            expect(probe(getComputedStyle(inner(element)).getPropertyValue('--ui-fx-band'))).toBe(
+                probe(`oklch(from rgb(0, 0, 255) ${lightness} c h)`),
+            );
+        },
+    );
+
     it('lets the focus win over the lights, and lights nothing on a button that cannot be used', async () => {
         const element = await followed(
             { 'hover-fill': 'spotlight', 'hover-shadow': 'cast', 'hover-border': 'edge' },

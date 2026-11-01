@@ -184,16 +184,12 @@ describe('the pointer engine', () => {
 
         over(control, 30, 10);
         await frame();
-
-        const page = control.getBoundingClientRect();
-        const pointer = { clientX: page.left + 30, clientY: page.top + 10 };
-
-        document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, ...pointer }));
         column?.scrollBy(0, 5);
         column?.dispatchEvent(new Event('scroll'));
         await frame();
 
-        // The pointer has not moved, and the control has, 5px up under it.
+        // The pointer has not moved, and the control has, 5px up under it: the scroll alone asks
+        // for the frame that writes it.
         expect(handed(control)[4]).toBe('15px');
     });
 
@@ -202,20 +198,11 @@ describe('the pointer engine', () => {
 
         over(control, 30, 10);
         await frame();
-
-        const page = control.getBoundingClientRect();
-
-        document.dispatchEvent(
-            new PointerEvent('pointermove', {
-                bubbles: true,
-                clientX: page.left + 30,
-                clientY: page.top + 10,
-            }),
-        );
         control.style.marginLeft = '10px';
         window.dispatchEvent(new Event('resize'));
         await frame();
 
+        // The resize alone asks for the frame that writes where the control moved to.
         expect(handed(control)[3]).toBe('20px');
     });
 
