@@ -569,9 +569,12 @@ describe('tokenStyleSheet', () => {
         }
     });
 
-    it("collapses a loop's count to one round", () => {
+    it("collapses a loop's count to one round, which reads as one", () => {
         for (const [name, value] of declarations(styleRule(reducedMotion().cssRules[0]))) {
             if (name.startsWith('--ui-iteration-')) {
+                // As written, for a script that reads the count off the page: an empty value
+                // runs one round too, the count's initial value being one, and reads as nothing.
+                expect(value, name).toBe('1');
                 expect(computed('animation-iteration-count', value, 'light'), name).toBe('1');
             }
         }
