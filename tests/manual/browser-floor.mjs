@@ -89,6 +89,8 @@ const styleQueries = 'css.at-rules.container.style_queries_for_custom_properties
 const heard = {
     'api.CustomElementRegistry.get':
         "Safari's is partial for customized built-in elements alone, and src/tooltip.ts asks only for a name with a hyphen, an autonomous element's",
+    'api.KeyboardEvent.repeat':
+        "Chrome's is partial only while another key is held too, where the last key's repeats read as fresh downs before 137, and on X11 before 139: src/ripple.ts then starts its circle over from the middle at each, and nothing else changes",
     'api.Window.devicePixelRatio':
         "Safari's is partial only in not following the page's zoom, and src/shatter.ts reads it to hold each piece on a device pixel: zoomed in Safari, a crack's edge lands a fraction of a pixel off, and nothing else changes",
     [styleQueries]:

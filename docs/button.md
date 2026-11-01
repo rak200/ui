@@ -156,6 +156,7 @@ the effect's name:
 | `--ui-motion-focus-ring`   | `glide`     | the ring glided over from the control seen last           |
 | `--ui-motion-focus-ring`   | `glitch`    | the ring shaken and split in two as the focus arrives     |
 | `--ui-motion-focus-ring`   | `refocus`   | the ring out of a blur as the focus arrives, and into one |
+| `--ui-motion-press-fill`   | `ripple`    | a circle spread once from where it was pressed, fading    |
 | `--ui-motion-press-move`   | `squish`    | squeezed to 96%, springing back once let go               |
 | `--ui-motion-press-move`   | `shatter`   | broken into pieces where it was pressed, until let go     |
 | `--ui-motion-press-move`   | `spring`    | pressed to 90%, let go on a spring past its rest          |
@@ -168,7 +169,8 @@ focus, lifts it at the focus, glides the ring over and squeezes and sinks it und
 burst at the focus without lifting, its ring glitching there, and shatters under a press, with
 neither a colour nor a sinking shadow. Under [Glass](theme.md#glass) it takes a light, a shadow
 and a band that follow the pointer, keeps a light along its inside at the focus without lifting, a
-sheen sweeping across it and its ring coming into focus there, and a press springs it back.
+sheen sweeping across it and its ring coming into focus there, and a press springs it back and
+spreads a circle from where it landed, with no colour of its own.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
 every button, or one. A name the button does not offer draws nothing, and the button does what it
@@ -259,18 +261,29 @@ drawn into a dozen or so pieces, smallest where the pointer struck it — the mi
 holds each a couple of pixels off until the press is let go, when they go back together. Only what
 the button draws solid breaks, so a theme's glow stays whole under the pieces, and through the
 cracks shows whatever is under the button. The filter goes in the button's own shadow root and is
-gone once the pieces are together. It answers what the other press effects answer: a pointer's
+gone once the pieces are together. It answers what the squeeze and the sink answer: a pointer's
 primary button and Space, held until the pointer comes up or Space does or the focus leaves; Enter,
 which makes no `:active`, breaks nothing. The button binds one internal helper, `press()` in
 `src/shatter.ts`, to its `pointerdown` and its `keydown`.
 
+**The ripple is a circle spread once from where the button was pressed** — the middle, for Space and
+for Enter — out to its farthest corner, in the shimmer's light at a third of its strength as it
+starts and faded to nothing as it gets there. A click is over in about 100ms, so the circle starts as
+the press lands and plays out on its own, and it takes the pressed colour's place. It is drawn on
+the layer under the label: over the spotlight, whose light and the circle's stay inside the sheen's
+strength together, and in the shimmer's place while it spreads, the sweep running on underneath, so
+the label keeps its 4.5:1 throughout. Enter, which makes no `:active`, ripples all the same, as the
+reader pressing the button; a key held down spreads one circle. The button binds one internal
+helper, `spread()` in `src/ripple.ts`, to its `pointerdown` and its `keydown`, beside the shatter's.
+
 Each effect moves over `--ui-duration-effect`, the shatter's pieces going back along
-`--ui-easing-move`; the glide over `--ui-duration-travel` along `--ui-easing-move`; and the burst, the
-glitch and the spring a press lets go on over `--ui-duration-flourish`, the spring along a curve of
-its own; and the shimmer over `--ui-duration-loop`, `--ui-iteration-settle` rounds of it. All of them collapse with every other duration under
-`prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once, the ring does
-not fly, no burst shows and nothing breaks. Nor does the ring fly or the burst show in forced
-colours. An engine without
+`--ui-easing-move`; the glide over `--ui-duration-travel` along `--ui-easing-move`; the burst, the
+glitch, the ripple and the spring a press lets go on over `--ui-duration-flourish`, the ripple along
+`--ui-easing-enter` and the spring along a curve of its own; and the shimmer over
+`--ui-duration-loop`, `--ui-iteration-settle` rounds of it. All of them collapse with every other
+duration under `prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once,
+the ring does not fly, no burst shows, no circle spreads and nothing breaks. Nor does the ring fly or
+the burst show in forced colours. An engine without
 container style queries — Firefox before 151, inside the
 [browser floor](../ARCHITECTURE.md#the-browser-floor) — matches no effect, and the button does what
 it did before effects existed.

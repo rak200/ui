@@ -171,9 +171,9 @@ the limit.
 pointer is, a shadow cast away from it and a band lit along its edge nearest it. At the focus it
 keeps a light along its inside, a sheen sweeps across it four times, its ring comes into focus from a
 blur and blurs away as the focus leaves, and it does not lift. A press springs it back, further in
-than the default theme's squeeze. The `none` takes back the default theme's lift, which would
-otherwise run under Glass too. The press's ripple is not drawn yet, and a taste names only what some
-component draws: until it is, the default theme's pressed colour stands under it.
+than the default theme's squeeze, and spreads a circle from where it landed in the place of the
+pressed colour. The `none` takes back the default theme's lift, which would otherwise run under
+Glass too.
 
 | Moment         | Effect      |
 | -------------- | ----------- |
@@ -185,6 +185,7 @@ component draws: until it is, the default theme's pressed colour stands under it
 | `focus-shadow` | `inner`     |
 | `focus-ring`   | `refocus`   |
 | `press-move`   | `spring`    |
+| `press-fill`   | `ripple`    |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

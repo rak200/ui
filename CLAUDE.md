@@ -37,6 +37,7 @@ src/
 ├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
+├── ripple.ts        # the press's ripple — internal, a circle the sheet draws and a press starts
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
@@ -61,6 +62,7 @@ tests/               # mirrors src/, one test file per unit
 ├── pointer.test.ts
 ├── radio.test.ts
 ├── ring.test.ts
+├── ripple.test.ts
 ├── shatter.test.ts
 ├── select.test.ts
 ├── table.test.ts
@@ -336,6 +338,13 @@ explains. This file restates none of them.
   driving the pointer**: a driven pointer lands where the frame the suite runs in is drawn, which the
   runner scales, and the cut depends on the exact point struck. It pins `Math.random` for the same
   reason, so each cut plan is one a test can state in full.
+- **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
+  the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
+  beside the ripple's rules in `src/button.ts`. A component hands it `--ui-fx-ripple-time` and
+  `-curve` on its control while it can be used, draws the circle under `[data-ripple]`, and binds
+  `spread()` to its `pointerdown` and `keydown` — the button through one listener that calls the
+  shatter's too. `tests/ripple.test.ts` holds a circle's `finished` before cancelling it: a
+  cancelled animation hands out a new promise, which never settles.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in
