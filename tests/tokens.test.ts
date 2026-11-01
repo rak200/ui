@@ -448,6 +448,35 @@ async function fieldTint(scheme: Scheme, palette: Palette): Promise<string> {
     );
 }
 
+/**
+ * The halo a field's text takes while a light passes under it, resolved in `scheme` under
+ * `palette`: read off a field while its sheen sweeps, as the first ring of its text's shadow.
+ */
+async function haloed(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-input label="Name" style="${kinds.choice}focus-fill: shimmer; --ui-duration-loop: 10s"></ui-input>`,
+        async (field) => {
+            const control = field.shadowRoot?.querySelector('input') ?? null;
+
+            if (control === null) {
+                throw new Error('the field rendered no control');
+            }
+
+            await userEvent.tab();
+
+            const ring = /^(.+?\)) 0px 0px 1px,/.exec(getComputedStyle(control).textShadow)?.[1];
+
+            if (ring === undefined) {
+                throw new Error('no halo round the text while the sheen sweeps');
+            }
+
+            return ring;
+        },
+    );
+}
+
 /** The page under a palette: the one it documents holding over, or the surface a host paints. */
 function page(palette: Palette, scheme: Scheme): string {
     return (
@@ -1554,6 +1583,24 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it("keeps a field's text legible where the shimmer's sheen passes under it", async () => {
+                    // A field sweeps the sheen a secondary button sweeps, over the same fill, so it
+                    // is read off that button: at the sheen's peak, laid over the fill laid over
+                    // whatever the field rests on. The placeholder is held against its halo.
+                    const swept = await sheen(scheme, palette, 'secondary');
+
+                    for (const beside of outside(palette, scheme)) {
+                        const under = laid('--ui-color-surface-control', beside, scheme, palette);
+
+                        expect(
+                            contrastRatio(
+                                paint('--ui-color-text'),
+                                layered(swept, under, scheme, palette),
+                            ),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
                 it("keeps a field's label legible where the accent takes it at the focus", async () => {
                     // A label is text, laid on whatever the field rests on. The accent alone fell
                     // under 4.5:1 on Matrix's light page and Glass's dark one, and a fifth of the
@@ -1567,30 +1614,43 @@ describe('the contrast floors', () => {
                     }
                 });
 
-                // The flash's first frame is the most of the danger it mixes in, laid over
-                // whatever the field rests on: an effect that colours the ground under text keeps
-                // the text's 4.5:1, RFC 0004 says, and the text typed in does. The placeholder is
-                // the one exception the package accepts: its colour was chosen to clear 4.5:1 at
-                // rest and no more, so the first frames of each round take it under — 3.84:1 on
-                // the default palette's light page, 3.49 on Matrix's, 4.06 on Glass's dark one,
-                // and under any share of the danger that still shows on Matrix's. Held to 3:1, so
-                // the dip accepted is not a dip unbounded.
-                it.each([
-                    ['its text', '--ui-color-text-invalid', 4.5],
-                    ['its placeholder, the one dip accepted', '--ui-color-text-muted', 3],
-                ] as const)(
-                    "keeps a field in error legible at each flash's start, %s",
-                    async (_what, token, floor) => {
-                        const start = await flashed(scheme, palette);
+                it("keeps a field in error's text legible at each flash's start", async () => {
+                    // The flash's first frame is the most of the danger it mixes in, laid over
+                    // whatever the field rests on: an effect that colours the ground under text
+                    // keeps the text's 4.5:1, RFC 0004 says, and the text typed in does. The
+                    // placeholder does not, and is held against its halo below.
+                    const start = await flashed(scheme, palette);
 
-                        for (const beside of outside(palette, scheme)) {
-                            expect(
-                                contrastRatio(
-                                    paint(token),
-                                    layered(start, beside, scheme, palette),
-                                ),
-                            ).toBeGreaterThanOrEqual(floor);
-                        }
+                    for (const beside of outside(palette, scheme)) {
+                        expect(
+                            contrastRatio(
+                                paint('--ui-color-text-invalid'),
+                                layered(start, beside, scheme, palette),
+                            ),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
+                it.each([
+                    ['its text', '--ui-color-text'],
+                    ['its placeholder', '--ui-color-text-muted'],
+                    ['its text in error', '--ui-color-text-invalid'],
+                ] as const)(
+                    'keeps a field legible against the halo a light rings it with, %s',
+                    async (_what, token) => {
+                        // Where a light passes under a field's text — the flash, the shimmer's
+                        // sheen — the text takes a halo in the fill made opaque, and a halo that
+                        // fills the letters' inner details is the text's background, WCAG says:
+                        // the placeholder clears 4.5:1 at rest and no more, and fell to 2.8:1
+                        // under the sheen's peak and 3.49 at the flash's start without it.
+                        const ring = await haloed(scheme, palette);
+
+                        expect(
+                            contrastRatio(
+                                paint(token),
+                                layered(ring, page(palette, scheme), scheme, palette),
+                            ),
+                        ).toBeGreaterThanOrEqual(4.5);
                     },
                 );
 

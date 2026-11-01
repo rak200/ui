@@ -325,10 +325,10 @@ explains. This file restates none of them.
   `tests/select.test.ts` asks. Each field's `watch()` call is set aside from mutation for the warm
   runner's reason, which the comment beside it gives. **Why the label's accent has a fifth of the
   text in it, and why the flash mixes the danger in rather than laying it over** — the comments
-  beside those rules there, which carry RFC 0004's measurements; **why an empty field's placeholder
-  dips under 4.5:1 at each flash's start, the one dip the package accepts** — the same comment,
-  [ARCHITECTURE.md](ARCHITECTURE.md)'s _Which effect runs is the consumer's_, and the floor in
-  `tests/tokens.test.ts` that holds it to 3:1. **Why a field's control reads one list of
+  beside those rules there, which carry RFC 0004's measurements; **why a field's text takes a halo
+  while the flash or the shimmer plays, and why it is played rather than held** — the comment beside
+  `ui-halo` there, [ARCHITECTURE.md](ARCHITECTURE.md)'s _Which effect runs is the consumer's_, and
+  the floors in `tests/tokens.test.ts` that measure the placeholder against it. **Why a field's control reads one list of
   animations from a property per kind** — the comment beside that rule in `src/effects.ts`: the
   focus's burst and an error's flash both animate the control, and two rules writing `animation`
   leave one unplayed. **Why `none` takes the pressed colour away where it keeps the lift

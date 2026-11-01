@@ -469,11 +469,13 @@ custom property written per moment — `--ui-motion-press-move: squish` — inhe
 region, every instance of a component and one instance choose apart and the narrowest wins
 (RFC 0004). **What an effect is stays the package's.** The ring nothing delays, the press that lands
 with the finger and the text kept at 4.5:1 are written into each effect, and a choice picks among
-effects rather than retuning one. **The flash is the one exception to the text, accepted**: it tints
-a field in error from a fifth of the danger, which keeps the text typed in at 4.74:1 or more, and
-takes an empty field's placeholder under 4.5:1 for the first frames of each round — 3.49:1 at the
-least — since its colour clears that floor at rest and no more, and no flash that shows leaves it
-there. A name a component does not offer draws nothing. **`none` is
+effects rather than retuning one. **Where a light passes under a field's text, the text takes a
+halo**: the fill made opaque, round each letter, for as long as the light plays. The placeholder's
+colour clears 4.5:1 at rest and no more, so the shimmer's sheen took it to 2.8:1 and the flash's
+danger to 3.49:1. A halo that fills the letters' inner details is the text's background, WCAG says,
+so the text keeps its rest contrast while the light still shows round it. It is a tool rather than
+an exception, and an effect refused for the contrast it took from text may be measured again with
+it. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.

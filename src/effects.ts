@@ -783,11 +783,13 @@ export function fieldEffects(component: string, able: string): CSSResult {
         }
 
         /* The control's one list of animations, read from the kinds that animate it: its shadow's,
-           which the focus's burst writes, and an error's fill's, which the flash writes. One list,
-           since an element has one, and two rules writing it leave one effect unplayed; a kind
-           that plays nothing reads as none. */
+           which the focus's burst writes; the focus's fill's, which the shimmer writes; and an
+           error's fill's, which the flash writes. One list, since an element has one, and two
+           rules writing it leave one effect unplayed; a kind that plays nothing reads as none. */
         ${control} {
-            animation: var(--ui-fx-run-shadow, none), var(--ui-fx-run-error, none);
+            animation:
+                var(--ui-fx-run-shadow, none), var(--ui-fx-run-fill, none),
+                var(--ui-fx-run-error, none);
         }
 
         /* The pointer's, on a field the pointer can change — not one that cannot be used or written
@@ -833,6 +835,74 @@ export function fieldEffects(component: string, able: string): CSSResult {
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             ${control}:focus-visible {
                 box-shadow: ${raise};
+            }
+        }
+
+        /* inner: the button's light held inside the boundary, for as long as the focus stays. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'inner'))} {
+            ${control}:focus-visible {
+                box-shadow: ${inner};
+            }
+        }
+
+        /* shimmer: the button's sheen swept across the control at the focus, under the text it
+           passes beneath, four rounds of the loop's period and then at rest, through the property
+           the button's moves through. In the light a button sweeps over a surface, as a field's
+           text is a surface's, the text and the placeholder taking the halo below while it sweeps.
+           In front of whatever the control paints in its background, which a component hands over
+           as --ui-fx-behind, its size and its place — the select's caret — and which reads as
+           nothing where it hands none over. */
+        @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
+            ${control}:focus-visible {
+                background-image:
+                    linear-gradient(
+                        100deg,
+                        transparent 35%,
+                        ${sheenOverSurface} 50%,
+                        transparent 65%
+                    ),
+                    var(--ui-fx-behind, none);
+                background-size:
+                    250% 100%,
+                    var(--ui-fx-behind-size, auto);
+                background-position:
+                    var(--ui-fx-shimmer) 0,
+                    var(--ui-fx-behind-position, 0 0);
+                background-repeat: no-repeat;
+                --ui-fx-run-fill:
+                    ui-shimmer ${reference('--ui-duration-loop')} linear
+                        ${reference('--ui-iteration-settle')},
+                    ui-halo ${reference('--ui-duration-loop')} linear
+                        ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        /* The halo a field's text and placeholder take for as long as a light passes under them —
+           the shimmer's sheen, the flash's danger — in the fill made opaque. The sheen took a
+           field's placeholder to 2.8:1 at its peak in every theme and scheme, and the flash to
+           3.49:1 at its start on Matrix's light page, since its colour clears 4.5:1 at rest and no
+           more. A halo that fills the letters' inner details is the text's background, WCAG says,
+           so the text keeps the contrast it has at rest, and the light still shows round it.
+           Played beside the light rather than held, since over a fill a theme lets the page
+           through the opaque halo shows round the text. The placeholder inherits it. */
+        @keyframes ui-halo {
+            from,
+            to {
+                text-shadow:
+                    0 0 1px rgb(from ${reference('--ui-color-surface-control')} r g b / 1),
+                    0 0 2px rgb(from ${reference('--ui-color-surface-control')} r g b / 1),
+                    0 0 3px rgb(from ${reference('--ui-color-surface-control')} r g b / 1),
+                    0 0 4px rgb(from ${reference('--ui-color-surface-control')} r g b / 1);
+            }
+        }
+
+        @keyframes ui-shimmer {
+            from {
+                --ui-fx-shimmer: 150%;
+            }
+
+            to {
+                --ui-fx-shimmer: -50%;
             }
         }
 
@@ -905,7 +975,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
 
         /* The layer an error's border draws on: round the box, which it is laid out against, and
            taking no pointer, so the field itself never moves. */
-        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} or ${unsafeCSS(drawn('invalid-border', 'split'))} {
+        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} or ${unsafeCSS(drawn('invalid-border', 'split'))} or ${unsafeCSS(drawn('invalid-border', 'glow'))} {
             .glow {
                 position: relative;
             }
@@ -936,6 +1006,16 @@ export function fieldEffects(component: string, able: string): CSSResult {
             .glow:has(> [aria-invalid='true'])::before {
                 animation: ui-split ${reference('--ui-duration-effect')} linear
                     calc(${reference('--ui-iteration-settle')} * 2);
+            }
+        }
+
+        /* glow: a light of the danger held round a field in error, as the button's glow is held
+           round it in the accent, for as long as the error stands; not round one that cannot be
+           used, which lights nothing. */
+        @container ${unsafeCSS(drawn('invalid-border', 'glow'))} {
+            .glow:has(> [aria-invalid='true']:not(:disabled))::before {
+                box-shadow: 0 0 0.75rem 0.125rem
+                    rgb(from ${reference('--ui-color-danger')} r g b / 0.5);
             }
         }
 
@@ -979,15 +1059,15 @@ export function fieldEffects(component: string, able: string): CSSResult {
            a flourish on the curve a departure takes. Mixed into the fill rather than laid over it,
            since a field has text in it to read: laid over, the text of a field in error fell to
            3.14:1 at each round's start on Matrix's light page, and mixed in it holds 4.74:1 at the
-           least, in every theme and scheme — measured for RFC 0004. An empty field's placeholder
-           does not: its colour clears 4.5:1 at rest and no more, so the first frames of each round
-           take it to 3.49:1 at the least, on Matrix's light page, and no share of the danger that
-           still shows holds it there. The one dip the package accepts; tests/tokens.test.ts holds
-           it to 3:1. */
+           least, in every theme and scheme — measured for RFC 0004. The placeholder takes the halo
+           below for as long as the flash plays. */
         @container ${unsafeCSS(drawn('invalid-fill', 'flash'))} {
             ${control}[aria-invalid='true'] {
-                --ui-fx-run-error: ui-flash ${reference('--ui-duration-flourish')}
-                    ${reference('--ui-easing-exit')} ${reference('--ui-iteration-settle')};
+                --ui-fx-run-error:
+                    ui-flash ${reference('--ui-duration-flourish')} ${reference('--ui-easing-exit')}
+                        ${reference('--ui-iteration-settle')},
+                    ui-halo ${reference('--ui-duration-flourish')} linear
+                        ${reference('--ui-iteration-settle')};
             }
         }
 
@@ -1010,6 +1090,17 @@ export function fieldEffects(component: string, able: string): CSSResult {
                     --ui-fx-ring: glide;
                     --ui-fx-ring-time: ${reference('--ui-duration-travel')};
                     --ui-fx-ring-curve: ${reference('--ui-easing-move')};
+                }
+            }
+
+            /* The refocus, as the button hands it: brought into focus from a blur as the focus
+               arrives, and blurred away as it leaves, over a quarter again an effect's time. */
+            @container ${unsafeCSS(drawn('focus-ring', 'refocus'))} {
+                ${control}:focus-visible {
+                    --ui-fx-ring: refocus;
+                    --ui-fx-ring-time: ${reference('--ui-duration-effect')};
+                    --ui-fx-ring-curve: ${reference('--ui-easing-enter')};
+                    --ui-fx-ring-exit: ${reference('--ui-easing-exit')};
                 }
             }
 

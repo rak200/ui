@@ -248,8 +248,10 @@ export const matrix: Theme = {
  * focus it keeps a light along its inside, a sheen sweeps across it four times, its ring comes into
  * focus from a blur and blurs away as the focus leaves, and it does not lift. A press springs it
  * back, further in than the default theme's squeeze, and spreads a circle from where it landed in
- * the place of the pressed colour. A field's label stays as it is at the focus. Its error's glow is
- * not drawn yet: until it is, the default theme's pulse stands under it.
+ * the place of the pressed colour. A field keeps a light along its inside at the focus, a sheen
+ * sweeps across it and its ring comes into focus from a blur, its label as it is; in error it holds
+ * a light of the danger round it and flashes its fill. A field's lights under the pointer are not
+ * drawn yet.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -371,6 +373,7 @@ export const glass: Theme = {
             'focus-label': 'none',
             'press-move': 'spring',
             'press-fill': 'ripple',
+            'invalid-border': 'glow',
         },
     },
 };
