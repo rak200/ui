@@ -468,6 +468,11 @@ export class UiMenu extends LitElement {
      */
     override connectedCallback(): void {
         super.connectedCallback();
+        // Stryker disable next-line CallExpression: watch() adds the page's two listeners, and in
+        // the warm process Stryker switches mutants in, a run before has already added them, so the
+        // call gone changes nothing a test can see. Outside the runner's reach, not an equivalent
+        // mutant: on a page with menus and no button, nothing else would add them, and the
+        // trigger's ring would never glide.
         watch();
     }
 
