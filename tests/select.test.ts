@@ -932,15 +932,65 @@ describe('the caret', () => {
         expect(getComputedStyle(box(select(form))).backgroundImage).toBe('none');
     });
 
+    it("sweeps a shimmer's sheen in front of nothing where the icon draws it, so it is drawn once", async () => {
+        // Where the base appearance moves the caret into the icon, the box hands nothing over as
+        // behind it, and a sweeping light draws no second caret in the background.
+        const form = await mount(fixture);
+        select(form).style.setProperty('--ui-motion-focus-fill', 'shimmer');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(box(select(form))).backgroundImage).toMatch(
+            /^linear-gradient\(100deg, .+\), none$/,
+        );
+        expect(icon(select(form)).backgroundImage, 'the caret, in the icon').toContain(
+            'linear-gradient',
+        );
+    });
+
+    it.each([
+        ['ltr', 'right calc(10px + calc(10px * 0.75)) center, right 10px center'],
+        ['rtl', 'left 10px center, left calc(10px + calc(10px * 0.75)) center'],
+    ])(
+        'hands its caret over sized and placed by the space, in the %s direction',
+        async (direction, position) => {
+            const form = await mount(fixture);
+            form.dir = direction;
+            select(form).style.setProperty('--ui-space', '10px');
+
+            // A custom property keeps the source's own spacing, so it is read with its runs of space as one.
+            const styles = getComputedStyle(box(select(form)));
+
+            expect([
+                styles.getPropertyValue('--ui-fx-behind-size').replace(/\s+/g, ' ').trim(),
+                styles.getPropertyValue('--ui-fx-behind-position').replace(/\s+/g, ' ').trim(),
+            ]).toEqual([
+                'calc(10px * 0.75) calc(10px * 0.75), calc(10px * 0.75) calc(10px * 0.75)',
+                position,
+            ]);
+        },
+    );
+
     it('stays in the background where the system draws the list', () => {
         // Two triangles in the background, mirrored right to left, since background-position
         // has no logical form.
+        // Handed over as what the box paints behind, which a sweeping light is drawn in front of.
         const caret = outside('select:not([multiple])').style;
+        const behind = (style: CSSStyleDeclaration, name: string): string =>
+            style.getPropertyValue(`--ui-fx-behind${name}`).trim();
 
-        expect(caret.backgroundImage).toContain('linear-gradient');
-        expect(caret.backgroundImage).toContain('var(--ui-color-text-muted');
-        expect(caret.backgroundPosition).toMatch(/^right /);
-        expect(outside('select:not([multiple]):dir(rtl)').style.backgroundPosition).toMatch(
+        expect(behind(caret, '')).toContain('linear-gradient');
+        expect(
+            behind(caret, '').split('var(--ui-color-text-muted').length - 1,
+            'both triangles in the muted colour',
+        ).toBe(2);
+        expect([caret.backgroundImage, caret.backgroundSize, caret.backgroundPosition]).toEqual([
+            'var(--ui-fx-behind)',
+            'var(--ui-fx-behind-size)',
+            'var(--ui-fx-behind-position)',
+        ]);
+        expect(behind(caret, '-position')).toMatch(/^right /);
+        expect(behind(outside('select:not([multiple]):dir(rtl)').style, '-position')).toMatch(
             /^left /,
         );
     });
@@ -1505,8 +1555,8 @@ describe("a field's effects, which the select adopts", () => {
         expect(getComputedStyle(glow(select(form)), '::before').animationName, 'the pulse').toBe(
             'ui-pulse-danger',
         );
-        expect(getComputedStyle(control(form)).animationName, "the flash, its list's second").toBe(
-            'none, ui-flash',
+        expect(getComputedStyle(control(form)).animationName, "the flash, its list's third").toBe(
+            'none, none, ui-flash, ui-halo',
         );
 
         const label = select(form).shadowRoot?.querySelector('label') ?? null;

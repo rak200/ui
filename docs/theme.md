@@ -184,22 +184,24 @@ pointer is, a shadow cast away from it and a band lit along its edge nearest it.
 keeps a light along its inside, a sheen sweeps across it four times, its ring comes into focus from a
 blur and blurs away as the focus leaves, and it does not lift. A press springs it back, further in
 than the default theme's squeeze, and spreads a circle from where it landed in the place of the
-pressed colour. A field's label stays as it is at the focus. Each `none` takes back an effect the
-default theme's taste names, which would otherwise run under Glass too. A field's error glow is not
-drawn yet: until it is, the default theme's pulse stands under it.
+pressed colour. A field keeps a light along its inside at the focus, a sheen sweeps across it and its
+ring comes into focus from a blur, its label as it is; in error it holds a light of the danger round
+it and flashes its fill. Each `none` takes back an effect the default theme's taste names, which
+would otherwise run under Glass too. A field's lights under the pointer are not drawn yet.
 
-| Moment         | Effect      |
-| -------------- | ----------- |
-| `hover-fill`   | `spotlight` |
-| `hover-shadow` | `cast`      |
-| `hover-border` | `edge`      |
-| `focus-move`   | `none`      |
-| `focus-fill`   | `shimmer`   |
-| `focus-shadow` | `inner`     |
-| `focus-ring`   | `refocus`   |
-| `focus-label`  | `none`      |
-| `press-move`   | `spring`    |
-| `press-fill`   | `ripple`    |
+| Moment           | Effect      |
+| ---------------- | ----------- |
+| `hover-fill`     | `spotlight` |
+| `hover-shadow`   | `cast`      |
+| `hover-border`   | `edge`      |
+| `focus-move`     | `none`      |
+| `focus-fill`     | `shimmer`   |
+| `focus-shadow`   | `inner`     |
+| `focus-ring`     | `refocus`   |
+| `focus-label`    | `none`      |
+| `press-move`     | `spring`    |
+| `press-fill`     | `ripple`    |
+| `invalid-border` | `glow`      |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

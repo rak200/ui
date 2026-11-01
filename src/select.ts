@@ -256,7 +256,10 @@ export class UiSelect extends LitElement {
            A multiple select is a list rather than a drop-down, and a caret on a list
            points at nothing, so it is guarded rather than drawn everywhere. */
             select:not([multiple]) {
-                background-image:
+                /* Handed over as what the box paints behind, so an effect that sweeps a light
+                   across the box — the shimmer — draws it in front of the caret rather than in
+                   its place: src/effects.ts reads the three. */
+                --ui-fx-behind:
                     linear-gradient(
                         45deg,
                         transparent 50%,
@@ -267,10 +270,13 @@ export class UiSelect extends LitElement {
                         ${reference('--ui-color-text-muted')} 50%,
                         transparent 50%
                     );
-                background-size: ${arm} ${arm};
-                background-position:
+                --ui-fx-behind-size: ${arm} ${arm}, ${arm} ${arm};
+                --ui-fx-behind-position:
                     right calc(${reference('--ui-space')} + ${arm}) center,
                     right ${reference('--ui-space')} center;
+                background-image: var(--ui-fx-behind);
+                background-size: var(--ui-fx-behind-size);
+                background-position: var(--ui-fx-behind-position);
             }
 
             /* Direction is the control's own, not the page's, and background-position has no
@@ -278,7 +284,7 @@ export class UiSelect extends LitElement {
            The padding needs no rule: padding-inline-end already follows. Measured, both
            halves. */
             select:not([multiple]):dir(rtl) {
-                background-position:
+                --ui-fx-behind-position:
                     left ${reference('--ui-space')} center,
                     left calc(${reference('--ui-space')} + ${arm}) center;
             }
@@ -350,7 +356,7 @@ export class UiSelect extends LitElement {
                    does. */
                     select:not([multiple]) {
                         position: relative;
-                        background-image: none;
+                        --ui-fx-behind: none;
                     }
 
                     select:not([multiple])::picker-icon {

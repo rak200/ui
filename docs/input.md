@@ -211,23 +211,27 @@ there, so an effect changes what is round the control, or moves the box it sits 
 it. Each is chosen by a custom property per moment, and where you choose nothing the theme's taste
 runs:
 
-| Property                     | Effect   | What it draws                                         |
-| ---------------------------- | -------- | ----------------------------------------------------- |
-| `--ui-motion-hover-fill`     | `tint`   | a little of the accent in the fill, under the pointer |
-| `--ui-motion-hover-shadow`   | `raise`  | the button's drop shadow under the control            |
-| `--ui-motion-hover-shadow`   | `glow`   | a light of the accent round the control               |
-| `--ui-motion-hover-border`   | `none`   | the boundary as it rests, its darkening taken away    |
-| `--ui-motion-focus-fill`     | `tint`   | the same tint, while the focus stays                  |
-| `--ui-motion-focus-shadow`   | `raise`  | the same drop, while the focus stays                  |
-| `--ui-motion-focus-shadow`   | `burst`  | light bursting out round the control as it arrives    |
-| `--ui-motion-focus-move`     | `lift`   | the box round the control two pixels up, ring and all |
-| `--ui-motion-focus-ring`     | `glide`  | the ring glided over from the control seen last       |
-| `--ui-motion-focus-ring`     | `glitch` | the ring shaken and split in two as the focus arrives |
-| `--ui-motion-focus-label`    | `accent` | the label in the accent, a fifth of the text in it    |
-| `--ui-motion-focus-label`    | `glow`   | a light of the accent behind the label                |
-| `--ui-motion-invalid-border` | `pulse`  | a band of the danger sent out from a field in error   |
-| `--ui-motion-invalid-border` | `split`  | the boundary split into the danger and the info       |
-| `--ui-motion-invalid-fill`   | `flash`  | a field in error tinted from the danger, and back     |
+| Property                     | Effect    | What it draws                                             |
+| ---------------------------- | --------- | --------------------------------------------------------- |
+| `--ui-motion-hover-fill`     | `tint`    | a little of the accent in the fill, under the pointer     |
+| `--ui-motion-hover-shadow`   | `raise`   | the button's drop shadow under the control                |
+| `--ui-motion-hover-shadow`   | `glow`    | a light of the accent round the control                   |
+| `--ui-motion-hover-border`   | `none`    | the boundary as it rests, its darkening taken away        |
+| `--ui-motion-focus-fill`     | `tint`    | the same tint, while the focus stays                      |
+| `--ui-motion-focus-fill`     | `shimmer` | the button's sheen swept across it four times             |
+| `--ui-motion-focus-shadow`   | `raise`   | the same drop, while the focus stays                      |
+| `--ui-motion-focus-shadow`   | `burst`   | light bursting out round the control as it arrives        |
+| `--ui-motion-focus-shadow`   | `inner`   | a light along the inside of its edge                      |
+| `--ui-motion-focus-move`     | `lift`    | the box round the control two pixels up, ring and all     |
+| `--ui-motion-focus-ring`     | `glide`   | the ring glided over from the control seen last           |
+| `--ui-motion-focus-ring`     | `glitch`  | the ring shaken and split in two as the focus arrives     |
+| `--ui-motion-focus-ring`     | `refocus` | the ring out of a blur as the focus arrives, and into one |
+| `--ui-motion-focus-label`    | `accent`  | the label in the accent, a fifth of the text in it        |
+| `--ui-motion-focus-label`    | `glow`    | a light of the accent behind the label                    |
+| `--ui-motion-invalid-border` | `pulse`   | a band of the danger sent out from a field in error       |
+| `--ui-motion-invalid-border` | `split`   | the boundary split into the danger and the info           |
+| `--ui-motion-invalid-border` | `glow`    | a light of the danger held round a field in error         |
+| `--ui-motion-invalid-fill`   | `flash`   | a field in error tinted from the danger, and back         |
 
 **The default theme's taste raises a field under the pointer and at the focus, lifts it at the
 focus and glides its ring over**, and the boundary still darkens under the pointer, as it did. **A
@@ -237,17 +241,21 @@ times, each round a `--ui-duration-flourish`, and rests — an error stands for 
 it. The message comes as it did. **Under [Matrix](theme.md#matrix)** a field tints and glows under
 the pointer, and its boundary no longer darkens there; at the focus it takes the tint and a burst of
 light, its ring glitches and its label glows; and in error its boundary splits into the danger and
-the info, and its fill stays as it is. **Under [Glass](theme.md#glass)** its label stays as it is at
-the focus; otherwise a field does what it did before effects existed there, until Glass's effects
-for a field are drawn — a name a field does not offer draws nothing — and the default theme's pulse
-stands under it.
+the info, and its fill stays as it is. **Under [Glass](theme.md#glass)** a field keeps a light along
+its inside at the focus, a sheen sweeps across it four times and its ring comes into focus from a
+blur, its label staying as it is; and in error it holds a light of the danger round it and flashes
+its fill. Its pointer's lights are not drawn yet — a name a field does not offer draws nothing — so
+it answers the pointer as it did before effects existed.
 
 **The label's accent has a fifth of the text in it**, so it clears 4.5:1 in every theme and scheme,
 where the accent alone fell under it. **The flash mixes a fifth of the danger into the fill** rather
-than laying it over, so the text you type in holds 4.74:1 at each round's start. An empty field's
-placeholder does not: it dips under 4.5:1 for the first frames of each round, to 3.84:1 under the
-default theme's light scheme — the one dip in the package's text, which RFC 0004 accepts. The band
-and the flash run where the control reads `aria-invalid="true"`, as a screen reader does.
+than laying it over, so the text you type in holds 4.74:1 at each round's start. **Where a light
+passes under the text — the flash, and the shimmer's sheen — the text and the placeholder take a
+halo** in the field's fill, made opaque, for as long as it plays: a placeholder clears 4.5:1 at rest
+and no more, and the halo is the text's background, so it keeps that contrast and the light still
+shows round it. Over a fill a theme lets the page through, Glass's, the halo shows round the text
+while the light plays. The band and the flash run where the control reads `aria-invalid="true"`, as
+a screen reader does.
 
 **The pointer's effects are drawn on a field the pointer can change**, never one that is disabled or
 read-only, only where the pointer can hover, and **the focus wins**: in a field the focus is where
@@ -258,8 +266,10 @@ Each effect moves over `--ui-duration-effect` on `--ui-easing-enter`, the label 
 `--ui-easing-state`, the glide over `--ui-duration-travel` on `--ui-easing-move`; the burst and the
 glitch over `--ui-duration-flourish`, the glitch on a straight clock; the band and the flash over
 `--ui-duration-flourish`, `--ui-iteration-settle` rounds of it, the band on `--ui-easing-enter` and
-the flash on `--ui-easing-exit`; and the split over `--ui-duration-effect`, twice as many rounds, on
-a straight clock. All of them collapse under
+the flash on `--ui-easing-exit`; the split over `--ui-duration-effect`, twice as many rounds, on a
+straight clock; the shimmer over `--ui-duration-loop`, `--ui-iteration-settle` rounds of it; and
+the refocus over a quarter again `--ui-duration-effect`, on `--ui-easing-enter` and
+`--ui-easing-exit`. All of them collapse under
 `prefers-reduced-motion: reduce`, and the ring does not fly in forced colours. What they move
 transitions only once one is chosen, so with none the boundary is still the only thing that moves.
 They are drawn by one internal sheet, `fieldEffects()` in `src/effects.ts`, which the two elements

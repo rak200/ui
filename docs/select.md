@@ -219,7 +219,9 @@ is the reason to.
 raised under the pointer and at the focus, lifted at the focus, its ring glided over, its label in
 the accent there, and in error a band sent out and its fill flashed, under the default theme's
 taste; under Matrix it takes the tint at the focus too, where Matrix's page names a hover colour a
-field leaves out. A select has no placeholder, so the flash takes nothing of its text under 4.5:1. A theme's
+field leaves out. Where the caret is drawn in the box's background, a shimmer's sheen sweeps in
+front of it rather than in its place; where the base appearance draws it in the icon, nothing is
+drawn behind the sheen. A select has no placeholder, so the flash takes nothing of its text under 4.5:1. A theme's
 taste reaches it under its own name, `--ui-taste-select-<moment>`.
 A select has no read-only state, so the only one the pointer's effects step over is disabled.
 

@@ -404,13 +404,19 @@ describe("a field's effects", () => {
 
         const styles = getComputedStyle(control);
 
-        // An error's fill's place in the control's one list, the shadow's before it playing nothing.
+        // An error's fill's place in the control's one list, the shadow's and the focus's fill's
+        // before it playing nothing.
         expect([
             styles.animationName,
             styles.animationDuration,
             styles.animationTimingFunction,
             styles.animationIterationCount,
-        ]).toEqual(['none, ui-flash', '0s, 0.5s', 'ease, linear', '1, 3']);
+        ]).toEqual([
+            'none, none, ui-flash, ui-halo',
+            '0s, 0s, 0.5s, 0.5s',
+            'ease, ease, linear, linear',
+            '1, 1, 3, 3',
+        ]);
 
         host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
         host.style.setProperty('--ui-color-surface-control', 'rgb(255, 255, 255)');
@@ -528,7 +534,7 @@ describe("a field's effects", () => {
             styles.animationName,
             styles.animationDuration,
             styles.animationTimingFunction,
-        ]).toEqual(['ui-burst, none', '0.5s, 0s', 'ease-in, ease']);
+        ]).toEqual(['ui-burst, none, none', '0.5s, 0s, 0s', 'ease-in, ease, ease']);
     });
 
     it('draws the burst from four fifths of the accent at the boundary out to nothing, 10px and 15px soft', async () => {
@@ -569,7 +575,7 @@ describe("a field's effects", () => {
 
         await userEvent.tab();
 
-        expect(playing(control)).toEqual(['ui-burst', 'ui-flash']);
+        expect(playing(control)).toEqual(['ui-burst', 'ui-flash', 'ui-halo']);
     });
 
     it("hands the ring the glitch, a flourish's time, a straight clock and its two lines' colours", async () => {
@@ -655,6 +661,184 @@ describe("a field's effects", () => {
 
             expect(getComputedStyle(box, '::before').boxShadow, String(time)).toBe(shadow);
         }
+    });
+
+    it("holds the button's light inside the boundary at the focus", async () => {
+        const { host, control } = field('input', typed, { 'focus-shadow': 'inner' });
+        host.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control).boxShadow).toBe(
+            'rgb(10, 20, 30) 0px 0px 0px 1px inset, color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px inset',
+        );
+    });
+
+    it("sweeps the button's sheen across a field at the focus, on the focus's fill's place in its list", async () => {
+        const { host, control } = field('input', typed, { 'focus-fill': 'shimmer' });
+        host.style.setProperty('--ui-duration-loop', '10s');
+        host.style.setProperty('--ui-iteration-settle', '3');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(control);
+
+        expect(styles.backgroundImage, 'the sheen, and nothing behind it').toMatch(
+            /^linear-gradient\(100deg, rgba\(0, 0, 0, 0\) 35%, .+ 50%, rgba\(0, 0, 0, 0\) 65%\), none$/,
+        );
+        expect([styles.backgroundSize, styles.backgroundRepeat]).toEqual([
+            '250% 100%, auto',
+            'no-repeat, no-repeat',
+        ]);
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationIterationCount,
+        ]).toEqual([
+            'none, ui-shimmer, ui-halo, none',
+            '0s, 10s, 10s, 0s',
+            'ease, linear, linear, ease',
+            '1, 3, 3, 1',
+        ]);
+
+        // Through the property the button's sheen moves through, halfway across a round.
+        const sweep = running(control, 'ui-shimmer');
+
+        sweep.pause();
+        sweep.currentTime = 5000;
+
+        expect(getComputedStyle(control).getPropertyValue('--ui-fx-shimmer')).toBe('50%');
+    });
+
+    it('draws the sheen a secondary button sweeps, the accent moved off the text', async () => {
+        const tokens = {
+            '--ui-color-accent': 'rgb(0, 0, 255)',
+            '--ui-color-text': 'rgb(0, 0, 0)',
+        };
+        const { host, control } = field('input', typed, { 'focus-fill': 'shimmer' });
+        const button = document.createElement('div');
+        const root = button.attachShadow({ mode: 'open' });
+        const sheet = buttonEffects('test').styleSheet;
+
+        if (sheet === undefined) {
+            throw new Error('the engine built no sheet to adopt');
+        }
+
+        root.adoptedStyleSheets = [sheet];
+        root.innerHTML = '<button class="secondary">Swept</button>';
+
+        for (const [name, value] of Object.entries(tokens)) {
+            host.style.setProperty(name, value);
+            button.style.setProperty(name, value);
+        }
+
+        document.body.append(button);
+
+        const own = root.querySelector('button');
+
+        if (own === null) {
+            throw new Error('the button rendered no control');
+        }
+
+        const sheen = colour(getComputedStyle(own).getPropertyValue('--ui-fx-sheen'));
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control).backgroundImage).toContain(`, ${sheen} 50%, `);
+    });
+
+    it('sweeps the sheen in front of what a component hands over as behind it', async () => {
+        const { host, control } = field('input', typed, { 'focus-fill': 'shimmer' });
+        host.style.setProperty('--ui-duration-loop', '10s');
+        control.style.setProperty(
+            '--ui-fx-behind',
+            'linear-gradient(rgb(255, 0, 0), rgb(255, 0, 0))',
+        );
+        control.style.setProperty('--ui-fx-behind-size', '10px 10px');
+        control.style.setProperty('--ui-fx-behind-position', 'right 4px center');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(control);
+
+        expect(styles.backgroundImage, 'the sheen, then what was behind').toMatch(
+            /, linear-gradient\(rgb\(255, 0, 0\), rgb\(255, 0, 0\)\)$/,
+        );
+        expect(styles.backgroundSize, 'each its own size').toBe('250% 100%, 10px 10px');
+        expect(styles.backgroundPosition, 'each its own place').toMatch(
+            /, calc\(100% - 4px\) 50%$/,
+        );
+    });
+
+    it.each([
+        ['the sheen sweeps', { 'focus-fill': 'shimmer' }, '', 'ui-shimmer'],
+        ['the flash plays', { 'invalid-fill': 'flash' }, 'aria-invalid="true"', 'ui-flash'],
+    ] as const)(
+        'rings the text with a halo in the fill made opaque for as long as %s, and lets it go after',
+        async (_while, choices, attributes, light) => {
+            const { host, control } = field('input', typed, choices, attributes);
+            host.style.setProperty('--ui-color-surface-control', 'rgb(240, 240, 240, 0.2)');
+            host.style.setProperty('--ui-duration-loop', '10s');
+            host.style.setProperty('--ui-duration-flourish', '10s');
+
+            await userEvent.tab();
+
+            // The fill, opaque; an animated shadow's colour is computed in the space it moves through.
+            const ring = colour('oklab(from rgb(240, 240, 240) l a b)');
+
+            expect(getComputedStyle(control).textShadow, 'while it plays').toBe(
+                `${ring} 0px 0px 1px, ${ring} 0px 0px 2px, ${ring} 0px 0px 3px, ${ring} 0px 0px 4px`,
+            );
+
+            for (const animation of [running(control, light), running(control, 'ui-halo')]) {
+                animation.finish();
+            }
+
+            expect(getComputedStyle(control).textShadow, 'once it has played').toBe('none');
+        },
+    );
+
+    it("hands the ring the refocus, an effect's time and the curves it comes and goes on", async () => {
+        const { host, control } = field('input', typed, { 'focus-ring': 'refocus' });
+        host.style.setProperty('--ui-duration-effect', '0.3s');
+        host.style.setProperty('--ui-easing-enter', 'ease-in');
+        host.style.setProperty('--ui-easing-exit', 'linear');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(control);
+
+        expect(
+            ['', '-time', '-curve', '-exit'].map((name) =>
+                styles.getPropertyValue(`--ui-fx-ring${name}`),
+            ),
+        ).toEqual(['refocus', '0.3s', 'ease-in', 'linear']);
+    });
+
+    it('holds a light of the danger round a field in error, and none round one that cannot be used', () => {
+        const erring = field('input', typed, { 'invalid-border': 'glow' }, 'aria-invalid="true"');
+        const disabled = field(
+            'input',
+            typed,
+            { 'invalid-border': 'glow' },
+            'aria-invalid="true" disabled',
+        );
+
+        for (const { host } of [erring, disabled]) {
+            host.style.setProperty('--ui-color-danger', 'rgb(10, 20, 30)');
+        }
+
+        const layer = getComputedStyle(erring.box, '::before');
+
+        expect(layer.boxShadow, 'in error').toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px',
+        );
+        expect([layer.position, layer.pointerEvents], 'on the layer round the box').toEqual([
+            'absolute',
+            'none',
+        ]);
+        expect(getComputedStyle(disabled.box, '::before').boxShadow, 'disabled').toBe('none');
     });
 
     it.each([

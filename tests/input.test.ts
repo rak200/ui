@@ -994,7 +994,7 @@ describe("a form's moments on a field", () => {
         const element = await erring();
 
         expect(playing(glow(element), '::before'), 'the pulse').toEqual(['ui-pulse-danger']);
-        expect(playing(box(element)), 'the flash').toEqual(['ui-flash']);
+        expect(playing(box(element)), 'the flash, and its halo').toEqual(['ui-flash', 'ui-halo']);
     });
 
     it("takes the label to the accent at the focus under the default theme's taste", async () => {
@@ -1086,7 +1086,15 @@ describe("a form's moments on a field", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(part(element, 'label')).color).toBe(resting);
-        expect(playing(box(element)), 'the flash, which Glass keeps').toEqual(['ui-flash']);
+        expect(
+            playing(box(element)),
+            'the shimmer at the focus, and the flash Glass keeps',
+        ).toEqual(['ui-shimmer', 'ui-halo', 'ui-flash', 'ui-halo']);
+        expect(getComputedStyle(box(element)).boxShadow, 'a light inside').toMatch(/ inset$/);
+        expect(
+            getComputedStyle(glow(element), '::before').boxShadow,
+            'a light of the danger',
+        ).not.toBe('none');
     });
 });
 
