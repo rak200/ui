@@ -213,12 +213,20 @@ runs:
 
 | Property                     | Effect   | What it draws                                         |
 | ---------------------------- | -------- | ----------------------------------------------------- |
+| `--ui-motion-hover-fill`     | `tint`   | a little of the accent in the fill, under the pointer |
 | `--ui-motion-hover-shadow`   | `raise`  | the button's drop shadow under the control            |
+| `--ui-motion-hover-shadow`   | `glow`   | a light of the accent round the control               |
+| `--ui-motion-hover-border`   | `none`   | the boundary as it rests, its darkening taken away    |
+| `--ui-motion-focus-fill`     | `tint`   | the same tint, while the focus stays                  |
 | `--ui-motion-focus-shadow`   | `raise`  | the same drop, while the focus stays                  |
+| `--ui-motion-focus-shadow`   | `burst`  | light bursting out round the control as it arrives    |
 | `--ui-motion-focus-move`     | `lift`   | the box round the control two pixels up, ring and all |
 | `--ui-motion-focus-ring`     | `glide`  | the ring glided over from the control seen last       |
+| `--ui-motion-focus-ring`     | `glitch` | the ring shaken and split in two as the focus arrives |
 | `--ui-motion-focus-label`    | `accent` | the label in the accent, a fifth of the text in it    |
+| `--ui-motion-focus-label`    | `glow`   | a light of the accent behind the label                |
 | `--ui-motion-invalid-border` | `pulse`  | a band of the danger sent out from a field in error   |
+| `--ui-motion-invalid-border` | `split`  | the boundary split into the danger and the info       |
 | `--ui-motion-invalid-fill`   | `flash`  | a field in error tinted from the danger, and back     |
 
 **The default theme's taste raises a field under the pointer and at the focus, lifts it at the
@@ -226,11 +234,13 @@ focus and glides its ring over**, and the boundary still darkens under the point
 field is a form's control, so it answers what a form's control does**: its label takes the accent
 at the focus, and in error it sends a band of the danger out four times and flashes its fill four
 times, each round a `--ui-duration-flourish`, and rests — an error stands for as long as you leave
-it. The message comes as it did. Under [Matrix](theme.md#matrix) a field in error keeps its fill as
-it is, and under [Glass](theme.md#glass) its label stays as it is at the focus; otherwise a field
-does what it did before effects existed under both, until their effects for a field are drawn — a
-name a field does not offer draws nothing — and the default theme's accent and pulse stand where a
-theme of theirs is not drawn yet.
+it. The message comes as it did. **Under [Matrix](theme.md#matrix)** a field tints and glows under
+the pointer, and its boundary no longer darkens there; at the focus it takes the tint and a burst of
+light, its ring glitches and its label glows; and in error its boundary splits into the danger and
+the info, and its fill stays as it is. **Under [Glass](theme.md#glass)** its label stays as it is at
+the focus; otherwise a field does what it did before effects existed there, until Glass's effects
+for a field are drawn — a name a field does not offer draws nothing — and the default theme's pulse
+stands under it.
 
 **The label's accent has a fifth of the text in it**, so it clears 4.5:1 in every theme and scheme,
 where the accent alone fell under it. **The flash mixes a fifth of the danger into the fill** rather
@@ -245,9 +255,11 @@ you are acting, so a pointer resting there changes nothing. A theme's taste reac
 its own name, `--ui-taste-input-<moment>` or `--ui-taste-textarea-<moment>`, over the page's.
 
 Each effect moves over `--ui-duration-effect` on `--ui-easing-enter`, the label on
-`--ui-easing-state`, the glide over `--ui-duration-travel` on `--ui-easing-move`, and the band and
-the flash over `--ui-duration-flourish`, `--ui-iteration-settle` rounds of it, the band on
-`--ui-easing-enter` and the flash on `--ui-easing-exit`; all of them collapse under
+`--ui-easing-state`, the glide over `--ui-duration-travel` on `--ui-easing-move`; the burst and the
+glitch over `--ui-duration-flourish`, the glitch on a straight clock; the band and the flash over
+`--ui-duration-flourish`, `--ui-iteration-settle` rounds of it, the band on `--ui-easing-enter` and
+the flash on `--ui-easing-exit`; and the split over `--ui-duration-effect`, twice as many rounds, on
+a straight clock. All of them collapse under
 `prefers-reduced-motion: reduce`, and the ring does not fly in forced colours. What they move
 transitions only once one is chosen, so with none the boundary is still the only thing that moves.
 They are drawn by one internal sheet, `fieldEffects()` in `src/effects.ts`, which the two elements

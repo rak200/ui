@@ -76,23 +76,32 @@ edge: 6.47:1 on the field's white and 7.37 on its black.
 **Its taste answers in light where the default theme's moves.** Under the pointer a button takes a
 tint of the accent and glows; at the focus it takes its hover colour and a burst of light, its ring
 glitches rather than gliding, and it does not lift; and a press shatters it rather than squeezing
-it, brings no colour of its own and sinks nothing. A field in error keeps its fill as it is. Each
-`none` in it takes back an effect the default theme's taste names, which would otherwise run under
-Matrix too. A field's label glow and its error's split are not drawn yet, and a taste names only
-what some component draws: until they are, the default theme's accent and pulse stand under it.
+it, brings no colour of its own and sinks nothing. A field tints and glows under the pointer
+without darkening; at the focus it takes the tint and a burst, its ring glitches and its label
+glows; and in error its boundary splits into the danger and the info, its fill as it is. A field
+leaves the hover colour out, so the theme names the tint for each field at the focus, over the
+page's highlight. Each `none` in it takes back an effect the default theme's taste names, which
+would otherwise run under Matrix too.
 
-| Moment         | Effect      |
-| -------------- | ----------- |
-| `hover-fill`   | `tint`      |
-| `hover-shadow` | `glow`      |
-| `focus-move`   | `none`      |
-| `focus-fill`   | `highlight` |
-| `focus-shadow` | `burst`     |
-| `focus-ring`   | `glitch`    |
-| `press-move`   | `shatter`   |
-| `press-fill`   | `none`      |
-| `press-shadow` | `none`      |
-| `invalid-fill` | `none`      |
+| Moment           | Effect      |
+| ---------------- | ----------- |
+| `hover-fill`     | `tint`      |
+| `hover-shadow`   | `glow`      |
+| `focus-move`     | `none`      |
+| `focus-fill`     | `highlight` |
+| `focus-shadow`   | `burst`     |
+| `focus-ring`     | `glitch`    |
+| `focus-label`    | `glow`      |
+| `hover-border`   | `none`      |
+| `press-move`     | `shatter`   |
+| `press-fill`     | `none`      |
+| `press-shadow`   | `none`      |
+| `invalid-border` | `split`     |
+| `invalid-fill`   | `none`      |
+
+| Component                     | Moment       | Effect |
+| ----------------------------- | ------------ | ------ |
+| `input`, `textarea`, `select` | `focus-fill` | `tint` |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
