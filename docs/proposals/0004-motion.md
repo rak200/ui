@@ -764,3 +764,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#330](https://github.com/rak200/ui/pull/330) | Matrix's press: the shatter, a filter in the button's own tree, and its taste complete  |
 | 4    | [#331](https://github.com/rak200/ui/pull/331) | Glass's taste begins: the inner light at the focus and the press's spring               |
 | 4    | [#332](https://github.com/rak200/ui/pull/332) | Glass's ring: the refocus, out of a blur and into one on a second ring of the page's    |
+| 4    | [#333](https://github.com/rak200/ui/pull/333) | Glass's shimmer, with `--ui-duration-loop`, `--ui-iteration-settle` and the collapse    |

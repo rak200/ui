@@ -168,8 +168,8 @@ has the most room of anything on the glass, so a page that looks fine under it c
 the limit.
 
 **Its taste holds the light inside the glass.** At the focus a button keeps a light along its
-inside and does not lift, and its ring comes into focus from a blur and blurs away as the focus
-leaves; a press springs it back, further in than the default theme's squeeze. The `none` takes back
+inside, a sheen sweeps across it four times, and it does not lift, and its ring comes into focus
+from a blur and blurs away as the focus leaves; a press springs it back, further in than the default theme's squeeze. The `none` takes back
 the default theme's lift, which would otherwise run under Glass too. The rest of what RFC 0004 chose
 for Glass is not drawn yet, and a taste names only what some component draws: until it is, the
 default theme's raise under the pointer and highlight under a press stand under it.
@@ -177,6 +177,7 @@ default theme's raise under the pointer and highlight under a press stand under 
 | Moment         | Effect    |
 | -------------- | --------- |
 | `focus-move`   | `none`    |
+| `focus-fill`   | `shimmer` |
 | `focus-shadow` | `inner`   |
 | `focus-ring`   | `refocus` |
 | `press-move`   | `spring`  |

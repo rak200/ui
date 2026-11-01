@@ -297,6 +297,42 @@ async function tint(scheme: Scheme, palette: Palette): Promise<string> {
     }
 }
 
+/**
+ * The sheen a shimmer sweeps across a `variant` button, resolved in `scheme` under `palette` as the
+ * button hands it to the layer that draws it — an effect's, so read off a button rather than a
+ * token, as the tint is.
+ */
+async function sheen(scheme: Scheme, palette: Palette, variant: string): Promise<string> {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet() + palette.sheet;
+
+    const host = document.createElement('div');
+    host.style.colorScheme = scheme;
+
+    if (palette.theme !== undefined) {
+        host.dataset['uiTheme'] = palette.theme;
+    }
+
+    host.innerHTML = `<ui-button variant="${variant}" style="${kinds.choice}focus-fill: shimmer">Save</ui-button>`;
+    document.body.append(style, host);
+
+    try {
+        const button = host.querySelector('ui-button');
+        await button?.updateComplete;
+
+        const control = button?.shadowRoot?.querySelector('button');
+
+        if (control === null || control === undefined) {
+            throw new Error('the button rendered no control');
+        }
+
+        return getComputedStyle(control).getPropertyValue(`${kinds.animated}sheen`);
+    } finally {
+        style.remove();
+        host.remove();
+    }
+}
+
 /** The page under a palette: the one it documents holding over, or the surface a host paints. */
 function page(palette: Palette, scheme: Scheme): string {
     return (
@@ -502,27 +538,45 @@ describe('tokenStyleSheet', () => {
         }
     });
 
-    it('collapses every duration when the reader has asked for less motion', () => {
+    it("collapses every duration and every loop's count when the reader has asked for less motion", () => {
         const rule = reducedMotion();
 
         expect(rule.conditionText).toBe('(prefers-reduced-motion: reduce)');
 
         const collapsed = declarations(styleRule(rule.cssRules[0]));
         const durations = declared.filter((name) => name.startsWith('--ui-duration-'));
+        const counts = declared.filter((name) => name.startsWith('--ui-iteration-'));
 
         // Ground *and* derived, which is the half that is easy to drop: a derived name
         // falls back to its formula only while nobody has declared it, so a host who had
         // tuned `--ui-duration-state` would keep their motion right through the collapse.
-        expect([...collapsed.keys()]).toEqual(durations);
+        // And the counts, since with its period alone collapsed an infinite loop runs on.
+        expect([...collapsed.keys()]).toEqual(
+            declared.filter((name) => durations.includes(name) || counts.includes(name)),
+        );
         expect(durations.length).toBeGreaterThan(1);
+        expect(counts.length).toBeGreaterThan(0);
     });
 
     it('collapses to a duration that is short but not zero', () => {
         for (const [name, value] of declarations(styleRule(reducedMotion().cssRules[0]))) {
-            const seconds = Number.parseFloat(computed('transition-duration', value, 'light'));
+            if (name.startsWith('--ui-duration-')) {
+                const seconds = Number.parseFloat(computed('transition-duration', value, 'light'));
 
-            expect(seconds, name).toBeGreaterThan(0);
-            expect(seconds, name).toBeLessThan(0.001);
+                expect(seconds, name).toBeGreaterThan(0);
+                expect(seconds, name).toBeLessThan(0.001);
+            }
+        }
+    });
+
+    it("collapses a loop's count to one round, which reads as one", () => {
+        for (const [name, value] of declarations(styleRule(reducedMotion().cssRules[0]))) {
+            if (name.startsWith('--ui-iteration-')) {
+                // As written, for a script that reads the count off the page: an empty value
+                // runs one round too, the count's initial value being one, and reads as nothing.
+                expect(value, name).toBe('1');
+                expect(computed('animation-iteration-count', value, 'light'), name).toBe('1');
+            }
         }
     });
 
@@ -593,19 +647,21 @@ describe('tokenStyleSheet', () => {
         // this one passes with the whole block on a single line. It is pasted into a page
         // by hand and read there, which is the property no CSSOM check can see.
         const lines = tokenStyleSheet().split('\n');
-        const durations = declared.filter((name) => name.startsWith('--ui-duration-'));
+        const collapsed = declared.filter(
+            (name) => name.startsWith('--ui-duration-') || name.startsWith('--ui-iteration-'),
+        );
 
         for (const line of lines) {
             expect(line.split(';').length, line).toBeLessThanOrEqual(2);
         }
 
         // `:root {`, the scheme axis, one line per token, `}`; a blank line; the media
-        // rule, its own `:root {`, one line per duration, and the two closing braces; a
+        // rule, its own `:root {`, one line per name it collapses, and the two closing braces; a
         // blank line, and the contrast rule laid out the same way; a blank line, and the
         // taste's block, its selector, one line per moment and its brace.
         expect(lines.length).toBe(
             tokens.length +
-                durations.length +
+                collapsed.length +
                 Object.keys(moreContrast).length +
                 13 +
                 Object.keys(taste.page ?? {}).length +
@@ -843,6 +899,7 @@ describe('every value is legal for the property its token serves', () => {
     const properties = [
         ['--ui-color-', 'color'],
         ['--ui-duration-', 'transition-duration'],
+        ['--ui-iteration-', 'animation-iteration-count'],
         ['--ui-easing-', 'transition-timing-function'],
         ['--ui-radius', 'border-radius'],
         ['--ui-space', 'padding'],
@@ -1342,6 +1399,27 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it.each([
+                    ['primary', '--ui-color-primary', '--ui-color-primary-contrast'],
+                    ['secondary', '--ui-color-surface-control', '--ui-color-text'],
+                ] as const)(
+                    "keeps a %s button's label legible where the shimmer's sheen passes under it",
+                    async (variant, fill, label) => {
+                        // At the sheen's peak, laid over the fill laid over whatever the button
+                        // rests on: an effect that colours the ground under text keeps the text's
+                        // 4.5:1, RFC 0004 says.
+                        const swept = await sheen(scheme, palette, variant);
+
+                        for (const beside of outside(palette, scheme)) {
+                            const under = laid(fill, beside, scheme, palette);
+
+                            expect(
+                                contrastRatio(paint(label), layered(swept, under, scheme, palette)),
+                            ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    },
+                );
+
                 it('keeps a hovered secondary legible', () => {
                     const label = paint('--ui-color-text');
 
@@ -1676,6 +1754,15 @@ describe('the reduced-motion control the playground carries', () => {
         return Number.parseFloat(getComputedStyle(probe).transitionDuration);
     }
 
+    /** A loop's count as the story's tree resolves it, with no fallback behind it. */
+    function rounds(container: HTMLElement, name: string): string {
+        const probe = document.createElement('div');
+        probe.style.animationIterationCount = `var(${name})`;
+        container.append(probe);
+
+        return getComputedStyle(probe).animationIterationCount;
+    }
+
     /** How long the button a story rendered takes to change colour, in seconds. */
     function transition(container: HTMLElement): number {
         const button = container.querySelector('ui-button')?.shadowRoot?.querySelector('button');
@@ -1690,13 +1777,17 @@ describe('the reduced-motion control the playground carries', () => {
     it("collapses every name the reader's setting collapses when the toolbar asks for less motion", async () => {
         const container = await mountStory(Defaults, meta, 'Defaults', { motion: 'reduce' });
 
-        // Short but not zero, as the setting leaves it. A derived name nobody declared
-        // resolves to no duration at all, and a ground left alone to its own.
+        // Short but not zero, as the setting leaves it, and a loop one round. A derived name
+        // nobody declared resolves to no duration at all, and a ground left alone to its own.
         expect(collapsed.length).toBeGreaterThan(1);
 
         for (const name of collapsed) {
-            expect(resolved(container, name), name).toBeGreaterThan(0);
-            expect(resolved(container, name), name).toBeLessThan(0.001);
+            if (name.startsWith('--ui-iteration-')) {
+                expect(rounds(container, name), name).toBe('1');
+            } else {
+                expect(resolved(container, name), name).toBeGreaterThan(0);
+                expect(resolved(container, name), name).toBeLessThan(0.001);
+            }
         }
     });
 

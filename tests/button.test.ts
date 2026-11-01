@@ -1623,6 +1623,106 @@ describe("the effects Glass's taste names", () => {
         expect(getComputedStyle(inner(element)).getPropertyValue('--ui-fx-ring')).toBe('refocus');
     });
 
+    /** The shimmer, if one is sweeping the button's layer under its label. */
+    function shimmer(element: UiButton): CSSAnimation | undefined {
+        return inner(element)
+            .getAnimations({ subtree: true })
+            .find(
+                (animation): animation is CSSAnimation =>
+                    animation instanceof CSSAnimation && animation.animationName === 'ui-shimmer',
+            );
+    }
+
+    it('lays the layer it sweeps under the label, over the fill', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        expect(getComputedStyle(inner(element)).isolation, 'a context of its own').toBe('isolate');
+        expect(getComputedStyle(inner(element), '::after').zIndex, 'under the label').toBe('-1');
+    });
+
+    it('sweeps a sheen across the button at the focus, four rounds of the loop', async () => {
+        const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
+        element.style.setProperty('--ui-motion-focus-fill', 'shimmer');
+        element.style.setProperty('--ui-duration-loop', '10s');
+
+        await userEvent.tab();
+
+        const layer = getComputedStyle(inner(element), '::after');
+
+        expect(layer.backgroundImage).toMatch(
+            /^linear-gradient\(100deg, rgba\(0, 0, 0, 0\) 35%, .+ 50%, rgba\(0, 0, 0, 0\) 65%\)$/,
+        );
+        expect([layer.backgroundSize, layer.backgroundRepeat]).toEqual(['250% 100%', 'no-repeat']);
+        expect([layer.animationDuration, layer.animationIterationCount]).toEqual(['10s', '4']);
+
+        // Through a property of its own, which moves rather than jumps: halfway across a round.
+        const sweeping = shimmer(element);
+
+        sweeping?.pause();
+
+        if (sweeping !== undefined) {
+            sweeping.currentTime = 5000;
+        }
+
+        expect(
+            getComputedStyle(inner(element), '::after').getPropertyValue('--ui-fx-shimmer'),
+        ).toBe('50%');
+        expect(getComputedStyle(inner(element), '::after').backgroundPosition).toBe('50% 0px');
+    });
+
+    it('draws the sheen in the accent moved off the label, a primary its own and a secondary the text', async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.style.setProperty('--ui-motion-focus-fill', 'shimmer');
+        element.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+        element.style.setProperty('--ui-color-primary-contrast', 'rgb(255, 255, 255)');
+
+        const sheen = getComputedStyle(inner(element)).getPropertyValue('--ui-fx-sheen');
+        const probe = document.createElement('div');
+        probe.style.color = sheen;
+        document.body.append(probe);
+
+        // A white label's far pole is black: a fifth of it in the blue, at half strength.
+        const expected = document.createElement('div');
+        expected.style.color =
+            'rgb(from color-mix(in oklab, rgb(0, 0, 255), black 20%) r g b / 0.5)';
+        document.body.append(expected);
+
+        expect(getComputedStyle(probe).color).toBe(getComputedStyle(expected).color);
+    });
+
+    it('sweeps nothing under reduced motion: one round, and no time to take', async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+        });
+
+        try {
+            sheet();
+            const element = await mount('<ui-button>Save</ui-button>');
+            element.style.setProperty('--ui-motion-focus-fill', 'shimmer');
+
+            await userEvent.tab();
+
+            const layer = getComputedStyle(inner(element), '::after');
+
+            expect(Number.parseFloat(layer.animationDuration)).toBeLessThan(0.001);
+            expect(layer.animationIterationCount).toBe('1');
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it("sweeps the sheen where Glass's taste runs", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.parentElement?.setAttribute('data-ui-theme', glass.name);
+
+        await userEvent.tab();
+
+        expect(shimmer(element)).toBeDefined();
+    });
+
     it("reads Glass's taste off the theme: the light held inside, and a spring", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet() + themeStyleSheet(glass);

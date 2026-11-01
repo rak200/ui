@@ -4,6 +4,7 @@ import { query } from './motion.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 import { press } from './shatter.js';
+import { farPole } from './tokens.js';
 
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
@@ -99,6 +100,52 @@ const innerOnPrimary = css`inset 0 0 0 1px ${offPrimary},
  */
 const spring = css`linear(0, 0.38 8%, 0.83 17%, 1.06 24%, 1.13 30%, 1.08 39%, 0.99 51%, 0.97 62%, 1 82%, 1)`;
 
+/**
+ * The sheen a shimmer sweeps across a button, over the label it passes under: the accent with a
+ * fifth of the pole further from that label mixed in, at half its strength. The accent alone, or
+ * the primary's fill lightened as the prototype drew it, took the label under its 4.5:1 at the
+ * sheen's peak — 2.42:1 on the default palette's primary, 3.65 on Matrix's dark secondary and 4.48
+ * on Glass's dark primary, measured for this button. A fifth of the far pole keeps every label at
+ * 5.64:1 or more, and leaves the band 1.48:1 or more from the fill under Glass, whose taste sweeps
+ * it.
+ */
+const sheenOnPrimary = css`rgb(
+    from color-mix(
+            in oklab,
+            ${reference('--ui-color-accent')},
+            ${unsafeCSS(farPole(String(reference('--ui-color-primary-contrast'))))} 20%
+        )
+        r g b / 0.5
+)`;
+
+/** The sheen over a secondary button, whose label is the text. */
+const sheenOverSurface = css`rgb(
+    from color-mix(
+            in oklab,
+            ${reference('--ui-color-accent')},
+            ${unsafeCSS(farPole(String(reference('--ui-color-text'))))} 20%
+        )
+        r g b / 0.5
+)`;
+
+// Stryker disable all: the shimmer's property is registered once, at import, in the page's one
+// registry — so in the warm process Stryker switches mutants in, the original registration stands
+// before any mutant is active, and none of them changes what a test can see. Outside the runner's
+// reach, not an equivalent mutant.
+try {
+    // The property the shimmer moves its sheen through: registered, so it moves rather than jumps,
+    // and its own, so a picture the layer already paints stays where it is.
+    CSS.registerProperty({
+        name: '--ui-fx-shimmer',
+        syntax: '<percentage>',
+        inherits: false,
+        initialValue: '150%',
+    });
+} catch {
+    // Registered already, by another copy of this package on the page, which stands.
+}
+// Stryker restore all
+
 /** The glow: a light of the accent, blurred round the button's boundary. */
 const glow = css`0 0 0.75rem 0.125rem rgb(from ${reference('--ui-color-accent')} r g b / 0.5)`;
 
@@ -159,8 +206,10 @@ export class UiButton extends LitElement {
            what it exists to do. */
             transition: background-color ${reference('--ui-duration-state')}
                 ${reference('--ui-easing-state')};
-            /* What a theme's glow is laid out against. */
+            /* What a theme's glow is laid out against, and a stacking context of its own, so
+               the layer under the label is drawn over the button's fill. */
             position: relative;
+            isolation: isolate;
         }
 
         /* What a theme's glow is drawn on: a layer over the button rather than the button,
@@ -188,6 +237,9 @@ export class UiButton extends LitElement {
         button::after {
             content: '';
             position: absolute;
+            /* Under the label, so what a fill effect paints on this layer lights the button's
+               fill and never the label; the edge and the lift lie past where the label reaches. */
+            z-index: -1;
             inset: -1px;
             border: 1px solid ${reference('--ui-color-border-button')};
             border-radius: inherit;
@@ -362,6 +414,45 @@ export class UiButton extends LitElement {
 
             button.secondary:not(:disabled):focus-visible:active {
                 background: ${reference('--ui-color-hover')};
+            }
+        }
+
+        /* shimmer: a sheen swept across the button at the focus, ten degrees off upright and
+           three quarters as wide as the button, from before its start to past its end, four
+           rounds of the loop's period, and then at rest before the start: a focus can rest for
+           minutes, and four rounds stay inside the five seconds a loop that settles keeps to. On
+           the layer under the label, through a property of its own. */
+        @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
+            button.primary {
+                --ui-fx-sheen: ${sheenOnPrimary};
+            }
+
+            button.secondary {
+                --ui-fx-sheen: ${sheenOverSurface};
+            }
+
+            button:focus-visible::after {
+                background-image: linear-gradient(
+                    100deg,
+                    transparent 35%,
+                    var(--ui-fx-sheen) 50%,
+                    transparent 65%
+                );
+                background-size: 250% 100%;
+                background-repeat: no-repeat;
+                background-position: var(--ui-fx-shimmer) 0;
+                animation: ui-shimmer ${reference('--ui-duration-loop')} linear
+                    ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        @keyframes ui-shimmer {
+            from {
+                --ui-fx-shimmer: 150%;
+            }
+
+            to {
+                --ui-fx-shimmer: -50%;
             }
         }
 
