@@ -123,6 +123,14 @@ export const tokens = [
     // moment fires it, rather than holding as long as the moment does, and so longer than an
     // effect that holds. No component reads it — they read `--ui-duration-flourish`.
     '--ui-duration-400',
+    // A loop's period, and how many rounds a loop runs where it settles: RFC 0004's, arriving
+    // with the shimmer at the focus. The period is off the scale, the round of something that
+    // comes round again rather than a step a moment fires, so it is a purpose with a value of its
+    // own. The count is a category of its own, which the collapse takes to one round: with the
+    // period alone collapsed, an infinite loop runs on in all three engines — measured for RFC
+    // 0004.
+    '--ui-duration-loop',
+    '--ui-iteration-settle',
     // The icon category, arriving with `ui-icon` rather than with the twelve components
     // that will eventually hold one. Two names, because an adopted set has exactly two
     // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
@@ -400,6 +408,11 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-easing-move': 'cubic-bezier(0.4, 0, 0.2, 1)',
     // 520ms, the prototypes' step for the burst, and the review's.
     '--ui-duration-400': '520ms',
+    // 1.2s, the prototypes' loop, and the review's.
+    '--ui-duration-loop': '1.2s',
+    // Four rounds: a focus can rest for minutes, and four of the loop's period stay inside the
+    // five seconds WCAG 2.2.2 lets motion run before a reader must be able to stop it.
+    '--ui-iteration-settle': '4',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
     // Two layers rather than one, which is what makes a shadow read as *lift* instead of
@@ -489,8 +502,19 @@ function shade(amount: number): string {
     return `color-mix(in oklab, ${room} ${String(amount)}%, ${ground('--ui-color-accent')})`;
 }
 
+/**
+ * The pole, white or black, further from `colour`, a colour as CSS writes it: read off its
+ * luminance as the accent's own label is, for what has to stand off a colour nobody here chose —
+ * a sheen passing under a label, say.
+ */
+export function farPole(colour: string): string {
+    const towardWhite = step(`${String(crossover)} - ${luminance}`);
+
+    return `color(from ${colour} srgb-linear ${towardWhite} ${towardWhite} ${towardWhite} / 1)`;
+}
+
 /** The pole of the accent, white or black, whichever stands further from it. */
-const label = pole('--ui-color-accent', step(`${String(crossover)} - ${luminance}`));
+const label = farPole(ground('--ui-color-accent'));
 
 /**
  * How each derived role computes when the host has not set it.
@@ -714,8 +738,14 @@ export const taste: Taste = {
     },
 };
 
-/** The category every duration name shares, which is what reduced motion collapses. */
-const duration = '--ui-duration-';
+/**
+ * What reduced motion collapses, by category: every duration to `0.01ms`, and every loop's count
+ * to one round, since with its period alone collapsed an infinite loop runs on.
+ */
+const collapse: Readonly<Record<string, string>> = {
+    '--ui-duration-': '0.01ms',
+    '--ui-iteration-': '1',
+};
 
 /**
  * The token defaults as a CSS rule, for a host that wants them without importing a
@@ -735,7 +765,7 @@ const duration = '--ui-duration-';
  * un-overridable, it is an accessibility defect every component would have to fix on its
  * own. The block declares the *derived* duration names as well as the ground ones — the
  * only place either may appear at `:root`, and legal there precisely because what it
- * declares is a literal rather than a formula. Without it, a host who tuned
+ * declares is a literal rather than a formula — and takes every loop's count to one round. Without it, a host who tuned
  * `--ui-duration-state` would keep their motion through the collapse, and the setting
  * would be honoured for everyone except the people who had touched it.
  *
@@ -759,8 +789,11 @@ export function tokenStyleSheet(): string {
     // end of one before removing itself waits forever — and only for the people who asked
     // for less motion. At `0.01ms` the lifecycle still runs; the time is what goes.
     const collapsed = [...tokens, ...derivedTokens]
-        .filter((token) => token.startsWith(duration))
-        .map((token) => `    ${token}: 0.01ms;`)
+        .flatMap((token) =>
+            Object.entries(collapse)
+                .filter(([category]) => token.startsWith(category))
+                .map(([, value]) => `    ${token}: ${value};`),
+        )
         .join('\n');
 
     const contrasted = Object.entries(moreContrast)

@@ -454,7 +454,9 @@ Components read a **purpose** — `--ui-duration-state` — over a scale named b
 inserting a step later is additive rather than a rename. `prefers-reduced-motion` is honoured once,
 in the token layer, and collapses every duration to `0.01ms` rather than to zero — at zero a
 transition still lands but fires no `transitionend`, so anything awaiting the end of one waits
-forever, and only for the people who asked for less motion.
+forever, and only for the people who asked for less motion. It takes every loop's count to one round
+as well: a count is a category of its own, `--ui-iteration-*`, since with its period alone collapsed
+an infinite loop runs on in all three engines.
 
 That is the argument for motion being tokens at all, and it is stronger than the theming one: a
 hardcoded `150ms` is not merely un-overridable, it is an accessibility defect that every component

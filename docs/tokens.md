@@ -167,7 +167,12 @@ because a crossing takes as long as its distance asks — the focus ring glided 
 the next — and it moves along `--ui-easing-move`, quick out of the gate and slow into place. **A
 flourish has a fourth**, `--ui-duration-flourish` over `--ui-duration-400`: an effect that plays out
 on its own once a moment fires it — the burst of light at the focus, the ring's glitch, the spring a
-press lets go on — which runs longer than an effect that holds for as long as its moment does. Which effect runs is a choice rather than a token, and
+press lets go on — which runs longer than an effect that holds for as long as its moment does.
+**A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
+a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
+focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
+before a reader must be able to stop it. The shimmer at the focus reads both, and a count is a
+category of its own, `--ui-iteration-*`. Which effect runs is a choice rather than a token, and
 [`taste`](#taste) is the default one.
 
 ## More contrast
@@ -212,7 +217,8 @@ registration serve a primary button, a danger message and body text.
 
 **Reduced motion is honoured in the sheet, once.** `tokenStyleSheet()` emits a
 `@media (prefers-reduced-motion: reduce)` rule that collapses every duration — ground and derived
-alike, so a host who tuned one still gets the collapse. It collapses to `0.01ms` rather than to
+alike, so a host who tuned one still gets the collapse — and takes every loop's count to one round,
+since with its period alone collapsed an infinite loop runs on in all three engines. It collapses to `0.01ms` rather than to
 zero, and that difference is not cosmetic: at zero a transition still lands but fires no
 `transitionstart` and no `transitionend`, so anything waiting on the end of one waits forever, and
 only for the people who asked for less motion.
@@ -256,6 +262,8 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-duration-300`        | the third step of the duration scale                              |
 | `--ui-easing-move`         | the curve something travelling between two places follows         |
 | `--ui-duration-400`        | the fourth step of the duration scale                             |
+| `--ui-duration-loop`       | a loop's period, off the scale                                    |
+| `--ui-iteration-settle`    | how many rounds a loop runs where it settles                      |
 | `--ui-icon-size`           | how big a glyph is drawn                                          |
 | `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
 | `--ui-elevation-100`       | the first step of the elevation scale                             |
@@ -579,6 +587,7 @@ tokenStyleSheet();
 // @media (prefers-reduced-motion: reduce) {
 //   :root {
 //     --ui-duration-100: 0.01ms;
+//     --ui-iteration-settle: 1;
 //     --ui-duration-state: 0.01ms;
 //   } }
 //

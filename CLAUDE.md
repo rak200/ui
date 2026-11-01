@@ -315,6 +315,13 @@ explains. This file restates none of them.
   the departure from nowhere is a sentinel rather than `undefined`, and where the focus went is read
   off the arrival's composed path rather than walked to `null` — a throw no test fails on is graded
   as an error, which fails the floor.
+- **Why the shimmer's sheen is the accent moved off the label rather than the prototype's, why the
+  layer it sweeps lies under the label, and why its property is registered in script** — the
+  docblock on the sheens in `src/button.ts`, which carries the measurement, the comment beside
+  `button::after` there, and the comment beside `CSS.registerProperty`: a registration is one per
+  page, so it is set aside from mutation for `customElements.define`'s reason. The sheen's floor runs
+  over every palette in `tests/tokens.test.ts`, read off a button rather than a token, as the tint's
+  is.
 - **Why the shatter is a filter over the button, what of the button it breaks, and when it lets
   go** — the docblock on `src/shatter.ts`. A component hands it `--ui-fx-press: shatter` and the
   pieces' return time and curve on its control while it can be used, and binds `press()` to its

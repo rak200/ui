@@ -231,8 +231,9 @@ export const matrix: Theme = {
  * translucent stands down, and the edges and the toasts go to the text's pole.
  *
  * **Its taste holds the light inside the glass.** At the focus a button keeps a light along its
- * inside and does not lift, and its ring comes into focus from a blur and blurs away as the focus
- * leaves; and a press springs it back, further in than the default theme's squeeze. The rest of what the review chose for it is not drawn yet, and a taste names only what
+ * inside, a sheen sweeps across it four times, and it does not lift, and its ring comes into focus
+ * from a blur and blurs away as the focus leaves; and a press springs it back, further in than the
+ * default theme's squeeze. The rest of what the review chose for it is not drawn yet, and a taste names only what
  * some component draws.
  */
 export const glass: Theme = {
@@ -346,6 +347,7 @@ export const glass: Theme = {
     taste: {
         page: {
             'focus-move': 'none',
+            'focus-fill': 'shimmer',
             'focus-shadow': 'inner',
             'focus-ring': 'refocus',
             'press-move': 'spring',

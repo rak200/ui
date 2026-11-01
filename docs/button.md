@@ -100,7 +100,8 @@ The button answers a pointer, and every colour it answers with comes from the
 
 **Its edge is drawn on a layer of its own**, in `--ui-color-border-button` — the variant's colour by
 default, the text on a secondary button and nothing on a primary — with `--ui-elevation-button`, a
-lift a theme gives it, on the same layer. Under the pointer the edge goes to
+lift a theme gives it, on the same layer. The layer lies under the label and over the fill, so what
+a fill effect draws on it lights the button's fill and never its label. Under the pointer the edge goes to
 `--ui-color-border-button-hover`, which is the resting edge until a theme gives the pointer its own.
 A secondary button is filled with `--ui-color-surface-control`, the fill every control takes.
 
@@ -144,6 +145,7 @@ the effect's name:
 | `--ui-motion-hover-shadow` | `raise`     | a drop shadow under the pointer                           |
 | `--ui-motion-hover-shadow` | `glow`      | a light of the accent round the button, under the pointer |
 | `--ui-motion-focus-fill`   | `highlight` | the hover colour, while the focus stays                   |
+| `--ui-motion-focus-fill`   | `shimmer`   | a sheen swept across it four times, at the focus          |
 | `--ui-motion-focus-shadow` | `raise`     | the same drop, while the focus stays                      |
 | `--ui-motion-focus-shadow` | `burst`     | light bursting out round the button as the focus arrives  |
 | `--ui-motion-focus-shadow` | `inner`     | a light along the inside of its edge, at the focus        |
@@ -162,7 +164,8 @@ focus, lifts it at the focus, glides the ring over and squeezes and sinks it und
 [Matrix](theme.md#matrix) the button tints and glows under the pointer, takes its hover colour and a
 burst at the focus without lifting, its ring glitching there, and shatters under a press, with
 neither a colour nor a sinking shadow. Under [Glass](theme.md#glass) it keeps a light along its
-inside at the focus without lifting, its ring coming into focus there, and a press springs it back.
+inside at the focus without lifting, a sheen sweeping across it and its ring coming into focus
+there, and a press springs it back.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
 every button, or one. A name the button does not offer draws nothing, and the button does what it
@@ -207,6 +210,14 @@ through. A primary's fill is the accent already, so its tint is the hover colour
 Over the primary's fill, which is the accent already, the accent is moved two fifths toward the
 label, which stands off that fill.
 
+**The shimmer is a sheen swept across the button**, ten degrees off upright and three quarters as
+wide as the button, four rounds of `--ui-duration-loop` and then at rest before the start: a focus
+can rest for minutes, and four rounds stay inside the five seconds a loop that settles keeps to. It
+is drawn on the layer under the label, in the accent with a fifth of the pole further from the
+label mixed in, at half strength, so the label keeps 4.5:1 at the sheen's peak on every palette.
+One internal helper reads that pole, `farPole()` in `src/tokens.ts`, as the accent's own label is
+read.
+
 **The burst is an animation**: it starts each time the reader sees the focus arrive, plays out on its
 own and leaves nothing behind while the focus stays. Only the light round the button moves, so the
 label keeps its contrast throughout.
@@ -240,7 +251,7 @@ which makes no `:active`, breaks nothing. The button binds one internal helper, 
 Each effect moves over `--ui-duration-effect`, the shatter's pieces going back along
 `--ui-easing-move`; the glide over `--ui-duration-travel` along `--ui-easing-move`; and the burst, the
 glitch and the spring a press lets go on over `--ui-duration-flourish`, the spring along a curve of
-its own. All of them collapse with every other duration under
+its own; and the shimmer over `--ui-duration-loop`, `--ui-iteration-settle` rounds of it. All of them collapse with every other duration under
 `prefers-reduced-motion: reduce`: the button still rises, lifts and sinks, at once, the ring does
 not fly, no burst shows and nothing breaks. Nor does the ring fly or the burst show in forced
 colours. An engine without
