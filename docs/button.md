@@ -150,6 +150,7 @@ the effect's name:
 | `--ui-motion-focus-move`   | `lift`      | two pixels up, the focus ring with it                     |
 | `--ui-motion-focus-ring`   | `glide`     | the ring glided over from the control seen last           |
 | `--ui-motion-focus-ring`   | `glitch`    | the ring shaken and split in two as the focus arrives     |
+| `--ui-motion-focus-ring`   | `refocus`   | the ring out of a blur as the focus arrives, and into one |
 | `--ui-motion-press-move`   | `squish`    | squeezed to 96%, springing back once let go               |
 | `--ui-motion-press-move`   | `shatter`   | broken into pieces where it was pressed, until let go     |
 | `--ui-motion-press-move`   | `spring`    | pressed to 90%, let go on a spring past its rest          |
@@ -161,7 +162,7 @@ focus, lifts it at the focus, glides the ring over and squeezes and sinks it und
 [Matrix](theme.md#matrix) the button tints and glows under the pointer, takes its hover colour and a
 burst at the focus without lifting, its ring glitching there, and shatters under a press, with
 neither a colour nor a sinking shadow. Under [Glass](theme.md#glass) it keeps a light along its
-inside at the focus without lifting, and a press springs it back.
+inside at the focus without lifting, its ring coming into focus there, and a press springs it back.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
 every button, or one. A name the button does not offer draws nothing, and the button does what it
@@ -210,7 +211,7 @@ label, which stands off that fill.
 own and leaves nothing behind while the focus stays. Only the light round the button moves, so the
 label keeps its contrast throughout.
 
-**The glide and the glitch are flown by a ring of the page's own.** An outline is drawn round its
+**The glide, the glitch and the refocus are flown by a ring of the page's own.** An outline is drawn round its
 own element and moves only with it, so a ring that leaves one control and lands on the button, or
 jumps about the button's own, is a popover laid in the top layer: it takes the button's outline,
 width and colour, follows the button frame by frame — lifting with it — and hides as it lands, where
@@ -220,8 +221,11 @@ and leaves only from a ring the reader saw, for where the focus went: a click, a
 the page's first focus brings the ring at once. The glitch starts on the button's own ring, wherever
 the focus came from, jumps a pixel or three each way about every twelfth of its time, and splits
 three times into two lines thrown 3px either way, in `--ui-color-danger` and `--ui-color-info`. The
-button binds one internal helper, `arrive()` in `src/ring.ts`, to its focus, and calls `watch()` as
-it connects, so the ring seen before its first focus is already recorded.
+refocus starts on the button's own ring too, out of a 3px blur, and as the focus leaves it blurs away
+on a second ring, fading over the second half, while the next control's ring may be coming into
+focus; both take a quarter again `--ui-duration-effect`, on `--ui-easing-enter` and
+`--ui-easing-exit`. The button binds one internal helper, `arrive()` in `src/ring.ts`, to its focus,
+and calls `watch()` as it connects, so the ring seen before its first focus is already recorded.
 
 **The shatter is a filter over the button**, which no sheet can draw: it cuts the button as it is
 drawn into a dozen or so pieces, smallest where the pointer struck it — the middle, for Space — and

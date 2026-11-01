@@ -168,17 +168,18 @@ has the most room of anything on the glass, so a page that looks fine under it c
 the limit.
 
 **Its taste holds the light inside the glass.** At the focus a button keeps a light along its
-inside and does not lift, and a press springs it back, further in than the default theme's squeeze.
-The `none` takes back the default theme's lift, which would otherwise run under Glass too. The rest
-of what RFC 0004 chose for Glass is not drawn yet, and a taste names only what some component
-draws: until it is, the default theme's raise under the pointer, glide and highlight under a press
-stand under it.
+inside and does not lift, and its ring comes into focus from a blur and blurs away as the focus
+leaves; a press springs it back, further in than the default theme's squeeze. The `none` takes back
+the default theme's lift, which would otherwise run under Glass too. The rest of what RFC 0004 chose
+for Glass is not drawn yet, and a taste names only what some component draws: until it is, the
+default theme's raise under the pointer and highlight under a press stand under it.
 
-| Moment         | Effect   |
-| -------------- | -------- |
-| `focus-move`   | `none`   |
-| `focus-shadow` | `inner`  |
-| `press-move`   | `spring` |
+| Moment         | Effect    |
+| -------------- | --------- |
+| `focus-move`   | `none`    |
+| `focus-shadow` | `inner`   |
+| `focus-ring`   | `refocus` |
+| `press-move`   | `spring`  |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

@@ -619,3 +619,278 @@ describe('the glitch the page flies', () => {
         },
     );
 });
+
+/** A plain control, two whose rings come into focus, and one whose ring glides, on a line. */
+interface Refocusing {
+    readonly before: HTMLButtonElement;
+    readonly first: HTMLButtonElement;
+    readonly second: HTMLButtonElement;
+    readonly glides: HTMLButtonElement;
+}
+
+/**
+ * Four controls on a line, the middle two refocusing: while the reader can see the focus on one,
+ * it carries what a component's sheet declares under the refocus's query — the choice, a time long
+ * enough to read partway, and straight curves for its arrival and its departure. The last glides.
+ */
+function refocusing(): Refocusing {
+    const host = document.createElement('div');
+    host.innerHTML = `
+        <style>
+            button { margin: 24px; border-radius: 0; outline: none; }
+            button:focus-visible { outline: 2px solid rgb(1, 2, 3); outline-offset: 2px; }
+            .refocuses { border-radius: 6px; }
+            .refocuses:focus-visible {
+                --ui-fx-ring: refocus;
+                --ui-fx-ring-time: 10s;
+                --ui-fx-ring-curve: linear;
+                --ui-fx-ring-exit: linear;
+            }
+            .glides:focus-visible {
+                --ui-fx-ring: glide;
+                --ui-fx-ring-time: 10s;
+                --ui-fx-ring-curve: linear;
+            }
+        </style>
+        <button id="before">Before</button>
+        <button id="first" class="refocuses">First</button>
+        <button id="second" class="refocuses">Second</button>
+        <button id="glides" class="glides">Glides</button>`;
+    document.body.append(host);
+    watch();
+
+    const pick = (id: string): HTMLButtonElement => {
+        const control = host.querySelector<HTMLButtonElement>(`#${id}`);
+
+        if (control === null) {
+            throw new Error(`no #${id}`);
+        }
+
+        control.addEventListener('focus', arrive);
+
+        return control;
+    };
+
+    return {
+        before: pick('before'),
+        first: pick('first'),
+        second: pick('second'),
+        glides: pick('glides'),
+    };
+}
+
+/** The second ring, which a refocused ring blurs away on, if one was made. */
+function leaving(): HTMLElement | undefined {
+    return document.querySelectorAll<HTMLElement>('[data-ui-ring]')[1];
+}
+
+/** Holds every animation on the second ring `at` a time of its own. */
+function stop(at: number): void {
+    for (const playing of leaving()?.getAnimations() ?? []) {
+        playing.pause();
+        playing.currentTime = at;
+    }
+}
+
+/** Takes the focus onto the first refocusing control from a pointer's, which leaves no ring seen. */
+async function refocus({ before }: Refocusing): Promise<void> {
+    await userEvent.click(before);
+    await userEvent.tab();
+}
+
+/**
+ * What `act` leaves rejected with nobody to hear it: a ring put away in a promise's callback, where
+ * a throw reaches no caller.
+ */
+async function unheard(act: () => Promise<void>): Promise<unknown[]> {
+    const rejected: unknown[] = [];
+    const hear = (event: PromiseRejectionEvent): void => {
+        rejected.push(event.reason);
+    };
+
+    window.addEventListener('unhandledrejection', hear);
+
+    try {
+        await act();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+    } finally {
+        window.removeEventListener('unhandledrejection', hear);
+    }
+
+    return rejected;
+}
+
+/** Lands the ring in the air. */
+async function land(): Promise<void> {
+    const flight = clock();
+
+    flight.finish();
+    await flight.finished;
+}
+
+describe('the refocus the page flies', () => {
+    it("brings the control's own ring into focus from a blur, wherever the focus came from", async () => {
+        const controls = refocusing();
+
+        await refocus(controls);
+        await hold(0);
+
+        expect(aloft()).toBe(true);
+        expect(getComputedStyle(flown()).filter).toBe('blur(3px)');
+
+        const ring = around(controls.first, 6);
+
+        laid().forEach((value, index) => {
+            expect(value, String(index)).toBeCloseTo(ring[index] ?? 0, 3);
+        });
+    });
+
+    it('takes a quarter again the time handed over, on the curve handed over', async () => {
+        await refocus(refocusing());
+
+        expect(clock().effect?.getTiming().duration).toBe(12500);
+
+        await hold(6250);
+
+        expect(getComputedStyle(flown()).filter).toBe('blur(1.5px)');
+    });
+
+    it('blurs it away on a second ring as the focus leaves, fading over the second half', async () => {
+        const controls = refocusing();
+
+        await refocus(controls);
+        await land();
+        await userEvent.tab({ shift: true });
+
+        const ring = leaving();
+
+        expect(ring?.matches(':popover-open'), 'up').toBe(true);
+        expect(getComputedStyle(ring ?? document.body).borderTopColor).toBe('rgb(1, 2, 3)');
+
+        const where = around(controls.first, 6);
+
+        expect(Number.parseFloat(ring?.style.left ?? '')).toBeCloseTo(where[0], 3);
+        expect(Number.parseFloat(ring?.style.top ?? '')).toBeCloseTo(where[1], 3);
+
+        stop(9375);
+
+        expect(getComputedStyle(ring ?? document.body).filter, 'three quarters blurred').toBe(
+            'blur(2.25px)',
+        );
+        expect(getComputedStyle(ring ?? document.body).opacity, 'half faded').toBe('0.5');
+
+        const [going] = ring?.getAnimations() ?? [];
+
+        going?.finish();
+        await going?.finished;
+
+        expect(ring?.matches(':popover-open'), 'gone').toBe(false);
+    });
+
+    it('lets the next ring come into focus while the last blurs away', async () => {
+        await refocus(refocusing());
+        await land();
+        await userEvent.tab();
+
+        expect(aloft(), 'the next coming into focus').toBe(true);
+        expect(leaving()?.matches(':popover-open'), 'the last blurring away').toBe(true);
+    });
+
+    it('blurs a new departure away from where it leaves, and gives up the last', async () => {
+        const controls = refocusing();
+
+        await refocus(controls);
+        await land();
+        await userEvent.tab();
+        await land();
+        await userEvent.tab();
+
+        expect(leaving()?.getAnimations(), 'one blur and one fade').toHaveLength(2);
+        expect(Number.parseFloat(leaving()?.style.left ?? '')).toBeCloseTo(
+            around(controls.second, 6)[0],
+            3,
+        );
+    });
+
+    it('blurs nothing away from a ring that did not come into focus', async () => {
+        mount();
+
+        // A glide onto the second control, and the focus leaving it for the third.
+        await userEvent.tab();
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(leaving()?.matches(':popover-open') ?? false).toBe(false);
+    });
+
+    it('blurs nothing away from a control no longer drawn', async () => {
+        const controls = refocusing();
+        controls.first.addEventListener('blur', () => {
+            controls.first.style.display = 'none';
+        });
+
+        await refocus(controls);
+        await land();
+        await userEvent.tab();
+
+        expect(leaving()?.matches(':popover-open') ?? false).toBe(false);
+    });
+
+    it('lays no blur over a glide', async () => {
+        mount();
+
+        await userEvent.tab();
+        await userEvent.tab();
+        await hold(0);
+
+        expect(getComputedStyle(flown()).filter).toBe('none');
+    });
+
+    it('blurs away again once the last blur has gone', async () => {
+        await refocus(refocusing());
+        await land();
+        await userEvent.tab();
+
+        const [going] = leaving()?.getAnimations() ?? [];
+
+        going?.finish();
+        await going?.finished;
+        await land();
+        await userEvent.tab({ shift: true });
+
+        expect(leaving()?.matches(':popover-open')).toBe(true);
+    });
+
+    it('puts away nothing the page took out while it blurred', async () => {
+        await refocus(refocusing());
+        await land();
+        await userEvent.tab();
+
+        const rejected = await unheard(async () => {
+            const ring = leaving();
+            const [going] = ring?.getAnimations() ?? [];
+
+            ring?.remove();
+            going?.finish();
+            await going?.finished;
+        });
+
+        expect(rejected).toEqual([]);
+    });
+
+    it.each(['0.01ms', '0s'])(
+        'brings nothing into focus, and blurs nothing away, where the time was taken to %s',
+        async (time) => {
+            const controls = refocusing();
+            controls.first.style.setProperty('--ui-fx-ring-time', time);
+
+            await refocus(controls);
+
+            expect(aloft(), 'nothing came').toBe(false);
+
+            await userEvent.tab({ shift: true });
+
+            expect(leaving()?.matches(':popover-open') ?? false, 'nothing went').toBe(false);
+        },
+    );
+});

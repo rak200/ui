@@ -34,6 +34,12 @@
  * is laid, so the shake stays on a control that moves while it plays. The lines' colours are
  * handed over as written, and resolved in the control's own scheme, which the ring takes.
  *
+ * **A refocus brings the control's own ring into focus from a blur**, wherever the focus came from,
+ * and blurs it away as the focus leaves, on a second ring of the page's own, since the next
+ * control's may be coming into focus meanwhile: as a surface comes into focus and goes out of it,
+ * a quarter again the time handed over, the blur sized to a line. The ring is whole from the first
+ * frame as it arrives, and fades only over the second half as it goes.
+ *
  * Internal — it is not re-exported from `src/index.ts`.
  */
 
@@ -56,6 +62,17 @@ interface Trip {
     readonly control: HTMLElement;
     now: Round;
     readonly end: () => void;
+}
+
+/** A ring the reader saw come into focus: its control, and what it was drawn with as it came. */
+interface Leaving {
+    readonly control: Element;
+    readonly width: number;
+    readonly offset: number;
+    readonly colour: string;
+    readonly time: number;
+    /** The curve it blurs away on. */
+    readonly curve: string;
 }
 
 /** The page's flown ring, and the two lines a glitch splits it into. */
@@ -90,6 +107,21 @@ const splits: readonly (readonly [start: number, end: number])[] = [
     [0.58, 0.66],
 ];
 
+/**
+ * A ring coming into focus, from the blur it starts at to the ring as it is. The offset is written:
+ * a lone keyframe is otherwise the last, and the ring went the other way — measured.
+ */
+const sharpen: Keyframe[] = [{ filter: 'blur(3px)', offset: 0 }];
+
+/** A ring going out of focus, from the ring as it is to the blur it ends at. */
+const blurred: Keyframe[] = [{ filter: 'blur(3px)', offset: 1 }];
+
+/** A ring fading out, from the ring as it is. */
+const faded: Keyframe[] = [{ opacity: 0, offset: 1 }];
+
+/** How much longer than the time handed over a ring takes to come into focus, or to go out of it. */
+const refocusing = 1.25;
+
 /** A target on no arrival's path: where a focus that left no ring the reader saw went. */
 const nowhere = new EventTarget();
 
@@ -110,6 +142,12 @@ let flying: Trip | undefined;
 
 /** The page's flown ring, made the first time one flies, and again if the page took it away. */
 let flier: Flier | undefined;
+
+/** The ring the reader saw come into focus last, until the focus leaves it. */
+let refocused: Leaving | undefined;
+
+/** The second ring, which a refocused ring blurs away on, made as the first is. */
+let fading: HTMLElement | undefined;
 
 /**
  * One corner of the ring an outline `out` past the boundary draws: round as the element's, and a
@@ -169,19 +207,71 @@ function line(aside: string): HTMLElement {
     return drawn;
 }
 
-/** The page's flown ring, laid in the page and styled on itself, with the glitch's two lines. */
-function aloft(): Flier {
+/** A ring of the page's own, laid in the page and styled on itself. */
+function blank(): HTMLElement {
     const ring = document.createElement('div');
-    const lines = [line('-3px 0'), line('3px 0')] as const;
     ring.popover = 'manual';
     ring.ariaHidden = 'true';
     ring.toggleAttribute('data-ui-ring');
     ring.style.cssText =
         'position:fixed;inset:auto;margin:0;padding:0;box-sizing:border-box;border-style:solid;background:none;overflow:visible;pointer-events:none';
-    ring.append(...lines);
     document.body.append(ring);
 
+    return ring;
+}
+
+/** The page's flown ring, with the glitch's two lines. */
+function aloft(): Flier {
+    const ring = blank();
+    const lines = [line('-3px 0'), line('3px 0')] as const;
+
+    ring.append(...lines);
+
     return { ring, lines };
+}
+
+/**
+ * Blurs away a ring the reader saw come into focus, on the second ring, where it is round its
+ * control as the focus leaves — but not round a control no longer drawn, a box of nothing.
+ */
+function defocus({ control, width, offset, colour, time, curve }: Leaving): void {
+    if (control.getClientRects().length === 0) {
+        return;
+    }
+
+    const ring = fading?.isConnected === true ? fading : blank();
+    const length = time * refocusing;
+
+    fading = ring;
+
+    for (const playing of ring.getAnimations()) {
+        playing.cancel();
+    }
+
+    lay(ring, round(control, width, offset));
+    ring.style.borderWidth = `${String(width)}px`;
+    ring.style.borderColor = colour;
+    // Put away first, so a ring still blurring from the last departure comes up again.
+    ring.hidePopover();
+    ring.showPopover();
+
+    const going = ring.animate(blurred, { duration: length, easing: curve, fill: 'forwards' });
+
+    ring.animate(faded, {
+        duration: length / 2,
+        delay: length / 2,
+        easing: curve,
+        fill: 'forwards',
+    });
+    // `hidePopover()`, not `togglePopover(false)`: a page that took the ring out of the document
+    // has hidden it already, which the one finds and the other throws on — measured, as a
+    // rejection in this callback, where it reaches nobody.
+    void going.finished.then(
+        () => {
+            ring.hidePopover();
+        },
+        () => undefined,
+    );
 }
 
 /** Shakes the flown ring and shows its lines as the glitch has them at `progress`. */
@@ -215,6 +305,11 @@ function heardIn(event: FocusEvent): void {
 function heardOut(event: FocusEvent): void {
     const target = event.composedPath()[0] as Element;
     const to = event.relatedTarget ?? nowhere;
+
+    if (refocused?.control === target) {
+        defocus(refocused);
+        refocused = undefined;
+    }
 
     if (flying?.control === target) {
         // Leaving while the ring is still landing: it goes on from where it had got to.
@@ -266,9 +361,10 @@ export function arrive(event: FocusEvent): void {
     const offset = Number.parseFloat(style.outlineOffset);
     const time = milliseconds(style.getPropertyValue(`${kinds.animated}ring-time`));
     // The glide only for where the focus went: the departure's target is the control or a host
-    // around it. The glitch wherever the focus came from, since it starts where it lands.
+    // around it. The glitch and the refocus wherever the focus came from, since each starts where
+    // it lands.
     const left = kind === 'glide' && path.includes(towards) ? ringed(width, offset) : undefined;
-    const from = kind === 'glitch' ? round(control, width, offset) : left;
+    const from = kind === 'glitch' || kind === 'refocus' ? round(control, width, offset) : left;
 
     if (!(time > collapsed) || from === undefined) {
         return;
@@ -298,9 +394,10 @@ export function arrive(event: FocusEvent): void {
     control.style.setProperty('outline-style', 'none');
 
     // An effect with no keyframes is a clock, its progress already eased by the curve. The ring is
-    // laid by the first frame's step, which runs before that frame is painted.
-    const timing = new KeyframeEffect(ring, null, {
-        duration: time,
+    // laid by the first frame's step, which runs before that frame is painted; a refocus's clock
+    // brings it into focus as well.
+    const timing = new KeyframeEffect(ring, kind === 'refocus' ? sharpen : null, {
+        duration: kind === 'refocus' ? time * refocusing : time,
         easing: style.getPropertyValue(`${kinds.animated}ring-curve`),
     });
     const clock = new Animation(timing, document.timeline);
@@ -320,8 +417,19 @@ export function arrive(event: FocusEvent): void {
 
     flying = trip;
 
-    // The glide is laid along the way from where it left; the glitch stays on the control's ring,
-    // wherever the control has got to, and is shaken there.
+    if (kind === 'refocus') {
+        refocused = {
+            control,
+            width,
+            offset,
+            colour: style.outlineColor,
+            time,
+            curve: style.getPropertyValue(`${kinds.animated}ring-exit`),
+        };
+    }
+
+    // The glide is laid along the way from where it left; the glitch and the refocus stay on the
+    // control's ring, wherever the control has got to, and the glitch is shaken there.
     const step = (): void => {
         if (flying === trip) {
             const progress = timing.getComputedTiming().progress ?? 1;
@@ -329,7 +437,7 @@ export function arrive(event: FocusEvent): void {
             trip.now = between(
                 from,
                 round(control, width, offset),
-                kind === 'glitch' ? 1 : progress,
+                kind === 'glide' ? progress : 1,
             );
             lay(ring, trip.now);
 
