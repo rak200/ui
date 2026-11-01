@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { fieldEffects } from './effects.js';
+import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
@@ -771,7 +772,7 @@ export class UiSelect extends LitElement {
         return html`
             <div class="stack" part="stack">
                 <label for="control" part="label">${this.label}</label>
-                <span class="glow"
+                <span class="glow" @pointerover=${follow}
                     ><select
                         id="control"
                         part="control"

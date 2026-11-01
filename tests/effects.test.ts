@@ -799,6 +799,125 @@ describe("a field's effects", () => {
         },
     );
 
+    /** Writes where the pointer is on the box round a field's control, as the engine writes it. */
+    function pointed(box: HTMLElement, near: number, x: number, y: number, nx = 0, ny = 0): void {
+        for (const [name, value] of Object.entries({
+            near: String(near),
+            x: `${String(x)}px`,
+            y: `${String(y)}px`,
+            nx: String(nx),
+            ny: String(ny),
+        })) {
+            box.style.setProperty(`--ui-fx-pointer-${name}`, value);
+        }
+    }
+
+    it.each([
+        ['hover-fill', 'spotlight'],
+        ['hover-shadow', 'cast'],
+        ['hover-border', 'edge'],
+    ])(
+        "hands the engine an effect's time on the box where %s is %s, and only while the pointer can change the field",
+        (moment, effect) => {
+            const tokens = { '--ui-duration-effect': '0.3s' };
+            const handed = (box: HTMLElement): string =>
+                getComputedStyle(box).getPropertyValue('--ui-fx-follow');
+            const chosen = field('input', typed, { [moment]: effect });
+            const readonly = field('input', typed, { [moment]: effect }, 'readonly');
+            const plain = field('input', typed, {});
+
+            for (const { host } of [chosen, readonly, plain]) {
+                for (const [name, value] of Object.entries(tokens)) {
+                    host.style.setProperty(name, value);
+                }
+            }
+
+            expect(handed(chosen.box), 'chosen').toBe('0.3s');
+            expect(handed(readonly.box), 'read-only').toBe('');
+            expect(handed(plain.box), 'nothing chosen').toBe('');
+        },
+    );
+
+    it('lights the field with its own tint where the pointer is, as strong as it is near', async () => {
+        const { box, control } = field('input', typed, { 'hover-fill': 'spotlight' });
+        const tinted = field('input', typed, { 'hover-fill': 'tint' });
+
+        pointed(box, 1, 30, 10);
+
+        const styles = getComputedStyle(control);
+        const stop =
+            /^radial-gradient\(256px at 30px 10px, (.+), rgba\(0, 0, 0, 0\) 70%\), none$/.exec(
+                styles.backgroundImage,
+            )?.[1];
+
+        expect(stop, 'at the pointer, 16rem out, and nothing behind').toBeDefined();
+        expect([styles.backgroundSize, styles.backgroundRepeat]).toEqual([
+            'auto, auto',
+            'no-repeat, no-repeat',
+        ]);
+
+        await userEvent.hover(tinted.control);
+
+        expect(stop, "the field's tint, where the pointer is nearest").toBe(
+            getComputedStyle(tinted.control).backgroundColor,
+        );
+
+        pointed(box, 0, 30, 10);
+
+        expect(getComputedStyle(control).backgroundImage, 'gone with the pointer').toContain(
+            ' / 0)',
+        );
+    });
+
+    it("casts the button's shadow from the control away from the pointer, as near as it is", () => {
+        const { box, control } = field('input', typed, { 'hover-shadow': 'cast' });
+
+        pointed(box, 1, 75, 10, 0.5, -0.5);
+
+        expect(getComputedStyle(control).boxShadow).toBe(
+            'rgba(0, 0, 0, 0.3) -4px 8px 14px -2px, rgba(0, 0, 0, 0) 6px -6px 24px 2px',
+        );
+    });
+
+    it('lights a band on the boundary nearest the pointer, on the layer round the box, as strong as it is near', () => {
+        const { box } = field('input', typed, { 'hover-border': 'edge' });
+
+        pointed(box, 1, 30, 10);
+
+        const layer = getComputedStyle(box, '::before');
+
+        expect(layer.opacity, 'as near as the pointer').toBe('1');
+        expect(layer.backgroundImage).toMatch(/^radial-gradient\(100% 100% at 30px 10px, /);
+        expect([layer.position, layer.paddingTop, layer.pointerEvents]).toEqual([
+            'absolute',
+            '2px',
+            'none',
+        ]);
+        expect(getComputedStyle(box).position, 'the box it is laid out against').toBe('relative');
+    });
+
+    it('lets the focus win over the lights, and leaves the band to a field in error', async () => {
+        const choices = {
+            'hover-fill': 'spotlight',
+            'hover-shadow': 'cast',
+            'hover-border': 'edge',
+        };
+        const focused = field('input', typed, choices);
+        const erring = field('input', typed, choices, 'aria-invalid="true"');
+
+        for (const { box } of [focused, erring]) {
+            pointed(box, 1, 30, 10);
+        }
+
+        expect(getComputedStyle(erring.box, '::before').backgroundImage, 'in error').toBe('none');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(focused.box, '::before').opacity, 'the band').toBe('0');
+        expect(getComputedStyle(focused.control).boxShadow, 'the cast').toBe('none');
+        expect(getComputedStyle(focused.control).backgroundImage, 'the light').toBe('none');
+    });
+
     it("hands the ring the refocus, an effect's time and the curves it comes and goes on", async () => {
         const { host, control } = field('input', typed, { 'focus-ring': 'refocus' });
         host.style.setProperty('--ui-duration-effect', '0.3s');

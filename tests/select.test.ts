@@ -1500,6 +1500,54 @@ describe("a field's effects, which the select adopts", () => {
         return document.querySelector('[data-ui-ring]:popover-open') !== null;
     }
 
+    /** A frame, after which the pointer engine has written what the moves before it asked for. */
+    async function frame(): Promise<void> {
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+                resolve();
+            });
+        });
+    }
+
+    /** The pointer coming over `target` at `x`, `y` in its own pixels, and a frame let pass. */
+    async function over(target: HTMLElement, x: number, y: number): Promise<void> {
+        const rect = target.getBoundingClientRect();
+
+        target.dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                composed: true,
+                clientX: rect.left + x,
+                clientY: rect.top + y,
+            }),
+        );
+        await frame();
+    }
+
+    /** The pointer far off every field, so the engine lets go before the next test. */
+    async function away(): Promise<void> {
+        document.dispatchEvent(
+            new PointerEvent('pointermove', { clientX: -10000, clientY: -10000 }),
+        );
+        await frame();
+    }
+
+    it('hands the box round the select where the pointer is, which lights its band', async () => {
+        // Never stilled: the engine reads its time off the box, and a time of nothing is the
+        // collapse's, under which nothing follows.
+        const form = await mount(fixture);
+        form.style.setProperty('--ui-motion-hover-border', 'edge');
+
+        try {
+            await over(control(form), 20, 10);
+
+            expect(glow(select(form)).style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
+            expect(getComputedStyle(glow(select(form)), '::before').opacity).toBe('1');
+        } finally {
+            await away();
+        }
+    });
+
     /** The select's own control. */
     function control(form: HTMLElement): HTMLSelectElement {
         const found = form.querySelector('ui-select')?.shadowRoot?.querySelector('select') ?? null;
