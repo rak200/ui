@@ -766,6 +766,7 @@ describe('the refocus the page flies', () => {
 
         expect(ring?.matches(':popover-open'), 'up').toBe(true);
         expect(getComputedStyle(ring ?? document.body).borderTopColor).toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(ring ?? document.body).borderTopWidth).toBe('2px');
 
         const where = around(controls.first, 6);
 

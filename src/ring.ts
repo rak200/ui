@@ -251,8 +251,7 @@ function defocus({ control, width, offset, colour, time, curve }: Leaving): void
     lay(ring, round(control, width, offset));
     ring.style.borderWidth = `${String(width)}px`;
     ring.style.borderColor = colour;
-    // Put away first, so a ring still blurring from the last departure comes up again.
-    ring.hidePopover();
+    // A ring still blurring from the last departure is up already, which showing it again leaves.
     ring.showPopover();
 
     const going = ring.animate(blurred, { duration: length, easing: curve, fill: 'forwards' });
