@@ -205,6 +205,18 @@ describe("a field's effects", () => {
     ])('moves the shadow and the place once %s is %s, and only then', (moment, effect) => {
         const still = field('input', typed, {});
         const moving = field('input', typed, { [moment]: effect });
+        // A value of its own for each token, so each is read where it is written.
+        const tokens = {
+            '--ui-duration-state': '0.1s',
+            '--ui-duration-effect': '0.2s',
+            '--ui-easing-state': 'linear',
+            '--ui-easing-enter': 'ease-in',
+        };
+
+        for (const [name, value] of Object.entries(tokens)) {
+            moving.host.style.setProperty(name, value);
+        }
+
         const transitions = (control: HTMLElement, box: HTMLElement): readonly string[] => [
             getComputedStyle(control).transitionProperty,
             getComputedStyle(box).transitionProperty,
@@ -213,6 +225,17 @@ describe("a field's effects", () => {
         expect(transitions(moving.control, moving.box), 'chosen').toEqual([
             'border-color, box-shadow',
             'translate',
+        ]);
+        expect(
+            [moving.control, moving.box].map((target) => {
+                const styles = getComputedStyle(target);
+
+                return [styles.transitionDuration, styles.transitionTimingFunction];
+            }),
+            'the boundary on the state, the shadow and the place on an effect',
+        ).toEqual([
+            ['0.1s, 0.2s', 'linear, ease-in'],
+            ['0.2s', 'ease-in'],
         ]);
         expect(transitions(still.control, still.box), 'nothing chosen').toEqual(['all', 'all']);
     });
