@@ -1023,6 +1023,29 @@ describe("a form's moments on a field", () => {
         expect(getComputedStyle(part(element, 'label')).textShadow, 'a glow').not.toBe('none');
     });
 
+    it.each(['ui-input', 'ui-textarea'])(
+        "tints a %s at the focus under Matrix, the field's own where the page names the highlight",
+        async (tag) => {
+            sheet(matrix);
+
+            const form = await mount(`<${tag} label="Note"></${tag}>`);
+            form.style.setProperty('--ui-duration-effect', '0s');
+            form.style.setProperty('--ui-duration-state', '0s');
+            form.dataset['uiTheme'] = matrix.name;
+
+            const control = box(field(form));
+            const fill = getComputedStyle(control).backgroundColor;
+
+            await userEvent.tab();
+
+            expect(getComputedStyle(control).backgroundColor).not.toBe(fill);
+
+            for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+                flight.finish();
+            }
+        },
+    );
+
     it('answers the pointer and the focus under Matrix: a glow and a tint, no darkening, a burst and the glitch', async () => {
         sheet(matrix);
 
