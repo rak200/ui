@@ -76,8 +76,10 @@ edge: 6.47:1 on the field's white and 7.37 on its black.
 **Its taste answers in light where the default theme's moves.** Under the pointer a button takes a
 tint of the accent and glows; at the focus it takes its hover colour and a burst of light, its ring
 glitches rather than gliding, and it does not lift; and a press shatters it rather than squeezing
-it, brings no colour of its own and sinks nothing. Each `none` in it takes back an effect the
-default theme's taste names, which would otherwise run under Matrix too.
+it, brings no colour of its own and sinks nothing. A field in error keeps its fill as it is. Each
+`none` in it takes back an effect the default theme's taste names, which would otherwise run under
+Matrix too. A field's label glow and its error's split are not drawn yet, and a taste names only
+what some component draws: until they are, the default theme's accent and pulse stand under it.
 
 | Moment         | Effect      |
 | -------------- | ----------- |
@@ -90,6 +92,7 @@ default theme's taste names, which would otherwise run under Matrix too.
 | `press-move`   | `shatter`   |
 | `press-fill`   | `none`      |
 | `press-shadow` | `none`      |
+| `invalid-fill` | `none`      |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
@@ -172,8 +175,9 @@ pointer is, a shadow cast away from it and a band lit along its edge nearest it.
 keeps a light along its inside, a sheen sweeps across it four times, its ring comes into focus from a
 blur and blurs away as the focus leaves, and it does not lift. A press springs it back, further in
 than the default theme's squeeze, and spreads a circle from where it landed in the place of the
-pressed colour. The `none` takes back the default theme's lift, which would otherwise run under
-Glass too.
+pressed colour. A field's label stays as it is at the focus. Each `none` takes back an effect the
+default theme's taste names, which would otherwise run under Glass too. A field's error glow is not
+drawn yet: until it is, the default theme's pulse stands under it.
 
 | Moment         | Effect      |
 | -------------- | ----------- |
@@ -184,6 +188,7 @@ Glass too.
 | `focus-fill`   | `shimmer`   |
 | `focus-shadow` | `inner`     |
 | `focus-ring`   | `refocus`   |
+| `focus-label`  | `none`      |
 | `press-move`   | `spring`    |
 | `press-fill`   | `ripple`    |
 

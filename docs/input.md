@@ -211,25 +211,43 @@ there, so an effect changes what is round the control, or moves the box it sits 
 it. Each is chosen by a custom property per moment, and where you choose nothing the theme's taste
 runs:
 
-| Property                   | Effect  | What it draws                                         |
-| -------------------------- | ------- | ----------------------------------------------------- |
-| `--ui-motion-hover-shadow` | `raise` | the button's drop shadow under the control            |
-| `--ui-motion-focus-shadow` | `raise` | the same drop, while the focus stays                  |
-| `--ui-motion-focus-move`   | `lift`  | the box round the control two pixels up, ring and all |
-| `--ui-motion-focus-ring`   | `glide` | the ring glided over from the control seen last       |
+| Property                     | Effect   | What it draws                                         |
+| ---------------------------- | -------- | ----------------------------------------------------- |
+| `--ui-motion-hover-shadow`   | `raise`  | the button's drop shadow under the control            |
+| `--ui-motion-focus-shadow`   | `raise`  | the same drop, while the focus stays                  |
+| `--ui-motion-focus-move`     | `lift`   | the box round the control two pixels up, ring and all |
+| `--ui-motion-focus-ring`     | `glide`  | the ring glided over from the control seen last       |
+| `--ui-motion-focus-label`    | `accent` | the label in the accent, a fifth of the text in it    |
+| `--ui-motion-invalid-border` | `pulse`  | a band of the danger sent out from a field in error   |
+| `--ui-motion-invalid-fill`   | `flash`  | a field in error tinted from the danger, and back     |
 
 **The default theme's taste raises a field under the pointer and at the focus, lifts it at the
-focus and glides its ring over**, and the boundary still darkens under the pointer, as it did.
-Under [Matrix](theme.md#matrix) and [Glass](theme.md#glass) a field does what it did before effects
-existed, until their effects for a field are drawn: a name a field does not offer draws nothing.
+focus and glides its ring over**, and the boundary still darkens under the pointer, as it did. **A
+field is a form's control, so it answers what a form's control does**: its label takes the accent
+at the focus, and in error it sends a band of the danger out four times and flashes its fill four
+times, each round a `--ui-duration-flourish`, and rests — an error stands for as long as you leave
+it. The message comes as it did. Under [Matrix](theme.md#matrix) a field in error keeps its fill as
+it is, and under [Glass](theme.md#glass) its label stays as it is at the focus; otherwise a field
+does what it did before effects existed under both, until their effects for a field are drawn — a
+name a field does not offer draws nothing — and the default theme's accent and pulse stand where a
+theme of theirs is not drawn yet.
+
+**The label's accent has a fifth of the text in it**, so it clears 4.5:1 in every theme and scheme,
+where the accent alone fell under it. **The flash mixes a fifth of the danger into the fill** rather
+than laying it over, so the text you type in holds 4.74:1 at each round's start. An empty field's
+placeholder does not: it dips under 4.5:1 for the first frames of each round, to 3.84:1 under the
+default theme's light scheme — the one dip in the package's text, which RFC 0004 accepts. The band
+and the flash run where the control reads `aria-invalid="true"`, as a screen reader does.
 
 **The pointer's effects are drawn on a field the pointer can change**, never one that is disabled or
 read-only, only where the pointer can hover, and **the focus wins**: in a field the focus is where
 you are acting, so a pointer resting there changes nothing. A theme's taste reaches a field under
 its own name, `--ui-taste-input-<moment>` or `--ui-taste-textarea-<moment>`, over the page's.
 
-Each effect moves over `--ui-duration-effect` on `--ui-easing-enter`, and the glide over
-`--ui-duration-travel` on `--ui-easing-move`; all of them collapse under
+Each effect moves over `--ui-duration-effect` on `--ui-easing-enter`, the label on
+`--ui-easing-state`, the glide over `--ui-duration-travel` on `--ui-easing-move`, and the band and
+the flash over `--ui-duration-flourish`, `--ui-iteration-settle` rounds of it, the band on
+`--ui-easing-enter` and the flash on `--ui-easing-exit`; all of them collapse under
 `prefers-reduced-motion: reduce`, and the ring does not fly in forced colours. What they move
 transitions only once one is chosen, so with none the boundary is still the only thing that moves.
 They are drawn by one internal sheet, `fieldEffects()` in `src/effects.ts`, which the two elements

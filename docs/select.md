@@ -216,8 +216,10 @@ is the reason to.
 
 **The box answers the pointer and the focus as a field does** — every effect
 [`<ui-input>`](input.md#motion) draws, from the same sheet, on the `<select>` and the box round it:
-raised under the pointer and at the focus, lifted at the focus, its ring glided over, under the
-default theme's taste. A theme's taste reaches it under its own name, `--ui-taste-select-<moment>`.
+raised under the pointer and at the focus, lifted at the focus, its ring glided over, its label in
+the accent there, and in error a band sent out and its fill flashed, under the default theme's
+taste. A select has no placeholder, so the flash takes nothing of its text under 4.5:1. A theme's
+taste reaches it under its own name, `--ui-taste-select-<moment>`.
 A select has no read-only state, so the only one the pointer's effects step over is disabled.
 
 ## Styling

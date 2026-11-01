@@ -323,7 +323,12 @@ explains. This file restates none of them.
   docblock on `fieldEffects()` in `src/effects.ts`. It names the control by the component, and takes
   the guard the pointer's effects carry from each, so the select's sheet names no read-only guard, as
   `tests/select.test.ts` asks. Each field's `watch()` call is set aside from mutation for the warm
-  runner's reason, which the comment beside it gives. **Why `none` takes the pressed colour away where it keeps the lift
+  runner's reason, which the comment beside it gives. **Why the label's accent has a fifth of the
+  text in it, and why the flash mixes the danger in rather than laying it over** — the comments
+  beside those rules there, which carry RFC 0004's measurements; **why an empty field's placeholder
+  dips under 4.5:1 at each flash's start, the one dip the package accepts** — the same comment,
+  [ARCHITECTURE.md](ARCHITECTURE.md)'s _Which effect runs is the consumer's_, and the floor in
+  `tests/tokens.test.ts` that holds it to 3:1. **Why `none` takes the pressed colour away where it keeps the lift
   as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
   component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
   container style query, which it sets aside: an engine without one keeps today's motion.

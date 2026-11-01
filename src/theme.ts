@@ -141,7 +141,9 @@ export function themeStyleSheet(theme: Theme): string {
  * takes a tint of the accent and glows, in the place of the ring and glow the theme lights it
  * to; at the focus it takes its hover colour and a burst of light, its ring glitches rather than
  * gliding, and it does not lift; and a press shatters it rather than squeezing it, brings no
- * colour of its own and sinks nothing.
+ * colour of its own and sinks nothing. A field in error keeps its fill as it is. Its label's glow
+ * at the focus and its error's split are not drawn yet, and a taste names only what some component
+ * draws: until they are, the default theme's accent and pulse stand under it.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -205,6 +207,7 @@ export const matrix: Theme = {
             'press-move': 'shatter',
             'press-fill': 'none',
             'press-shadow': 'none',
+            'invalid-fill': 'none',
         },
     },
 };
@@ -235,7 +238,8 @@ export const matrix: Theme = {
  * focus it keeps a light along its inside, a sheen sweeps across it four times, its ring comes into
  * focus from a blur and blurs away as the focus leaves, and it does not lift. A press springs it
  * back, further in than the default theme's squeeze, and spreads a circle from where it landed in
- * the place of the pressed colour.
+ * the place of the pressed colour. A field's label stays as it is at the focus. Its error's glow is
+ * not drawn yet: until it is, the default theme's pulse stands under it.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -343,8 +347,8 @@ export const glass: Theme = {
         '--ui-color-pressed': ['#c1c1c1', '#3d3d3d'],
         '--ui-color-surface-muted': ['#f2f2f2', '#141414'],
     },
-    // The review's, read off each page under this theme — RFC 0004. The `none` takes back the
-    // default theme's lift, which would otherwise run here too.
+    // The review's, read off each page under this theme — RFC 0004. Each `none` takes back an
+    // effect the default theme's taste names, which would otherwise run here too.
     taste: {
         page: {
             'hover-fill': 'spotlight',
@@ -354,6 +358,7 @@ export const glass: Theme = {
             'focus-fill': 'shimmer',
             'focus-shadow': 'inner',
             'focus-ring': 'refocus',
+            'focus-label': 'none',
             'press-move': 'spring',
             'press-fill': 'ripple',
         },

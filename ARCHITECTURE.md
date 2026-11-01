@@ -469,7 +469,11 @@ custom property written per moment — `--ui-motion-press-move: squish` — inhe
 region, every instance of a component and one instance choose apart and the narrowest wins
 (RFC 0004). **What an effect is stays the package's.** The ring nothing delays, the press that lands
 with the finger and the text kept at 4.5:1 are written into each effect, and a choice picks among
-effects rather than retuning one. A name a component does not offer draws nothing. **`none` is
+effects rather than retuning one. **The flash is the one exception to the text, accepted**: it tints
+a field in error from a fifth of the danger, which keeps the text typed in at 4.74:1 or more, and
+takes an empty field's placeholder under 4.5:1 for the first frames of each round — 3.49:1 at the
+least — since its colour clears that floor at rest and no more, and no flash that shows leaves it
+there. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.
@@ -479,8 +483,9 @@ stands under every theme, as its values do. That makes it the package's motion. 
 inserts the token sheet and chooses nothing, the button — and the menu's trigger, which is one —
 rises under the pointer and at the focus, lifts at the focus, takes its focus ring glided over from
 the control before it, and squeezes and sinks under a press; and a field rises under the pointer and
-at the focus, its box lifting there rather than the control the reader types in, and takes its ring
-glided over. RFC 0004 accepted that as the cost of having motion at all. A shipped theme's
+at the focus, its box lifting there rather than the control the reader types in, takes its ring
+glided over and its label to the accent, and in error sends a band of the danger out and flashes its
+fill. RFC 0004 accepted that as the cost of having motion at all. A shipped theme's
 taste replaces it moment by moment, and names `none` where it wants nothing in place of an effect. An effect enters
 the catalogue with the first component that draws it, bringing the tokens and the script it needs:
 _a category arrives with the component that consumes it_, applied to an effect. The rest waits in

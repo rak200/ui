@@ -736,6 +736,10 @@ export function buttonEffects(component: string): CSSResult {
  *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
  * {@link buttonEffects} gives.
+ *
+ * **A field is a form's control, so it answers what a form's control does**: its label at the
+ * focus, and an error — the border and the fill of a field whose control reads
+ * `aria-invalid="true"`, which is what a screen reader reads too. The message comes as it did.
  */
 export function fieldEffects(component: string, able: string): CSSResult {
     /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
@@ -793,6 +797,85 @@ export function fieldEffects(component: string, able: string): CSSResult {
         @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
             .glow:has(> :focus-visible) {
                 translate: 0 -2px;
+            }
+        }
+
+        /* accent: the label in the accent with a fifth of the text's colour mixed in, so it still
+           reads as a label, while the focus stays: the accent alone was 4.31:1 on Matrix's light
+           page and on Glass's dark one, under the 4.5:1 text clears, and a fifth of the text took
+           every theme and scheme to 5.4:1 or more — measured for RFC 0004. On the label's own
+           transition, over an effect's time on the state's curve. */
+        @container ${unsafeCSS(drawn('focus-label', 'accent'))} {
+            label {
+                transition: color ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-state')};
+            }
+
+            label:has(+ .glow > :focus-visible) {
+                color: color-mix(
+                    in oklab,
+                    ${reference('--ui-color-accent')} 80%,
+                    ${reference('--ui-color-text')}
+                );
+            }
+        }
+
+        /* pulse: a band of the danger sent out from a field in error and fading, four rounds of a
+           flourish and then at rest, as a loop does for a state that stands for as long as the
+           reader leaves it. On a layer round the box, the one an error's border draws on, which
+           takes no pointer: the field itself never moves. */
+        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} {
+            .glow {
+                position: relative;
+            }
+
+            .glow::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                pointer-events: none;
+            }
+
+            .glow:has(> [aria-invalid='true'])::before {
+                animation: ui-pulse-danger ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-enter')} ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        @keyframes ui-pulse-danger {
+            from {
+                box-shadow: 0 0 0 0 rgb(from ${reference('--ui-color-danger')} r g b / 0.5);
+            }
+
+            to {
+                box-shadow: 0 0 0 12px rgb(from ${reference('--ui-color-danger')} r g b / 0);
+            }
+        }
+
+        /* flash: a field in error tinted from a fifth of the danger back to its fill, four rounds of
+           a flourish on the curve a departure takes. Mixed into the fill rather than laid over it,
+           since a field has text in it to read: laid over, the text of a field in error fell to
+           3.14:1 at each round's start on Matrix's light page, and mixed in it holds 4.74:1 at the
+           least, in every theme and scheme — measured for RFC 0004. An empty field's placeholder
+           does not: its colour clears 4.5:1 at rest and no more, so the first frames of each round
+           take it to 3.49:1 at the least, on Matrix's light page, and no share of the danger that
+           still shows holds it there. The one dip the package accepts; tests/tokens.test.ts holds
+           it to 3:1. */
+        @container ${unsafeCSS(drawn('invalid-fill', 'flash'))} {
+            ${control}[aria-invalid='true'] {
+                animation: ui-flash ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-exit')} ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        @keyframes ui-flash {
+            from {
+                background-color: color-mix(
+                    in oklab,
+                    ${reference('--ui-color-danger')} 20%,
+                    ${reference('--ui-color-surface-control')}
+                );
             }
         }
 
