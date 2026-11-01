@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.8.6](https://github.com/rak200/ui/compare/0.8.5...0.8.6) (2026-11-01)
+
+
+### Features
+
+* a theme carries a motion taste, and RFC 0004's effects get the query they draw under ([#325](https://github.com/rak200/ui/issues/325)) ([aad7d1c](https://github.com/rak200/ui/commit/aad7d1cf58de782c2b8397a658b95dbee7613ed8))
+* **button:** a press shatters the button under Matrix, its pieces held apart until let go ([#330](https://github.com/rak200/ui/issues/330)) ([6c0e3f3](https://github.com/rak200/ui/commit/6c0e3f372ca9bd1d4855f1d0efc13248a8ec0519))
+* **button:** a sheen sweeps the button at the focus under Glass, with a loop's period and its count ([#333](https://github.com/rak200/ui/issues/333)) ([0034113](https://github.com/rak200/ui/commit/003411324b5e2c256c87516ea5093e9091d7f72f))
+* **button:** Glass's taste begins — a light held inside at the focus, and a press that springs ([#331](https://github.com/rak200/ui/issues/331)) ([a0647a6](https://github.com/rak200/ui/commit/a0647a684246085c162d8ac65919a8a71191b394))
+* **button:** Matrix's taste, in light — a tint, a glow, a burst and a press with no colour ([#328](https://github.com/rak200/ui/issues/328)) ([d8de0ee](https://github.com/rak200/ui/commit/d8de0ee20c15c2065ff8d4ca3fe811b0a7b88036))
+* **button:** the first effects and the default taste — raise, lift, squish and sink ([#326](https://github.com/rak200/ui/issues/326)) ([46394c3](https://github.com/rak200/ui/commit/46394c3032a2d4e26dd78f5bd51e1b501a750a9a))
+* **button:** the focus ring glides over from the control the reader saw it on last ([#327](https://github.com/rak200/ui/issues/327)) ([60dde56](https://github.com/rak200/ui/commit/60dde5656bb9f95306bcf0cdb3c8264fe25e1c57))
+* **button:** the focus ring glitches under Matrix, shaken and split into the danger and the info ([#329](https://github.com/rak200/ui/issues/329)) ([57cab5c](https://github.com/rak200/ui/commit/57cab5c694a1f0b1eb36630cbebcc431bb13f3c9))
+* **button:** under Glass a press spreads a ripple from where it landed, with no pressed colour ([#335](https://github.com/rak200/ui/issues/335)) ([c53bf29](https://github.com/rak200/ui/commit/c53bf2904f6ce1428d1afd9ad49b93353fe799e7))
+* **button:** under Glass the focus ring comes into focus from a blur, and blurs away as it leaves ([#332](https://github.com/rak200/ui/issues/332)) ([dd13d80](https://github.com/rak200/ui/commit/dd13d80ae822781ef68429e9a70946bf0e3768b9))
+* **button:** under Glass the pointer lights the button — a spotlight, a cast shadow and a lit edge ([#334](https://github.com/rak200/ui/issues/334)) ([cc9325e](https://github.com/rak200/ui/commit/cc9325e42632c1a0365b380dec038d549f6ee79c))
+* **input,select:** a field rises under the pointer and lifts at the focus, its ring gliding over ([#339](https://github.com/rak200/ui/issues/339)) ([484513e](https://github.com/rak200/ui/commit/484513e041189ffae843b8b0ed4ca9fa3dcefa92))
+* **input,select:** a field's label takes the accent at the focus, and an error pulses and flashes ([#340](https://github.com/rak200/ui/issues/340)) ([6edc5ca](https://github.com/rak200/ui/commit/6edc5caa292629c893cccee0df28df0402264cb4))
+* **input,select:** under Glass a field holds a light inside, sweeps a sheen and glows in error ([#342](https://github.com/rak200/ui/issues/342)) ([8c58116](https://github.com/rak200/ui/commit/8c581163b4a8f4599a1bd83f75a0ead4c047cafd))
+* **input,select:** under Glass the pointer lights a field — its tint, a cast shadow and a lit edge ([#343](https://github.com/rak200/ui/issues/343)) ([4bd45aa](https://github.com/rak200/ui/commit/4bd45aa6b086784d186d2757d265e7628d29c9fa))
+* **input,select:** under Matrix a field tints, glows, bursts and glitches, and an error splits ([#341](https://github.com/rak200/ui/issues/341)) ([7487edd](https://github.com/rak200/ui/commit/7487edd96efeb604017825206468dc06288414af))
+* **menu:** the trigger answers the pointer, the focus and a press as a secondary button does ([#337](https://github.com/rak200/ui/issues/337)) ([bdbc3a3](https://github.com/rak200/ui/commit/bdbc3a3bd8669fd078268fb5ae209db90c6f2f5b))
+* the playground reduces motion on request, collapsing what the reader's setting collapses ([#321](https://github.com/rak200/ui/issues/321)) ([d008ea4](https://github.com/rak200/ui/commit/d008ea4e58e2875f87ad08490f46bc2e316a9952))
+
 ## [0.8.5](https://github.com/rak200/ui/compare/0.8.4...0.8.5) (2026-10-23)
 
 
