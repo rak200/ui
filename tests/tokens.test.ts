@@ -425,6 +425,29 @@ async function flashed(scheme: Scheme, palette: Palette): Promise<string> {
     );
 }
 
+/**
+ * A field's tint under the pointer, where it is chosen, resolved in `scheme` under `palette`: read
+ * off a field rather than a token, as the button's is.
+ */
+async function fieldTint(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-input label="Name" style="${kinds.choice}hover-fill: tint; --ui-duration-effect: 0s; --ui-duration-state: 0s"></ui-input>`,
+        async (field) => {
+            const control = field.shadowRoot?.querySelector('input') ?? null;
+
+            if (control === null) {
+                throw new Error('the field rendered no control');
+            }
+
+            await userEvent.hover(control);
+
+            return getComputedStyle(control).backgroundColor;
+        },
+    );
+}
+
 /** The page under a palette: the one it documents holding over, or the surface a host paints. */
 function page(palette: Palette, scheme: Scheme): string {
     return (
@@ -1514,6 +1537,22 @@ describe('the contrast floors', () => {
                         }
                     },
                 );
+
+                it.each([
+                    ['its text', '--ui-color-text'],
+                    ['its placeholder', '--ui-color-text-muted'],
+                ] as const)('keeps a field legible over its tint, %s', async (_what, token) => {
+                    // The tint is every component's light, and RFC 0004 held it light enough that
+                    // every palette's text and placeholder clear 4.5:1 over it, laid over whatever
+                    // the field rests on.
+                    const tinted = await fieldTint(scheme, palette);
+
+                    for (const beside of outside(palette, scheme)) {
+                        expect(
+                            contrastRatio(paint(token), layered(tinted, beside, scheme, palette)),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
 
                 it("keeps a field's label legible where the accent takes it at the focus", async () => {
                     // A label is text, laid on whatever the field rests on. The accent alone fell

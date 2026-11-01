@@ -154,6 +154,13 @@ function colour(value: string): string {
     }
 }
 
+/** The animations an element's one list plays, the kinds that play nothing left out. */
+function playing(target: Element, pseudo?: string): readonly string[] {
+    return getComputedStyle(target, pseudo)
+        .animationName.split(', ')
+        .filter((name) => name !== 'none');
+}
+
 /** The one CSS animation named `name` running on `target` or a layer of it. */
 function running(target: HTMLElement, name: string): CSSAnimation {
     const found = target
@@ -229,46 +236,52 @@ describe("a field's effects", () => {
     });
 
     it.each([
+        ['hover-fill', 'tint'],
         ['hover-shadow', 'raise'],
+        ['hover-shadow', 'glow'],
+        ['focus-fill', 'tint'],
         ['focus-shadow', 'raise'],
         ['focus-move', 'lift'],
-    ])('moves the shadow and the place once %s is %s, and only then', (moment, effect) => {
-        const still = field('input', typed, {});
-        const moving = field('input', typed, { [moment]: effect });
-        // A value of its own for each token, so each is read where it is written.
-        const tokens = {
-            '--ui-duration-state': '0.1s',
-            '--ui-duration-effect': '0.2s',
-            '--ui-easing-state': 'linear',
-            '--ui-easing-enter': 'ease-in',
-        };
+    ])(
+        'moves the shadow, the fill and the place once %s is %s, and only then',
+        (moment, effect) => {
+            const still = field('input', typed, {});
+            const moving = field('input', typed, { [moment]: effect });
+            // A value of its own for each token, so each is read where it is written.
+            const tokens = {
+                '--ui-duration-state': '0.1s',
+                '--ui-duration-effect': '0.2s',
+                '--ui-easing-state': 'linear',
+                '--ui-easing-enter': 'ease-in',
+            };
 
-        for (const [name, value] of Object.entries(tokens)) {
-            moving.host.style.setProperty(name, value);
-        }
+            for (const [name, value] of Object.entries(tokens)) {
+                moving.host.style.setProperty(name, value);
+            }
 
-        const transitions = (control: HTMLElement, box: HTMLElement): readonly string[] => [
-            getComputedStyle(control).transitionProperty,
-            getComputedStyle(box).transitionProperty,
-        ];
+            const transitions = (control: HTMLElement, box: HTMLElement): readonly string[] => [
+                getComputedStyle(control).transitionProperty,
+                getComputedStyle(box).transitionProperty,
+            ];
 
-        expect(transitions(moving.control, moving.box), 'chosen').toEqual([
-            'border-color, box-shadow',
-            'translate',
-        ]);
-        expect(
-            [moving.control, moving.box].map((target) => {
-                const styles = getComputedStyle(target);
+            expect(transitions(moving.control, moving.box), 'chosen').toEqual([
+                'border-color, box-shadow, background-color',
+                'translate',
+            ]);
+            expect(
+                [moving.control, moving.box].map((target) => {
+                    const styles = getComputedStyle(target);
 
-                return [styles.transitionDuration, styles.transitionTimingFunction];
-            }),
-            'the boundary on the state, the shadow and the place on an effect',
-        ).toEqual([
-            ['0.1s, 0.2s', 'linear, ease-in'],
-            ['0.2s', 'ease-in'],
-        ]);
-        expect(transitions(still.control, still.box), 'nothing chosen').toEqual(['all', 'all']);
-    });
+                    return [styles.transitionDuration, styles.transitionTimingFunction];
+                }),
+                'the boundary on the state, the shadow and the place on an effect',
+            ).toEqual([
+                ['0.1s, 0.2s, 0.2s', 'linear, ease-in, ease-in'],
+                ['0.2s', 'ease-in'],
+            ]);
+            expect(transitions(still.control, still.box), 'nothing chosen').toEqual(['all', 'all']);
+        },
+    );
 
     it('hands the ring the glide while the reader can see the focus, never in forced colours', async () => {
         const { control } = field('input', typed, { 'focus-ring': 'glide' });
@@ -391,12 +404,13 @@ describe("a field's effects", () => {
 
         const styles = getComputedStyle(control);
 
+        // An error's fill's place in the control's one list, the shadow's before it playing nothing.
         expect([
             styles.animationName,
             styles.animationDuration,
             styles.animationTimingFunction,
             styles.animationIterationCount,
-        ]).toEqual(['ui-flash', '0.5s', 'linear', '3']);
+        ]).toEqual(['none, ui-flash', '0s, 0.5s', 'ease, linear', '1, 3']);
 
         host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
         host.style.setProperty('--ui-color-surface-control', 'rgb(255, 255, 255)');
@@ -418,8 +432,229 @@ describe("a field's effects", () => {
             'invalid-fill': 'flash',
         });
 
-        expect(getComputedStyle(box, '::before').animationName, 'the band').toBe('none');
-        expect(getComputedStyle(control).animationName, 'the fill').toBe('none');
+        expect(playing(box, '::before'), 'the band').toEqual([]);
+        expect(playing(control), 'the fill').toEqual([]);
+    });
+
+    it("glows a field under the pointer, the button's light of the accent round it", async () => {
+        const { host, control } = field('input', typed, { 'hover-shadow': 'glow' });
+        host.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+
+        await userEvent.hover(control);
+
+        expect(getComputedStyle(control).boxShadow).toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px',
+        );
+    });
+
+    it("tints a field under the pointer and at the focus with the button's own tint", async () => {
+        const tokens = {
+            '--ui-color-accent': 'rgb(0, 0, 255)',
+            '--ui-color-surface-control': 'rgb(240, 240, 240)',
+        };
+        const { host, control } = field('input', typed, {
+            'hover-fill': 'tint',
+            'focus-fill': 'tint',
+        });
+        const button = document.createElement('div');
+        const root = button.attachShadow({ mode: 'open' });
+        const sheet = buttonEffects('test').styleSheet;
+
+        if (sheet === undefined) {
+            throw new Error('the engine built no sheet to adopt');
+        }
+
+        root.adoptedStyleSheets = [sheet];
+        root.innerHTML = '<button class="secondary" style="display: block">Tinted</button>';
+        button.style.setProperty('--ui-motion-hover-fill', 'tint');
+
+        for (const [name, value] of Object.entries(tokens)) {
+            host.style.setProperty(name, value);
+            button.style.setProperty(name, value);
+        }
+
+        document.body.append(button);
+
+        const own = root.querySelector('button');
+
+        if (own === null) {
+            throw new Error('the button rendered no control');
+        }
+
+        const resting = getComputedStyle(control).backgroundColor;
+
+        await userEvent.hover(own);
+
+        const buttons = getComputedStyle(own).backgroundColor;
+
+        await userEvent.hover(control);
+
+        expect(getComputedStyle(control).backgroundColor, 'under the pointer').toBe(buttons);
+        expect(buttons, 'a tint at all').not.toBe(resting);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control).backgroundColor, 'at the focus').toBe(buttons);
+    });
+
+    it("takes the darkening's place under the pointer with the boundary at rest, a field in error's red kept", async () => {
+        const plain = field('input', typed, { 'hover-border': 'none' });
+        const erring = field('input', typed, { 'hover-border': 'none' }, 'aria-invalid="true"');
+
+        for (const { host } of [plain, erring]) {
+            host.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+            host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        }
+
+        await userEvent.hover(plain.control);
+
+        expect(getComputedStyle(plain.control).borderTopColor, 'at rest').toBe('rgb(1, 2, 3)');
+
+        await userEvent.hover(erring.control);
+
+        expect(getComputedStyle(erring.control).borderTopColor, 'in error').toBe('rgb(200, 0, 0)');
+    });
+
+    it("bursts light out round a field as the focus arrives, on the shadow's place in its list", async () => {
+        const { host, control } = field('input', typed, { 'focus-shadow': 'burst' });
+        host.style.setProperty('--ui-duration-flourish', '0.5s');
+        host.style.setProperty('--ui-easing-enter', 'ease-in');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(control);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+        ]).toEqual(['ui-burst, none', '0.5s, 0s', 'ease-in, ease']);
+    });
+
+    it('draws the burst from four fifths of the accent at the boundary out to nothing, 10px and 15px soft', async () => {
+        const { host, control } = field('input', typed, { 'focus-shadow': 'burst' });
+        host.style.setProperty('--ui-color-accent', 'rgb(200, 0, 0)');
+        host.style.setProperty('--ui-duration-flourish', '10s');
+        host.style.setProperty('--ui-easing-enter', 'linear');
+
+        await userEvent.tab();
+
+        const burst = running(control, 'ui-burst');
+        // An animated shadow's colour is computed in the space it moves through.
+        const accent = (opacity: number): string =>
+            colour(`oklab(from rgb(200, 0, 0) l a b / ${String(opacity)})`);
+
+        burst.pause();
+        burst.currentTime = 0;
+
+        expect(getComputedStyle(control).boxShadow, 'arriving').toBe(
+            `${accent(0.8)} 0px 0px 0px 0px`,
+        );
+
+        burst.currentTime = 5000;
+
+        expect(getComputedStyle(control).boxShadow, 'halfway').toBe(
+            `${accent(0.4)} 0px 0px 7.5px 5px`,
+        );
+    });
+
+    it('plays the burst and the flash at once on a field in error the focus arrives at', async () => {
+        const { host, control } = field(
+            'input',
+            typed,
+            { 'focus-shadow': 'burst', 'invalid-fill': 'flash' },
+            'aria-invalid="true"',
+        );
+        host.style.setProperty('--ui-duration-flourish', '10s');
+
+        await userEvent.tab();
+
+        expect(playing(control)).toEqual(['ui-burst', 'ui-flash']);
+    });
+
+    it("hands the ring the glitch, a flourish's time, a straight clock and its two lines' colours", async () => {
+        const { host, control } = field('input', typed, { 'focus-ring': 'glitch' });
+        host.style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
+        host.style.setProperty('--ui-color-info', 'rgb(4, 5, 6)');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(control);
+
+        expect(
+            ['', '-time', '-curve', '-left', '-right'].map((name) =>
+                styles.getPropertyValue(`--ui-fx-ring${name}`),
+            ),
+        ).toEqual(['glitch', '520ms', 'linear', 'rgb(1, 2, 3)', 'rgb(4, 5, 6)']);
+    });
+
+    it('lights the label with a glow of the accent at the focus, on its own transition', async () => {
+        const { host, label } = field('input', typed, { 'focus-label': 'glow' });
+        host.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        host.style.setProperty('--ui-duration-effect', '0.2s');
+        host.style.setProperty('--ui-easing-state', 'linear');
+
+        const styles = getComputedStyle(label);
+
+        expect(
+            [styles.transitionProperty, styles.transitionDuration, styles.transitionTimingFunction],
+            'its transition',
+        ).toEqual(['text-shadow', '0.2s', 'linear']);
+
+        host.style.setProperty('--ui-duration-effect', '0s');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(label).textShadow, 'at the focus').toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.7) 0px 0px 8px',
+        );
+    });
+
+    it("splits a field in error's boundary into the danger and the info, twice the rounds an effect takes", () => {
+        const { host, box } = field(
+            'input',
+            typed,
+            { 'invalid-border': 'split' },
+            'aria-invalid="true"',
+        );
+        host.style.setProperty('--ui-duration-effect', '0.2s');
+        host.style.setProperty('--ui-iteration-settle', '3');
+
+        const layer = getComputedStyle(box, '::before');
+
+        expect([
+            layer.animationName,
+            layer.animationDuration,
+            layer.animationTimingFunction,
+            layer.animationIterationCount,
+        ]).toEqual(['ui-split', '0.2s', 'linear', '6']);
+        expect([layer.position, layer.pointerEvents], 'on the layer round the box').toEqual([
+            'absolute',
+            'none',
+        ]);
+
+        host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        host.style.setProperty('--ui-color-info', 'rgb(0, 0, 200)');
+        host.style.setProperty('--ui-duration-effect', '10s');
+
+        const split = running(box, 'ui-split');
+
+        split.pause();
+
+        // Each of its four keyframes, held where it is written: thrown 3px either way, back, 2px
+        // and a pixel down, and a pixel.
+        const thrown = [
+            [2000, 'rgb(200, 0, 0) -3px 0px 0px 0px, rgb(0, 0, 200) 3px 0px 0px 0px'],
+            [4000, 'rgb(200, 0, 0) 3px 0px 0px 0px, rgb(0, 0, 200) -3px 0px 0px 0px'],
+            [6000, 'rgb(200, 0, 0) -2px 1px 0px 0px, rgb(0, 0, 200) 2px -1px 0px 0px'],
+            [8000, 'rgb(200, 0, 0) 1px 0px 0px 0px, rgb(0, 0, 200) -1px 0px 0px 0px'],
+        ] as const;
+
+        for (const [time, shadow] of thrown) {
+            split.currentTime = time;
+
+            expect(getComputedStyle(box, '::before').boxShadow, String(time)).toBe(shadow);
+        }
     });
 
     it.each([

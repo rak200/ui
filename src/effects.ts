@@ -196,11 +196,15 @@ const tint = css`light-dark(
 )`;
 
 /**
- * The effects that move a field's shadow or its place, each by the moment it answers: what a
- * field's boundary transitions with once one of them is chosen.
+ * The effects that move a field's shadow, its fill or its place, each by the moment it answers:
+ * what a field's boundary transitions with once one of them is chosen. The burst, the flash and the
+ * split are animations, which need none.
  */
 const fieldMoves = [
+    ['hover-fill', 'tint'],
     ['hover-shadow', 'raise'],
+    ['hover-shadow', 'glow'],
+    ['focus-fill', 'tint'],
     ['focus-shadow', 'raise'],
     ['focus-move', 'lift'],
 ] as const;
@@ -758,15 +762,18 @@ export function fieldEffects(component: string, able: string): CSSResult {
 
     return css`
         /* What they move transitions only once one of them is chosen, so with none the boundary
-           is still the only thing that moves: the shadow on the control's own, and the place on
-           the box round it, each over an effect's time on the curve an arrival takes. */
+           is still the only thing that moves: the shadow and the fill on the control's own, and
+           the place on the box round it, each over an effect's time on the curve an arrival
+           takes. */
         @container ${moving} {
             ${control} {
-                transition-property: border-color, box-shadow;
+                transition-property: border-color, box-shadow, background-color;
                 transition-duration:
-                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-effect')};
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-effect')},
+                    ${reference('--ui-duration-effect')};
                 transition-timing-function:
-                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-enter')};
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-enter')},
+                    ${reference('--ui-easing-enter')};
             }
 
             .glow {
@@ -775,13 +782,50 @@ export function fieldEffects(component: string, able: string): CSSResult {
             }
         }
 
-        /* raise: the button's drop, under the control, on a field the pointer can change — not one
-           that cannot be used or written in — which only a pointer that hovers can ask for: a tap
-           leaves the hover behind, and the shadow would stay with it. The focus wins. */
+        /* The control's one list of animations, read from the kinds that animate it: its shadow's,
+           which the focus's burst writes, and an error's fill's, which the flash writes. One list,
+           since an element has one, and two rules writing it leave one effect unplayed; a kind
+           that plays nothing reads as none. */
+        ${control} {
+            animation: var(--ui-fx-run-shadow, none), var(--ui-fx-run-error, none);
+        }
+
+        /* The pointer's, on a field the pointer can change — not one that cannot be used or written
+           in — which only a pointer that hovers can ask for: a tap leaves the hover behind, and
+           what it drew would stay with it. The focus wins.
+
+           raise: the button's drop, under the control. glow: the button's light of the accent,
+           blurred round the control. tint: the button's, a little of the accent in the fill, which
+           every component's lights are drawn in and over which every shipped palette's text and
+           placeholder hold 4.5:1 — measured for RFC 0004. none, for the boundary: today's
+           darkening taken away, so it stays as it rests, and a field in error keeps its red, which
+           the darkening covers. */
         @media (hover: hover) {
             @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
                 ${control}:hover${pointable}:not(:focus-visible) {
                     box-shadow: ${raise};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-shadow', 'glow'))} {
+                ${control}:hover${pointable}:not(:focus-visible) {
+                    box-shadow: ${glow};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-fill', 'tint'))} {
+                ${control}:hover${pointable}:not(:focus-visible) {
+                    background-color: ${tint};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-border', 'none'))} {
+                ${control}:hover${pointable}:not(:focus-visible) {
+                    border-color: ${reference('--ui-color-border')};
+                }
+
+                ${control}[aria-invalid='true']:hover${pointable}:not(:focus-visible) {
+                    border-color: ${reference('--ui-color-danger')};
                 }
             }
         }
@@ -789,6 +833,32 @@ export function fieldEffects(component: string, able: string): CSSResult {
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             ${control}:focus-visible {
                 box-shadow: ${raise};
+            }
+        }
+
+        /* tint at the focus: the pointer's, for as long as the focus stays. */
+        @container ${unsafeCSS(drawn('focus-fill', 'tint'))} {
+            ${control}:focus-visible {
+                background-color: ${tint};
+            }
+        }
+
+        /* burst: the button's light bursting out round the control as the reader sees the focus
+           arrive, and gone, on the shadow's place in the control's list. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'burst'))} {
+            ${control}:focus-visible {
+                --ui-fx-run-shadow: ui-burst ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @keyframes ui-burst {
+            from {
+                box-shadow: 0 0 0 0 rgb(from ${reference('--ui-color-accent')} r g b / 0.8);
+            }
+
+            to {
+                box-shadow: 0 0 15px 10px rgb(from ${reference('--ui-color-accent')} r g b / 0);
             }
         }
 
@@ -820,11 +890,22 @@ export function fieldEffects(component: string, able: string): CSSResult {
             }
         }
 
-        /* pulse: a band of the danger sent out from a field in error and fading, four rounds of a
-           flourish and then at rest, as a loop does for a state that stands for as long as the
-           reader leaves it. On a layer round the box, the one an error's border draws on, which
-           takes no pointer: the field itself never moves. */
-        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} {
+        /* glow: a light of the accent behind the label, which leaves its colour as it is, while
+           the focus stays. */
+        @container ${unsafeCSS(drawn('focus-label', 'glow'))} {
+            label {
+                transition: text-shadow ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-state')};
+            }
+
+            label:has(+ .glow > :focus-visible) {
+                text-shadow: 0 0 0.5rem rgb(from ${reference('--ui-color-accent')} r g b / 0.7);
+            }
+        }
+
+        /* The layer an error's border draws on: round the box, which it is laid out against, and
+           taking no pointer, so the field itself never moves. */
+        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} or ${unsafeCSS(drawn('invalid-border', 'split'))} {
             .glow {
                 position: relative;
             }
@@ -836,10 +917,51 @@ export function fieldEffects(component: string, able: string): CSSResult {
                 border-radius: inherit;
                 pointer-events: none;
             }
+        }
 
+        /* pulse: a band of the danger sent out from a field in error and fading, four rounds of a
+           flourish and then at rest, as a loop does for a state that stands for as long as the
+           reader leaves it. */
+        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} {
             .glow:has(> [aria-invalid='true'])::before {
                 animation: ui-pulse-danger ${reference('--ui-duration-flourish')}
                     ${reference('--ui-easing-enter')} ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        /* split: the boundary split into the danger and the info where it is, thrown a few pixels
+           either way and back, as the glitch splits the ring. Its rounds are an effect's, about
+           half the pulse's, so it plays twice as many and ends close to it, then rests. */
+        @container ${unsafeCSS(drawn('invalid-border', 'split'))} {
+            .glow:has(> [aria-invalid='true'])::before {
+                animation: ui-split ${reference('--ui-duration-effect')} linear
+                    calc(${reference('--ui-iteration-settle')} * 2);
+            }
+        }
+
+        @keyframes ui-split {
+            20% {
+                box-shadow:
+                    -3px 0 0 0 ${reference('--ui-color-danger')},
+                    3px 0 0 0 ${reference('--ui-color-info')};
+            }
+
+            40% {
+                box-shadow:
+                    3px 0 0 0 ${reference('--ui-color-danger')},
+                    -3px 0 0 0 ${reference('--ui-color-info')};
+            }
+
+            60% {
+                box-shadow:
+                    -2px 1px 0 0 ${reference('--ui-color-danger')},
+                    2px -1px 0 0 ${reference('--ui-color-info')};
+            }
+
+            80% {
+                box-shadow:
+                    1px 0 0 0 ${reference('--ui-color-danger')},
+                    -1px 0 0 0 ${reference('--ui-color-info')};
             }
         }
 
@@ -864,7 +986,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
            it to 3:1. */
         @container ${unsafeCSS(drawn('invalid-fill', 'flash'))} {
             ${control}[aria-invalid='true'] {
-                animation: ui-flash ${reference('--ui-duration-flourish')}
+                --ui-fx-run-error: ui-flash ${reference('--ui-duration-flourish')}
                     ${reference('--ui-easing-exit')} ${reference('--ui-iteration-settle')};
             }
         }
@@ -888,6 +1010,18 @@ export function fieldEffects(component: string, able: string): CSSResult {
                     --ui-fx-ring: glide;
                     --ui-fx-ring-time: ${reference('--ui-duration-travel')};
                     --ui-fx-ring-curve: ${reference('--ui-easing-move')};
+                }
+            }
+
+            /* The glitch, as the button hands it: shaken, and split into two lines thrown either
+               way in the danger and the info, a flourish on a straight clock. */
+            @container ${unsafeCSS(drawn('focus-ring', 'glitch'))} {
+                ${control}:focus-visible {
+                    --ui-fx-ring: glitch;
+                    --ui-fx-ring-time: ${reference('--ui-duration-flourish')};
+                    --ui-fx-ring-curve: linear;
+                    --ui-fx-ring-left: ${reference('--ui-color-danger')};
+                    --ui-fx-ring-right: ${reference('--ui-color-info')};
                 }
             }
         }

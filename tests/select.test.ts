@@ -20,6 +20,7 @@ import '../src/tooltip.js';
 import type { UiOption, UiSelect } from '../src/select.js';
 import type { UiInput } from '../src/input.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { matrix, themeStyleSheet } from '../src/theme.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
@@ -1504,7 +1505,9 @@ describe("a field's effects, which the select adopts", () => {
         expect(getComputedStyle(glow(select(form)), '::before').animationName, 'the pulse').toBe(
             'ui-pulse-danger',
         );
-        expect(getComputedStyle(control(form)).animationName, 'the flash').toBe('ui-flash');
+        expect(getComputedStyle(control(form)).animationName, "the flash, its list's second").toBe(
+            'none, ui-flash',
+        );
 
         const label = select(form).shadowRoot?.querySelector('label') ?? null;
 
@@ -1517,6 +1520,25 @@ describe("a field's effects, which the select adopts", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(label).color, 'the label at the focus').not.toBe(resting);
+    });
+
+    it("tints the select at the focus under Matrix, the field's own where the page names the highlight", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+        document.body.append(style);
+        const form = await mount(fixture);
+        stilled(form);
+        form.dataset['uiTheme'] = matrix.name;
+
+        const fill = getComputedStyle(control(form)).backgroundColor;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control(form)).backgroundColor).not.toBe(fill);
+
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
     });
 
     it("raises the select under the pointer, and raises and lifts it at the focus, under the default theme's taste", async () => {

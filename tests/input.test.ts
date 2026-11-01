@@ -968,6 +968,13 @@ describe("a form's moments on a field", () => {
         return found;
     }
 
+    /** The animations an element's one list plays, the kinds that play nothing left out. */
+    function playing(target: Element, pseudo?: string): readonly string[] {
+        return getComputedStyle(target, pseudo)
+            .animationName.split(', ')
+            .filter((name) => name !== 'none');
+    }
+
     /** Mounts a field in error under `theme`, every duration the effects move over taken out. */
     async function erring(theme?: Theme): Promise<Field> {
         sheet(theme);
@@ -986,10 +993,8 @@ describe("a form's moments on a field", () => {
     it("answers an error under the default theme's taste: a band sent out, and the fill flashed", async () => {
         const element = await erring();
 
-        expect(getComputedStyle(glow(element), '::before').animationName, 'the pulse').toBe(
-            'ui-pulse-danger',
-        );
-        expect(getComputedStyle(box(element)).animationName, 'the flash').toBe('ui-flash');
+        expect(playing(glow(element), '::before'), 'the pulse').toEqual(['ui-pulse-danger']);
+        expect(playing(box(element)), 'the flash').toEqual(['ui-flash']);
     });
 
     it("takes the label to the accent at the focus under the default theme's taste", async () => {
@@ -1001,14 +1006,54 @@ describe("a form's moments on a field", () => {
         expect(getComputedStyle(part(element, 'label')).color).not.toBe(resting);
     });
 
-    it("keeps a field in error's fill as it is under Matrix, whose taste takes the flash back", async () => {
+    it("splits a field in error's boundary under Matrix, and keeps its fill as it is", async () => {
         const element = await erring(matrix);
 
-        expect(getComputedStyle(box(element)).animationName, 'no flash').toBe('none');
-        // The default theme's pulse stands under Matrix until its own split is drawn.
-        expect(getComputedStyle(glow(element), '::before').animationName, 'the pulse').toBe(
-            'ui-pulse-danger',
+        expect(playing(glow(element), '::before'), 'the split').toEqual(['ui-split']);
+        expect(playing(box(element)), 'no flash').toEqual([]);
+    });
+
+    it('glows the label at the focus under Matrix, its colour as it was', async () => {
+        const element = await erring(matrix);
+        const resting = getComputedStyle(part(element, 'label')).color;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(part(element, 'label')).color, 'its colour').toBe(resting);
+        expect(getComputedStyle(part(element, 'label')).textShadow, 'a glow').not.toBe('none');
+    });
+
+    it('answers the pointer and the focus under Matrix: a glow and a tint, no darkening, a burst and the glitch', async () => {
+        sheet(matrix);
+
+        const form = await mount('<ui-input label="Amount"></ui-input>');
+        form.style.setProperty('--ui-duration-effect', '0s');
+        form.style.setProperty('--ui-duration-state', '0s');
+        form.style.setProperty('--ui-duration-flourish', '10s');
+        form.dataset['uiTheme'] = matrix.name;
+
+        const element = field(form);
+        const control = box(element);
+        const resting = getComputedStyle(control);
+        const [fill, edge] = [resting.backgroundColor, resting.borderTopColor];
+
+        await userEvent.hover(control);
+
+        expect(getComputedStyle(control).boxShadow, 'a glow').toMatch(/ 0px 0px 12px 2px$/);
+        expect(getComputedStyle(control).backgroundColor, 'a tint').not.toBe(fill);
+        expect(getComputedStyle(control).borderTopColor, 'no darkening').toBe(edge);
+
+        await userEvent.tab();
+
+        expect(playing(control), 'a burst').toEqual(['ui-burst']);
+        expect(getComputedStyle(control).backgroundColor, "the tint, the field's own").not.toBe(
+            fill,
         );
+        expect(document.querySelector('[data-ui-ring]:popover-open'), 'the glitch').not.toBeNull();
+
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
     });
 
     it('keeps the label as it is at the focus under Glass, whose taste takes the accent back', async () => {
@@ -1018,9 +1063,7 @@ describe("a form's moments on a field", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(part(element, 'label')).color).toBe(resting);
-        expect(getComputedStyle(box(element)).animationName, 'the flash, which Glass keeps').toBe(
-            'ui-flash',
-        );
+        expect(playing(box(element)), 'the flash, which Glass keeps').toEqual(['ui-flash']);
     });
 });
 

@@ -141,9 +141,9 @@ export function themeStyleSheet(theme: Theme): string {
  * takes a tint of the accent and glows, in the place of the ring and glow the theme lights it
  * to; at the focus it takes its hover colour and a burst of light, its ring glitches rather than
  * gliding, and it does not lift; and a press shatters it rather than squeezing it, brings no
- * colour of its own and sinks nothing. A field in error keeps its fill as it is. Its label's glow
- * at the focus and its error's split are not drawn yet, and a taste names only what some component
- * draws: until they are, the default theme's accent and pulse stand under it.
+ * colour of its own and sinks nothing. A field tints and glows under the pointer without darkening;
+ * at the focus it takes the tint and a burst, its ring glitches and its label glows; and in error
+ * its boundary splits into the danger and the info, its fill as it is.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -204,10 +204,20 @@ export const matrix: Theme = {
             'focus-fill': 'highlight',
             'focus-shadow': 'burst',
             'focus-ring': 'glitch',
+            'focus-label': 'glow',
+            'hover-border': 'none',
             'press-move': 'shatter',
             'press-fill': 'none',
             'press-shadow': 'none',
+            'invalid-border': 'split',
             'invalid-fill': 'none',
+        },
+        // A field leaves the hover colour out, so at the focus it takes a little of the accent in
+        // the highlight's place, as RFC 0004 chose for every component that leaves it out.
+        components: {
+            input: { 'focus-fill': 'tint' },
+            textarea: { 'focus-fill': 'tint' },
+            select: { 'focus-fill': 'tint' },
         },
     },
 };
