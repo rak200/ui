@@ -19,6 +19,7 @@ import '../src/input.js';
 import '../src/tooltip.js';
 import type { UiOption, UiSelect } from '../src/select.js';
 import type { UiInput } from '../src/input.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
@@ -1410,6 +1411,107 @@ describe('the interaction states', () => {
  * protocol is graded in `description.test.ts` and the composition in `src/description.ts`;
  * what these are about is that the box takes the sentence and the choices do not.
  */
+/**
+ * A field's effects — RFC 0004's — which the select adopts from `src/effects.ts` under its own
+ * taste name, with the one guard a select has. What each effect draws is graded on a field of the
+ * suite's own in `tests/effects.test.ts`.
+ */
+describe("a field's effects, which the select adopts", () => {
+    /** The button's drop, as the engine computes it on a light page. */
+    const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
+
+    afterEach(() => {
+        // A ring still in the air lands, so nothing flies on into the next test.
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
+    });
+
+    /** The box round a field's control, which a theme's glow is drawn on and the lift moves. */
+    function glow(element: HTMLElement): HTMLElement {
+        const found = element.shadowRoot?.querySelector<HTMLElement>('.glow') ?? null;
+
+        if (found === null) {
+            throw new Error(`${element.tagName} rendered no box round its control`);
+        }
+
+        return found;
+    }
+
+    /** Takes every duration the effects move over out, on the region round the fixture. */
+    function stilled(form: HTMLElement): void {
+        form.style.setProperty('--ui-duration-effect', '0s');
+        form.style.setProperty('--ui-duration-state', '0s');
+    }
+
+    /** Whether the page's ring is in the air. */
+    function aloft(): boolean {
+        return document.querySelector('[data-ui-ring]:popover-open') !== null;
+    }
+
+    /** The select's own control. */
+    function control(form: HTMLElement): HTMLSelectElement {
+        const found = form.querySelector('ui-select')?.shadowRoot?.querySelector('select') ?? null;
+
+        if (found === null) {
+            throw new Error('the fixture rendered no select');
+        }
+
+        return found;
+    }
+
+    it("draws them under the select's own taste name, and not under the input's", async () => {
+        const form = await mount(fixture);
+        stilled(form);
+        form.style.setProperty('--ui-taste-input-focus-move', 'lift');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(glow(select(form))).translate, "the input's").toBe('none');
+
+        form.style.setProperty('--ui-taste-select-focus-move', 'lift');
+
+        expect(getComputedStyle(glow(select(form))).translate, 'its own').toBe('0px -2px');
+    });
+
+    it('raises nothing under the pointer on a select that cannot be used', async () => {
+        const form = await mount(fixture.replace('<ui-select', '<ui-select disabled'));
+        stilled(form);
+        form.style.setProperty('--ui-motion-hover-shadow', 'raise');
+
+        await userEvent.hover(control(form));
+
+        expect(getComputedStyle(control(form)).boxShadow).toBe('none');
+    });
+
+    it('glides the ring from an input to the select, both of which hand it the flight', async () => {
+        const form = await mount(`<ui-input label="Name"></ui-input>${fixture}`);
+        form.style.setProperty('--ui-motion-focus-ring', 'glide');
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it("raises the select under the pointer, and raises and lifts it at the focus, under the default theme's taste", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+        const form = await mount(fixture);
+        stilled(form);
+
+        await userEvent.hover(control(form));
+
+        expect(getComputedStyle(control(form)).boxShadow, 'under the pointer').toBe(raised);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control(form)).boxShadow, 'at the focus').toBe(raised);
+        expect(getComputedStyle(glow(select(form))).translate, 'lifted').toBe('0px -2px');
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: UiSelect, detail: unknown): boolean {

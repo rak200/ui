@@ -568,7 +568,9 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 
 `none` keeps a component as it was for that moment. An entry arrives with the first component that
 draws the effect it names — [the button](button.md#motion) draws every one here — and the suite
-refuses an entry no component draws.
+refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each as the button
+does, and [a field](input.md#motion) answers the pointer's and the focus's, its box lifting rather
+than the control.
 
 ## `tokenStyleSheet`
 

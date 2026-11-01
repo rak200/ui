@@ -19,6 +19,7 @@ import '@rak200/ui';
 - [Supplementary text](#supplementary-text)
 - [The list, where the engine hands it to the page](#the-list-where-the-engine-hands-it-to-the-page)
 - [What the platform still refuses](#what-the-platform-still-refuses)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-select>`
@@ -210,6 +211,14 @@ kit draws the list in two engines of three.
 choice paints. The box, the caret and the states are this package's; the popup, and the highlight on
 the choice under the pointer, are not. That is the cost of delegating to a native `<select>`, and it
 is the reason to.
+
+## Motion
+
+**The box answers the pointer and the focus as a field does** — every effect
+[`<ui-input>`](input.md#motion) draws, from the same sheet, on the `<select>` and the box round it:
+raised under the pointer and at the focus, lifted at the focus, its ring glided over, under the
+default theme's taste. A theme's taste reaches it under its own name, `--ui-taste-select-<moment>`.
+A select has no read-only state, so the only one the pointer's effects step over is disabled.
 
 ## Styling
 
