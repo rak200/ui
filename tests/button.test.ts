@@ -1595,6 +1595,34 @@ describe("the effects Glass's taste names", () => {
         );
     });
 
+    it("hands the ring the refocus, an effect's time and the curves it comes and goes on", async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.style.setProperty('--ui-motion-focus-ring', 'refocus');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(
+            ['', '-time', '-curve', '-exit'].map((name) =>
+                styles.getPropertyValue(`--ui-fx-ring${name}`),
+            ),
+        ).toEqual(['refocus', '240ms', 'ease-out', 'ease-in']);
+    });
+
+    it("brings the ring into focus where Glass's taste runs, on the page's first focus", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+        const element = await mount('<ui-button>Save</ui-button>');
+        element.parentElement?.setAttribute('data-ui-theme', glass.name);
+
+        await userEvent.tab();
+
+        expect(document.querySelector('[data-ui-ring]:popover-open')).not.toBeNull();
+        expect(getComputedStyle(inner(element)).getPropertyValue('--ui-fx-ring')).toBe('refocus');
+    });
+
     it("reads Glass's taste off the theme: the light held inside, and a spring", async () => {
         const style = document.createElement('style');
         style.textContent = tokenStyleSheet() + themeStyleSheet(glass);

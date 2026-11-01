@@ -492,7 +492,8 @@ round its own element and moves only with it, so a ring that leaves one control 
 another, or jumps about its own, is a popover of the page's own, in the top layer: `aria-hidden`,
 out of the pointer's way, styled on itself so the page needs no sheet, and standing in for the
 control's outline until it lands. The glide flies it from the ring the reader saw last; the glitch
-shakes it over the control's own. **The sheet decides and the script reads**: a control hands the
+shakes it over the control's own; the refocus brings the control's own into focus from a blur, and
+blurs it away on a second ring as the focus leaves. **The sheet decides and the script reads**: a control hands the
 ring its flight, and its time, only where its query chose that flight and the reader can see the
 focus. So the ring cannot fly where the sheet
 draws nothing — in an engine without style queries, in forced colours — and under reduced motion

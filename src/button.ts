@@ -520,6 +520,19 @@ export class UiButton extends LitElement {
                     --ui-fx-ring-right: ${reference('--ui-color-info')};
                 }
             }
+
+            /* The refocus, which the page's ring plays over the button's own: brought into focus
+               from a blur as the focus arrives, and blurred away as it leaves — as a surface comes
+               into focus and goes out of it, on the curves an arrival and a departure take, over a
+               quarter again an effect's time. */
+            @container ${unsafeCSS(drawn('focus-ring', 'refocus'))} {
+                button:focus-visible {
+                    --ui-fx-ring: refocus;
+                    --ui-fx-ring-time: ${reference('--ui-duration-effect')};
+                    --ui-fx-ring-curve: ${reference('--ui-easing-enter')};
+                    --ui-fx-ring-exit: ${reference('--ui-easing-exit')};
+                }
+            }
         }
     `;
 
