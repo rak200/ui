@@ -588,7 +588,7 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 draws the effect it names — [the button](button.md#motion) draws the pointer's, the focus's and a
 press's, [a field](input.md#motion) the pointer's, the focus's, its label's and an error's, and
 [a drawn control](checkbox.md#motion) its check, the pointer's, the focus's, its label's and an
-error's — and
+error's, and [the card](card.md#motion) the pointer's and a focus on something it holds — and
 the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
 button answers as the button does, and a field's box lifts rather than its control.
 

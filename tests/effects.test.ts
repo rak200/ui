@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `tokens.test.ts`.
 import type {} from '@vitest/browser-playwright';
-import { buttonEffects, controlEffects, fieldEffects, pressed } from '../src/effects.js';
+import {
+    buttonEffects,
+    controlEffects,
+    fieldEffects,
+    pressed,
+    surfaceEffects,
+} from '../src/effects.js';
+import { held, released } from '../src/held.js';
 import { farPole } from '../src/tokens.js';
 
 /**
@@ -2082,5 +2089,165 @@ describe("a drawn control's effects", () => {
         await userEvent.tab();
 
         expect(opacity(usable.frame), 'with the focus').toBe('0');
+    });
+});
+
+/**
+ * A surface of the test's own, in a region of the page: a host whose shadow root adopts the sheet
+ * built for `component`, holding the two layers and a slot, with a button in it and the mark bound,
+ * and the effects `choices` names chosen on the region round it — where a choice reaches what the
+ * sheet draws on the host as well as on its layers.
+ */
+function surface(
+    component: string,
+    choices: Readonly<Record<string, string>>,
+): { region: HTMLElement; host: HTMLElement; layer: HTMLElement; focus: HTMLElement } {
+    const region = document.createElement('div');
+    const host = document.createElement('div');
+    const root = host.attachShadow({ mode: 'open' });
+    const sheet = surfaceEffects(component).styleSheet;
+
+    if (sheet === undefined) {
+        throw new Error('the engine built no sheet to adopt');
+    }
+
+    root.adoptedStyleSheets = [sheet];
+    root.innerHTML =
+        '<span data-layer="shadow"></span><span data-layer="focus-shadow"></span><slot></slot>';
+    host.innerHTML = '<button>Inside</button>';
+    host.style.cssText = 'display: block; position: relative; width: 200px; height: 100px';
+    host.addEventListener('focusin', held);
+    host.addEventListener('focusout', released);
+
+    for (const [moment, effect] of Object.entries(choices)) {
+        region.style.setProperty(`--ui-motion-${moment}`, effect);
+    }
+
+    region.append(host);
+    document.body.append(region);
+
+    const [layer, focus] = root.querySelectorAll<HTMLElement>('[data-layer]');
+
+    if (layer === undefined || focus === undefined) {
+        throw new Error('the surface holds no layers');
+    }
+
+    return { region, host, layer, focus };
+}
+
+describe("a surface's effects", () => {
+    /** The raise, as the engine computes it on a light page over a lift written as one ring. */
+    const raisedOver =
+        'rgb(1, 2, 3) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.35) 0px 12px 28px -8px, rgba(0, 0, 0, 0) 0px 16px 40px -4px, rgba(0, 0, 0, 0) 0px 4px 12px 0px';
+
+    /** Each token the raise draws in, each its own, on the region round a surface. */
+    function lifted(region: HTMLElement): void {
+        region.style.setProperty('--ui-elevation-raised', '0 0 0 3px rgb(1, 2, 3)');
+        region.style.setProperty('--ui-color-accent', 'rgb(4, 5, 6)');
+        region.style.setProperty('--ui-duration-effect', '0s');
+    }
+
+    it('lays a layer per moment over the boundary, taking no pointer and invisible until an effect fades it in', () => {
+        const { layer, focus } = surface('test', {});
+
+        for (const each of [layer, focus]) {
+            const styles = getComputedStyle(each);
+
+            expect(
+                [styles.position, styles.top, styles.left, styles.pointerEvents, styles.opacity],
+                each.dataset['layer'],
+            ).toEqual(['absolute', '-1px', '-1px', 'none', '0']);
+        }
+    });
+
+    it("raises a surface under the pointer, the theme's lift drawn again with a drop, on its layer", async () => {
+        const { region, host, layer } = surface('test', { 'hover-shadow': 'raise' });
+        lifted(region);
+
+        await userEvent.hover(host);
+
+        const styles = getComputedStyle(layer);
+
+        expect([styles.opacity, styles.color, styles.boxShadow]).toEqual([
+            '1',
+            'rgb(4, 5, 6)',
+            raisedOver,
+        ]);
+    });
+
+    it("fades each raise in and out on its layer, over an effect's time on the curve an arrival takes", () => {
+        const { region, layer, focus } = surface('test', {
+            'hover-shadow': 'raise',
+            'focus-shadow': 'raise',
+        });
+        region.style.setProperty('--ui-duration-effect', '0.3s');
+        region.style.setProperty('--ui-easing-enter', 'ease-in');
+
+        for (const each of [layer, focus]) {
+            const styles = getComputedStyle(each);
+
+            expect(
+                [
+                    styles.transitionProperty,
+                    styles.transitionDuration,
+                    styles.transitionTimingFunction,
+                ],
+                each.dataset['layer'],
+            ).toEqual(['opacity', '0.3s', 'ease-in']);
+        }
+    });
+
+    it('raises a surface while a focus the reader can see is on something it holds, on its own layer', async () => {
+        const { region, layer, focus } = surface('test', { 'focus-shadow': 'raise' });
+        lifted(region);
+
+        await userEvent.tab();
+
+        expect([getComputedStyle(focus).opacity, getComputedStyle(focus).boxShadow]).toEqual([
+            '1',
+            raisedOver,
+        ]);
+        expect(getComputedStyle(focus).color, 'in the accent').toBe('rgb(4, 5, 6)');
+        expect(getComputedStyle(layer).opacity, "the pointer's layer").toBe('0');
+    });
+
+    it("draws nothing of the pointer's while a focus the reader can see is in the surface, which wins", async () => {
+        const { region, host, layer } = surface('test', { 'hover-shadow': 'raise' });
+        lifted(region);
+
+        await userEvent.tab();
+        await userEvent.hover(host);
+
+        expect(getComputedStyle(layer).opacity).toBe('0');
+    });
+
+    it("lifts the whole surface a quarter rem while a focus the reader can see is in it, over an effect's time", async () => {
+        const { region, host } = surface('test', { 'focus-move': 'lift' });
+        region.style.setProperty('--ui-duration-effect', '0.3s');
+        region.style.setProperty('--ui-easing-enter', 'ease-in');
+
+        expect(
+            [
+                getComputedStyle(host).transitionProperty,
+                getComputedStyle(host).transitionDuration,
+                getComputedStyle(host).transitionTimingFunction,
+            ],
+            'its transition',
+        ).toEqual(['translate', '0.3s', 'ease-in']);
+
+        region.style.setProperty('--ui-duration-effect', '0s');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(host).translate, 'lifted').toBe('0px -4px');
+    });
+
+    it("leaves a choice written on the one surface out of reach of what it draws on its host — RFC 0004's S8", async () => {
+        const { host } = surface('test', {});
+        host.style.setProperty('--ui-motion-focus-move', 'lift');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(host).translate).toBe('none');
     });
 });
