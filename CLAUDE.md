@@ -30,6 +30,7 @@ src/
 ├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── effects.ts       # the effects a component draws — internal, one sheet for each kind: a button's, a field's
+├── held.ts          # a focus a surface holds — internal, the mark a card's sheet draws its focus from
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
@@ -58,6 +59,7 @@ tests/               # mirrors src/, one test file per unit
 ├── description.test.ts
 ├── dialog.test.ts
 ├── effects.test.ts
+├── held.test.ts
 ├── icon.test.ts
 ├── input.test.ts
 ├── menu.test.ts
@@ -397,6 +399,13 @@ explains. This file restates none of them.
   drawn control sits in a `.frame`** — the docblock on `controlEffects()` and the comment beside the
   edge: the pointer engine follows the frame, so the control and every layer read where the pointer
   is, and the band is drawn on the frame's own layer.
+- **Why a card's effects are drawn on layers of their own, how it knows a focus it holds is one the
+  reader sees, and what a choice written on one card cannot reach** — the docblocks on
+  `surfaceEffects()` in `src/effects.ts` and on `src/held.ts`, and `docs/card.md`'s _Motion_. Each
+  moment fades a layer in by its opacity, since a theme's glow in currentColor went dark through a
+  transition in Chromium; `:host(:has(:focus-visible))` matched nothing in Chromium, so the card is
+  marked in script; and the lift is drawn on the host, which RFC 0004's S8 leaves out of reach of a
+  choice made on the one card.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { BodyOnly, Card, OutOfOrder, Row, WithLink } from '../stories/card.stories.js';
 import '../src/card.js';
 import '../src/button.js';
 import type { UiCard } from '../src/card.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the drawing tests use, unless one needs a different shape. */
 const fixture = `
@@ -78,11 +80,19 @@ describe('ui-card', () => {
         expect(card(host).shadowRoot?.querySelector('[role]')).toBeNull();
     });
 
-    it('renders three regions and nothing else', async () => {
+    it('renders three regions, and beside them only the empty layers its effects are drawn on', async () => {
         const host = await mount(fixture);
+        const layers = [...(card(host).shadowRoot?.querySelectorAll('[data-layer]') ?? [])];
 
         expect(slots(card(host))).toEqual(['header', null, 'footer']);
-        expect(card(host).shadowRoot?.querySelectorAll('*').length, 'slots only').toBe(3);
+        expect(
+            layers.map((layer) => [layer.getAttribute('data-layer'), layer.childNodes.length]),
+            'the layers, empty',
+        ).toEqual([
+            ['shadow', 0],
+            ['focus-shadow', 0],
+        ]);
+        expect(card(host).shadowRoot?.querySelectorAll('*').length, 'nothing else').toBe(5);
     });
 
     it('orders the regions itself, whatever order they were written in', async () => {
@@ -245,6 +255,54 @@ describe('ui-card', () => {
  * `expectAccessible` is called per story rather than once: a card with a link and a card
  * with a heading are different markup, and each can fail on its own.
  */
+/**
+ * The pointer and a focus on something a card holds — RFC 0004's — under the default theme's taste.
+ * What each effect draws is graded on a surface of the suite's own in `tests/effects.test.ts`; what
+ * these are about is that the card draws it.
+ */
+describe("the pointer and a focus it holds, under the default theme's taste", () => {
+    /** Mounts `markup` under the token sheet, with every duration the effects move over out. */
+    async function under(markup: string): Promise<HTMLElement> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+
+        const host = await mount(markup);
+        host.style.setProperty('--ui-duration-effect', '0s');
+
+        return host;
+    }
+
+    /** One of the card's layers. */
+    function layer(element: UiCard, name: string): HTMLElement {
+        return only(element.shadowRoot ?? document, `[data-layer='${name}']`);
+    }
+
+    it('raises a card under the pointer', async () => {
+        const host = await under(fixture);
+
+        await userEvent.hover(card(host));
+
+        expect(getComputedStyle(layer(card(host), 'shadow')).opacity).toBe('1');
+    });
+
+    it('marks, raises and lifts a card while a focus the reader can see is on something it holds', async () => {
+        const host = await under(`
+            <ui-card>
+                <p style="margin: 0">Everything in the free tier.</p>
+                <div slot="footer"><ui-button>Choose</ui-button></div>
+            </ui-card>
+        `);
+        const element = card(host);
+
+        await userEvent.tab();
+
+        expect(element.hasAttribute('data-focus-visible'), 'marked').toBe(true);
+        expect(getComputedStyle(layer(element, 'focus-shadow')).opacity, 'raised').toBe('1');
+        expect(getComputedStyle(element).translate, 'lifted').toBe('0px -4px');
+    });
+});
+
 describe('accessibility', () => {
     it('has no violations with every region filled', async () => {
         await expectAccessible(await mountStory(Card, meta, 'Card'));

@@ -2,8 +2,9 @@
  * The effects a component draws — RFC 0004's: one sheet for each kind of control, which a
  * component of that kind adopts. A button's, for what the pointer, the focus and a press do to it;
  * a field's, for what the pointer and the focus do to a control a reader types or chooses in,
- * {@link fieldEffects}; and a drawn control's, {@link controlEffects}. The rest of this docblock is
- * the button's, and each of the others says its own.
+ * {@link fieldEffects}; a drawn control's, {@link controlEffects}; and a surface's, for what the
+ * pointer and a focus on something it holds do to a card, {@link surfaceEffects}. The rest of this
+ * docblock is the button's, and each of the others says its own.
  *
  * **Built for a component, under its own taste name.** A theme's taste reaches a component by its
  * tag — the button's is `--ui-taste-button-<moment>`, the menu's `--ui-taste-menu-<moment>` — so
@@ -1917,6 +1918,107 @@ export function controlEffects(component: string): CSSResult {
                     ${reference('--ui-duration-effect')};
                 transition-timing-function:
                     linear, linear, ${bounce}, ${reference('--ui-easing-enter')};
+            }
+        }
+    `;
+}
+
+/**
+ * A surface's raise: the theme's lift drawn a second time, with a drop under it, in the accent a
+ * theme lights a glow in. A shadow barely shows on a dark page, which nothing is much darker than,
+ * so there the drop is near black and wider, and the boundary catches the light, brightest along
+ * the top — RFC 0004's prototype, as its review settled it.
+ */
+const surfaceRaise = css`
+    ${reference('--ui-elevation-raised')},
+    inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.22)),
+    inset 0 0 0 1px light-dark(transparent, rgb(255 255 255 / 0.12)),
+    0 0.75rem 1.75rem -0.5rem light-dark(rgb(0 0 0 / 0.35), transparent),
+    0 1rem 2.5rem -0.25rem light-dark(transparent, rgb(0 0 0 / 0.9)),
+    0 0.25rem 0.75rem light-dark(transparent, rgb(0 0 0 / 0.5))
+`;
+
+/**
+ * The sheet of a surface's effects, for the component whose tag less `ui-` is `component`: what the
+ * pointer and a focus on something the surface holds do to it, each drawn under that component's
+ * query — the card's, and the toast's to come.
+ *
+ * **Each moment draws on a layer of its own**, which the component renders empty into its shadow
+ * root: `<span data-layer="shadow">` for the pointer and `<span data-layer="focus-shadow">` for the
+ * focus. A layer holds its effect's picture at all times and fades in and out by its opacity
+ * alone, so a picture is never taken away under a fade; and the pointer's and the focus's are two,
+ * so each keeps its own. Not the theme's shadow moved: a theme may write its glow in
+ * currentColor, as Matrix does, and Chromium carried such a glow through transparent for the
+ * length of a transition, so the card went dark and lit again — measured for RFC 0004.
+ *
+ * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
+ * two layers, and marked `data-focus-visible` by `held()` from `src/held.ts`, bound to its
+ * `focusin` and `focusout`, while a focus the reader can see is in it. The sheet comes after the
+ * component's own. An effect that moves the whole surface is drawn on its host, which a query asks
+ * the host's surroundings about and never the host itself: a choice written on the one card alone
+ * does not reach it — RFC 0004's S8, which the card leaves marked.
+ *
+ * Built once for each component, as it is defined: a function, and safe as one, for the reason
+ * {@link buttonEffects} gives.
+ */
+export function surfaceEffects(component: string): CSSResult {
+    /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
+    const drawn = query(component);
+
+    return css`
+        /* A layer per moment that draws, over the boundary, taking no pointer, and invisible until
+           an effect gives it something to fade in. */
+        [data-layer] {
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* raise under the pointer, faded in on its layer over an effect's time on the curve an
+           arrival takes, where the pointer can hover: a tap leaves the hover behind. Never while
+           a focus the reader can see is in the surface, which wins. */
+        @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
+            [data-layer='shadow'] {
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${surfaceRaise};
+                transition: opacity ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+
+            @media (hover: hover) {
+                :host(:hover:not([data-focus-visible])) [data-layer='shadow'] {
+                    opacity: 1;
+                }
+            }
+        }
+
+        /* raise at a focus the reader can see in the surface, on its own layer. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
+            [data-layer='focus-shadow'] {
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${surfaceRaise};
+                transition: opacity ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+
+            :host([data-focus-visible]) [data-layer='focus-shadow'] {
+                opacity: 1;
+            }
+        }
+
+        /* lift: the whole surface a quarter rem up, the button's two pixels at a surface's give,
+           for as long as a focus the reader can see is in it — on the host, which S8 leaves out of
+           reach of a choice made on the one surface. */
+        @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
+            :host {
+                transition: translate ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+
+            :host([data-focus-visible]) {
+                translate: 0 -0.25rem;
             }
         }
     `;

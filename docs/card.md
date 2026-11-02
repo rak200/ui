@@ -15,6 +15,7 @@ import '@rak200/ui';
 - [It is not a button](#it-is-not-a-button)
 - [It claims no role](#it-claims-no-role)
 - [A row of cards](#a-row-of-cards)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-card>`
@@ -93,6 +94,26 @@ the one thing the `footer` slot buys that writing the element last does not.
 
 The card takes the width it is given. It sets no `max-inline-size` of its own: how wide a card is
 belongs to the layout around it, not to the card.
+
+## Motion
+
+**A card answers the pointer and a focus on something it holds**, in RFC 0004's motion, and where you
+choose nothing the theme's taste runs. Under the default theme's:
+
+- under the pointer it rises: the theme's lift drawn again, with a drop under it, faded in over
+  `--ui-duration-effect`;
+- while a focus the reader can see is on something it holds — a button in its footer — it rises the
+  same way and lifts a quarter rem, and the pointer resting on it changes nothing.
+
+A focus a click left is not one the reader sees, and changes nothing. Each rise is drawn on a layer of
+its own in the card's shadow root, an empty span that means nothing. The lift moves the card itself,
+which a container query asks the card's surroundings about, never the card: **a choice written on
+the one card alone does not reach the lift**, where one written on anything round it does — RFC
+0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce` each lands at once.
+
+The effects are drawn by one internal sheet, `surfaceEffects()` in `src/effects.ts`, and the card is
+marked by one internal helper, `held()` in `src/held.ts`, bound to its `focusin` and `focusout`: no
+selector reads a focus the reader can see in what a host holds in every engine.
 
 ## Styling
 

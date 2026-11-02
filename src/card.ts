@@ -1,4 +1,6 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
+import { surfaceEffects } from './effects.js';
+import { held } from './held.js';
 import { reference } from './reference.js';
 
 /**
@@ -12,7 +14,8 @@ import { reference } from './reference.js';
  * leaving them to find out.
  *
  * **It claims no role either.** There is no card element and no APG pattern for one, so
- * the shadow root renders slots and nothing else: what a card *means* is the host's, and
+ * the shadow root renders slots and, beside them, the empty layers its effects are drawn on —
+ * nothing that means anything: what a card *means* is the host's, and
  * they say it by slotting a heading, or by writing `<article>` around this element when
  * the content really is self-contained. A `role` invented here would be one every consumer
  * inherits and none of them chose.
@@ -32,9 +35,17 @@ import { reference } from './reference.js';
  * ```
  */
 export class UiCard extends LitElement {
+    /** Marks the card while a focus the reader can see is on something it holds. */
+    constructor() {
+        super();
+        this.addEventListener('focusin', held);
+        this.addEventListener('focusout', held);
+    }
+
     /** The styles its shadow root adopts. */
-    static override readonly styles = css`
-        /* A column rather than a block, and the footer below is why: margin-block-start:
+    static override readonly styles: CSSResult[] = [
+        css`
+            /* A column rather than a block, and the footer below is why: margin-block-start:
            auto needs a flex line to push against. That is what makes a row of cards in a
            grid line their footers up when the bodies are different lengths — the one thing
            a footer slot buys that writing the element last does not.
@@ -42,28 +53,28 @@ export class UiCard extends LitElement {
            The slots are left at their default display: contents, so the flex items are
            the host's own elements. An empty region is then absent rather than
            zero-height — gap never spaces a card that has no footer. */
-        :host {
-            display: flex;
-            flex-direction: column;
-            gap: calc(${reference('--ui-space')} * 2);
-            box-sizing: border-box;
-            padding: calc(${reference('--ui-space')} * 2);
-            font-family: ${reference('--ui-font')};
-            /* The pair, never half of it: a surface declared without the text colour that
+            :host {
+                display: flex;
+                flex-direction: column;
+                gap: calc(${reference('--ui-space')} * 2);
+                box-sizing: border-box;
+                padding: calc(${reference('--ui-space')} * 2);
+                font-family: ${reference('--ui-font')};
+                /* The pair, never half of it: a surface declared without the text colour that
                was chosen against it inherits whatever the page set, and the contrast the
                token layer measured stops holding at the one place it was measured for. */
-            color: ${reference('--ui-color-text')};
-            /* The raised surface's own colour and what it does to the page behind it, which
+                color: ${reference('--ui-color-text')};
+                /* The raised surface's own colour and what it does to the page behind it, which
                are the surface and nothing until a theme makes the card glass. */
-            background: ${reference('--ui-color-surface-raised')};
-            backdrop-filter: ${reference('--ui-backdrop-raised')};
-            border: 1px solid ${reference('--ui-color-border-raised')};
-            border-radius: ${reference('--ui-radius')};
-            /* What the shadow's layer below is laid out against. */
-            position: relative;
-        }
+                background: ${reference('--ui-color-surface-raised')};
+                backdrop-filter: ${reference('--ui-backdrop-raised')};
+                border: 1px solid ${reference('--ui-color-border-raised')};
+                border-radius: ${reference('--ui-radius')};
+                /* What the shadow's layer below is laid out against. */
+                position: relative;
+            }
 
-        /* The boundary and the shadow are one decision made twice, because each covers
+            /* The boundary and the shadow are one decision made twice, because each covers
            where the other cannot. The shadow is what says *raised* on a light page and
            nearly nothing on a dark one: the default's is black at a low alpha in both
            schemes. Only a shadow's colour can follow the scheme, as a light-dark() pair
@@ -77,27 +88,34 @@ export class UiCard extends LitElement {
            theme may write it in currentColor — Matrix's glow is — and the card's own colour
            is its text. The layer's is the accent; it covers the card and its border, and it
            takes no pointer, so what is in the card is still what is clicked. */
-        :host::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            pointer-events: none;
-            color: ${reference('--ui-color-accent')};
-            box-shadow: ${reference('--ui-elevation-raised')};
-        }
+            :host::before {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                border-radius: inherit;
+                pointer-events: none;
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${reference('--ui-elevation-raised')};
+            }
 
-        /* Pushed to the bottom of whatever height the card ended up with. Written on the
+            /* Pushed to the bottom of whatever height the card ended up with. Written on the
            slotted element rather than on a wrapper, because a wrapper would be a flex item
            of its own — present, and therefore spaced by gap, even with nothing in it. */
-        slot[name='footer']::slotted(*) {
-            margin-block-start: auto;
-        }
-    `;
+            slot[name='footer']::slotted(*) {
+                margin-block-start: auto;
+            }
+        `,
+        surfaceEffects('card'),
+    ];
 
-    /** The three slots: `header`, the default one, and `footer`. */
+    /**
+     * The three slots — `header`, the default one, and `footer` — and the layers the pointer's and
+     * a focus's effects are drawn on, empty until one is chosen.
+     */
     override render(): TemplateResult {
         return html`
+            <span data-layer="shadow"></span>
+            <span data-layer="focus-shadow"></span>
             <slot name="header"></slot>
             <slot></slot>
             <slot name="footer"></slot>
