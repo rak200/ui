@@ -82,8 +82,10 @@ glows; and in error its boundary splits into the danger and the info, its fill a
 leaves the hover colour out, so the theme names the tint for each field at the focus, over the
 page's highlight. A drawn control tints and glows under the pointer, its boundary at rest; at the
 focus it takes its hover colour and a burst, its ring glitches and its label glows; and in error
-its boundary splits, its fill as it is. Each `none` in it takes back an effect the default theme's taste names, which
-would otherwise run under Matrix too.
+its boundary splits, its fill as it is. A card takes the tint and glows under the pointer; at a
+focus it holds it takes the tint and a burst. The card leaves the hover colour out as a field does,
+so the theme names the tint for it at the focus too. Each `none` in it takes back an effect the
+default theme's taste names, which would otherwise run under Matrix too.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |

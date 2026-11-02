@@ -405,7 +405,10 @@ explains. This file restates none of them.
   moment fades a layer in by its opacity, since a theme's glow in currentColor went dark through a
   transition in Chromium; `:host(:has(:focus-visible))` matched nothing in Chromium, so the card is
   marked in script; and the lift is drawn on the host, which RFC 0004's S8 leaves out of reach of a
-  choice made on the one card.
+  choice made on the one card. **Why a card is isolated only where a fill is chosen** — the same
+  docblock: a fill under the content needs a stacking context, which keeps what a card holds with a
+  `z-index` from stacking over what follows it, so the default theme, which fills nothing, leaves the
+  card as it was.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

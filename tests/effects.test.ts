@@ -2101,7 +2101,14 @@ describe("a drawn control's effects", () => {
 function surface(
     component: string,
     choices: Readonly<Record<string, string>>,
-): { region: HTMLElement; host: HTMLElement; layer: HTMLElement; focus: HTMLElement } {
+): {
+    region: HTMLElement;
+    host: HTMLElement;
+    layer: HTMLElement;
+    focus: HTMLElement;
+    fill: HTMLElement;
+    focusFill: HTMLElement;
+} {
     const region = document.createElement('div');
     const host = document.createElement('div');
     const root = host.attachShadow({ mode: 'open' });
@@ -2112,8 +2119,10 @@ function surface(
     }
 
     root.adoptedStyleSheets = [sheet];
-    root.innerHTML =
-        '<span data-layer="shadow"></span><span data-layer="focus-shadow"></span><slot></slot>';
+    root.innerHTML = [
+        '<span data-layer="fill"></span><span data-layer="focus-fill"></span>',
+        '<span data-layer="shadow"></span><span data-layer="focus-shadow"></span><slot></slot>',
+    ].join('');
     host.innerHTML = '<button>Inside</button>';
     host.style.cssText = 'display: block; position: relative; width: 200px; height: 100px';
     host.addEventListener('focusin', held);
@@ -2126,13 +2135,18 @@ function surface(
     region.append(host);
     document.body.append(region);
 
-    const [layer, focus] = root.querySelectorAll<HTMLElement>('[data-layer]');
+    const [fill, focusFill, layer, focus] = root.querySelectorAll<HTMLElement>('[data-layer]');
 
-    if (layer === undefined || focus === undefined) {
+    if (
+        fill === undefined ||
+        focusFill === undefined ||
+        layer === undefined ||
+        focus === undefined
+    ) {
         throw new Error('the surface holds no layers');
     }
 
-    return { region, host, layer, focus };
+    return { region, host, layer, focus, fill, focusFill };
 }
 
 describe("a surface's effects", () => {
@@ -2249,5 +2263,148 @@ describe("a surface's effects", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(host).translate).toBe('none');
+    });
+    /** The surface's tint over `surface` with `accent` in it, as the engine computes it on a light page. */
+    function tinted(surface: string, accent: string): string {
+        return colour(
+            `light-dark(oklch(from color-mix(in oklab, ${surface} 88%, ${accent}) max(l, 0.98) c h / max(alpha, 0.6)), oklch(from color-mix(in oklab, ${surface} 90%, ${accent}) l c h / max(alpha, 0.6)))`,
+        );
+    }
+
+    it('lays a fill per moment inside the boundary and under the content', () => {
+        const { fill, focusFill } = surface('test', {});
+
+        for (const each of [fill, focusFill]) {
+            const styles = getComputedStyle(each);
+
+            expect([styles.top, styles.left, styles.zIndex], each.dataset['layer']).toEqual([
+                '0px',
+                '0px',
+                '-1',
+            ]);
+        }
+    });
+
+    it.each([['hover-fill'], ['focus-fill']])(
+        "isolates the surface where %s: tint is chosen, so its fill stays over the surface's own",
+        (moment) => {
+            const { host } = surface('test', { [moment]: 'tint' });
+
+            expect(getComputedStyle(host).isolation).toBe('isolate');
+        },
+    );
+
+    it('leaves a surface unisolated where no fill is chosen, so what it holds stacks as it did', () => {
+        const { host } = surface('test', { 'hover-shadow': 'raise', 'focus-move': 'lift' });
+
+        expect(getComputedStyle(host).isolation).toBe('auto');
+    });
+
+    it("tints a surface under the pointer with a little of the accent in its own fill, over the state's time", async () => {
+        const { region, host, fill } = surface('test', { 'hover-fill': 'tint' });
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+        region.style.setProperty('--ui-duration-state', '0.3s');
+        region.style.setProperty('--ui-easing-state', 'ease-in');
+
+        const styles = getComputedStyle(fill);
+
+        expect(
+            [styles.transitionProperty, styles.transitionDuration, styles.transitionTimingFunction],
+            'its fade',
+        ).toEqual(['opacity', '0.3s', 'ease-in']);
+        expect(styles.backgroundColor, 'the tint').toBe(
+            tinted('rgb(240, 240, 240)', 'rgb(0, 0, 200)'),
+        );
+
+        region.style.setProperty('--ui-duration-state', '0s');
+
+        await userEvent.hover(host);
+
+        expect(getComputedStyle(fill).opacity, 'faded in').toBe('1');
+    });
+
+    it("tints a surface while a focus the reader can see is in it, on its own layer, over the state's time", async () => {
+        const { region, fill, focusFill } = surface('test', { 'focus-fill': 'tint' });
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+        region.style.setProperty('--ui-duration-state', '0.3s');
+        region.style.setProperty('--ui-easing-state', 'ease-in');
+
+        const styles = getComputedStyle(focusFill);
+
+        expect(
+            [styles.transitionProperty, styles.transitionDuration, styles.transitionTimingFunction],
+            'its fade',
+        ).toEqual(['opacity', '0.3s', 'ease-in']);
+        expect(styles.backgroundColor, 'the tint').toBe(
+            tinted('rgb(240, 240, 240)', 'rgb(0, 0, 200)'),
+        );
+
+        region.style.setProperty('--ui-duration-state', '0s');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(focusFill).opacity, 'faded in').toBe('1');
+        expect(getComputedStyle(fill).opacity, "the pointer's").toBe('0');
+    });
+
+    it("glows a surface under the pointer, a light of the accent round it, faded in over an effect's time", async () => {
+        const { region, host, layer } = surface('test', { 'hover-shadow': 'glow' });
+        region.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        region.style.setProperty('--ui-duration-effect', '0.3s');
+        region.style.setProperty('--ui-easing-enter', 'ease-in');
+
+        const styles = getComputedStyle(layer);
+
+        expect(
+            [styles.transitionProperty, styles.transitionDuration, styles.transitionTimingFunction],
+            'its fade',
+        ).toEqual(['opacity', '0.3s', 'ease-in']);
+        expect(styles.boxShadow, 'the glow').toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.45) 0px 0px 16px 2px, color(srgb 0.0392157 0.0784314 0.117647 / 0.25) 0px 0px 40px 8px',
+        );
+
+        region.style.setProperty('--ui-duration-effect', '0s');
+
+        await userEvent.hover(host);
+
+        expect(getComputedStyle(layer).opacity, 'faded in').toBe('1');
+    });
+
+    it('bursts light out round a surface as a focus arrives in it, from four fifths of the accent to nothing, 10px and 15px soft', async () => {
+        const { region, focus } = surface('test', { 'focus-shadow': 'burst' });
+        region.style.setProperty('--ui-color-accent', 'rgb(200, 0, 0)');
+        region.style.setProperty('--ui-duration-flourish', '10s');
+        region.style.setProperty('--ui-easing-enter', 'linear');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(focus);
+
+        expect([
+            styles.opacity,
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+        ]).toEqual(['1', 'ui-burst', '10s', 'linear']);
+
+        const burst = running(focus, 'ui-burst');
+        // An animated shadow's colour is computed in the space it moves through.
+        const accent = (opacity: number): string =>
+            colour(`oklab(from rgb(200, 0, 0) l a b / ${String(opacity)})`);
+
+        burst.pause();
+        burst.currentTime = 0;
+
+        expect(getComputedStyle(focus).boxShadow, 'arriving').toBe(
+            `${accent(0.8)} 0px 0px 0px 0px`,
+        );
+
+        burst.currentTime = 5000;
+
+        expect(getComputedStyle(focus).boxShadow, 'halfway').toBe(
+            `${accent(0.4)} 0px 0px 7.5px 5px`,
+        );
     });
 });
