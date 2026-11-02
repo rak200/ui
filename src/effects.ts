@@ -2024,7 +2024,7 @@ const surfaceMoves = [
 /**
  * The sheet of a surface's effects, for the component whose tag less `ui-` is `component`: what the
  * pointer and a focus on something the surface holds do to it, and how it arrives and leaves, each
- * drawn under that component's query — the card's, and the toast's to come.
+ * drawn under that component's query — the card's and the toast's.
  *
  * **Each moment draws on a layer of its own**, which the component renders empty into its shadow
  * root, one per kind and moment: `<span data-layer="fill">`, `"shadow"` and `"border"` for the
@@ -2069,16 +2069,52 @@ const surfaceMoves = [
  * nor a light that follows the pointer, which the engine is then never handed — RFC 0004's S8, which
  * the card leaves marked.
  *
+ * **A surface moves on its translate, or on its transform where its own rise holds its translate** —
+ * the toast's, which comes in from below on a transition of its own. There the sheet lifts it on its
+ * transform and leaves the transition to the component, which writes the transform's beside its own:
+ * one rule writing the host's transitions takes the other's away. RFC 0004 put the toast's movements
+ * on its transform for that rise.
+ *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
  * {@link buttonEffects} gives.
+ *
+ * @param transformed - Whether the surface moves on its transform, which the component transitions.
  */
-export function surfaceEffects(component: string): CSSResult {
+export function surfaceEffects(component: string, transformed = false): CSSResult {
     /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
     const drawn = query(component);
 
     /** True wherever one of `effects` is chosen, by a consumer or a taste. */
     const chosen = (effects: readonly (readonly [string, string])[]): CSSResult =>
         unsafeCSS(effects.map(([moment, effect]) => drawn(moment, effect)).join(' or '));
+
+    /** A quarter rem up, on the translate or on the transform. */
+    const lifted = transformed
+        ? css`
+              transform: translateY(-0.25rem);
+          `
+        : css`
+              translate: 0 -0.25rem;
+          `;
+
+    /**
+     * What moves the surface itself transitions only once one of them is chosen: its place over an
+     * effect's time on the curve an arrival takes, and its turn toward the pointer over the time a
+     * movement that follows it takes, on a straight clock. Nothing, where the component transitions
+     * its transform itself.
+     */
+    const moving = transformed
+        ? css``
+        : css`
+              @container ${chosen(surfaceMoves)} {
+                  :host {
+                      transition-property: translate, transform;
+                      transition-duration:
+                          ${reference('--ui-duration-effect')}, ${reference('--ui-duration-follow')};
+                      transition-timing-function: ${reference('--ui-easing-enter')}, linear;
+                  }
+              }
+          `;
 
     return css`
         /* A layer per moment and kind that draws, over the boundary, taking no pointer, and
@@ -2133,17 +2169,7 @@ export function surfaceEffects(component: string): CSSResult {
             }
         }
 
-        /* What moves the surface itself transitions only once one of them is chosen: its place
-           over an effect's time on the curve an arrival takes, and its turn toward the pointer
-           over the time a movement that follows it takes, on a straight clock. */
-        @container ${chosen(surfaceMoves)} {
-            :host {
-                transition-property: translate, transform;
-                transition-duration:
-                    ${reference('--ui-duration-effect')}, ${reference('--ui-duration-follow')};
-                transition-timing-function: ${reference('--ui-easing-enter')}, linear;
-            }
-        }
+        ${moving}
 
         /* tint under the pointer, a little of the accent in the surface's own fill, faded in over
            the state's time; and at a focus the reader can see in it, on its own layer. */
@@ -2334,7 +2360,7 @@ export function surfaceEffects(component: string): CSSResult {
            reach of a choice made on the one surface. */
         @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
             :host([data-focus-visible]) {
-                translate: 0 -0.25rem;
+                ${lifted}
             }
         }
 

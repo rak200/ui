@@ -107,7 +107,8 @@ const copyOf = (host: HTMLElement) => (): HTMLElement => {
     // The component's rise, which a copy has nothing to rise from.
     copy.style.transition = 'none';
     const root = copy.attachShadow({ mode: 'open' });
-    const own = UiToast.styles.styleSheet;
+    // The component's own sheet, the first it adopts, without the surface's effects after it.
+    const own = UiToast.styles[0]?.styleSheet;
     root.adoptedStyleSheets = own === undefined ? [] : [own];
     root.append(...[...(host.shadowRoot?.childNodes ?? [])].map((node) => node.cloneNode(true)));
     copy.append(...[...host.childNodes].map((node) => node.cloneNode(true)));

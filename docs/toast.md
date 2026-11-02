@@ -20,6 +20,7 @@ import '@rak200/ui';
 - [Showing a toast](#showing-a-toast)
 - [Queueing](#queueing)
 - [Where to put the toaster](#where-to-put-the-toaster)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-toaster>`
@@ -187,6 +188,29 @@ this component:
   is in, so this is not something the top layer can fix. A page that toasts from inside a dialog puts
   a second `<ui-toaster>` inside the dialog.
 
+## Motion
+
+**A toast answers the pointer and a focus in it as a card does**, in RFC 0004's motion, and where
+you choose nothing the theme's taste runs:
+
+- under the default theme's, it rises under the pointer, the theme's lift drawn again with a drop
+  under it; and while a focus the reader can see is in it — its dismiss button — it rises the same
+  way and lifts a quarter rem;
+- under [Matrix](theme.md#matrix)'s, it takes a tint under the pointer and glows, and at a focus in
+  it takes the tint and a burst of light, and does not lift;
+- under [Glass](theme.md#glass)'s, it takes its tint where the pointer is and rises, its edge as it
+  rests; at a focus in it its tint sweeps across it and a light holds along its inside.
+
+Each is drawn on a layer of its own in the toast's shadow root, an empty span that means nothing, by
+the same internal sheet as the card's, `surfaceEffects()` in `src/effects.ts`, and the layers cover
+the toast's edge, the wider stripe at its start included. **What moves a toast goes on its
+`transform`**, since its own rise holds its `translate`, and the toast transitions it beside its rise.
+A focus a click left is not one the reader sees, and changes nothing; the pointer resting on a toast
+with a focus in it changes nothing either. Each effect drawn on the toast itself — the lift — reads
+its choice from round the toast, never from the toast: **a choice written on one toast alone does not
+reach it**, where one written on the toaster or anything round it does — RFC 0004's S8. Under
+`prefers-reduced-motion: reduce` each lands at once.
+
 ## Styling
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
@@ -205,7 +229,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | lift          | `--ui-elevation-raised`, lit in the edge's colour if written in `currentColor`                                  |
 | font          | `--ui-font`                                                                                                     |
 | dismiss mark  | `--ui-icon-size` and `--ui-icon-stroke`, at 24 × 24 minimum                                                     |
-| motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit`                                                  |
+| motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit`, and `--ui-duration-effect` for a movement       |
 
 A toast is **bounded as well as lifted**, for the reason [`<ui-card>`](card.md) gives: a shadow is one
 value in both schemes and does almost nothing on a dark page, where the edge is what separates the

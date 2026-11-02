@@ -1,4 +1,15 @@
-import { LitElement, css, html, svg, type SVGTemplateResult, type TemplateResult } from 'lit';
+import {
+    LitElement,
+    css,
+    html,
+    svg,
+    type CSSResult,
+    type SVGTemplateResult,
+    type TemplateResult,
+} from 'lit';
+import { surfaceEffects } from './effects.js';
+import { held, released } from './held.js';
+import { follow } from './pointer.js';
 import { reference } from './reference.js';
 
 /** What a toast is telling the reader, which decides how it looks *and* how it is announced. */
@@ -195,6 +206,11 @@ export class UiToaster extends LitElement {
  * is still in the tree so the event can reach a listener above it; a framework rendering a
  * list of toasts drops the entry there rather than leaving the element to be put back.
  *
+ * **It answers the pointer and a focus in it as a card does**, RFC 0004's: a surface's effects,
+ * from `surfaceEffects()` in `src/effects.ts`, drawn on layers its shadow root renders empty, from
+ * a mark `held()` puts on it while a focus the reader can see is in it. What moves it goes on its
+ * transform, since its own rise from below holds its translate.
+ *
  * @example
  * ```html
  * <ui-toaster>
@@ -203,52 +219,65 @@ export class UiToaster extends LitElement {
  * ```
  */
 export class UiToast extends LitElement {
-    /** The styles its shadow root adopts. */
-    static override readonly styles = css`
-        :host {
-            display: flex;
-            align-items: flex-start;
-            gap: ${reference('--ui-space')};
-            box-sizing: border-box;
-            padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 1.5);
-            /* The edge's room, which the layer below draws in: the stripe at the start is
+    /** The styles its shadow root adopts: its own, and then a surface's effects. */
+    static override readonly styles: CSSResult[] = [
+        css`
+            :host {
+                display: flex;
+                align-items: flex-start;
+                gap: ${reference('--ui-space')};
+                box-sizing: border-box;
+                padding: ${reference('--ui-space')} calc(${reference('--ui-space')} * 1.5);
+                /* The edge's room, which the layer below draws in: the stripe at the start is
                wider, and the rest of the edge one pixel. */
-            border: 1px solid transparent;
-            border-inline-start-width: calc(${reference('--ui-space')} / 2);
-            border-radius: ${reference('--ui-radius')};
-            /* A raised surface, as a card is. */
-            background: ${reference('--ui-color-surface-raised')};
-            backdrop-filter: ${reference('--ui-backdrop-raised')};
-            /* The variant's colour, which the edge, the glow and the icon are lit in. The
+                border: 1px solid transparent;
+                border-inline-start-width: calc(${reference('--ui-space')} / 2);
+                border-radius: ${reference('--ui-radius')};
+                /* A raised surface, as a card is. */
+                background: ${reference('--ui-color-surface-raised')};
+                backdrop-filter: ${reference('--ui-backdrop-raised')};
+                /* The variant's colour, which the edge, the glow and the icon are lit in. The
                message writes the text's, which is the pair the surface was chosen against. */
-            color: ${reference('--ui-color-info')};
-            font-family: ${reference('--ui-font')};
-            /* What the edge's layer below is laid out against. */
-            position: relative;
-            /* The toaster takes no clicks so it does not steal a corner of the page. This
+                color: ${reference('--ui-color-info')};
+                font-family: ${reference('--ui-font')};
+                /* What the edge's layer below is laid out against. */
+                position: relative;
+                /* The toaster takes no clicks so it does not steal a corner of the page. This
                is the part that is not the corner. */
-            pointer-events: auto;
+                pointer-events: auto;
 
-            opacity: 1;
-            translate: 0 0;
-            transition:
-                opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-enter')},
-                translate ${reference('--ui-duration-state')} ${reference('--ui-easing-enter')};
-        }
+                opacity: 1;
+                translate: 0 0;
+                /* Its rise and its fade, and beside them what a focus moves it by: a surface's effects
+               lift it on its transform, which its own rise leaves free, and leave its transition to
+               this list, which one rule of theirs would take the rise's out of. */
+                transition:
+                    opacity ${reference('--ui-duration-state')} ${reference('--ui-easing-enter')},
+                    translate ${reference('--ui-duration-state')} ${reference('--ui-easing-enter')},
+                    transform ${reference('--ui-duration-effect')} ${reference('--ui-easing-enter')};
+            }
 
-        :host([variant='success']) {
-            color: ${reference('--ui-color-success')};
-        }
+            /* The layers a surface's effects are drawn on cover the toast's edge, its wider stripe
+           included, which its own border leaves transparent for the layer above to draw: a fill
+           inside the border left the edge's room unlit round it. */
+            :host [data-layer] {
+                inset: -1px;
+                inset-inline-start: calc(${reference('--ui-space')} / -2);
+            }
 
-        :host([variant='warning']) {
-            color: ${reference('--ui-color-warning')};
-        }
+            :host([variant='success']) {
+                color: ${reference('--ui-color-success')};
+            }
 
-        :host([variant='danger']) {
-            color: ${reference('--ui-color-danger')};
-        }
+            :host([variant='warning']) {
+                color: ${reference('--ui-color-warning')};
+            }
 
-        /* The edge goes all the way round in one colour, the stripe at the start only
+            :host([variant='danger']) {
+                color: ${reference('--ui-color-danger')};
+            }
+
+            /* The edge goes all the way round in one colour, the stripe at the start only
            wider. A stripe in one colour and three sides in the derived border met at the
            corners as a break — RFC 0003. Lifted, too, because a toast sits over the page
            rather than in it, and bounded as well as lifted for the reason src/card.ts
@@ -259,20 +288,20 @@ export class UiToast extends LitElement {
            text. A theme's glow written in currentColor is lit in it too. The layer covers
            the toast and its edge, and takes no pointer, so the dismiss button is still
            what is pressed. */
-        :host::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            inset-inline-start: calc(${reference('--ui-space')} / -2);
-            border: 1px solid currentColor;
-            border-inline-start-width: calc(${reference('--ui-space')} / 2);
-            border-radius: inherit;
-            pointer-events: none;
-            color: ${reference('--ui-color-toast-edge')};
-            box-shadow: ${reference('--ui-elevation-raised')};
-        }
+            :host::before {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                inset-inline-start: calc(${reference('--ui-space')} / -2);
+                border: 1px solid currentColor;
+                border-inline-start-width: calc(${reference('--ui-space')} / 2);
+                border-radius: inherit;
+                pointer-events: none;
+                color: ${reference('--ui-color-toast-edge')};
+                box-shadow: ${reference('--ui-elevation-raised')};
+            }
 
-        /* The icon takes the edge's colour, and sits centred on the message's first line,
+            /* The icon takes the edge's colour, and sits centred on the message's first line,
            whatever height the page's text gives a line: half of what one line has to spare
            over the glyph, above it and below. A fixed eighth of an em assumed a line-height
            of 1.5 and sat low under a monospace face at normal — measured, under Matrix.
@@ -281,88 +310,90 @@ export class UiToast extends LitElement {
            that tells a variant by more than its colour, so it owes 3:1 as a graphic. Glass's
            edge at 0.80 took every icon but the danger's under it over the page that theme
            documents, the success's to 2.70:1, and opaque the least is 3.52 — measured. */
-        .icon {
-            flex: none;
-            margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
-            color: rgb(from ${reference('--ui-color-toast-edge')} r g b / 1);
-        }
+            .icon {
+                flex: none;
+                margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
+                color: rgb(from ${reference('--ui-color-toast-edge')} r g b / 1);
+            }
 
-        /* Where the entrance comes from. Without it there is nothing to transition out of:
+            /* Where the entrance comes from. Without it there is nothing to transition out of:
            a toast goes from not rendered to laid out in one frame, and a transition needs a
            before-change style that an unrendered element does not have. */
-        @starting-style {
-            :host {
+            @starting-style {
+                :host {
+                    opacity: 0;
+                    translate: 0 calc(${reference('--ui-space')} * 2);
+                }
+            }
+
+            /* The exit, driven from a class rather than from the element leaving: the removal
+           is what this is waiting for, so an exit keyed on it would never run. */
+            :host(.closing) {
                 opacity: 0;
                 translate: 0 calc(${reference('--ui-space')} * 2);
+                transition-timing-function: ${reference('--ui-easing-exit')};
             }
-        }
 
-        /* The exit, driven from a class rather than from the element leaving: the removal
-           is what this is waiting for, so an exit keyed on it would never run. */
-        :host(.closing) {
-            opacity: 0;
-            translate: 0 calc(${reference('--ui-space')} * 2);
-            transition-timing-function: ${reference('--ui-easing-exit')};
-        }
-
-        div {
-            /* The message takes the room the button does not, and may wrap inside it — a
+            div {
+                /* The message takes the room the button does not, and may wrap inside it — a
                flex item refuses to shrink below its content without this. */
-            flex: 1;
-            min-inline-size: 0;
-            /* The pair, never half of it: the surface was chosen against the text, and the
+                flex: 1;
+                min-inline-size: 0;
+                /* The pair, never half of it: the surface was chosen against the text, and the
                toast's own colour is its variant's. */
-            color: ${reference('--ui-color-text')};
-        }
+                color: ${reference('--ui-color-text')};
+            }
 
-        button {
-            flex: none;
-            display: grid;
-            place-items: center;
-            /* WCAG 2.2 2.5.8 asks 24 by 24, and an icon-only button is the shape that
+            button {
+                flex: none;
+                display: grid;
+                place-items: center;
+                /* WCAG 2.2 2.5.8 asks 24 by 24, and an icon-only button is the shape that
                lands under it: the glyph is drawn at 1.25em, which is 20 pixels at the
                default text size. The platform floors nothing, so this does. */
-            min-inline-size: 24px;
-            min-block-size: 24px;
-            margin: 0;
-            padding: 0;
-            border: none;
-            border-radius: ${reference('--ui-radius')};
-            background: none;
-            /* Inherited so the glyph, sized in em, is the size of the text beside it. */
-            font: inherit;
-            color: ${reference('--ui-color-text-muted')};
-            cursor: pointer;
-            transition: background-color ${reference('--ui-duration-state')}
-                ${reference('--ui-easing-state')};
-        }
+                min-inline-size: 24px;
+                min-block-size: 24px;
+                margin: 0;
+                padding: 0;
+                border: none;
+                border-radius: ${reference('--ui-radius')};
+                background: none;
+                /* Inherited so the glyph, sized in em, is the size of the text beside it. */
+                font: inherit;
+                color: ${reference('--ui-color-text-muted')};
+                cursor: pointer;
+                transition: background-color ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
 
-        /* A hover and a focus ring, and no pressed step — which is where every component
+            /* A hover and a focus ring, and no pressed step — which is where every component
            here stops except ui-button. Pressing a button *is* the action, so its own
            pressed colour is the feedback for the thing being done; dismissing a notice is
            secondary, and a third colour for it would be a rule the suite cannot reach.
            Measured: a scripted pointer cannot be driven onto a box in the top layer from
            inside the frame the suite runs in, so an :active here would ship unmeasured. */
-        button:hover {
-            background: ${reference('--ui-color-hover')};
-        }
+            button:hover {
+                background: ${reference('--ui-color-hover')};
+            }
 
-        /* A visible focus ring is not decoration: removing it is the single most common way
+            /* A visible focus ring is not decoration: removing it is the single most common way
            a component stops being usable by keyboard. */
-        button:focus-visible {
-            outline: 2px solid ${reference('--ui-color-focus')};
-            outline-offset: 2px;
-        }
+            button:focus-visible {
+                outline: 2px solid ${reference('--ui-color-focus')};
+                outline-offset: 2px;
+            }
 
-        /* One dimension, not two, and the mutation floor is what proved it: an svg carrying
+            /* One dimension, not two, and the mutation floor is what proved it: an svg carrying
            a viewBox is a replaced element with an intrinsic ratio, so a square glyph given
            a width takes the same height from the ratio. Writing both was the same fact
            twice — and a fact written twice is a rule whose removal nothing can observe. */
-        svg {
-            inline-size: ${reference('--ui-icon-size')};
-            stroke-width: ${reference('--ui-icon-stroke')};
-        }
-    `;
+            svg {
+                inline-size: ${reference('--ui-icon-size')};
+                stroke-width: ${reference('--ui-icon-stroke')};
+            }
+        `,
+        surfaceEffects('toast', true),
+    ];
 
     /** The properties Lit observes on this element. */
     static override readonly properties = {
@@ -457,6 +488,11 @@ export class UiToast extends LitElement {
         this.addEventListener('focusin', this.#hold, watched);
         this.addEventListener('focusout', this.#resume, watched);
         this.addEventListener('keydown', this.#onKey, watched);
+        // The mark a surface's effects draw a focus from, and the engine their lights read the
+        // pointer from.
+        this.addEventListener('focusin', held, watched);
+        this.addEventListener('focusout', released, watched);
+        this.addEventListener('pointerover', follow, watched);
 
         this.#start();
     }
@@ -486,9 +522,17 @@ export class UiToast extends LitElement {
         this.#route();
     }
 
-    /** The variant's icon, the message, and a button that dismisses it. */
+    /**
+     * The variant's icon, the message, and a button that dismisses it, beside the empty layers the
+     * pointer's and a focus's effects are drawn on.
+     */
     override render(): TemplateResult {
         return html`
+            <span data-layer="fill"></span>
+            <span data-layer="focus-fill"></span>
+            <span data-layer="shadow"></span>
+            <span data-layer="focus-shadow"></span>
+            <span data-layer="border"></span>
             <svg
                 class="icon"
                 part="icon"

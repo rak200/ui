@@ -85,7 +85,9 @@ focus it takes its hover colour and a burst, its ring glitches and its label glo
 its boundary splits, its fill as it is. A card takes the tint and glows under the pointer; at a
 focus it holds it takes the tint and a burst; and it comes and goes in pieces, appearing and
 vanishing at random. The card leaves the hover colour out as a field does, so the theme names the
-tint for it at the focus too, and its entrance and its exit are its own moments. Each `none` in it takes back an effect the
+tint for it at the focus too, and its entrance and its exit are its own moments. A toast takes the
+card's answers to the pointer and a focus in it, and the tint at the focus for the same reason. Each
+`none` in it takes back an effect the
 default theme's taste names, which would otherwise run under Matrix too.
 
 | Moment           | Effect      |
@@ -110,6 +112,7 @@ default theme's taste names, which would otherwise run under Matrix too.
 | `card`                        | `focus-fill` | `tint`        |
 | `card`                        | `enter`      | `materialize` |
 | `card`                        | `exit`       | `erode`       |
+| `toast`                       | `focus-fill` | `tint`        |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
@@ -205,7 +208,9 @@ band along its boundary nearest it. A card takes its tint where the pointer is, 
 from it and a band along its boundary nearest it, and leans toward it; at a focus it holds, its tint
 sweeps across it — the card's own light, which keeps its muted text at 4.5:1 where a button's sheen
 did not — and a light holds along its inside; and it comes out of a fine grain as it arrives, and
-dissolves into one as it leaves.
+dissolves into one as it leaves. A toast takes its tint where the pointer is and rises, its edge as
+it rests, as RFC 0004 chose for it apart from the page; at a focus in it, its tint sweeps across it
+and a light holds along its inside.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |
@@ -231,6 +236,8 @@ Glass's edge would never reach them. And it leans the card alone, as RFC 0004 ch
 | `card`                        | `hover-move`   | `tilt`     |
 | `card`                        | `enter`        | `dissolve` |
 | `card`                        | `exit`         | `dissolve` |
+| `toast`                       | `hover-shadow` | `raise`    |
+| `toast`                       | `hover-border` | `none`     |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer
