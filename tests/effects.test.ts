@@ -3,6 +3,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `tokens.test.ts`.
 import type {} from '@vitest/browser-playwright';
 import { buttonEffects, controlEffects, fieldEffects, pressed } from '../src/effects.js';
+import { farPole } from '../src/tokens.js';
 
 /**
  * A component of the test's own that is a button: a host whose shadow root adopts the sheet built
@@ -1113,6 +1114,7 @@ describe("a drawn control's effects", () => {
     it.each([
         ['hover-shadow', 'raise'],
         ['hover-shadow', 'glow'],
+        ['hover-shadow', 'cast'],
         ['focus-shadow', 'raise'],
         ['focus-shadow', 'inner'],
         ['invalid-border', 'glow'],
@@ -1217,31 +1219,39 @@ describe("a drawn control's effects", () => {
         expect(getComputedStyle(input).translate).toBe('0px -2px');
     });
 
-    it("takes the darkening's place under the pointer with the boundary at rest, a full control's fill and boundary in the accent", async () => {
-        const empty = drawnControl('checkbox', { 'hover-border': 'none' }, drawnBox);
-        const full = drawnControl('checkbox', { 'hover-border': 'none' }, `checked ${drawnBox}`);
-        const mixed = drawnControl('checkbox', { 'hover-border': 'none' }, drawnBox);
-        mixed.input.indeterminate = true;
+    it.each([['none'], ['edge']])(
+        "takes the darkening's place under the pointer under %s, the boundary at rest, a full control's fill and boundary in the accent",
+        async (effect) => {
+            const empty = drawnControl('checkbox', { 'hover-border': effect }, drawnBox);
+            const full = drawnControl(
+                'checkbox',
+                { 'hover-border': effect },
+                `checked ${drawnBox}`,
+            );
+            const mixed = drawnControl('checkbox', { 'hover-border': effect }, drawnBox);
+            mixed.input.indeterminate = true;
 
-        for (const { host } of [empty, full, mixed]) {
-            coloured(host);
-        }
+            for (const { host } of [empty, full, mixed]) {
+                coloured(host);
+            }
 
-        await userEvent.hover(empty.input);
+            await userEvent.hover(empty.input);
 
-        expect(colours(empty.input)[1], 'empty').toBe('rgb(1, 2, 3)');
+            expect(colours(empty.input)[1], 'empty').toBe('rgb(1, 2, 3)');
 
-        await userEvent.hover(full.input);
+            await userEvent.hover(full.input);
 
-        expect(colours(full.input), 'checked').toEqual(['rgb(0, 0, 200)', 'rgb(0, 0, 200)']);
+            expect(colours(full.input), 'checked').toEqual(['rgb(0, 0, 200)', 'rgb(0, 0, 200)']);
 
-        await userEvent.hover(mixed.input);
+            await userEvent.hover(mixed.input);
 
-        expect(colours(mixed.input), 'mixed').toEqual(['rgb(0, 0, 200)', 'rgb(0, 0, 200)']);
-    });
+            expect(colours(mixed.input), 'mixed').toEqual(['rgb(0, 0, 200)', 'rgb(0, 0, 200)']);
+        },
+    );
 
     it.each([
         ['none for the boundary', { 'hover-border': 'none' }, 'rgb(0, 0, 200)'],
+        ['the edge for the boundary', { 'hover-border': 'edge' }, 'rgb(0, 0, 200)'],
         ['highlight for the fill', { 'hover-fill': 'highlight' }, 'rgb(0, 0, 100)'],
         ['tint for the fill', { 'hover-fill': 'tint' }, 'rgb(0, 0, 100)'],
         [
@@ -1352,11 +1362,12 @@ describe("a drawn control's effects", () => {
     });
 
     /** A control with its label beside it, as the components lay one out. */
-    const labelled = '<label><input type="checkbox"><span>Notify me</span></label>';
+    const labelled =
+        '<label><span class="frame"><input type="checkbox"></span><span>Notify me</span></label>';
 
-    /** The label beside a control. */
+    /** The label beside a control: the next sibling of the frame round it. */
     function text(input: HTMLInputElement): HTMLElement {
-        const found = input.nextElementSibling;
+        const found = input.parentElement?.nextElementSibling;
 
         if (!(found instanceof HTMLElement)) {
             throw new Error('the control has no label beside it');
@@ -1909,5 +1920,167 @@ describe("a drawn control's effects", () => {
         expect(getComputedStyle(disabled.input, '::after').boxShadow, 'disabled').toBe(
             `${clear}, ${clear}, ${unlit}`,
         );
+    });
+    /** A control in the frame the components lay round it, its corners the frame's. */
+    function framed(
+        component: string,
+        choices: Readonly<Record<string, string>>,
+        attributes = '',
+    ): { host: HTMLElement; input: HTMLInputElement; frame: HTMLElement } {
+        const { host, input } = drawnControl(
+            component,
+            choices,
+            '',
+            `<span class="frame" style="display: grid; border-radius: 5px"><input type="checkbox" ${attributes} ${drawnBox}></span>`,
+        );
+        const frame = input.parentElement;
+
+        if (frame === null) {
+            throw new Error('the control has no frame');
+        }
+
+        return { host, input, frame };
+    }
+
+    /** Where the engine puts the pointer, written on a frame as it writes it. */
+    function pointed(frame: HTMLElement, near = '1'): void {
+        frame.style.setProperty('--ui-fx-pointer-x', '5px');
+        frame.style.setProperty('--ui-fx-pointer-y', '6px');
+        frame.style.setProperty('--ui-fx-pointer-nx', '1');
+        frame.style.setProperty('--ui-fx-pointer-ny', '0');
+        frame.style.setProperty('--ui-fx-pointer-near', near);
+    }
+
+    /** What the engine computes `value` to as a picture, on an element of the page. */
+    function picture(value: string): string {
+        const probe = document.createElement('div');
+        probe.style.backgroundImage = value;
+        document.body.append(probe);
+
+        try {
+            return getComputedStyle(probe).backgroundImage;
+        } finally {
+            probe.remove();
+        }
+    }
+
+    it.each([
+        ['hover-fill', 'spotlight'],
+        ['hover-shadow', 'cast'],
+        ['hover-border', 'edge'],
+    ])(
+        'hands the pointer engine its time on the frame where %s: %s is chosen, and only round a control that can be used',
+        (moment, effect) => {
+            const usable = framed('checkbox', { [moment]: effect });
+            const disabled = framed('checkbox', { [moment]: effect }, 'disabled');
+
+            for (const { host } of [usable, disabled]) {
+                host.style.setProperty('--ui-duration-effect', '0.3s');
+            }
+
+            expect(getComputedStyle(usable.frame).getPropertyValue('--ui-fx-follow')).toBe('0.3s');
+            expect(getComputedStyle(disabled.frame).getPropertyValue('--ui-fx-follow')).toBe('');
+        },
+    );
+
+    it('lights a control in its sheen where the pointer is, as strong as it is near, under its mark', () => {
+        const empty = framed('checkbox', { 'hover-fill': 'spotlight' });
+        const full = framed('checkbox', { 'hover-fill': 'spotlight' }, 'checked');
+        const toggle = framed('switch', { 'hover-fill': 'spotlight' }, 'role="switch"');
+
+        for (const { host, frame } of [empty, full, toggle]) {
+            host.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+            host.style.setProperty('--ui-color-accent-contrast', 'rgb(255, 255, 255)');
+            host.style.setProperty('--ui-color-text', 'rgb(0, 0, 0)');
+            pointed(frame, '0.5');
+        }
+
+        /** The spotlight in `sheen`, at the point and the nearness the engine wrote. */
+        const lit = (sheen: string): string =>
+            picture(
+                `radial-gradient(circle 4rem at 5px 6px, rgb(from ${sheen} r g b / calc(0.5 * 0.24)), transparent)`,
+            );
+        const sheen = (pole: string): string =>
+            `rgb(from color-mix(in oklab, rgb(0, 0, 200), ${farPole(pole)} 20%) r g b / 0.5)`;
+
+        expect(getComputedStyle(empty.input).backgroundImage, 'empty').toBe(
+            lit(sheen('rgb(0, 0, 0)')),
+        );
+        expect(getComputedStyle(full.input).backgroundImage, 'full').toBe(
+            lit(sheen('rgb(255, 255, 255)')),
+        );
+        expect(getComputedStyle(toggle.input).backgroundImage, 'a switch').toBe('none');
+    });
+
+    it("casts the card's shadow at a drawn control's scale on its lights' layer, as strong as the pointer is near", () => {
+        const { host, input, frame } = framed('checkbox', { 'hover-shadow': 'cast' });
+        host.style.setProperty('--ui-duration-effect', '0s');
+        pointed(frame);
+
+        expect(getComputedStyle(input, '::after').boxShadow).toBe(
+            `rgba(0, 0, 0, 0.3) -4px 2px 7px -1px, rgba(0, 0, 0, 0) 6px 0px 12px 1px, ${clear}, ${unlit}`,
+        );
+    });
+
+    it('lays the edge on the frame, a band on the boundary lit where the pointer is nearest, in the accent pushed off the page and off a full fill', () => {
+        const empty = framed('checkbox', { 'hover-border': 'edge' });
+        const full = framed('checkbox', { 'hover-border': 'edge' }, 'checked');
+
+        for (const { host, frame } of [empty, full]) {
+            host.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+            host.style.setProperty('--ui-color-accent-contrast', 'rgb(255, 255, 255)');
+            pointed(frame);
+        }
+
+        const band = getComputedStyle(empty.frame, '::after');
+
+        expect(getComputedStyle(empty.frame).position, 'the frame it is laid out against').toBe(
+            'relative',
+        );
+        expect(
+            [band.position, band.top, band.left, band.paddingTop, band.pointerEvents],
+            'a band round the boundary, which takes no pointer',
+        ).toEqual(['absolute', '-1px', '-1px', '2px', 'none']);
+        expect(band.backgroundImage, 'empty').toBe(
+            picture(
+                'radial-gradient(ellipse 100% 100% at 5px 6px, light-dark(oklch(from rgb(0, 0, 200) calc(l - 0.1) c h), oklch(from rgb(0, 0, 200) calc(l + 0.2) c h)), transparent)',
+            ),
+        );
+        expect(getComputedStyle(full.frame, '::after').backgroundImage, 'full').toBe(
+            picture(
+                'radial-gradient(ellipse 100% 100% at 5px 6px, color-mix(in oklab, rgb(0, 0, 200), rgb(255, 255, 255) 40%), transparent)',
+            ),
+        );
+    });
+
+    it('lights the edge as strongly as the pointer is near, and never round a control that cannot be used, has the focus or is in error', async () => {
+        const usable = framed('checkbox', { 'hover-border': 'edge' });
+        const disabled = framed('checkbox', { 'hover-border': 'edge' }, 'disabled');
+        const erring = framed('checkbox', { 'hover-border': 'edge' }, 'aria-invalid="true"');
+        const set = drawnControl(
+            'radio',
+            { 'hover-border': 'edge' },
+            '',
+            `<div aria-invalid="true"><span class="frame" style="display: grid"><input type="radio" name="set" ${drawnBox}></span></div>`,
+        );
+        const frames = [usable.frame, disabled.frame, erring.frame, set.input.parentElement];
+
+        for (const frame of frames) {
+            if (frame !== null) {
+                pointed(frame, '0.6');
+            }
+        }
+
+        const opacity = (frame: HTMLElement | null): string =>
+            frame === null ? '' : getComputedStyle(frame, '::after').opacity;
+
+        expect(opacity(usable.frame), 'usable').toBe('0.6');
+        expect(opacity(disabled.frame), 'disabled').toBe('0');
+        expect(opacity(erring.frame), 'in error').toBe('0');
+        expect(opacity(set.input.parentElement), 'of a set in error').toBe('0');
+
+        await userEvent.tab();
+
+        expect(opacity(usable.frame), 'with the focus').toBe('0');
     });
 });

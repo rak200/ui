@@ -212,7 +212,8 @@ answers as a checkbox does there: tinted and glowing under the pointer, the hove
 glitching ring and a glowing label at the focus, and every radio of a set in error split. **Under
 [Glass](theme.md#glass)** a radio keeps a light along its inside at the focus, the sheen swept under
 its dot and its ring refocused, and every radio of a set in error holds a light of the danger and
-flashes.
+flashes. Under the pointer a radio takes its sheen where the pointer is, a shadow cast away from it
+and a band along its boundary nearest it.
 
 ## Styling
 

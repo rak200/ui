@@ -1317,18 +1317,62 @@ describe("the pointer, the focus and a form's moments, under the default theme's
     });
 
     it.each([['ui-checkbox'], ['ui-switch']])(
-        "takes Glass's edge back for a %s from the default theme's none, which leaves it today's darkening",
+        "follows the pointer over a %s under Glass, Glass's edge reaching it over the default theme's none: a band, a cast and its boundary at rest",
         async (tag) => {
             const form = await under(`<${tag} label="Notify me"></${tag}>`, glass);
-            stilled(form);
-            form.style.setProperty('--ui-color-text', 'rgb(9, 9, 9)');
+            form.style.setProperty('--ui-duration-state', '0s');
+            form.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
             const control = box(toggle(form));
+            const frame = control.parentElement;
 
             await userEvent.hover(control);
+            await new Promise<void>((resolve) => {
+                requestAnimationFrame(() => {
+                    resolve();
+                });
+            });
 
-            expect(getComputedStyle(control).borderTopColor).toBe('rgb(9, 9, 9)');
+            for (const transition of control.getAnimations({ subtree: true })) {
+                transition.finish();
+            }
+
+            expect(getComputedStyle(control).borderTopColor, 'the boundary at rest').toBe(
+                'rgb(1, 2, 3)',
+            );
+            expect(frame === null ? '' : getComputedStyle(frame, '::after').opacity, 'a band').toBe(
+                '1',
+            );
+            expect(getComputedStyle(control, '::after').boxShadow, 'a shadow cast').toMatch(
+                /^rgba\(0, 0, 0, 0\.3\) /,
+            );
         },
     );
+
+    it('lights a checkbox in its sheen where the pointer is under Glass, and a switch not', async () => {
+        const form = await under(
+            '<ui-checkbox label="First"></ui-checkbox><ui-switch label="Second"></ui-switch>',
+            glass,
+        );
+        const [checkbox, toggled] = [...form.querySelectorAll<Toggle>('ui-checkbox, ui-switch')];
+
+        if (checkbox === undefined || toggled === undefined) {
+            throw new Error('the fixture holds two controls');
+        }
+
+        await userEvent.hover(box(checkbox));
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+                resolve();
+            });
+        });
+
+        expect(getComputedStyle(box(checkbox)).backgroundImage, 'the checkbox').toMatch(
+            /^radial-gradient\(64px at /,
+        );
+        expect(getComputedStyle(box(toggled)).backgroundImage, 'the switch').not.toMatch(
+            /radial-gradient\(64px/,
+        );
+    });
 
     it.each([['ui-checkbox'], ['ui-switch']])(
         "takes a %s's label to the accent at the focus, with a fifth of the text in it",

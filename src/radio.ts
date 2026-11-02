@@ -1,6 +1,7 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { checked } from './check.js';
 import { controlEffects } from './effects.js';
+import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
@@ -187,6 +188,14 @@ export class UiRadioGroup extends LitElement {
                 gap: calc(${reference('--ui-space')} / 2);
                 color: ${reference('--ui-color-text')};
                 cursor: pointer;
+            }
+
+            /* The frame round the control, which the pointer engine follows and a band of the
+               edge is drawn on: the control's size, as a grid round it, and its round corners. */
+            .frame {
+                display: grid;
+                flex: none;
+                border-radius: 50%;
             }
 
             .option:has(input:disabled) {
@@ -572,17 +581,18 @@ export class UiRadioGroup extends LitElement {
      */
     #draw(choice: UiRadio, chosen: string): TemplateResult {
         return html`<label class="option" part="option">
-            <input
-                type="radio"
-                part="control"
-                name=${grouping}
-                value=${choice.value}
-                .checked=${choice.value === chosen}
-                ?disabled=${this.disabled || choice.disabled}
-                ?required=${this.required}
-                @change=${this.#changed}
-                @focus=${arrive}
-            />
+            <span class="frame" @pointerover=${follow}
+                ><input
+                    type="radio"
+                    part="control"
+                    name=${grouping}
+                    value=${choice.value}
+                    .checked=${choice.value === chosen}
+                    ?disabled=${this.disabled || choice.disabled}
+                    ?required=${this.required}
+                    @change=${this.#changed}
+                    @focus=${arrive}
+            /></span>
             <span part="option-label">${choice.textContent}</span>
         </label>`;
     }
