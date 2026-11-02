@@ -1,6 +1,7 @@
 import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
+import { follow } from './pointer.js';
 import { reference } from './reference.js';
 
 /**
@@ -35,11 +36,15 @@ import { reference } from './reference.js';
  * ```
  */
 export class UiCard extends LitElement {
-    /** Marks the card while a focus the reader can see is on something it holds. */
+    /**
+     * Marks the card while a focus the reader can see is on something it holds, and has the pointer
+     * engine follow it where its sheet chose a light that follows the pointer.
+     */
     constructor() {
         super();
         this.addEventListener('focusin', held);
         this.addEventListener('focusout', released);
+        this.addEventListener('pointerover', follow);
     }
 
     /** The styles its shadow root adopts. */
@@ -118,6 +123,7 @@ export class UiCard extends LitElement {
             <span data-layer="focus-fill"></span>
             <span data-layer="shadow"></span>
             <span data-layer="focus-shadow"></span>
+            <span data-layer="border"></span>
             <slot name="header"></slot>
             <slot></slot>
             <slot name="footer"></slot>

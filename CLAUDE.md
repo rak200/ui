@@ -405,10 +405,16 @@ explains. This file restates none of them.
   moment fades a layer in by its opacity, since a theme's glow in currentColor went dark through a
   transition in Chromium; `:host(:has(:focus-visible))` matched nothing in Chromium, so the card is
   marked in script; and the lift is drawn on the host, which RFC 0004's S8 leaves out of reach of a
-  choice made on the one card. **Why a card is isolated only where a fill is chosen** — the same
-  docblock: a fill under the content needs a stacking context, which keeps what a card holds with a
-  `z-index` from stacking over what follows it, so the default theme, which fills nothing, leaves the
-  card as it was.
+  choice made on the one card. **Why a card is isolated only where something under its content is
+  chosen** — the same docblock: a fill or a light held inside the boundary, under the content, needs
+  a stacking context, which keeps what a card holds with a `z-index` from stacking over what follows
+  it, so the default theme, which puts nothing there, leaves the card as it was. **Why a card's sheen
+  is its tint rather than a button's** — the docblock on `surfaceSheen` there, ARCHITECTURE.md's
+  _Which effect runs is the consumer's_, and the floor in `tests/tokens.test.ts`: the accent's sheen
+  took the muted text to 1.97:1, and the halo a field's text takes would be inherited by everything a
+  card holds. **How the lights that follow the pointer reach a card** — the same docblock: `follow()`
+  is bound to its `pointerover` and handed its time on the host, so S8 reaches them as it reaches the
+  lift and the tilt.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

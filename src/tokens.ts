@@ -131,6 +131,12 @@ export const tokens = [
     // 0004.
     '--ui-duration-loop',
     '--ui-iteration-settle',
+    // The step the card's lean arrives with: a movement that follows the pointer, caught up with
+    // it in half a state's time, since it is moved again every frame the pointer moves and a
+    // longer step leaves it trailing — RFC 0004's prototypes declared it beside the four. Under
+    // the first step, in the gap the ordinals left for it. No component reads it — they read
+    // `--ui-duration-follow`.
+    '--ui-duration-50',
     // The icon category, arriving with `ui-icon` rather than with the twelve components
     // that will eventually hold one. Two names, because an adopted set has exactly two
     // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
@@ -236,6 +242,10 @@ export const derivedTokens = [
     // spring a press lets go on. Apart from the effect's, which holds for as long as its moment
     // does and moves back when it ends.
     '--ui-duration-flourish',
+    // How long a movement that follows the pointer takes to catch up with it — RFC 0004's: the
+    // card leaning toward the pointer. Apart from the effect's, since what follows the pointer is
+    // moved again every frame the pointer moves, and an effect's time would leave it trailing.
+    '--ui-duration-follow',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -413,6 +423,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     // Four rounds: a focus can rest for minutes, and four of the loop's period stay inside the
     // five seconds WCAG 2.2.2 lets motion run before a reader must be able to stop it.
     '--ui-iteration-settle': '4',
+    // 75ms, the prototypes' step for a movement that follows the pointer, and the review's.
+    '--ui-duration-50': '75ms',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
     // Two layers rather than one, which is what makes a shadow read as *lift* instead of
@@ -550,6 +562,7 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-duration-effect': ground('--ui-duration-200'),
     '--ui-duration-travel': ground('--ui-duration-300'),
     '--ui-duration-flourish': ground('--ui-duration-400'),
+    '--ui-duration-follow': ground('--ui-duration-50'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast

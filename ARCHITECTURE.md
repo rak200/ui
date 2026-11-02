@@ -482,8 +482,11 @@ all but lost against the tint, 1.05:1 at the least, and an off switch's thumb fa
 and RFC 0004's one flash was chosen over it. **A drawn control's sheen lies under its mark**, as
 a button's under its label, which holds the mark at 5.82:1 or more where over it the mark fell to
 2.47:1; a switch sweeps none, since its thumb is a layer of the background a sheen could only pass
-over, and an off thumb fell from 3:1 to 1.06:1 under any band. A name a component does not offer
-draws nothing. **`none` is
+over, and an off thumb fell from 3:1 to 1.06:1 under any band. **A card's sheen is its tint**, where
+a button sweeps the accent: the accent's took the card's muted text to 1.97:1 at its peak, and the
+halo, which everything a card holds inherits, would ring a light label on a fill of its own in the
+card's colour. So the card sweeps the light its other lights are drawn in, over which every shipped
+palette's text and muted text hold 4.5:1. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.

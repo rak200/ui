@@ -2094,9 +2094,9 @@ describe("a drawn control's effects", () => {
 
 /**
  * A surface of the test's own, in a region of the page: a host whose shadow root adopts the sheet
- * built for `component`, holding the two layers and a slot, with a button in it and the mark bound,
- * and the effects `choices` names chosen on the region round it — where a choice reaches what the
- * sheet draws on the host as well as on its layers.
+ * built for `component`, holding its layers and a slot, with a button in it and the mark bound, and
+ * the effects `choices` names chosen on the region round it — where a choice reaches what the sheet
+ * draws on the host as well as on its layers.
  */
 function surface(
     component: string,
@@ -2108,6 +2108,7 @@ function surface(
     focus: HTMLElement;
     fill: HTMLElement;
     focusFill: HTMLElement;
+    border: HTMLElement;
 } {
     const region = document.createElement('div');
     const host = document.createElement('div');
@@ -2121,7 +2122,8 @@ function surface(
     root.adoptedStyleSheets = [sheet];
     root.innerHTML = [
         '<span data-layer="fill"></span><span data-layer="focus-fill"></span>',
-        '<span data-layer="shadow"></span><span data-layer="focus-shadow"></span><slot></slot>',
+        '<span data-layer="shadow"></span><span data-layer="focus-shadow"></span>',
+        '<span data-layer="border"></span><slot></slot>',
     ].join('');
     host.innerHTML = '<button>Inside</button>';
     host.style.cssText = 'display: block; position: relative; width: 200px; height: 100px';
@@ -2135,18 +2137,20 @@ function surface(
     region.append(host);
     document.body.append(region);
 
-    const [fill, focusFill, layer, focus] = root.querySelectorAll<HTMLElement>('[data-layer]');
+    const [fill, focusFill, layer, focus, border] =
+        root.querySelectorAll<HTMLElement>('[data-layer]');
 
     if (
         fill === undefined ||
         focusFill === undefined ||
         layer === undefined ||
-        focus === undefined
+        focus === undefined ||
+        border === undefined
     ) {
         throw new Error('the surface holds no layers');
     }
 
-    return { region, host, layer, focus, fill, focusFill };
+    return { region, host, layer, focus, fill, focusFill, border };
 }
 
 describe("a surface's effects", () => {
@@ -2162,9 +2166,9 @@ describe("a surface's effects", () => {
     }
 
     it('lays a layer per moment over the boundary, taking no pointer and invisible until an effect fades it in', () => {
-        const { layer, focus } = surface('test', {});
+        const { layer, focus, border } = surface('test', {});
 
-        for (const each of [layer, focus]) {
+        for (const each of [layer, focus, border]) {
             const styles = getComputedStyle(each);
 
             expect(
@@ -2235,20 +2239,29 @@ describe("a surface's effects", () => {
         expect(getComputedStyle(layer).opacity).toBe('0');
     });
 
-    it("lifts the whole surface a quarter rem while a focus the reader can see is in it, over an effect's time", async () => {
-        const { region, host } = surface('test', { 'focus-move': 'lift' });
-        region.style.setProperty('--ui-duration-effect', '0.3s');
-        region.style.setProperty('--ui-easing-enter', 'ease-in');
+    it.each([
+        ['focus-move', 'lift'],
+        ['hover-move', 'tilt'],
+    ])(
+        "moves the surface where %s: %s is chosen, its place over an effect's time and its turn over a following's",
+        (moment, effect) => {
+            const { region, host } = surface('test', { [moment]: effect });
+            const still = surface('test', {});
+            region.style.setProperty('--ui-duration-effect', '0.3s');
+            region.style.setProperty('--ui-duration-follow', '0.05s');
+            region.style.setProperty('--ui-easing-enter', 'ease-in');
 
-        expect(
-            [
+            expect([
                 getComputedStyle(host).transitionProperty,
                 getComputedStyle(host).transitionDuration,
                 getComputedStyle(host).transitionTimingFunction,
-            ],
-            'its transition',
-        ).toEqual(['translate', '0.3s', 'ease-in']);
+            ]).toEqual(['translate, transform', '0.3s, 0.05s', 'ease-in, linear']);
+            expect(getComputedStyle(still.host).transitionDuration, 'nothing chosen').toBe('0s');
+        },
+    );
 
+    it('lifts the whole surface a quarter rem while a focus the reader can see is in it', async () => {
+        const { region, host } = surface('test', { 'focus-move': 'lift' });
         region.style.setProperty('--ui-duration-effect', '0s');
 
         await userEvent.tab();
@@ -2259,10 +2272,15 @@ describe("a surface's effects", () => {
     it("leaves a choice written on the one surface out of reach of what it draws on its host — RFC 0004's S8", async () => {
         const { host } = surface('test', {});
         host.style.setProperty('--ui-motion-focus-move', 'lift');
+        host.style.setProperty('--ui-motion-hover-move', 'tilt');
+        host.style.setProperty('--ui-motion-hover-fill', 'spotlight');
+
+        expect(getComputedStyle(host).transform, 'the tilt').toBe('none');
+        expect(getComputedStyle(host).getPropertyValue('--ui-fx-follow'), 'the engine').toBe('');
 
         await userEvent.tab();
 
-        expect(getComputedStyle(host).translate).toBe('none');
+        expect(getComputedStyle(host).translate, 'the lift').toBe('none');
     });
     /** The surface's tint over `surface` with `accent` in it, as the engine computes it on a light page. */
     function tinted(surface: string, accent: string): string {
@@ -2285,17 +2303,28 @@ describe("a surface's effects", () => {
         }
     });
 
-    it.each([['hover-fill'], ['focus-fill']])(
-        "isolates the surface where %s: tint is chosen, so its fill stays over the surface's own",
-        (moment) => {
-            const { host } = surface('test', { [moment]: 'tint' });
+    it.each([
+        ['hover-fill', 'tint'],
+        ['hover-fill', 'spotlight'],
+        ['focus-fill', 'tint'],
+        ['focus-fill', 'shimmer'],
+        ['focus-shadow', 'inner'],
+    ])(
+        "isolates the surface where %s: %s is chosen, so what lies under its content stays over the surface's own fill",
+        (moment, effect) => {
+            const { host } = surface('test', { [moment]: effect });
 
             expect(getComputedStyle(host).isolation).toBe('isolate');
         },
     );
 
-    it('leaves a surface unisolated where no fill is chosen, so what it holds stacks as it did', () => {
-        const { host } = surface('test', { 'hover-shadow': 'raise', 'focus-move': 'lift' });
+    it('leaves a surface unisolated where nothing under its content is chosen, so what it holds stacks as it did', () => {
+        const { host } = surface('test', {
+            'hover-shadow': 'cast',
+            'hover-border': 'edge',
+            'focus-shadow': 'raise',
+            'focus-move': 'lift',
+        });
 
         expect(getComputedStyle(host).isolation).toBe('auto');
     });
@@ -2406,5 +2435,204 @@ describe("a surface's effects", () => {
         expect(getComputedStyle(focus).boxShadow, 'halfway').toBe(
             `${accent(0.4)} 0px 0px 7.5px 5px`,
         );
+    });
+
+    /** Writes where the pointer is on a surface's host, as the engine writes it. */
+    function pointed(host: HTMLElement, near: number, x: number, y: number, nx = 0, ny = 0): void {
+        for (const [name, value] of Object.entries({
+            near: String(near),
+            x: `${String(x)}px`,
+            y: `${String(y)}px`,
+            nx: String(nx),
+            ny: String(ny),
+        })) {
+            host.style.setProperty(`--ui-fx-pointer-${name}`, value);
+        }
+    }
+
+    /** What the engine computes `value` to as a picture, on an element of the page. */
+    function picture(value: string): string {
+        const probe = document.createElement('div');
+        probe.style.backgroundImage = value;
+        document.body.append(probe);
+
+        try {
+            return getComputedStyle(probe).backgroundImage;
+        } finally {
+            probe.remove();
+        }
+    }
+
+    it.each([
+        ['hover-fill', 'spotlight'],
+        ['hover-shadow', 'cast'],
+        ['hover-border', 'edge'],
+        ['hover-move', 'tilt'],
+    ])(
+        "hands the pointer engine an effect's time on the host where %s: %s is chosen",
+        (moment, effect) => {
+            const chosen = surface('test', { [moment]: effect });
+            const plain = surface('test', {});
+
+            for (const { region } of [chosen, plain]) {
+                region.style.setProperty('--ui-duration-effect', '0.3s');
+            }
+
+            expect(getComputedStyle(chosen.host).getPropertyValue('--ui-fx-follow')).toBe('0.3s');
+            expect(
+                getComputedStyle(plain.host).getPropertyValue('--ui-fx-follow'),
+                'nothing chosen',
+            ).toBe('');
+        },
+    );
+
+    it('cuts the border to a band over the boundary and a pixel inside it, over the content', () => {
+        const { border } = surface('test', {});
+        const styles = getComputedStyle(border);
+
+        expect([styles.paddingTop, styles.zIndex, styles.maskComposite]).toEqual([
+            '2px',
+            'auto',
+            'exclude, add',
+        ]);
+    });
+
+    it('lights the surface with its tint where the pointer is, as strong as it is near, on its fill', async () => {
+        const { region, host, fill } = surface('test', { 'hover-fill': 'spotlight' });
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+
+        pointed(host, 0.5, 30, 10);
+
+        expect(getComputedStyle(fill).backgroundImage, 'at the pointer, 16rem out').toBe(
+            picture(
+                `radial-gradient(16rem circle at 30px 10px, ${tinted('rgb(240, 240, 240)', 'rgb(0, 0, 200)')}, transparent 70%)`,
+            ),
+        );
+        expect(getComputedStyle(fill).opacity, 'as near as the pointer').toBe('0.5');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(fill).opacity, 'the focus wins').toBe('0');
+    });
+
+    it("casts the surface's shadow away from the pointer at the card's own size, as strong as it is near", async () => {
+        const { region, host, layer } = surface('test', { 'hover-shadow': 'cast' });
+        const dark = surface('test', { 'hover-shadow': 'cast' });
+        dark.region.style.colorScheme = 'dark';
+
+        for (const each of [region, dark.region]) {
+            each.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        }
+
+        for (const each of [host, dark.host]) {
+            pointed(each, 0.5, 150, 25, 0.5, -0.5);
+        }
+
+        expect(getComputedStyle(layer).boxShadow, 'on a light page, the shadow').toBe(
+            'rgba(0, 0, 0, 0.3) -8px 16px 28px -4px, rgba(0, 0, 0, 0) 12px -12px 48px 4px',
+        );
+        expect(getComputedStyle(dark.layer).boxShadow, 'on a dark one, the light too').toBe(
+            'rgba(0, 0, 0, 0.85) -8px 16px 28px -4px, color(srgb 0.0392157 0.0784314 0.117647 / 0.35) 12px -12px 48px 4px',
+        );
+        expect(getComputedStyle(layer).opacity, 'as near as the pointer').toBe('0.5');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(layer).opacity, 'the focus wins').toBe('0');
+    });
+
+    it('lights a band on the boundary nearest the pointer, in the accent pushed off the page, as strong as it is near', async () => {
+        const { region, host, border } = surface('test', { 'hover-border': 'edge' });
+        region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+
+        pointed(host, 0.5, 30, 10);
+
+        expect(getComputedStyle(border).backgroundImage).toBe(
+            picture(
+                'radial-gradient(ellipse 100% 100% at 30px 10px, light-dark(oklch(from rgb(0, 0, 200) calc(l - 0.1) c h), oklch(from rgb(0, 0, 200) calc(l + 0.2) c h)), transparent)',
+            ),
+        );
+        expect(getComputedStyle(border).opacity, 'as near as the pointer').toBe('0.5');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(border).opacity, 'the focus wins').toBe('0');
+    });
+
+    it('turns the surface toward the pointer, five degrees at most each way, as strong as it is near', async () => {
+        const { region, host } = surface('test', { 'hover-move': 'tilt' });
+        const turned = document.createElement('div');
+        region.style.setProperty('--ui-duration-follow', '0s');
+        turned.style.transform = 'perspective(60rem) rotateX(1.25deg) rotateY(-2.5deg)';
+        document.body.append(turned);
+
+        pointed(host, 0.5, 20, 30, -1, -0.5);
+
+        expect(getComputedStyle(host).transform).toBe(getComputedStyle(turned).transform);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(host).transform, 'the focus wins').toBe('none');
+    });
+
+    it("sweeps the surface's tint across it at a focus the reader can see in it, four rounds of the loop and then at rest", async () => {
+        const { region, focusFill } = surface('test', { 'focus-fill': 'shimmer' });
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+        region.style.setProperty('--ui-duration-loop', '10s');
+        region.style.setProperty('--ui-iteration-settle', '3');
+
+        expect(getComputedStyle(focusFill).backgroundImage, 'its tint, swept').toBe(
+            picture(
+                `linear-gradient(100deg, transparent 35%, ${tinted('rgb(240, 240, 240)', 'rgb(0, 0, 200)')} 50%, transparent 65%)`,
+            ),
+        );
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(focusFill);
+
+        expect([
+            styles.opacity,
+            styles.backgroundSize,
+            styles.backgroundRepeat,
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationIterationCount,
+        ]).toEqual(['1', '250% 100%', 'no-repeat', 'ui-shimmer', '10s', 'linear', '3']);
+
+        // Through the property the button's sheen moves through, halfway across a round.
+        const sweep = running(focusFill, 'ui-shimmer');
+
+        sweep.pause();
+        sweep.currentTime = 5000;
+
+        expect(getComputedStyle(focusFill).backgroundPosition).toBe('50% 0px');
+    });
+
+    it("holds the button's light inside the boundary while a focus the reader can see is in the surface, under its content", async () => {
+        const { region, focus } = surface('test', { 'focus-shadow': 'inner' });
+        region.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        region.style.setProperty('--ui-duration-effect', '0.3s');
+        region.style.setProperty('--ui-easing-enter', 'ease-in');
+
+        const styles = getComputedStyle(focus);
+
+        expect(
+            [styles.transitionProperty, styles.transitionDuration, styles.transitionTimingFunction],
+            'its fade',
+        ).toEqual(['opacity', '0.3s', 'ease-in']);
+        expect([styles.zIndex, styles.boxShadow]).toEqual([
+            '-1',
+            'rgb(10, 20, 30) 0px 0px 0px 1px inset, color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px inset',
+        ]);
+
+        region.style.setProperty('--ui-duration-effect', '0s');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(focus).opacity, 'faded in').toBe('1');
     });
 });
