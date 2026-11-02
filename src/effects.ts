@@ -1961,12 +1961,64 @@ const surfaceTint = css`light-dark(
 )`;
 
 /**
- * The effects that fill a surface under its content, on a layer a stacking context of the
- * surface's own has to keep over its fill: where one is chosen, the surface is isolated.
+ * A surface's cast: the pointer as a light, the shadow falling away from it the further the further
+ * the pointer is from the middle, and on a dark page, where a shadow barely shows, the light spilling
+ * round the side the pointer is on — the card's own, of which a button's and a field's are half. It
+ * reaches past a glow a theme may already draw round the surface. Faded in on its layer, as strong
+ * as the pointer is near.
  */
-const surfaceFills = [
+const surfaceCast = css`calc(var(--ui-fx-pointer-nx, 0) * -1rem)
+        calc(var(--ui-fx-pointer-ny, 0) * -1rem + 0.5rem) 1.75rem -0.25rem
+        light-dark(rgb(0 0 0 / 0.3), rgb(0 0 0 / 0.85)),
+    calc(var(--ui-fx-pointer-nx, 0) * 1.5rem) calc(var(--ui-fx-pointer-ny, 0) * 1.5rem) 3rem 0.25rem
+        light-dark(transparent, rgb(from ${reference('--ui-color-accent')} r g b / 0.35))`;
+
+/**
+ * A surface's spotlight: its tint where the pointer is, in a circle 16rem out that fades to nothing
+ * seven tenths of the way. The tint rather than the accent, so what rests on the surface holds the
+ * contrast the tint was measured at.
+ */
+const surfaceSpotlight = css`radial-gradient(
+    16rem circle at var(--ui-fx-pointer-x, -999px) var(--ui-fx-pointer-y, -999px),
+    ${surfaceTint},
+    transparent 70%
+)`;
+
+/**
+ * A surface's sheen, the shimmer's: its tint swept across it, where a button sweeps the accent. The
+ * accent's sheen took a surface's muted text, at its peak, to 1.97:1, and under 4.5:1 in every
+ * shipped palette and scheme — measured. A field's answer, a halo round its text, would be inherited
+ * by everything a surface holds, and ring a light label on a fill of its own in the surface's colour.
+ * Over the tint every shipped palette's text and muted text hold 4.5:1, as they do under the
+ * surface's other lights.
+ */
+const surfaceSheen = css`linear-gradient(100deg, transparent 35%, ${surfaceTint} 50%, transparent 65%)`;
+
+/**
+ * The effects drawn under a surface's content, on a layer a stacking context of the surface's own
+ * has to keep over its fill: its fills, and the light held inside its boundary. Where one is chosen,
+ * the surface is isolated.
+ */
+const surfaceUnder = [
     ['hover-fill', 'tint'],
+    ['hover-fill', 'spotlight'],
     ['focus-fill', 'tint'],
+    ['focus-fill', 'shimmer'],
+    ['focus-shadow', 'inner'],
+] as const;
+
+/** The effects that follow the pointer, which the pointer engine follows a surface for. */
+const surfaceFollowing = [
+    ['hover-fill', 'spotlight'],
+    ['hover-shadow', 'cast'],
+    ['hover-border', 'edge'],
+    ['hover-move', 'tilt'],
+] as const;
+
+/** The effects that move the surface itself, which its host transitions once one is chosen. */
+const surfaceMoves = [
+    ['focus-move', 'lift'],
+    ['hover-move', 'tilt'],
 ] as const;
 
 /**
@@ -1975,28 +2027,38 @@ const surfaceFills = [
  * query — the card's, and the toast's to come.
  *
  * **Each moment draws on a layer of its own**, which the component renders empty into its shadow
- * root, one per kind and moment: `<span data-layer="fill">` and `"shadow"` for the pointer, and
- * `"focus-fill"` and `"focus-shadow"` for the focus. A layer holds its effect's picture at all
- * times and fades in and out by its opacity alone, so a picture is never taken away under a fade;
- * and the pointer's and the focus's are apart, so each keeps its own. Not the theme's shadow moved:
- * a theme may write its glow in currentColor, as Matrix does, and Chromium carried such a glow
- * through transparent for the length of a transition, so the card went dark and lit again —
+ * root, one per kind and moment: `<span data-layer="fill">`, `"shadow"` and `"border"` for the
+ * pointer, and `"focus-fill"` and `"focus-shadow"` for the focus. A layer holds its effect's picture
+ * at all times and fades in and out by its opacity alone, so a picture is never taken away under a
+ * fade; and the pointer's and the focus's are apart, so each keeps its own. Not the theme's shadow
+ * moved: a theme may write its glow in currentColor, as Matrix does, and Chromium carried such a
+ * glow through transparent for the length of a transition, so the card went dark and lit again —
  * measured for RFC 0004.
  *
- * **A fill lies under the content, and that takes a stacking context.** A layer under the content
- * but over the surface's own fill needs the surface isolated, and an isolated surface keeps what it
- * holds from stacking over what follows it: a host's own dropdown with a `z-index`, one that is no
- * popover, falls under the next card. So the surface is isolated only where a fill is chosen — under
- * Matrix and Glass, the second of which isolates it already with its glass — and the default theme
- * leaves it as it was.
+ * **A fill lies under the content, and so does a light held inside the boundary, and that takes a
+ * stacking context.** A layer under the content but over the surface's own fill needs the surface
+ * isolated, and an isolated surface keeps what it holds from stacking over what follows it: a
+ * host's own dropdown with a `z-index`, one that is no popover, falls under the next card. So the
+ * surface is isolated only where one of them is chosen — under Matrix and Glass, the second of which
+ * isolates it already with its glass — and the default theme leaves it as it was.
+ *
+ * **The lights that follow the pointer read where it is from the engine**, `src/pointer.ts`, which
+ * the sheet hands a duration on the host where one of them is chosen and the pointer can hover. The
+ * spotlight and the cast fade in on their layers as strong as the pointer is near, and so does the
+ * edge, a band the border's layer is cut to, over the content, where the content never reaches. The
+ * tilt turns the host toward the pointer, which takes a transform, and a transformed host is a
+ * stacking context and the box what it holds that is fixed is placed in, as Glass's glass makes it
+ * already.
  *
  * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
- * layers, and marked `data-focus-visible` while a focus the reader can see is in it, by `held()`
- * from `src/held.ts` bound to its `focusin` and `released()` to its `focusout`. The sheet comes
- * after the component's own. An effect drawn on the host, a move or the isolation a fill takes, is
- * drawn under a query that asks the host's surroundings and never the host itself: a choice written
- * on the one card alone does not reach it, nor a fill chosen there, which then lies behind the
- * card's own — RFC 0004's S8, which the card leaves marked.
+ * layers, marked `data-focus-visible` while a focus the reader can see is in it, by `held()` from
+ * `src/held.ts` bound to its `focusin` and `released()` to its `focusout`, and followed by `follow()`
+ * from `src/pointer.ts` bound to its `pointerover`. The sheet comes after the component's own. An
+ * effect drawn on the host — a move, the isolation, and the duration the engine is handed — is drawn
+ * under a query that asks the host's surroundings and never the host itself: a choice written on the
+ * one card alone does not reach it, nor a fill chosen there, which then lies behind the card's own,
+ * nor a light that follows the pointer, which the engine is then never handed — RFC 0004's S8, which
+ * the card leaves marked.
  *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
  * {@link buttonEffects} gives.
@@ -2005,10 +2067,9 @@ export function surfaceEffects(component: string): CSSResult {
     /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
     const drawn = query(component);
 
-    /** True wherever a fill under the content is chosen. */
-    const filled = unsafeCSS(
-        surfaceFills.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
-    );
+    /** True wherever one of `effects` is chosen, by a consumer or a taste. */
+    const chosen = (effects: readonly (readonly [string, string])[]): CSSResult =>
+        unsafeCSS(effects.map(([moment, effect]) => drawn(moment, effect)).join(' or '));
 
     return css`
         /* A layer per moment and kind that draws, over the boundary, taking no pointer, and
@@ -2028,10 +2089,50 @@ export function surfaceEffects(component: string): CSSResult {
             z-index: -1;
         }
 
-        /* The stacking context a fill under the content takes, only where one is chosen. */
-        @container ${filled} {
+        /* A border, cut to a band over the boundary and a pixel inside it: the layer less its
+           content box. Safari reads no content-box in the mask, prefixed or not, but its own
+           prefixed mask's, so that one comes first and the standard one after it, which the other
+           engines take and Safari drops. */
+        [data-layer='border'] {
+            padding: 2px;
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask:
+                linear-gradient(#000 0 0) content-box exclude,
+                linear-gradient(#000 0 0);
+        }
+
+        /* The stacking context what lies under the content takes, only where some of it is
+           chosen. */
+        @container ${chosen(surfaceUnder)} {
             :host {
                 isolation: isolate;
+            }
+        }
+
+        /* The lights that follow the pointer, and the tilt, which the pointer engine follows the
+           surface for — src/pointer.ts. Handed a duration it reads no other way, where one of them
+           is chosen and the pointer can hover, so the collapse takes it to nothing and nothing
+           follows. */
+        @media (hover: hover) {
+            @container ${chosen(surfaceFollowing)} {
+                :host {
+                    --ui-fx-follow: ${reference('--ui-duration-effect')};
+                }
+            }
+        }
+
+        /* What moves the surface itself transitions only once one of them is chosen: its place
+           over an effect's time on the curve an arrival takes, and its turn toward the pointer
+           over the time a movement that follows it takes, on a straight clock. */
+        @container ${chosen(surfaceMoves)} {
+            :host {
+                transition-property: translate, transform;
+                transition-duration:
+                    ${reference('--ui-duration-effect')}, ${reference('--ui-duration-follow')};
+                transition-timing-function: ${reference('--ui-easing-enter')}, linear;
             }
         }
 
@@ -2060,6 +2161,47 @@ export function surfaceEffects(component: string): CSSResult {
 
             :host([data-focus-visible]) [data-layer='focus-fill'] {
                 opacity: 1;
+            }
+        }
+
+        /* spotlight: the tint where the pointer is, as strong as it is near, whether it is over the
+           surface or on its way off it. The focus wins. */
+        @container ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
+            [data-layer='fill'] {
+                background-image: ${surfaceSpotlight};
+            }
+
+            :host(:not([data-focus-visible])) [data-layer='fill'] {
+                opacity: var(--ui-fx-pointer-near, 0);
+            }
+        }
+
+        /* shimmer: the surface's sheen swept across it at a focus the reader can see in it, ten
+           degrees off upright and three quarters as wide as the surface, from before its start to
+           past its end, four rounds of the loop's period and then at rest before the start, on the
+           focus's layer, through the property the button's moves through. */
+        @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
+            [data-layer='focus-fill'] {
+                background-image: ${surfaceSheen};
+                background-size: 250% 100%;
+                background-position: var(--ui-fx-shimmer) 0;
+                background-repeat: no-repeat;
+            }
+
+            :host([data-focus-visible]) [data-layer='focus-fill'] {
+                opacity: 1;
+                animation: ui-shimmer ${reference('--ui-duration-loop')} linear
+                    ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        @keyframes ui-shimmer {
+            from {
+                --ui-fx-shimmer: 150%;
+            }
+
+            to {
+                --ui-fx-shimmer: -50%;
             }
         }
 
@@ -2098,11 +2240,38 @@ export function surfaceEffects(component: string): CSSResult {
             }
         }
 
+        /* cast: the surface's shadow thrown away from the pointer, on its layer, as strong as the
+           pointer is near. The focus wins. */
+        @container ${unsafeCSS(drawn('hover-shadow', 'cast'))} {
+            [data-layer='shadow'] {
+                box-shadow: ${surfaceCast};
+            }
+
+            :host(:not([data-focus-visible])) [data-layer='shadow'] {
+                opacity: var(--ui-fx-pointer-near, 0);
+            }
+        }
+
         /* raise at a focus the reader can see in the surface, on its own layer. */
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             [data-layer='focus-shadow'] {
                 color: ${reference('--ui-color-accent')};
                 box-shadow: ${surfaceRaise};
+                transition: opacity ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+
+            :host([data-focus-visible]) [data-layer='focus-shadow'] {
+                opacity: 1;
+            }
+        }
+
+        /* inner: the button's light held inside the boundary, under the content, for as long as a
+           focus the reader can see is in the surface, faded in as the raise is. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'inner'))} {
+            [data-layer='focus-shadow'] {
+                z-index: -1;
+                box-shadow: ${inner};
                 transition: opacity ${reference('--ui-duration-effect')}
                     ${reference('--ui-easing-enter')};
             }
@@ -2132,17 +2301,49 @@ export function surfaceEffects(component: string): CSSResult {
             }
         }
 
+        /* edge: the band lit where the pointer is nearest, in the accent pushed off the page, its
+           light fading over the surface's own width across and its own height down, as strong as
+           the pointer is near. The layer's box is the surface's, so the pointer is where the engine
+           writes it. The focus wins. */
+        @container ${unsafeCSS(drawn('hover-border', 'edge'))} {
+            [data-layer='border'] {
+                background-image: radial-gradient(
+                    ellipse 100% 100% at var(--ui-fx-pointer-x, -999px)
+                        var(--ui-fx-pointer-y, -999px),
+                    ${far},
+                    transparent
+                );
+            }
+
+            :host(:not([data-focus-visible])) [data-layer='border'] {
+                opacity: var(--ui-fx-pointer-near, 0);
+            }
+        }
+
         /* lift: the whole surface a quarter rem up, the button's two pixels at a surface's give,
            for as long as a focus the reader can see is in it — on the host, which S8 leaves out of
            reach of a choice made on the one surface. */
         @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
-            :host {
-                transition: translate ${reference('--ui-duration-effect')}
-                    ${reference('--ui-easing-enter')};
-            }
-
             :host([data-focus-visible]) {
                 translate: 0 -0.25rem;
+            }
+        }
+
+        /* tilt: the whole surface turned toward the pointer, five degrees at most each way, as far
+           as the pointer is from the middle and as strong as it is near, seen from 60rem off — on
+           the host, as the lift is, and only where the pointer can hover. The focus wins, and the
+           surface turns back flat. */
+        @media (hover: hover) {
+            @container ${unsafeCSS(drawn('hover-move', 'tilt'))} {
+                :host(:not([data-focus-visible])) {
+                    transform: perspective(60rem)
+                        rotateX(
+                            calc(var(--ui-fx-pointer-ny, 0) * var(--ui-fx-pointer-near, 0) * -5deg)
+                        )
+                        rotateY(
+                            calc(var(--ui-fx-pointer-nx, 0) * var(--ui-fx-pointer-near, 0) * 5deg)
+                        );
+                }
             }
         }
     `;

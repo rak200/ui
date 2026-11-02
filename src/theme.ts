@@ -260,7 +260,10 @@ export const matrix: Theme = {
  * drawn control keeps a light along its inside at the focus, a sheen sweeps under its mark, a
  * switch's excepted, and its ring comes into focus from a blur; in error it holds a light of the
  * danger round it and flashes its fill. Under the pointer it takes its sheen where the pointer is, a
- * switch's excepted again, a shadow cast away from it and a band along its boundary nearest it.
+ * switch's excepted again, a shadow cast away from it and a band along its boundary nearest it. A
+ * card takes its tint where the pointer is, a shadow cast away from it and a band along its boundary
+ * nearest it, and leans toward it; at a focus it holds, its tint sweeps across it and a light holds
+ * inside its boundary.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -386,11 +389,13 @@ export const glass: Theme = {
         },
         // The page's edge, for the drawn controls: the default theme's taste names their none,
         // and a component's own entry outweighs a page's, so without these the band would never
-        // reach them under this theme.
+        // reach them under this theme. And the card leans toward the pointer, alone, as RFC 0004
+        // chose.
         components: {
             checkbox: { 'hover-border': 'edge' },
             switch: { 'hover-border': 'edge' },
             radio: { 'hover-border': 'edge' },
+            card: { 'hover-move': 'tilt' },
         },
     },
 };

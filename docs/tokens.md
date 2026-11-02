@@ -167,7 +167,11 @@ because a crossing takes as long as its distance asks — the focus ring glided 
 the next — and it moves along `--ui-easing-move`, quick out of the gate and slow into place. **A
 flourish has a fourth**, `--ui-duration-flourish` over `--ui-duration-400`: an effect that plays out
 on its own once a moment fires it — the burst of light at the focus, the ring's glitch, the spring a
-press lets go on — which runs longer than an effect that holds for as long as its moment does.
+press lets go on — which runs longer than an effect that holds for as long as its moment does. **A
+movement that follows the pointer has a fifth**, `--ui-duration-follow` over `--ui-duration-50`, the
+step the ordinals left room for under the first: what follows the pointer is moved again every frame
+the pointer moves, so it catches up in 75ms on a straight clock — the card leaning toward it under
+Glass — where an effect's time would leave it trailing.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
 focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
@@ -264,6 +268,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-duration-400`        | the fourth step of the duration scale                             |
 | `--ui-duration-loop`       | a loop's period, off the scale                                    |
 | `--ui-iteration-settle`    | how many rounds a loop runs where it settles                      |
+| `--ui-duration-50`         | the step under the first, for what follows the pointer            |
 | `--ui-icon-size`           | how big a glyph is drawn                                          |
 | `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
 | `--ui-elevation-100`       | the first step of the elevation scale                             |
@@ -374,6 +379,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-duration-effect`           | how long an effect a moment fires takes        |
 | `--ui-duration-travel`           | how long something takes to cross to its place |
 | `--ui-duration-flourish`         | how long a flourish takes                      |
+| `--ui-duration-follow`           | how long what follows the pointer takes        |
 | `--ui-elevation-raised`          | a surface lifted off the page                  |
 | `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
 | `--ui-text-supporting`           | text that explains what is beside it           |

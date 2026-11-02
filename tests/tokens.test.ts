@@ -427,6 +427,36 @@ async function cardTint(scheme: Scheme, palette: Palette): Promise<string> {
 }
 
 /**
+ * The sheen a card sweeps across itself at a focus it holds, where the shimmer is chosen, resolved
+ * in `scheme` under `palette`: the middle stop of the sweep read off its focus's fill, as a full
+ * control's is read off the control.
+ */
+async function cardSheen(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-card style="${kinds.choice}focus-fill: shimmer"><button>Choose</button></ui-card>`,
+        async (card) => {
+            const fill = card.shadowRoot?.querySelector("[data-layer='focus-fill']") ?? null;
+
+            if (fill === null) {
+                throw new Error('the card rendered no fill for the focus');
+            }
+
+            await userEvent.tab();
+
+            const stop = /35%, (.+) 50%, /.exec(getComputedStyle(fill).backgroundImage)?.[1];
+
+            if (stop === undefined) {
+                throw new Error('no sheen swept across the card');
+            }
+
+            return stop;
+        },
+    );
+}
+
+/**
  * The sheen a shimmer sweeps under a full control's mark, where it is chosen, resolved in `scheme`
  * under `palette`: the middle stop of the sweep read off a checked box at the focus, as the button's
  * is read off a button.
@@ -1102,6 +1132,7 @@ describe('the references components write', () => {
         ['--ui-duration-effect', '--ui-duration-200'],
         ['--ui-duration-travel', '--ui-duration-300'],
         ['--ui-duration-flourish', '--ui-duration-400'],
+        ['--ui-duration-follow', '--ui-duration-50'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
     ] as const)('reads %s rather than the step under it', (name, step) => {
@@ -1502,6 +1533,36 @@ describe('the contrast floors', () => {
                         ).toBeGreaterThanOrEqual(4.5);
                     }
                 });
+
+                it.each([
+                    ['its text', '--ui-color-text'],
+                    ['its muted text', '--ui-color-text-muted'],
+                ] as const)(
+                    'keeps a card legible where its sheen passes under it, %s',
+                    async (_what, token) => {
+                        // The shimmer sweeps the card's tint across it, where a button sweeps the
+                        // accent: at its peak the accent's sheen took the muted text to 1.97:1, and a
+                        // halo round the text would ring everything the card holds. Laid over the
+                        // card's own surface, laid over whatever the card rests on.
+                        const swept = await cardSheen(scheme, palette);
+
+                        for (const beside of outside(palette, scheme)) {
+                            const surface = laid(
+                                '--ui-color-surface-raised',
+                                beside,
+                                scheme,
+                                palette,
+                            );
+
+                            expect(
+                                contrastRatio(
+                                    paint(token),
+                                    layered(swept, surface, scheme, palette),
+                                ),
+                            ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    },
+                );
 
                 it("keeps a full control's mark legible where the shimmer's sheen passes under it", async () => {
                     // The sheen is swept under the mark, on the control's own background, as a

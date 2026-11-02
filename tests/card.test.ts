@@ -6,7 +6,7 @@ import meta, { BodyOnly, Card, OutOfOrder, Row, WithLink } from '../stories/card
 import '../src/card.js';
 import '../src/button.js';
 import type { UiCard } from '../src/card.js';
-import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the drawing tests use, unless one needs a different shape. */
@@ -94,8 +94,9 @@ describe('ui-card', () => {
             ['focus-fill', 0],
             ['shadow', 0],
             ['focus-shadow', 0],
+            ['border', 0],
         ]);
-        expect(card(host).shadowRoot?.querySelectorAll('*').length, 'nothing else').toBe(7);
+        expect(card(host).shadowRoot?.querySelectorAll('*').length, 'nothing else').toBe(8);
     });
 
     it('orders the regions itself, whatever order they were written in', async () => {
@@ -378,6 +379,58 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'tinted').toBe('1');
         expect(getComputedStyle(layer(element, 'focus-shadow')).animationName, 'a burst').toBe(
             'ui-burst',
+        );
+        expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
+    });
+
+    it('lights a card where the pointer is under Glass, casts its shadow, edges it and leans it toward the pointer', async () => {
+        const host = await under(fixture, glass);
+        const element = card(host);
+        const box = element.getBoundingClientRect();
+        // The engine is handed an effect's time, and follows nothing under none.
+        host.style.setProperty('--ui-duration-effect', '0.3s');
+        host.style.setProperty('--ui-duration-follow', '0s');
+
+        // Dispatched rather than driven, so the pointer is where the test says: a driven one lands
+        // where the runner's scaled frame is drawn.
+        element.dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                clientX: box.right - 1,
+                clientY: box.top + box.height / 2,
+            }),
+        );
+        await new Promise(requestAnimationFrame);
+
+        expect(element.style.getPropertyValue('--ui-fx-pointer-near'), 'followed').toBe('1');
+
+        for (const name of ['fill', 'shadow', 'border']) {
+            expect(getComputedStyle(layer(element, name)).opacity, name).toBe('1');
+        }
+
+        expect(getComputedStyle(element).transform, 'leaning').not.toBe('none');
+        expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
+    });
+
+    it("sweeps a card's tint across it and holds a light inside it at a focus it holds under Glass", async () => {
+        const host = await under(
+            `
+            <ui-card>
+                <p style="margin: 0">Everything in the free tier.</p>
+                <div slot="footer"><ui-button>Choose</ui-button></div>
+            </ui-card>
+        `,
+            glass,
+        );
+        const element = card(host);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(layer(element, 'focus-fill')).animationName, 'a sweep').toBe(
+            'ui-shimmer',
+        );
+        expect(getComputedStyle(layer(element, 'focus-shadow')).boxShadow, 'a light').toMatch(
+            / 0px 0px 0px 1px inset, .+ 0px 0px 12px 2px inset$/,
         );
         expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
     });

@@ -106,6 +106,7 @@ default theme's taste names, which would otherwise run under Matrix too.
 | Component                     | Moment       | Effect |
 | ----------------------------- | ------------ | ------ |
 | `input`, `textarea`, `select` | `focus-fill` | `tint` |
+| `card`                        | `focus-fill` | `tint` |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
@@ -197,7 +198,10 @@ own. A drawn control keeps a light along its inside at the focus, a sheen sweeps
 switch's excepted, whose thumb a sheen could only pass over — and its ring comes into focus from a
 blur; in error it holds a light of the danger round it and flashes its fill. Under the pointer it
 takes its sheen where the pointer is, a switch's excepted again, a shadow cast away from it and a
-band along its boundary nearest it.
+band along its boundary nearest it. A card takes its tint where the pointer is, a shadow cast away
+from it and a band along its boundary nearest it, and leans toward it; at a focus it holds, its tint
+sweeps across it — the card's own light, which keeps its muted text at 4.5:1 where a button's sheen
+did not — and a light holds along its inside.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |
@@ -215,7 +219,12 @@ band along its boundary nearest it.
 
 It names the edge again for each drawn control, `checkbox`, `switch` and `radio`, where the default
 theme's taste names their `none`: a component's own entry outweighs a page's, so without its own
-Glass's edge would never reach them.
+Glass's edge would never reach them. And it leans the card alone, as RFC 0004 chose.
+
+| Component                     | Moment         | Effect |
+| ----------------------------- | -------------- | ------ |
+| `checkbox`, `switch`, `radio` | `hover-border` | `edge` |
+| `card`                        | `hover-move`   | `tilt` |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer
