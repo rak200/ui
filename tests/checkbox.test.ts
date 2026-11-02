@@ -1348,6 +1348,27 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         },
     );
 
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        "gives the frame round a %s the control's own size and corners, which the edge's band takes",
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`);
+            form.style.setProperty('--ui-radius', '7px');
+            const control = box(toggle(form));
+            const frame = control.parentElement;
+
+            if (frame === null) {
+                throw new Error('the control has no frame');
+            }
+
+            const [own, round] = [getComputedStyle(control), getComputedStyle(frame)];
+
+            expect(
+                [round.width, round.height, round.borderTopLeftRadius],
+                'its size and corners',
+            ).toEqual([own.width, own.height, own.borderTopLeftRadius]);
+        },
+    );
+
     it('lights a checkbox in its sheen where the pointer is under Glass, and a switch not', async () => {
         const form = await under(
             '<ui-checkbox label="First"></ui-checkbox><ui-switch label="Second"></ui-switch>',

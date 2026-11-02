@@ -1406,6 +1406,24 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         expect(aloft()).toBe(true);
     });
 
+    it("gives the frame round a radio the control's own size and corners, which the edge's band takes", async () => {
+        const form = await under(fixture);
+        const control = radio(form);
+        const frame = control.parentElement;
+
+        if (frame === null) {
+            throw new Error('the control has no frame');
+        }
+
+        const [own, round] = [getComputedStyle(control), getComputedStyle(frame)];
+
+        expect([round.width, round.height, round.borderTopLeftRadius]).toEqual([
+            own.width,
+            own.height,
+            own.borderTopLeftRadius,
+        ]);
+    });
+
     it("follows the pointer over a radio under Glass, Glass's edge reaching it over the default theme's none: its sheen, a band, a cast and its boundary at rest", async () => {
         const form = await under(fixture, glass);
         form.style.setProperty('--ui-duration-state', '0s');
