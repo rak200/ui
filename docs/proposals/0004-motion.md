@@ -786,3 +786,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#353](https://github.com/rak200/ui/pull/353) | the card's fade in and out, and leave(), its own way out, announced before it goes      |
 | 4    | [#354](https://github.com/rak200/ui/pull/354) | the card under Matrix: materialize and erode, one filter over it and nothing copied     |
 | 4    | [#355](https://github.com/rak200/ui/pull/355) | the card under Glass: dissolve in and out, the grain beside the pieces in one module    |
+| 4    | [#356](https://github.com/rak200/ui/pull/356) | the toast's pointer and focus in every theme, a card's, its movements on its transform  |
