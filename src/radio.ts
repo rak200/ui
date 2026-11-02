@@ -1,4 +1,6 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
+import { checked } from './check.js';
+import { controlEffects } from './effects.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
 
@@ -135,152 +137,154 @@ export class UiRadio extends LitElement {
  * ```
  */
 export class UiRadioGroup extends LitElement {
-    /** The styles its shadow root adopts. */
-    static override readonly styles: CSSResult = css`
-        :host {
-            display: block;
-            font-family: ${reference('--ui-font')};
-        }
+    /** The styles its shadow root adopts: its own, and a drawn control's effects under the radio's taste name, the controls it draws being radios. */
+    static override readonly styles: CSSResult[] = [
+        css`
+            :host {
+                display: block;
+                font-family: ${reference('--ui-font')};
+            }
 
-        /* The vertical rhythm between the label, the set and whatever is under it. */
-        .stack {
-            display: flex;
-            flex-direction: column;
-            gap: calc(${reference('--ui-space')} / 2);
-        }
+            /* The vertical rhythm between the label, the set and whatever is under it. */
+            .stack {
+                display: flex;
+                flex-direction: column;
+                gap: calc(${reference('--ui-space')} / 2);
+            }
 
-        .label {
-            color: ${reference('--ui-color-text')};
-        }
+            .label {
+                color: ${reference('--ui-color-text')};
+            }
 
-        :host([disabled]) .label {
-            color: ${reference('--ui-color-text-muted')};
-        }
+            :host([disabled]) .label {
+                color: ${reference('--ui-color-text-muted')};
+            }
 
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: calc(${reference('--ui-space')} / 2);
-        }
+            .options {
+                display: flex;
+                flex-direction: column;
+                gap: calc(${reference('--ui-space')} / 2);
+            }
 
-        /* Laid out by the attribute rather than by the host's own CSS, so the drawing and
+            /* Laid out by the attribute rather than by the host's own CSS, so the drawing and
            the announcement cannot disagree: orientation sets both this rule and
            aria-orientation, and a host who reached for flex-direction instead would change
            one of the two. */
-        :host([orientation='horizontal']) .options {
-            flex-direction: row;
-            flex-wrap: wrap;
-            column-gap: calc(${reference('--ui-space')} * 2);
-        }
+            :host([orientation='horizontal']) .options {
+                flex-direction: row;
+                flex-wrap: wrap;
+                column-gap: calc(${reference('--ui-space')} * 2);
+            }
 
-        /* The label CONTAINS its control, so there is no IDREF to resolve and no id to
+            /* The label CONTAINS its control, so there is no IDREF to resolve and no id to
            generate — the same shape src/checkbox.ts takes, and the reason the click target
            covers the text for free. align-items rather than center: an option whose text
            wraps to two lines should keep its control on the first. */
-        .option {
-            display: flex;
-            align-items: center;
-            gap: calc(${reference('--ui-space')} / 2);
-            color: ${reference('--ui-color-text')};
-            cursor: pointer;
-        }
+            .option {
+                display: flex;
+                align-items: center;
+                gap: calc(${reference('--ui-space')} / 2);
+                color: ${reference('--ui-color-text')};
+                cursor: pointer;
+            }
 
-        .option:has(input:disabled) {
-            color: ${reference('--ui-color-text-muted')};
-            cursor: not-allowed;
-        }
+            .option:has(input:disabled) {
+                color: ${reference('--ui-color-text-muted')};
+                cursor: not-allowed;
+            }
 
-        /* appearance: none is this component's whole cost, and it is taken for the reason
+            /* appearance: none is this component's whole cost, and it is taken for the reason
            ARCHITECTURE.md states as a debt rather than a free hand: it removes the
            platform's dot, its target size and its behaviour under forced colors in one
            declaration, and each of those is answered below. What it buys is a radio that
            belongs beside the checkbox this kit already draws — a native 13px radio next to
            a drawn 24px checkbox would argue cosmetically for a difference that is
            semantic. */
-        input {
-            appearance: none;
-            box-sizing: border-box;
-            flex: none;
-            /* The user agent puts 3px around a radio. Left in, it would put the control
+            input {
+                appearance: none;
+                box-sizing: border-box;
+                flex: none;
+                /* The user agent puts 3px around a radio. Left in, it would put the control
                off centre against the text beside it. */
-            margin: 0;
-            inline-size: ${size};
-            block-size: ${size};
-            /* A circle, and the one measurement here that is not a token: the shape is what
+                margin: 0;
+                inline-size: ${size};
+                block-size: ${size};
+                /* A circle, and the one measurement here that is not a token: the shape is what
                tells a radio from a checkbox before either is read, so it cannot follow
                --ui-radius without a square radio becoming possible. */
-            border-radius: 50%;
-            background-color: ${reference('--ui-color-surface-control')};
-            background-repeat: no-repeat;
-            border: 1px solid ${reference('--ui-color-border')};
-            cursor: inherit;
-            /* The glow a theme lights a control with, as src/checkbox.ts draws it: lit in
+                border-radius: 50%;
+                background-color: ${reference('--ui-color-surface-control')};
+                background-repeat: no-repeat;
+                border: 1px solid ${reference('--ui-color-border')};
+                cursor: inherit;
+                /* The glow a theme lights a control with, as src/checkbox.ts draws it: lit in
                this colour, the accent, and the danger below on an invalid group. */
-            color: ${reference('--ui-color-accent')};
-            box-shadow: ${reference('--ui-elevation-control')};
-            /* What the mark is laid out against. */
-            position: relative;
-            /* The focus ring is deliberately not in this list, for the reason
+                color: ${reference('--ui-color-accent')};
+                box-shadow: ${reference('--ui-elevation-control')};
+                /* What the mark is laid out against. */
+                position: relative;
+                /* The focus ring is deliberately not in this list, for the reason
                src/button.ts gives beside its own: delaying the affordance that says *this
                is where you are* is the opposite of what it exists to do. */
-            transition:
-                background-color ${reference('--ui-duration-state')}
-                    ${reference('--ui-easing-state')},
-                border-color ${reference('--ui-duration-state')} ${reference('--ui-easing-state')};
-        }
+                transition:
+                    background-color ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')},
+                    border-color ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')};
+            }
 
-        input:checked {
-            background-color: ${reference('--ui-color-accent')};
-            border-color: ${reference('--ui-color-accent')};
-        }
+            input:checked {
+                background-color: ${reference('--ui-color-accent')};
+                border-color: ${reference('--ui-color-accent')};
+            }
 
-        /* The mark is painted over the fill, in the accent's label, the way the checkbox's
+            /* The mark is painted over the fill, in the accent's label, the way the checkbox's
            is and for its reason: a hole shows whatever the control sits on, which is the
            label only by coincidence. On the control's own ::before, with inset: -1px to
            reach back over the border, so the dot is centred on the whole control. */
-        input:checked::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            background-color: ${reference('--ui-color-accent-contrast')};
-            mask-image: ${mark};
-            mask-size: calc(${size} / 2);
-            mask-position: center;
-            mask-repeat: no-repeat;
-        }
+            input:checked::before {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                background-color: ${reference('--ui-color-accent-contrast')};
+                mask-image: ${mark};
+                mask-size: calc(${size} / 2);
+                mask-position: center;
+                mask-repeat: no-repeat;
+            }
 
-        /* Unselected, the boundary finishes the mix it already started — the same hover
+            /* Unselected, the boundary finishes the mix it already started — the same hover
            ui-input and ui-checkbox have, because it is the same boundary. Selected, the
            boundary is not what the eye is on, so the fill moves instead, the way
            ui-button's does.
 
            The disabled guard is measured rather than assumed: a disabled control still
            matches :hover. */
-        input:hover:not(:disabled) {
-            border-color: ${reference('--ui-color-text')};
-        }
+            input:hover:not(:disabled) {
+                border-color: ${reference('--ui-color-text')};
+            }
 
-        input:checked:hover:not(:disabled) {
-            background-color: ${reference('--ui-color-accent-hover')};
-            border-color: ${reference('--ui-color-accent-hover')};
-        }
+            input:checked:hover:not(:disabled) {
+                background-color: ${reference('--ui-color-accent-hover')};
+                border-color: ${reference('--ui-color-accent-hover')};
+            }
 
-        /* A visible focus ring is not decoration: removing it is the single most common way
+            /* A visible focus ring is not decoration: removing it is the single most common way
            a component stops being usable by keyboard — and on a radio group it is the only
            thing that says which option an arrow key just moved to. */
-        input:focus-visible {
-            outline: 2px solid ${reference('--ui-color-focus')};
-            outline-offset: 2px;
-        }
+            input:focus-visible {
+                outline: 2px solid ${reference('--ui-color-focus')};
+                outline-offset: 2px;
+            }
 
-        /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
-        input:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-            box-shadow: none;
-        }
+            /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
+            input:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+                box-shadow: none;
+            }
 
-        /* The error is the SET's, not one option's: what a radio group gets wrong is the
+            /* The error is the SET's, not one option's: what a radio group gets wrong is the
            choice. Read off the rendered aria-invalid rather than a reflected attribute on
            the host, which is the trap ui-checkbox measured — Lit reflects an empty string
            default as an empty attribute, and an attribute-presence selector matches every
@@ -289,24 +293,24 @@ export class UiRadioGroup extends LitElement {
            This used to retarget --ui-color-border over the whole subtree, because no
            selector in this sheet could reach a control two elements down in the host's
            tree. The controls are in here now, so the rule names them. */
-        .options[aria-invalid='true'] input {
-            border-color: ${reference('--ui-color-danger')};
-            color: ${reference('--ui-color-danger')};
-        }
+            .options[aria-invalid='true'] input {
+                border-color: ${reference('--ui-color-danger')};
+                color: ${reference('--ui-color-danger')};
+            }
 
-        .help {
-            color: ${reference('--ui-color-text')};
-            font-size: ${reference('--ui-text-supporting')};
-        }
+            .help {
+                color: ${reference('--ui-color-text')};
+                font-size: ${reference('--ui-text-supporting')};
+            }
 
-        /* Colour is not the only cue — the message says what is wrong, and aria-invalid
+            /* Colour is not the only cue — the message says what is wrong, and aria-invalid
            marks the group whatever the styling does. */
-        .error {
-            color: ${reference('--ui-color-danger')};
-            font-size: ${reference('--ui-text-supporting')};
-        }
+            .error {
+                color: ${reference('--ui-color-danger')};
+                font-size: ${reference('--ui-text-supporting')};
+            }
 
-        /* Forced colors replaces every author colour with one from the user's palette, so
+            /* Forced colors replaces every author colour with one from the user's palette, so
            the accent that says *selected* becomes the same Canvas as the surface that says
            *not* — the state disappears, silently, for the people who turned the mode on to
            see states more clearly. System colours are the ones forced colors keeps, so the
@@ -317,22 +321,24 @@ export class UiRadioGroup extends LitElement {
            Opacity is not a colour and is not forced, so the disabled control would still be
            half-transparent against a palette chosen for contrast. GrayText is what that
            mode has for *unavailable*, and it is a colour rather than a veil. */
-        @media (forced-colors: active) {
-            input:checked {
-                background-color: Highlight;
-                border-color: Highlight;
-            }
+            @media (forced-colors: active) {
+                input:checked {
+                    background-color: Highlight;
+                    border-color: Highlight;
+                }
 
-            input:checked::before {
-                background-color: HighlightText;
-            }
+                input:checked::before {
+                    background-color: HighlightText;
+                }
 
-            input:disabled {
-                border-color: GrayText;
-                opacity: 1;
+                input:disabled {
+                    border-color: GrayText;
+                    opacity: 1;
+                }
             }
-        }
-    `;
+        `,
+        controlEffects('radio'),
+    ];
 
     /** Takes part in the form it sits in. */
     static readonly formAssociated = true;
@@ -494,6 +500,7 @@ export class UiRadioGroup extends LitElement {
 
     /** A choice made by hand, mirrored back and re-dispatched. */
     readonly #changed = (event: Event): void => {
+        checked(event);
         this.value = (event.target as HTMLInputElement).value;
         this.dispatchEvent(new Event('change', { bubbles: true }));
     };

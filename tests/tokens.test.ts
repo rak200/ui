@@ -734,12 +734,19 @@ describe('tokenStyleSheet', () => {
         const rule = styleRule(parsed().cssRules[3]);
 
         expect(rule.selectorText).toBe(':where(:root)');
-        expect([...declarations(rule)]).toEqual(
-            Object.entries(taste.page ?? {}).map(([moment, effect]) => [
+        expect([...declarations(rule)]).toEqual([
+            ...Object.entries(taste.page ?? {}).map(([moment, effect]) => [
                 `${kinds.taste}${moment}`,
                 effect,
             ]),
-        );
+            // Then each component's own, under its tag.
+            ...Object.entries(taste.components ?? {}).flatMap(([component, moments]) =>
+                Object.entries(moments).map(([moment, effect]) => [
+                    `${kinds.taste}${component}-${moment}`,
+                    effect,
+                ]),
+            ),
+        ]);
     });
 
     it("takes the button's and the fields' effects as the default theme's taste, the package's motion", () => {
@@ -754,6 +761,11 @@ describe('tokenStyleSheet', () => {
                 'press-shadow': 'sink',
                 'invalid-border': 'pulse',
                 'invalid-fill': 'flash',
+            },
+            components: {
+                checkbox: { check: 'draw' },
+                switch: { check: 'spring' },
+                radio: { check: 'pop' },
             },
         });
     });
@@ -805,13 +817,18 @@ describe('tokenStyleSheet', () => {
         // `:root {`, the scheme axis, one line per token, `}`; a blank line; the media
         // rule, its own `:root {`, one line per name it collapses, and the two closing braces; a
         // blank line, and the contrast rule laid out the same way; a blank line, and the
-        // taste's block, its selector, one line per moment and its brace.
+        // taste's block, its selector, one line per moment — the page's and each component's —
+        // and its brace.
         expect(lines.length).toBe(
             tokens.length +
                 collapsed.length +
                 Object.keys(moreContrast).length +
                 13 +
                 Object.keys(taste.page ?? {}).length +
+                Object.values(taste.components ?? {}).reduce(
+                    (count, moments) => count + Object.keys(moments).length,
+                    0,
+                ) +
                 3,
         );
     });

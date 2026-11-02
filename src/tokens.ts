@@ -739,6 +739,13 @@ export const taste: Taste = {
         'invalid-border': 'pulse',
         'invalid-fill': 'flash',
     },
+    // A check is each drawn control's own moment, so it is named for each: the tick drawn on, the
+    // thumb sprung over, the dot popped in.
+    components: {
+        checkbox: { check: 'draw' },
+        switch: { check: 'spring' },
+        radio: { check: 'pop' },
+    },
 };
 
 /**

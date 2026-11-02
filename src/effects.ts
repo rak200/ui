@@ -1,8 +1,9 @@
 /**
  * The effects a component draws — RFC 0004's: one sheet for each kind of control, which a
  * component of that kind adopts. A button's, for what the pointer, the focus and a press do to it;
- * and a field's, for what the pointer and the focus do to a control a reader types or chooses in,
- * {@link fieldEffects}, which the rest of this docblock leaves to its own.
+ * a field's, for what the pointer and the focus do to a control a reader types or chooses in,
+ * {@link fieldEffects}; and a drawn control's, {@link controlEffects}. The rest of this docblock is
+ * the button's, and each of the others says its own.
  *
  * **Built for a component, under its own taste name.** A theme's taste reaches a component by its
  * tag — the button's is `--ui-taste-button-<moment>`, the menu's `--ui-taste-menu-<moment>` — so
@@ -1211,6 +1212,71 @@ export function fieldEffects(component: string, able: string): CSSResult {
                     --ui-fx-ring-left: ${reference('--ui-color-danger')};
                     --ui-fx-ring-right: ${reference('--ui-color-info')};
                 }
+            }
+        }
+    `;
+}
+
+/**
+ * The reference's spring for a switch's thumb: a `linear()` curve that carries it a fifth of its
+ * way past its place, back a little short of it, and to rest by four fifths of the time.
+ */
+const bounce = css`linear(0, 0.45 7%, 0.98 15%, 1.18 22%, 1.22 26%, 1.15 32%, 0.97 44%, 0.94 52%, 1.01 66%, 1 78%, 1)`;
+
+/**
+ * The sheet of a drawn control's effects, for the component whose tag less `ui-` is `component`:
+ * each effect drawn under that component's query, so its own taste reaches it — the checkbox's,
+ * the switch's, and the radio's, which `ui-radio-group` draws the radios of.
+ *
+ * **What it asks of the component.** Its control is the `<input>` in its shadow root, drawn with
+ * `appearance: none`, its mark on its `::before` — the tick, the dot; a switch's carries
+ * `role="switch"` and draws its thumb as a background layer, whose `background-position` is the
+ * third of its transitions; and `checked()` from `src/check.ts` is called from the control's
+ * `change` listener. The sheet comes after the component's own.
+ *
+ * Built once for each component, as it is defined: a function, and safe as one, for the reason
+ * {@link buttonEffects} gives.
+ */
+export function controlEffects(component: string): CSSResult {
+    /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
+    const drawn = query(component);
+
+    return css`
+        /* draw and pop: the mark src/check.ts plays on the control's ::before as the reader checks
+           it. The sheet decides and the script only reads: the effect, and the time and curve it
+           plays over, on a control that can be used. The tick drawn over an effect's time on the
+           curve an arrival takes; the dot popped in on the emphasis curve, which passes its rest. */
+        @container ${unsafeCSS(drawn('check', 'draw'))} {
+            input:not(:disabled) {
+                --ui-fx-check: draw;
+                --ui-fx-check-time: ${reference('--ui-duration-effect')};
+                --ui-fx-check-curve: ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @container ${unsafeCSS(drawn('check', 'pop'))} {
+            input:not(:disabled) {
+                --ui-fx-check: pop;
+                --ui-fx-check-time: ${reference('--ui-duration-effect')};
+                --ui-fx-check-curve: ${reference('--ui-easing-emphasis')};
+            }
+        }
+
+        /* While the mark plays the control takes its colour at once, for the reason src/check.ts
+           gives: its colours leave the transitions, which ends their fade where it was going. */
+        input[data-check] {
+            transition-property: none;
+        }
+
+        /* spring: the switch's thumb carried past its place and back on the reference's spring,
+           over a flourish, on a track that takes its colour at once. On the emphasis curve over
+           the state's fade, the thumb went 1.1px past a travel of 14px, white on a track still
+           pale, and read as the slide it stood in for — measured for RFC 0004; the spring takes it
+           about 3px past, short on the way back, and to rest. */
+        @container ${unsafeCSS(drawn('check', 'spring'))} {
+            input[role='switch'] {
+                transition-duration: 0s, 0s, ${reference('--ui-duration-flourish')};
+                transition-timing-function: linear, linear, ${bounce};
             }
         }
     `;

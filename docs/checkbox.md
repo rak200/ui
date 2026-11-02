@@ -21,6 +21,7 @@ import '@rak200/ui';
 - [The mixed state](#the-mixed-state)
 - [Events](#events)
 - [Interaction states](#interaction-states)
+- [Motion](#motion)
 - [Selecting on state](#selecting-on-state)
 - [Styling](#styling)
 
@@ -228,6 +229,30 @@ accent that says _checked_ would become the same `Canvas` as the surface that sa
 would disappear for the people who turned the mode on to see states more clearly. The checked and
 mixed states name `Highlight`, and the disabled one names `GrayText` instead of dimming, because
 opacity is not a colour and is not forced.
+
+## Motion
+
+**A check is each control's own moment** in RFC 0004's motion, chosen with `--ui-motion-check`, and
+where you choose nothing the theme's taste runs — the same in every shipped theme:
+
+| Control         | Effect   | What it draws                                               |
+| --------------- | -------- | ----------------------------------------------------------- |
+| `<ui-checkbox>` | `draw`   | the tick drawn on from its start to its end, over an effect |
+| `<ui-switch>`   | `spring` | the thumb carried past its place and back, on a spring      |
+
+**The tick is drawn as the reader checks the box, and never as it renders checked**, nor as a script
+checks it: the mark is played from the control's `change`, which a reader's check fires and a
+script's write does not. Clearing it plays nothing. While the tick is drawn the box takes its
+colour at once, since a fill still fading in left the white tick drawn on white. **The switch's
+thumb springs** about 3px past its place and back over `--ui-duration-flourish`, its track taking
+its colour at once; on the state's own fade the thumb read as the slide it stood in for.
+
+The tick takes `--ui-duration-effect` on `--ui-easing-enter`. Both collapse under
+`prefers-reduced-motion: reduce`, where the tick appears whole and the thumb slides at once, and an
+engine without container style queries draws neither. A theme's taste reaches each control under
+its own name, `--ui-taste-checkbox-check` or `--ui-taste-switch-check`. The effects are drawn by one
+internal sheet, `controlEffects()` in `src/effects.ts`, and the tick is played by one internal
+helper, `checked()` in `src/check.ts`, which each control calls from its `change` listener.
 
 ## Selecting on state
 

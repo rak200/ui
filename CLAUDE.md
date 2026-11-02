@@ -25,6 +25,7 @@ src/
 ├── reference.ts     # how a component writes a token — internal, and the only importer of Lit here
 ├── button.ts        # <ui-button>
 ├── card.ts          # <ui-card> — a surface, three regions, and the elevation category
+├── check.ts         # the check's mark — internal, the tick and the dot played on a reader's change
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
@@ -52,6 +53,7 @@ tests/               # mirrors src/, one test file per unit
 ├── reference.test.ts
 ├── button.test.ts
 ├── card.test.ts
+├── check.test.ts
 ├── checkbox.test.ts
 ├── description.test.ts
 ├── dialog.test.ts
@@ -373,6 +375,12 @@ explains. This file restates none of them.
   `spread()` to its `pointerdown` and `keydown` — a button through `pressed()` in `src/effects.ts`,
   one listener that calls the shatter's too. `tests/ripple.test.ts` holds a circle's `finished` before cancelling it: a
   cancelled animation hands out a new promise, which never settles.
+- **Why a drawn control's mark is played from its `change` rather than drawn under `:checked`, and
+  why the control takes its colour at once while it plays** — the docblock on `src/check.ts`. The
+  sheet's half is `controlEffects()` in `src/effects.ts`: the hand-offs, the `data-check` rule and
+  the switch's spring, scoped to `input[role='switch']`, the one control with a thumb. A check is
+  each control's own moment, so the default taste names it per component, and `ui-radio-group`
+  builds the sheet under the radio's name, since the controls it draws are radios.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

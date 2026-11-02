@@ -1,4 +1,6 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
+import { checked } from './check.js';
+import { controlEffects } from './effects.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
 
@@ -382,6 +384,7 @@ class UiToggle extends LitElement {
      * this element on its own.
      */
     protected readonly changed = (event: Event): void => {
+        checked(event);
         this.sync(event.target as HTMLInputElement);
         this.dispatchEvent(new Event('change', { bubbles: true }));
     };
@@ -589,6 +592,7 @@ export class UiCheckbox extends UiToggle {
                 }
             }
         `,
+        controlEffects('checkbox'),
     ];
 
     /** The shared drawing, showing the mixed state while `indeterminate` is set. */
@@ -683,6 +687,7 @@ export class UiSwitch extends UiToggle {
                 background-position: calc(100% - ${size} / 6) center;
             }
         `,
+        controlEffects('switch'),
     ];
 
     protected override readonly controlRole: string = 'switch';

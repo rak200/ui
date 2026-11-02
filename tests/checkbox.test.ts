@@ -9,6 +9,7 @@ import meta, { Checkbox, Invalid, Markup, States, Switch } from '../stories/chec
 import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
 type Toggle = UiCheckbox | UiSwitch;
@@ -1129,6 +1130,74 @@ describe('under forced colors', () => {
  * itself is graded in `description.test.ts`; what these are about is the composition —
  * `error` and the handed sentence coexisting on one control, in the order a reader needs.
  */
+/**
+ * The check — RFC 0004's — under the default theme's taste: the tick drawn on as the reader checks
+ * the box, and the switch's thumb sprung over. What the mark plays is graded in
+ * `tests/check.test.ts`, and the sheet's hand-offs in `tests/effects.test.ts`.
+ */
+describe("the check, under the default theme's taste", () => {
+    /** Inserts the token sheet, which carries the default theme's taste. */
+    function sheet(): void {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+    }
+
+    /** The marks playing on a control's `::before`. */
+    function marks(control: HTMLInputElement): Animation[] {
+        return control
+            .getAnimations({ subtree: true })
+            .filter(
+                (animation) => (animation.effect as KeyframeEffect).pseudoElement === '::before',
+            );
+    }
+
+    it('draws the tick on as the reader checks the box, the box taking its colour at once', async () => {
+        sheet();
+
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        await userEvent.click(box(element));
+
+        expect(marks(box(element)), 'the tick').toHaveLength(1);
+        // The click began the fill's fade; the mark took the colours out of the transitions,
+        // which ended it where it was going.
+        expect(
+            box(element)
+                .getAnimations()
+                .filter((animation) => animation instanceof CSSTransition),
+            'no colour still fading',
+        ).toEqual([]);
+    });
+
+    it('draws nothing as a box renders checked, or as a script checks it', async () => {
+        sheet();
+
+        const form = await mount('<ui-checkbox label="Send a receipt" checked></ui-checkbox>');
+        const element = toggle(form);
+
+        expect(marks(box(element)), 'rendered checked').toEqual([]);
+
+        element.checked = false;
+        await element.updateComplete;
+        element.checked = true;
+        await element.updateComplete;
+
+        expect(marks(box(element)), 'checked by a script').toEqual([]);
+    });
+
+    it("springs the switch's thumb over, its track taking its colour at once", async () => {
+        sheet();
+
+        const form = await mount('<ui-switch label="Notify me"></ui-switch>');
+        const styles = getComputedStyle(box(toggle(form)));
+
+        expect(styles.transitionDuration).toBe('0s, 0s, 0.52s');
+        expect(styles.transitionTimingFunction).toMatch(/^linear, linear, linear\(/);
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: Toggle, detail: unknown): boolean {
