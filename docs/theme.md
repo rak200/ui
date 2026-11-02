@@ -80,7 +80,9 @@ it, brings no colour of its own and sinks nothing. A field tints and glows under
 without darkening; at the focus it takes the tint and a burst, its ring glitches and its label
 glows; and in error its boundary splits into the danger and the info, its fill as it is. A field
 leaves the hover colour out, so the theme names the tint for each field at the focus, over the
-page's highlight. Each `none` in it takes back an effect the default theme's taste names, which
+page's highlight. A drawn control tints and glows under the pointer, its boundary at rest; at the
+focus it takes its hover colour and a burst, its ring glitches and its label glows; and in error
+its boundary splits, its fill as it is. Each `none` in it takes back an effect the default theme's taste names, which
 would otherwise run under Matrix too.
 
 | Moment           | Effect      |

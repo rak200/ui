@@ -9,7 +9,7 @@ import meta, { Checkbox, Invalid, Markup, States, Switch } from '../stories/chec
 import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
-import { glass, themeStyleSheet, type Theme } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
@@ -1202,8 +1202,9 @@ describe("the check, under the default theme's taste", () => {
 
 /**
  * The pointer, the focus and a form's moments on a drawn control — RFC 0004's — under the default
- * theme's taste, and what Glass keeps of today's. What each effect draws is graded on a control of
- * the suite's own in `tests/effects.test.ts`; what these are about is that both elements draw it.
+ * theme's taste, Matrix's in its place, and what Glass keeps of today's. What each effect draws is
+ * graded on a control of the suite's own in `tests/effects.test.ts`; what these are about is that
+ * both elements draw it.
  */
 describe("the pointer, the focus and a form's moments, under the default theme's taste", () => {
     /** The button's drop, as the engine computes it on a light page. */
@@ -1346,12 +1347,74 @@ describe("the pointer, the focus and a form's moments, under the default theme's
     );
 
     it.each([['ui-checkbox'], ['ui-switch']])(
+        'tints a %s under the pointer under Matrix and glows it, its boundary at rest',
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`, matrix);
+            stilled(form);
+            form.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+            form.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+            const control = box(toggle(form));
+            const resting = getComputedStyle(control).backgroundColor;
+
+            await userEvent.hover(control);
+
+            const styles = getComputedStyle(control);
+
+            expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
+            expect(styles.backgroundColor, 'tinted').not.toBe(resting);
+            expect(getComputedStyle(control, '::after').boxShadow, 'glowing').toBe(
+                `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}`,
+            );
+        },
+    );
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        'takes the hover colour into a %s at the focus under Matrix, bursts light round it and glows its label',
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`, matrix);
+            stilled(form);
+            form.style.setProperty('--ui-color-hover', 'rgb(4, 5, 6)');
+            const element = toggle(form);
+
+            await userEvent.tab();
+
+            const styles = getComputedStyle(box(element));
+
+            expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
+            expect(styles.animationName, 'the burst').toBe('ui-burst, none, none');
+            expect(getComputedStyle(part(element, 'text')).textShadow, 'the label').toMatch(
+                / 0px 0px 8px$/,
+            );
+        },
+    );
+
+    it('glitches the ring onto a drawn control under Matrix, which hands it the flight', async () => {
+        await under('<ui-checkbox label="Notify me"></ui-checkbox>', matrix);
+
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        'splits a %s in error under Matrix, and flashes nothing',
+        async (tag) => {
+            const form = await under(
+                `<${tag} label="Notify me" error="Required."></${tag}>`,
+                matrix,
+            );
+
+            expect(getComputedStyle(box(toggle(form))).animationName).toBe('none, ui-split, none');
+        },
+    );
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
         'sends a band of the danger out from a %s in error, and flashes its fill',
         async (tag) => {
             const form = await under(`<${tag} label="Notify me" error="Required."></${tag}>`);
 
             expect(getComputedStyle(box(toggle(form))).animationName).toBe(
-                'ui-pulse-danger, ui-flash',
+                'none, ui-pulse-danger, ui-flash',
             );
         },
     );

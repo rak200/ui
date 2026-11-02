@@ -411,6 +411,12 @@ describe('a theme, as the browser renders it', () => {
                 throw new Error('the checkbox rendered no control');
             }
 
+            // Read as the control rests: an error's split is added to the glow while it plays,
+            // and settles.
+            for (const animation of box.getAnimations()) {
+                animation.finish();
+            }
+
             expect(getComputedStyle(box).boxShadow).toBe(
                 `color(srgb ${colour} / ${ring}) 0px 0px 0px 1px, color(srgb ${colour} / ${spread}) 0px 0px 18px 0px`,
             );

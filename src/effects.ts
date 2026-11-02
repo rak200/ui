@@ -1223,7 +1223,18 @@ export function fieldEffects(component: string, able: string): CSSResult {
  */
 const controlLights = [
     ['hover-shadow', 'raise'],
+    ['hover-shadow', 'glow'],
     ['focus-shadow', 'raise'],
+] as const;
+
+/**
+ * The effects that draw a drawn control's boundary or its fill under the pointer, which an error's
+ * red outlasts: what the red is drawn after once one is chosen.
+ */
+const controlPointing = [
+    ['hover-border', 'none'],
+    ['hover-fill', 'highlight'],
+    ['hover-fill', 'tint'],
 ] as const;
 
 /**
@@ -1254,6 +1265,11 @@ export function controlEffects(component: string): CSSResult {
     /** True wherever any of the lights round the control is chosen. */
     const lit = unsafeCSS(
         controlLights.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
+    /** True wherever an effect draws the boundary or the fill under the pointer. */
+    const pointing = unsafeCSS(
+        controlPointing.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
     );
 
     return css`
@@ -1312,8 +1328,12 @@ export function controlEffects(component: string): CSSResult {
            hover colour, a secondary button's on an empty control and the deeper accent on a full
            one, after the boundary's, so a full control's fill is the fill's to choose. A full
            control's boundary goes with its fill, as it does today: left at the accent it drew a
-           ring round a control that is only being pointed at. raise: the button's drop, on the
-           lights' layer.
+           ring round a control that is only being pointed at. tint: the button's and a field's, a
+           little of the accent in an empty control's fill, and the deeper accent in a full one's,
+           as highlight draws it: in the empty control's tint a full one lost the accent under the
+           pointer, and its mark with it — measured for RFC 0004, under Matrix. raise and glow: the
+           button's drop and its light of the accent, on the lights' layer. Whatever draws the
+           boundary or the fill, a control in error keeps its red, drawn after them all.
 
            A full control is a checked one, or a checkbox in the mixed state, which is drawn full: a
            radio is indeterminate wherever its group has no choice. In error each keeps the boundary
@@ -1330,11 +1350,6 @@ export function controlEffects(component: string): CSSResult {
                     background-color: ${reference('--ui-color-accent')};
                     border-color: ${reference('--ui-color-accent')};
                 }
-
-                input[aria-invalid='true']:hover:not(:disabled):not(:focus-visible),
-                [aria-invalid='true'] input:hover:not(:disabled):not(:focus-visible) {
-                    border-color: ${reference('--ui-color-danger')};
-                }
             }
 
             @container ${unsafeCSS(drawn('hover-fill', 'highlight'))} {
@@ -1349,9 +1364,34 @@ export function controlEffects(component: string): CSSResult {
                 }
             }
 
+            @container ${unsafeCSS(drawn('hover-fill', 'tint'))} {
+                input:hover:not(:disabled):not(:focus-visible) {
+                    background-color: ${tint};
+                }
+
+                input:checked:hover:not(:disabled):not(:focus-visible),
+                input[type='checkbox']:indeterminate:hover:not(:disabled):not(:focus-visible) {
+                    background-color: ${reference('--ui-color-accent-hover')};
+                    border-color: ${reference('--ui-color-accent-hover')};
+                }
+            }
+
+            @container ${pointing} {
+                input[aria-invalid='true']:hover:not(:disabled):not(:focus-visible),
+                [aria-invalid='true'] input:hover:not(:disabled):not(:focus-visible) {
+                    border-color: ${reference('--ui-color-danger')};
+                }
+            }
+
             @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
                 input:hover:not(:disabled):not(:focus-visible) {
                     --ui-fx-lit-pointer: ${raise};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-shadow', 'glow'))} {
+                input:hover:not(:disabled):not(:focus-visible) {
+                    --ui-fx-lit-pointer: ${glow};
                 }
             }
         }
@@ -1359,6 +1399,46 @@ export function controlEffects(component: string): CSSResult {
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
             input:focus-visible {
                 --ui-fx-lit-focus: ${raise};
+            }
+        }
+
+        /* highlight, for the fill at the focus: the pointer's, for as long as the focus stays — the
+           hover colour in an empty control and the deeper accent in a full one, its boundary with
+           it, and a control in error keeping its red after them. */
+        @container ${unsafeCSS(drawn('focus-fill', 'highlight'))} {
+            input:focus-visible {
+                background-color: ${reference('--ui-color-hover')};
+            }
+
+            input:checked:focus-visible,
+            input[type='checkbox']:indeterminate:focus-visible {
+                background-color: ${reference('--ui-color-accent-hover')};
+                border-color: ${reference('--ui-color-accent-hover')};
+            }
+
+            input[aria-invalid='true']:focus-visible,
+            [aria-invalid='true'] input:focus-visible {
+                border-color: ${reference('--ui-color-danger')};
+            }
+        }
+
+        /* burst: the button's light bursting out round the control as the reader sees the focus
+           arrive, and gone, on the focus's shadow's place in the control's list, at the button's
+           size, which is a drawn control's: 10px out and 15px soft. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'burst'))} {
+            input:focus-visible {
+                --ui-fx-run-focus-shadow: ui-burst ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @keyframes ui-burst {
+            from {
+                box-shadow: 0 0 0 0 rgb(from ${reference('--ui-color-accent')} r g b / 0.8);
+            }
+
+            to {
+                box-shadow: 0 0 15px 10px rgb(from ${reference('--ui-color-accent')} r g b / 0);
             }
         }
 
@@ -1378,6 +1458,18 @@ export function controlEffects(component: string): CSSResult {
                     --ui-fx-ring: glide;
                     --ui-fx-ring-time: ${reference('--ui-duration-travel')};
                     --ui-fx-ring-curve: ${reference('--ui-easing-move')};
+                }
+            }
+
+            /* The glitch, as the button hands it: shaken, and split into two lines thrown either
+               way in the danger and the info, a flourish on a straight clock. */
+            @container ${unsafeCSS(drawn('focus-ring', 'glitch'))} {
+                input:focus-visible {
+                    --ui-fx-ring: glitch;
+                    --ui-fx-ring-time: ${reference('--ui-duration-flourish')};
+                    --ui-fx-ring-curve: linear;
+                    --ui-fx-ring-left: ${reference('--ui-color-danger')};
+                    --ui-fx-ring-right: ${reference('--ui-color-info')};
                 }
             }
         }
@@ -1401,15 +1493,32 @@ export function controlEffects(component: string): CSSResult {
             }
         }
 
+        /* glow: a light of the accent behind the control's label, which leaves its colour as it
+           is, while the focus stays, as a field's. */
+        @container ${unsafeCSS(drawn('focus-label', 'glow'))} {
+            input + span {
+                transition: text-shadow ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-state')};
+            }
+
+            input:focus-visible + span {
+                text-shadow: 0 0 0.5rem rgb(from ${reference('--ui-color-accent')} r g b / 0.7);
+            }
+        }
+
         /* The control's one list of animations, read from the kinds that animate it, each from a
-           property of its own, so none takes another's away: an error's boundary, which the pulse
-           writes, and an error's fill. The boundary's is added to what is under it, so a ring goes
-           beside the glow a theme lights the control with rather than in its place — measured for
-           RFC 0004 in all three engines; Chromium alone loses a glow written from currentColor,
-           which no shipped theme pairs with a ring. A kind that plays nothing reads as none. */
+           property of its own, so none takes another's away: the focus's shadow, which the burst
+           writes; an error's boundary, which the pulse and the split write; and an error's fill.
+           The two shadows are added to what is under it, so they go beside the glow a theme lights
+           the control with rather than in its place — measured for RFC 0004 in all three engines.
+           Chromium alone loses a glow written from currentColor while one is added to it, as
+           Matrix's is: its ring and glow go for the burst's flourish and the split's rounds, and
+           come back. A kind that plays nothing reads as none. */
         input {
-            animation: var(--ui-fx-run-error-border, none), var(--ui-fx-run-error-fill, none);
-            animation-composition: add, replace;
+            animation:
+                var(--ui-fx-run-focus-shadow, none), var(--ui-fx-run-error-border, none),
+                var(--ui-fx-run-error-fill, none);
+            animation-composition: add, add, replace;
         }
 
         /* pulse: a band of the danger sent out from a control in error, or from each control of a
@@ -1431,6 +1540,44 @@ export function controlEffects(component: string): CSSResult {
 
             to {
                 box-shadow: 0 0 0 10px rgb(from ${reference('--ui-color-danger')} r g b / 0);
+            }
+        }
+
+        /* split: the boundary split into the danger and the info where it is, thrown a few pixels
+           either way and back, as a field's is, on the error boundary's place in the list. Its
+           rounds are an effect's, about half the pulse's, so it plays twice as many and ends close
+           to it, then rests. */
+        @container ${unsafeCSS(drawn('invalid-border', 'split'))} {
+            input[aria-invalid='true'],
+            [aria-invalid='true'] input {
+                --ui-fx-run-error-border: ui-split ${reference('--ui-duration-effect')} linear
+                    calc(${reference('--ui-iteration-settle')} * 2);
+            }
+        }
+
+        @keyframes ui-split {
+            20% {
+                box-shadow:
+                    -3px 0 0 0 ${reference('--ui-color-danger')},
+                    3px 0 0 0 ${reference('--ui-color-info')};
+            }
+
+            40% {
+                box-shadow:
+                    3px 0 0 0 ${reference('--ui-color-danger')},
+                    -3px 0 0 0 ${reference('--ui-color-info')};
+            }
+
+            60% {
+                box-shadow:
+                    -2px 1px 0 0 ${reference('--ui-color-danger')},
+                    2px -1px 0 0 ${reference('--ui-color-info')};
+            }
+
+            80% {
+                box-shadow:
+                    1px 0 0 0 ${reference('--ui-color-danger')},
+                    -1px 0 0 0 ${reference('--ui-color-info')};
             }
         }
 

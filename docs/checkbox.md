@@ -271,6 +271,13 @@ the danger back, four rounds of `--ui-duration-flourish` that settle. The flash 
 mixed into the surface, so at each round's start the mark of a checked or mixed box, and a switch's
 thumb, lose most of their contrast against the tint until the round fades.
 
+**Under [Matrix](theme.md#matrix)** a control tints and glows under the pointer, its boundary at
+rest; at the focus it takes the hover colour and a burst of light, its ring glitches and its label
+glows; and in error its boundary splits into the danger and the info, its fill as it is. The burst
+and the split are added to the ring and glow the theme lights the control with, and Chromium draws
+that ring and glow transparent while either plays, where Firefox and WebKit keep them. Whatever
+draws the boundary or the fill under the pointer or at the focus, a control in error keeps its red.
+
 The effects are drawn by one internal sheet, `controlEffects()` in `src/effects.ts`, and the tick
 is played by one internal helper, `checked()` in `src/check.ts`, which each control calls from its
 `change` listener.

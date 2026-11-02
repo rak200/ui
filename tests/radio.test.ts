@@ -19,7 +19,7 @@ import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiRadio, UiRadioGroup } from '../src/radio.js';
 import type { UiCheckbox } from '../src/checkbox.js';
-import { glass, themeStyleSheet, type Theme } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -1314,9 +1314,9 @@ describe("the check, under the default theme's taste", () => {
 
 /**
  * The pointer, the focus and a form's moments on a radio — RFC 0004's — under the default theme's
- * taste, and what Glass keeps of today's. What each effect draws is graded on a control of the
- * suite's own in `tests/effects.test.ts`; what these are about is that the group draws it on its
- * radios.
+ * taste, Matrix's in its place, and what Glass keeps of today's. What each effect draws is graded on
+ * a control of the suite's own in `tests/effects.test.ts`; what these are about is that the group
+ * draws it on its radios.
  */
 describe("the pointer, the focus and a form's moments, under the default theme's taste", () => {
     /** The button's drop, as the engine computes it on a light page. */
@@ -1437,7 +1437,67 @@ describe("the pointer, the focus and a form's moments, under the default theme's
 
         for (const control of controls(form)) {
             expect(getComputedStyle(control).animationName, control.value).toBe(
-                'ui-pulse-danger, ui-flash',
+                'none, ui-pulse-danger, ui-flash',
+            );
+        }
+    });
+
+    it('tints a radio under the pointer under Matrix and glows it, its boundary at rest', async () => {
+        const form = await under(fixture, matrix);
+        stilled(form);
+        form.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        form.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        const control = radio(form);
+        const resting = getComputedStyle(control).backgroundColor;
+
+        await userEvent.hover(control);
+
+        const styles = getComputedStyle(control);
+
+        expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
+        expect(styles.backgroundColor, 'tinted').not.toBe(resting);
+        expect(getComputedStyle(control, '::after').boxShadow, 'glowing').toBe(
+            `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}`,
+        );
+    });
+
+    it('takes the hover colour into a radio at the focus under Matrix, bursts light round it and glows its label', async () => {
+        const form = await under(fixture, matrix);
+        stilled(form);
+        form.style.setProperty('--ui-color-hover', 'rgb(4, 5, 6)');
+        const control = radio(form);
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(control);
+
+        expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
+        expect(styles.animationName, 'the burst').toBe('ui-burst, none, none');
+        expect(
+            control.nextElementSibling === null
+                ? null
+                : getComputedStyle(control.nextElementSibling).textShadow,
+            'the label',
+        ).toMatch(/ 0px 0px 8px$/);
+    });
+
+    it('glitches the ring onto a radio under Matrix, which hands it the flight', async () => {
+        await under(fixture, matrix);
+
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it('splits every radio of a set in error under Matrix, and flashes none', async () => {
+        const form = await under(
+            fixture.replace('name="plan"', 'name="plan" error="Pick one."'),
+            matrix,
+        );
+
+        for (const control of controls(form)) {
+            expect(getComputedStyle(control).animationName, control.value).toBe(
+                'none, ui-split, none',
             );
         }
     });
