@@ -146,7 +146,9 @@ export function themeStyleSheet(theme: Theme): string {
  * its boundary splits into the danger and the info, its fill as it is. A drawn control tints and
  * glows under the pointer, its boundary at rest; at the focus it takes its hover colour and a burst,
  * its ring glitches and its label glows; and in error its boundary splits, its fill as it is. A card
- * takes the tint and glows under the pointer, and takes the tint and a burst at a focus it holds.
+ * takes the tint and glows under the pointer, and takes the tint and a burst at a focus it holds; it
+ * is put together from pieces appearing at random as it arrives, and broken into pieces vanishing at
+ * random as it leaves.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -217,12 +219,12 @@ export const matrix: Theme = {
         },
         // A field and the card leave the hover colour out, so at the focus each takes a little of
         // the accent in the highlight's place, as RFC 0004 chose for every component that leaves it
-        // out.
+        // out. And the card comes and goes in pieces.
         components: {
             input: { 'focus-fill': 'tint' },
             textarea: { 'focus-fill': 'tint' },
             select: { 'focus-fill': 'tint' },
-            card: { 'focus-fill': 'tint' },
+            card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
         },
     },
 };

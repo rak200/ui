@@ -2723,4 +2723,39 @@ describe("a surface's effects", () => {
         );
         expect(getComputedStyle(inner.host).animationName, 'the one it holds').toBe('none');
     });
+
+    it.each([
+        ['enter', 'materialize', '--ui-duration-enter', '--ui-easing-enter'],
+        ['exit', 'erode', '--ui-duration-exit', '--ui-easing-exit'],
+    ])(
+        "hands the pieces their effect where %s: %s is chosen, with that moment's time and curve",
+        (moment, effect, time, curve) => {
+            const { region, host } = surface('test', { [moment]: effect });
+            region.style.setProperty(time, '0.7s');
+            region.style.setProperty(curve, 'ease-in');
+
+            const styles = getComputedStyle(host);
+
+            expect(
+                ['', '-time', '-curve'].map((kind) =>
+                    styles.getPropertyValue(`--ui-fx-${moment}${kind}`),
+                ),
+            ).toEqual([effect, '0.7s', 'ease-in']);
+        },
+    );
+
+    it('hands the pieces nothing where nothing is chosen, nor what a surface round it was handed', () => {
+        const plain = surface('test', {});
+        const outer = surface('test', { enter: 'materialize', exit: 'erode' });
+        const inner = surface('test', { enter: 'none', exit: 'none' });
+        outer.host.append(inner.region);
+
+        for (const { host } of [plain, inner]) {
+            expect(
+                ['enter', 'exit'].map((moment) =>
+                    getComputedStyle(host).getPropertyValue(`--ui-fx-${moment}`),
+                ),
+            ).toEqual(['none', 'none']);
+        }
+    });
 });

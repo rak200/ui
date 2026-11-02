@@ -83,8 +83,9 @@ leaves the hover colour out, so the theme names the tint for each field at the f
 page's highlight. A drawn control tints and glows under the pointer, its boundary at rest; at the
 focus it takes its hover colour and a burst, its ring glitches and its label glows; and in error
 its boundary splits, its fill as it is. A card takes the tint and glows under the pointer; at a
-focus it holds it takes the tint and a burst. The card leaves the hover colour out as a field does,
-so the theme names the tint for it at the focus too. Each `none` in it takes back an effect the
+focus it holds it takes the tint and a burst; and it comes and goes in pieces, appearing and
+vanishing at random. The card leaves the hover colour out as a field does, so the theme names the
+tint for it at the focus too, and its entrance and its exit are its own moments. Each `none` in it takes back an effect the
 default theme's taste names, which would otherwise run under Matrix too.
 
 | Moment           | Effect      |
@@ -103,10 +104,12 @@ default theme's taste names, which would otherwise run under Matrix too.
 | `invalid-border` | `split`     |
 | `invalid-fill`   | `none`      |
 
-| Component                     | Moment       | Effect |
-| ----------------------------- | ------------ | ------ |
-| `input`, `textarea`, `select` | `focus-fill` | `tint` |
-| `card`                        | `focus-fill` | `tint` |
+| Component                     | Moment       | Effect        |
+| ----------------------------- | ------------ | ------------- |
+| `input`, `textarea`, `select` | `focus-fill` | `tint`        |
+| `card`                        | `focus-fill` | `tint`        |
+| `card`                        | `enter`      | `materialize` |
+| `card`                        | `exit`       | `erode`       |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both

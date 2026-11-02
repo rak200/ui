@@ -160,6 +160,15 @@ the default theme leaves it as it was. The isolation is drawn on the card itself
 too: a fill chosen on the one card alone, and not round it, lies behind the card's own and does not
 show.
 
+Under Matrix a card also comes and goes in pieces: it is put together from pieces appearing where
+they belong, at random, as it is put on the page, and broken into pieces vanishing where they are,
+at random, as [`leave()`](#taking-a-card-away) takes it away. The last piece lands 650ms in, and the
+last goes about a second after `leave()`, each in proportion to `--ui-duration-enter` and
+`--ui-duration-exit` from their defaults. **The pieces are a filter over the card as it is drawn,
+and nothing is copied**: a copy of what you put in a card would be that content again — an iframe
+loaded and a video played once a copy, a field in your form submitted with each copy's value. While
+it is cut, the card carries an inline `filter` and `rotate` of its own, and takes both away after.
+
 **Under [Glass](theme.md#glass)** a card takes its tint where the pointer is, casts its shadow away
 from the pointer, lights a band along its boundary nearest it, and leans toward it, five degrees at
 most each way, over `--ui-duration-follow` — each as strong as the pointer is near, so they fade as
