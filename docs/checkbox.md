@@ -250,9 +250,22 @@ its colour at once; on the state's own fade the thumb read as the slide it stood
 The tick takes `--ui-duration-effect` on `--ui-easing-enter`. Both collapse under
 `prefers-reduced-motion: reduce`, where the tick appears whole and the thumb slides at once, and an
 engine without container style queries draws neither. A theme's taste reaches each control under
-its own name, `--ui-taste-checkbox-check` or `--ui-taste-switch-check`. The effects are drawn by one
-internal sheet, `controlEffects()` in `src/effects.ts`, and the tick is played by one internal
-helper, `checked()` in `src/check.ts`, which each control calls from its `change` listener.
+its own name, `--ui-taste-checkbox-check` or `--ui-taste-switch-check`.
+
+**Under the pointer and at the focus, the default theme's taste answers as it answers a button.**
+Under the pointer an empty control's boundary stays as it rests rather than darkening —
+`hover-border: none`, named for each control — and its fill takes the hover colour instead; a full
+one, checked or mixed, takes the deeper accent as it does today, its boundary with it, so no ring is
+drawn round a control that is only being pointed at. A drop shadow raises it. At the focus the same drop raises
+it and it lifts two pixels, its mark with it, and the focus ring glides over from the control the
+reader saw it on last. The shadows are drawn on the control's `::after`, so a theme's glow stays
+under them; each answer to the pointer yields to the focus, and a control in error keeps its red.
+`--ui-motion-hover-border: highlight` keeps today's darkening, which is that moment's answer from
+before effects existed.
+
+The effects are drawn by one internal sheet, `controlEffects()` in `src/effects.ts`, and the tick
+is played by one internal helper, `checked()` in `src/check.ts`, which each control calls from its
+`change` listener.
 
 ## Selecting on state
 

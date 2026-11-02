@@ -547,25 +547,32 @@ taste.page['hover-shadow']; // 'raise'
 taste.page['press-move']; // 'squish'
 ```
 
-| Moment           | Effect   | What it draws                                       |
-| ---------------- | -------- | --------------------------------------------------- |
-| `hover-shadow`   | `raise`  | a drop shadow under the pointer                     |
-| `focus-shadow`   | `raise`  | the same drop, at the focus                         |
-| `focus-move`     | `lift`   | two pixels up at the focus, the ring with it        |
-| `focus-ring`     | `glide`  | the ring glided over from the control seen last     |
-| `focus-label`    | `accent` | a field's label in the accent, at the focus         |
-| `press-move`     | `squish` | squeezed under a press, springing back once let go  |
-| `press-shadow`   | `sink`   | its shadow sunk inside under a press                |
-| `invalid-border` | `pulse`  | a band of the danger sent out from a field in error |
-| `invalid-fill`   | `flash`  | a field in error tinted from the danger, and back   |
+| Moment           | Effect      | What it draws                                                 |
+| ---------------- | ----------- | ------------------------------------------------------------- |
+| `hover-fill`     | `highlight` | a drawn control's fill in the hover colour, under the pointer |
+| `hover-shadow`   | `raise`     | a drop shadow under the pointer                               |
+| `focus-shadow`   | `raise`     | the same drop, at the focus                                   |
+| `focus-move`     | `lift`      | two pixels up at the focus, the ring with it                  |
+| `focus-ring`     | `glide`     | the ring glided over from the control seen last               |
+| `focus-label`    | `accent`    | a field's label in the accent, at the focus                   |
+| `press-move`     | `squish`    | squeezed under a press, springing back once let go            |
+| `press-shadow`   | `sink`      | its shadow sunk inside under a press                          |
+| `invalid-border` | `pulse`     | a band of the danger sent out from a field in error           |
+| `invalid-fill`   | `flash`     | a field in error tinted from the danger, and back             |
 
-A check is each drawn control's own moment, so it is named for each:
+A check is each drawn control's own moment, so it is named for each. So is a drawn control's
+boundary under the pointer, which stays as it rests while the fill moves: named for the page, its
+`none` would take a field's darkening too, which is a field's answer to the pointer beside the
+raise.
 
-| Component  | Moment  | Effect   | What it draws                                  |
-| ---------- | ------- | -------- | ---------------------------------------------- |
-| `checkbox` | `check` | `draw`   | the tick drawn on as the reader checks the box |
-| `switch`   | `check` | `spring` | the thumb sprung over to the other side        |
-| `radio`    | `check` | `pop`    | the dot popped in as the reader chooses        |
+| Component  | Moment         | Effect   | What it draws                                  |
+| ---------- | -------------- | -------- | ---------------------------------------------- |
+| `checkbox` | `check`        | `draw`   | the tick drawn on as the reader checks the box |
+| `checkbox` | `hover-border` | `none`   | the boundary at rest under the pointer         |
+| `switch`   | `check`        | `spring` | the thumb sprung over to the other side        |
+| `switch`   | `hover-border` | `none`   | the boundary at rest under the pointer         |
+| `radio`    | `check`        | `pop`    | the dot popped in as the reader chooses        |
+| `radio`    | `hover-border` | `none`   | the boundary at rest under the pointer         |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
@@ -580,7 +587,7 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 `none` keeps a component as it was for that moment. An entry arrives with the first component that
 draws the effect it names — [the button](button.md#motion) draws the pointer's, the focus's and a
 press's, [a field](input.md#motion) the pointer's, the focus's, its label's and an error's, and
-[a drawn control](checkbox.md#motion) its check — and
+[a drawn control](checkbox.md#motion) its check, the pointer's and the focus's — and
 the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
 button answers as the button does, and a field's box lifts rather than its control.
 

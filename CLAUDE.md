@@ -380,7 +380,13 @@ explains. This file restates none of them.
   sheet's half is `controlEffects()` in `src/effects.ts`: the hand-offs, the `data-check` rule and
   the switch's spring, scoped to `input[role='switch']`, the one control with a thumb. A check is
   each control's own moment, so the default taste names it per component, and `ui-radio-group`
-  builds the sheet under the radio's name, since the controls it draws are radios.
+  builds the sheet under the radio's name, since the controls it draws are radios. **Why the
+  default taste names a drawn control's `hover-border: none` per component rather than on the
+  page, and why Glass names the edge back for each** — the comments beside both tastes, in
+  `src/tokens.ts` and `src/theme.ts`: a component's own entry outweighs a page's, and on the page
+  the `none` would take a field's darkening. **Why the full control's rule under the pointer names
+  a checkbox's mixed state by its type** — the comment beside it in `src/effects.ts`: a radio is
+  indeterminate wherever its group has no choice.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

@@ -9,6 +9,7 @@ import meta, { Checkbox, Invalid, Markup, States, Switch } from '../stories/chec
 import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
+import { glass, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
@@ -1193,9 +1194,136 @@ describe("the check, under the default theme's taste", () => {
         const form = await mount('<ui-switch label="Notify me"></ui-switch>');
         const styles = getComputedStyle(box(toggle(form)));
 
-        expect(styles.transitionDuration).toBe('0s, 0s, 0.52s');
-        expect(styles.transitionTimingFunction).toMatch(/^linear, linear, linear\(/);
+        // The fourth is the lift's, the control's place, which the default theme moves at the focus.
+        expect(styles.transitionDuration).toBe('0s, 0s, 0.52s, 0.24s');
+        expect(styles.transitionTimingFunction).toMatch(/^linear, linear, linear\(.+\), ease-out$/);
     });
+});
+
+/**
+ * The pointer and the focus on a drawn control — RFC 0004's — under the default theme's taste, and
+ * what Glass keeps of today's. What each effect draws is graded on a control of the suite's own in
+ * `tests/effects.test.ts`; what these are about is that both elements draw it.
+ */
+describe("the pointer and the focus, under the default theme's taste", () => {
+    /** The button's drop, as the engine computes it on a light page. */
+    const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
+
+    /** A light that is not there, as the engine computes the layer's fallback. */
+    const clear = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+
+    afterEach(() => {
+        // A ring still in the air lands, so nothing flies on into the next test.
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
+    });
+
+    /**
+     * Mounts `markup` under the token sheet, and under a theme's after it where one is named, which
+     * the form then takes.
+     */
+    async function under(markup: string, theme?: Theme): Promise<HTMLFormElement> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
+        document.body.append(style);
+
+        const form = await mount(markup);
+
+        if (theme !== undefined) {
+            form.dataset['uiTheme'] = theme.name;
+        }
+
+        return form;
+    }
+
+    /** Takes every duration the effects move over out, on the form round the fixture. */
+    function stilled(form: HTMLElement): void {
+        form.style.setProperty('--ui-duration-effect', '0s');
+        form.style.setProperty('--ui-duration-state', '0s');
+    }
+
+    /** Whether the page's ring is in the air. */
+    function aloft(): boolean {
+        return document.querySelector('[data-ui-ring]:popover-open') !== null;
+    }
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        "takes a %s's darkening away under the pointer, for the hover colour in its fill and a raise",
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`);
+            stilled(form);
+            form.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+            form.style.setProperty('--ui-color-hover', 'rgb(4, 5, 6)');
+            const control = box(toggle(form));
+
+            await userEvent.hover(control);
+
+            const styles = getComputedStyle(control);
+
+            expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
+            expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
+            expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
+                `${raised}, ${clear}`,
+            );
+        },
+    );
+
+    it('draws a mixed box full under the pointer, as a checked one is', async () => {
+        const form = await under('<ui-checkbox label="Select all" indeterminate></ui-checkbox>');
+        stilled(form);
+        form.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+        form.style.setProperty('--ui-color-accent-hover', 'rgb(0, 0, 100)');
+        const control = box(toggle(form));
+
+        await userEvent.hover(control);
+
+        const styles = getComputedStyle(control);
+
+        // The boundary goes with the fill, so no ring is drawn round it.
+        expect([styles.backgroundColor, styles.borderTopColor]).toEqual([
+            'rgb(0, 0, 100)',
+            'rgb(0, 0, 100)',
+        ]);
+    });
+
+    it.each([['ui-checkbox'], ['ui-switch']])('raises and lifts a %s at the focus', async (tag) => {
+        const form = await under(`<${tag} label="Notify me"></${tag}>`);
+        stilled(form);
+        const control = box(toggle(form));
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
+            `${clear}, ${raised}`,
+        );
+        expect(getComputedStyle(control).translate, 'lifted').toBe('0px -2px');
+    });
+
+    it('glides the ring from one drawn control to the next, which hands it the flight', async () => {
+        await under(
+            '<ui-checkbox label="First"></ui-checkbox><ui-switch label="Second"></ui-switch>',
+        );
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        "takes Glass's edge back for a %s from the default theme's none, which leaves it today's darkening",
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`, glass);
+            stilled(form);
+            form.style.setProperty('--ui-color-text', 'rgb(9, 9, 9)');
+            const control = box(toggle(form));
+
+            await userEvent.hover(control);
+
+            expect(getComputedStyle(control).borderTopColor).toBe('rgb(9, 9, 9)');
+        },
+    );
 });
 
 describe('the description a tooltip hands over', () => {

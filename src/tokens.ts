@@ -729,6 +729,7 @@ export const moreContrast: Readonly<
  */
 export const taste: Taste = {
     page: {
+        'hover-fill': 'highlight',
         'hover-shadow': 'raise',
         'focus-move': 'lift',
         'focus-shadow': 'raise',
@@ -740,11 +741,13 @@ export const taste: Taste = {
         'invalid-fill': 'flash',
     },
     // A check is each drawn control's own moment, so it is named for each: the tick drawn on, the
-    // thumb sprung over, the dot popped in.
+    // thumb sprung over, the dot popped in. A drawn control's darkening under the pointer gives way
+    // to the hover colour in its fill, so its none is named for it too: on the page it would take
+    // a field's darkening, its one answer to the pointer beside the raise — RFC 0004.
     components: {
-        checkbox: { check: 'draw' },
-        switch: { check: 'spring' },
-        radio: { check: 'pop' },
+        checkbox: { check: 'draw', 'hover-border': 'none' },
+        switch: { check: 'spring', 'hover-border': 'none' },
+        radio: { check: 'pop', 'hover-border': 'none' },
     },
 };
 
