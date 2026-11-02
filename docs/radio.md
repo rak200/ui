@@ -209,7 +209,10 @@ At the focus a radio's own label takes the accent, and a set in error sends a ba
 from every radio and flashes each, as [a checkbox does](checkbox.md#motion), the chosen radio's dot
 losing most of its contrast at each round's start. **Under [Matrix](theme.md#matrix)** a radio
 answers as a checkbox does there: tinted and glowing under the pointer, the hover colour, a burst, a
-glitching ring and a glowing label at the focus, and every radio of a set in error split.
+glitching ring and a glowing label at the focus, and every radio of a set in error split. **Under
+[Glass](theme.md#glass)** a radio keeps a light along its inside at the focus, the sheen swept under
+its dot and its ring refocused, and every radio of a set in error holds a light of the danger and
+flashes.
 
 ## Styling
 

@@ -402,6 +402,36 @@ async function labelled(
 }
 
 /**
+ * The sheen a shimmer sweeps under a full control's mark, where it is chosen, resolved in `scheme`
+ * under `palette`: the middle stop of the sweep read off a checked box at the focus, as the button's
+ * is read off a button.
+ */
+async function markSheen(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-checkbox label="Name" checked style="${kinds.choice}focus-fill: shimmer"></ui-checkbox>`,
+        async (field) => {
+            const control = field.shadowRoot?.querySelector('input') ?? null;
+
+            if (control === null) {
+                throw new Error('the checkbox rendered no control');
+            }
+
+            await userEvent.tab();
+
+            const stop = /35%, (.+) 50%, /.exec(getComputedStyle(control).backgroundImage)?.[1];
+
+            if (stop === undefined) {
+                throw new Error('no sheen swept under the mark');
+            }
+
+            return stop;
+        },
+    );
+}
+
+/**
  * A field in error's fill at the start of a flash, where the flash is chosen for it, resolved in
  * `scheme` under `palette`: its first frame held still, read off the field, as the label is.
  */
@@ -1427,6 +1457,22 @@ describe('the contrast floors', () => {
                                 token,
                             ).toBeGreaterThanOrEqual(4.5);
                         }
+                    }
+                });
+
+                it("keeps a full control's mark legible where the shimmer's sheen passes under it", async () => {
+                    // The sheen is swept under the mark, on the control's own background, as a
+                    // button's lies under its label: over it, the mark fell to 2.47:1 at the
+                    // sheen's peak. Laid over the fill laid over whatever the control rests on.
+                    const swept = await markSheen(scheme, palette);
+
+                    for (const fill of over('--ui-color-accent', palette, scheme)) {
+                        expect(
+                            contrastRatio(
+                                paint('--ui-color-accent-contrast'),
+                                layered(swept, fill, scheme, palette),
+                            ),
+                        ).toBeGreaterThanOrEqual(4.5);
                     }
                 });
 

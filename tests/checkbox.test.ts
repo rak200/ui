@@ -1213,6 +1213,10 @@ describe("the pointer, the focus and a form's moments, under the default theme's
     /** A light that is not there, as the engine computes the layer's fallback. */
     const clear = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
 
+    /** The inner light's place and an error's, with nothing in them. */
+    const unlit =
+        'rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+
     afterEach(() => {
         // A ring still in the air lands, so nothing flies on into the next test.
         for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
@@ -1265,7 +1269,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
             expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
             expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
             expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
-                `${raised}, ${clear}`,
+                `${raised}, ${clear}, ${unlit}`,
             );
         },
     );
@@ -1296,7 +1300,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         await userEvent.tab();
 
         expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
-            `${clear}, ${raised}`,
+            `${clear}, ${raised}, ${unlit}`,
         );
         expect(getComputedStyle(control).translate, 'lifted').toBe('0px -2px');
     });
@@ -1363,7 +1367,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
             expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
             expect(styles.backgroundColor, 'tinted').not.toBe(resting);
             expect(getComputedStyle(control, '::after').boxShadow, 'glowing').toBe(
-                `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}`,
+                `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}, ${unlit}`,
             );
         },
     );
@@ -1381,7 +1385,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
             const styles = getComputedStyle(box(element));
 
             expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
-            expect(styles.animationName, 'the burst').toBe('ui-burst, none, none');
+            expect(styles.animationName, 'the burst').toBe('ui-burst, none, none, none');
             expect(getComputedStyle(part(element, 'text')).textShadow, 'the label').toMatch(
                 / 0px 0px 8px$/,
             );
@@ -1404,7 +1408,76 @@ describe("the pointer, the focus and a form's moments, under the default theme's
                 matrix,
             );
 
-            expect(getComputedStyle(box(toggle(form))).animationName).toBe('none, ui-split, none');
+            expect(getComputedStyle(box(toggle(form))).animationName).toBe(
+                'none, none, ui-split, none',
+            );
+        },
+    );
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        'holds a light inside a %s at the focus under Glass, and does not lift it',
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`, glass);
+            stilled(form);
+            const control = box(toggle(form));
+
+            await userEvent.tab();
+
+            expect(getComputedStyle(control, '::after').boxShadow, 'the inner light').toContain(
+                '0px 0px 0px 1px inset',
+            );
+            expect(getComputedStyle(control).translate, 'not lifted').toBe('none');
+        },
+    );
+
+    it('sweeps the sheen across a checkbox at the focus under Glass, and none across a switch', async () => {
+        const form = await under(
+            '<ui-checkbox label="First"></ui-checkbox><ui-switch label="Second"></ui-switch>',
+            glass,
+        );
+        const [checkbox, toggled] = [...form.querySelectorAll<Toggle>('ui-checkbox, ui-switch')];
+
+        if (checkbox === undefined || toggled === undefined) {
+            throw new Error('the fixture holds two controls');
+        }
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(box(checkbox)).animationName, 'the checkbox').toBe(
+            'none, ui-shimmer, none, none',
+        );
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(box(toggled)).animationName, 'the switch').toBe(
+            'none, none, none, none',
+        );
+    });
+
+    it('refocuses the ring onto a drawn control under Glass, which hands it the flight', async () => {
+        await under('<ui-checkbox label="Notify me"></ui-checkbox>', glass);
+
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        'holds a light of the danger round a %s in error under Glass, and flashes its fill',
+        async (tag) => {
+            const form = await under(
+                `<${tag} label="Notify me" error="Required."></${tag}>`,
+                glass,
+            );
+            stilled(form);
+            const control = box(toggle(form));
+
+            expect(getComputedStyle(control, '::after').boxShadow, 'the glow').toMatch(
+                / 0px 0px 12px 2px$/,
+            );
+            expect(getComputedStyle(control).animationName, 'the flash').toBe(
+                'none, none, none, ui-flash',
+            );
         },
     );
 
@@ -1414,7 +1487,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
             const form = await under(`<${tag} label="Notify me" error="Required."></${tag}>`);
 
             expect(getComputedStyle(box(toggle(form))).animationName).toBe(
-                'none, ui-pulse-danger, ui-flash',
+                'none, none, ui-pulse-danger, ui-flash',
             );
         },
     );

@@ -1086,6 +1086,10 @@ describe("a drawn control's effects", () => {
     /** A light that is not there, as the engine computes the layer's fallback. */
     const clear = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
 
+    /** The inner light's place and an error's, with nothing in them. */
+    const unlit =
+        'rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+
     /** A control drawn as the components draw one, which the lights' layer is laid over. */
     const drawnBox =
         'style="appearance: none; margin: 0; width: 20px; height: 20px; border-width: 1px; border-style: solid; border-radius: 5px"';
@@ -1110,6 +1114,8 @@ describe("a drawn control's effects", () => {
         ['hover-shadow', 'raise'],
         ['hover-shadow', 'glow'],
         ['focus-shadow', 'raise'],
+        ['focus-shadow', 'inner'],
+        ['invalid-border', 'glow'],
     ])(
         "lays the lights' layer over the control's whole box, its boundary and corners included, once %s: %s is chosen",
         (moment, effect) => {
@@ -1149,7 +1155,7 @@ describe("a drawn control's effects", () => {
 
         await userEvent.hover(input);
 
-        expect(getComputedStyle(input, '::after').boxShadow).toBe(`${raised}, ${clear}`);
+        expect(getComputedStyle(input, '::after').boxShadow).toBe(`${raised}, ${clear}, ${unlit}`);
     });
 
     it('raises a control at the focus, on a light of its own', async () => {
@@ -1158,7 +1164,7 @@ describe("a drawn control's effects", () => {
 
         await userEvent.tab();
 
-        expect(getComputedStyle(input, '::after').boxShadow).toBe(`${clear}, ${raised}`);
+        expect(getComputedStyle(input, '::after').boxShadow).toBe(`${clear}, ${raised}, ${unlit}`);
     });
 
     it("moves a control's place on an effect's time beside its colours on the state's, once the lift is chosen", () => {
@@ -1327,7 +1333,7 @@ describe("a drawn control's effects", () => {
 
         expect(colours(input), 'its colours').toEqual(focused);
         expect(getComputedStyle(input, '::after').boxShadow, 'its light').toBe(
-            `${clear}, ${clear}`,
+            `${clear}, ${clear}, ${unlit}`,
         );
     });
 
@@ -1423,11 +1429,11 @@ describe("a drawn control's effects", () => {
                 styles.animationIterationCount,
                 styles.animationComposition,
             ]).toEqual([
-                'none, ui-pulse-danger, none',
-                '0s, 0.5s, 0s',
-                'ease, ease-in, ease',
-                '1, 3, 1',
-                'add, add, replace',
+                'none, none, ui-pulse-danger, none',
+                '0s, 0s, 0.5s, 0s',
+                'ease, ease, ease-in, ease',
+                '1, 1, 3, 1',
+                'add, replace, add, replace',
             ]);
         }
     });
@@ -1481,7 +1487,12 @@ describe("a drawn control's effects", () => {
                 styles.animationDuration,
                 styles.animationTimingFunction,
                 styles.animationIterationCount,
-            ]).toEqual(['none, none, ui-flash', '0s, 0s, 0.5s', 'ease, ease, linear', '1, 1, 3']);
+            ]).toEqual([
+                'none, none, none, ui-flash',
+                '0s, 0s, 0s, 0.5s',
+                'ease, ease, ease, linear',
+                '1, 1, 1, 3',
+            ]);
         }
 
         const [own] = controls;
@@ -1521,7 +1532,7 @@ describe("a drawn control's effects", () => {
         await userEvent.hover(input);
 
         expect(getComputedStyle(input, '::after').boxShadow).toBe(
-            `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}`,
+            `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}, ${unlit}`,
         );
     });
 
@@ -1612,11 +1623,11 @@ describe("a drawn control's effects", () => {
             styles.animationIterationCount,
             styles.animationComposition,
         ]).toEqual([
-            'ui-burst, none, none',
-            '0.5s, 0s, 0s',
-            'ease-in, ease, ease',
-            '1, 1, 1',
-            'add, add, replace',
+            'ui-burst, none, none, none',
+            '0.5s, 0s, 0s, 0s',
+            'ease-in, ease, ease, ease',
+            '1, 1, 1, 1',
+            'add, replace, add, replace',
         ]);
     });
 
@@ -1705,7 +1716,12 @@ describe("a drawn control's effects", () => {
                 styles.animationDuration,
                 styles.animationTimingFunction,
                 styles.animationIterationCount,
-            ]).toEqual(['none, ui-split, none', '0s, 0.2s, 0s', 'ease, linear, ease', '1, 6, 1']);
+            ]).toEqual([
+                'none, none, ui-split, none',
+                '0s, 0s, 0.2s, 0s',
+                'ease, ease, linear, ease',
+                '1, 1, 6, 1',
+            ]);
         }
 
         const [own] = controls;
@@ -1736,5 +1752,162 @@ describe("a drawn control's effects", () => {
 
             expect(getComputedStyle(own).boxShadow, String(time)).toBe(shadow);
         }
+    });
+    it('holds a light of the accent inside a control at the focus, at its scale, and over a full one in the accent moved toward its mark', async () => {
+        const empty = drawnControl('checkbox', { 'focus-shadow': 'inner' });
+        const full = drawnControl('checkbox', { 'focus-shadow': 'inner' }, 'checked');
+
+        for (const { host } of [empty, full]) {
+            host.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+            host.style.setProperty('--ui-color-accent-contrast', 'rgb(250, 250, 250)');
+            host.style.setProperty('--ui-duration-effect', '0s');
+        }
+
+        /** The layer's shadows with `ink`'s inner light in its place. */
+        const inside = (ink: string): string =>
+            `${clear}, ${clear}, ${colour(ink)} 0px 0px 0px 1px inset, ${colour(`rgb(from ${ink} r g b / 0.5)`)} 0px 0px 6px 1px inset, ${clear}`;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(empty.input, '::after').boxShadow, 'empty').toBe(
+            inside('rgb(10, 20, 30)'),
+        );
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(full.input, '::after').boxShadow, 'full').toBe(
+            inside('color-mix(in oklab, rgb(10, 20, 30), rgb(250, 250, 250) 40%)'),
+        );
+    });
+
+    it("sweeps a sheen across a control at the focus, under its mark, on the focus's fill's place in its list", async () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-fill': 'shimmer' }, drawnBox);
+        host.style.setProperty('--ui-duration-loop', '10s');
+        host.style.setProperty('--ui-iteration-settle', '3');
+        host.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+        host.style.setProperty('--ui-color-text', 'rgb(0, 0, 0)');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(input);
+        // A secondary button's: the accent with a fifth of the pole further from the text.
+        const sheen = colour(
+            'rgb(from color-mix(in oklab, rgb(0, 0, 200), rgb(255, 255, 255) 20%) r g b / 0.5)',
+        );
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationIterationCount,
+        ]).toEqual([
+            'none, ui-shimmer, none, none',
+            '0s, 10s, 0s, 0s',
+            'ease, linear, ease, ease',
+            '1, 3, 1, 1',
+        ]);
+        expect(styles.backgroundImage, 'the sheen, on the control').toBe(
+            `linear-gradient(100deg, rgba(0, 0, 0, 0) 35%, ${sheen} 50%, rgba(0, 0, 0, 0) 65%)`,
+        );
+        expect([styles.backgroundSize, styles.backgroundRepeat]).toEqual([
+            '250% 100%',
+            'no-repeat',
+        ]);
+
+        const sweep = running(input, 'ui-shimmer');
+
+        sweep.pause();
+        sweep.currentTime = 0;
+
+        expect(getComputedStyle(input).backgroundPosition, 'before its start').toBe('150% 0px');
+
+        sweep.currentTime = 5000;
+
+        expect(getComputedStyle(input).backgroundPosition, 'halfway').toBe('50% 0px');
+    });
+
+    it('sweeps the accent across a full control, with a fifth of the pole further from its mark in it', async () => {
+        const checked = drawnControl(
+            'checkbox',
+            { 'focus-fill': 'shimmer' },
+            `checked ${drawnBox}`,
+        );
+        const mixed = drawnControl('checkbox', { 'focus-fill': 'shimmer' }, drawnBox);
+        mixed.input.indeterminate = true;
+
+        for (const { host } of [checked, mixed]) {
+            host.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
+            host.style.setProperty('--ui-color-accent-contrast', 'rgb(255, 255, 255)');
+        }
+
+        const swept = `linear-gradient(100deg, rgba(0, 0, 0, 0) 35%, ${colour(
+            'rgb(from color-mix(in oklab, rgb(0, 0, 200), rgb(0, 0, 0) 20%) r g b / 0.5)',
+        )} 50%, rgba(0, 0, 0, 0) 65%)`;
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(checked.input).backgroundImage, 'checked').toBe(swept);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(mixed.input).backgroundImage, 'mixed').toBe(swept);
+    });
+
+    it('sweeps no sheen across a switch, whose thumb is a layer of the same background', async () => {
+        const { input } = drawnControl(
+            'switch',
+            { 'focus-fill': 'shimmer' },
+            `role="switch" ${drawnBox}`,
+        );
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(input);
+
+        expect([styles.backgroundImage, styles.animationName]).toEqual([
+            'none',
+            'none, none, none, none',
+        ]);
+    });
+
+    it("hands the ring the refocus, an effect's time on the curves an arrival and a departure take", async () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-ring': 'refocus' });
+        host.style.setProperty('--ui-duration-effect', '0.3s');
+        host.style.setProperty('--ui-easing-enter', 'ease-in');
+        host.style.setProperty('--ui-easing-exit', 'ease-out');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(input);
+
+        expect(
+            ['', '-time', '-curve', '-exit'].map((name) =>
+                styles.getPropertyValue(`--ui-fx-ring${name}`),
+            ),
+        ).toEqual(['refocus', '0.3s', 'ease-in', 'ease-out']);
+    });
+
+    it('holds a light of the danger round a control in error, or of a set in error, and none round one that cannot be used', () => {
+        const controls = erring({ 'invalid-border': 'glow' });
+        const disabled = drawnControl(
+            'checkbox',
+            { 'invalid-border': 'glow' },
+            'aria-invalid="true" disabled',
+        );
+
+        for (const input of [...controls, disabled.input]) {
+            input.style.setProperty('--ui-color-danger', 'rgb(10, 20, 30)');
+            input.style.setProperty('--ui-duration-effect', '0s');
+        }
+
+        for (const input of controls) {
+            expect(getComputedStyle(input, '::after').boxShadow).toBe(
+                `${clear}, ${clear}, rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px`,
+            );
+        }
+
+        expect(getComputedStyle(disabled.input, '::after').boxShadow, 'disabled').toBe(
+            `${clear}, ${clear}, ${unlit}`,
+        );
     });
 });

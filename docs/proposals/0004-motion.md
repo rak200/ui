@@ -778,3 +778,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#345](https://github.com/rak200/ui/pull/345) | the drawn controls' pointer and focus: the hover colour, the raise, the lift, the glide |
 | 4    | [#346](https://github.com/rak200/ui/pull/346) | the drawn controls' form moments: the label's accent, the pulse and the flash           |
 | 4    | [#347](https://github.com/rak200/ui/pull/347) | the drawn controls under Matrix: the tint, the glow, the burst, the glitch, the split   |
+| 4    | [#348](https://github.com/rak200/ui/pull/348) | the drawn controls' Glass focus and error: the inner light, the sheen, the error's glow |

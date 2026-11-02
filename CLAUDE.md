@@ -392,7 +392,8 @@ explains. This file restates none of them.
   [ARCHITECTURE.md](ARCHITECTURE.md)'s _Which effect runs is the consumer's_, which carries the
   measurement and the choice. **Why an error's red is drawn after every effect on the boundary or
   the fill** — the comment beside the pointer's rules there: a full control's boundary goes with its
-  fill, and the red outlasts that.
+  fill, and the red outlasts that. **Why a drawn control's sheen is swept under its mark, and none
+  on a switch** — the comment beside the shimmer there, and ARCHITECTURE.md's same section.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in
