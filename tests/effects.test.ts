@@ -9,7 +9,7 @@ import {
     pressed,
     surfaceEffects,
 } from '../src/effects.js';
-import { held } from '../src/held.js';
+import { held, released } from '../src/held.js';
 import { farPole } from '../src/tokens.js';
 
 /**
@@ -2094,7 +2094,7 @@ describe("a drawn control's effects", () => {
 
 /**
  * A surface of the test's own, in a region of the page: a host whose shadow root adopts the sheet
- * built for `component`, holding the two layers and a slot, with a button in it and `held()` bound,
+ * built for `component`, holding the two layers and a slot, with a button in it and the mark bound,
  * and the effects `choices` names chosen on the region round it — where a choice reaches what the
  * sheet draws on the host as well as on its layers.
  */
@@ -2117,7 +2117,7 @@ function surface(
     host.innerHTML = '<button>Inside</button>';
     host.style.cssText = 'display: block; position: relative; width: 200px; height: 100px';
     host.addEventListener('focusin', held);
-    host.addEventListener('focusout', held);
+    host.addEventListener('focusout', released);
 
     for (const [moment, effect] of Object.entries(choices)) {
         region.style.setProperty(`--ui-motion-${moment}`, effect);

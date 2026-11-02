@@ -8,22 +8,30 @@
  * measured. So the surface listens to the focus arriving and leaving inside it, and marks its host
  * with `data-focus-visible` while the focus it holds is one the reader can see.
  *
+ * **Two listeners, one for each way.** A focus that moves from one thing in the surface to another
+ * leaves and arrives, so the mark follows it: taken off as it leaves, and put back as it arrives
+ * where the reader sees it.
+ *
  * Internal — it is not re-exported from `src/index.ts`.
  */
 
 /**
- * Marks the surface a focus arrived in while that focus is one the reader can see, and takes the
- * mark off as the focus leaves. Its listener's event, `focusin` and `focusout` on the surface's
- * host, whose `currentTarget` is the host; the focus is read off the arrival's composed path, so
- * a control inside another component's shadow root is the one asked. A focus that moves from one
- * thing in the surface to another leaves and arrives, so the mark follows it.
+ * Marks the surface a focus arrived in where that focus is one the reader can see. Its listener's
+ * event, `focusin` on the surface's host, whose `currentTarget` is the host; the focus is read off
+ * the arrival's composed path, so a control inside another component's shadow root is the one
+ * asked.
  */
 export function held(event: FocusEvent): void {
     const host = event.currentTarget as HTMLElement;
     const target = event.composedPath()[0] as Element;
 
-    host.toggleAttribute(
-        'data-focus-visible',
-        event.type === 'focusin' && target.matches(':focus-visible'),
-    );
+    host.toggleAttribute('data-focus-visible', target.matches(':focus-visible'));
+}
+
+/**
+ * Takes the mark off the surface a focus left. Its listener's event, `focusout` on the surface's
+ * host.
+ */
+export function released(event: FocusEvent): void {
+    (event.currentTarget as HTMLElement).removeAttribute('data-focus-visible');
 }

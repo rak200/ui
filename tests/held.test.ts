@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
-import { held } from '../src/held.js';
+import { held, released } from '../src/held.js';
 
 /**
  * A surface of the test's own: a host that marks itself by `held()`, holding what `markup` writes,
@@ -13,7 +13,7 @@ function surface(markup: string): HTMLElement {
     const host = document.createElement('div');
     host.innerHTML = markup;
     host.addEventListener('focusin', held);
-    host.addEventListener('focusout', held);
+    host.addEventListener('focusout', released);
 
     const after = document.createElement('button');
     after.textContent = 'After';

@@ -286,6 +286,35 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(layer(card(host), 'shadow')).opacity).toBe('1');
     });
 
+    it('takes the mark off as the focus leaves the card', async () => {
+        const host = await under(`
+            <ui-card><div slot="footer"><button>Choose</button></div></ui-card>
+            <button>After</button>
+        `);
+
+        await userEvent.tab();
+
+        expect(card(host).hasAttribute('data-focus-visible'), 'in it').toBe(true);
+
+        await userEvent.tab();
+
+        expect(card(host).hasAttribute('data-focus-visible'), 'left').toBe(false);
+    });
+
+    it.each([
+        ['its own taste', '--ui-taste-card-hover-shadow', '1'],
+        ["another component's", '--ui-taste-toast-hover-shadow', '0'],
+    ])('draws its effects under %s', async (_whose, name, opacity) => {
+        // No token sheet, so no page's taste: only the name written here can reach the card.
+        const host = await mount(fixture);
+        host.style.setProperty('--ui-duration-effect', '0s');
+        host.style.setProperty(name, 'raise');
+
+        await userEvent.hover(card(host));
+
+        expect(getComputedStyle(layer(card(host), 'shadow')).opacity).toBe(opacity);
+    });
+
     it('marks, raises and lifts a card while a focus the reader can see is on something it holds', async () => {
         const host = await under(`
             <ui-card>

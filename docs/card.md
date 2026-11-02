@@ -112,8 +112,8 @@ the one card alone does not reach the lift**, where one written on anything roun
 0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce` each lands at once.
 
 The effects are drawn by one internal sheet, `surfaceEffects()` in `src/effects.ts`, and the card is
-marked by one internal helper, `held()` in `src/held.ts`, bound to its `focusin` and `focusout`: no
-selector reads a focus the reader can see in what a host holds in every engine.
+marked by two internal helpers in `src/held.ts`, `held()` bound to its `focusin` and `released()` to
+its `focusout`: no selector reads a focus the reader can see in what a host holds in every engine.
 
 ## Styling
 

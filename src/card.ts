@@ -1,6 +1,6 @@
 import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
 import { surfaceEffects } from './effects.js';
-import { held } from './held.js';
+import { held, released } from './held.js';
 import { reference } from './reference.js';
 
 /**
@@ -39,7 +39,7 @@ export class UiCard extends LitElement {
     constructor() {
         super();
         this.addEventListener('focusin', held);
-        this.addEventListener('focusout', held);
+        this.addEventListener('focusout', released);
     }
 
     /** The styles its shadow root adopts. */

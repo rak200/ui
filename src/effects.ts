@@ -1952,8 +1952,8 @@ const surfaceRaise = css`
  * length of a transition, so the card went dark and lit again — measured for RFC 0004.
  *
  * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
- * two layers, and marked `data-focus-visible` by `held()` from `src/held.ts`, bound to its
- * `focusin` and `focusout`, while a focus the reader can see is in it. The sheet comes after the
+ * two layers, and marked `data-focus-visible` while a focus the reader can see is in it, by
+ * `held()` from `src/held.ts` bound to its `focusin` and `released()` to its `focusout`. The sheet comes after the
  * component's own. An effect that moves the whole surface is drawn on its host, which a query asks
  * the host's surroundings about and never the host itself: a choice written on the one card alone
  * does not reach it — RFC 0004's S8, which the card leaves marked.
