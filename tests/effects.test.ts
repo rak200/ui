@@ -2109,6 +2109,7 @@ customElements.define('effects-surface', SurfaceHost);
 function surface(
     component: string,
     choices: Readonly<Record<string, string>>,
+    transformed = false,
 ): {
     region: HTMLElement;
     host: SurfaceHost;
@@ -2121,7 +2122,7 @@ function surface(
     const region = document.createElement('div');
     const host = document.createElement('effects-surface') as SurfaceHost;
     const root = host.attachShadow({ mode: 'open' });
-    const sheet = surfaceEffects(component).styleSheet;
+    const sheet = surfaceEffects(component, transformed).styleSheet;
 
     if (sheet === undefined) {
         throw new Error('the engine built no sheet to adopt');
@@ -2275,6 +2276,20 @@ describe("a surface's effects", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(host).translate, 'lifted').toBe('0px -4px');
+    });
+
+    it('lifts a surface that moves on its transform there, and leaves its transition to the component', async () => {
+        const { region, host } = surface('test', { 'focus-move': 'lift' }, true);
+        region.style.setProperty('--ui-duration-effect', '0.3s');
+
+        expect(getComputedStyle(host).transitionDuration, 'no transition of its own').toBe('0s');
+
+        await userEvent.tab();
+
+        expect([getComputedStyle(host).transform, getComputedStyle(host).translate]).toEqual([
+            'matrix(1, 0, 0, 1, 0, -4)',
+            'none',
+        ]);
     });
 
     it("leaves a choice written on the one surface out of reach of what it draws on its host — RFC 0004's S8", async () => {

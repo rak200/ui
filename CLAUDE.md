@@ -432,6 +432,11 @@ explains. This file restates none of them.
   a surface sets its passage to none before any entrance writes one** — the comment beside it in
   `src/effects.ts`: a custom property is inherited, and a card held in a leaving card played its
   exit.
+- **Why a toast answers the pointer and a focus as a card does, and why what moves it goes on its
+  transform** — the docblocks on `UiToast` in `src/toast.ts` and on `surfaceEffects()` in
+  `src/effects.ts`: its own rise holds its translate, so the sheet lifts it on its transform and
+  leaves the transition to the toast's own list, which one rule of the sheet's would take the rise's
+  out of. Its layers cover its edge, the wider stripe included, which its border leaves transparent.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

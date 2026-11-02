@@ -15,6 +15,7 @@ import '../src/icons/circle-check.js';
 import '../src/icons/triangle-alert.js';
 import '../src/icons/circle-x.js';
 import { reference } from '../src/reference.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet, type DerivedToken, type Token } from '../src/tokens.js';
 import type { UiToast, UiToaster } from '../src/toast.js';
 
@@ -734,13 +735,16 @@ describe('the values, all of which come from the token layer', () => {
         const element = toast(host);
 
         element.style.setProperty('--ui-duration-state', '0.4s');
+        element.style.setProperty('--ui-duration-effect', '0.3s');
         element.style.setProperty('--ui-easing-enter', 'linear');
 
         const styles = getComputedStyle(element);
 
-        expect(styles.transitionProperty).toBe('opacity, translate');
-        expect(styles.transitionDuration).toBe('0.4s, 0.4s');
-        expect(styles.transitionTimingFunction).toBe('linear, linear');
+        // Its rise and its fade over a state's time, and what a focus moves it by on its
+        // transform over an effect's.
+        expect(styles.transitionProperty).toBe('opacity, translate, transform');
+        expect(styles.transitionDuration).toBe('0.4s, 0.4s, 0.3s');
+        expect(styles.transitionTimingFunction).toBe('linear, linear, linear');
     });
 
     it('takes the distance the entrance travels from the host', async () => {
@@ -873,6 +877,168 @@ describe('the values, all of which come from the token layer', () => {
         ).not.toBeUndefined();
         expect(dismisser(toast(host)).getAttribute('part')).toBe('dismiss');
         expect(toast(host).shadowRoot?.querySelector('svg')?.getAttribute('part')).toBe('icon');
+    });
+});
+
+/**
+ * The pointer and a focus in a toast — RFC 0004's, a card's by kind, under each theme's taste. What
+ * each effect draws is graded on a surface of the suite's own in `tests/effects.test.ts`; what these
+ * are about is that the toast draws it.
+ */
+describe("the pointer and a focus in it, under each theme's taste", () => {
+    /**
+     * Mounts the fixture under the token sheet, and under `theme`'s after it where one is named,
+     * which the region round it takes, with every duration the effects fade over out.
+     */
+    async function under(theme?: Theme): Promise<UiToast> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
+        document.body.append(style);
+
+        const host = document.createElement('div');
+        host.style.setProperty('--ui-duration-effect', '0s');
+        host.style.setProperty('--ui-duration-state', '0s');
+
+        if (theme !== undefined) {
+            host.dataset['uiTheme'] = theme.name;
+        }
+
+        host.innerHTML = fixture;
+        document.body.append(host);
+
+        const element = toast(host);
+        await toaster(host).updateComplete;
+        await element.updateComplete;
+        await still(element);
+
+        return element;
+    }
+
+    /** One of the toast's layers. */
+    function layer(element: UiToast, name: string): HTMLElement {
+        return only(element.shadowRoot ?? document, `[data-layer='${name}']`);
+    }
+
+    it('renders the empty layers its effects are drawn on, beside its icon, message and button', async () => {
+        const host = await mount(fixture);
+        const layers = [...(toast(host).shadowRoot?.querySelectorAll('[data-layer]') ?? [])];
+
+        expect(
+            layers.map((each) => [each.getAttribute('data-layer'), each.childNodes.length]),
+        ).toEqual([
+            ['fill', 0],
+            ['focus-fill', 0],
+            ['shadow', 0],
+            ['focus-shadow', 0],
+            ['border', 0],
+        ]);
+    });
+
+    it('lays every layer over its edge, the wider stripe at its start included', async () => {
+        const host = await mount(fixture);
+        const element = toast(host);
+        element.style.setProperty('--ui-space', '10px');
+
+        for (const name of ['fill', 'focus-fill', 'shadow', 'focus-shadow', 'border']) {
+            const styles = getComputedStyle(layer(element, name));
+
+            expect([styles.top, styles.left, styles.right, styles.bottom], name).toEqual([
+                '-1px',
+                '-5px',
+                '-1px',
+                '-1px',
+            ]);
+        }
+    });
+
+    it("raises a toast under the pointer, and raises and lifts it on its transform at a focus in it, under the default theme's taste", async () => {
+        const element = await under();
+
+        await userEvent.hover(element);
+
+        expect(getComputedStyle(layer(element, 'shadow')).opacity, 'raised').toBe('1');
+
+        await userEvent.tab();
+
+        expect(element.hasAttribute('data-focus-visible'), 'marked').toBe(true);
+        expect(getComputedStyle(layer(element, 'focus-shadow')).opacity, 'raised').toBe('1');
+        expect(
+            [getComputedStyle(element).transform, getComputedStyle(element).translate],
+            'lifted on its transform, its translate left to its rise',
+        ).toEqual(['matrix(1, 0, 0, 1, 0, -4)', '0px']);
+    });
+
+    it('takes the mark off as the focus leaves the toast', async () => {
+        const element = await under();
+        const after = document.createElement('button');
+        after.textContent = 'After';
+        document.body.append(after);
+
+        await userEvent.tab();
+
+        expect(element.hasAttribute('data-focus-visible'), 'in it').toBe(true);
+
+        await userEvent.tab();
+
+        expect(element.hasAttribute('data-focus-visible'), 'left').toBe(false);
+    });
+
+    it('has the pointer engine follow a toast whose sheet chose a light that follows it', async () => {
+        const element = await under(glass);
+        const box = element.getBoundingClientRect();
+        // The engine is handed an effect's time, and follows nothing under none.
+        element.style.setProperty('--ui-duration-effect', '0.3s');
+
+        // Dispatched rather than driven, so the pointer is where the test says.
+        element.dispatchEvent(
+            new PointerEvent('pointerover', {
+                bubbles: true,
+                clientX: box.left + box.width / 2,
+                clientY: box.top + box.height / 2,
+            }),
+        );
+        await new Promise(requestAnimationFrame);
+
+        expect(element.style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
+    });
+
+    it('tints and glows a toast under the pointer under Matrix, and tints it and bursts light round it at a focus in it', async () => {
+        const element = await under(matrix);
+
+        await userEvent.hover(element);
+
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted').toBe('1');
+        expect(getComputedStyle(layer(element, 'shadow')).boxShadow, 'glowing').toMatch(
+            / 0px 0px 16px 2px, .+ 0px 0px 40px 8px$/,
+        );
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'tinted').toBe('1');
+        expect(getComputedStyle(layer(element, 'focus-shadow')).animationName, 'a burst').toBe(
+            'ui-burst',
+        );
+        expect(getComputedStyle(element).transform, 'not lifted').toBe('none');
+    });
+
+    it('raises a toast under the pointer under Glass, its edge as it rests, and sweeps it and lights it inside at a focus in it', async () => {
+        const element = await under(glass);
+
+        await userEvent.hover(element);
+
+        expect(getComputedStyle(layer(element, 'shadow')).boxShadow, 'raised, not cast').toContain(
+            'rgba(0, 0, 0, 0.35) 0px 12px 28px -8px',
+        );
+        expect(getComputedStyle(layer(element, 'border')).backgroundImage, 'no edge').toBe('none');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(layer(element, 'focus-fill')).animationName, 'a sweep').toBe(
+            'ui-shimmer',
+        );
+        expect(getComputedStyle(layer(element, 'focus-shadow')).boxShadow, 'a light').toMatch(
+            / 0px 0px 0px 1px inset, .+ 0px 0px 12px 2px inset$/,
+        );
     });
 });
 

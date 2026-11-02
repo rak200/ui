@@ -2013,6 +2013,25 @@ describe('the contrast floors', () => {
                         contrastRatio(paint(token), raised(palette, scheme)),
                     ).toBeGreaterThanOrEqual(3);
                 });
+
+                it.each([
+                    '--ui-color-info',
+                    '--ui-color-success',
+                    '--ui-color-warning',
+                    '--ui-color-danger',
+                ] as const)("keeps a toast's %s icon at 3:1 over its tint", async (token) => {
+                    // The tint a toast takes under the pointer and at a focus is the card's,
+                    // one formula over the one raised surface, so it is read off a card. The
+                    // hover colour was left out of the toast for taking the icon under this.
+                    const tinted = await cardTint(scheme, palette);
+
+                    expect(
+                        contrastRatio(
+                            paint(token),
+                            layered(tinted, raised(palette, scheme), scheme, palette),
+                        ),
+                    ).toBeGreaterThanOrEqual(3);
+                });
             });
         });
     });
