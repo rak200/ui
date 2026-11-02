@@ -547,18 +547,18 @@ taste.page['hover-shadow']; // 'raise'
 taste.page['press-move']; // 'squish'
 ```
 
-| Moment           | Effect      | What it draws                                                 |
-| ---------------- | ----------- | ------------------------------------------------------------- |
-| `hover-fill`     | `highlight` | a drawn control's fill in the hover colour, under the pointer |
-| `hover-shadow`   | `raise`     | a drop shadow under the pointer                               |
-| `focus-shadow`   | `raise`     | the same drop, at the focus                                   |
-| `focus-move`     | `lift`      | two pixels up at the focus, the ring with it                  |
-| `focus-ring`     | `glide`     | the ring glided over from the control seen last               |
-| `focus-label`    | `accent`    | a field's label in the accent, at the focus                   |
-| `press-move`     | `squish`    | squeezed under a press, springing back once let go            |
-| `press-shadow`   | `sink`      | its shadow sunk inside under a press                          |
-| `invalid-border` | `pulse`     | a band of the danger sent out from a field in error           |
-| `invalid-fill`   | `flash`     | a field in error tinted from the danger, and back             |
+| Moment           | Effect      | What it draws                                                          |
+| ---------------- | ----------- | ---------------------------------------------------------------------- |
+| `hover-fill`     | `highlight` | a drawn control's fill in the hover colour, under the pointer          |
+| `hover-shadow`   | `raise`     | a drop shadow under the pointer                                        |
+| `focus-shadow`   | `raise`     | the same drop, at the focus                                            |
+| `focus-move`     | `lift`      | two pixels up at the focus, the ring with it                           |
+| `focus-ring`     | `glide`     | the ring glided over from the control seen last                        |
+| `focus-label`    | `accent`    | a field's or a drawn control's label in the accent, at the focus       |
+| `press-move`     | `squish`    | squeezed under a press, springing back once let go                     |
+| `press-shadow`   | `sink`      | its shadow sunk inside under a press                                   |
+| `invalid-border` | `pulse`     | a band of the danger sent out from a field or a drawn control in error |
+| `invalid-fill`   | `flash`     | a field or a drawn control in error tinted from the danger, and back   |
 
 A check is each drawn control's own moment, so it is named for each. So is a drawn control's
 boundary under the pointer, which stays as it rests while the fill moves: named for the page, its
@@ -587,7 +587,8 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 `none` keeps a component as it was for that moment. An entry arrives with the first component that
 draws the effect it names — [the button](button.md#motion) draws the pointer's, the focus's and a
 press's, [a field](input.md#motion) the pointer's, the focus's, its label's and an error's, and
-[a drawn control](checkbox.md#motion) its check, the pointer's and the focus's — and
+[a drawn control](checkbox.md#motion) its check, the pointer's, the focus's, its label's and an
+error's — and
 the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
 button answers as the button does, and a field's box lifts rather than its control.
 

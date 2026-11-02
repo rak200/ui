@@ -1382,6 +1382,83 @@ export function controlEffects(component: string): CSSResult {
             }
         }
 
+        /* accent: the control's label in the accent with a fifth of the text's colour mixed in, as a
+           field's label takes it and for the floor that measured, while the focus stays. The label
+           is the text beside the control, which a sibling reaches with no :has(). On its own
+           transition, over an effect's time on the state's curve. */
+        @container ${unsafeCSS(drawn('focus-label', 'accent'))} {
+            input + span {
+                transition: color ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-state')};
+            }
+
+            input:focus-visible + span {
+                color: color-mix(
+                    in oklab,
+                    ${reference('--ui-color-accent')} 80%,
+                    ${reference('--ui-color-text')}
+                );
+            }
+        }
+
+        /* The control's one list of animations, read from the kinds that animate it, each from a
+           property of its own, so none takes another's away: an error's boundary, which the pulse
+           writes, and an error's fill. The boundary's is added to what is under it, so a ring goes
+           beside the glow a theme lights the control with rather than in its place — measured for
+           RFC 0004 in all three engines; Chromium alone loses a glow written from currentColor,
+           which no shipped theme pairs with a ring. A kind that plays nothing reads as none. */
+        input {
+            animation: var(--ui-fx-run-error-border, none), var(--ui-fx-run-error-fill, none);
+            animation-composition: add, replace;
+        }
+
+        /* pulse: a band of the danger sent out from a control in error, or from each control of a
+           set in error, and fading, four rounds of a flourish that settle, as a field's does. To
+           10px rather than a field's 12: the pulse is one shape in a drawn control's size and a
+           button's, RFC 0004 says, and a field takes the button's. */
+        @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} {
+            input[aria-invalid='true'],
+            [aria-invalid='true'] input {
+                --ui-fx-run-error-border: ui-pulse-danger ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-enter')} ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        @keyframes ui-pulse-danger {
+            from {
+                box-shadow: 0 0 0 0 rgb(from ${reference('--ui-color-danger')} r g b / 0.5);
+            }
+
+            to {
+                box-shadow: 0 0 0 10px rgb(from ${reference('--ui-color-danger')} r g b / 0);
+            }
+        }
+
+        /* flash: a control in error, or each control of a set in error, tinted from a fifth of the
+           danger back to its fill, four rounds of a flourish on the curve a departure takes. The
+           field's, mixed into the surface, so the two look alike, as RFC 0004 decided, and kept
+           over what it costs: at each round's start the mark of a full control is all but lost,
+           1.05:1 to 1.90:1 against the tint in every palette but Matrix's light one, and an off
+           switch's thumb falls from 3.15:1 to 2.31:1 at the least — measured. Both come back as
+           the round fades, and the flash settles. */
+        @container ${unsafeCSS(drawn('invalid-fill', 'flash'))} {
+            input[aria-invalid='true'],
+            [aria-invalid='true'] input {
+                --ui-fx-run-error-fill: ui-flash ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-exit')} ${reference('--ui-iteration-settle')};
+            }
+        }
+
+        @keyframes ui-flash {
+            from {
+                background-color: color-mix(
+                    in oklab,
+                    ${reference('--ui-color-danger')} 20%,
+                    ${reference('--ui-color-surface-control')}
+                );
+            }
+        }
+
         /* draw and pop: the mark src/check.ts plays on the control's ::before as the reader checks
            it. The sheet decides and the script only reads: the effect, and the time and curve it
            plays over, on a control that can be used. The tick drawn over an effect's time on the

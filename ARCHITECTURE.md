@@ -475,7 +475,11 @@ colour clears 4.5:1 at rest and no more, so the shimmer's sheen took it to 2.8:1
 danger to 3.49:1. A halo that fills the letters' inner details is the text's background, WCAG says,
 so the text keeps its rest contrast while the light still shows round it. It is a tool rather than
 an exception, and an effect refused for the contrast it took from text may be measured again with
-it. A name a component does not offer draws nothing. **`none` is
+it. **A drawn control's flash is the field's**, a fifth of the danger mixed into the surface, so the
+two look alike, and it is kept over what it takes: at each round's start a full control's mark is
+all but lost against the tint, 1.05:1 at the least, and an off switch's thumb falls from 3:1 to
+2.31:1, until the round fades. Mixing the danger into the accent kept the mark at 4.57:1 or more,
+and RFC 0004's one flash was chosen over it. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.
@@ -488,8 +492,9 @@ the control before it, and squeezes and sinks under a press; and a field rises u
 at the focus, its box lifting there rather than the control the reader types in, takes its ring
 glided over and its label to the accent, and in error sends a band of the danger out and flashes its
 fill; and a drawn control takes the hover colour in its fill under the pointer, its boundary at rest,
-rises there and at the focus, lifts and takes its ring glided over at the focus, and its check draws
-the tick on, springs the switch's thumb over and pops the radio's dot in, as the reader makes it.
+rises there and at the focus, lifts and takes its ring glided over and its label to the accent at
+the focus, sends a band of the danger out and flashes its fill in error, and its check draws the
+tick on, springs the switch's thumb over and pops the radio's dot in, as the reader makes it.
 RFC 0004 accepted that as the cost of having motion at all. A shipped theme's taste replaces it
 moment by moment, and names `none` where it wants nothing in place of an effect; a component's own
 entry outweighs a page's in either, so a theme replaces one the default theme names for a component

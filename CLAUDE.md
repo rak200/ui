@@ -386,7 +386,11 @@ explains. This file restates none of them.
   `src/tokens.ts` and `src/theme.ts`: a component's own entry outweighs a page's, and on the page
   the `none` would take a field's darkening. **Why the full control's rule under the pointer names
   a checkbox's mixed state by its type** — the comment beside it in `src/effects.ts`: a radio is
-  indeterminate wherever its group has no choice.
+  indeterminate wherever its group has no choice. **Why a drawn control's pulse is added to its own
+  shadow, and why its flash is the field's though it takes most of a full control's mark** — the
+  comments beside the control's animation list and the flash there, and
+  [ARCHITECTURE.md](ARCHITECTURE.md)'s _Which effect runs is the consumer's_, which carries the
+  measurement and the choice.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

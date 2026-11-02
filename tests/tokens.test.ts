@@ -334,8 +334,8 @@ async function sheen(scheme: Scheme, palette: Palette, variant: string): Promise
 }
 
 /**
- * Mounts `markup` under `palette` in `scheme`, with the token sheet, hands its one field to `read`,
- * and takes it all away again.
+ * Mounts `markup` under `palette` in `scheme`, with the token sheet, hands its one field or drawn
+ * control to `read`, and takes it all away again.
  */
 async function under<T>(
     scheme: Scheme,
@@ -357,10 +357,10 @@ async function under<T>(
     document.body.append(style, host);
 
     try {
-        const field = host.querySelector('ui-input');
+        const field = host.querySelector<UiInput | UiCheckbox>('ui-input, ui-checkbox');
 
         if (field === null) {
-            throw new Error('no field in the markup');
+            throw new Error('no field or drawn control in the markup');
         }
 
         await field.updateComplete;
@@ -373,24 +373,30 @@ async function under<T>(
 }
 
 /**
- * A field's label at the focus, where the accent is chosen for it, resolved in `scheme` under
- * `palette` — an effect's, so read off a field rather than a token, as the tint is.
+ * A `tag`'s label at the focus — the part of it `label` selects — where the accent is chosen for
+ * it, resolved in `scheme` under `palette`: an effect's, so read off a component rather than a
+ * token, as the tint is.
  */
-async function labelled(scheme: Scheme, palette: Palette): Promise<string> {
+async function labelled(
+    scheme: Scheme,
+    palette: Palette,
+    tag: 'ui-input' | 'ui-checkbox',
+    label: string,
+): Promise<string> {
     return under(
         scheme,
         palette,
-        `<ui-input label="Name" style="${kinds.choice}focus-label: accent; --ui-duration-effect: 0s"></ui-input>`,
+        `<${tag} label="Name" style="${kinds.choice}focus-label: accent; --ui-duration-effect: 0s"></${tag}>`,
         async (field) => {
-            const label = field.shadowRoot?.querySelector('label') ?? null;
+            const text = field.shadowRoot?.querySelector(label) ?? null;
 
-            if (label === null) {
-                throw new Error('the field rendered no label');
+            if (text === null) {
+                throw new Error(`the ${tag} rendered no label`);
             }
 
             await userEvent.tab();
 
-            return getComputedStyle(label).color;
+            return getComputedStyle(text).color;
         },
     );
 }
@@ -1619,18 +1625,24 @@ describe('the contrast floors', () => {
                     }
                 });
 
-                it("keeps a field's label legible where the accent takes it at the focus", async () => {
-                    // A label is text, laid on whatever the field rests on. The accent alone fell
-                    // under 4.5:1 on Matrix's light page and Glass's dark one, and a fifth of the
-                    // text mixed in clears it everywhere, RFC 0004 measured.
-                    const label = await labelled(scheme, palette);
+                it.each([
+                    ['a field', 'ui-input', 'label'],
+                    ['a drawn control', 'ui-checkbox', "[part='text']"],
+                ] as const)(
+                    "keeps %s's label legible where the accent takes it at the focus",
+                    async (_what, tag, part) => {
+                        // A label is text, laid on whatever the component rests on. The accent alone
+                        // fell under 4.5:1 on Matrix's light page and Glass's dark one, and a fifth of
+                        // the text mixed in clears it everywhere, RFC 0004 measured.
+                        const label = await labelled(scheme, palette, tag, part);
 
-                    for (const beside of outside(palette, scheme)) {
-                        expect(
-                            contrastRatio(layered(label, beside, scheme, palette), beside),
-                        ).toBeGreaterThanOrEqual(4.5);
-                    }
-                });
+                        for (const beside of outside(palette, scheme)) {
+                            expect(
+                                contrastRatio(layered(label, beside, scheme, palette), beside),
+                            ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    },
+                );
 
                 it("keeps a field in error's text legible at each flash's start", async () => {
                     // The flash's first frame is the most of the danger it mixes in, laid over

@@ -205,6 +205,10 @@ with its boundary, and a drop shadow raises it; at the focus it is raised and li
 in a group with no choice is indeterminate to the platform, and is still drawn empty. An error on the
 set keeps every radio's red.
 
+At the focus a radio's own label takes the accent, and a set in error sends a band of the danger out
+from every radio and flashes each, as [a checkbox does](checkbox.md#motion), the chosen radio's dot
+losing most of its contrast at each round's start.
+
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the mark.

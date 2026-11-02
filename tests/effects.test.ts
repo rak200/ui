@@ -1328,4 +1328,172 @@ describe("a drawn control's effects", () => {
             ['', '-time', '-curve'].map((name) => styles.getPropertyValue(`--ui-fx-ring${name}`)),
         ).toEqual(['glide', '0.4s', 'ease-in']);
     });
+
+    /** A control with its label beside it, as the components lay one out. */
+    const labelled = '<label><input type="checkbox"><span>Notify me</span></label>';
+
+    /** The label beside a control. */
+    function text(input: HTMLInputElement): HTMLElement {
+        const found = input.nextElementSibling;
+
+        if (!(found instanceof HTMLElement)) {
+            throw new Error('the control has no label beside it');
+        }
+
+        return found;
+    }
+
+    /** A control in error, and a control of a set in error, with the effects `choices` names. */
+    function erring(choices: Readonly<Record<string, string>>): readonly HTMLInputElement[] {
+        const own = drawnControl('checkbox', choices, 'aria-invalid="true"');
+        const set = drawnControl(
+            'radio',
+            choices,
+            '',
+            '<div aria-invalid="true"><input type="radio" name="set"></div>',
+        );
+
+        return [own.input, set.input];
+    }
+
+    it("moves a control's label on its own transition where the accent is chosen for it", () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-label': 'accent' }, '', labelled);
+        host.style.setProperty('--ui-duration-effect', '0.2s');
+        host.style.setProperty('--ui-easing-state', 'linear');
+
+        const styles = getComputedStyle(text(input));
+
+        expect([
+            styles.transitionProperty,
+            styles.transitionDuration,
+            styles.transitionTimingFunction,
+        ]).toEqual(['color', '0.2s', 'linear']);
+    });
+
+    it("takes a control's label to the accent at the focus, with a fifth of the text in it", async () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-label': 'accent' }, '', labelled);
+        host.style.setProperty('--ui-duration-effect', '0s');
+        host.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+        host.style.setProperty('--ui-color-text', 'rgb(0, 0, 0)');
+
+        const resting = getComputedStyle(text(input)).color;
+
+        await userEvent.tab();
+
+        const mixed = colour('color-mix(in oklab, rgb(0, 0, 255) 80%, rgb(0, 0, 0))');
+
+        expect(getComputedStyle(text(input)).color, 'at the focus').toBe(mixed);
+        expect(resting, 'before it').not.toBe(mixed);
+    });
+
+    it('sends a band of the danger out from a control in error, or of a set in error, rounds of a flourish that settle', () => {
+        const controls = erring({ 'invalid-border': 'pulse' });
+
+        for (const input of controls) {
+            input.style.setProperty('--ui-duration-flourish', '0.5s');
+            input.style.setProperty('--ui-easing-enter', 'ease-in');
+            input.style.setProperty('--ui-iteration-settle', '3');
+        }
+
+        for (const input of controls) {
+            const styles = getComputedStyle(input);
+
+            // The boundary's place in the control's one list, added to what is under it, and an
+            // error's fill after it playing nothing.
+            expect([
+                styles.animationName,
+                styles.animationDuration,
+                styles.animationTimingFunction,
+                styles.animationIterationCount,
+                styles.animationComposition,
+            ]).toEqual([
+                'ui-pulse-danger, none',
+                '0.5s, 0s',
+                'ease-in, ease',
+                '3, 1',
+                'add, replace',
+            ]);
+        }
+    });
+
+    it("draws the band from the boundary out to 10px, fading from half the danger to nothing, beside the control's glow", () => {
+        const { host, input } = drawnControl(
+            'checkbox',
+            { 'invalid-border': 'pulse' },
+            'aria-invalid="true" style="box-shadow: 0 0 0 1px rgb(0, 200, 0)"',
+        );
+        host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        host.style.setProperty('--ui-duration-flourish', '10s');
+        host.style.setProperty('--ui-easing-enter', 'linear');
+
+        const pulse = running(input, 'ui-pulse-danger');
+
+        pulse.pause();
+        pulse.currentTime = 0;
+
+        // An animated shadow's colour is computed in the space it moves through.
+        const danger = (opacity: number): string =>
+            colour(`oklab(from rgb(200, 0, 0) l a b / ${String(opacity)})`);
+
+        expect(getComputedStyle(input).boxShadow, 'leaving').toBe(
+            `rgb(0, 200, 0) 0px 0px 0px 1px, ${danger(0.5)} 0px 0px 0px 0px`,
+        );
+
+        pulse.currentTime = 5000;
+
+        expect(getComputedStyle(input).boxShadow, 'halfway').toBe(
+            `rgb(0, 200, 0) 0px 0px 0px 1px, ${danger(0.25)} 0px 0px 0px 5px`,
+        );
+    });
+
+    it('tints a control in error, or of a set in error, from a fifth of the danger back to its fill, rounds that settle', () => {
+        const controls = erring({ 'invalid-fill': 'flash' });
+
+        for (const input of controls) {
+            input.style.setProperty('--ui-duration-flourish', '0.5s');
+            input.style.setProperty('--ui-easing-exit', 'linear');
+            input.style.setProperty('--ui-iteration-settle', '3');
+        }
+
+        for (const input of controls) {
+            const styles = getComputedStyle(input);
+
+            // An error's fill's place in the control's one list, the boundary's before it playing
+            // nothing.
+            expect([
+                styles.animationName,
+                styles.animationDuration,
+                styles.animationTimingFunction,
+                styles.animationIterationCount,
+            ]).toEqual(['none, ui-flash', '0s, 0.5s', 'ease, linear', '1, 3']);
+        }
+
+        const [own] = controls;
+
+        if (own === undefined) {
+            throw new Error('no control in error');
+        }
+
+        own.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        own.style.setProperty('--ui-color-surface-control', 'rgb(255, 255, 255)');
+        own.style.setProperty('--ui-duration-flourish', '10s');
+
+        const flash = running(own, 'ui-flash');
+
+        flash.pause();
+        flash.currentTime = 0;
+
+        expect(getComputedStyle(own).backgroundColor).toBe(
+            colour('color-mix(in oklab, rgb(200, 0, 0) 20%, rgb(255, 255, 255))'),
+        );
+    });
+
+    it('sends nothing out and tints nothing where the control is not in error', () => {
+        const { input } = drawnControl('checkbox', {
+            'invalid-border': 'pulse',
+            'invalid-fill': 'flash',
+        });
+
+        expect(playing(input)).toEqual([]);
+    });
 });

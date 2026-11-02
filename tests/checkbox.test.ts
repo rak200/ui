@@ -1201,11 +1201,11 @@ describe("the check, under the default theme's taste", () => {
 });
 
 /**
- * The pointer and the focus on a drawn control — RFC 0004's — under the default theme's taste, and
- * what Glass keeps of today's. What each effect draws is graded on a control of the suite's own in
- * `tests/effects.test.ts`; what these are about is that both elements draw it.
+ * The pointer, the focus and a form's moments on a drawn control — RFC 0004's — under the default
+ * theme's taste, and what Glass keeps of today's. What each effect draws is graded on a control of
+ * the suite's own in `tests/effects.test.ts`; what these are about is that both elements draw it.
  */
-describe("the pointer and the focus, under the default theme's taste", () => {
+describe("the pointer, the focus and a form's moments, under the default theme's taste", () => {
     /** The button's drop, as the engine computes it on a light page. */
     const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
 
@@ -1322,6 +1322,37 @@ describe("the pointer and the focus, under the default theme's taste", () => {
             await userEvent.hover(control);
 
             expect(getComputedStyle(control).borderTopColor).toBe('rgb(9, 9, 9)');
+        },
+    );
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        "takes a %s's label to the accent at the focus, with a fifth of the text in it",
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me"></${tag}>`);
+            stilled(form);
+            form.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
+            form.style.setProperty('--ui-color-text', 'rgb(0, 0, 0)');
+            const text = part(toggle(form), 'text');
+
+            await userEvent.tab();
+
+            // What the engine computes the mix to, on an element of the page.
+            const probe = document.createElement('div');
+            probe.style.color = 'color-mix(in oklab, rgb(0, 0, 255) 80%, rgb(0, 0, 0))';
+            document.body.append(probe);
+
+            expect(getComputedStyle(text).color).toBe(getComputedStyle(probe).color);
+        },
+    );
+
+    it.each([['ui-checkbox'], ['ui-switch']])(
+        'sends a band of the danger out from a %s in error, and flashes its fill',
+        async (tag) => {
+            const form = await under(`<${tag} label="Notify me" error="Required."></${tag}>`);
+
+            expect(getComputedStyle(box(toggle(form))).animationName).toBe(
+                'ui-pulse-danger, ui-flash',
+            );
         },
     );
 });
