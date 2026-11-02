@@ -19,6 +19,7 @@ import '@rak200/ui';
 - [Errors](#errors)
 - [Supplementary text](#supplementary-text)
 - [Interaction states](#interaction-states)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-radio-group>`
@@ -186,6 +187,17 @@ criterion's _user agent control_ exception, which drawing our own gives up.
 **Forced colors is handled rather than inherited**, exactly as it is for
 [`<ui-checkbox>`](checkbox.md): the selected state names `Highlight`, and the disabled one names
 `GrayText` instead of dimming, because opacity is not a colour and is not forced.
+
+## Motion
+
+**A check is the control's own moment** in RFC 0004's motion, chosen with `--ui-motion-check`, and
+where you choose nothing the theme's taste runs, `pop` in every shipped theme: **the dot pops in
+from a fifth of its size as the reader chooses**, on `--ui-easing-emphasis` over
+`--ui-duration-effect`, and never as the group renders a choice made, nor as a script makes one. The
+choice it leaves fades out as it did, and the chosen control takes its fill at once while its dot
+pops, as [the checkbox's box](checkbox.md#motion) does for its tick. A theme's taste reaches it
+under the radio's name, `--ui-taste-radio-check`, since the controls the group draws are radios. It
+collapses under `prefers-reduced-motion: reduce`.
 
 ## Styling
 

@@ -19,6 +19,7 @@ import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiRadio, UiRadioGroup } from '../src/radio.js';
 import type { UiCheckbox } from '../src/checkbox.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
@@ -1277,6 +1278,39 @@ describe('under forced colors', () => {
  * protocol is graded in `description.test.ts` and the composition in `src/description.ts`;
  * what these are about is that the group takes the sentence and each radio does not.
  */
+/**
+ * The check — RFC 0004's — under the default theme's taste: the dot popped in as the reader chooses.
+ * What the mark plays is graded in `tests/check.test.ts`.
+ */
+describe("the check, under the default theme's taste", () => {
+    it('pops the dot in on the choice the reader makes, and on none the group renders made', async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+
+        const form = await mount(fixture.replace('value="free"', 'value="free" checked'));
+        const [first, second] = controls(form);
+        const marks = (control: HTMLInputElement | undefined): Animation[] =>
+            control
+                ?.getAnimations({ subtree: true })
+                .filter(
+                    (animation) =>
+                        (animation.effect as KeyframeEffect).pseudoElement === '::before',
+                ) ?? [];
+
+        expect(marks(first), 'the choice it renders made').toEqual([]);
+
+        if (second === undefined) {
+            throw new Error('the group rendered one control');
+        }
+
+        await userEvent.click(second);
+
+        expect(marks(second), 'the choice the reader made').toHaveLength(1);
+        expect(marks(first), 'the one it left').toEqual([]);
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: UiRadioGroup, detail: unknown): boolean {

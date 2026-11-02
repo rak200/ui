@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `tokens.test.ts`.
 import type {} from '@vitest/browser-playwright';
-import { buttonEffects, fieldEffects, pressed } from '../src/effects.js';
+import { buttonEffects, controlEffects, fieldEffects, pressed } from '../src/effects.js';
 
 /**
  * A component of the test's own that is a button: a host whose shadow root adopts the sheet built
@@ -970,5 +970,105 @@ describe("a field's effects", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(box).translate).toBe(translate);
+    });
+});
+
+/**
+ * A drawn control of the test's own: a host whose shadow root adopts the sheet built for
+ * `component`, around an `<input type="checkbox">` with `attributes`, and the effects `choices`
+ * names chosen on the host.
+ */
+function drawnControl(
+    component: string,
+    choices: Readonly<Record<string, string>>,
+    attributes = '',
+): { host: HTMLElement; input: HTMLInputElement } {
+    const host = document.createElement('div');
+    const root = host.attachShadow({ mode: 'open' });
+    const sheet = controlEffects(component).styleSheet;
+
+    if (sheet === undefined) {
+        throw new Error('the engine built no sheet to adopt');
+    }
+
+    root.adoptedStyleSheets = [sheet];
+    root.innerHTML = `<input type="checkbox" ${attributes}>`;
+
+    for (const [moment, effect] of Object.entries(choices)) {
+        host.style.setProperty(`--ui-motion-${moment}`, effect);
+    }
+
+    document.body.append(host);
+
+    const input = root.querySelector('input');
+
+    if (input === null) {
+        throw new Error('the fixture holds no control');
+    }
+
+    return { host, input };
+}
+
+describe("a drawn control's effects", () => {
+    /** What the sheet hands src/check.ts on a control: the mark, its time and its curve. */
+    function handed(input: HTMLInputElement): readonly string[] {
+        const styles = getComputedStyle(input);
+
+        return ['', '-time', '-curve'].map((name) =>
+            styles.getPropertyValue(`--ui-fx-check${name}`),
+        );
+    }
+
+    it.each([
+        ['draw', '--ui-easing-enter', 'ease-in'],
+        ['pop', '--ui-easing-emphasis', 'ease-out'],
+    ])(
+        "hands the mark %s, an effect's time and its curve, while the control can be used",
+        (effect, curve, value) => {
+            const usable = drawnControl('checkbox', { check: effect });
+            const disabled = drawnControl('checkbox', { check: effect }, 'disabled');
+
+            for (const { host } of [usable, disabled]) {
+                host.style.setProperty('--ui-duration-effect', '0.3s');
+                host.style.setProperty(curve, value);
+            }
+
+            expect(handed(usable.input), 'usable').toEqual([effect, '0.3s', value]);
+            expect(handed(disabled.input), 'disabled').toEqual(['', '', '']);
+        },
+    );
+
+    it("takes a control's colours out of its transitions while its mark plays", () => {
+        const { input } = drawnControl('checkbox', {}, 'data-check');
+
+        expect(getComputedStyle(input).transitionProperty).toBe('none');
+    });
+
+    it("springs a switch's thumb over a flourish on the reference's spring, its track at once", () => {
+        const { host, input } = drawnControl('switch', { check: 'spring' }, 'role="switch"');
+        host.style.setProperty('--ui-duration-flourish', '0.6s');
+
+        const styles = getComputedStyle(input);
+
+        expect(styles.transitionDuration).toBe('0s, 0s, 0.6s');
+        expect(styles.transitionTimingFunction).toMatch(
+            /^linear, linear, linear\(0( 0%)?, 0\.45 7%, 0\.98 15%, 1\.18 22%, 1\.22 26%, 1\.15 32%, 0\.97 44%, 0\.94 52%, 1\.01 66%, 1 78%, 1( 100%)?\)$/,
+        );
+    });
+
+    it('springs nothing on a control that is not a switch, which has no thumb', () => {
+        const { input } = drawnControl('checkbox', { check: 'spring' });
+
+        expect(getComputedStyle(input).transitionDuration).toBe('0s');
+    });
+
+    it.each([
+        ["the control's own taste", '--ui-taste-checkbox-check', 'draw'],
+        ["another control's", '--ui-taste-radio-check', ''],
+    ])('reads %s', (_whose, name, mark) => {
+        const { host, input } = drawnControl('checkbox', {});
+        host.style.setProperty(name, 'draw');
+
+        expect(handed(input)[0]).toBe(mark);
     });
 });

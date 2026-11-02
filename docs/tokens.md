@@ -559,6 +559,14 @@ taste.page['press-move']; // 'squish'
 | `invalid-border` | `pulse`  | a band of the danger sent out from a field in error |
 | `invalid-fill`   | `flash`  | a field in error tinted from the danger, and back   |
 
+A check is each drawn control's own moment, so it is named for each:
+
+| Component  | Moment  | Effect   | What it draws                                  |
+| ---------- | ------- | -------- | ---------------------------------------------- |
+| `checkbox` | `check` | `draw`   | the tick drawn on as the reader checks the box |
+| `switch`   | `check` | `spring` | the thumb sprung over to the other side        |
+| `radio`    | `check` | `pop`    | the dot popped in as the reader chooses        |
+
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
 page that inserts the sheet and chooses nothing. A choice runs instead, at any scope:
@@ -571,7 +579,8 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 
 `none` keeps a component as it was for that moment. An entry arrives with the first component that
 draws the effect it names — [the button](button.md#motion) draws the pointer's, the focus's and a
-press's, and [a field](input.md#motion) the pointer's, the focus's, its label's and an error's — and
+press's, [a field](input.md#motion) the pointer's, the focus's, its label's and an error's, and
+[a drawn control](checkbox.md#motion) its check — and
 the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
 button answers as the button does, and a field's box lifts rather than its control.
 

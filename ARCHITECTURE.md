@@ -487,7 +487,8 @@ rises under the pointer and at the focus, lifts at the focus, takes its focus ri
 the control before it, and squeezes and sinks under a press; and a field rises under the pointer and
 at the focus, its box lifting there rather than the control the reader types in, takes its ring
 glided over and its label to the accent, and in error sends a band of the danger out and flashes its
-fill. RFC 0004 accepted that as the cost of having motion at all. A shipped theme's
+fill; and a drawn control's check draws the tick on, springs the switch's thumb over and pops the
+radio's dot in, as the reader makes it. RFC 0004 accepted that as the cost of having motion at all. A shipped theme's
 taste replaces it moment by moment, and names `none` where it wants nothing in place of an effect. An effect enters
 the catalogue with the first component that draws it, bringing the tokens and the script it needs:
 _a category arrives with the component that consumes it_, applied to an effect. The rest waits in
