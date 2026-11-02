@@ -1225,7 +1225,41 @@ const controlLights = [
     ['hover-shadow', 'raise'],
     ['hover-shadow', 'glow'],
     ['focus-shadow', 'raise'],
+    ['focus-shadow', 'inner'],
+    ['invalid-border', 'glow'],
 ] as const;
+
+/** The accent moved toward a full control's mark, which stands off the fill the accent is. */
+const offAccent = css`color-mix(
+    in oklab,
+    ${reference('--ui-color-accent')},
+    ${reference('--ui-color-accent-contrast')} 40%
+)`;
+
+/**
+ * The inner light at a drawn control's scale, a quarter of the button's: a line of the accent along
+ * the inside of the boundary, and its light from it.
+ */
+const controlInner = css`inset 0 0 0 1px ${reference('--ui-color-accent')},
+    inset 0 0 0.375rem 0.0625rem rgb(from ${reference('--ui-color-accent')} r g b / 0.5)`;
+
+/** The inner light over a full control, in the accent moved toward its mark. */
+const controlInnerOnAccent = css`inset 0 0 0 1px ${offAccent},
+    inset 0 0 0.375rem 0.0625rem rgb(from ${offAccent} r g b / 0.5)`;
+
+/**
+ * The sheen a shimmer sweeps across a full control, under its mark: the accent with a fifth of the
+ * pole further from the mark mixed in, at half its strength, as a primary button's is from its
+ * label.
+ */
+const sheenOnAccent = css`rgb(
+    from color-mix(
+            in oklab,
+            ${reference('--ui-color-accent')},
+            ${unsafeCSS(farPole(String(reference('--ui-color-accent-contrast'))))} 20%
+        )
+        r g b / 0.5
+)`;
 
 /**
  * The effects that draw a drawn control's boundary or its fill under the pointer, which an error's
@@ -1301,8 +1335,10 @@ export function controlEffects(component: string): CSSResult {
         }
 
         /* The lights round the control, on its ::after, since its own shadow is the theme's glow:
-           the pointer's and the focus's, each from a property of its own, so the two draw at once
-           and the glow stays under them. Moved on an effect's time. */
+           the pointer's, the focus's outside the boundary and inside it, and an error's, each from a
+           property of its own, so all of them draw at once and the glow stays under them. The
+           inner light's place rests on inset shadows, so it moves into its own rather than jumping.
+           Moved on an effect's time. */
         @container ${lit} {
             input {
                 position: relative;
@@ -1313,7 +1349,10 @@ export function controlEffects(component: string): CSSResult {
                 position: absolute;
                 inset: -1px;
                 border-radius: inherit;
-                box-shadow: var(--ui-fx-lit-pointer, 0 0 #0000), var(--ui-fx-lit-focus, 0 0 #0000);
+                box-shadow:
+                    var(--ui-fx-lit-pointer, 0 0 #0000), var(--ui-fx-lit-focus, 0 0 #0000),
+                    var(--ui-fx-lit-inner, inset 0 0 #0000, inset 0 0 #0000),
+                    var(--ui-fx-lit-error, 0 0 #0000);
                 transition: box-shadow ${reference('--ui-duration-effect')}
                     ${reference('--ui-easing-enter')};
             }
@@ -1442,6 +1481,66 @@ export function controlEffects(component: string): CSSResult {
             }
         }
 
+        /* inner: a light of the accent held inside the boundary at the focus, as a field's is, its
+           blur at a drawn control's scale; over a full control in the accent moved toward its mark,
+           as over a primary button: in the accent, over the accent, none of it showed — measured
+           for RFC 0004. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'inner'))} {
+            input:focus-visible {
+                --ui-fx-lit-inner: ${controlInner};
+            }
+
+            input:checked:focus-visible,
+            input[type='checkbox']:indeterminate:focus-visible {
+                --ui-fx-lit-inner: ${controlInnerOnAccent};
+            }
+        }
+
+        /* shimmer: a sheen swept across the control at the focus, ten degrees off upright and three
+           quarters as wide as it, four rounds of the loop's period and then at rest, as the button
+           sweeps it. Under the mark, on the control's own background, as the button's lies under
+           its label: drawn over it, the sheen took a full control's mark to 2.47:1 at its peak, and
+           under it the mark holds 5.82:1 or more in every palette — measured. Over an empty control
+           the sheen a secondary button sweeps, over a full one the accent with a fifth of the pole
+           further from its mark. Never on a switch: its thumb is a layer of the same background,
+           which a sheen could only pass over, and an off thumb fell from 3:1 to 1.06:1 under any
+           band — measured, so it is left out where it cannot be drawn honestly. */
+        @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
+            input:not([role='switch']):focus-visible {
+                background-image: linear-gradient(
+                    100deg,
+                    transparent 35%,
+                    ${sheenOverSurface} 50%,
+                    transparent 65%
+                );
+                background-size: 250% 100%;
+                background-position: var(--ui-fx-shimmer) 0;
+                background-repeat: no-repeat;
+                --ui-fx-run-focus-fill: ui-shimmer ${reference('--ui-duration-loop')} linear
+                    ${reference('--ui-iteration-settle')};
+            }
+
+            input:checked:not([role='switch']):focus-visible,
+            input[type='checkbox']:indeterminate:focus-visible {
+                background-image: linear-gradient(
+                    100deg,
+                    transparent 35%,
+                    ${sheenOnAccent} 50%,
+                    transparent 65%
+                );
+            }
+        }
+
+        @keyframes ui-shimmer {
+            from {
+                --ui-fx-shimmer: 150%;
+            }
+
+            to {
+                --ui-fx-shimmer: -50%;
+            }
+        }
+
         /* lift: the control two pixels up, its mark, its lights and its ring with it, for as long
            as the focus stays. */
         @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
@@ -1470,6 +1569,17 @@ export function controlEffects(component: string): CSSResult {
                     --ui-fx-ring-curve: linear;
                     --ui-fx-ring-left: ${reference('--ui-color-danger')};
                     --ui-fx-ring-right: ${reference('--ui-color-info')};
+                }
+            }
+
+            /* The refocus, as the button hands it: brought into focus from a blur as the focus
+               arrives, and blurred away as it leaves, over a quarter again an effect's time. */
+            @container ${unsafeCSS(drawn('focus-ring', 'refocus'))} {
+                input:focus-visible {
+                    --ui-fx-ring: refocus;
+                    --ui-fx-ring-time: ${reference('--ui-duration-effect')};
+                    --ui-fx-ring-curve: ${reference('--ui-easing-enter')};
+                    --ui-fx-ring-exit: ${reference('--ui-easing-exit')};
                 }
             }
         }
@@ -1508,7 +1618,8 @@ export function controlEffects(component: string): CSSResult {
 
         /* The control's one list of animations, read from the kinds that animate it, each from a
            property of its own, so none takes another's away: the focus's shadow, which the burst
-           writes; an error's boundary, which the pulse and the split write; and an error's fill.
+           writes; the focus's fill, which the shimmer writes; an error's boundary, which the pulse
+           and the split write; and an error's fill.
            The two shadows are added to what is under it, so they go beside the glow a theme lights
            the control with rather than in its place — measured for RFC 0004 in all three engines.
            Chromium alone loses a glow written from currentColor while one is added to it, as
@@ -1516,9 +1627,9 @@ export function controlEffects(component: string): CSSResult {
            come back. A kind that plays nothing reads as none. */
         input {
             animation:
-                var(--ui-fx-run-focus-shadow, none), var(--ui-fx-run-error-border, none),
-                var(--ui-fx-run-error-fill, none);
-            animation-composition: add, add, replace;
+                var(--ui-fx-run-focus-shadow, none), var(--ui-fx-run-focus-fill, none),
+                var(--ui-fx-run-error-border, none), var(--ui-fx-run-error-fill, none);
+            animation-composition: add, replace, add, replace;
         }
 
         /* pulse: a band of the danger sent out from a control in error, or from each control of a
@@ -1540,6 +1651,18 @@ export function controlEffects(component: string): CSSResult {
 
             to {
                 box-shadow: 0 0 0 10px rgb(from ${reference('--ui-color-danger')} r g b / 0);
+            }
+        }
+
+        /* glow: a light of the danger held round a control in error, or each control of a set in
+           error, as the glow is held round it in the accent, for as long as the error stands; not
+           round one that cannot be used, which lights nothing. On the lights' layer, beside the
+           focus's. */
+        @container ${unsafeCSS(drawn('invalid-border', 'glow'))} {
+            input[aria-invalid='true']:not(:disabled),
+            [aria-invalid='true'] input:not(:disabled) {
+                --ui-fx-lit-error: 0 0 0.75rem 0.125rem
+                    rgb(from ${reference('--ui-color-danger')} r g b / 0.5);
             }
         }
 

@@ -479,7 +479,11 @@ it. **A drawn control's flash is the field's**, a fifth of the danger mixed into
 two look alike, and it is kept over what it takes: at each round's start a full control's mark is
 all but lost against the tint, 1.05:1 at the least, and an off switch's thumb falls from 3:1 to
 2.31:1, until the round fades. Mixing the danger into the accent kept the mark at 4.57:1 or more,
-and RFC 0004's one flash was chosen over it. A name a component does not offer draws nothing. **`none` is
+and RFC 0004's one flash was chosen over it. **A drawn control's sheen lies under its mark**, as
+a button's under its label, which holds the mark at 5.82:1 or more where over it the mark fell to
+2.47:1; a switch sweeps none, since its thumb is a layer of the background a sheen could only pass
+over, and an off thumb fell from 3:1 to 1.06:1 under any band. A name a component does not offer
+draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.

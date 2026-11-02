@@ -1325,6 +1325,10 @@ describe("the pointer, the focus and a form's moments, under the default theme's
     /** A light that is not there, as the engine computes the layer's fallback. */
     const clear = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
 
+    /** The inner light's place and an error's, with nothing in them. */
+    const unlit =
+        'rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px inset, rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+
     afterEach(() => {
         // A ring still in the air lands, so nothing flies on into the next test.
         for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
@@ -1376,7 +1380,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
         expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
         expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
-            `${raised}, ${clear}`,
+            `${raised}, ${clear}, ${unlit}`,
         );
     });
 
@@ -1388,7 +1392,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         await userEvent.tab();
 
         expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
-            `${clear}, ${raised}`,
+            `${clear}, ${raised}, ${unlit}`,
         );
         expect(getComputedStyle(control).translate, 'lifted').toBe('0px -2px');
     });
@@ -1437,7 +1441,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
 
         for (const control of controls(form)) {
             expect(getComputedStyle(control).animationName, control.value).toBe(
-                'none, ui-pulse-danger, ui-flash',
+                'none, none, ui-pulse-danger, ui-flash',
             );
         }
     });
@@ -1457,7 +1461,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
         expect(styles.backgroundColor, 'tinted').not.toBe(resting);
         expect(getComputedStyle(control, '::after').boxShadow, 'glowing').toBe(
-            `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}`,
+            `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}, ${unlit}`,
         );
     });
 
@@ -1472,7 +1476,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         const styles = getComputedStyle(control);
 
         expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
-        expect(styles.animationName, 'the burst').toBe('ui-burst, none, none');
+        expect(styles.animationName, 'the burst').toBe('ui-burst, none, none, none');
         expect(
             control.nextElementSibling === null
                 ? null
@@ -1489,6 +1493,47 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         expect(aloft()).toBe(true);
     });
 
+    it('holds a light inside a radio at the focus under Glass, sweeps the sheen under its dot, and does not lift it', async () => {
+        const form = await under(fixture, glass);
+        stilled(form);
+        const control = radio(form);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control, '::after').boxShadow, 'the inner light').toContain(
+            '0px 0px 0px 1px inset',
+        );
+        expect(getComputedStyle(control).animationName, 'the sheen').toBe(
+            'none, ui-shimmer, none, none',
+        );
+        expect(getComputedStyle(control).translate, 'not lifted').toBe('none');
+    });
+
+    it('refocuses the ring onto a radio under Glass, which hands it the flight', async () => {
+        await under(fixture, glass);
+
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it('holds a light of the danger round every radio of a set in error under Glass, and flashes each', async () => {
+        const form = await under(
+            fixture.replace('name="plan"', 'name="plan" error="Pick one."'),
+            glass,
+        );
+        stilled(form);
+
+        for (const control of controls(form)) {
+            expect(getComputedStyle(control, '::after').boxShadow, control.value).toMatch(
+                / 0px 0px 12px 2px$/,
+            );
+            expect(getComputedStyle(control).animationName, control.value).toBe(
+                'none, none, none, ui-flash',
+            );
+        }
+    });
+
     it('splits every radio of a set in error under Matrix, and flashes none', async () => {
         const form = await under(
             fixture.replace('name="plan"', 'name="plan" error="Pick one."'),
@@ -1497,7 +1542,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
 
         for (const control of controls(form)) {
             expect(getComputedStyle(control).animationName, control.value).toBe(
-                'none, ui-split, none',
+                'none, none, ui-split, none',
             );
         }
     });

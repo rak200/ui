@@ -278,6 +278,13 @@ and the split are added to the ring and glow the theme lights the control with, 
 that ring and glow transparent while either plays, where Firefox and WebKit keep them. Whatever
 draws the boundary or the fill under the pointer or at the focus, a control in error keeps its red.
 
+**Under [Glass](theme.md#glass)** a control keeps a light along its inside at the focus, a sheen
+sweeps under its mark four times and its ring comes into focus from a blur, and it does not lift;
+in error it holds a light of the danger round it and flashes its fill. The sheen lies under the
+mark, as a button's lies under its label: over it, a full control's mark fell to 2.47:1 at the
+sheen's peak. A switch sweeps none, since its thumb is a layer of its own background that a sheen
+could only pass over, and an off thumb fell under 3:1 beneath any band.
+
 The effects are drawn by one internal sheet, `controlEffects()` in `src/effects.ts`, and the tick
 is played by one internal helper, `checked()` in `src/check.ts`, which each control calls from its
 `change` listener.
