@@ -215,25 +215,19 @@ function cut(
     };
 
     /**
-     * Copies each clock's progress into its piece while this cut is the surface's, and asks for the
-     * next frame while a clock is still running or held: once the last has finished, what it drew
-     * last is where each piece rests.
+     * Copies each clock's progress into its piece, and asks for the next frame while a clock is
+     * still running or held: once the last has finished, what it drew last is where each piece
+     * rests, and once the cut is ended its clocks are stopped, so nothing asks for another.
      */
     const frame = (): void => {
-        if (cutting.get(surface) === whole) {
-            for (const { fade, timing } of faded) {
-                const progress = timing.getComputedTiming().progress ?? 0;
+        for (const { fade, timing } of faded) {
+            const progress = timing.getComputedTiming().progress ?? 0;
 
-                fade.setAttribute('slope', String(together ? progress : 1 - progress));
-            }
+            fade.setAttribute('slope', String(together ? progress : 1 - progress));
+        }
 
-            if (
-                clocks.some(
-                    (clock) => clock.playState === 'running' || clock.playState === 'paused',
-                )
-            ) {
-                requestAnimationFrame(frame);
-            }
+        if (clocks.some((clock) => clock.playState === 'running' || clock.playState === 'paused')) {
+            requestAnimationFrame(frame);
         }
     };
 

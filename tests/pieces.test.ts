@@ -229,6 +229,37 @@ describe('putting a surface together', () => {
         }
     });
 
+    it('keeps drawing the pieces still under way once others have landed', async () => {
+        const surface = mount('--ui-fx-enter-time: 36s');
+
+        materialize(surface);
+
+        const running = surface.getAnimations();
+        // Every second piece landed; the rest held, and moved on while held.
+        running.forEach((clock, index) => {
+            if (index % 2 === 1) {
+                clock.finish();
+            }
+        });
+
+        const [[delay, duration] = []] = clocks(surface);
+        const held = running.filter((_, index) => index % 2 === 0);
+
+        for (const time of [9000, 20000]) {
+            for (const clock of held) {
+                clock.pause();
+                clock.currentTime = time;
+            }
+
+            await new Promise(requestAnimationFrame);
+
+            expect(slopes(surface)[0], `at ${String(time)}ms`).toBeCloseTo(
+                (time - Number(delay)) / Number(duration),
+                4,
+            );
+        }
+    });
+
     it('draws the pieces frame after frame as their clocks run on their own', async () => {
         const surface = mount('--ui-fx-enter-time: 36s');
 
@@ -311,11 +342,24 @@ describe('putting a surface together', () => {
     it('cuts nothing with no box to cut', () => {
         const hidden = mount('display: none');
         const flat = mount('height: 0');
+        const narrow = mount('width: 0');
 
-        materialize(hidden);
-        materialize(flat);
+        for (const surface of [hidden, flat, narrow]) {
+            materialize(surface);
+        }
 
-        expect([hidden.style.filter, flat.style.filter]).toEqual(['', '']);
+        expect([hidden.style.filter, flat.style.filter, narrow.style.filter]).toEqual(['', '', '']);
+    });
+
+    it('lays the filter where it takes no room on the page', () => {
+        const surface = mount();
+
+        materialize(surface);
+
+        const holder = filterOf(surface).parentElement;
+        const room = holder?.getBoundingClientRect();
+
+        expect([holder?.style.position, room?.width, room?.height]).toEqual(['absolute', 0, 0]);
     });
 
     it('names each cut apart, so two surfaces cut at once each take their own', () => {
