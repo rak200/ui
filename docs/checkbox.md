@@ -263,6 +263,14 @@ under them; each answer to the pointer yields to the focus, and a control in err
 `--ui-motion-hover-border: highlight` keeps today's darkening, which is that moment's answer from
 before effects existed.
 
+**At the focus the label takes the accent, and in error the control sends a band out and flashes**,
+as a field does. The text beside the control goes to the accent with a fifth of the text's colour
+mixed in, which holds 4.5:1 in every theme. A control in error sends a band of the danger out from
+its boundary to 10px, added to any glow a theme lights it with, and its fill flashes from a fifth of
+the danger back, four rounds of `--ui-duration-flourish` that settle. The flash is the field's,
+mixed into the surface, so at each round's start the mark of a checked or mixed box, and a switch's
+thumb, lose most of their contrast against the tint until the round fades.
+
 The effects are drawn by one internal sheet, `controlEffects()` in `src/effects.ts`, and the tick
 is played by one internal helper, `checked()` in `src/check.ts`, which each control calls from its
 `change` listener.
