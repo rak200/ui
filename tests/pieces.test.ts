@@ -58,11 +58,17 @@ function cells(surface: HTMLElement): (readonly number[])[] {
     );
 }
 
-/** How much of each piece shows, as the filter draws it. */
+/** How much of each piece shows, as the filter draws it: never a slope left blank, which is 1. */
 function slopes(surface: HTMLElement): number[] {
-    return [...filterOf(surface).querySelectorAll('feFuncA')].map((fade) =>
-        Number(fade.getAttribute('slope')),
-    );
+    return [...filterOf(surface).querySelectorAll('feFuncA')].map((fade) => {
+        const slope = fade.getAttribute('slope') ?? '';
+
+        if (slope === '') {
+            throw new Error('a piece drawn with no slope, which shows it whole');
+        }
+
+        return Number(slope);
+    });
 }
 
 /** Each piece's clock: when it starts, for how long, on what curve, and how it holds. */
@@ -97,12 +103,13 @@ async function finish(surface: HTMLElement): Promise<void> {
 }
 
 /**
- * Two kinds of piece, every other one each: one that waits nothing and fades over the longest, 585ms,
- * and one that waits half the longest wait, 232.5ms, and fades over a quarter of the way from the
- * shortest, 438.75ms. Each piece asks for its wait first and its fade second.
+ * Two kinds of piece, every other one each: one that waits a fifth of the longest wait, 93ms, and
+ * fades over the longest, 585ms, so it sets off first and is gone last; and one that waits half the
+ * longest wait, 232.5ms, and fades over a quarter of the way from the shortest, 438.75ms. Each piece
+ * asks for its wait first and its fade second.
  */
 beforeEach(() => {
-    const draws = [0, 1, 0.5, 0.25];
+    const draws = [0.2, 1, 0.5, 0.25];
     let drawn = 0;
 
     vi.spyOn(Math, 'random').mockImplementation(() => {
@@ -125,11 +132,12 @@ afterEach(() => {
 });
 
 /** The first kind's wait and fade, and the second's, at the reference's pace less a quarter. */
-const first = [0, 585] as const;
+const first = [93, 585] as const;
 const second = [232.5, 438.75] as const;
 
-/** When the last piece of either kind would be gone, broken at that pace. */
-const end = second[0] + second[1];
+/** When the last piece would be gone, broken at that pace, and when the first would set off. */
+const end = Math.max(first[0] + first[1], second[0] + second[1]);
+const start = Math.min(first[0], second[0]);
 
 describe('putting a surface together', () => {
     it('cuts it under one filter of thirty-six pieces, six by six, an outer one reaching 3rem past it', () => {
@@ -180,18 +188,18 @@ describe('putting a surface together', () => {
         materialize(surface);
 
         // The span from the first setting off to the last landing, fitted to 650ms.
-        const scale = 650 / end;
+        const scale = 650 / (end - start);
 
         expect(slopes(surface).slice(0, 2), 'none showing yet').toEqual([0, 0]);
         expect(clocks(surface)).toHaveLength(36);
-        expect(clocks(surface)[0], 'the first kind').toEqual([
+        expect(clocks(surface)[0], 'the first kind, which would have gone last').toEqual([
             (end - first[0] - first[1]) * scale,
             first[1] * scale,
             'linear',
             'both',
         ]);
-        expect(clocks(surface)[1], 'the second, which would have gone last').toEqual([
-            0,
+        expect(clocks(surface)[1], 'the second').toEqual([
+            (end - second[0] - second[1]) * scale,
             second[1] * scale,
             'linear',
             'both',
@@ -213,7 +221,7 @@ describe('putting a surface together', () => {
 
         materialize(surface);
 
-        const [[delay, duration] = [], [, length] = []] = clocks(surface);
+        const [[delay, duration] = [], [wait, length] = []] = clocks(surface);
 
         for (const time of [300, 400]) {
             await hold(surface, time);
@@ -223,7 +231,7 @@ describe('putting a surface together', () => {
                 4,
             );
             expect(slopes(surface)[1], `the second, at ${String(time)}ms`).toBeCloseTo(
-                time / Number(length),
+                (time - Number(wait)) / Number(length),
                 4,
             );
         }
@@ -266,12 +274,12 @@ describe('putting a surface together', () => {
         materialize(surface);
         await new Promise((resolve) => setTimeout(resolve, 50));
 
-        const earlier = slopes(surface)[1] ?? 0;
+        const earlier = slopes(surface)[0] ?? 0;
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         expect(earlier, 'under way').toBeGreaterThan(0);
-        expect(slopes(surface)[1], 'and further on').toBeGreaterThan(earlier);
+        expect(slopes(surface)[0], 'and further on').toBeGreaterThan(earlier);
     });
 
     it('gives the surface back whole once the last piece has landed, and copies nothing after', async () => {
@@ -411,7 +419,10 @@ describe('breaking a surface apart', () => {
         erode(surface);
         await hold(surface, 300);
 
-        expect(slopes(surface)[0], 'the first kind').toBeCloseTo(1 - 300 / first[1], 4);
+        expect(slopes(surface)[0], 'the first kind').toBeCloseTo(
+            1 - (300 - first[0]) / first[1],
+            4,
+        );
         expect(slopes(surface)[1], 'the second').toBeCloseTo(1 - (300 - second[0]) / second[1], 4);
     });
 
@@ -462,6 +473,17 @@ describe('mending', () => {
         mend(surface);
 
         expect(surface.style.filter).toBe('');
+    });
+
+    it('leaves a surface alone once it is whole again, a filter of its own included', async () => {
+        const surface = mount();
+
+        materialize(surface);
+        await finish(surface);
+        surface.style.filter = 'grayscale(1)';
+        mend(surface);
+
+        expect(surface.style.filter).toBe('grayscale(1)');
     });
 
     it("counts its pace from the entrance's and the exit's own defaults", () => {
