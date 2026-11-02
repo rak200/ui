@@ -749,9 +749,10 @@ describe('tokenStyleSheet', () => {
         ]);
     });
 
-    it("takes the button's and the fields' effects as the default theme's taste, the package's motion", () => {
+    it("takes the button's, the fields' and the drawn controls' effects as the default theme's taste, the package's motion", () => {
         expect(taste).toEqual({
             page: {
+                'hover-fill': 'highlight',
                 'hover-shadow': 'raise',
                 'focus-move': 'lift',
                 'focus-shadow': 'raise',
@@ -763,9 +764,9 @@ describe('tokenStyleSheet', () => {
                 'invalid-fill': 'flash',
             },
             components: {
-                checkbox: { check: 'draw' },
-                switch: { check: 'spring' },
-                radio: { check: 'pop' },
+                checkbox: { check: 'draw', 'hover-border': 'none' },
+                switch: { check: 'spring', 'hover-border': 'none' },
+                radio: { check: 'pop', 'hover-border': 'none' },
             },
         });
     });

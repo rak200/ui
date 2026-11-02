@@ -375,5 +375,13 @@ export const glass: Theme = {
             'press-fill': 'ripple',
             'invalid-border': 'glow',
         },
+        // The page's edge, for the drawn controls: the default theme's taste names their none,
+        // and a component's own entry outweighs a page's, so without these they lose their answer
+        // to the pointer under this theme.
+        components: {
+            checkbox: { 'hover-border': 'edge' },
+            switch: { 'hover-border': 'edge' },
+            radio: { 'hover-border': 'edge' },
+        },
     },
 };

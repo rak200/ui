@@ -19,6 +19,7 @@ import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiRadio, UiRadioGroup } from '../src/radio.js';
 import type { UiCheckbox } from '../src/checkbox.js';
+import { glass, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -1308,6 +1309,107 @@ describe("the check, under the default theme's taste", () => {
 
         expect(marks(second), 'the choice the reader made').toHaveLength(1);
         expect(marks(first), 'the one it left').toEqual([]);
+    });
+});
+
+/**
+ * The pointer and the focus on a radio — RFC 0004's — under the default theme's taste, and what
+ * Glass keeps of today's. What each effect draws is graded on a control of the suite's own in
+ * `tests/effects.test.ts`; what these are about is that the group draws it on its radios.
+ */
+describe("the pointer and the focus, under the default theme's taste", () => {
+    /** The button's drop, as the engine computes it on a light page. */
+    const raised = 'rgba(0, 0, 0, 0.25) 0px 2px 4px -1px, rgba(0, 0, 0, 0.35) 0px 6px 14px -4px';
+
+    /** A light that is not there, as the engine computes the layer's fallback. */
+    const clear = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+
+    afterEach(() => {
+        // A ring still in the air lands, so nothing flies on into the next test.
+        for (const flight of document.querySelector('[data-ui-ring]')?.getAnimations() ?? []) {
+            flight.finish();
+        }
+    });
+
+    /**
+     * Mounts `markup` under the token sheet, and under a theme's after it where one is named, which
+     * the form then takes.
+     */
+    async function under(markup: string, theme?: Theme): Promise<HTMLFormElement> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
+        document.body.append(style);
+
+        const form = await mount(markup);
+
+        if (theme !== undefined) {
+            form.dataset['uiTheme'] = theme.name;
+        }
+
+        return form;
+    }
+
+    /** Takes every duration the effects move over out, on the form round the fixture. */
+    function stilled(form: HTMLElement): void {
+        form.style.setProperty('--ui-duration-effect', '0s');
+        form.style.setProperty('--ui-duration-state', '0s');
+    }
+
+    /** Whether the page's ring is in the air. */
+    function aloft(): boolean {
+        return document.querySelector('[data-ui-ring]:popover-open') !== null;
+    }
+
+    it("takes a radio's darkening away under the pointer, for the hover colour in its fill and a raise, in a group with no choice", async () => {
+        // A group with no choice leaves every radio indeterminate, which is not full.
+        const form = await under(fixture);
+        stilled(form);
+        form.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        form.style.setProperty('--ui-color-hover', 'rgb(4, 5, 6)');
+        const control = radio(form);
+
+        await userEvent.hover(control);
+
+        const styles = getComputedStyle(control);
+
+        expect(styles.borderTopColor, 'the boundary at rest').toBe('rgb(1, 2, 3)');
+        expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
+        expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
+            `${raised}, ${clear}`,
+        );
+    });
+
+    it('raises and lifts a radio at the focus', async () => {
+        const form = await under(fixture);
+        stilled(form);
+        const control = radio(form);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(control, '::after').boxShadow, 'raised').toBe(
+            `${clear}, ${raised}`,
+        );
+        expect(getComputedStyle(control).translate, 'lifted').toBe('0px -2px');
+    });
+
+    it('glides the ring to a radio from the control before it, which hands it the flight', async () => {
+        await under(`<ui-checkbox label="First"></ui-checkbox>${fixture}`);
+
+        await userEvent.tab();
+        await userEvent.tab();
+
+        expect(aloft()).toBe(true);
+    });
+
+    it("takes Glass's edge back for a radio from the default theme's none, which leaves it today's darkening", async () => {
+        const form = await under(fixture, glass);
+        stilled(form);
+        form.style.setProperty('--ui-color-text', 'rgb(9, 9, 9)');
+        const control = radio(form);
+
+        await userEvent.hover(control);
+
+        expect(getComputedStyle(control).borderTopColor).toBe('rgb(9, 9, 9)');
     });
 });
 

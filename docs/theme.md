@@ -205,6 +205,10 @@ own.
 | `press-fill`     | `ripple`    |
 | `invalid-border` | `glow`      |
 
+It names the edge again for each drawn control, `checkbox`, `switch` and `radio`, where the default
+theme's taste names their `none`: a component's own entry outweighs a page's, so without its own
+Glass's edge would never reach them.
+
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer
 by, and over the light page Glass holds over, the formula's hover stood 1.15:1 from the glass, under
@@ -275,7 +279,9 @@ offer runs nothing there, and the component does what it does today.
 **The default theme's taste stands under every theme**, as its values do: the token sheet carries
 it, as [`taste`](tokens.md#taste), and a theme's own replaces it moment by moment where the theme
 names one. So a theme that wants nothing where the default theme has an effect names `none` there,
-which is nothing. [Matrix](#matrix) and [Glass](#glass) carry tastes of their own. RFC 0004's
+which is nothing. **A component's own entry outweighs a page's**, whichever taste it is in, so where
+the default theme names a moment for one component, a theme replaces it by naming that component's
+too. [Matrix](#matrix) and [Glass](#glass) carry tastes of their own. RFC 0004's
 rollout draws the effects the three themes' tastes name a component at a time,
 [the button](button.md#motion) first, so a taste written today changes nothing until the component it
 names offers that effect.

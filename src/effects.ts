@@ -1218,6 +1218,15 @@ export function fieldEffects(component: string, able: string): CSSResult {
 }
 
 /**
+ * The lights a drawn control draws round itself, each on its `::after` from a property of its
+ * own: what lays that layer out once one is chosen.
+ */
+const controlLights = [
+    ['hover-shadow', 'raise'],
+    ['focus-shadow', 'raise'],
+] as const;
+
+/**
  * The reference's spring for a switch's thumb: a `linear()` curve that carries it a fifth of its
  * way past its place, back a little short of it, and to rest by four fifths of the time.
  */
@@ -1229,10 +1238,11 @@ const bounce = css`linear(0, 0.45 7%, 0.98 15%, 1.18 22%, 1.22 26%, 1.15 32%, 0.
  * the switch's, and the radio's, which `ui-radio-group` draws the radios of.
  *
  * **What it asks of the component.** Its control is the `<input>` in its shadow root, drawn with
- * `appearance: none`, its mark on its `::before` — the tick, the dot; a switch's carries
- * `role="switch"` and draws its thumb as a background layer, whose `background-position` is the
- * third of its transitions; and `checked()` from `src/check.ts` is called from the control's
- * `change` listener. The sheet comes after the component's own.
+ * `appearance: none`, its mark on its `::before` — the tick, the dot — and its lights on its
+ * `::after`; a switch's carries `role="switch"` and draws its thumb as a background layer, whose
+ * `background-position` is the third of its transitions; `checked()` from `src/check.ts` is called
+ * from the control's `change` listener, and `arrive()` is bound to its focus, with `watch()` called
+ * as the component connects. The sheet comes after the component's own.
  *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
  * {@link buttonEffects} gives.
@@ -1241,7 +1251,137 @@ export function controlEffects(component: string): CSSResult {
     /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
     const drawn = query(component);
 
+    /** True wherever any of the lights round the control is chosen. */
+    const lit = unsafeCSS(
+        controlLights.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
     return css`
+        /* lift moves the control's place, so its place transitions once it is chosen, beside what
+           the control already moves: its colours on the state's time, and the switch's thumb with
+           them, and its place on an effect's, on the curve an arrival takes. Ahead of the check's
+           rules, which outrank these by coming later: the mark's takes the colours out, and the
+           spring times the switch's. */
+        @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
+            input {
+                transition-property: background-color, border-color, translate;
+                transition-duration:
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-state')},
+                    ${reference('--ui-duration-effect')};
+                transition-timing-function:
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-state')},
+                    ${reference('--ui-easing-enter')};
+            }
+
+            input[role='switch'] {
+                transition-property: background-color, border-color, background-position, translate;
+                transition-duration:
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-state')},
+                    ${reference('--ui-duration-state')}, ${reference('--ui-duration-effect')};
+                transition-timing-function:
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-state')},
+                    ${reference('--ui-easing-state')}, ${reference('--ui-easing-enter')};
+            }
+        }
+
+        /* The lights round the control, on its ::after, since its own shadow is the theme's glow:
+           the pointer's and the focus's, each from a property of its own, so the two draw at once
+           and the glow stays under them. Moved on an effect's time. */
+        @container ${lit} {
+            input {
+                position: relative;
+            }
+
+            input::after {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                border-radius: inherit;
+                box-shadow: var(--ui-fx-lit-pointer, 0 0 #0000), var(--ui-fx-lit-focus, 0 0 #0000);
+                transition: box-shadow ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        /* The pointer's, on a control the pointer can change and without the focus, which they
+           yield to, where the pointer can hover: a tap leaves the hover behind.
+
+           none, for the boundary: today's answer taken away — the boundary darkening on an empty
+           control and the fill deepening on a full one — back to the colours at rest; a control in
+           error keeps its red, on the control or on the set it is in. highlight, for the fill: the
+           hover colour, a secondary button's on an empty control and the deeper accent on a full
+           one, after the boundary's, so a full control's fill is the fill's to choose. A full
+           control's boundary goes with its fill, as it does today: left at the accent it drew a
+           ring round a control that is only being pointed at. raise: the button's drop, on the
+           lights' layer.
+
+           A full control is a checked one, or a checkbox in the mixed state, which is drawn full: a
+           radio is indeterminate wherever its group has no choice. In error each keeps the boundary
+           it rests in — the red round a checked control, which comes after it, and the accent round
+           a mixed one, whose own rule outweighs the red as the mixed state's does at rest. */
+        @media (hover: hover) {
+            @container ${unsafeCSS(drawn('hover-border', 'none'))} {
+                input:hover:not(:disabled):not(:focus-visible) {
+                    border-color: ${reference('--ui-color-border')};
+                }
+
+                input:checked:hover:not(:disabled):not(:focus-visible),
+                input[type='checkbox']:indeterminate:hover:not(:disabled):not(:focus-visible) {
+                    background-color: ${reference('--ui-color-accent')};
+                    border-color: ${reference('--ui-color-accent')};
+                }
+
+                input[aria-invalid='true']:hover:not(:disabled):not(:focus-visible),
+                [aria-invalid='true'] input:hover:not(:disabled):not(:focus-visible) {
+                    border-color: ${reference('--ui-color-danger')};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-fill', 'highlight'))} {
+                input:hover:not(:disabled):not(:focus-visible) {
+                    background-color: ${reference('--ui-color-hover')};
+                }
+
+                input:checked:hover:not(:disabled):not(:focus-visible),
+                input[type='checkbox']:indeterminate:hover:not(:disabled):not(:focus-visible) {
+                    background-color: ${reference('--ui-color-accent-hover')};
+                    border-color: ${reference('--ui-color-accent-hover')};
+                }
+            }
+
+            @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
+                input:hover:not(:disabled):not(:focus-visible) {
+                    --ui-fx-lit-pointer: ${raise};
+                }
+            }
+        }
+
+        @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
+            input:focus-visible {
+                --ui-fx-lit-focus: ${raise};
+            }
+        }
+
+        /* lift: the control two pixels up, its mark, its lights and its ring with it, for as long
+           as the focus stays. */
+        @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
+            input:focus-visible {
+                translate: 0 -2px;
+            }
+        }
+
+        /* The focus ring glided over from the control the reader saw it on last, as the button
+           hands it the flight — src/ring.ts — never in forced colours. */
+        @media (forced-colors: none) {
+            @container ${unsafeCSS(drawn('focus-ring', 'glide'))} {
+                input:focus-visible {
+                    --ui-fx-ring: glide;
+                    --ui-fx-ring-time: ${reference('--ui-duration-travel')};
+                    --ui-fx-ring-curve: ${reference('--ui-easing-move')};
+                }
+            }
+        }
+
         /* draw and pop: the mark src/check.ts plays on the control's ::before as the reader checks
            it. The sheet decides and the script only reads: the effect, and the time and curve it
            plays over, on a control that can be used. The tick drawn over an effect's time on the
@@ -1275,8 +1415,11 @@ export function controlEffects(component: string): CSSResult {
            about 3px past, short on the way back, and to rest. */
         @container ${unsafeCSS(drawn('check', 'spring'))} {
             input[role='switch'] {
-                transition-duration: 0s, 0s, ${reference('--ui-duration-flourish')};
-                transition-timing-function: linear, linear, ${bounce};
+                transition-duration:
+                    0s, 0s, ${reference('--ui-duration-flourish')},
+                    ${reference('--ui-duration-effect')};
+                transition-timing-function:
+                    linear, linear, ${bounce}, ${reference('--ui-easing-enter')};
             }
         }
     `;

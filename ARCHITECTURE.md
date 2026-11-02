@@ -487,10 +487,14 @@ rises under the pointer and at the focus, lifts at the focus, takes its focus ri
 the control before it, and squeezes and sinks under a press; and a field rises under the pointer and
 at the focus, its box lifting there rather than the control the reader types in, takes its ring
 glided over and its label to the accent, and in error sends a band of the danger out and flashes its
-fill; and a drawn control's check draws the tick on, springs the switch's thumb over and pops the
-radio's dot in, as the reader makes it. RFC 0004 accepted that as the cost of having motion at all. A shipped theme's
-taste replaces it moment by moment, and names `none` where it wants nothing in place of an effect. An effect enters
-the catalogue with the first component that draws it, bringing the tokens and the script it needs:
+fill; and a drawn control takes the hover colour in its fill under the pointer, its boundary at rest,
+rises there and at the focus, lifts and takes its ring glided over at the focus, and its check draws
+the tick on, springs the switch's thumb over and pops the radio's dot in, as the reader makes it.
+RFC 0004 accepted that as the cost of having motion at all. A shipped theme's taste replaces it
+moment by moment, and names `none` where it wants nothing in place of an effect; a component's own
+entry outweighs a page's in either, so a theme replaces one the default theme names for a component
+by naming that component's. An effect enters the catalogue with the first component that draws it,
+bringing the tokens and the script it needs:
 _a category arrives with the component that consumes it_, applied to an effect. The rest waits in
 the proposal's prototypes until someone asks for it.
 

@@ -199,6 +199,12 @@ pops, as [the checkbox's box](checkbox.md#motion) does for its tick. A theme's t
 under the radio's name, `--ui-taste-radio-check`, since the controls the group draws are radios. It
 collapses under `prefers-reduced-motion: reduce`.
 
+**Under the pointer and at the focus a radio answers as [a checkbox does](checkbox.md#motion)**: its
+boundary stays as it rests while its fill takes the hover colour, or the deeper accent once chosen,
+with its boundary, and a drop shadow raises it; at the focus it is raised and lifted, and the ring glides over. A radio
+in a group with no choice is indeterminate to the platform, and is still drawn empty. An error on the
+set keeps every radio's red.
+
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the mark.
