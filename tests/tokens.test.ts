@@ -840,7 +840,7 @@ describe('tokenStyleSheet', () => {
         ]);
     });
 
-    it("takes the button's, the fields', the drawn controls' and the card's effects as the default theme's taste, the package's motion", () => {
+    it("takes the button's, the fields', the drawn controls', the card's and the toast's effects as the default theme's taste, the package's motion", () => {
         expect(taste).toEqual({
             page: {
                 'hover-fill': 'highlight',
@@ -859,6 +859,7 @@ describe('tokenStyleSheet', () => {
                 switch: { check: 'spring', 'hover-border': 'none' },
                 radio: { check: 'pop', 'hover-border': 'none' },
                 card: { enter: 'fade', exit: 'fade' },
+                toast: { enter: 'slide-elastic', exit: 'slide' },
             },
         });
     });

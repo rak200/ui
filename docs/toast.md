@@ -211,6 +211,20 @@ its choice from round the toast, never from the toast: **a choice written on one
 reach it**, where one written on the toaster or anything round it does — RFC 0004's S8. Under
 `prefers-reduced-motion: reduce` each lands at once.
 
+**A toast slides in and slides out.** Under the default theme's taste it comes in from its own width
+past the page's edge, the one the toaster stands at, flung a rem past where it lands and pulled back
+either side of it — 520ms at the defaults, `--ui-duration-enter` and four ninths again — and as it is
+dismissed it slides back out toward that edge over `--ui-duration-exit`, on `--ui-easing-exit`. In
+right-to-left text the edge is the left one. The toaster lets a sliding toast pass its box rather than
+scroll.
+
+Its own entrance and exit, a rise from below and a fade, then a sink and a fade, are what it does where
+you choose `none` and in an engine without container style queries. Under an entrance or an exit a
+surface's effects animate they stand down, and the toast transitions only its transform: a
+transition outranks an animation in the cascade, and the two would move the same values. While it leaves the toast is in the custom state `leaving`,
+which your stylesheet reads as `ui-toast:state(leaving)`, and a toast put back after it was dismissed
+arrives anew. The state stands where an undocumented class, `closing`, stood before.
+
 ## Styling
 
 Every value is a [token](tokens.md); nothing here is hardcoded.

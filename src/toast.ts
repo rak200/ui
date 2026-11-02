@@ -3,20 +3,19 @@ import {
     css,
     html,
     svg,
+    unsafeCSS,
     type CSSResult,
     type SVGTemplateResult,
     type TemplateResult,
 } from 'lit';
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
+import { query } from './motion.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
 
 /** What a toast is telling the reader, which decides how it looks *and* how it is announced. */
 export type ToastVariant = 'info' | 'success' | 'warning' | 'danger';
-
-/** The class the exit is carried by, on the toast for exactly as long as the exit runs. */
-const closing = 'closing';
 
 /**
  * The glyph each variant carries beside its edge: Lucide's `info`, `circle-check`,
@@ -48,6 +47,16 @@ const glyphs: Readonly<Record<ToastVariant, SVGTemplateResult>> = {
  * the rest of it spent noticing that something arrived at all.
  */
 const dwell = 5000;
+
+/** The condition one of the toast's effects is drawn under, by moment and effect. */
+const drawn = query('toast');
+
+/**
+ * True wherever the toast's entrance is one a surface's effects animate, which its own rise stands
+ * down for; and its exit, which its own sink stands down for.
+ */
+const arriving = ['fade', 'slide-elastic'].map((effect) => drawn('enter', effect)).join(' or ');
+const leaving = ['fade', 'slide'].map((effect) => drawn('exit', effect)).join(' or ');
 
 /**
  * The live regions a toast is announced through, and the box the stack is drawn in.
@@ -116,6 +125,10 @@ export class UiToaster extends LitElement {
                takes no clicks; a toast puts them back on itself. Without this a page has a
                dead zone in the corner for as long as a toaster is on it. */
             pointer-events: none;
+            /* A toast that slides in or out passes its own width past the stack's box, which the
+               platform gives a popover's overflow to scroll: a slide scrolled the toaster, under
+               a scrollbar, for as long as it ran — measured for RFC 0004. */
+            overflow: visible;
         }
 
         /* display is named under :popover-open and nowhere else, and that is the rule
@@ -209,7 +222,9 @@ export class UiToaster extends LitElement {
  * **It answers the pointer and a focus in it as a card does**, RFC 0004's: a surface's effects,
  * from `surfaceEffects()` in `src/effects.ts`, drawn on layers its shadow root renders empty, from
  * a mark `held()` puts on it while a focus the reader can see is in it. What moves it goes on its
- * transform, since its own rise from below holds its translate.
+ * transform, since its own rise from below holds its translate. It slides in and out where the taste
+ * says so, its own rise and sink standing down, and while it leaves it is in the custom state
+ * `leaving`, which a host's sheet reads as `ui-toast:state(leaving)`.
  *
  * @example
  * ```html
@@ -326,12 +341,31 @@ export class UiToast extends LitElement {
                 }
             }
 
-            /* The exit, driven from a class rather than from the element leaving: the removal
-           is what this is waiting for, so an exit keyed on it would never run. */
-            :host(.closing) {
+            /* The exit, driven from a state the toast takes as it is dismissed rather than from the
+           element leaving: the removal is what this is waiting for, so an exit keyed on it would
+           never run. A host's sheet reads the state as ui-toast:state(leaving). */
+            :host(:state(leaving)) {
                 opacity: 0;
                 translate: 0 calc(${reference('--ui-space')} * 2);
                 transition-timing-function: ${reference('--ui-easing-exit')};
+            }
+
+            /* Its own rise and sink stand down for an entrance or an exit a surface's effects
+           animate, which move what they move: it transitions only what moves it, its transform. A
+           transition outranks an animation in the cascade, and Firefox started the rise's beside a
+           slide, measured; RFC 0004's prototype turned them off for the same reason. */
+            @container ${unsafeCSS(arriving)} {
+                :host(:not(:state(leaving))) {
+                    transition: transform ${reference('--ui-duration-effect')}
+                        ${reference('--ui-easing-enter')};
+                }
+            }
+
+            @container ${unsafeCSS(leaving)} {
+                :host(:state(leaving)) {
+                    transition: transform ${reference('--ui-duration-effect')}
+                        ${reference('--ui-easing-exit')};
+                }
             }
 
             div {
@@ -436,6 +470,9 @@ export class UiToast extends LitElement {
     /** The pending auto-dismissal; `0` when there is none, which is what `clearTimeout` reads. */
     #timer = 0;
 
+    /** Where the toast keeps its states: `leaving`, from when it is dismissed until it has gone. */
+    readonly #internals = this.attachInternals();
+
     /**
      * Takes every listener off at once, for the reason `src/tooltip.ts` gives beside its
      * own: half of these leak invisibly if they are removed by name, and one `abort()` is
@@ -480,6 +517,10 @@ export class UiToast extends LitElement {
         // A fresh one per connection: an aborted signal stays aborted, so a toast a
         // framework moved in the tree would come back deaf.
         this.#listeners = new AbortController();
+
+        // And a toast put back after it was dismissed arrives as any toast does, rather than
+        // standing at the end of its exit.
+        this.#internals.states.delete('leaving');
 
         const watched = { signal: this.#listeners.signal };
 
@@ -615,15 +656,15 @@ export class UiToast extends LitElement {
         //
         // **It is also why no `#stop()` belongs here**, which is worth writing down because
         // one used to be. A clock still running when a dismissal starts fires into this very
-        // guard — the class goes on the next line with no await between, so there is no
+        // guard — the state goes on the next line with no await between, so there is no
         // window — and the removal below runs `disconnectedCallback`, which stops it anyway.
         // The call was unobservable on every input, which mutation testing reports as a
         // survivor rather than as the dead line it was.
-        if (this.classList.contains(closing)) {
+        if (this.#internals.states.has('leaving')) {
             return;
         }
 
-        this.classList.add(closing);
+        this.#internals.states.add('leaving');
 
         // `finished` rejects when an animation is cancelled, so what this waits for is
         // settlement rather than fulfilment. `getAnimations` flushes the pending style

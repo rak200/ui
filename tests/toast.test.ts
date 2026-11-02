@@ -776,18 +776,23 @@ describe('the values, all of which come from the token layer', () => {
 
         element.style.setProperty('--ui-space', '10px');
         element.style.setProperty('--ui-easing-exit', 'linear');
+        element.style.setProperty('--ui-duration-state', '10s');
+        await still(element);
+
+        element.dismiss();
+
+        // One value rather than the list the resting rule declares: the exit names the
+        // timing function alone, and one function covers every property in the list.
+        expect(getComputedStyle(element).transitionTimingFunction).toBe('linear');
+
         // The destination rather than the interpolation: a value read partway through the
         // exit is whatever the curve had reached, which is a different question.
-        element.style.setProperty('--ui-duration-state', '0s');
-        element.classList.add('closing');
+        for (const animation of element.getAnimations()) {
+            animation.finish();
+        }
 
-        const styles = getComputedStyle(element);
-
-        expect(styles.translate).toBe('0px 20px');
-        expect(styles.opacity).toBe('0');
-        // One value rather than the pair the resting rule declares: the exit names the
-        // timing function alone, and one function covers both properties in the list.
-        expect(styles.transitionTimingFunction).toBe('linear');
+        expect(getComputedStyle(element).translate).toBe('0px 20px');
+        expect(getComputedStyle(element).opacity).toBe('0');
     });
 
     it('takes the dismiss button from the host', async () => {
@@ -1042,6 +1047,111 @@ describe("the pointer and a focus in it, under each theme's taste", () => {
     });
 });
 
+/**
+ * How a toast comes onto the page and leaves it — RFC 0004's entrance and exit, which its own rise and
+ * sink, today's, stand down for where a surface's effects animate one.
+ */
+describe('arriving and leaving', () => {
+    /**
+     * Puts a toast into a toaster mounted under the token sheet, the effects `choices` names chosen
+     * on the toaster, and hands it over as it arrives.
+     */
+    async function arriving(choices: Readonly<Record<string, string>> = {}): Promise<UiToast> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+
+        const host = await mount('<ui-toaster></ui-toaster>');
+
+        for (const [moment, effect] of Object.entries(choices)) {
+            toaster(host).style.setProperty(`--ui-motion-${moment}`, effect);
+        }
+
+        const created = document.createElement('ui-toast');
+        created.duration = 0;
+        created.textContent = 'Saved.';
+        toaster(host).append(created);
+        await created.updateComplete;
+
+        return created;
+    }
+
+    /** What `element` transitions: only its transform where an animated passage stands its own down. */
+    function transitioned(element: HTMLElement): string {
+        return getComputedStyle(element).transitionProperty;
+    }
+
+    it("slides a toast in under the default theme's taste, its own rise standing down", async () => {
+        const element = await arriving();
+
+        expect(getComputedStyle(element).animationName).toBe('ui-enter-slide-elastic');
+        expect(transitioned(element), 'only what moves it').toBe('transform');
+    });
+
+    it('fades a toast in where the fade is chosen, its own rise standing down', async () => {
+        const element = await arriving({ enter: 'fade' });
+
+        expect(getComputedStyle(element).animationName).toBe('ui-enter-fade');
+        expect(transitioned(element), 'only what moves it').toBe('transform');
+    });
+
+    it('rises as it does today where no entrance is chosen', async () => {
+        const element = await arriving({ enter: 'none' });
+
+        expect(getComputedStyle(element).animationName).toBe('none');
+        expect(transitioned(element), 'its rise').toBe('opacity, translate, transform');
+    });
+
+    it.each([
+        ["the default theme's slide", {}, 'ui-exit-slide'],
+        ['a fade', { exit: 'fade' }, 'ui-exit-fade'],
+    ] as const)(
+        'leaves through %s as it is dismissed, its own sink standing down, then goes',
+        async (_whose, choices, exit) => {
+            const element = await arriving(choices);
+            await still(element);
+
+            element.style.setProperty('--ui-duration-effect', '0.3s');
+            element.dismiss();
+
+            expect(getComputedStyle(element).animationName).toBe(exit);
+            expect(
+                [transitioned(element), getComputedStyle(element).transitionDuration],
+                'only what moves it',
+            ).toEqual(['transform', '0.3s']);
+
+            const gone = dismissed(element);
+
+            for (const animation of element.getAnimations()) {
+                animation.finish();
+            }
+
+            await gone;
+
+            expect(element.isConnected).toBe(false);
+        },
+    );
+
+    it('arrives anew when it is put back after it was dismissed', async () => {
+        const host = await mount(fixture);
+        const element = toast(host);
+        element.style.setProperty('--ui-duration-state', '0s');
+        await still(element);
+
+        element.dismiss();
+        await dismissed(element);
+        toaster(host).append(element);
+
+        expect(element.matches(':state(leaving)')).toBe(false);
+    });
+
+    it('lets a toast slide past the stack it stands in rather than scrolling it', async () => {
+        const host = await mount(fixture);
+
+        expect(getComputedStyle(toaster(host)).overflow).toBe('visible');
+    });
+});
+
 describe('the dismiss button, which every toast has', () => {
     it('carries a name, because an icon-only control has nothing else to be called', async () => {
         const host = await mount(fixture);
@@ -1138,7 +1248,7 @@ describe('dismissal', () => {
 
         element.dismiss();
 
-        expect(element.classList.contains('closing')).toBe(true);
+        expect(element.matches(':state(leaving)')).toBe(true);
         expect(element.getAnimations().length).toBeGreaterThan(0);
 
         await dismissed(element);

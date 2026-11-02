@@ -2720,6 +2720,76 @@ describe("a surface's effects", () => {
         expect(getComputedStyle(host).opacity, 'held at its end').toBe('0');
     });
 
+    it('slides the surface in from its own width past the end of the line, over an entrance and four ninths again', () => {
+        const { region, host } = surface('test', { enter: 'slide-elastic' });
+        const rtl = surface('test', { enter: 'slide-elastic' });
+        rtl.region.dir = 'rtl';
+
+        for (const each of [region, rtl.region]) {
+            each.style.setProperty('--ui-duration-enter', '0.9s');
+        }
+
+        const styles = getComputedStyle(host);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['ui-enter-slide-elastic', '1.3s', 'linear', 'backwards']);
+
+        const slide = running(host, 'ui-enter-slide-elastic');
+        const backward = running(rtl.host, 'ui-enter-slide-elastic');
+
+        for (const each of [slide, backward]) {
+            each.pause();
+            each.currentTime = 0;
+        }
+
+        expect([getComputedStyle(host).translate, getComputedStyle(host).opacity]).toEqual([
+            '100%',
+            '0',
+        ]);
+        expect(getComputedStyle(rtl.host).translate, 'from the left in right-to-left text').toBe(
+            '-100%',
+        );
+
+        // Flung a rem past where it lands, at forty-two hundredths of the way.
+        slide.currentTime = 546;
+
+        expect(getComputedStyle(host).translate).toBe('-16px');
+    });
+
+    it('slides the surface out past the end of the line as it leaves, over an exit on the curve a departure takes', () => {
+        const { region, host } = surface('test', { exit: 'slide' });
+        region.style.setProperty('--ui-duration-exit', '10s');
+        region.style.setProperty('--ui-easing-exit', 'linear');
+        host.internals.states.add('leaving');
+
+        const styles = getComputedStyle(host);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['ui-exit-slide', '10s', 'linear', 'forwards']);
+
+        const slide = running(host, 'ui-exit-slide');
+
+        slide.pause();
+        slide.currentTime = 6000;
+
+        expect(getComputedStyle(host).opacity, 'whole three fifths of the way').toBe('1');
+
+        slide.finish();
+
+        expect([getComputedStyle(host).translate, getComputedStyle(host).opacity]).toEqual([
+            '100%',
+            '0',
+        ]);
+    });
+
     it('plays no entrance while the surface is leaving, so it goes at once where no exit is chosen', () => {
         const { host } = surface('test', { enter: 'fade' });
         host.internals.states.add('leaving');
