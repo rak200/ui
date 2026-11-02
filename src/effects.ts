@@ -2054,9 +2054,9 @@ const surfaceMoves = [
  * property each entrance writes and each exit writes over while the surface is on its way out. An
  * entrance plays as the surface is put on the page and is held at its start until it begins; an exit
  * plays once the component marks itself leaving and is held at its end until the component takes it
- * away, which no surface can wait for on its own: a host's removal takes it at once. The pieces are
- * cut in script, `src/pieces.ts`, which the sheet hands the effect and its time and curve, and whose
- * clocks are the host's animations too.
+ * away, which no surface can wait for on its own: a host's removal takes it at once. The pieces and
+ * the grain are drawn in script, `src/passage.ts`, which the sheet hands the effect and its time and
+ * curve, and whose clocks are the host's animations too.
  *
  * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
  * layers, marked `data-focus-visible` while a focus the reader can see is in it, by `held()` from
@@ -2359,7 +2359,7 @@ export function surfaceEffects(component: string): CSSResult {
         /* The host's one list of animations: its passage, an entrance as it is put on the page and
            an exit as it leaves. Its own on each surface, never one inherited from a surface round
            it, which a surface it holds would otherwise play as its own — and so are the entrance and
-           the exit the pieces are cut for. */
+           the exit drawn in script. */
         :host {
             --ui-fx-passage: none;
             --ui-fx-enter: none;
@@ -2391,8 +2391,8 @@ export function surfaceEffects(component: string): CSSResult {
         }
 
         /* materialize: the surface put together from pieces appearing where they belong, at random,
-           as it is put on the page — cut in script, src/pieces.ts, handed the entrance's time and
-           curve, on which each piece fades in. */
+           as it is put on the page — drawn in script, src/passage.ts, handed the entrance's time
+           and curve, on which each piece fades in. */
         @container ${unsafeCSS(drawn('enter', 'materialize'))} {
             :host {
                 --ui-fx-enter: materialize;
@@ -2408,6 +2408,27 @@ export function surfaceEffects(component: string): CSSResult {
                 --ui-fx-exit: erode;
                 --ui-fx-exit-time: ${reference('--ui-duration-exit')};
                 --ui-fx-exit-curve: ${reference('--ui-easing-exit')};
+            }
+        }
+
+        /* dissolve: the surface brought out of a fine grain as it is put on the page, and dissolved
+           into one as it leaves — handed each moment's time, on a straight clock: the grain is
+           sparse at both ends of its span already, and the moment's curve on top eased it twice,
+           the first hundredth of a dialog's panel gone 149ms into 780 under the exit's and 45ms in
+           on a straight one, measured for RFC 0004. */
+        @container ${unsafeCSS(drawn('enter', 'dissolve'))} {
+            :host {
+                --ui-fx-enter: dissolve;
+                --ui-fx-enter-time: ${reference('--ui-duration-enter')};
+                --ui-fx-enter-curve: linear;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'dissolve'))} {
+            :host {
+                --ui-fx-exit: dissolve;
+                --ui-fx-exit-time: ${reference('--ui-duration-exit')};
+                --ui-fx-exit-curve: linear;
             }
         }
 

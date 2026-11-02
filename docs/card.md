@@ -167,7 +167,8 @@ last goes about a second after `leave()`, each in proportion to `--ui-duration-e
 `--ui-duration-exit` from their defaults. **The pieces are a filter over the card as it is drawn,
 and nothing is copied**: a copy of what you put in a card would be that content again — an iframe
 loaded and a video played once a copy, a field in your form submitted with each copy's value. While
-it is cut, the card carries an inline `filter` and `rotate` of its own, and takes both away after.
+a passage like this runs, the card carries an inline `filter` of its own — and in pieces a `rotate`
+of nothing — in place of any you wrote there, and gives yours back after.
 
 **Under [Glass](theme.md#glass)** a card takes its tint where the pointer is, casts its shadow away
 from the pointer, lights a band along its boundary nearest it, and leans toward it, five degrees at
@@ -178,6 +179,12 @@ nor leans. **The sweep is the card's tint rather than a button's sheen**: the ac
 took the card's muted text to 1.97:1 at its peak, and a field's answer, a halo round its text, would
 be inherited by everything the card holds and ring a light label on a fill of its own in the card's
 colour. Over the tint the card's text and muted text hold 4.5:1 in every shipped palette.
+
+Under Glass a card also comes out of a fine grain as it is put on the page, and dissolves into one as
+`leave()` takes it away, its glass and its glow with it: noise made the card's alpha, eaten grain by
+grain. Each takes 780ms at the defaults, in proportion to `--ui-duration-enter` and
+`--ui-duration-exit`, on a straight clock, since the grain is sparse at both ends already. The grain
+is a filter over the card too, and copies nothing.
 
 The lights that follow the pointer, and the lean, read where it is from an internal engine, bound to
 the card's `pointerover`, which follows nothing under reduced motion or for a pointer that cannot

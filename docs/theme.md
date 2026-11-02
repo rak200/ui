@@ -204,7 +204,8 @@ takes its sheen where the pointer is, a switch's excepted again, a shadow cast a
 band along its boundary nearest it. A card takes its tint where the pointer is, a shadow cast away
 from it and a band along its boundary nearest it, and leans toward it; at a focus it holds, its tint
 sweeps across it — the card's own light, which keeps its muted text at 4.5:1 where a button's sheen
-did not — and a light holds along its inside.
+did not — and a light holds along its inside; and it comes out of a fine grain as it arrives, and
+dissolves into one as it leaves.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |
@@ -224,10 +225,12 @@ It names the edge again for each drawn control, `checkbox`, `switch` and `radio`
 theme's taste names their `none`: a component's own entry outweighs a page's, so without its own
 Glass's edge would never reach them. And it leans the card alone, as RFC 0004 chose.
 
-| Component                     | Moment         | Effect |
-| ----------------------------- | -------------- | ------ |
-| `checkbox`, `switch`, `radio` | `hover-border` | `edge` |
-| `card`                        | `hover-move`   | `tilt` |
+| Component                     | Moment         | Effect     |
+| ----------------------------- | -------------- | ---------- |
+| `checkbox`, `switch`, `radio` | `hover-border` | `edge`     |
+| `card`                        | `hover-move`   | `tilt`     |
+| `card`                        | `enter`        | `dissolve` |
+| `card`                        | `exit`         | `dissolve` |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

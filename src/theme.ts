@@ -265,7 +265,8 @@ export const matrix: Theme = {
  * switch's excepted again, a shadow cast away from it and a band along its boundary nearest it. A
  * card takes its tint where the pointer is, a shadow cast away from it and a band along its boundary
  * nearest it, and leans toward it; at a focus it holds, its tint sweeps across it and a light holds
- * inside its boundary.
+ * inside its boundary; and it comes out of a fine grain as it arrives, and dissolves into one as it
+ * leaves.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -392,12 +393,12 @@ export const glass: Theme = {
         // The page's edge, for the drawn controls: the default theme's taste names their none,
         // and a component's own entry outweighs a page's, so without these the band would never
         // reach them under this theme. And the card leans toward the pointer, alone, as RFC 0004
-        // chose.
+        // chose, and comes and goes in a grain.
         components: {
             checkbox: { 'hover-border': 'edge' },
             switch: { 'hover-border': 'edge' },
             radio: { 'hover-border': 'edge' },
-            card: { 'hover-move': 'tilt' },
+            card: { 'hover-move': 'tilt', enter: 'dissolve', exit: 'dissolve' },
         },
     },
 };

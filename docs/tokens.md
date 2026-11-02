@@ -174,7 +174,7 @@ the pointer moves, so it catches up in 75ms on a straight clock — the card lea
 Glass — where an effect's time would leave it trailing. **An entrance and an exit have a sixth and
 a seventh**, `--ui-duration-enter` over `--ui-duration-300` and `--ui-duration-exit` over
 `--ui-duration-200`, the exit a step quicker, beside the curves each already had — a card fading in
-as it is put on the page, and out as it leaves. A card's pieces take as long again as the review
+as it is put on the page, and out as it leaves. A card's pieces and its grain take as long again as the review
 judged them at these two's defaults, in proportion as either is moved.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a

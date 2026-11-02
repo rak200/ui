@@ -584,6 +584,29 @@ describe('arriving and leaving', () => {
         expect(document.body.querySelector(':scope > svg'), 'the filter gone').toBeNull();
     });
 
+    it('brings a card out of a grain as it is put on the page under Glass, and dissolves it as it leaves', async () => {
+        const host = await themed(fixture, glass);
+        const element = card(host);
+
+        expect(element.style.filter, 'arriving').toMatch(/^url\("#ui-grain-\d+"\)$/);
+
+        await settle(element);
+
+        expect(element.style.filter, 'whole').toBe('');
+
+        const gone = element.leave();
+
+        expect(element.style.filter, 'leaving').toMatch(/^url\("#ui-grain-\d+"\)$/);
+
+        await settle(element);
+        await gone;
+
+        expect([element.isConnected, element.style.filter], 'removed, and whole').toEqual([
+            false,
+            '',
+        ]);
+    });
+
     it('arrives anew when it is put back on the page, and can leave again', async () => {
         const host = await under(fixture);
         host.style.setProperty('--ui-duration-exit', '0s');
