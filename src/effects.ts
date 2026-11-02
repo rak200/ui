@@ -1224,9 +1224,53 @@ export function fieldEffects(component: string, able: string): CSSResult {
 const controlLights = [
     ['hover-shadow', 'raise'],
     ['hover-shadow', 'glow'],
+    ['hover-shadow', 'cast'],
     ['focus-shadow', 'raise'],
     ['focus-shadow', 'inner'],
     ['invalid-border', 'glow'],
+] as const;
+
+/**
+ * The cast at a drawn control's scale, a quarter of the card's where the button's is half: the
+ * pointer as a light, the shadow falling away from it, and on a dark page the light spilling round
+ * the side the pointer is on, as strong as the pointer is near.
+ */
+const controlCast = css`calc(var(--ui-fx-pointer-nx, 0) * -0.25rem)
+        calc(var(--ui-fx-pointer-ny, 0) * -0.25rem + 0.125rem) 0.4375rem -0.0625rem
+        light-dark(
+            rgb(0 0 0 / calc(0.3 * var(--ui-fx-pointer-near, 0))),
+            rgb(0 0 0 / calc(0.85 * var(--ui-fx-pointer-near, 0)))
+        ),
+    calc(var(--ui-fx-pointer-nx, 0) * 0.375rem) calc(var(--ui-fx-pointer-ny, 0) * 0.375rem) 0.75rem
+        0.0625rem
+        light-dark(
+            transparent,
+            rgb(from ${reference('--ui-color-accent')} r g b / calc(0.35 * var(--ui-fx-pointer-near, 0)))
+        )`;
+
+/**
+ * The effects that draw in the sheen a drawn control is handed, in its own light: the shimmer at
+ * the focus and the spotlight under the pointer.
+ */
+const controlSheened = [
+    ['focus-fill', 'shimmer'],
+    ['hover-fill', 'spotlight'],
+] as const;
+
+/** The lights that follow the pointer, which the pointer engine follows a drawn control for. */
+const controlFollowing = [
+    ['hover-fill', 'spotlight'],
+    ['hover-shadow', 'cast'],
+    ['hover-border', 'edge'],
+] as const;
+
+/**
+ * The effects that leave a drawn control's boundary as it rests under the pointer: none, and the
+ * edge, whose band is the pointer's answer in the darkening's place.
+ */
+const controlResting = [
+    ['hover-border', 'none'],
+    ['hover-border', 'edge'],
 ] as const;
 
 /** The accent moved toward a full control's mark, which stands off the fill the accent is. */
@@ -1267,6 +1311,7 @@ const sheenOnAccent = css`rgb(
  */
 const controlPointing = [
     ['hover-border', 'none'],
+    ['hover-border', 'edge'],
     ['hover-fill', 'highlight'],
     ['hover-fill', 'tint'],
 ] as const;
@@ -1284,10 +1329,12 @@ const bounce = css`linear(0, 0.45 7%, 0.98 15%, 1.18 22%, 1.22 26%, 1.15 32%, 0.
  *
  * **What it asks of the component.** Its control is the `<input>` in its shadow root, drawn with
  * `appearance: none`, its mark on its `::before` — the tick, the dot — and its lights on its
- * `::after`; a switch's carries `role="switch"` and draws its thumb as a background layer, whose
- * `background-position` is the third of its transitions; `checked()` from `src/check.ts` is called
- * from the control's `change` listener, and `arrive()` is bound to its focus, with `watch()` called
- * as the component connects. The sheet comes after the component's own.
+ * `::after`, alone in a `<span class="frame">` that is its size and has its corners, with the text
+ * that labels it the frame's next sibling; a switch's carries `role="switch"` and draws its thumb as
+ * a background layer, whose `background-position` is the third of its transitions. `checked()` from
+ * `src/check.ts` is called from the control's `change` listener, `arrive()` is bound to its focus
+ * and `follow()` to the frame's `pointerover`, with `watch()` called as the component connects. The
+ * sheet comes after the component's own.
  *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
  * {@link buttonEffects} gives.
@@ -1304,6 +1351,21 @@ export function controlEffects(component: string): CSSResult {
     /** True wherever an effect draws the boundary or the fill under the pointer. */
     const pointing = unsafeCSS(
         controlPointing.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
+    /** True wherever an effect leaves the boundary as it rests under the pointer. */
+    const resting = unsafeCSS(
+        controlResting.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
+    /** True wherever an effect draws in the sheen the control is handed. */
+    const sheened = unsafeCSS(
+        controlSheened.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
+    /** True wherever a light that follows the pointer is chosen. */
+    const following = unsafeCSS(
+        controlFollowing.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
     );
 
     return css`
@@ -1363,7 +1425,8 @@ export function controlEffects(component: string): CSSResult {
 
            none, for the boundary: today's answer taken away — the boundary darkening on an empty
            control and the fill deepening on a full one — back to the colours at rest; a control in
-           error keeps its red, on the control or on the set it is in. highlight, for the fill: the
+           error keeps its red, on the control or on the set it is in; the edge leaves it so too,
+           its band the answer in the darkening's place. highlight, for the fill: the
            hover colour, a secondary button's on an empty control and the deeper accent on a full
            one, after the boundary's, so a full control's fill is the fill's to choose. A full
            control's boundary goes with its fill, as it does today: left at the accent it drew a
@@ -1379,7 +1442,7 @@ export function controlEffects(component: string): CSSResult {
            it rests in — the red round a checked control, which comes after it, and the accent round
            a mixed one, whose own rule outweighs the red as the mixed state's does at rest. */
         @media (hover: hover) {
-            @container ${unsafeCSS(drawn('hover-border', 'none'))} {
+            @container ${resting} {
                 input:hover:not(:disabled):not(:focus-visible) {
                     border-color: ${reference('--ui-color-border')};
                 }
@@ -1431,6 +1494,89 @@ export function controlEffects(component: string): CSSResult {
             @container ${unsafeCSS(drawn('hover-shadow', 'glow'))} {
                 input:hover:not(:disabled):not(:focus-visible) {
                     --ui-fx-lit-pointer: ${glow};
+                }
+            }
+
+            /* The lights that follow the pointer, which the pointer engine follows for —
+               src/pointer.ts — bound to the frame round the control, so the control, its layers
+               and the frame's own all read where the pointer is in the control's box. Handed a
+               duration it reads no other way, where a light is chosen and the control can be used,
+               so the collapse takes it to nothing and nothing follows. */
+            @container ${following} {
+                .frame:has(> input:not(:disabled)) {
+                    --ui-fx-follow: ${reference('--ui-duration-effect')};
+                }
+            }
+
+            /* spotlight: the button's, a light where the pointer is, a quarter as strong as the
+               sheen and fading out over 4rem, as strong as the pointer is near, at rest as under
+               the pointer. In the sheen the control is handed and under its mark, as the button's
+               lies under its label, so the mark holds what it holds under the sheen, at half the
+               strength or less. Never on a switch, for the shimmer's reason. The focus wins. */
+            @container ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
+                input:not([role='switch']):not(:disabled):not(:focus-visible) {
+                    background-image: ${spotlight};
+                }
+            }
+
+            /* cast: the card's at a drawn control's scale, on the lights' layer, as strong as the
+               pointer is near, whether it is over the control or not. The focus wins. */
+            @container ${unsafeCSS(drawn('hover-shadow', 'cast'))} {
+                input:not(:disabled):not(:focus-visible) {
+                    --ui-fx-lit-pointer: ${controlCast};
+                }
+            }
+
+            /* edge: a band on the boundary from its outer side in, lit where the pointer is nearest
+               and as strong as it is near, on the frame's own layer — the control's two are its
+               mark and its lights, and a band cut to the boundary would cut the lights with it. In
+               the accent pushed off the page, and over a full control in the accent moved toward
+               its mark, as over a primary button. After the control, so drawn over its boundary,
+               and taking no pointer, so the control keeps its hover to its edge. Cut to the band as
+               the button's is, Safari's prefixed mask first. Never round a control in error, which
+               keeps its red, and the focus wins. */
+            @container ${unsafeCSS(drawn('hover-border', 'edge'))} {
+                .frame {
+                    position: relative;
+                }
+
+                .frame::after {
+                    content: '';
+                    position: absolute;
+                    inset: -1px;
+                    padding: 2px;
+                    border-radius: inherit;
+                    pointer-events: none;
+                    background: radial-gradient(
+                        ellipse 100% 100% at var(--ui-fx-pointer-x, -999px)
+                            var(--ui-fx-pointer-y, -999px),
+                        var(--ui-fx-band),
+                        transparent
+                    );
+                    -webkit-mask:
+                        linear-gradient(#000 0 0) content-box,
+                        linear-gradient(#000 0 0);
+                    -webkit-mask-composite: xor;
+                    mask:
+                        linear-gradient(#000 0 0) content-box exclude,
+                        linear-gradient(#000 0 0);
+                    opacity: 0;
+                    --ui-fx-band: ${far};
+                }
+
+                .frame:has(> input:checked)::after,
+                .frame:has(> input[type='checkbox']:indeterminate)::after {
+                    --ui-fx-band: ${offAccent};
+                }
+
+                .frame:has(> input:not(:disabled):not(:focus-visible))::after {
+                    opacity: var(--ui-fx-pointer-near, 0);
+                }
+
+                /* As heavy as the rule above, and after it. */
+                .frame:has(> input[aria-invalid='true']:not(:disabled))::after,
+                [aria-invalid='true'] .frame:has(> input:not(:disabled))::after {
+                    opacity: 0;
                 }
             }
         }
@@ -1500,17 +1646,17 @@ export function controlEffects(component: string): CSSResult {
            quarters as wide as it, four rounds of the loop's period and then at rest, as the button
            sweeps it. Under the mark, on the control's own background, as the button's lies under
            its label: drawn over it, the sheen took a full control's mark to 2.47:1 at its peak, and
-           under it the mark holds 5.82:1 or more in every palette — measured. Over an empty control
-           the sheen a secondary button sweeps, over a full one the accent with a fifth of the pole
-           further from its mark. Never on a switch: its thumb is a layer of the same background,
+           under it the mark holds 5.82:1 or more in every palette — measured. Never on a switch:
+           its thumb is a layer of the same background,
            which a sheen could only pass over, and an off thumb fell from 3:1 to 1.06:1 under any
-           band — measured, so it is left out where it cannot be drawn honestly. */
+           band — measured, so it is left out where it cannot be drawn honestly. In the sheen the
+           control is handed below. */
         @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
             input:not([role='switch']):focus-visible {
                 background-image: linear-gradient(
                     100deg,
                     transparent 35%,
-                    ${sheenOverSurface} 50%,
+                    var(--ui-fx-sheen) 50%,
                     transparent 65%
                 );
                 background-size: 250% 100%;
@@ -1519,15 +1665,19 @@ export function controlEffects(component: string): CSSResult {
                 --ui-fx-run-focus-fill: ui-shimmer ${reference('--ui-duration-loop')} linear
                     ${reference('--ui-iteration-settle')};
             }
+        }
 
-            input:checked:not([role='switch']):focus-visible,
-            input[type='checkbox']:indeterminate:focus-visible {
-                background-image: linear-gradient(
-                    100deg,
-                    transparent 35%,
-                    ${sheenOnAccent} 50%,
-                    transparent 65%
-                );
+        /* The sheen the shimmer and the spotlight draw in: over an empty control the one a
+           secondary button sweeps, and over a full one the accent with a fifth of the pole further
+           from its mark, as a primary button's is from its label. */
+        @container ${sheened} {
+            input {
+                --ui-fx-sheen: ${sheenOverSurface};
+            }
+
+            input:checked,
+            input[type='checkbox']:indeterminate {
+                --ui-fx-sheen: ${sheenOnAccent};
             }
         }
 
@@ -1586,15 +1736,15 @@ export function controlEffects(component: string): CSSResult {
 
         /* accent: the control's label in the accent with a fifth of the text's colour mixed in, as a
            field's label takes it and for the floor that measured, while the focus stays. The label
-           is the text beside the control, which a sibling reaches with no :has(). On its own
-           transition, over an effect's time on the state's curve. */
+           is the text beside the control, the frame's next sibling. On its own transition, over an
+           effect's time on the state's curve. */
         @container ${unsafeCSS(drawn('focus-label', 'accent'))} {
-            input + span {
+            .frame + span {
                 transition: color ${reference('--ui-duration-effect')}
                     ${reference('--ui-easing-state')};
             }
 
-            input:focus-visible + span {
+            .frame:has(> input:focus-visible) + span {
                 color: color-mix(
                     in oklab,
                     ${reference('--ui-color-accent')} 80%,
@@ -1606,12 +1756,12 @@ export function controlEffects(component: string): CSSResult {
         /* glow: a light of the accent behind the control's label, which leaves its colour as it
            is, while the focus stays, as a field's. */
         @container ${unsafeCSS(drawn('focus-label', 'glow'))} {
-            input + span {
+            .frame + span {
                 transition: text-shadow ${reference('--ui-duration-effect')}
                     ${reference('--ui-easing-state')};
             }
 
-            input:focus-visible + span {
+            .frame:has(> input:focus-visible) + span {
                 text-shadow: 0 0 0.5rem rgb(from ${reference('--ui-color-accent')} r g b / 0.7);
             }
         }

@@ -256,7 +256,8 @@ export const matrix: Theme = {
  * where the pointer is, a shadow cast away from it and a band along its boundary nearest it. A
  * drawn control keeps a light along its inside at the focus, a sheen sweeps under its mark, a
  * switch's excepted, and its ring comes into focus from a blur; in error it holds a light of the
- * danger round it and flashes its fill.
+ * danger round it and flashes its fill. Under the pointer it takes its sheen where the pointer is, a
+ * switch's excepted again, a shadow cast away from it and a band along its boundary nearest it.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -381,8 +382,8 @@ export const glass: Theme = {
             'invalid-border': 'glow',
         },
         // The page's edge, for the drawn controls: the default theme's taste names their none,
-        // and a component's own entry outweighs a page's, so without these they lose their answer
-        // to the pointer under this theme.
+        // and a component's own entry outweighs a page's, so without these the band would never
+        // reach them under this theme.
         components: {
             checkbox: { 'hover-border': 'edge' },
             switch: { 'hover-border': 'edge' },

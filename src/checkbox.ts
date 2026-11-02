@@ -1,6 +1,7 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { checked } from './check.js';
 import { controlEffects } from './effects.js';
+import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
@@ -84,6 +85,13 @@ const toggle = css`
         gap: ${reference('--ui-space')};
         cursor: pointer;
         color: ${reference('--ui-color-text')};
+    }
+
+    /* The frame round the control, which the pointer engine follows and a band of the edge is
+       drawn on: the control's size, as a grid round it, and its corners, which each element gives. */
+    .frame {
+        display: grid;
+        flex: none;
     }
 
     input {
@@ -471,19 +479,20 @@ class UiToggle extends LitElement {
     protected template(mixed: boolean): TemplateResult {
         return html`
             <label part="label">
-                <input
-                    type="checkbox"
-                    part="box"
-                    role=${this.controlRole === '' ? nothing : this.controlRole}
-                    .checked=${this.checked}
-                    .indeterminate=${mixed}
-                    ?disabled=${this.disabled}
-                    ?required=${this.required}
-                    aria-invalid=${this.error === '' ? nothing : 'true'}
-                    aria-describedby=${this.#described()}
-                    @change=${this.changed}
-                    @focus=${arrive}
-                />
+                <span class="frame" @pointerover=${follow}
+                    ><input
+                        type="checkbox"
+                        part="box"
+                        role=${this.controlRole === '' ? nothing : this.controlRole}
+                        .checked=${this.checked}
+                        .indeterminate=${mixed}
+                        ?disabled=${this.disabled}
+                        ?required=${this.required}
+                        aria-invalid=${this.error === '' ? nothing : 'true'}
+                        aria-describedby=${this.#described()}
+                        @change=${this.changed}
+                        @focus=${arrive}
+                /></span>
                 <span part="text"><slot name="label">${this.label}</slot></span>
             </label>
             ${
@@ -547,6 +556,10 @@ export class UiCheckbox extends UiToggle {
                 border-radius: ${reference('--ui-radius')};
                 /* What the mark is laid out against. */
                 position: relative;
+            }
+
+            .frame {
+                border-radius: ${reference('--ui-radius')};
             }
 
             /* The mark is painted over the fill, in the accent's label, and the mask
@@ -660,6 +673,10 @@ export class UiSwitch extends UiToggle {
     static override readonly styles: CSSResult[] = [
         toggle,
         css`
+            .frame {
+                border-radius: ${size};
+            }
+
             input {
                 inline-size: calc(${size} * 5 / 3);
                 /* Any radius at or above half the block size rounds the ends fully, so

@@ -393,7 +393,10 @@ explains. This file restates none of them.
   measurement and the choice. **Why an error's red is drawn after every effect on the boundary or
   the fill** — the comment beside the pointer's rules there: a full control's boundary goes with its
   fill, and the red outlasts that. **Why a drawn control's sheen is swept under its mark, and none
-  on a switch** — the comment beside the shimmer there, and ARCHITECTURE.md's same section.
+  on a switch** — the comment beside the shimmer there, and ARCHITECTURE.md's same section. **Why a
+  drawn control sits in a `.frame`** — the docblock on `controlEffects()` and the comment beside the
+  edge: the pointer engine follows the frame, so the control and every layer read where the pointer
+  is, and the band is drawn on the frame's own layer.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

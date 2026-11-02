@@ -193,7 +193,9 @@ would otherwise run under Glass too. Under the pointer a field takes its tint wh
 is, a shadow cast away from it and a band along its boundary nearest it, as a button takes its
 own. A drawn control keeps a light along its inside at the focus, a sheen sweeps under its mark — a
 switch's excepted, whose thumb a sheen could only pass over — and its ring comes into focus from a
-blur; in error it holds a light of the danger round it and flashes its fill.
+blur; in error it holds a light of the danger round it and flashes its fill. Under the pointer it
+takes its sheen where the pointer is, a switch's excepted again, a shadow cast away from it and a
+band along its boundary nearest it.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |

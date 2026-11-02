@@ -1406,15 +1406,54 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         expect(aloft()).toBe(true);
     });
 
-    it("takes Glass's edge back for a radio from the default theme's none, which leaves it today's darkening", async () => {
-        const form = await under(fixture, glass);
-        stilled(form);
-        form.style.setProperty('--ui-color-text', 'rgb(9, 9, 9)');
+    it("gives the frame round a radio the control's own size and corners, which the edge's band takes", async () => {
+        const form = await under(fixture);
         const control = radio(form);
+        const frame = control.parentElement;
+
+        if (frame === null) {
+            throw new Error('the control has no frame');
+        }
+
+        const [own, round] = [getComputedStyle(control), getComputedStyle(frame)];
+
+        expect([round.width, round.height, round.borderTopLeftRadius]).toEqual([
+            own.width,
+            own.height,
+            own.borderTopLeftRadius,
+        ]);
+    });
+
+    it("follows the pointer over a radio under Glass, Glass's edge reaching it over the default theme's none: its sheen, a band, a cast and its boundary at rest", async () => {
+        const form = await under(fixture, glass);
+        form.style.setProperty('--ui-duration-state', '0s');
+        form.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+        const control = radio(form);
+        const frame = control.parentElement;
 
         await userEvent.hover(control);
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+                resolve();
+            });
+        });
 
-        expect(getComputedStyle(control).borderTopColor).toBe('rgb(9, 9, 9)');
+        for (const transition of control.getAnimations({ subtree: true })) {
+            transition.finish();
+        }
+
+        expect(getComputedStyle(control).borderTopColor, 'the boundary at rest').toBe(
+            'rgb(1, 2, 3)',
+        );
+        expect(getComputedStyle(control).backgroundImage, 'its sheen').toMatch(
+            /^radial-gradient\(64px at /,
+        );
+        expect(frame === null ? '' : getComputedStyle(frame, '::after').opacity, 'a band').toBe(
+            '1',
+        );
+        expect(getComputedStyle(control, '::after').boxShadow, 'a shadow cast').toMatch(
+            /^rgba\(0, 0, 0, 0\.3\) /,
+        );
     });
 
     it("takes a radio's label to the accent at the focus, with a fifth of the text in it", async () => {
@@ -1422,7 +1461,7 @@ describe("the pointer, the focus and a form's moments, under the default theme's
         stilled(form);
         form.style.setProperty('--ui-color-accent', 'rgb(0, 0, 255)');
         form.style.setProperty('--ui-color-text', 'rgb(0, 0, 0)');
-        const text = radio(form).nextElementSibling;
+        const text = radio(form).parentElement?.nextElementSibling ?? null;
 
         await userEvent.tab();
 
@@ -1477,12 +1516,11 @@ describe("the pointer, the focus and a form's moments, under the default theme's
 
         expect(styles.backgroundColor, 'the hover colour').toBe('rgb(4, 5, 6)');
         expect(styles.animationName, 'the burst').toBe('ui-burst, none, none, none');
-        expect(
-            control.nextElementSibling === null
-                ? null
-                : getComputedStyle(control.nextElementSibling).textShadow,
-            'the label',
-        ).toMatch(/ 0px 0px 8px$/);
+        const label = control.parentElement?.nextElementSibling ?? null;
+
+        expect(label === null ? null : getComputedStyle(label).textShadow, 'the label').toMatch(
+            / 0px 0px 8px$/,
+        );
     });
 
     it('glitches the ring onto a radio under Matrix, which hands it the flight', async () => {

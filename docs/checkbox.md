@@ -283,7 +283,12 @@ sweeps under its mark four times and its ring comes into focus from a blur, and 
 in error it holds a light of the danger round it and flashes its fill. The sheen lies under the
 mark, as a button's lies under its label: over it, a full control's mark fell to 2.47:1 at the
 sheen's peak. A switch sweeps none, since its thumb is a layer of its own background that a sheen
-could only pass over, and an off thumb fell under 3:1 beneath any band.
+could only pass over, and an off thumb fell under 3:1 beneath any band. Under the pointer a control
+takes its sheen where the pointer is, under its mark again and a switch's excepted, a shadow cast
+away from the pointer and a band lit along its boundary nearest it, its boundary at rest. The
+lights that follow the pointer are handed where it is by one internal engine, `follow()` in
+`src/pointer.ts`, bound to a frame round the control that is its size: the band is drawn on the
+frame, since the control's own two layers are its mark and its lights.
 
 The effects are drawn by one internal sheet, `controlEffects()` in `src/effects.ts`, and the tick
 is played by one internal helper, `checked()` in `src/check.ts`, which each control calls from its
