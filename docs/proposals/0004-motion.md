@@ -775,3 +775,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#342](https://github.com/rak200/ui/pull/342) | Glass's fields at the focus and in error, and the text's halo, which retires the dip    |
 | 4    | [#343](https://github.com/rak200/ui/pull/343) | Glass's fields under the pointer: the tint's spotlight, the cast and the edge           |
 | 4    | [#344](https://github.com/rak200/ui/pull/344) | the drawn controls' check: the tick drawn on, the thumb sprung, the dot popped          |
+| 4    | [#345](https://github.com/rak200/ui/pull/345) | the drawn controls' pointer and focus: the hover colour, the raise, the lift, the glide |
