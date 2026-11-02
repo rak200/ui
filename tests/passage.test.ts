@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 
 import { cdp } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `tokens.test.ts`.
 import type {} from '@vitest/browser-playwright';
-import { erode, materialize, mend } from '../src/pieces.js';
+import { enter, exit, mend } from '../src/passage.js';
 import { reference } from '../src/reference.js';
 
 /**
@@ -38,9 +38,9 @@ function mount(style = '', left = 53, shadowed = false): HTMLElement {
     return surface;
 }
 
-/** The filter cutting `surface` now, found by the reference written on it. */
+/** The filter a passage draws `surface` through now, found by the reference written on it. */
 function filterOf(surface: HTMLElement): SVGFilterElement {
-    const id = /^url\("#(ui-pieces-\d+)"\)$/.exec(surface.style.filter)?.[1];
+    const id = /^url\("#(ui-(?:pieces|grain)-\d+)"\)$/.exec(surface.style.filter)?.[1];
     const tree = surface.getRootNode() as Document | ShadowRoot;
     const filter = id === undefined ? null : tree.getElementById(id);
 
@@ -143,7 +143,7 @@ describe('putting a surface together', () => {
     it('cuts it under one filter of thirty-six pieces, six by six, an outer one reaching 3rem past it', () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
 
         const filter = filterOf(surface);
 
@@ -177,7 +177,7 @@ describe('putting a surface together', () => {
     it('takes the surface a turn of nothing while it is cut, which WebKit counts from', () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
 
         expect(surface.style.rotate).toBe('0deg');
     });
@@ -185,7 +185,7 @@ describe('putting a surface together', () => {
     it('fades each piece in on a clock of its own, its wait run backward, the last landing at 650ms', () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
 
         // The span from the first setting off to the last landing, fitted to 650ms.
         const scale = 650 / (end - start);
@@ -209,7 +209,7 @@ describe('putting a surface together', () => {
     it("fits the pieces to the entrance's time in proportion", () => {
         const surface = mount('--ui-fx-enter-time: 720ms');
 
-        materialize(surface);
+        enter(surface);
 
         const [delay, duration] = clocks(surface)[0] ?? [];
 
@@ -219,7 +219,7 @@ describe('putting a surface together', () => {
     it("copies each clock's progress into its piece, frame after frame while it is held", async () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
 
         const [[delay, duration] = [], [wait, length] = []] = clocks(surface);
 
@@ -240,7 +240,7 @@ describe('putting a surface together', () => {
     it('keeps drawing the pieces still under way once others have landed', async () => {
         const surface = mount('--ui-fx-enter-time: 36s');
 
-        materialize(surface);
+        enter(surface);
 
         const running = surface.getAnimations();
         // Every second piece landed; the rest held, and moved on while held.
@@ -271,7 +271,7 @@ describe('putting a surface together', () => {
     it('draws the pieces frame after frame as their clocks run on their own', async () => {
         const surface = mount('--ui-fx-enter-time: 36s');
 
-        materialize(surface);
+        enter(surface);
         await new Promise((resolve) => setTimeout(resolve, 50));
 
         const earlier = slopes(surface)[0] ?? 0;
@@ -285,7 +285,7 @@ describe('putting a surface together', () => {
     it('gives the surface back whole once the last piece has landed, and copies nothing after', async () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
         await finish(surface);
 
         expect([surface.style.filter, surface.style.rotate]).toEqual(['', '']);
@@ -313,8 +313,8 @@ describe('putting a surface together', () => {
         const off = mount('', 53.3);
         const grown = mount('transform: scale(2); transform-origin: 0 0', 0.3);
 
-        materialize(off);
-        materialize(grown);
+        enter(off);
+        enter(grown);
 
         const box = off.getBoundingClientRect();
 
@@ -331,8 +331,8 @@ describe('putting a surface together', () => {
         const other = mount('--ui-fx-enter: fade');
         const unchosen = mount('--ui-fx-enter: initial');
 
-        materialize(other);
-        materialize(unchosen);
+        enter(other);
+        enter(unchosen);
 
         for (const surface of [other, unchosen]) {
             expect([surface.style.filter, surface.getAnimations().length]).toEqual(['', 0]);
@@ -342,7 +342,7 @@ describe('putting a surface together', () => {
     it('cuts nothing under the collapse, which takes its time to 0.01ms', () => {
         const surface = mount('--ui-fx-enter-time: 0.01ms');
 
-        materialize(surface);
+        enter(surface);
 
         expect(surface.style.filter).toBe('');
     });
@@ -353,7 +353,7 @@ describe('putting a surface together', () => {
         const narrow = mount('width: 0');
 
         for (const surface of [hidden, flat, narrow]) {
-            materialize(surface);
+            enter(surface);
         }
 
         expect([hidden.style.filter, flat.style.filter, narrow.style.filter]).toEqual(['', '', '']);
@@ -362,7 +362,7 @@ describe('putting a surface together', () => {
     it('lays the filter where it takes no room on the page', () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
 
         const holder = filterOf(surface).parentElement;
         const room = holder?.getBoundingClientRect();
@@ -374,8 +374,8 @@ describe('putting a surface together', () => {
         const one = mount();
         const two = mount();
 
-        materialize(one);
-        materialize(two);
+        enter(one);
+        enter(two);
 
         expect(one.style.filter).toMatch(/^url\("#ui-pieces-\d+"\)$/);
         expect(two.style.filter).toMatch(/^url\("#ui-pieces-\d+"\)$/);
@@ -385,7 +385,7 @@ describe('putting a surface together', () => {
     it("writes the filter in the surface's own tree, where the reference to it resolves", () => {
         const surface = mount('', 53, true);
 
-        materialize(surface);
+        enter(surface);
 
         expect(filterOf(surface).getRootNode()).toBe(surface.getRootNode());
         expect(document.body.querySelector(':scope > svg'), 'none in the page').toBeNull();
@@ -396,7 +396,7 @@ describe('breaking a surface apart', () => {
     it("fades each piece out on a clock of its own, at the reference's pace less a quarter", () => {
         const surface = mount();
 
-        erode(surface);
+        exit(surface);
 
         expect(slopes(surface).slice(0, 2), 'all showing yet').toEqual([1, 1]);
         expect(clocks(surface).slice(0, 2)).toEqual([
@@ -408,7 +408,7 @@ describe('breaking a surface apart', () => {
     it("keeps the pace in proportion to the exit's time", () => {
         const surface = mount('--ui-fx-exit-time: 480ms');
 
-        erode(surface);
+        exit(surface);
 
         expect(clocks(surface)[1]?.slice(0, 2)).toEqual([second[0] * 2, second[1] * 2]);
     });
@@ -416,7 +416,7 @@ describe('breaking a surface apart', () => {
     it('fades each piece out as its clock runs, frame by frame', async () => {
         const surface = mount();
 
-        erode(surface);
+        exit(surface);
         await hold(surface, 300);
 
         expect(slopes(surface)[0], 'the first kind').toBeCloseTo(
@@ -429,7 +429,7 @@ describe('breaking a surface apart', () => {
     it('leaves the surface cut, every piece gone, until it is mended', async () => {
         const surface = mount();
 
-        erode(surface);
+        exit(surface);
         await finish(surface);
         await new Promise(requestAnimationFrame);
 
@@ -449,9 +449,156 @@ describe('breaking a surface apart', () => {
     it('cuts nothing where the sheet chose another exit', () => {
         const surface = mount('--ui-fx-exit: fade');
 
-        erode(surface);
+        exit(surface);
 
         expect(surface.style.filter).toBe('');
+    });
+});
+
+/** The offset the grain's matrix ends its alpha row in: 1 where every pixel is whole, -6 where none is. */
+function offset(surface: HTMLElement): string {
+    const values = filterOf(surface).querySelector('feColorMatrix')?.getAttribute('values') ?? '';
+
+    return values.split(/\s+/).at(-1) ?? '';
+}
+
+describe('dissolving a surface', () => {
+    /** What a sheet hands a surface for the grain, over the pieces the fixture is handed. */
+    const grained = '--ui-fx-enter: dissolve; --ui-fx-exit: dissolve';
+
+    it('brings it out of a grain under one filter, with room round it for a glow and a seed of its own', () => {
+        const surface = mount(grained);
+
+        enter(surface);
+
+        const filter = filterOf(surface);
+        const read = (selector: string, names: readonly string[]): (string | null)[] => {
+            const element = selector === '' ? filter : filter.querySelector(selector);
+
+            return names.map((name) => element?.getAttribute(name) ?? null);
+        };
+
+        expect(filter.id).toMatch(/^ui-grain-\d+$/);
+        expect(read('', ['x', 'y', 'width', 'height', 'color-interpolation-filters'])).toEqual([
+            '-25%',
+            '-25%',
+            '150%',
+            '150%',
+            'sRGB',
+        ]);
+        expect(
+            read('feTurbulence', ['type', 'baseFrequency', 'numOctaves', 'seed', 'result']),
+            'the noise',
+        ).toEqual(['fractalNoise', '0.62', '1', '200', 'grain']);
+        expect(read('feColorMatrix', ['in', 'type', 'result']), 'made alpha').toEqual([
+            'grain',
+            'matrix',
+            'mask',
+        ]);
+        expect(read('feComposite', ['in', 'in2', 'operator']), 'the surface kept there').toEqual([
+            'SourceGraphic',
+            'mask',
+            'in',
+        ]);
+        expect(
+            filter.querySelector('feColorMatrix')?.getAttribute('values'),
+            'none of it yet',
+        ).toBe('0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  6 0 0 0 -6.000');
+        expect(filter.parentElement?.getAttribute('aria-hidden'), 'out of what is read').toBe(
+            'true',
+        );
+        expect(surface.style.rotate, 'no turn, counting no pixels').toBe('');
+    });
+
+    it('runs the grain on one clock on the surface, 780ms at the judged entrance, on the curve handed over', () => {
+        const surface = mount(grained);
+
+        enter(surface);
+
+        expect(clocks(surface)).toEqual([[0, 780, 'linear', 'forwards']]);
+    });
+
+    it("runs it in proportion to the entrance's time", () => {
+        const surface = mount(`${grained}; --ui-fx-enter-time: 720ms`);
+
+        enter(surface);
+
+        expect(clocks(surface)[0]?.[1]).toBe(1560);
+    });
+
+    it("moves the threshold through the grain's span as its clock runs, exact at either end", async () => {
+        const surface = mount(grained);
+
+        enter(surface);
+
+        // Halfway, half the span: 0.22 and half of 0.53 is 0.485, which takes the offset to
+        // 1 - 7 x 0.485.
+        for (const [time, at] of [
+            [0, '-6.000'],
+            [390, '-2.395'],
+            [780, '1.000'],
+        ] as const) {
+            await hold(surface, time);
+
+            expect(offset(surface), `at ${String(time)}ms`).toBe(at);
+        }
+    });
+
+    it('gives the surface back whole once it is out of the grain, and draws nothing after', async () => {
+        const surface = mount(grained);
+
+        enter(surface);
+        await finish(surface);
+
+        expect(surface.style.filter).toBe('');
+        expect(document.body.querySelector(':scope > svg'), 'the filter gone').toBeNull();
+
+        const asked = vi.spyOn(window, 'requestAnimationFrame');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(asked, 'no frame asked for').not.toHaveBeenCalled();
+    });
+
+    it('dissolves it into a grain as it leaves, 780ms at the judged exit, and leaves it gone until mended', async () => {
+        const surface = mount(grained);
+
+        exit(surface);
+
+        expect(clocks(surface), 'its clock').toEqual([[0, 780, 'linear', 'forwards']]);
+        expect(offset(surface), 'whole yet').toBe('1.000');
+
+        await finish(surface);
+        await new Promise(requestAnimationFrame);
+
+        expect(offset(surface), 'none of it left').toBe('-6.000');
+
+        mend(surface);
+
+        expect(surface.style.filter).toBe('');
+    });
+
+    it('gives the surface back the filter and the turn of its own it had, turning it only for its pieces', async () => {
+        const kept = 'filter: grayscale(1); rotate: 3deg';
+        const dissolving = mount(`${grained}; ${kept}`);
+        const pieced = mount(kept);
+
+        enter(dissolving);
+        enter(pieced);
+
+        expect([dissolving.style.rotate, pieced.style.rotate], 'while drawn').toEqual([
+            '3deg',
+            '0deg',
+        ]);
+
+        await finish(dissolving);
+        await finish(pieced);
+
+        for (const surface of [dissolving, pieced]) {
+            expect([surface.style.filter, surface.style.rotate], 'after').toEqual([
+                'grayscale(1)',
+                '3deg',
+            ]);
+        }
     });
 });
 
@@ -459,12 +606,29 @@ describe('mending', () => {
     it('ends whatever was cutting the surface, so the next cut starts from it whole', () => {
         const surface = mount();
 
-        materialize(surface);
-        erode(surface);
+        enter(surface);
+        exit(surface);
 
         expect(document.body.querySelectorAll(':scope > svg'), 'one filter').toHaveLength(1);
         expect(surface.getAnimations(), "the first cut's clocks stopped").toHaveLength(36);
         expect(slopes(surface)[0], 'breaking from whole').toBe(1);
+    });
+
+    it('gives a surface that arrives anew while it was breaking back whole, whatever it arrives with', () => {
+        const pieced = mount();
+        const plain = mount('--ui-fx-enter: fade');
+
+        for (const surface of [pieced, plain]) {
+            exit(surface);
+            enter(surface);
+        }
+
+        expect(document.body.querySelectorAll(':scope > svg'), 'one filter').toHaveLength(1);
+        expect(pieced.getAnimations(), 'its arrival alone').toHaveLength(36);
+        expect(
+            [plain.style.filter, plain.getAnimations().length],
+            'nothing to arrive with',
+        ).toEqual(['', 0]);
     });
 
     it('leaves a whole surface as it was', () => {
@@ -478,7 +642,7 @@ describe('mending', () => {
     it('leaves a surface alone once it is whole again, a filter of its own included', async () => {
         const surface = mount();
 
-        materialize(surface);
+        enter(surface);
         await finish(surface);
         surface.style.filter = 'grayscale(1)';
         mend(surface);

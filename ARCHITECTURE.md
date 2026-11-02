@@ -491,7 +491,7 @@ the prototypes cut a card from thirty-six copies, and a copy of what a host put 
 content again — an iframe loaded and a video played once a copy, a field in a form round the card
 submitted with every copy's value, an open dialog shown as a modal by each. The filter cuts the card
 as it is drawn, and its pieces fade where they are without shrinking toward the middle as the copies
-did. A name a component does not offer draws nothing. **`none` is
+did; its grain was one filter and no copy in the prototypes already. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.

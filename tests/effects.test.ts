@@ -2744,6 +2744,25 @@ describe("a surface's effects", () => {
         },
     );
 
+    it.each([
+        ['enter', '--ui-duration-enter'],
+        ['exit', '--ui-duration-exit'],
+    ])(
+        "hands the grain its effect where %s: dissolve is chosen, with that moment's time on a straight clock",
+        (moment, time) => {
+            const { region, host } = surface('test', { [moment]: 'dissolve' });
+            region.style.setProperty(time, '0.7s');
+
+            const styles = getComputedStyle(host);
+
+            expect(
+                ['', '-time', '-curve'].map((kind) =>
+                    styles.getPropertyValue(`--ui-fx-${moment}${kind}`),
+                ),
+            ).toEqual(['dissolve', '0.7s', 'linear']);
+        },
+    );
+
     it('hands the pieces nothing where nothing is chosen, nor what a surface round it was handed', () => {
         const plain = surface('test', {});
         const outer = surface('test', { enter: 'materialize', exit: 'erode' });

@@ -36,7 +36,7 @@ src/
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
 ├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
 ├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
-├── pieces.ts        # a surface's pieces — internal, materialize and erode, one filter over the card
+├── passage.ts       # a surface's passage in script — internal, its pieces and its grain, one filter
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
@@ -65,7 +65,7 @@ tests/               # mirrors src/, one test file per unit
 ├── input.test.ts
 ├── menu.test.ts
 ├── motion.test.ts
-├── pieces.test.ts
+├── passage.test.ts
 ├── placement.test.ts
 ├── pointer.test.ts
 ├── radio.test.ts
@@ -372,13 +372,15 @@ explains. This file restates none of them.
   driving the pointer**: a driven pointer lands where the frame the suite runs in is drawn, which the
   runner scales, and the cut depends on the exact point struck. It pins `Math.random` for the same
   reason, so each cut plan is one a test can state in full.
-- **Why a card's pieces are a filter over it rather than copies of it, and how long they take** —
-  the docblock on `src/pieces.ts`, and ARCHITECTURE.md's _Which effect runs is the consumer's_. A
-  surface hands it `--ui-fx-enter: materialize` and `--ui-fx-exit: erode` with each moment's time and
-  curve; the card calls `materialize()` once it is drawn, `erode()` as it leaves and `mend()` once it
-  has gone, and its pieces fade on clocks that are the card's own animations, which `leave()` waits
-  out. `tests/pieces.test.ts` pins `Math.random`, as the shatter's does, and mends every surface it
-  mounted after each test: a clock in a shadow root is no animation of the document's.
+- **Why a card's pieces and its grain are a filter over it rather than copies of it, and how long
+  they take** — the docblock on `src/passage.ts`, and ARCHITECTURE.md's _Which effect runs is the
+  consumer's_. A surface hands `--ui-fx-enter` and `--ui-fx-exit` the effect each moment chose —
+  materialize, erode or dissolve — with that moment's time and curve; the card calls `enter()` once it
+  is drawn, `exit()` as it leaves and `mend()` once it has gone, and a passage runs on clocks that are
+  the card's own animations, which `leave()` waits out. One module for both, so whichever is running
+  is the one the next ends. `tests/passage.test.ts` pins `Math.random`, as the shatter's does, and
+  mends every surface it mounted after each test: a clock in a shadow root is no animation of the
+  document's.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and

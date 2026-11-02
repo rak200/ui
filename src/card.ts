@@ -1,7 +1,7 @@
 import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
-import { erode, materialize, mend } from './pieces.js';
+import { enter, exit, mend } from './passage.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
 
@@ -63,14 +63,15 @@ export class UiCard extends LitElement {
 
     /**
      * {@inheritDoc LitElement.connectedCallback} A card put back on the page arrives anew, and once it
-     * is drawn it is put together from its pieces, where its sheet chose that.
+     * is drawn it plays the entrance its sheet chose that a sheet cannot draw — its pieces or its
+     * grain.
      */
     override connectedCallback(): void {
         super.connectedCallback();
         this.#internals.states.delete('leaving');
         this.#departure = undefined;
         void this.updateComplete.then(() => {
-            materialize(this);
+            enter(this);
         });
     }
 
@@ -91,17 +92,17 @@ export class UiCard extends LitElement {
     };
 
     /**
-     * Marks the card leaving, breaks it into its pieces where its sheet chose that, waits out its
-     * exit, announces it, removes it, and gives it back whole.
+     * Marks the card leaving, runs the exit its sheet chose that a sheet cannot draw — its pieces or
+     * its grain — waits out its exit, announces it, removes it, and gives it back as it was.
      */
     async #depart(): Promise<void> {
         this.#internals.states.add('leaving');
-        erode(this);
+        exit(this);
 
         // `finished` rejects when an animation is cancelled, so what this waits for is
         // settlement rather than fulfilment. `getAnimations` flushes the pending style change
         // before it answers, so the exit the state above started is in the list, and so are the
-        // clocks the pieces fade on.
+        // clocks a passage drawn in script runs on.
         await Promise.allSettled(this.getAnimations().map((animation) => animation.finished));
 
         // Before the removal, for the toast's reason: a listener above the card hears a bubbling
