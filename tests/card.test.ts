@@ -6,6 +6,7 @@ import meta, { BodyOnly, Card, OutOfOrder, Row, WithLink } from '../stories/card
 import '../src/card.js';
 import '../src/button.js';
 import type { UiCard } from '../src/card.js';
+import { matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the drawing tests use, unless one needs a different shape. */
@@ -89,10 +90,12 @@ describe('ui-card', () => {
             layers.map((layer) => [layer.getAttribute('data-layer'), layer.childNodes.length]),
             'the layers, empty',
         ).toEqual([
+            ['fill', 0],
+            ['focus-fill', 0],
             ['shadow', 0],
             ['focus-shadow', 0],
         ]);
-        expect(card(host).shadowRoot?.querySelectorAll('*').length, 'nothing else').toBe(5);
+        expect(card(host).shadowRoot?.querySelectorAll('*').length, 'nothing else').toBe(7);
     });
 
     it('orders the regions itself, whatever order they were written in', async () => {
@@ -261,14 +264,22 @@ describe('ui-card', () => {
  * these are about is that the card draws it.
  */
 describe("the pointer and a focus it holds, under the default theme's taste", () => {
-    /** Mounts `markup` under the token sheet, with every duration the effects move over out. */
-    async function under(markup: string): Promise<HTMLElement> {
+    /**
+     * Mounts `markup` under the token sheet, and under a theme's after it where one is named, which
+     * the region round it then takes, with every duration the effects fade over out.
+     */
+    async function under(markup: string, theme?: Theme): Promise<HTMLElement> {
         const style = document.createElement('style');
-        style.textContent = tokenStyleSheet();
+        style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
         document.body.append(style);
 
         const host = await mount(markup);
         host.style.setProperty('--ui-duration-effect', '0s');
+        host.style.setProperty('--ui-duration-state', '0s');
+
+        if (theme !== undefined) {
+            host.dataset['uiTheme'] = theme.name;
+        }
 
         return host;
     }
@@ -329,6 +340,46 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(element.hasAttribute('data-focus-visible'), 'marked').toBe(true);
         expect(getComputedStyle(layer(element, 'focus-shadow')).opacity, 'raised').toBe('1');
         expect(getComputedStyle(element).translate, 'lifted').toBe('0px -4px');
+    });
+
+    it('leaves a card unisolated under the default theme, which chooses no fill', async () => {
+        const host = await under(fixture);
+
+        expect(getComputedStyle(card(host)).isolation).toBe('auto');
+    });
+
+    it('tints and glows a card under the pointer under Matrix, isolated for its fill', async () => {
+        const host = await under(fixture, matrix);
+        const element = card(host);
+
+        await userEvent.hover(element);
+
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted').toBe('1');
+        expect(getComputedStyle(layer(element, 'shadow')).boxShadow, 'glowing').toMatch(
+            / 0px 0px 16px 2px, .+ 0px 0px 40px 8px$/,
+        );
+        expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
+    });
+
+    it('tints a card and bursts light round it at a focus it holds under Matrix, which names its tint', async () => {
+        const host = await under(
+            `
+            <ui-card>
+                <p style="margin: 0">Everything in the free tier.</p>
+                <div slot="footer"><ui-button>Choose</ui-button></div>
+            </ui-card>
+        `,
+            matrix,
+        );
+        const element = card(host);
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'tinted').toBe('1');
+        expect(getComputedStyle(layer(element, 'focus-shadow')).animationName, 'a burst').toBe(
+            'ui-burst',
+        );
+        expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
     });
 });
 

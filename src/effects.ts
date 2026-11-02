@@ -1938,25 +1938,65 @@ const surfaceRaise = css`
     0 0.25rem 0.75rem light-dark(transparent, rgb(0 0 0 / 0.5))
 `;
 
+/** A surface's glow: a light of the accent round it, at a surface's size. */
+const surfaceGlow = css`0 0 1rem 0.125rem rgb(from ${reference('--ui-color-accent')} r g b / 0.45),
+    0 0 2.5rem 0.5rem rgb(from ${reference('--ui-color-accent')} r g b / 0.25)`;
+
+/**
+ * A surface's tint: a little of the accent in its own fill, as a field's is in its own. Held light
+ * in the light scheme and at a tenth in the dark, so every shipped palette's text and muted text
+ * hold 4.5:1 over it, and at least 0.6 opaque over a surface a theme lets the page through, where
+ * at the glass's own opacity nothing showed — measured for RFC 0004, the card at both of Glass's
+ * page limits.
+ */
+const surfaceTint = css`light-dark(
+    oklch(
+        from color-mix(in oklab, ${reference('--ui-color-surface-raised')} 88%, ${reference('--ui-color-accent')})
+            max(l, 0.98) c h / max(alpha, 0.6)
+    ),
+    oklch(
+        from color-mix(in oklab, ${reference('--ui-color-surface-raised')} 90%, ${reference('--ui-color-accent')})
+            l c h / max(alpha, 0.6)
+    )
+)`;
+
+/**
+ * The effects that fill a surface under its content, on a layer a stacking context of the
+ * surface's own has to keep over its fill: where one is chosen, the surface is isolated.
+ */
+const surfaceFills = [
+    ['hover-fill', 'tint'],
+    ['focus-fill', 'tint'],
+] as const;
+
 /**
  * The sheet of a surface's effects, for the component whose tag less `ui-` is `component`: what the
  * pointer and a focus on something the surface holds do to it, each drawn under that component's
  * query — the card's, and the toast's to come.
  *
  * **Each moment draws on a layer of its own**, which the component renders empty into its shadow
- * root: `<span data-layer="shadow">` for the pointer and `<span data-layer="focus-shadow">` for the
- * focus. A layer holds its effect's picture at all times and fades in and out by its opacity
- * alone, so a picture is never taken away under a fade; and the pointer's and the focus's are two,
- * so each keeps its own. Not the theme's shadow moved: a theme may write its glow in
- * currentColor, as Matrix does, and Chromium carried such a glow through transparent for the
- * length of a transition, so the card went dark and lit again — measured for RFC 0004.
+ * root, one per kind and moment: `<span data-layer="fill">` and `"shadow"` for the pointer, and
+ * `"focus-fill"` and `"focus-shadow"` for the focus. A layer holds its effect's picture at all
+ * times and fades in and out by its opacity alone, so a picture is never taken away under a fade;
+ * and the pointer's and the focus's are apart, so each keeps its own. Not the theme's shadow moved:
+ * a theme may write its glow in currentColor, as Matrix does, and Chromium carried such a glow
+ * through transparent for the length of a transition, so the card went dark and lit again —
+ * measured for RFC 0004.
+ *
+ * **A fill lies under the content, and that takes a stacking context.** A layer under the content
+ * but over the surface's own fill needs the surface isolated, and an isolated surface keeps what it
+ * holds from stacking over what follows it: a host's own dropdown with a `z-index`, one that is no
+ * popover, falls under the next card. So the surface is isolated only where a fill is chosen — under
+ * Matrix and Glass, the second of which isolates it already with its glass — and the default theme
+ * leaves it as it was.
  *
  * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
- * two layers, and marked `data-focus-visible` while a focus the reader can see is in it, by
- * `held()` from `src/held.ts` bound to its `focusin` and `released()` to its `focusout`. The sheet comes after the
- * component's own. An effect that moves the whole surface is drawn on its host, which a query asks
- * the host's surroundings about and never the host itself: a choice written on the one card alone
- * does not reach it — RFC 0004's S8, which the card leaves marked.
+ * layers, and marked `data-focus-visible` while a focus the reader can see is in it, by `held()`
+ * from `src/held.ts` bound to its `focusin` and `released()` to its `focusout`. The sheet comes
+ * after the component's own. An effect drawn on the host, a move or the isolation a fill takes, is
+ * drawn under a query that asks the host's surroundings and never the host itself: a choice written
+ * on the one card alone does not reach it, nor a fill chosen there, which then lies behind the
+ * card's own — RFC 0004's S8, which the card leaves marked.
  *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
  * {@link buttonEffects} gives.
@@ -1965,15 +2005,79 @@ export function surfaceEffects(component: string): CSSResult {
     /** The condition one of the effects is drawn under, by moment and effect — see `drawn` above. */
     const drawn = query(component);
 
+    /** True wherever a fill under the content is chosen. */
+    const filled = unsafeCSS(
+        surfaceFills.map(([moment, effect]) => drawn(moment, effect)).join(' or '),
+    );
+
     return css`
-        /* A layer per moment that draws, over the boundary, taking no pointer, and invisible until
-           an effect gives it something to fade in. */
+        /* A layer per moment and kind that draws, over the boundary, taking no pointer, and
+           invisible until an effect gives it something to fade in. */
         [data-layer] {
             position: absolute;
             inset: -1px;
             border-radius: inherit;
             pointer-events: none;
             opacity: 0;
+        }
+
+        /* A fill, inside the boundary and under the content. */
+        [data-layer='fill'],
+        [data-layer='focus-fill'] {
+            inset: 0;
+            z-index: -1;
+        }
+
+        /* The stacking context a fill under the content takes, only where one is chosen. */
+        @container ${filled} {
+            :host {
+                isolation: isolate;
+            }
+        }
+
+        /* tint under the pointer, a little of the accent in the surface's own fill, faded in over
+           the state's time; and at a focus the reader can see in it, on its own layer. */
+        @container ${unsafeCSS(drawn('hover-fill', 'tint'))} {
+            [data-layer='fill'] {
+                background-color: ${surfaceTint};
+                transition: opacity ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
+
+            @media (hover: hover) {
+                :host(:hover:not([data-focus-visible])) [data-layer='fill'] {
+                    opacity: 1;
+                }
+            }
+        }
+
+        @container ${unsafeCSS(drawn('focus-fill', 'tint'))} {
+            [data-layer='focus-fill'] {
+                background-color: ${surfaceTint};
+                transition: opacity ${reference('--ui-duration-state')}
+                    ${reference('--ui-easing-state')};
+            }
+
+            :host([data-focus-visible]) [data-layer='focus-fill'] {
+                opacity: 1;
+            }
+        }
+
+        /* glow under the pointer: a light of the accent round the surface, faded in as the raise
+           is. A halo and no ring: a ring at the boundary read as a border, which is another kind's
+           to draw. */
+        @container ${unsafeCSS(drawn('hover-shadow', 'glow'))} {
+            [data-layer='shadow'] {
+                box-shadow: ${surfaceGlow};
+                transition: opacity ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+
+            @media (hover: hover) {
+                :host(:hover:not([data-focus-visible])) [data-layer='shadow'] {
+                    opacity: 1;
+                }
+            }
         }
 
         /* raise under the pointer, faded in on its layer over an effect's time on the curve an
@@ -2005,6 +2109,26 @@ export function surfaceEffects(component: string): CSSResult {
 
             :host([data-focus-visible]) [data-layer='focus-shadow'] {
                 opacity: 1;
+            }
+        }
+
+        /* burst: the button's light bursting out round the surface as the focus arrives in it, and
+           gone, on the focus's layer, at the button's size. */
+        @container ${unsafeCSS(drawn('focus-shadow', 'burst'))} {
+            :host([data-focus-visible]) [data-layer='focus-shadow'] {
+                opacity: 1;
+                animation: ui-burst ${reference('--ui-duration-flourish')}
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @keyframes ui-burst {
+            from {
+                box-shadow: 0 0 0 0 rgb(from ${reference('--ui-color-accent')} r g b / 0.8);
+            }
+
+            to {
+                box-shadow: 0 0 15px 10px rgb(from ${reference('--ui-color-accent')} r g b / 0);
             }
         }
 

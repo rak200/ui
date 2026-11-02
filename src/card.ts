@@ -114,6 +114,8 @@ export class UiCard extends LitElement {
      */
     override render(): TemplateResult {
         return html`
+            <span data-layer="fill"></span>
+            <span data-layer="focus-fill"></span>
             <span data-layer="shadow"></span>
             <span data-layer="focus-shadow"></span>
             <slot name="header"></slot>

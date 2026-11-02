@@ -357,10 +357,12 @@ async function under<T>(
     document.body.append(style, host);
 
     try {
-        const field = host.querySelector<UiInput | UiCheckbox>('ui-input, ui-checkbox');
+        const field = host.querySelector<UiInput | UiCheckbox | UiCard>(
+            'ui-input, ui-checkbox, ui-card',
+        );
 
         if (field === null) {
-            throw new Error('no field or drawn control in the markup');
+            throw new Error('no field, drawn control or card in the markup');
         }
 
         await field.updateComplete;
@@ -397,6 +399,29 @@ async function labelled(
             await userEvent.tab();
 
             return getComputedStyle(text).color;
+        },
+    );
+}
+
+/**
+ * A card's tint under the pointer, where it is chosen, resolved in `scheme` under `palette`: read off
+ * its fill's layer rather than a token, as a field's is.
+ */
+async function cardTint(scheme: Scheme, palette: Palette): Promise<string> {
+    return under(
+        scheme,
+        palette,
+        `<ui-card style="${kinds.choice}hover-fill: tint; --ui-duration-state: 0s"><p>Text</p></ui-card>`,
+        async (card) => {
+            const fill = card.shadowRoot?.querySelector("[data-layer='fill']") ?? null;
+
+            if (fill === null) {
+                throw new Error('the card rendered no fill');
+            }
+
+            await userEvent.hover(card);
+
+            return getComputedStyle(fill).backgroundColor;
         },
     );
 }
@@ -1457,6 +1482,24 @@ describe('the contrast floors', () => {
                                 token,
                             ).toBeGreaterThanOrEqual(4.5);
                         }
+                    }
+                });
+
+                it.each([
+                    ['its text', '--ui-color-text'],
+                    ['its muted text', '--ui-color-text-muted'],
+                ] as const)('keeps a card legible over its tint, %s', async (_what, token) => {
+                    // The tint is laid over the card's own surface, laid over whatever the card
+                    // rests on; RFC 0004 held it light enough that every palette's text and muted
+                    // text clear 4.5:1 over it.
+                    const tinted = await cardTint(scheme, palette);
+
+                    for (const beside of outside(palette, scheme)) {
+                        const surface = laid('--ui-color-surface-raised', beside, scheme, palette);
+
+                        expect(
+                            contrastRatio(paint(token), layered(tinted, surface, scheme, palette)),
+                        ).toBeGreaterThanOrEqual(4.5);
                     }
                 });
 

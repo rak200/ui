@@ -111,6 +111,17 @@ which a container query asks the card's surroundings about, never the card: **a 
 the one card alone does not reach the lift**, where one written on anything round it does — RFC
 0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce` each lands at once.
 
+**Under [Matrix](theme.md#matrix)** a card takes a tint under the pointer, a little of the accent in
+its own fill, and glows, a light of the accent round it; at a focus it holds it takes the tint and a
+burst of light, and does not lift. The tint holds the card's text and muted text at 4.5:1 in every
+shipped palette. **A fill lies under the card's content, and that isolates the card**: the layer it
+is drawn on stays over the card's own fill only in a stacking context of the card's, and in one
+anything the card holds with a `z-index` of its own — a dropdown that is no popover — stops stacking
+over what follows the card. So the card is isolated only where a fill is chosen, under Matrix and
+Glass, whose glass isolates it already; the default theme leaves it as it was. The isolation is drawn
+on the card itself, so S8 reaches it too: a fill chosen on the one card alone, and not round it, lies
+behind the card's own and does not show.
+
 The effects are drawn by one internal sheet, `surfaceEffects()` in `src/effects.ts`, and the card is
 marked by two internal helpers in `src/held.ts`, `held()` bound to its `focusin` and `released()` to
 its `focusout`: no selector reads a focus the reader can see in what a host holds in every engine.
