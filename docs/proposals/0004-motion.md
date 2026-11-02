@@ -780,3 +780,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#347](https://github.com/rak200/ui/pull/347) | the drawn controls under Matrix: the tint, the glow, the burst, the glitch, the split   |
 | 4    | [#348](https://github.com/rak200/ui/pull/348) | the drawn controls' Glass focus and error: the inner light, the sheen, the error's glow |
 | 4    | [#349](https://github.com/rak200/ui/pull/349) | the drawn controls' Glass pointer: the sheen where it is, the cast and the edge         |
+| 4    | [#350](https://github.com/rak200/ui/pull/350) | the card's layers and focus mark, the raise under the pointer, the raise and lift       |
