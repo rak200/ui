@@ -783,3 +783,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#350](https://github.com/rak200/ui/pull/350) | the card's layers and focus mark, the raise under the pointer, the raise and lift       |
 | 4    | [#351](https://github.com/rak200/ui/pull/351) | the card under Matrix: the tint, the glow and the burst, isolated only for a fill       |
 | 4    | [#352](https://github.com/rak200/ui/pull/352) | the card under Glass: spotlight, cast, edge, tilt, its tint swept, the inner light      |
+| 4    | [#353](https://github.com/rak200/ui/pull/353) | the card's fade in and out, and leave(), its own way out, announced before it goes      |

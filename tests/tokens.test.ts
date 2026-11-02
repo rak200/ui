@@ -840,7 +840,7 @@ describe('tokenStyleSheet', () => {
         ]);
     });
 
-    it("takes the button's, the fields' and the drawn controls' effects as the default theme's taste, the package's motion", () => {
+    it("takes the button's, the fields', the drawn controls' and the card's effects as the default theme's taste, the package's motion", () => {
         expect(taste).toEqual({
             page: {
                 'hover-fill': 'highlight',
@@ -858,6 +858,7 @@ describe('tokenStyleSheet', () => {
                 checkbox: { check: 'draw', 'hover-border': 'none' },
                 switch: { check: 'spring', 'hover-border': 'none' },
                 radio: { check: 'pop', 'hover-border': 'none' },
+                card: { enter: 'fade', exit: 'fade' },
             },
         });
     });
@@ -1126,20 +1127,29 @@ describe('the references components write', () => {
     //
     // A table rather than a case per scale, because the rule is the scale-and-purpose
     // shape itself: whichever category grows a scale next inherits the check by adding a
-    // row, and a scale that arrives without a purpose has nothing to add.
-    it.each([
+    // row, and a scale that arrives without a purpose has nothing to add. A step two purposes
+    // stand over is mentioned in both their fallbacks, so each is taken out before the step is
+    // looked for.
+    const purposes = [
         ['--ui-duration-state', '--ui-duration-100'],
         ['--ui-duration-effect', '--ui-duration-200'],
         ['--ui-duration-travel', '--ui-duration-300'],
         ['--ui-duration-flourish', '--ui-duration-400'],
         ['--ui-duration-follow', '--ui-duration-50'],
+        ['--ui-duration-enter', '--ui-duration-300'],
+        ['--ui-duration-exit', '--ui-duration-200'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
-    ] as const)('reads %s rather than the step under it', (name, step) => {
+    ] as const;
+
+    it.each(purposes)('reads %s rather than the step under it', (name, step) => {
         const purpose = String(reference(name));
+        const over = purposes
+            .filter(([, under]) => under === step)
+            .map(([each]) => String(reference(each)));
 
         expect(styles).toContain(purpose);
-        expect(styles.split(purpose).join('')).not.toContain(step);
+        expect(over.reduce((text, each) => text.split(each).join(''), styles)).not.toContain(step);
     });
 });
 

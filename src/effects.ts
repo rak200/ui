@@ -2023,8 +2023,8 @@ const surfaceMoves = [
 
 /**
  * The sheet of a surface's effects, for the component whose tag less `ui-` is `component`: what the
- * pointer and a focus on something the surface holds do to it, each drawn under that component's
- * query — the card's, and the toast's to come.
+ * pointer and a focus on something the surface holds do to it, and how it arrives and leaves, each
+ * drawn under that component's query — the card's, and the toast's to come.
  *
  * **Each moment draws on a layer of its own**, which the component renders empty into its shadow
  * root, one per kind and moment: `<span data-layer="fill">`, `"shadow"` and `"border"` for the
@@ -2050,11 +2050,18 @@ const surfaceMoves = [
  * stacking context and the box what it holds that is fixed is placed in, as Glass's glass makes it
  * already.
  *
+ * **It arrives and leaves on its host**, through the host's one list of animations, read from a
+ * property each entrance writes and each exit writes over while the surface is on its way out. An
+ * entrance plays as the surface is put on the page and is held at its start until it begins; an exit
+ * plays once the component marks itself leaving and is held at its end until the component takes it
+ * away, which no surface can wait for on its own: a host's removal takes it at once.
+ *
  * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
  * layers, marked `data-focus-visible` while a focus the reader can see is in it, by `held()` from
- * `src/held.ts` bound to its `focusin` and `released()` to its `focusout`, and followed by `follow()`
- * from `src/pointer.ts` bound to its `pointerover`. The sheet comes after the component's own. An
- * effect drawn on the host — a move, the isolation, and the duration the engine is handed — is drawn
+ * `src/held.ts` bound to its `focusin` and `released()` to its `focusout`, followed by `follow()`
+ * from `src/pointer.ts` bound to its `pointerover`, and in the custom state `leaving` from when it is
+ * asked to leave until it has gone. The sheet comes after the component's own. An effect drawn on the
+ * host — a move, the isolation, the duration the engine is handed, an entrance and an exit — is drawn
  * under a query that asks the host's surroundings and never the host itself: a choice written on the
  * one card alone does not reach it, nor a fill chosen there, which then lies behind the card's own,
  * nor a light that follows the pointer, which the engine is then never handed — RFC 0004's S8, which
@@ -2344,6 +2351,49 @@ export function surfaceEffects(component: string): CSSResult {
                             calc(var(--ui-fx-pointer-nx, 0) * var(--ui-fx-pointer-near, 0) * 5deg)
                         );
                 }
+            }
+        }
+
+        /* The host's one list of animations: its passage, an entrance as it is put on the page and
+           an exit as it leaves. Its own on each surface, never one inherited from a surface round
+           it, which a surface it holds would otherwise play as its own. */
+        :host {
+            --ui-fx-passage: none;
+            animation: var(--ui-fx-passage, none);
+        }
+
+        /* fade: the surface comes up from nothing as it is put on the page, over an entrance's time
+           on the curve an arrival takes, held at its start until it begins. */
+        @container ${unsafeCSS(drawn('enter', 'fade'))} {
+            :host {
+                --ui-fx-passage: ui-enter-fade ${reference('--ui-duration-enter')}
+                    ${reference('--ui-easing-enter')} backwards;
+            }
+        }
+
+        /* A surface on its way out plays no entrance, and goes at once where no exit is chosen. */
+        :host(:state(leaving)) {
+            --ui-fx-passage: none;
+        }
+
+        /* fade: the surface goes down to nothing as it leaves, over an exit's time on the curve a
+           departure takes, held at its end until it has gone. */
+        @container ${unsafeCSS(drawn('exit', 'fade'))} {
+            :host(:state(leaving)) {
+                --ui-fx-passage: ui-exit-fade ${reference('--ui-duration-exit')}
+                    ${reference('--ui-easing-exit')} forwards;
+            }
+        }
+
+        @keyframes ui-enter-fade {
+            from {
+                opacity: 0;
+            }
+        }
+
+        @keyframes ui-exit-fade {
+            to {
+                opacity: 0;
             }
         }
     `;

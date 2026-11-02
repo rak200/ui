@@ -260,36 +260,52 @@ describe('ui-card', () => {
  * with a heading are different markup, and each can fail on its own.
  */
 /**
+ * Mounts `markup` under the token sheet, and under a theme's after it where one is named, which the
+ * region round it then takes, with every duration the effects fade over out.
+ */
+async function under(markup: string, theme?: Theme): Promise<HTMLElement> {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
+    document.body.append(style);
+
+    const host = await mount(markup);
+    host.style.setProperty('--ui-duration-effect', '0s');
+    host.style.setProperty('--ui-duration-state', '0s');
+
+    if (theme !== undefined) {
+        host.dataset['uiTheme'] = theme.name;
+    }
+
+    return host;
+}
+
+/** One of the card's layers. */
+function layer(element: UiCard, name: string): HTMLElement {
+    return only(element.shadowRoot ?? document, `[data-layer='${name}']`);
+}
+
+/** The one CSS animation named `name` running on `element`. */
+function running(element: HTMLElement, name: string): CSSAnimation {
+    const found = element
+        .getAnimations()
+        .find(
+            (animation): animation is CSSAnimation =>
+                animation instanceof CSSAnimation && animation.animationName === name,
+        );
+
+    if (found === undefined) {
+        throw new Error(`no ${name} running`);
+    }
+
+    return found;
+}
+
+/**
  * The pointer and a focus on something a card holds — RFC 0004's — under the default theme's taste.
  * What each effect draws is graded on a surface of the suite's own in `tests/effects.test.ts`; what
  * these are about is that the card draws it.
  */
 describe("the pointer and a focus it holds, under the default theme's taste", () => {
-    /**
-     * Mounts `markup` under the token sheet, and under a theme's after it where one is named, which
-     * the region round it then takes, with every duration the effects fade over out.
-     */
-    async function under(markup: string, theme?: Theme): Promise<HTMLElement> {
-        const style = document.createElement('style');
-        style.textContent = tokenStyleSheet() + (theme === undefined ? '' : themeStyleSheet(theme));
-        document.body.append(style);
-
-        const host = await mount(markup);
-        host.style.setProperty('--ui-duration-effect', '0s');
-        host.style.setProperty('--ui-duration-state', '0s');
-
-        if (theme !== undefined) {
-            host.dataset['uiTheme'] = theme.name;
-        }
-
-        return host;
-    }
-
-    /** One of the card's layers. */
-    function layer(element: UiCard, name: string): HTMLElement {
-        return only(element.shadowRoot ?? document, `[data-layer='${name}']`);
-    }
-
     it('raises a card under the pointer', async () => {
         const host = await under(fixture);
 
@@ -433,6 +449,91 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
             / 0px 0px 0px 1px inset, .+ 0px 0px 12px 2px inset$/,
         );
         expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
+    });
+});
+
+/**
+ * How a card comes onto the page and leaves it — RFC 0004's entrance and exit, and the way out a card
+ * owns, since nothing that removes it waits for an exit.
+ */
+describe('arriving and leaving', () => {
+    it("fades a card in as it is put on the page, under the default theme's taste", async () => {
+        const host = await under(fixture);
+
+        expect(getComputedStyle(card(host)).animationName).toBe('ui-enter-fade');
+    });
+
+    it('takes a card off the page through its exit: marked, faded, announced in the tree, then removed', async () => {
+        const host = await under(fixture);
+        host.style.setProperty('--ui-duration-exit', '10s');
+        const element = card(host);
+        const heard: (readonly [boolean, boolean, boolean])[] = [];
+        host.addEventListener('ui-leave', (event) => {
+            heard.push([element.isConnected, event.bubbles, event.composed]);
+        });
+
+        // Bound, so it leaves however it is called.
+        const { leave } = element;
+        const gone = leave();
+
+        expect(element.matches(':state(leaving)'), 'marked').toBe(true);
+
+        const exit = running(element, 'ui-exit-fade');
+        await new Promise(requestAnimationFrame);
+
+        expect([element.isConnected, heard], 'there while the exit plays').toEqual([true, []]);
+
+        exit.finish();
+        await gone;
+
+        expect(heard, 'announced while still in the tree').toEqual([[true, true, true]]);
+        expect(element.isConnected, 'removed').toBe(false);
+    });
+
+    it('takes a card off at once where no exit is chosen', async () => {
+        // No token sheet, so no taste: nothing chooses an exit.
+        const host = await mount(fixture);
+        const element = card(host);
+
+        await element.leave();
+
+        expect(element.isConnected).toBe(false);
+    });
+
+    it('leaves once, however often it is asked', async () => {
+        const host = await under(fixture);
+        host.style.setProperty('--ui-duration-exit', '10s');
+        const element = card(host);
+        let heard = 0;
+        host.addEventListener('ui-leave', () => {
+            heard += 1;
+        });
+
+        const first = element.leave();
+        const second = element.leave();
+
+        expect(second, 'one departure').toBe(first);
+
+        running(element, 'ui-exit-fade').finish();
+        await Promise.all([first, second]);
+
+        expect(heard, 'announced once').toBe(1);
+    });
+
+    it('arrives anew when it is put back on the page, and can leave again', async () => {
+        const host = await under(fixture);
+        host.style.setProperty('--ui-duration-exit', '0s');
+        const element = card(host);
+        await element.leave();
+
+        host.append(element);
+
+        expect(element.matches(':state(leaving)'), 'no longer leaving').toBe(false);
+        expect(getComputedStyle(element).animationName, 'arriving').toBe('ui-enter-fade');
+
+        await element.leave();
+
+        expect(element.isConnected, 'gone again').toBe(false);
     });
 });
 

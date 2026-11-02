@@ -414,7 +414,13 @@ explains. This file restates none of them.
   took the muted text to 1.97:1, and the halo a field's text takes would be inherited by everything a
   card holds. **How the lights that follow the pointer reach a card** — the same docblock: `follow()`
   is bound to its `pointerover` and handed its time on the host, so S8 reaches them as it reaches the
-  lift and the tilt.
+  lift and the tilt. **Why a card leaves through `leave()` and removes itself** — the docblock on
+  `UiCard` in `src/card.ts`, and `docs/card.md`'s _Taking a card away_: no element can hold off a
+  removal it did not ask for, so the exit is the card's own way out, as `close()` is the dialog's,
+  and `ui-leave` fires while the card is still in the tree, as the toast's `ui-dismiss` does. **Why
+  a surface sets its passage to none before any entrance writes one** — the comment beside it in
+  `src/effects.ts`: a custom property is inherited, and a card held in a leaving card played its
+  exit.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

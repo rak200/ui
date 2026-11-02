@@ -246,6 +246,13 @@ export const derivedTokens = [
     // card leaning toward the pointer. Apart from the effect's, since what follows the pointer is
     // moved again every frame the pointer moves, and an effect's time would leave it trailing.
     '--ui-duration-follow',
+    // How long an entrance takes — RFC 0004's: a card fading in as it is put on the page. Apart
+    // from the effect's, as `--ui-easing-enter` is apart from the state's curve: something that
+    // arrives is new to the reader, where an effect changes what they were already looking at.
+    '--ui-duration-enter',
+    // How long an exit takes, a step quicker than the entrance, RFC 0004's prototypes say: slow to
+    // arrive and quick to be gone, so a departure does not linger over a decision already made.
+    '--ui-duration-exit',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -563,6 +570,8 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-duration-travel': ground('--ui-duration-300'),
     '--ui-duration-flourish': ground('--ui-duration-400'),
     '--ui-duration-follow': ground('--ui-duration-50'),
+    '--ui-duration-enter': ground('--ui-duration-300'),
+    '--ui-duration-exit': ground('--ui-duration-200'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast
@@ -756,11 +765,14 @@ export const taste: Taste = {
     // A check is each drawn control's own moment, so it is named for each: the tick drawn on, the
     // thumb sprung over, the dot popped in. A drawn control's darkening under the pointer gives way
     // to the hover colour in its fill, so its none is named for it too: on the page it would take
-    // a field's darkening, its one answer to the pointer beside the raise — RFC 0004.
+    // a field's darkening, its one answer to the pointer beside the raise — RFC 0004. A card's
+    // entrance and its exit are its own moments too: it fades in as it is put on the page, and out
+    // as `leave()` takes it off.
     components: {
         checkbox: { check: 'draw', 'hover-border': 'none' },
         switch: { check: 'spring', 'hover-border': 'none' },
         radio: { check: 'pop', 'hover-border': 'none' },
+        card: { enter: 'fade', exit: 'fade' },
     },
 };
 

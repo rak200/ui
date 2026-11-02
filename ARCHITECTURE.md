@@ -502,8 +502,8 @@ fill; and a drawn control takes the hover colour in its fill under the pointer, 
 rises there and at the focus, lifts and takes its ring glided over and its label to the accent at
 the focus, sends a band of the danger out and flashes its fill in error, and its check draws the
 tick on, springs the switch's thumb over and pops the radio's dot in, as the reader makes it; and a
-card rises under the pointer, and rises and lifts while a focus the reader can see is on something
-it holds.
+card rises under the pointer, rises and lifts while a focus the reader can see is on something it
+holds, and fades in as it is put on the page and out as it leaves.
 RFC 0004 accepted that as the cost of having motion at all. A shipped theme's taste replaces it
 moment by moment, and names `none` where it wants nothing in place of an effect; a component's own
 entry outweighs a page's in either, so a theme replaces one the default theme names for a component
