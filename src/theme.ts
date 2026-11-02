@@ -143,7 +143,9 @@ export function themeStyleSheet(theme: Theme): string {
  * gliding, and it does not lift; and a press shatters it rather than squeezing it, brings no
  * colour of its own and sinks nothing. A field tints and glows under the pointer without darkening;
  * at the focus it takes the tint and a burst, its ring glitches and its label glows; and in error
- * its boundary splits into the danger and the info, its fill as it is.
+ * its boundary splits into the danger and the info, its fill as it is. A drawn control tints and
+ * glows under the pointer, its boundary at rest; at the focus it takes its hover colour and a burst,
+ * its ring glitches and its label glows; and in error its boundary splits, its fill as it is.
  */
 export const matrix: Theme = {
     name: 'matrix',

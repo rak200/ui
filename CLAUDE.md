@@ -390,7 +390,9 @@ explains. This file restates none of them.
   shadow, and why its flash is the field's though it takes most of a full control's mark** — the
   comments beside the control's animation list and the flash there, and
   [ARCHITECTURE.md](ARCHITECTURE.md)'s _Which effect runs is the consumer's_, which carries the
-  measurement and the choice.
+  measurement and the choice. **Why an error's red is drawn after every effect on the boundary or
+  the fill** — the comment beside the pointer's rules there: a full control's boundary goes with its
+  fill, and the red outlasts that.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

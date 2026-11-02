@@ -1106,13 +1106,17 @@ describe("a drawn control's effects", () => {
         return [styles.backgroundColor, styles.borderTopColor];
     }
 
-    it.each([['hover-shadow'], ['focus-shadow']])(
-        "lays the lights' layer over the control's whole box, its boundary and corners included, once %s: raise is chosen",
-        (moment) => {
+    it.each([
+        ['hover-shadow', 'raise'],
+        ['hover-shadow', 'glow'],
+        ['focus-shadow', 'raise'],
+    ])(
+        "lays the lights' layer over the control's whole box, its boundary and corners included, once %s: %s is chosen",
+        (moment, effect) => {
             // A switch, whose own sheet does not lay its control out for a layer: the sheet does.
             const { input } = drawnControl(
                 'switch',
-                { [moment]: 'raise' },
+                { [moment]: effect },
                 `role="switch" ${drawnBox}`,
             );
             const layer = getComputedStyle(input, '::after');
@@ -1230,31 +1234,43 @@ describe("a drawn control's effects", () => {
         expect(colours(mixed.input), 'mixed').toEqual(['rgb(0, 0, 200)', 'rgb(0, 0, 200)']);
     });
 
-    it('keeps the red of a control in error under the pointer, on the control or on the set it is in', async () => {
-        const own = drawnControl(
-            'checkbox',
-            { 'hover-border': 'none' },
-            `checked aria-invalid="true" ${drawnBox}`,
-        );
-        const set = drawnControl(
-            'radio',
-            { 'hover-border': 'none' },
-            '',
-            `<div aria-invalid="true"><input type="radio" name="set" checked ${drawnBox}></div>`,
-        );
+    it.each([
+        ['none for the boundary', { 'hover-border': 'none' }, 'rgb(0, 0, 200)'],
+        ['highlight for the fill', { 'hover-fill': 'highlight' }, 'rgb(0, 0, 100)'],
+        ['tint for the fill', { 'hover-fill': 'tint' }, 'rgb(0, 0, 100)'],
+        [
+            'both, as the default theme names them',
+            { 'hover-border': 'none', 'hover-fill': 'highlight' },
+            'rgb(0, 0, 100)',
+        ],
+    ])(
+        'keeps the red of a full control in error under the pointer, on the control or on its set, under %s',
+        async (_under, choices, fill) => {
+            const own = drawnControl(
+                'checkbox',
+                choices,
+                `checked aria-invalid="true" ${drawnBox}`,
+            );
+            const set = drawnControl(
+                'radio',
+                choices,
+                '',
+                `<div aria-invalid="true"><input type="radio" name="set" checked ${drawnBox}></div>`,
+            );
 
-        for (const { host } of [own, set]) {
-            coloured(host);
-        }
+            for (const { host } of [own, set]) {
+                coloured(host);
+            }
 
-        await userEvent.hover(own.input);
+            await userEvent.hover(own.input);
 
-        expect(colours(own.input), 'its own').toEqual(['rgb(0, 0, 200)', 'rgb(200, 0, 0)']);
+            expect(colours(own.input), 'its own').toEqual([fill, 'rgb(200, 0, 0)']);
 
-        await userEvent.hover(set.input);
+            await userEvent.hover(set.input);
 
-        expect(colours(set.input), 'its set').toEqual(['rgb(0, 0, 200)', 'rgb(200, 0, 0)']);
-    });
+            expect(colours(set.input), 'its set').toEqual([fill, 'rgb(200, 0, 0)']);
+        },
+    );
 
     it('fills a control under the pointer with the hover colour, and a full one with the deeper accent, its boundary with it', async () => {
         const pointed = { 'hover-border': 'none', 'hover-fill': 'highlight' };
@@ -1398,8 +1414,8 @@ describe("a drawn control's effects", () => {
         for (const input of controls) {
             const styles = getComputedStyle(input);
 
-            // The boundary's place in the control's one list, added to what is under it, and an
-            // error's fill after it playing nothing.
+            // The boundary's place in the control's one list, added to what is under it, the
+            // focus's shadow before it and an error's fill after it playing nothing.
             expect([
                 styles.animationName,
                 styles.animationDuration,
@@ -1407,11 +1423,11 @@ describe("a drawn control's effects", () => {
                 styles.animationIterationCount,
                 styles.animationComposition,
             ]).toEqual([
-                'ui-pulse-danger, none',
-                '0.5s, 0s',
-                'ease-in, ease',
-                '3, 1',
-                'add, replace',
+                'none, ui-pulse-danger, none',
+                '0s, 0.5s, 0s',
+                'ease, ease-in, ease',
+                '1, 3, 1',
+                'add, add, replace',
             ]);
         }
     });
@@ -1458,14 +1474,14 @@ describe("a drawn control's effects", () => {
         for (const input of controls) {
             const styles = getComputedStyle(input);
 
-            // An error's fill's place in the control's one list, the boundary's before it playing
-            // nothing.
+            // An error's fill's place in the control's one list, the two shadows' before it
+            // playing nothing.
             expect([
                 styles.animationName,
                 styles.animationDuration,
                 styles.animationTimingFunction,
                 styles.animationIterationCount,
-            ]).toEqual(['none, ui-flash', '0s, 0.5s', 'ease, linear', '1, 3']);
+            ]).toEqual(['none, none, ui-flash', '0s, 0s, 0.5s', 'ease, ease, linear', '1, 1, 3']);
         }
 
         const [own] = controls;
@@ -1495,5 +1511,230 @@ describe("a drawn control's effects", () => {
         });
 
         expect(playing(input)).toEqual([]);
+    });
+
+    it("glows a control under the pointer, the button's light of the accent round it", async () => {
+        const { host, input } = drawnControl('checkbox', { 'hover-shadow': 'glow' });
+        host.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        host.style.setProperty('--ui-duration-effect', '0s');
+
+        await userEvent.hover(input);
+
+        expect(getComputedStyle(input, '::after').boxShadow).toBe(
+            `color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px, ${clear}`,
+        );
+    });
+
+    it("tints a control under the pointer with the button's own tint, and a full one with the deeper accent, its boundary with it", async () => {
+        const empty = drawnControl('checkbox', { 'hover-fill': 'tint' }, drawnBox);
+        const full = drawnControl('checkbox', { 'hover-fill': 'tint' }, `checked ${drawnBox}`);
+        const button = document.createElement('div');
+        const root = button.attachShadow({ mode: 'open' });
+        const sheet = buttonEffects('test').styleSheet;
+
+        if (sheet === undefined) {
+            throw new Error('the engine built no sheet to adopt');
+        }
+
+        root.adoptedStyleSheets = [sheet];
+        root.innerHTML = '<button class="secondary" style="display: block">Tinted</button>';
+        button.style.setProperty('--ui-motion-hover-fill', 'tint');
+
+        for (const host of [empty.host, full.host, button]) {
+            coloured(host);
+            host.style.setProperty('--ui-color-surface-control', 'rgb(240, 240, 240)');
+        }
+
+        document.body.append(button);
+
+        const own = root.querySelector('button');
+
+        if (own === null) {
+            throw new Error('the button rendered no control');
+        }
+
+        const resting = colours(empty.input)[0];
+
+        await userEvent.hover(own);
+
+        const buttons = getComputedStyle(own).backgroundColor;
+
+        await userEvent.hover(empty.input);
+
+        expect(colours(empty.input)[0], 'empty').toBe(buttons);
+        expect(buttons, 'a tint at all').not.toBe(resting);
+
+        await userEvent.hover(full.input);
+
+        expect(colours(full.input), 'full').toEqual(['rgb(0, 0, 100)', 'rgb(0, 0, 100)']);
+    });
+
+    it("takes the hover colour into a control at the focus, and the deeper accent into a full one with its boundary, an error's red kept", async () => {
+        const empty = drawnControl('checkbox', { 'focus-fill': 'highlight' }, drawnBox);
+        const full = drawnControl('checkbox', { 'focus-fill': 'highlight' }, `checked ${drawnBox}`);
+        const erring = drawnControl(
+            'radio',
+            { 'focus-fill': 'highlight' },
+            '',
+            `<div aria-invalid="true"><input type="radio" name="set" checked ${drawnBox}></div>`,
+        );
+
+        for (const { host } of [empty, full, erring]) {
+            coloured(host);
+        }
+
+        await userEvent.tab();
+
+        expect(colours(empty.input), 'empty').toEqual(['rgb(4, 5, 6)', 'rgb(0, 0, 0)']);
+
+        await userEvent.tab();
+
+        expect(colours(full.input), 'full').toEqual(['rgb(0, 0, 100)', 'rgb(0, 0, 100)']);
+
+        await userEvent.tab();
+
+        expect(colours(erring.input), 'in error').toEqual(['rgb(0, 0, 100)', 'rgb(200, 0, 0)']);
+    });
+
+    it("bursts light out round a control as the focus arrives, on the focus's shadow's place in its list", async () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-shadow': 'burst' });
+        host.style.setProperty('--ui-duration-flourish', '0.5s');
+        host.style.setProperty('--ui-easing-enter', 'ease-in');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(input);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationIterationCount,
+            styles.animationComposition,
+        ]).toEqual([
+            'ui-burst, none, none',
+            '0.5s, 0s, 0s',
+            'ease-in, ease, ease',
+            '1, 1, 1',
+            'add, add, replace',
+        ]);
+    });
+
+    it("draws the burst from four fifths of the accent at the boundary out to nothing, 10px and 15px soft, beside the control's glow", async () => {
+        const { host, input } = drawnControl(
+            'checkbox',
+            { 'focus-shadow': 'burst' },
+            'style="box-shadow: 0 0 0 1px rgb(0, 200, 0)"',
+        );
+        host.style.setProperty('--ui-color-accent', 'rgb(200, 0, 0)');
+        host.style.setProperty('--ui-duration-flourish', '10s');
+        host.style.setProperty('--ui-easing-enter', 'linear');
+
+        await userEvent.tab();
+
+        const burst = running(input, 'ui-burst');
+        // An animated shadow's colour is computed in the space it moves through.
+        const accent = (opacity: number): string =>
+            colour(`oklab(from rgb(200, 0, 0) l a b / ${String(opacity)})`);
+
+        burst.pause();
+        burst.currentTime = 0;
+
+        expect(getComputedStyle(input).boxShadow, 'arriving').toBe(
+            `rgb(0, 200, 0) 0px 0px 0px 1px, ${accent(0.8)} 0px 0px 0px 0px`,
+        );
+
+        burst.currentTime = 5000;
+
+        expect(getComputedStyle(input).boxShadow, 'halfway').toBe(
+            `rgb(0, 200, 0) 0px 0px 0px 1px, ${accent(0.4)} 0px 0px 7.5px 5px`,
+        );
+    });
+
+    it("lights a control's label with a glow of the accent at the focus, on its own transition", async () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-label': 'glow' }, '', labelled);
+        host.style.setProperty('--ui-color-accent', 'rgb(10, 20, 30)');
+        host.style.setProperty('--ui-duration-effect', '0.2s');
+        host.style.setProperty('--ui-easing-state', 'linear');
+
+        const styles = getComputedStyle(text(input));
+
+        expect(
+            [styles.transitionProperty, styles.transitionDuration, styles.transitionTimingFunction],
+            'its transition',
+        ).toEqual(['text-shadow', '0.2s', 'linear']);
+
+        host.style.setProperty('--ui-duration-effect', '0s');
+
+        await userEvent.tab();
+
+        expect(getComputedStyle(text(input)).textShadow, 'at the focus').toBe(
+            'color(srgb 0.0392157 0.0784314 0.117647 / 0.7) 0px 0px 8px',
+        );
+    });
+
+    it("hands the ring the glitch, a flourish's time, a straight clock and its two lines' colours", async () => {
+        const { host, input } = drawnControl('checkbox', { 'focus-ring': 'glitch' });
+        host.style.setProperty('--ui-color-danger', 'rgb(1, 2, 3)');
+        host.style.setProperty('--ui-color-info', 'rgb(4, 5, 6)');
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(input);
+
+        expect(
+            ['', '-time', '-curve', '-left', '-right'].map((name) =>
+                styles.getPropertyValue(`--ui-fx-ring${name}`),
+            ),
+        ).toEqual(['glitch', '520ms', 'linear', 'rgb(1, 2, 3)', 'rgb(4, 5, 6)']);
+    });
+
+    it('splits a control in error, or of a set in error, into the danger and the info, twice the rounds an effect takes', () => {
+        const controls = erring({ 'invalid-border': 'split' });
+
+        for (const input of controls) {
+            input.style.setProperty('--ui-duration-effect', '0.2s');
+            input.style.setProperty('--ui-iteration-settle', '3');
+        }
+
+        for (const input of controls) {
+            const styles = getComputedStyle(input);
+
+            expect([
+                styles.animationName,
+                styles.animationDuration,
+                styles.animationTimingFunction,
+                styles.animationIterationCount,
+            ]).toEqual(['none, ui-split, none', '0s, 0.2s, 0s', 'ease, linear, ease', '1, 6, 1']);
+        }
+
+        const [own] = controls;
+
+        if (own === undefined) {
+            throw new Error('no control in error');
+        }
+
+        own.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+        own.style.setProperty('--ui-color-info', 'rgb(0, 0, 200)');
+        own.style.setProperty('--ui-duration-effect', '10s');
+
+        const split = running(own, 'ui-split');
+
+        split.pause();
+
+        // Each of its four keyframes, held where it is written: thrown 3px either way, back, 2px
+        // and a pixel down, and a pixel.
+        const thrown = [
+            [2000, 'rgb(200, 0, 0) -3px 0px 0px 0px, rgb(0, 0, 200) 3px 0px 0px 0px'],
+            [4000, 'rgb(200, 0, 0) 3px 0px 0px 0px, rgb(0, 0, 200) -3px 0px 0px 0px'],
+            [6000, 'rgb(200, 0, 0) -2px 1px 0px 0px, rgb(0, 0, 200) 2px -1px 0px 0px'],
+            [8000, 'rgb(200, 0, 0) 1px 0px 0px 0px, rgb(0, 0, 200) -1px 0px 0px 0px'],
+        ] as const;
+
+        for (const [time, shadow] of thrown) {
+            split.currentTime = time;
+
+            expect(getComputedStyle(own).boxShadow, String(time)).toBe(shadow);
+        }
     });
 });

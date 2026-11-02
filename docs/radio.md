@@ -207,7 +207,9 @@ set keeps every radio's red.
 
 At the focus a radio's own label takes the accent, and a set in error sends a band of the danger out
 from every radio and flashes each, as [a checkbox does](checkbox.md#motion), the chosen radio's dot
-losing most of its contrast at each round's start.
+losing most of its contrast at each round's start. **Under [Matrix](theme.md#matrix)** a radio
+answers as a checkbox does there: tinted and glowing under the pointer, the hover colour, a burst, a
+glitching ring and a glowing label at the focus, and every radio of a set in error split.
 
 ## Styling
 
