@@ -26,6 +26,13 @@ import { reference } from './reference.js';
  * them — and an unfilled one costs nothing, because a `<slot>` is `display: contents` and
  * contributes no box to lay out or to space.
  *
+ * **It leaves through {@link UiCard.leave}, and removes itself.** A card cannot hold off a
+ * removal it did not ask for: whatever takes it off the page takes it at once, and its exit with
+ * it. So the exit is the card's own way out, as `close()` is the dialog's and `dismiss()` the
+ * toast's: it plays the exit, announces `ui-leave` while the card is still in the tree, so a
+ * framework rendering a list of cards drops the entry there, and then removes the card. A card put
+ * back on the page arrives as any card does.
+ *
  * @example
  * ```html
  * <ui-card>
@@ -36,6 +43,12 @@ import { reference } from './reference.js';
  * ```
  */
 export class UiCard extends LitElement {
+    /** Where the card keeps its states: `leaving`, from when it is asked to leave until it has gone. */
+    readonly #internals = this.attachInternals();
+
+    /** The departure under way, once one has been asked for. */
+    #departure: Promise<void> | undefined;
+
     /**
      * Marks the card while a focus the reader can see is on something it holds, and has the pointer
      * engine follow it where its sheet chose a light that follows the pointer.
@@ -45,6 +58,45 @@ export class UiCard extends LitElement {
         this.addEventListener('focusin', held);
         this.addEventListener('focusout', released);
         this.addEventListener('pointerover', follow);
+    }
+
+    /** {@inheritDoc LitElement.connectedCallback} A card put back on the page arrives anew. */
+    override connectedCallback(): void {
+        super.connectedCallback();
+        this.#internals.states.delete('leaving');
+        this.#departure = undefined;
+    }
+
+    /**
+     * Takes the card off the page through its exit: plays the exit chosen for it, announces
+     * `ui-leave` while it is still in the tree, and removes it. Resolves once it has gone. Asked
+     * twice, it is one departure, and both calls resolve with it.
+     *
+     * Bound as a field, so it can be handed to a listener and called as a method without losing
+     * `this`.
+     */
+    readonly leave = (): Promise<void> => {
+        if (this.#departure === undefined) {
+            this.#departure = this.#depart();
+        }
+
+        return this.#departure;
+    };
+
+    /** Marks the card leaving, waits out its exit, announces it, and removes it. */
+    async #depart(): Promise<void> {
+        this.#internals.states.add('leaving');
+
+        // `finished` rejects when an animation is cancelled, so what this waits for is
+        // settlement rather than fulfilment. `getAnimations` flushes the pending style change
+        // before it answers, so the exit the state above started is in the list.
+        await Promise.allSettled(this.getAnimations().map((animation) => animation.finished));
+
+        // Before the removal, for the toast's reason: a listener above the card hears a bubbling
+        // event only while the card is still in the tree.
+        this.dispatchEvent(new Event('ui-leave', { bubbles: true, composed: true }));
+
+        this.remove();
     }
 
     /** The styles its shadow root adopts. */

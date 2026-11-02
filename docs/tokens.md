@@ -171,7 +171,10 @@ press lets go on — which runs longer than an effect that holds for as long as 
 movement that follows the pointer has a fifth**, `--ui-duration-follow` over `--ui-duration-50`, the
 step the ordinals left room for under the first: what follows the pointer is moved again every frame
 the pointer moves, so it catches up in 75ms on a straight clock — the card leaning toward it under
-Glass — where an effect's time would leave it trailing.
+Glass — where an effect's time would leave it trailing. **An entrance and an exit have a sixth and
+a seventh**, `--ui-duration-enter` over `--ui-duration-300` and `--ui-duration-exit` over
+`--ui-duration-200`, the exit a step quicker, beside the curves each already had — a card fading in
+as it is put on the page, and out as it leaves.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
 focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
@@ -380,6 +383,8 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-duration-travel`           | how long something takes to cross to its place |
 | `--ui-duration-flourish`         | how long a flourish takes                      |
 | `--ui-duration-follow`           | how long what follows the pointer takes        |
+| `--ui-duration-enter`            | how long an entrance takes                     |
+| `--ui-duration-exit`             | how long an exit takes                         |
 | `--ui-elevation-raised`          | a surface lifted off the page                  |
 | `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
 | `--ui-text-supporting`           | text that explains what is beside it           |
@@ -569,7 +574,7 @@ taste.page['press-move']; // 'squish'
 A check is each drawn control's own moment, so it is named for each. So is a drawn control's
 boundary under the pointer, which stays as it rests while the fill moves: named for the page, its
 `none` would take a field's darkening too, which is a field's answer to the pointer beside the
-raise.
+raise. A card's entrance and its exit are its own moments as well.
 
 | Component  | Moment         | Effect   | What it draws                                  |
 | ---------- | -------------- | -------- | ---------------------------------------------- |
@@ -579,6 +584,8 @@ raise.
 | `switch`   | `hover-border` | `none`   | the boundary at rest under the pointer         |
 | `radio`    | `check`        | `pop`    | the dot popped in as the reader chooses        |
 | `radio`    | `hover-border` | `none`   | the boundary at rest under the pointer         |
+| `card`     | `enter`        | `fade`   | faded in as it is put on the page              |
+| `card`     | `exit`         | `fade`   | faded out as `leave()` takes it away           |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
@@ -594,7 +601,8 @@ page that inserts the sheet and chooses nothing. A choice runs instead, at any s
 draws the effect it names — [the button](button.md#motion) draws the pointer's, the focus's and a
 press's, [a field](input.md#motion) the pointer's, the focus's, its label's and an error's, and
 [a drawn control](checkbox.md#motion) its check, the pointer's, the focus's, its label's and an
-error's, and [the card](card.md#motion) the pointer's and a focus on something it holds — and
+error's, and [the card](card.md#motion) the pointer's, a focus on something it holds, its entrance
+and its exit — and
 the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
 button answers as the button does, and a field's box lifts rather than its control.
 

@@ -15,6 +15,7 @@ import '@rak200/ui';
 - [It is not a button](#it-is-not-a-button)
 - [It claims no role](#it-claims-no-role)
 - [A row of cards](#a-row-of-cards)
+- [Taking a card away](#taking-a-card-away)
 - [Motion](#motion)
 - [Styling](#styling)
 
@@ -95,6 +96,38 @@ the one thing the `footer` slot buys that writing the element last does not.
 The card takes the width it is given. It sets no `max-inline-size` of its own: how wide a card is
 belongs to the layout around it, not to the card.
 
+## Taking a card away
+
+| Method    | Does                                                                         |
+| --------- | ---------------------------------------------------------------------------- |
+| `leave()` | plays the exit, announces it and removes the card; resolves once it has gone |
+
+| Event      | Fires                                                                       |
+| ---------- | --------------------------------------------------------------------------- |
+| `ui-leave` | after the exit and **before** the card removes itself; bubbles and composed |
+
+**Take a card away with `leave()`**, which plays its [exit](#motion) first. Anything else that
+removes it — `remove()`, a framework dropping it from a list — takes it at once, and the exit with
+it: no element can hold off a removal it did not ask for. So the exit is the card's own way out, as
+`close()` is the dialog's and `dismiss()` the toast's.
+
+**A card that leaves removes itself**, after dispatching `ui-leave` while it is still in the tree, so
+the event reaches a listener above it. Drop your own record of it there:
+
+```js
+list.addEventListener('ui-leave', (event) => {
+  remove(event.target.dataset['id']);
+});
+```
+
+A framework that removes a node it rendered without checking that it is still there throws on a card
+that has already left — React DOM does, as of 19.3 — so under one, drop the entry and let the
+framework remove the card, which then leaves at once.
+
+`leave()` is bound, so it can be handed to a listener as it is, and asking twice is one departure.
+While it leaves the card is in the custom state `leaving`, which your stylesheet reads as
+`ui-card:state(leaving)`. A card put back on the page arrives as any card does.
+
 ## Motion
 
 **A card answers the pointer and a focus on something it holds**, in RFC 0004's motion, and where you
@@ -103,13 +136,17 @@ choose nothing the theme's taste runs. Under the default theme's:
 - under the pointer it rises: the theme's lift drawn again, with a drop under it, faded in over
   `--ui-duration-effect`;
 - while a focus the reader can see is on something it holds — a button in its footer — it rises the
-  same way and lifts a quarter rem, and the pointer resting on it changes nothing.
+  same way and lifts a quarter rem, and the pointer resting on it changes nothing;
+- it fades in as it is put on the page, over `--ui-duration-enter` on `--ui-easing-enter`, and out as
+  [`leave()`](#taking-a-card-away) takes it away, a step quicker, over `--ui-duration-exit` on
+  `--ui-easing-exit`.
 
 A focus a click left is not one the reader sees, and changes nothing. Each rise is drawn on a layer of
-its own in the card's shadow root, an empty span that means nothing. The lift moves the card itself,
-which a container query asks the card's surroundings about, never the card: **a choice written on
-the one card alone does not reach the lift**, where one written on anything round it does — RFC
-0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce` each lands at once.
+its own in the card's shadow root, an empty span that means nothing. The lift, the entrance and the
+exit move the card itself, which a container query asks the card's surroundings about, never the
+card: **a choice written on the one card alone does not reach them**, where one written on anything
+round it does — RFC 0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce`
+each lands at once.
 
 **Under [Matrix](theme.md#matrix)** a card takes a tint under the pointer, a little of the accent in
 its own fill, and glows, a light of the accent round it; at a focus it holds it takes the tint and a

@@ -2092,6 +2092,14 @@ describe("a drawn control's effects", () => {
     });
 });
 
+/** A surface's host of the suite's own: a custom element, so it can hold a state, as the card does. */
+class SurfaceHost extends HTMLElement {
+    /** Where its states are kept. */
+    readonly internals = this.attachInternals();
+}
+
+customElements.define('effects-surface', SurfaceHost);
+
 /**
  * A surface of the test's own, in a region of the page: a host whose shadow root adopts the sheet
  * built for `component`, holding its layers and a slot, with a button in it and the mark bound, and
@@ -2103,7 +2111,7 @@ function surface(
     choices: Readonly<Record<string, string>>,
 ): {
     region: HTMLElement;
-    host: HTMLElement;
+    host: SurfaceHost;
     layer: HTMLElement;
     focus: HTMLElement;
     fill: HTMLElement;
@@ -2111,7 +2119,7 @@ function surface(
     border: HTMLElement;
 } {
     const region = document.createElement('div');
-    const host = document.createElement('div');
+    const host = document.createElement('effects-surface') as SurfaceHost;
     const root = host.attachShadow({ mode: 'open' });
     const sheet = surfaceEffects(component).styleSheet;
 
@@ -2274,7 +2282,9 @@ describe("a surface's effects", () => {
         host.style.setProperty('--ui-motion-focus-move', 'lift');
         host.style.setProperty('--ui-motion-hover-move', 'tilt');
         host.style.setProperty('--ui-motion-hover-fill', 'spotlight');
+        host.style.setProperty('--ui-motion-enter', 'fade');
 
+        expect(getComputedStyle(host).animationName, 'the entrance').toBe('none');
         expect(getComputedStyle(host).transform, 'the tilt').toBe('none');
         expect(getComputedStyle(host).getPropertyValue('--ui-fx-follow'), 'the engine').toBe('');
 
@@ -2634,5 +2644,83 @@ describe("a surface's effects", () => {
         await userEvent.tab();
 
         expect(getComputedStyle(focus).opacity, 'faded in').toBe('1');
+    });
+
+    it('plays nothing on its host where no entrance is chosen', () => {
+        const { host } = surface('test', {});
+
+        expect(getComputedStyle(host).animationName).toBe('none');
+    });
+
+    it("fades the surface in as it is put on the page, over an entrance's time on the curve an arrival takes", () => {
+        const { region, host } = surface('test', { enter: 'fade' });
+        region.style.setProperty('--ui-duration-enter', '10s');
+        region.style.setProperty('--ui-easing-enter', 'linear');
+
+        const styles = getComputedStyle(host);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['ui-enter-fade', '10s', 'linear', 'backwards']);
+
+        const fade = running(host, 'ui-enter-fade');
+
+        fade.pause();
+        fade.currentTime = 0;
+
+        expect(getComputedStyle(host).opacity, 'from nothing').toBe('0');
+
+        fade.currentTime = 5000;
+
+        expect(getComputedStyle(host).opacity, 'halfway').toBe('0.5');
+    });
+
+    it("fades the surface out while it is leaving, over an exit's time on the curve a departure takes, held at its end", () => {
+        const { region, host } = surface('test', { enter: 'fade', exit: 'fade' });
+        region.style.setProperty('--ui-duration-exit', '10s');
+        region.style.setProperty('--ui-easing-exit', 'linear');
+        host.internals.states.add('leaving');
+
+        const styles = getComputedStyle(host);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['ui-exit-fade', '10s', 'linear', 'forwards']);
+
+        const fade = running(host, 'ui-exit-fade');
+
+        fade.pause();
+        fade.currentTime = 5000;
+
+        expect(getComputedStyle(host).opacity, 'halfway').toBe('0.5');
+
+        fade.finish();
+
+        expect(getComputedStyle(host).opacity, 'held at its end').toBe('0');
+    });
+
+    it('plays no entrance while the surface is leaving, so it goes at once where no exit is chosen', () => {
+        const { host } = surface('test', { enter: 'fade' });
+        host.internals.states.add('leaving');
+
+        expect(getComputedStyle(host).animationName).toBe('none');
+    });
+
+    it('keeps its passage its own, never playing one a surface round it plays', () => {
+        const outer = surface('test', { exit: 'fade' });
+        const inner = surface('test', {});
+        outer.host.append(inner.region);
+        outer.host.internals.states.add('leaving');
+
+        expect(getComputedStyle(outer.host).animationName, 'the surface leaving').toBe(
+            'ui-exit-fade',
+        );
+        expect(getComputedStyle(inner.host).animationName, 'the one it holds').toBe('none');
     });
 });
