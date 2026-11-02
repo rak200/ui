@@ -284,6 +284,39 @@ function layer(element: UiCard, name: string): HTMLElement {
     return only(element.shadowRoot ?? document, `[data-layer='${name}']`);
 }
 
+/**
+ * Mounts `markup` under the token sheet and `theme`'s, inside the region the theme is chosen on, so
+ * a card arrives under it as it is put on the page.
+ */
+async function themed(markup: string, theme: Theme): Promise<HTMLElement> {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet() + themeStyleSheet(theme);
+    document.body.append(style);
+
+    const host = document.createElement('div');
+    host.dataset['uiTheme'] = theme.name;
+    host.innerHTML = markup;
+    document.body.append(host);
+
+    for (const element of host.querySelectorAll('ui-card')) {
+        await element.updateComplete;
+    }
+
+    return host;
+}
+
+/** Runs every animation on `element` to its end — its pieces' clocks among them — and waits. */
+async function settle(element: HTMLElement): Promise<void> {
+    const running = element.getAnimations();
+
+    for (const animation of running) {
+        animation.finish();
+    }
+
+    await Promise.allSettled(running.map((animation) => animation.finished));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 /** The one CSS animation named `name` running on `element`. */
 function running(element: HTMLElement, name: string): CSSAnimation {
     const found = element
@@ -518,6 +551,37 @@ describe('arriving and leaving', () => {
         await Promise.all([first, second]);
 
         expect(heard, 'announced once').toBe(1);
+    });
+
+    it('puts a card together from its pieces as it is put on the page under Matrix, and then whole', async () => {
+        const host = await themed(fixture, matrix);
+        const element = card(host);
+
+        expect(element.style.filter, 'cut').toMatch(/^url\("#ui-pieces-\d+"\)$/);
+
+        await settle(element);
+
+        expect(element.style.filter, 'whole').toBe('');
+    });
+
+    it('breaks a card into its pieces as it leaves under Matrix, then removes it and mends it', async () => {
+        const host = await themed(fixture, matrix);
+        const element = card(host);
+        await settle(element);
+
+        const gone = element.leave();
+
+        expect(element.style.filter, 'cut').toMatch(/^url\("#ui-pieces-\d+"\)$/);
+        expect(element.isConnected, 'there while it breaks').toBe(true);
+
+        await settle(element);
+        await gone;
+
+        expect([element.isConnected, element.style.filter], 'removed, and whole').toEqual([
+            false,
+            '',
+        ]);
+        expect(document.body.querySelector(':scope > svg'), 'the filter gone').toBeNull();
     });
 
     it('arrives anew when it is put back on the page, and can leave again', async () => {

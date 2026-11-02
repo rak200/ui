@@ -486,7 +486,12 @@ over, and an off thumb fell from 3:1 to 1.06:1 under any band. **A card's sheen 
 a button sweeps the accent: the accent's took the card's muted text to 1.97:1 at its peak, and the
 halo, which everything a card holds inherits, would ring a light label on a fill of its own in the
 card's colour. So the card sweeps the light its other lights are drawn in, over which every shipped
-palette's text and muted text hold 4.5:1. A name a component does not offer draws nothing. **`none` is
+palette's text and muted text hold 4.5:1. **A card's pieces are a filter over it, not copies of it**:
+the prototypes cut a card from thirty-six copies, and a copy of what a host put in a card is that
+content again — an iframe loaded and a video played once a copy, a field in a form round the card
+submitted with every copy's value, an open dialog shown as a modal by each. The filter cuts the card
+as it is drawn, and its pieces fade where they are without shrinking toward the middle as the copies
+did. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the
 component as it was, and where it answered with something of its own — the button's colour under a
 press — the component draws `none` and takes that away, while `highlight` names what it did.

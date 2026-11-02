@@ -1,6 +1,7 @@
 import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
+import { erode, materialize, mend } from './pieces.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
 
@@ -60,11 +61,17 @@ export class UiCard extends LitElement {
         this.addEventListener('pointerover', follow);
     }
 
-    /** {@inheritDoc LitElement.connectedCallback} A card put back on the page arrives anew. */
+    /**
+     * {@inheritDoc LitElement.connectedCallback} A card put back on the page arrives anew, and once it
+     * is drawn it is put together from its pieces, where its sheet chose that.
+     */
     override connectedCallback(): void {
         super.connectedCallback();
         this.#internals.states.delete('leaving');
         this.#departure = undefined;
+        void this.updateComplete.then(() => {
+            materialize(this);
+        });
     }
 
     /**
@@ -83,13 +90,18 @@ export class UiCard extends LitElement {
         return this.#departure;
     };
 
-    /** Marks the card leaving, waits out its exit, announces it, and removes it. */
+    /**
+     * Marks the card leaving, breaks it into its pieces where its sheet chose that, waits out its
+     * exit, announces it, removes it, and gives it back whole.
+     */
     async #depart(): Promise<void> {
         this.#internals.states.add('leaving');
+        erode(this);
 
         // `finished` rejects when an animation is cancelled, so what this waits for is
         // settlement rather than fulfilment. `getAnimations` flushes the pending style change
-        // before it answers, so the exit the state above started is in the list.
+        // before it answers, so the exit the state above started is in the list, and so are the
+        // clocks the pieces fade on.
         await Promise.allSettled(this.getAnimations().map((animation) => animation.finished));
 
         // Before the removal, for the toast's reason: a listener above the card hears a bubbling
@@ -97,6 +109,7 @@ export class UiCard extends LitElement {
         this.dispatchEvent(new Event('ui-leave', { bubbles: true, composed: true }));
 
         this.remove();
+        mend(this);
     }
 
     /** The styles its shadow root adopts. */
