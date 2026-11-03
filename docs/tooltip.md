@@ -17,6 +17,7 @@ import '@rak200/ui';
 - [Touch](#touch)
 - [Where it lands, and who put it there](#where-it-lands-and-who-put-it-there)
 - [On a control you wrote](#on-a-control-you-wrote)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## `<ui-tooltip>`
@@ -172,6 +173,29 @@ replaced another is the failure nobody sees.
 A tooltip around [`<ui-input>`](input.md) or any other control this package draws needs none of
 this. Those take the sentence rather than the reference, and render it where their own control can
 resolve it — so the composition above is for a control of yours, not for one of theirs.
+
+## Motion
+
+**A tip rises as it shows and sinks as it goes**, in RFC 0004's motion, where you choose nothing and
+the default theme's taste runs: it comes a quarter rem toward where it sits as it fades in, and goes
+back toward its trigger as it fades out, over `--ui-duration-overlay` on `--ui-easing-enter` and
+`--ui-easing-exit`. Under [Glass](theme.md#glass) it comes into focus from half a rem out of it
+instead, `refocus`, and goes out of it, `defocus`, over an overlay's step and a quarter, whole by
+half the way and gone over the second half. `--ui-motion-enter` and `--ui-motion-exit`, written on
+the tooltip or anywhere above it, choose for yourself, and `none` shows and hides a tip at once, as
+a tooltip did before effects existed.
+
+Each is a transition, so a tip you leave before it has arrived turns back from where it is, and one
+pointed at again as it leaves comes back from where it got to. **None scales a tip**: the placement
+reads the tip's box as it shows, transform and all, and a tip that started smaller landed off its
+trigger's middle in RFC 0004's measurements. An entrance comes from the side the tip was last placed
+on, since the side is written once the tip is shown — above its trigger until it has been placed
+below.
+
+**Only Chromium plays an exit.** A tip is held on the page while it goes by transitioning its
+display and its overlay, which Chromium honours for a popover; Firefox and WebKit take a popover
+away at once, so there a tip is gone the moment it is dismissed, whatever exit is chosen. Under
+reduced motion every duration collapses, and a tip shows and goes at once everywhere.
 
 ## Styling
 

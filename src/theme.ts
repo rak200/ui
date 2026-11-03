@@ -405,6 +405,7 @@ export const glass: Theme = {
             radio: { 'hover-border': 'edge' },
             card: { 'hover-move': 'tilt', enter: 'dissolve', exit: 'dissolve' },
             dialog: { enter: 'dissolve', exit: 'dissolve', backdrop: 'blur' },
+            tooltip: { enter: 'refocus', exit: 'defocus' },
             // The toast raised with its boundary as it is at rest, apart from the page's cast and
             // edge, as RFC 0004 chose.
             toast: {

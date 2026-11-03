@@ -1,4 +1,5 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
+import { query } from './motion.js';
 import { place } from './placement.js';
 import { reference } from './reference.js';
 
@@ -7,6 +8,9 @@ let sequence = 0;
 
 /** How far the tip sits from the trigger, and which way the script placed it. */
 const side = 'data-side';
+
+/** The query each of the tip's effects is drawn under: the consumer's choice, else a taste. */
+const drawn = query('tooltip');
 
 /**
  * What makes a trigger's shadow root the thing the browser actually focuses.
@@ -159,6 +163,97 @@ export class UiTooltip extends LitElement {
 
         slot[name='tip']::slotted([data-side='block-end']) {
             translate: 0 calc(${reference('--ui-space')} / 2);
+        }
+
+        /* Which side of the tip its trigger is on, as a sign on the block axis, which what moves a
+           tip toward its trigger or away reads. The side is written by the placement, after the
+           tip's first style, so an entrance comes from the side the tip was last placed on —
+           above its trigger, where a tip goes first, until it has been placed below. */
+        slot[name='tip']::slotted(*) {
+            --ui-fx-toward: 1;
+        }
+
+        slot[name='tip']::slotted([data-side='block-end']) {
+            --ui-fx-toward: -1;
+        }
+
+        /* RFC 0004's: how a tip comes and goes, each a transition, so a tip the reader leaves
+           before it has arrived turns back from where it is, and one pointed at again as it
+           leaves comes back from where it got to. Each moves, blurs or fades the tip and none
+           scales it, since the placement reads the tip's box as it shows, transform and all.
+           Nothing is drawn where nothing is chosen, as a tooltip drew nothing before. */
+
+        /* rise: from a quarter rem nearer its trigger, toward where it sits, as it fades in. */
+        @container ${unsafeCSS(drawn('enter', 'rise'))} {
+            slot[name='tip']::slotted(:popover-open) {
+                transition:
+                    opacity ${reference('--ui-duration-overlay')} ${reference('--ui-easing-enter')},
+                    transform ${reference('--ui-duration-overlay')}
+                        ${reference('--ui-easing-enter')};
+            }
+
+            @starting-style {
+                slot[name='tip']::slotted(:popover-open) {
+                    opacity: 0;
+                    transform: translateY(calc(var(--ui-fx-toward) * 0.25rem));
+                }
+            }
+        }
+
+        /* refocus: out of focus by half a rem and sharpening over an overlay's step and a
+           quarter, there by half the way. */
+        @container ${unsafeCSS(drawn('enter', 'refocus'))} {
+            slot[name='tip']::slotted(:popover-open) {
+                transition:
+                    filter calc(${reference('--ui-duration-overlay')} * 1.25)
+                        ${reference('--ui-easing-enter')},
+                    opacity calc(${reference('--ui-duration-overlay')} * 0.625)
+                        ${reference('--ui-easing-enter')};
+            }
+
+            @starting-style {
+                slot[name='tip']::slotted(:popover-open) {
+                    filter: blur(0.5rem);
+                    opacity: 0;
+                }
+            }
+        }
+
+        /* Leaving, the tip is held on the page while it goes, its display and its overlay
+           transitioned as discrete values, and only where an exit is chosen, so a tip with none
+           is gone at once. Chromium alone holds a popover so: Firefox takes it away at once
+           while it reports allow-discrete as supported, and WebKit, which holds a plain element
+           that way, takes a popover away at once — measured for RFC 0004 — so elsewhere a tip
+           is gone at once whatever is chosen. */
+
+        /* sink: back toward its trigger as it fades — the rise, run the other way. */
+        @container ${unsafeCSS(drawn('exit', 'sink'))} {
+            slot[name='tip']::slotted(:not(:popover-open)) {
+                opacity: 0;
+                transform: translateY(calc(var(--ui-fx-toward) * 0.25rem));
+                transition:
+                    opacity ${reference('--ui-duration-overlay')} ${reference('--ui-easing-exit')},
+                    transform ${reference('--ui-duration-overlay')} ${reference('--ui-easing-exit')},
+                    display ${reference('--ui-duration-overlay')} allow-discrete,
+                    overlay ${reference('--ui-duration-overlay')} allow-discrete;
+            }
+        }
+
+        /* defocus: blurring away by as much as the refocus sharpens from, over as long, and gone
+           over its second half. */
+        @container ${unsafeCSS(drawn('exit', 'defocus'))} {
+            slot[name='tip']::slotted(:not(:popover-open)) {
+                filter: blur(0.5rem);
+                opacity: 0;
+                transition:
+                    filter calc(${reference('--ui-duration-overlay')} * 1.25)
+                        ${reference('--ui-easing-exit')},
+                    opacity calc(${reference('--ui-duration-overlay')} * 0.625)
+                        ${reference('--ui-easing-exit')}
+                        calc(${reference('--ui-duration-overlay')} * 0.625),
+                    display calc(${reference('--ui-duration-overlay')} * 1.25) allow-discrete,
+                    overlay calc(${reference('--ui-duration-overlay')} * 1.25) allow-discrete;
+            }
         }
     `;
 

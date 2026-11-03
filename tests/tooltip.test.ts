@@ -14,6 +14,8 @@ import meta, {
 import '../src/tooltip.js';
 import '../src/input.js';
 import type { UiTooltip } from '../src/tooltip.js';
+import { glass, themeStyleSheet } from '../src/theme.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
@@ -1065,6 +1067,236 @@ describe('when it shows', () => {
         expect(thrown, 'nothing is still placing a detached element').toEqual([]);
         expect(shown.matches(':popover-open')).toBe(false);
     });
+});
+
+/** The transitions the tip runs, sorted by the property each moves. */
+function moving(host: ParentNode): CSSTransition[] {
+    return tip(host)
+        .getAnimations()
+        .filter((each): each is CSSTransition => each instanceof CSSTransition)
+        .sort((one, other) => one.transitionProperty.localeCompare(other.transitionProperty));
+}
+
+/** Holds every transition the tip runs at `time`. */
+function held(host: ParentNode, time: number): void {
+    for (const each of moving(host)) {
+        each.pause();
+        each.currentTime = time;
+    }
+}
+
+/** The fixture's tooltip, with `style` written on it: the choices and tokens a test hands it. */
+async function chosen(style: string): Promise<HTMLElement> {
+    const host = await mount(fixture);
+    only(host, 'ui-tooltip').style.cssText = style;
+
+    return host;
+}
+
+// The pointer leaves by `parkPointer()` rather than `unhover()`, which scrolled the page under the
+// tip and moved what its placement reads.
+describe("the tip's motion, RFC 0004's", () => {
+    it('tells the tip which side of it its trigger is on', async () => {
+        // The one below first, so it is at the top of the page, with no room above its trigger.
+        const below = await mount(fixture, '0px');
+        const above = await mount(fixture);
+
+        await userEvent.hover(trigger(above));
+        await painted();
+
+        const upper = getComputedStyle(tip(above)).getPropertyValue('--ui-fx-toward');
+
+        await parkPointer();
+        await userEvent.hover(trigger(below));
+        await painted();
+
+        expect([upper, getComputedStyle(tip(below)).getPropertyValue('--ui-fx-toward')]).toEqual([
+            '1',
+            '-1',
+        ]);
+    });
+
+    it("rises toward where it sits as it shows, over the overlay's step on the entrance's curve", async () => {
+        const host = await chosen(
+            '--ui-motion-enter: rise; --ui-duration-overlay: 7s; --ui-easing-enter: steps(3)',
+        );
+
+        await userEvent.hover(trigger(host));
+
+        expect(
+            moving(host).map((each) => {
+                const timing = each.effect?.getTiming();
+
+                return [each.transitionProperty, timing?.duration, timing?.easing];
+            }),
+        ).toEqual([
+            ['opacity', 7000, 'steps(3)'],
+            ['transform', 7000, 'steps(3)'],
+        ]);
+
+        held(host, 0);
+
+        expect([
+            getComputedStyle(tip(host)).opacity,
+            getComputedStyle(tip(host)).transform,
+        ]).toEqual(['0', 'matrix(1, 0, 0, 1, 0, 4)']);
+    });
+
+    it('comes into focus as it shows, over five quarters of the step, whole by half the way', async () => {
+        const host = await chosen(
+            '--ui-motion-enter: refocus; --ui-duration-overlay: 8s; --ui-easing-enter: steps(2)',
+        );
+
+        await userEvent.hover(trigger(host));
+
+        expect(
+            moving(host).map((each) => {
+                const timing = each.effect?.getTiming();
+
+                return [each.transitionProperty, timing?.duration, timing?.easing];
+            }),
+        ).toEqual([
+            ['filter', 10000, 'steps(2)'],
+            ['opacity', 5000, 'steps(2)'],
+        ]);
+
+        held(host, 0);
+
+        expect([getComputedStyle(tip(host)).filter, getComputedStyle(tip(host)).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+    });
+
+    it("sinks back toward its trigger as it goes, held on the page over the overlay's step", async () => {
+        const host = await chosen(
+            '--ui-motion-exit: sink; --ui-duration-overlay: 6s; --ui-easing-exit: steps(4)',
+        );
+        await userEvent.hover(trigger(host));
+
+        await parkPointer();
+
+        expect(tip(host).matches(':popover-open'), 'closed').toBe(false);
+        expect(getComputedStyle(tip(host)).display, 'and still on the page').not.toBe('none');
+        expect(
+            moving(host).map((each) => {
+                const timing = each.effect?.getTiming();
+
+                return [each.transitionProperty, timing?.duration, timing?.easing];
+            }),
+        ).toEqual([
+            ['display', 6000, 'ease'],
+            ['opacity', 6000, 'steps(4)'],
+            ['overlay', 6000, 'ease'],
+            ['transform', 6000, 'steps(4)'],
+        ]);
+
+        // Half way, on four steps: half gone and half way back. At its end the tip is off the page,
+        // where no box is left to read a transform off.
+        held(host, 3000);
+
+        expect([
+            getComputedStyle(tip(host)).opacity,
+            getComputedStyle(tip(host)).transform,
+        ]).toEqual(['0.5', 'matrix(1, 0, 0, 1, 0, 2)']);
+    });
+
+    it('goes out of focus as it leaves, gone over the second half', async () => {
+        const host = await chosen(
+            '--ui-motion-exit: defocus; --ui-duration-overlay: 8s; --ui-easing-exit: steps(5)',
+        );
+        await userEvent.hover(trigger(host));
+
+        await parkPointer();
+
+        expect(
+            moving(host).map((each) => {
+                const timing = each.effect?.getTiming();
+
+                return [each.transitionProperty, timing?.duration, timing?.delay, timing?.easing];
+            }),
+        ).toEqual([
+            ['display', 10000, 0, 'ease'],
+            ['filter', 10000, 0, 'steps(5)'],
+            ['opacity', 5000, 5000, 'steps(5)'],
+            ['overlay', 10000, 0, 'ease'],
+        ]);
+
+        held(host, 10000);
+
+        expect([getComputedStyle(tip(host)).filter, getComputedStyle(tip(host)).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+    });
+
+    it.each([
+        ['nothing is chosen', ''],
+        ['none is', '--ui-motion-enter: none; --ui-motion-exit: none'],
+    ])('shows and goes at once where %s', async (_name, style) => {
+        const host = await chosen(style);
+
+        await userEvent.hover(trigger(host));
+
+        expect(moving(host), 'showing').toEqual([]);
+
+        await parkPointer();
+
+        expect([moving(host), getComputedStyle(tip(host)).display], 'gone').toEqual([[], 'none']);
+    });
+
+    it('places the tip where it would sit without motion, whatever its entrance moves', async () => {
+        const still = await mount(fixture);
+        await userEvent.hover(trigger(still));
+        await painted();
+
+        const placed = [tip(still).style.insetBlockStart, tip(still).style.insetInlineStart];
+
+        await parkPointer();
+        only(still, 'ui-tooltip').style.setProperty('--ui-motion-enter', 'rise');
+        await userEvent.hover(trigger(still));
+        await painted();
+
+        expect([tip(still).style.insetBlockStart, tip(still).style.insetInlineStart]).toEqual(
+            placed,
+        );
+    });
+
+    it.each([
+        ['the default theme', '', '', ['opacity', 'transform']],
+        ['Glass', themeStyleSheet(glass), 'glass', ['filter', 'opacity']],
+    ] as const)(
+        "takes its entrance and its exit from %s's taste",
+        async (_name, sheet, theme, moved) => {
+            const style = document.createElement('style');
+            style.textContent = tokenStyleSheet() + sheet;
+            document.body.append(style);
+            // Slowed, so every transition is still running when it is read, however long the pointer
+            // takes to arrive.
+            const host = await mount(
+                `<div data-ui-theme="${theme}" style="--ui-duration-overlay: 10s">${fixture}</div>`,
+            );
+
+            await userEvent.hover(trigger(host));
+
+            expect(
+                moving(host).map((each) => each.transitionProperty),
+                'coming',
+            ).toEqual(moved);
+
+            // Arrived: a tip left as it starts to come is where its exit goes already.
+            for (const each of moving(host)) {
+                each.finish();
+            }
+
+            await parkPointer();
+
+            expect(
+                moving(host).map((each) => each.transitionProperty),
+                'going',
+            ).toEqual(['display', ...moved, 'overlay'].sort());
+        },
+    );
 });
 
 describe('the dismissal, which 1.4.13 asks to hold', () => {
