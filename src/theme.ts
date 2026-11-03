@@ -149,7 +149,9 @@ export function themeStyleSheet(theme: Theme): string {
  * takes the tint and glows under the pointer, and takes the tint and a burst at a focus it holds; it
  * is put together from pieces appearing at random as it arrives, and broken into pieces vanishing at
  * random as it leaves. A toast takes the card's answers to the pointer and a focus in it, and comes
- * and goes on a wind, blown together from its pieces and away into them.
+ * and goes on a wind, blown together from its pieces and away into them. A dialog's panel is put
+ * together and broken as a card is, and code rains over its scrim. A tooltip's tip is typed out
+ * behind a caret of the accent, and flickers out in bands, its text split.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -227,6 +229,7 @@ export const matrix: Theme = {
             select: { 'focus-fill': 'tint' },
             card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
             toast: { 'focus-fill': 'tint', enter: 'wind', exit: 'wind' },
+            tooltip: { enter: 'typing', exit: 'glitch' },
             dialog: { enter: 'materialize', exit: 'erode', backdrop: 'char-rain' },
         },
     },
@@ -271,7 +274,9 @@ export const matrix: Theme = {
  * inside its boundary; and it comes out of a fine grain as it arrives, and dissolves into one as it
  * leaves. A toast takes its tint where the pointer is and rises, its edge as it rests; at a focus in
  * it, its tint sweeps across it and a light holds inside its boundary; and it comes into focus as it
- * arrives, and goes out of it as it leaves.
+ * arrives, and goes out of it as it leaves. A dialog's panel comes out of a grain and dissolves into
+ * one, and the page behind it blurs, no scrim laid over the glass. A tooltip's tip comes into focus
+ * and goes out of it, as a toast does.
  */
 export const glass: Theme = {
     name: 'glass',

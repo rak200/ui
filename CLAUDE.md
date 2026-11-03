@@ -51,6 +51,7 @@ src/
 ├── theme.ts         # the shipped themes, as data, and the function that renders one
 ├── toast.ts         # <ui-toaster> and <ui-toast> — two live regions, and a clock that is not a token
 ├── tooltip.ts       # <ui-tooltip> — a popover the platform lifts, placed by hand
+├── typing.ts        # the tip's typing — internal, its text typed out through highlights
 └── index.ts         # the public barrel
 tests/               # mirrors src/, one test file per unit
 ├── tokens.test.ts
@@ -81,6 +82,7 @@ tests/               # mirrors src/, one test file per unit
 ├── theme.test.ts
 ├── toast.test.ts
 ├── tooltip.test.ts
+├── typing.test.ts
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
@@ -416,6 +418,18 @@ explains. This file restates none of them.
   comes from is `--ui-fx-toward`, written from `data-side` after the tip's first style.
   `tests/tooltip.test.ts` leaves a trigger by `parkPointer()` rather than `unhover()`, which
   scrolled the page under the tip and moved what its placement reads.
+- **Why Matrix's tip is typed through highlights rather than by writing its text, and why the typing
+  is handed over only under `@supports`** — the docblock on `src/typing.ts`: the tooltip hands its
+  trigger the tip's sentence again whenever its text changes, so what is not typed yet is a
+  highlight in no colour, whose rules are adopted into the tree the text is in, since Firefox drew
+  none written in the tooltip's shadow root; and the Highlight API is newer than the floor, so an
+  engine without it never reaches the drawing, which `tests/manual/browser-floor.mjs` sets aside in
+  `heard`. **Why nothing on the path every tip takes can throw** — the same docblock: `ready()`,
+  `write()` and `halt()` run as any tip shows and goes, from listeners, where a throw reaches no
+  test and is graded as an error, so a tip nobody types reads no state that could be missing and
+  never touches the page's highlights. The clock is an animation of the tip's own, which
+  `tests/typing.test.ts` holds where it likes, and the tests that type wrap the pointer in
+  `escaped()`.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and

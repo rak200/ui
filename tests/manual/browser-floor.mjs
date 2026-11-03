@@ -79,6 +79,10 @@ const floor = { chrome: '125', edge: '125', firefox: '129', safari: '18.2', safa
 const drawnList =
     "behind @supports (appearance: base-select) in src/select.ts, and an engine without it keeps the system's list";
 
+/** Why the tip's typing moves no floor. */
+const typing =
+    "src/tooltip.ts hands a tip the typing only under @supports selector(::highlight()), so an engine without highlights never reaches src/typing.ts's drawing, and shows every tip whole";
+
 /** Why a cursor moves no floor. */
 const noCursor = 'iOS draws no cursor, and an iPad shows its own pointer instead';
 
@@ -89,6 +93,8 @@ const styleQueries = 'css.at-rules.container.style_queries_for_custom_properties
 const heard = {
     'api.CustomElementRegistry.get':
         "Safari's is partial for customized built-in elements alone, and src/tooltip.ts asks only for a name with a hyphen, an autonomous element's",
+    'api.Highlight': typing,
+    'api.Highlight.Highlight': typing,
     'api.KeyboardEvent.repeat':
         "Chrome's is partial only while another key is held too, where the last key's repeats read as fresh downs before 137, and on X11 before 139: src/ripple.ts then starts its circle over from the middle at each, and nothing else changes",
     'api.Window.devicePixelRatio':
@@ -104,6 +110,7 @@ const heard = {
     'css.properties.cursor.pointer': noCursor,
     'css.properties.resize':
         'iOS recognises it and does nothing, so a textarea there is not resized by hand',
+    'css.selectors.highlight': typing,
     'css.selectors.open': drawnList,
     'css.selectors.picker': drawnList,
     'css.selectors.picker-icon': drawnList,

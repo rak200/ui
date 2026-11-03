@@ -14,7 +14,7 @@ import meta, {
 import '../src/tooltip.js';
 import '../src/input.js';
 import type { UiTooltip } from '../src/tooltip.js';
-import { glass, themeStyleSheet } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -1297,6 +1297,152 @@ describe("the tip's motion, RFC 0004's", () => {
             ).toEqual(['display', ...moved, 'overlay'].sort());
         },
     );
+});
+
+/** The tip's text each of the typing's highlights draws now. */
+function drawn(name: string): string[] {
+    return [...(CSS.highlights.get(name) ?? [])].map((range) => (range as Range).toString());
+}
+
+describe("Matrix's tip, RFC 0004's", () => {
+    it.each([
+        [
+            'where it is chosen',
+            '--ui-motion-enter: typing; --ui-duration-overlay: 0.5s',
+            'typing',
+            '0.5s',
+        ],
+        ['nowhere else', '', 'none', ''],
+    ] as const)('hands its tip the typing %s', async (_name, style, effect, time) => {
+        const host = await chosen(style);
+        const handed = getComputedStyle(tip(host));
+
+        expect([
+            handed.getPropertyValue('--ui-fx-enter'),
+            handed.getPropertyValue('--ui-fx-enter-time'),
+        ]).toEqual([effect, time]);
+    });
+
+    it('hands its tip none of what a surface round the tooltip was handed', async () => {
+        const host = await mount(`<div style="--ui-fx-enter: materialize">${fixture}</div>`);
+
+        expect(getComputedStyle(tip(host)).getPropertyValue('--ui-fx-enter')).toBe('none');
+    });
+
+    it('types its tip out as it shows, and stops where it got to as it goes', async () => {
+        const host = await chosen('--ui-motion-enter: typing; --ui-duration-overlay: 0.5s');
+        const errors = await escaped(async () => {
+            await userEvent.hover(trigger(host));
+
+            const typing = tip(host)
+                .getAnimations()
+                .find((each) => each.id === 'ui-typing');
+
+            // A character every tenth of the overlay's half second, for each of the 33.
+            expect(typing?.effect?.getTiming().duration).toBe(33 * 50);
+
+            typing?.pause();
+
+            if (typing !== undefined) {
+                typing.currentTime = 50 * 6.5;
+            }
+
+            await painted();
+
+            expect([drawn('ui-caret'), drawn('ui-untyped')]).toEqual([
+                ['w'],
+                ['ithout closing the dialog.'],
+            ]);
+
+            await parkPointer();
+            await painted();
+
+            expect(
+                tip(host)
+                    .getAnimations()
+                    .some((each) => each.id === 'ui-typing'),
+                'stopped',
+            ).toBe(false);
+            expect(drawn('ui-caret'), 'where it got to').toEqual(['w']);
+        });
+
+        expect(errors).toEqual([]);
+    });
+
+    it.each([
+        [0.25, 'matrix(1, 0, 0, 1, 2, 0)', 'inset(20% -48px 25%)', '1', '1px', '-1px'],
+        [0.45, 'matrix(1, 0, 0, 1, -3, 0)', 'inset(40% -48px 0%)', '0.5', '-2px', '2px'],
+        [0.65, 'matrix(1, 0, 0, 1, 3, 0)', 'inset(0px -48px 55%)', '1', '2px', '-2px'],
+        [0.85, 'matrix(1, 0, 0, 1, 3, 0)', 'inset(0px -48px 55%)', '0', '2px', '-2px'],
+    ] as const)(
+        'flickers its tip out in bands, its text split, held at %s of the way',
+        async (fraction, transform, clip, opacity, red, blue) => {
+            const host = await chosen(
+                '--ui-motion-exit: glitch; --ui-duration-overlay: 6s; --ui-color-danger: rgb(200, 0, 0); --ui-color-info: rgb(0, 0, 200)',
+            );
+            await userEvent.hover(trigger(host));
+
+            await parkPointer();
+
+            const flicker = tip(host)
+                .getAnimations()
+                .find((each): each is CSSAnimation => each instanceof CSSAnimation);
+            const timing = flicker?.effect?.getTiming();
+
+            expect([flicker?.animationName, timing?.duration, timing?.fill]).toEqual([
+                'ui-tip-glitch-out',
+                6000,
+                'forwards',
+            ]);
+            expect(getComputedStyle(tip(host)).animationTimingFunction).toBe('steps(1)');
+            expect(moving(host).map((each) => each.transitionProperty)).toEqual([
+                'display',
+                'overlay',
+            ]);
+
+            flicker?.pause();
+
+            if (flicker !== undefined) {
+                flicker.currentTime = 6000 * fraction;
+            }
+
+            const style = getComputedStyle(tip(host));
+
+            expect([style.transform, style.clipPath, style.opacity, style.textShadow]).toEqual([
+                transform,
+                clip,
+                opacity,
+                `rgb(200, 0, 0) ${red} 0px 0px, rgb(0, 0, 200) ${blue} 0px 0px`,
+            ]);
+        },
+    );
+
+    it("types its tip in and flickers it out under Matrix's taste", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+        document.body.append(style);
+        const host = await mount(
+            `<div data-ui-theme="matrix" style="--ui-duration-overlay: 10s">${fixture}</div>`,
+        );
+        const errors = await escaped(async () => {
+            await userEvent.hover(trigger(host));
+
+            expect(
+                tip(host)
+                    .getAnimations()
+                    .some((each) => each.id === 'ui-typing'),
+                'typed',
+            ).toBe(true);
+
+            await parkPointer();
+
+            expect(getComputedStyle(tip(host)).animationName, 'flickered out').toBe(
+                'ui-tip-glitch-out',
+            );
+        });
+
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the dismissal, which 1.4.13 asks to hold', () => {

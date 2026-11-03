@@ -2,6 +2,7 @@ import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { query } from './motion.js';
 import { place } from './placement.js';
 import { reference } from './reference.js';
+import { halt, ready, write } from './typing.js';
 
 /** Distinguishes one tooltip's generated id from another's. */
 let sequence = 0;
@@ -253,6 +254,78 @@ export class UiTooltip extends LitElement {
                         calc(${reference('--ui-duration-overlay')} * 0.625),
                     display calc(${reference('--ui-duration-overlay')} * 1.25) allow-discrete,
                     overlay calc(${reference('--ui-duration-overlay')} * 1.25) allow-discrete;
+            }
+        }
+
+        /* The tip's own hand-off to the typing, never one inherited from a surface round the
+           tooltip, which would type a tip nobody chose to. */
+        slot[name='tip']::slotted(*) {
+            --ui-fx-enter: none;
+        }
+
+        /* typing: the tip's text typed out a character at a time behind a caret of the accent, a
+           character every tenth of an overlay's step — drawn in script, src/typing.ts, through
+           highlights, so handed over only where the engine draws them: elsewhere the tip shows
+           whole, at once. */
+        @supports selector(::highlight(ui-untyped)) {
+            @container ${unsafeCSS(drawn('enter', 'typing'))} {
+                slot[name='tip']::slotted(*) {
+                    --ui-fx-enter: typing;
+                    --ui-fx-enter-time: ${reference('--ui-duration-overlay')};
+                }
+            }
+        }
+
+        /* glitch: the tip flickering out in bands, side to side, its text split into the danger
+           and the info as a button's label splits, each step held until the next, over the
+           overlay's step. It moves only along its line, so the box it rests in is what placed
+           it. */
+        @container ${unsafeCSS(drawn('exit', 'glitch'))} {
+            slot[name='tip']::slotted(:not(:popover-open)) {
+                animation: ui-tip-glitch-out ${reference('--ui-duration-overlay')} steps(1, end)
+                    forwards;
+                transition:
+                    display ${reference('--ui-duration-overlay')} allow-discrete,
+                    overlay ${reference('--ui-duration-overlay')} allow-discrete;
+            }
+        }
+
+        @keyframes ui-tip-glitch-out {
+            0% {
+                opacity: 1;
+            }
+
+            20% {
+                transform: translateX(2px);
+                clip-path: inset(20% -3rem 25% -3rem);
+                text-shadow:
+                    1px 0 ${reference('--ui-color-danger')},
+                    -1px 0 ${reference('--ui-color-info')};
+            }
+
+            40% {
+                opacity: 0.5;
+                transform: translateX(-3px);
+                clip-path: inset(40% -3rem 0 -3rem);
+                text-shadow:
+                    -2px 0 ${reference('--ui-color-danger')},
+                    2px 0 ${reference('--ui-color-info')};
+            }
+
+            60% {
+                opacity: 1;
+                transform: translateX(3px);
+                clip-path: inset(0 -3rem 55% -3rem);
+                text-shadow:
+                    2px 0 ${reference('--ui-color-danger')},
+                    -2px 0 ${reference('--ui-color-info')};
+            }
+
+            80%,
+            100% {
+                opacity: 0;
+                transform: translateX(3px);
+                clip-path: inset(0 -3rem 55% -3rem);
             }
         }
     `;
@@ -698,8 +771,12 @@ export class UiTooltip extends LitElement {
         }
 
         this.#shown = true;
+        // Its text hidden before it is first drawn, where the typing is chosen, and typed out
+        // once it is placed, at the width it will be read at.
+        ready(tip);
         tip.showPopover();
         this.#place();
+        write(tip);
 
         this.#watching = new AbortController();
 
@@ -728,7 +805,15 @@ export class UiTooltip extends LitElement {
         }
 
         this.#shown = false;
-        this.#tip()?.hidePopover();
+
+        const tip = this.#tip();
+
+        tip?.hidePopover();
+
+        // The typing stopped where it got to, for the exit to take away.
+        if (tip !== undefined) {
+            halt(tip);
+        }
 
         this.#watching.abort();
     }
