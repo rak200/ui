@@ -124,10 +124,6 @@ function characters(tip: HTMLElement): (readonly [Text, number])[] {
  * it takes off whatever typing was left on the tip from before, and touches nothing else.
  */
 export function ready(tip: HTMLElement): void {
-    for (const each of clocks(tip)) {
-        each.cancel();
-    }
-
     if (pace(tip) === 0) {
         // Written only where it had something to take off, so a page that types nothing never
         // reaches the highlights, which an engine without them does not have.
@@ -152,8 +148,8 @@ export function ready(tip: HTMLElement): void {
     const untyped = new Range();
     const caret = new Range();
 
+    // The caret drawn nowhere yet: a range is made collapsed.
     untyped.selectNodeContents(tip);
-    caret.setStart(tip, 0);
     stopped.delete(tip);
     marks.set(tip, [untyped, caret]);
     draw();
@@ -187,14 +183,16 @@ export function write(tip: HTMLElement): void {
         }
 
         const next = all[Math.floor(Number(typing.currentTime) / time)];
-        const last = all.at(-1);
 
-        if (next === undefined || last === undefined) {
+        if (next === undefined) {
             marks.delete(tip);
             draw();
 
             return;
         }
+
+        // Where there is a next character there is a last, which the fallback says to the types.
+        const last = all.at(-1) ?? next;
 
         caret.setStart(...next);
         caret.setEnd(next[0], next[1] + 1);

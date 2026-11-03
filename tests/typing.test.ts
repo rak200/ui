@@ -101,6 +101,16 @@ describe('the typing', () => {
         expect([drawn('ui-caret'), drawn('ui-untyped')]).toEqual([['b'], ['']]);
     });
 
+    it('types no character drawn nowhere, as one in a hidden element', () => {
+        const tip = made('');
+        tip.innerHTML = 'ab<span hidden>secret</span>c';
+
+        ready(tip);
+        write(tip);
+
+        expect(clock(tip)?.effect?.getTiming().duration).toBe(3 * 24);
+    });
+
     it('takes the typing off once every character is typed, and the tip draws its text whole', async () => {
         const tip = made('Hello world');
 

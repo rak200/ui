@@ -203,10 +203,10 @@ typed out a character at a time behind a caret of the accent, a character every 
 collapsed, takes no time. Nothing of your text is rewritten: what is not typed yet is a highlight
 drawn in no colour, through the CSS Custom Highlight API, so the sentence the tooltip hands its
 trigger, and the one a reader of the page meets, is whole from the start. A tip you leave as it is
-typed stops where it got to, and one pointed at again before it has gone goes on from there. As it
-goes, it flickers out in bands side to side, its text split into `--ui-color-danger` and
-`--ui-color-info`, over the overlay's step. The highlight's rules are adopted into the tree your tip
-is in, which is where an engine draws them. An engine without highlights shows the tip whole, at
+typed comes to a halt where it got to, and one pointed at again before it has gone goes on from
+there. As it goes, it flickers out in bands side to side, its text split into `--ui-color-danger`
+and `--ui-color-info`, over the overlay's step. The highlight's rules are adopted into the tree your
+tip is in, which is where an engine draws them. An engine without highlights shows the tip whole, at
 once, and under reduced motion nothing is typed.
 
 ## Styling

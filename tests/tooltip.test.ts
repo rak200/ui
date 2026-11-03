@@ -1369,6 +1369,35 @@ describe("Matrix's tip, RFC 0004's", () => {
         expect(errors).toEqual([]);
     });
 
+    it('types a tip shown again from its first character once it has gone', async () => {
+        const host = await chosen('--ui-motion-enter: typing; --ui-duration-overlay: 0.5s');
+        const errors = await escaped(async () => {
+            await userEvent.hover(trigger(host));
+
+            const first = tip(host)
+                .getAnimations()
+                .find((each) => each.id === 'ui-typing');
+
+            first?.pause();
+
+            if (first !== undefined) {
+                first.currentTime = 50 * 6.5;
+            }
+
+            // Gone at once, with no exit chosen, and pointed at again.
+            await parkPointer();
+            await userEvent.hover(trigger(host));
+
+            expect(
+                tip(host)
+                    .getAnimations()
+                    .find((each) => each.id === 'ui-typing')?.currentTime,
+            ).toBe(0);
+        });
+
+        expect(errors).toEqual([]);
+    });
+
     it.each([
         [0.25, 'matrix(1, 0, 0, 1, 2, 0)', 'inset(20% -48px 25%)', '1', '1px', '-1px'],
         [0.45, 'matrix(1, 0, 0, 1, -3, 0)', 'inset(40% -48px 0%)', '0.5', '-2px', '2px'],
