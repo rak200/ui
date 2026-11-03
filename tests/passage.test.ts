@@ -764,6 +764,54 @@ describe('dissolving a surface', () => {
     });
 });
 
+describe('a surface that takes its time whole', () => {
+    /** What a dialog's panel hands a passage beside each moment: every effect fitted to its time. */
+    const whole = '--ui-fx-fit: whole';
+
+    /** When the last of `surface`'s clocks ends. */
+    function last(surface: HTMLElement): number {
+        return Math.max(
+            ...clocks(surface).map(([delay, duration]) => Number(delay) + Number(duration)),
+        );
+    }
+
+    it.each([
+        ['puts it together from its pieces', enter, '--ui-fx-enter: materialize', 300],
+        ['breaks it into them', exit, '--ui-fx-exit: erode', 210],
+        ['blows it together on a wind', enter, '--ui-fx-enter: wind', 270],
+        ['blows it away on one', exit, '--ui-fx-exit: wind', 190],
+    ] as const)('%s in the whole of the time handed', (_what, passage, effect, time) => {
+        const surface = mount(
+            `${whole}; ${effect}; --ui-fx-enter-time: ${String(time)}ms; --ui-fx-exit-time: ${String(time)}ms`,
+        );
+
+        passage(surface);
+
+        expect(last(surface)).toBeCloseTo(time, 6);
+    });
+
+    it.each([
+        ['brings it out of a grain', enter, 330],
+        ['dissolves it into one', exit, 170],
+    ] as const)('%s over the whole of the time handed', (_what, passage, time) => {
+        const surface = mount(
+            `${whole}; --ui-fx-enter: dissolve; --ui-fx-exit: dissolve; --ui-fx-enter-time: ${String(time)}ms; --ui-fx-exit-time: ${String(time)}ms`,
+        );
+
+        passage(surface);
+
+        expect(clocks(surface)).toEqual([[0, time, 'linear', 'forwards']]);
+    });
+
+    it('runs at the pace the review judged where the surface writes pace for itself', () => {
+        const surface = mount('--ui-fx-fit: pace; --ui-fx-enter: dissolve');
+
+        enter(surface);
+
+        expect(clocks(surface)).toEqual([[0, 780, 'linear', 'forwards']]);
+    });
+});
+
 describe('mending', () => {
     it('ends whatever was cutting the surface, so the next cut starts from it whole', () => {
         const surface = mount();

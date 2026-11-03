@@ -6,6 +6,8 @@ import meta, { Confirm, Long, Nested } from '../stories/dialog.stories.js';
 import '../src/dialog.js';
 import { applyLock, reservedGutter } from '../src/dialog.js';
 import type { UiDialog } from '../src/dialog.js';
+import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the behavioural tests open, unless one needs a different shape. */
 const fixture = `
@@ -596,6 +598,244 @@ describe('the motion', () => {
         await close(element);
 
         expect(inner(element).open).toBe(false);
+    });
+});
+
+/** Opens `element` and leaves its entrance running, so what it set going can be read. */
+async function opening(element: UiDialog): Promise<void> {
+    element.open = true;
+    await element.updateComplete;
+}
+
+/** The transitions the panel's own sheet set going, as against the clocks a script set going. */
+function fades(element: UiDialog): Animation[] {
+    return inner(element)
+        .getAnimations()
+        .filter((animation) => animation instanceof CSSTransition);
+}
+
+/** When the last clock a script set going on the panel ends. */
+function last(element: UiDialog): number {
+    return Math.max(
+        ...inner(element)
+            .getAnimations()
+            .filter((animation) => !(animation instanceof CSSTransition))
+            .map((clock) => Number(clock.effect?.getComputedTiming().endTime)),
+    );
+}
+
+/** The fixture's dialog under `theme`, written where a page writes one. */
+async function themed(theme: Theme, name: string): Promise<UiDialog> {
+    const style = document.createElement('style');
+    style.textContent = tokenStyleSheet() + themeStyleSheet(theme);
+    document.body.append(style);
+
+    return mount(`<div data-ui-theme="${name}">${fixture}</div>`);
+}
+
+describe("the panel's passage, RFC 0004's", () => {
+    it('hands its panel nothing where nothing is chosen, nor what a surface round it was handed', async () => {
+        const element = await mount(
+            `<div style="--ui-fx-enter: materialize; --ui-fx-exit: erode; --ui-fx-fit: pace">${fixture}</div>`,
+        );
+        const style = getComputedStyle(inner(element));
+
+        expect(
+            ['enter', 'exit', 'fit'].map((name) => style.getPropertyValue(`--ui-fx-${name}`)),
+        ).toEqual(['none', 'none', 'whole']);
+    });
+
+    it.each([
+        ['enter', 'materialize', '--ui-easing-enter', 'steps(3)'],
+        ['exit', 'erode', '--ui-easing-exit', 'steps(5)'],
+    ] as const)(
+        "hands the pieces its %s, %s, over the dialog's step on the moment's curve",
+        async (moment, effect, curve, value) => {
+            const element = await mount(fixture);
+            element.style.setProperty(`--ui-motion-${moment}`, effect);
+            element.style.setProperty('--ui-duration-modal', '0.7s');
+            element.style.setProperty(curve, value);
+            const style = getComputedStyle(inner(element));
+
+            expect(
+                ['', '-time', '-curve'].map((part) =>
+                    style.getPropertyValue(`--ui-fx-${moment}${part}`),
+                ),
+            ).toEqual([effect, '0.7s', value]);
+        },
+    );
+
+    it.each([['enter'], ['exit']] as const)(
+        "hands the grain its %s over the dialog's step, on a straight clock",
+        async (moment) => {
+            const element = await mount(fixture);
+            element.style.setProperty(`--ui-motion-${moment}`, 'dissolve');
+            element.style.setProperty('--ui-duration-modal', '0.9s');
+            const style = getComputedStyle(inner(element));
+
+            expect(
+                ['', '-time', '-curve'].map((part) =>
+                    style.getPropertyValue(`--ui-fx-${moment}${part}`),
+                ),
+            ).toEqual(['dissolve', '0.9s', 'linear']);
+        },
+    );
+
+    it.each([
+        ['nothing chosen', '', 1],
+        ['none', 'none', 0],
+        ['materialize', 'materialize', 0],
+        ['dissolve', 'dissolve', 0],
+    ] as const)(
+        'fades its panel in only where its own fade is the entrance: %s',
+        async (_name, effect, count) => {
+            const element = await mount(fixture);
+            element.style.setProperty('--ui-motion-enter', effect);
+
+            await opening(element);
+
+            expect(fades(element)).toHaveLength(count);
+        },
+    );
+
+    it.each([
+        ['nothing chosen', '', 1, '0'],
+        ['erode', 'erode', 0, '1'],
+        ['dissolve', 'dissolve', 0, '1'],
+    ] as const)(
+        'fades its panel out only where its own fade is the exit, and keeps it whole for one drawn in script: %s',
+        async (_name, effect, count, opacity) => {
+            const element = await mount(fixture);
+            element.style.setProperty('--ui-motion-exit', effect);
+            await open(element);
+
+            element.open = false;
+            await element.updateComplete;
+
+            const fading = fades(element);
+
+            for (const fade of fading) {
+                fade.finish();
+            }
+
+            expect([fading.length, getComputedStyle(inner(element)).opacity]).toEqual([
+                count,
+                opacity,
+            ]);
+        },
+    );
+
+    it('closes at once where its exit is none, its panel fading nothing', async () => {
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-exit', 'none');
+        await open(element);
+
+        element.open = false;
+        await element.updateComplete;
+
+        expect([fades(element).length, inner(element).open]).toEqual([0, false]);
+    });
+
+    it.each([
+        ['erode', 'steps(4)'],
+        ['dissolve', 'linear'],
+    ] as const)(
+        "takes the scrim away over the dialog's step under %s, on the panel's clock",
+        async (effect, curve) => {
+            const element = await mount(fixture);
+            element.style.setProperty('--ui-motion-exit', effect);
+            element.style.setProperty('--ui-duration-modal', '0.6s');
+            element.style.setProperty('--ui-easing-exit', 'steps(4)');
+            await open(element);
+
+            element.open = false;
+            await element.updateComplete;
+
+            const scrim = getComputedStyle(inner(element), '::backdrop');
+
+            expect([scrim.transitionDuration, scrim.transitionTimingFunction]).toEqual([
+                '0.6s',
+                curve,
+            ]);
+        },
+    );
+
+    it("puts the panel together and breaks it under Matrix, each in the whole of the dialog's step, then gives it back", async () => {
+        const element = await themed(matrix, 'matrix');
+
+        await opening(element);
+
+        expect(inner(element).style.filter, 'put together').toMatch(/^url\("#ui-pieces-\d+"\)$/);
+        expect(last(element), 'the last piece landing').toBeCloseTo(200, 6);
+
+        await still(element);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(inner(element).style.filter, 'whole once it has landed').toBe('');
+
+        const done = closed(element);
+        element.open = false;
+        await element.updateComplete;
+
+        expect(inner(element).style.filter, 'broken').toMatch(/^url\("#ui-pieces-\d+"\)$/);
+        expect(last(element), 'the last piece going').toBeCloseTo(200, 6);
+
+        await done;
+
+        expect([inner(element).open, inner(element).style.filter], 'closed, and whole').toEqual([
+            false,
+            '',
+        ]);
+    });
+
+    it("brings the panel out of a grain and dissolves it under Glass, over the dialog's step", async () => {
+        const element = await themed(glass, 'glass');
+
+        await opening(element);
+
+        expect(inner(element).style.filter, 'brought out').toMatch(/^url\("#ui-grain-\d+"\)$/);
+        expect(last(element)).toBe(200);
+
+        await still(element);
+        const done = closed(element);
+        element.open = false;
+        await element.updateComplete;
+
+        expect(inner(element).style.filter, 'dissolved').toMatch(/^url\("#ui-grain-\d+"\)$/);
+        expect(last(element)).toBe(200);
+
+        await done;
+
+        expect(inner(element).style.filter, 'whole').toBe('');
+    });
+
+    it('puts the panel together again when it is reopened while its pieces are going', async () => {
+        const element = await themed(matrix, 'matrix');
+        await open(element);
+
+        element.open = false;
+        await element.updateComplete;
+
+        const broken = inner(element).style.filter;
+
+        element.open = true;
+        await element.updateComplete;
+
+        for (const clock of inner(element).getAnimations()) {
+            clock.finish();
+        }
+
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(inner(element).open, 'and it never closed').toBe(true);
+        expect(inner(element).style.filter, 'put together anew').toMatch(
+            /^url\("#ui-pieces-\d+"\)$/,
+        );
+        expect(inner(element).style.filter).not.toBe(broken);
     });
 });
 

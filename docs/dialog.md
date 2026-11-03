@@ -177,6 +177,26 @@ ui-dialog {
 A host that sets it to `0s` still gets a dialog that closes: the exit waits on the animations
 themselves, and an empty list resolves rather than blocks.
 
+**The fade is the default theme's, and one of four choices**, RFC 0004's: `--ui-motion-enter` and
+`--ui-motion-exit`, written on the dialog or anywhere above it, choose its entrance and its exit,
+and where you choose nothing the theme's taste runs. Under [Matrix](theme.md#matrix) the panel is
+put together from pieces appearing where they belong, at random, `materialize`, and broken into
+pieces vanishing where they are, `erode`; under [Glass](theme.md#glass) it is brought out of a fine
+grain and dissolved into one, `dissolve`. `none` takes the fade away: the panel is there at once and
+gone at once. The scrim keeps its own fade whichever you choose.
+
+**Every effect on the panel takes `--ui-duration-modal` whole**, 200ms at its default: from the
+first piece setting off to the last landing or going, and the grain's whole span. A card's take as
+long as the review judged them, in proportion to the entrance's and the exit's times, but a dialog
+is opened to be used and closed to get back to the page, so the reader waits on it both ways, and it
+holds the page while it does. Under an exit drawn so the panel stands whole for the pieces or the
+grain to take away, and the scrim leaves with it over the same step, on the grain's straight clock
+under `dissolve`.
+
+The pieces and the grain are a filter over the panel, drawn in script, and nothing of what you put
+in the dialog is copied; the close waits for them as it waits for the fade. Under reduced motion
+`--ui-duration-modal` collapses as every duration does, and nothing is cut.
+
 ## Limits
 
 - **`<form method="dialog">` does not close it.** Measured, and it is a property of slotting rather

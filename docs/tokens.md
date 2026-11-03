@@ -175,7 +175,10 @@ Glass — where an effect's time would leave it trailing. **An entrance and an e
 a seventh**, `--ui-duration-enter` over `--ui-duration-300` and `--ui-duration-exit` over
 `--ui-duration-200`, the exit a step quicker, beside the curves each already had — a card fading in
 as it is put on the page, and out as it leaves. A surface's pieces and its grain take as long
-again as the review judged them at these two's defaults, in proportion as either is moved.
+again as the review judged them at these two's defaults, in proportion as either is moved. **A modal
+has an eighth**, `--ui-duration-modal` over `--ui-duration-150`, the step the ordinals left room for
+between the first two: every effect a dialog draws takes its 200ms whole, since the reader waits on
+a dialog both ways.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
 focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
@@ -273,6 +276,7 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-duration-loop`       | a loop's period, off the scale                                    |
 | `--ui-iteration-settle`    | how many rounds a loop runs where it settles                      |
 | `--ui-duration-50`         | the step under the first, for what follows the pointer            |
+| `--ui-duration-150`        | the step between the first two, for a dialog's effects            |
 | `--ui-icon-size`           | how big a glyph is drawn                                          |
 | `--ui-icon-stroke`         | how heavy its stroke is, on a 24 grid                             |
 | `--ui-elevation-100`       | the first step of the elevation scale                             |
@@ -386,6 +390,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-duration-follow`           | how long what follows the pointer takes        |
 | `--ui-duration-enter`            | how long an entrance takes                     |
 | `--ui-duration-exit`             | how long an exit takes                         |
+| `--ui-duration-modal`            | how long a modal's effect takes                |
 | `--ui-elevation-raised`          | a surface lifted off the page                  |
 | `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
 | `--ui-text-supporting`           | text that explains what is beside it           |

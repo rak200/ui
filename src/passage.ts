@@ -36,9 +36,13 @@
  * after. Its clock takes 780ms either way, on the straight curve the sheet hands over.
  *
  * **Each passage takes as long as the review judged it**, at the entrance's and the exit's own
- * defaults, 360ms and 240ms, and in proportion as either time is moved. Its clocks are animations on
- * the surface, so whatever waits out a surface's animations waits out its passage, and a frame
- * copies their progress into the filter while one runs or is held.
+ * defaults, 360ms and 240ms, and in proportion as either time is moved. **Or it takes the time it is
+ * handed, whole**, where the surface hands `--ui-fx-fit: whole` beside it: from the first piece
+ * setting off to the last landing or going, or the grain's span. That is a dialog's panel, every
+ * effect on which the review gave the one step, since a reader waits on a dialog both ways; every
+ * other surface writes `pace` for itself, so none takes the timing of a dialog it is held in. Its
+ * clocks are animations on the surface, so whatever waits out a surface's animations waits out its
+ * passage, and a frame copies their progress into the filter while one runs or is held.
  *
  * **The sheet decides, and this only reads.** A component hands `--ui-fx-enter` and `--ui-fx-exit`
  * the effect it chose for each moment, with that moment's time and curve, under the effect's query.
@@ -59,6 +63,11 @@ interface Handed {
     readonly effect: string;
     /** The moment's time over the time the review judged it at: how much longer or shorter to run. */
     readonly pace: number;
+    /**
+     * The moment's time, where the surface fits every effect to it whole rather than running it at a
+     * pace: a dialog's panel's.
+     */
+    readonly fitted: number | undefined;
     /** The curve each clock runs on. */
     readonly curve: string;
     /** The surface as the page draws it, and its own width and height, in its own pixels. */
@@ -151,12 +160,21 @@ function handed(surface: HTMLElement, moment: Moment): Handed | undefined {
     return {
         effect: style.getPropertyValue(`${kinds.animated}${moment}`),
         pace: time / judged[moment],
+        fitted: style.getPropertyValue(`${kinds.animated}fit`) === 'whole' ? time : undefined,
         curve: style.getPropertyValue(`${kinds.animated}${moment}-curve`),
         box,
         width: Number.parseFloat(style.width),
         height: Number.parseFloat(style.height),
         way: Number.parseFloat(style.getPropertyValue(`${kinds.animated}end`)),
     };
+}
+
+/**
+ * How long, in milliseconds, an effect takes that the review judged `long` at its times: the time
+ * the surface handed, where it fits every effect to it, or in proportion to that time.
+ */
+function lasting({ pace, fitted }: Handed, long: number): number {
+    return fitted ?? long * pace;
 }
 
 /**
@@ -312,12 +330,8 @@ function blown(rows: number, columns: number, way: number): Piece[] {
  * `together`, or out, as `handed` says: along a wind, each slides on the way it blows as it fades,
  * from where it lands or to where it goes.
  */
-function pieces(
-    surface: HTMLElement,
-    { pace, curve, box, width, height, way }: Handed,
-    together: boolean,
-    windy: boolean,
-): void {
+function pieces(surface: HTMLElement, chosen: Handed, together: boolean, windy: boolean): void {
+    const { curve, box, width, height, way } = chosen;
     const [rows, columns] = windy ? squared(width, height) : [side, side];
     const cut = windy ? blown(rows, columns, way) : scattered();
     // An outer piece reaches 3rem past the surface, and the filter as far again as a piece goes.
@@ -353,14 +367,12 @@ function pieces(
     const merge = made('feMerge', {});
     const end = Math.max(...cut.map((piece) => piece.wait + piece.length));
     const first = Math.min(...cut.map((piece) => piece.wait));
-    // Put together, the span from the first piece setting off to the last landing is fitted to its
-    // time. Broken at random, every piece keeps its pace, which follows the exit's time; along a
-    // wind, the last goes as the time is up.
-    const scale = windy
-        ? (windblown * pace) / (together ? end - first : end)
-        : together
-          ? (assembled * pace) / (end - first)
-          : pace;
+    // The whole, from the first piece setting off to the last landing put together, or to the last
+    // going broken: as long as the review judged it, put together or along a wind; broken at random,
+    // every piece keeps its pace, which follows the exit's time. Or the time the surface fits every
+    // effect to.
+    const total = lasting(chosen, windy ? windblown : together ? assembled : end);
+    const scale = total / (together ? end - first : end);
     const drawn = cut.map((piece, index) => {
         const left = line(box.left, box.width, width, piece.column, columns);
         const top = line(box.top, box.height, height, piece.row, rows);
@@ -429,7 +441,7 @@ function level(progress: number): number {
 }
 
 /** Dissolves `surface` into a grain, or brings it out of one, `together`, as `handed` says. */
-function grain(surface: HTMLElement, { pace, curve }: Handed, together: boolean): void {
+function grain(surface: HTMLElement, chosen: Handed, together: boolean): void {
     // Room round the surface for a glow, which the default tenth would cut; and the surface's own
     // colours, which a round trip through linearRGB shifted, measured in Firefox for RFC 0004.
     const filter = made('filter', {
@@ -441,8 +453,8 @@ function grain(surface: HTMLElement, { pace, curve }: Handed, together: boolean)
     });
     const matrix = made('feColorMatrix', { in: 'grain', type: 'matrix', result: 'mask' });
     const timing = new KeyframeEffect(surface, null, {
-        duration: dissolved * pace,
-        easing: curve,
+        duration: lasting(chosen, dissolved),
+        easing: chosen.curve,
         fill: 'forwards',
     });
     /** Where the threshold is: at 0 every pixel is whole, and at 1 none is left. */
@@ -483,8 +495,7 @@ function grain(surface: HTMLElement, { pace, curve }: Handed, together: boolean)
 /**
  * Runs the entrance `surface`'s sheet chose for it as it arrives — putting it together from its
  * pieces, at random or on a wind, or bringing it out of a grain — and gives it back as it was once
- * that is done. Whatever was
- * running on it is ended first.
+ * that is done. Whatever was running on it is ended first.
  */
 export function enter(surface: HTMLElement): void {
     mend(surface);
@@ -502,8 +513,8 @@ export function enter(surface: HTMLElement): void {
 
 /**
  * Runs the exit `surface`'s sheet chose for it as it leaves — breaking it into its pieces, at random
- * or on a wind, or dissolving it into a grain — and leaves it drawn gone until it is mended, which the component does
- * once it has taken the surface away. Whatever was running on it is ended first.
+ * or on a wind, or dissolving it into a grain — and leaves it drawn gone until it is mended, which
+ * the component does once it has taken the surface away. Whatever was running on it is ended first.
  */
 export function exit(surface: HTMLElement): void {
     mend(surface);

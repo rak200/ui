@@ -377,12 +377,15 @@ explains. This file restates none of them.
 - **Why a card's pieces and its grain are a filter over it rather than copies of it, and how long
   they take** — the docblock on `src/passage.ts`, and ARCHITECTURE.md's _Which effect runs is the
   consumer's_. A surface hands `--ui-fx-enter` and `--ui-fx-exit` the effect each moment chose —
-  materialize, erode, wind or dissolve — with that moment's time and curve; the card and the toast
-  call `enter()` once drawn, `exit()` as they leave and `mend()` once gone, and a passage runs on
-  clocks that are the surface's own animations, which `leave()` and `dismiss()` wait out. One module
-  for both, so whichever is running is the one the next ends. `tests/passage.test.ts` pins
-  `Math.random`, as the shatter's does, and mends every surface it mounted after each test: a clock
-  in a shadow root is no animation of the document's.
+  materialize, erode, wind or dissolve — with that moment's time and curve; the card, the toast and
+  the dialog's panel call `enter()` once drawn, `exit()` as they leave and `mend()` once gone, and a
+  passage runs on clocks that are the surface's own animations, which `leave()`, `dismiss()` and a
+  dialog's close wait out. One module for both, so whichever is running is the one the next ends.
+  **Why a dialog's panel takes every passage whole in one step**, where a card's run at the pace the
+  review judged — the comment beside its hand-offs in `src/dialog.ts`: it hands `--ui-fx-fit: whole`
+  beside them, and every other surface writes `pace` for itself, so a card held in a dialog keeps
+  its own. `tests/passage.test.ts` pins `Math.random`, as the shatter's does, and mends every
+  surface it mounted after each test: a clock in a shadow root is no animation of the document's.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and

@@ -115,6 +115,8 @@ default theme's taste names, which would otherwise run under Matrix too.
 | `toast`                       | `focus-fill` | `tint`        |
 | `toast`                       | `enter`      | `wind`        |
 | `toast`                       | `exit`       | `wind`        |
+| `dialog`                      | `enter`      | `materialize` |
+| `dialog`                      | `exit`       | `erode`       |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
@@ -242,6 +244,8 @@ Glass's edge would never reach them. And it leans the card alone, as RFC 0004 ch
 | `toast`                       | `hover-border` | `none`     |
 | `toast`                       | `enter`        | `refocus`  |
 | `toast`                       | `exit`         | `defocus`  |
+| `dialog`                      | `enter`        | `dissolve` |
+| `dialog`                      | `exit`         | `dissolve` |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

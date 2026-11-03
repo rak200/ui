@@ -1140,6 +1140,7 @@ describe('the references components write', () => {
         ['--ui-duration-follow', '--ui-duration-50'],
         ['--ui-duration-enter', '--ui-duration-300'],
         ['--ui-duration-exit', '--ui-duration-200'],
+        ['--ui-duration-modal', '--ui-duration-150'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
     ] as const;
