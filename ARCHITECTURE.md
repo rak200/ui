@@ -196,7 +196,9 @@ measured.
 
 **A feature newer than the floor either leaves a component as it was where it is missing, or raises
 the floor.** The select's drawn list sits under `@supports (appearance: base-select)`, and an engine
-without it keeps the system's list. RFC 0004's motion effects will draw under container style
+without it keeps the system's list, and a tooltip's tip is typed only under
+`@supports selector(::highlight())`, so an engine without highlights shows it whole. RFC 0004's
+motion effects will draw under container style
 queries, which need Chrome 111, Firefox 151 and Safari 18: inside the floor, Firefox 129 to 150
 lacks them, and keeps each component's own motion.
 

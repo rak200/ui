@@ -794,3 +794,5 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#361](https://github.com/rak200/ui/pull/361) | the dialog's panel in pieces under Matrix and a grain under Glass, each in 200ms whole  |
 | 4    | [#362](https://github.com/rak200/ui/pull/362) | the scrim's moment: its fade a choice, and Glass's blur with no scrim over the glass    |
 | 4    | [#363](https://github.com/rak200/ui/pull/363) | Matrix's rain over the scrim: falling code drawn on a canvas in the accent, settling    |
+| 4    | [#364](https://github.com/rak200/ui/pull/364) | the tooltip's rise and sink, Glass's refocus and defocus, and `--ui-duration-overlay`   |
+| 4    | [#365](https://github.com/rak200/ui/pull/365) | Matrix's tip: typed in through highlights behind a caret, and flickered out in bands    |
