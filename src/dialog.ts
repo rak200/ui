@@ -253,11 +253,62 @@ export class UiDialog extends LitElement {
         /* The exit, driven from the class rather than from [open] going away: the
            platform removes a closed dialog in the same frame it is closed, so an exit
            waiting on the attribute would never be seen. Both halves are declared together
-           because moving together is what lets #exit await one of them. */
+           because moving together is what lets #exit await one of them — over the state's
+           step, whatever step the scrim came in over, so a scrim that came in slower is
+           never cut short. */
         dialog.closing,
         dialog.closing::backdrop {
             opacity: 0;
+            transition-duration: ${reference('--ui-duration-state')};
             transition-timing-function: ${reference('--ui-easing-exit')};
+        }
+
+        /* The scrim's moment, RFC 0004's: today's fade, or none, which puts it there at once
+           and takes it away at once. */
+        @container ${unsafeCSS(drawn('backdrop', 'none'))} {
+            dialog::backdrop {
+                transition: none;
+            }
+        }
+
+        /* blur: the page behind blurs as the scrim comes in, over the dialog's step, and comes
+           back into focus as it goes. */
+        @container ${unsafeCSS(drawn('backdrop', 'blur'))} {
+            dialog::backdrop {
+                backdrop-filter: blur(4px);
+                transition:
+                    opacity ${reference('--ui-duration-modal')} ${reference('--ui-easing-enter')},
+                    backdrop-filter ${reference('--ui-duration-modal')}
+                        ${reference('--ui-easing-enter')};
+            }
+
+            @starting-style {
+                dialog[open]::backdrop {
+                    backdrop-filter: blur(0);
+                }
+            }
+
+            dialog.closing::backdrop {
+                backdrop-filter: blur(0);
+            }
+        }
+
+        /* Whether the theme raises its surfaces as glass: the backdrop filter of a raised
+           surface, read through the token's fallback, since a theme's name does not reach a
+           shadow root. Where the reader asks for more contrast or less transparency the glass
+           stands down and leaves the token with no value at all, which the fallback reads as
+           none, where a query on the token itself took it for glass and left the page with no
+           scrim — measured for RFC 0004. */
+        :host {
+            --ui-fx-glass: ${reference('--ui-backdrop-raised')};
+        }
+
+        /* Under glass, the blur alone, with no scrim colour over it, which would tint the page
+           the glass is there to let through. */
+        @container ${unsafeCSS(drawn('backdrop', 'blur'))} and (not style(--ui-fx-glass: none)) {
+            dialog::backdrop {
+                background: transparent;
+            }
         }
 
         /* The panel's passage, RFC 0004's: the effect the dialog chose for each moment and how it

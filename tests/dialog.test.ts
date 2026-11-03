@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { cdp, userEvent } from 'vitest/browser';
+// The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`.
+import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Confirm, Long, Nested } from '../stories/dialog.stories.js';
@@ -520,20 +522,31 @@ describe('the motion', () => {
         expect(inner(element).open).toBe(false);
     });
 
-    it('moves the panel and the scrim over one duration, which is what lets it await one', async () => {
-        // `#exit` waits on the panel alone — a pseudo-element needs `subtree: true` and the
-        // backdrop is therefore not in the list it reads. That is only correct while the
-        // two move together, so this is the invariant under that decision rather than a
-        // restatement of the stylesheet.
-        const element = await mount(fixture);
-        await open(element);
+    it.each([
+        ['nothing chosen', ''],
+        ['the blur', 'blur'],
+    ] as const)(
+        'takes the panel and the scrim away over one duration, which is what lets it await one: %s',
+        async (_name, backdrop) => {
+            // `#exit` waits on the panel alone — a pseudo-element needs `subtree: true` and the
+            // backdrop is therefore not in the list it reads. That is only correct while the
+            // two move together as it closes, whatever the scrim came in over, so this is the
+            // invariant under that decision rather than a restatement of the stylesheet.
+            const element = await mount(fixture);
+            element.style.setProperty('--ui-motion-backdrop', backdrop);
+            element.style.setProperty('--ui-duration-modal', '0.45s');
+            await open(element);
 
-        const panel = getComputedStyle(inner(element)).transitionDuration;
-        const scrim = getComputedStyle(inner(element), '::backdrop').transitionDuration;
+            element.open = false;
+            await element.updateComplete;
 
-        expect(panel, 'and there is a duration to share').not.toBe('0s');
-        expect(scrim).toBe(panel);
-    });
+            const panel = getComputedStyle(inner(element)).transitionDuration;
+            const scrim = getComputedStyle(inner(element), '::backdrop').transitionDuration;
+
+            expect(panel, 'and there is a duration to share').not.toBe('0s');
+            expect(scrim.split(', ').map((each) => each === panel)).not.toContain(false);
+        },
+    );
 
     it('enters and leaves along different curves', async () => {
         const element = await mount(fixture);
@@ -837,6 +850,162 @@ describe("the panel's passage, RFC 0004's", () => {
         );
         expect(inner(element).style.filter).not.toBe(broken);
     });
+});
+
+/** The transitions the scrim runs. */
+function scrimmed(element: UiDialog): CSSTransition[] {
+    return inner(element)
+        .getAnimations({ subtree: true })
+        .filter(
+            (animation): animation is CSSTransition =>
+                animation instanceof CSSTransition &&
+                (animation.effect as KeyframeEffect | null)?.pseudoElement === '::backdrop',
+        );
+}
+
+describe("the scrim's moment, RFC 0004's", () => {
+    it.each([
+        ['nothing chosen', '', ['opacity']],
+        ['none', 'none', []],
+    ] as const)(
+        'fades the scrim in only where its own fade is the moment: %s',
+        async (_name, backdrop, moved) => {
+            const element = await mount(fixture);
+            element.style.setProperty('--ui-motion-backdrop', backdrop);
+
+            await opening(element);
+
+            expect(scrimmed(element).map((each) => each.transitionProperty)).toEqual(moved);
+        },
+    );
+
+    it('takes the scrim away at once under none', async () => {
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'none');
+        await open(element);
+
+        element.open = false;
+        await element.updateComplete;
+
+        expect(scrimmed(element)).toEqual([]);
+    });
+
+    it("blurs the page behind as the scrim comes in, over the dialog's step on the entrance's curve", async () => {
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'blur');
+        element.style.setProperty('--ui-duration-modal', '0.45s');
+        element.style.setProperty('--ui-easing-enter', 'steps(2)');
+
+        await opening(element);
+
+        const scrim = getComputedStyle(inner(element), '::backdrop');
+
+        expect([
+            scrim.transitionProperty,
+            scrim.transitionDuration,
+            scrim.transitionTimingFunction,
+        ]).toEqual(['opacity, backdrop-filter', '0.45s, 0.45s', 'steps(2), steps(2)']);
+
+        const coming = scrimmed(element);
+
+        for (const each of coming) {
+            each.pause();
+            each.currentTime = 0;
+        }
+
+        expect(scrim.backdropFilter, 'from the page in focus').toBe('blur(0px)');
+
+        for (const each of coming) {
+            each.finish();
+        }
+
+        expect(scrim.backdropFilter, 'to the page blurred').toBe('blur(4px)');
+    });
+
+    it("brings the page back into focus as the dialog closes, over the panel's step", async () => {
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'blur');
+        element.style.setProperty('--ui-duration-state', '0.3s');
+        await open(element);
+
+        element.open = false;
+        await element.updateComplete;
+
+        const going = scrimmed(element);
+
+        expect(going.map((each) => each.transitionProperty)).toEqual([
+            'backdrop-filter',
+            'opacity',
+        ]);
+        // One step for both: the closing rule writes the duration alone, which every property
+        // in the list takes.
+        expect(getComputedStyle(inner(element), '::backdrop').transitionDuration).toBe('0.3s');
+
+        for (const each of going) {
+            each.finish();
+        }
+
+        expect(getComputedStyle(inner(element), '::backdrop').backdropFilter).toBe('blur(0px)');
+    });
+
+    it.each([
+        ['glass', 'blur(10px)', 'rgba(0, 0, 0, 0)'],
+        ['no glass', 'none', 'rgb(1, 2, 3)'],
+        ['nothing said', '', 'rgb(1, 2, 3)'],
+    ] as const)(
+        'lays no scrim colour over the blur under glass, and keeps it otherwise: %s',
+        async (_name, raised, colour) => {
+            const element = await mount(fixture);
+            element.style.setProperty('--ui-motion-backdrop', 'blur');
+            element.style.setProperty('--ui-color-scrim', 'rgb(1, 2, 3)');
+            element.style.setProperty('--ui-backdrop-raised', raised);
+
+            await open(element);
+
+            expect(getComputedStyle(inner(element), '::backdrop').backgroundColor).toBe(colour);
+        },
+    );
+
+    it('keeps the scrim colour where nothing but glass is chosen', async () => {
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-color-scrim', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-backdrop-raised', 'blur(10px)');
+
+        await open(element);
+
+        expect(getComputedStyle(inner(element), '::backdrop').backgroundColor).toBe('rgb(1, 2, 3)');
+    });
+
+    it.each([
+        ['prefers-contrast', 'more'],
+        ['prefers-reduced-transparency', 'reduce'],
+    ] as const)(
+        'blurs the page with no scrim under Glass, and lays the scrim over it again under %s',
+        async (feature, value) => {
+            const element = await themed(glass, 'glass');
+            await open(element);
+
+            const scrim = getComputedStyle(inner(element), '::backdrop');
+
+            expect([scrim.backdropFilter, scrim.backgroundColor], 'glass').toEqual([
+                'blur(4px)',
+                'rgba(0, 0, 0, 0)',
+            ]);
+
+            await cdp().send('Emulation.setEmulatedMedia', {
+                features: [{ name: feature, value }],
+            });
+
+            try {
+                expect(
+                    [scrim.backdropFilter, scrim.backgroundColor],
+                    'the glass stood down',
+                ).toEqual(['blur(4px)', 'rgba(0, 0, 0, 0.5)']);
+            } finally {
+                await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+            }
+        },
+    );
 });
 
 describe('the lifecycle', () => {

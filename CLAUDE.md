@@ -386,6 +386,13 @@ explains. This file restates none of them.
   beside them, and every other surface writes `pace` for itself, so a card held in a dialog keeps
   its own. `tests/passage.test.ts` pins `Math.random`, as the shatter's does, and mends every
   surface it mounted after each test: a clock in a shadow root is no animation of the document's.
+- **Why Glass's blur lays no scrim colour over the page, and how a dialog knows the theme is glass**
+  — the comments beside `--ui-fx-glass` and the blur in `src/dialog.ts`. A theme's name does not
+  reach a shadow root and its glass does, as `--ui-backdrop-raised` read through the token's
+  fallback: the stand-down leaves the token with no value at all, which the fallback reads as none
+  and a query on the token itself took for glass. **Why the scrim always leaves over the panel's
+  step** — the comment beside the exit's rule there: `#exit` waits on the panel alone, so a scrim
+  that came in slower would be cut short as the dialog closed.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and
