@@ -16,6 +16,7 @@ const handed = [
     '--ui-fx-exit: erode',
     '--ui-fx-exit-time: 240ms',
     '--ui-fx-exit-curve: linear',
+    '--ui-fx-end: 1',
 ].join('; ');
 
 /** Every surface the test mounted, mended after it, wherever it was. */
@@ -53,7 +54,7 @@ function filterOf(surface: HTMLElement): SVGFilterElement {
 
 /** Each piece as the filter cuts it: its region's corner and size. */
 function cells(surface: HTMLElement): (readonly number[])[] {
-    return [...filterOf(surface).querySelectorAll('feComponentTransfer')].map((cell) =>
+    return [...filterOf(surface).querySelectorAll('feOffset')].map((cell) =>
         ['x', 'y', 'width', 'height'].map((name) => Number(cell.getAttribute(name))),
     );
 }
@@ -162,13 +163,20 @@ describe('putting a surface together', () => {
             'every piece drawn',
         ).toEqual(Array.from({ length: 36 }, (_, index) => `piece-${String(index)}`));
         expect(
+            [...filter.querySelectorAll('feOffset')].map((cell) => [
+                cell.getAttribute('in'),
+                cell.getAttribute('result'),
+            ])[5],
+            'each cut from the surface as it is drawn',
+        ).toEqual(['SourceGraphic', 'moved-5']);
+        expect(
             [...filter.querySelectorAll('feComponentTransfer')].map((cell) => [
                 cell.getAttribute('in'),
                 cell.getAttribute('result'),
                 cell.querySelector('feFuncA')?.getAttribute('type'),
             ])[5],
-            'each from the surface as it is drawn',
-        ).toEqual(['SourceGraphic', 'piece-5', 'linear']);
+            'and faded',
+        ).toEqual(['moved-5', 'piece-5', 'linear']);
         expect(filter.parentElement?.getAttribute('aria-hidden'), 'out of what is read').toBe(
             'true',
         );
@@ -461,6 +469,160 @@ function offset(surface: HTMLElement): string {
 
     return values.split(/\s+/).at(-1) ?? '';
 }
+
+/** How far each piece stands from its cell now, as the filter draws it: across and down. */
+function offsets(surface: HTMLElement): (readonly number[])[] {
+    return [...filterOf(surface).querySelectorAll('feOffset')].map((cell) =>
+        ['dx', 'dy'].map((name) => Number(cell.getAttribute(name))),
+    );
+}
+
+describe('a surface on a wind', () => {
+    /** What a sheet hands a surface for the wind, over the pieces the fixture is handed. */
+    const blowing = '--ui-fx-enter: wind; --ui-fx-exit: wind';
+
+    it('cuts it into about thirty-six pieces about as tall as they are wide', () => {
+        const wide = mount(`${blowing}; height: 60px`);
+        const square = mount(blowing);
+
+        enter(wide);
+        enter(square);
+
+        // 300 by 60: thirteen across, three down; 300 by 120: nine across, four down. A cut falls
+        // on a device pixel of the page.
+        const { left } = wide.getBoundingClientRect();
+        const cut = (at: number): number =>
+            Math.round((left + (300 * at) / 13) * devicePixelRatio) / devicePixelRatio;
+
+        expect([cells(wide).length, cells(square).length]).toEqual([39, 36]);
+        expect(cells(wide)[1]?.slice(2), 'a piece').toEqual([cut(2) - cut(1), 48 + 20]);
+    });
+
+    it('puts it together from where each piece would have gone, further for what lies further on', async () => {
+        const surface = mount(`${blowing}; height: 60px`);
+
+        enter(surface);
+        await hold(surface, 0);
+
+        // Along a wind toward the end of the line, 90px and 12 more for each sixth of the way.
+        expect(offsets(surface)[0]?.[0], 'the first column, nearest where it blows from').toBe(90);
+        expect(offsets(surface)[12]?.[0], 'the last, furthest on').toBe(150);
+        expect(
+            offsets(surface).every(([, down = 0]) => Math.abs(down) <= 14),
+            'drifting 14px at most',
+        ).toBe(true);
+        expect(filterOf(surface).getAttribute('x'), 'room for the furthest').toBe('-198');
+    });
+
+    it('blows the other way in right-to-left text, where the end of the line is the left', async () => {
+        const surface = mount(`${blowing}; height: 60px; --ui-fx-end: -1`);
+
+        enter(surface);
+        await hold(surface, 0);
+
+        expect([offsets(surface)[0]?.[0], offsets(surface)[12]?.[0]]).toEqual([-150, -90]);
+    });
+
+    it.each([
+        ['together', enter, '--ui-fx-enter-time: 720ms'],
+        ['away', exit, '--ui-fx-exit-time: 480ms'],
+    ] as const)(
+        'blows it %s in 520ms at the judged time, and in proportion to it',
+        (_way, passage, slower) => {
+            const judged = mount(`${blowing}; height: 60px`);
+            const doubled = mount(`${blowing}; height: 60px; ${slower}`);
+
+            passage(judged);
+            passage(doubled);
+
+            const last = (surface: HTMLElement): number =>
+                Math.max(
+                    ...clocks(surface).map(([delay, duration]) => Number(delay) + Number(duration)),
+                );
+
+            expect(last(judged)).toBeCloseTo(520, 6);
+            expect(last(doubled)).toBeCloseTo(1040, 6);
+        },
+    );
+
+    it('slides each piece on the way it goes as its clock runs, and fades it', async () => {
+        const surface = mount(`${blowing}; height: 60px`);
+
+        exit(surface);
+
+        expect(slopes(surface)[0], 'whole yet').toBe(1);
+
+        const [[delay, duration] = []] = clocks(surface);
+        const time = Number(delay) + Number(duration) / 5;
+
+        await hold(surface, time);
+
+        expect(offsets(surface)[0]?.[0], 'a fifth of the way along').toBe(18);
+        expect(cells(surface)[0]?.slice(0, 2), 'its region gone with it').toEqual([-48 + 18, -48]);
+        expect(slopes(surface)[0], 'a fifth gone').toBeCloseTo(0.8, 6);
+    });
+
+    // Each piece asks for its wait, its fade and its drift, in turn, of the draws above: the first
+    // waits 0.2 of its 40ms, fades over all of its 260ms more and drifts not at all; the second, 5/12
+    // of a step on, waits 34ms for each step and 0.25 of its 40, fades over 0.2 of its 260 more and
+    // drifts 14px down; the third, 10/12 on, drifts 8.4px up.
+    it("times each piece by the reference's own wind, in its six steps across", () => {
+        const surface = mount(`${blowing}; height: 60px`);
+
+        exit(surface);
+
+        const [first, second] = clocks(surface);
+        const fade = Number(first?.[1]);
+
+        expect(Number(first?.[0]) / fade, "the first one's wait").toBeCloseTo(8 / 780, 6);
+        expect(Number(second?.[1]) / fade, "the second one's fade").toBeCloseTo(572 / 780, 6);
+        expect(Number(second?.[0]) / fade, "the second one's wait").toBeCloseTo(
+            ((5 / 12) * 34 + 10) / 780,
+            6,
+        );
+    });
+
+    it('slides each piece on device pixels of the page', async () => {
+        await cdp().send('Emulation.setDeviceMetricsOverride', {
+            width: 414,
+            height: 896,
+            deviceScaleFactor: 2,
+            mobile: false,
+        });
+        onTestFinished(async () => {
+            await cdp().send('Emulation.clearDeviceMetricsOverride');
+        });
+        const surface = mount(`${blowing}; height: 60px`);
+
+        exit(surface);
+
+        const [[delay, duration] = [], [wait, length] = []] = clocks(surface);
+
+        // The first piece 0.37 of its way on, 33.3px, which a 2x display draws on 33.5; the second
+        // 0.33 of its way down, 4.62px, drawn on 4.5.
+        await hold(surface, Number(delay) + Number(duration) * 0.37);
+
+        expect(offsets(surface)[0]?.[0], 'across').toBe(33.5);
+
+        await hold(surface, Number(wait) + Number(length) * 0.33);
+
+        expect(offsets(surface)[1]?.[1], 'down').toBe(4.5);
+        expect(cells(surface)[1]?.[1], 'its region gone with it').toBe(-48 + 4.5);
+    });
+
+    it("drifts each piece by the reference's own wind, either side of it", async () => {
+        const surface = mount(`${blowing}; height: 60px`);
+
+        enter(surface);
+        await hold(surface, 0);
+
+        expect(
+            offsets(surface)
+                .slice(0, 3)
+                .map(([, down]) => down),
+        ).toEqual([0, 14, -8]);
+    });
+});
 
 describe('dissolving a surface', () => {
     /** What a sheet hands a surface for the grain, over the pieces the fixture is handed. */

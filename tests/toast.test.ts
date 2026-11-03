@@ -1088,6 +1088,92 @@ describe('arriving and leaving', () => {
         expect(transitioned(element), 'only what moves it').toBe('transform');
     });
 
+    it.each([['fade'], ['slide-elastic'], ['refocus'], ['materialize'], ['wind'], ['dissolve']])(
+        'stands its own rise down where its entrance is %s',
+        async (effect) => {
+            const element = await arriving({ enter: effect });
+
+            expect(transitioned(element)).toBe('transform');
+        },
+    );
+
+    it.each([['fade'], ['slide'], ['defocus'], ['erode'], ['wind'], ['dissolve']])(
+        'stands its own sink down where its exit is %s, at rest for whatever draws it',
+        async (effect) => {
+            const element = await arriving({ exit: effect });
+            await still(element);
+            element.style.setProperty('--ui-duration-exit', '10s');
+
+            element.dismiss();
+
+            const styles = getComputedStyle(element);
+
+            expect(transitioned(element)).toBe('transform');
+            expect(
+                [styles.getPropertyValue('opacity'), element.style.opacity],
+                'its own sink not drawn',
+            ).not.toContain('0');
+        },
+    );
+
+    it('blows a toast in and away on a wind under Matrix, drawn through its pieces at rest', async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(matrix);
+        document.body.append(style);
+
+        const host = await mount('<ui-toaster data-ui-theme="matrix"></ui-toaster>');
+        const created = document.createElement('ui-toast');
+        created.duration = 0;
+        created.textContent = 'Saved.';
+        toaster(host).append(created);
+        await created.updateComplete;
+        await created.updateComplete;
+
+        expect(created.style.filter, 'blown in').toMatch(/^url\("#ui-pieces-\d+"\)$/);
+
+        for (const animation of created.getAnimations()) {
+            animation.finish();
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        created.dismiss();
+
+        expect(created.style.filter, 'blown away').toMatch(/^url\("#ui-pieces-\d+"\)$/);
+        expect(getComputedStyle(created).opacity, 'at rest, for the pieces to draw').toBe('1');
+
+        const gone = dismissed(created);
+
+        for (const animation of created.getAnimations()) {
+            animation.finish();
+        }
+
+        await gone;
+        await Promise.resolve();
+
+        expect([created.isConnected, created.style.filter], 'gone, and whole').toEqual([false, '']);
+    });
+
+    it('brings a toast into focus under Glass, and takes it out of focus as it leaves', async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + themeStyleSheet(glass);
+        document.body.append(style);
+
+        const host = await mount('<ui-toaster data-ui-theme="glass"></ui-toaster>');
+        const created = document.createElement('ui-toast');
+        created.duration = 0;
+        created.textContent = 'Saved.';
+        toaster(host).append(created);
+        await created.updateComplete;
+
+        expect(getComputedStyle(created).animationName).toBe('ui-enter-refocus');
+
+        await still(created);
+        created.dismiss();
+
+        expect(getComputedStyle(created).animationName).toBe('ui-exit-defocus');
+    });
+
     it('fades a toast in where the fade is chosen, its own rise standing down', async () => {
         const element = await arriving({ enter: 'fade' });
 

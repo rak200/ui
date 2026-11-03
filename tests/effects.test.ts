@@ -2790,6 +2790,65 @@ describe("a surface's effects", () => {
         ]);
     });
 
+    it('brings the surface into focus as it is put on the page, from half a rem out of it, over an entrance and a quarter', () => {
+        const { region, host } = surface('test', { enter: 'refocus' });
+        region.style.setProperty('--ui-duration-enter', '8s');
+        region.style.setProperty('--ui-easing-enter', 'linear');
+
+        const styles = getComputedStyle(host);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['ui-enter-refocus', '10s', 'linear', 'backwards']);
+
+        const refocus = running(host, 'ui-enter-refocus');
+
+        refocus.pause();
+        refocus.currentTime = 0;
+
+        expect([getComputedStyle(host).filter, getComputedStyle(host).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+
+        refocus.currentTime = 5000;
+
+        expect(getComputedStyle(host).opacity, 'whole by half the way').toBe('1');
+    });
+
+    it('takes the surface out of focus as it leaves, over an exit and a quarter', () => {
+        const { region, host } = surface('test', { exit: 'defocus' });
+        region.style.setProperty('--ui-duration-exit', '8s');
+        region.style.setProperty('--ui-easing-exit', 'linear');
+        host.internals.states.add('leaving');
+
+        const styles = getComputedStyle(host);
+
+        expect([
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['ui-exit-defocus', '10s', 'linear', 'forwards']);
+
+        const defocus = running(host, 'ui-exit-defocus');
+
+        defocus.pause();
+        defocus.currentTime = 5000;
+
+        expect(getComputedStyle(host).opacity, 'whole half the way').toBe('1');
+
+        defocus.finish();
+
+        expect([getComputedStyle(host).filter, getComputedStyle(host).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+    });
+
     it('plays no entrance while the surface is leaving, so it goes at once where no exit is chosen', () => {
         const { host } = surface('test', { enter: 'fade' });
         host.internals.states.add('leaving');
@@ -2812,6 +2871,8 @@ describe("a surface's effects", () => {
     it.each([
         ['enter', 'materialize', '--ui-duration-enter', '--ui-easing-enter'],
         ['exit', 'erode', '--ui-duration-exit', '--ui-easing-exit'],
+        ['enter', 'wind', '--ui-duration-enter', '--ui-easing-enter'],
+        ['exit', 'wind', '--ui-duration-exit', '--ui-easing-exit'],
     ])(
         "hands the pieces their effect where %s: %s is chosen, with that moment's time and curve",
         (moment, effect, time, curve) => {

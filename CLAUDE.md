@@ -377,12 +377,12 @@ explains. This file restates none of them.
 - **Why a card's pieces and its grain are a filter over it rather than copies of it, and how long
   they take** — the docblock on `src/passage.ts`, and ARCHITECTURE.md's _Which effect runs is the
   consumer's_. A surface hands `--ui-fx-enter` and `--ui-fx-exit` the effect each moment chose —
-  materialize, erode or dissolve — with that moment's time and curve; the card calls `enter()` once it
-  is drawn, `exit()` as it leaves and `mend()` once it has gone, and a passage runs on clocks that are
-  the card's own animations, which `leave()` waits out. One module for both, so whichever is running
-  is the one the next ends. `tests/passage.test.ts` pins `Math.random`, as the shatter's does, and
-  mends every surface it mounted after each test: a clock in a shadow root is no animation of the
-  document's.
+  materialize, erode, wind or dissolve — with that moment's time and curve; the card and the toast
+  call `enter()` once drawn, `exit()` as they leave and `mend()` once gone, and a passage runs on
+  clocks that are the surface's own animations, which `leave()` and `dismiss()` wait out. One module
+  for both, so whichever is running is the one the next ends. `tests/passage.test.ts` pins
+  `Math.random`, as the shatter's does, and mends every surface it mounted after each test: a clock
+  in a shadow root is no animation of the document's.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and
@@ -443,18 +443,19 @@ explains. This file restates none of them.
   beside them in `src/toast.ts`: a transition outranks an animation in the cascade, and Firefox started
   the rise's beside a slide, so under one the toast transitions only its transform; they stay what it
   does under `none` and in an engine without style queries, and its exit is the `leaving` state the
-  card's is. **Why the time left is a ring the toast's own dwell runs, and why it stands down under
-  reduced motion** — the comment beside the ring in `src/toast.ts`: the dwell is no token, for the
-  reason the constant gives, so the toast writes it on itself as `--ui-fx-dwell` and marks itself
-  `timed`; a ring that does not collapse would move for the whole of it, so it is read off the
-  count the collapse takes to one. Its angle is registered in script, for the shimmer's reason.
-  **Why the stack is measured as a toast announces `ui-dismiss`, and why a toast hands it the spring
-  under its toaster's query** — the docblock on `src/stack.ts`: a layout move is animated from where
-  each toast stood, and `ui-dismiss` is the last moment the toast going holds its place, while a
-  newcomer is measured out of the layout and moved at the next frame; a toast's `:host` rule reads
-  where its toaster stands, so a choice written on the toaster reaches the stack, which S8 would have
-  kept a rule on the toaster's own host from. `tests/stack.test.ts` stacks undefined `ui-toast`
-  elements of its own, so only the stack moves them.
+  card's is; under an exit drawn through a filter it stands at rest, since its sink's values would
+  have left the filter nothing to draw. **Why the time left is a ring the toast's own dwell runs,
+  and why it stands down under reduced motion** — the comment beside the ring in `src/toast.ts`: the
+  dwell is no token, for the reason the constant gives, so the toast writes it on itself as
+  `--ui-fx-dwell` and marks itself `timed`; a ring that does not collapse would move for the whole
+  of it, so it is read off the count the collapse takes to one. Its angle is registered in script,
+  for the shimmer's reason. **Why the stack is measured as a toast announces `ui-dismiss`, and why a
+  toast hands it the spring under its toaster's query** — the docblock on `src/stack.ts`: a layout
+  move is animated from where each toast stood, and `ui-dismiss` is the last moment the toast going
+  holds its place, while a newcomer is measured out of the layout and moved at the next frame; a
+  toast's `:host` rule reads where its toaster stands, so a choice written on the toaster reaches
+  the stack, which S8 would have kept a rule on the toaster's own host from. `tests/stack.test.ts`
+  stacks undefined `ui-toast` elements of its own, so only the stack moves them.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

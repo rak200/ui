@@ -11,6 +11,7 @@ import {
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
 import { query } from './motion.js';
+import { enter, exit, mend } from './passage.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { watch } from './stack.js';
@@ -62,8 +63,12 @@ const springing = query('toaster')('stack', 'spring');
  * True wherever the toast's entrance is one a surface's effects animate, which its own rise stands
  * down for; and its exit, which its own sink stands down for.
  */
-const arriving = ['fade', 'slide-elastic'].map((effect) => drawn('enter', effect)).join(' or ');
-const leaving = ['fade', 'slide'].map((effect) => drawn('exit', effect)).join(' or ');
+const arriving = ['fade', 'slide-elastic', 'refocus', 'materialize', 'wind', 'dissolve']
+    .map((effect) => drawn('enter', effect))
+    .join(' or ');
+const leaving = ['fade', 'slide', 'defocus', 'erode', 'wind', 'dissolve']
+    .map((effect) => drawn('exit', effect))
+    .join(' or ');
 
 // Stryker disable all: the ring's property is registered once, at import, in the page's one
 // registry — so in the warm process Stryker switches mutants in, the original registration stands
@@ -256,9 +261,11 @@ export class UiToaster extends LitElement {
  * **It answers the pointer and a focus in it as a card does**, RFC 0004's: a surface's effects,
  * from `surfaceEffects()` in `src/effects.ts`, drawn on layers its shadow root renders empty, from
  * a mark `held()` puts on it while a focus the reader can see is in it. What moves it goes on its
- * transform, since its own rise from below holds its translate. It slides in and out where the taste
- * says so, its own rise and sink standing down, and while it leaves it is in the custom state
- * `leaving`, which a host's sheet reads as `ui-toast:state(leaving)`.
+ * transform, since its own rise from below holds its translate. It slides in and out, comes and goes
+ * on a wind, or comes into focus and goes out of it, where the taste says so, its own rise and sink
+ * standing down — a wind's pieces drawn by `enter()` and `exit()` from `src/passage.ts`, as a card's
+ * are — and while it leaves it is in the custom state `leaving`, which a host's sheet reads as
+ * `ui-toast:state(leaving)`.
  *
  * @example
  * ```html
@@ -397,6 +404,10 @@ export class UiToast extends LitElement {
 
             @container ${unsafeCSS(leaving)} {
                 :host(:state(leaving)) {
+                    /* At rest, since a passage drawn through a filter draws the toast as it is: its
+                       sink's values would have left nothing to draw. */
+                    opacity: 1;
+                    translate: 0 0;
                     transition: transform ${reference('--ui-duration-effect')}
                         ${reference('--ui-easing-exit')};
                 }
@@ -607,8 +618,12 @@ export class UiToast extends LitElement {
         this.#listeners = new AbortController();
 
         // And a toast put back after it was dismissed arrives as any toast does, rather than
-        // standing at the end of its exit.
+        // standing at the end of its exit; once it is drawn, it plays an entrance a sheet cannot
+        // draw, where its sheet chose one.
         this.#internals.states.delete('leaving');
+        void this.updateComplete.then(() => {
+            enter(this);
+        });
 
         const watched = { signal: this.#listeners.signal };
 
@@ -763,10 +778,13 @@ export class UiToast extends LitElement {
         }
 
         this.#internals.states.add('leaving');
+        // An exit a sheet cannot draw, its pieces or its grain, run on clocks of the toast's own.
+        exit(this);
 
         // `finished` rejects when an animation is cancelled, so what this waits for is
         // settlement rather than fulfilment. `getAnimations` flushes the pending style
-        // change before it answers, so the transition the line above started is in the list.
+        // change before it answers, so the transition the line above started is in the list,
+        // and so are the clocks a passage drawn in script runs on.
         await Promise.allSettled(this.getAnimations().map((animation) => animation.finished));
 
         // Before the removal, and that order is forced rather than preferred: a listener on
@@ -775,6 +793,7 @@ export class UiToast extends LitElement {
         this.dispatchEvent(new Event('ui-dismiss', { bubbles: true, composed: true }));
 
         this.remove();
+        mend(this);
     }
 }
 
