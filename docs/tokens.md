@@ -577,19 +577,20 @@ boundary under the pointer, which stays as it rests while the fill moves: named 
 `none` would take a field's darkening too, which is a field's answer to the pointer beside the
 raise. A card's entrance and its exit are its own moments as well, and so are a toast's.
 
-| Component  | Moment         | Effect          | What it draws                                  |
-| ---------- | -------------- | --------------- | ---------------------------------------------- |
-| `checkbox` | `check`        | `draw`          | the tick drawn on as the reader checks the box |
-| `checkbox` | `hover-border` | `none`          | the boundary at rest under the pointer         |
-| `switch`   | `check`        | `spring`        | the thumb sprung over to the other side        |
-| `switch`   | `hover-border` | `none`          | the boundary at rest under the pointer         |
-| `radio`    | `check`        | `pop`           | the dot popped in as the reader chooses        |
-| `radio`    | `hover-border` | `none`          | the boundary at rest under the pointer         |
-| `card`     | `enter`        | `fade`          | faded in as it is put on the page              |
-| `card`     | `exit`         | `fade`          | faded out as `leave()` takes it away           |
-| `toast`    | `enter`        | `slide-elastic` | slid in, springing past where it lands         |
-| `toast`    | `exit`         | `slide`         | slid out toward the edge it came from          |
-| `toast`    | `dwell`        | `ring`          | the time it has left, round its dismiss button |
+| Component  | Moment         | Effect          | What it draws                                     |
+| ---------- | -------------- | --------------- | ------------------------------------------------- |
+| `checkbox` | `check`        | `draw`          | the tick drawn on as the reader checks the box    |
+| `checkbox` | `hover-border` | `none`          | the boundary at rest under the pointer            |
+| `switch`   | `check`        | `spring`        | the thumb sprung over to the other side           |
+| `switch`   | `hover-border` | `none`          | the boundary at rest under the pointer            |
+| `radio`    | `check`        | `pop`           | the dot popped in as the reader chooses           |
+| `radio`    | `hover-border` | `none`          | the boundary at rest under the pointer            |
+| `card`     | `enter`        | `fade`          | faded in as it is put on the page                 |
+| `card`     | `exit`         | `fade`          | faded out as `leave()` takes it away              |
+| `toast`    | `enter`        | `slide-elastic` | slid in, springing past where it lands            |
+| `toast`    | `exit`         | `slide`         | slid out toward the edge it came from             |
+| `toast`    | `dwell`        | `ring`          | the time it has left, round its dismiss button    |
+| `toaster`  | `stack`        | `spring`        | the others sprung into place as one comes or goes |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
@@ -606,8 +607,8 @@ draws the effect it names — [the button](button.md#motion) draws the pointer's
 press's, [a field](input.md#motion) the pointer's, the focus's, its label's and an error's, and
 [a drawn control](checkbox.md#motion) its check, the pointer's, the focus's, its label's and an
 error's, [the card](card.md#motion) the pointer's, a focus on something it holds, its entrance and
-its exit, and [the toast](toast.md#motion) the pointer's, a focus in it, its entrance and its exit —
-and
+its exit, [the toast](toast.md#motion) the pointer's, a focus in it, its entrance, its exit and the
+time it has left, and the toaster its stack — and
 the suite refuses an entry no component draws. [The menu's trigger](menu.md#motion) answers each a
 button answers as the button does, and a field's box lifts rather than its control.
 
