@@ -109,8 +109,9 @@ export const tokens = [
     // The step and the curve RFC 0004's effects arrive with, beside the button that draws the
     // first of them. The step is the one the review judged those effects at in the prototypes,
     // longer than a state's, since an effect moves a component where a state only recolours it;
-    // no component reads it — they read `--ui-duration-effect`. The curve runs past its end and
-    // settles back, which is what a press let go of does.
+    // no component reads it — they read `--ui-duration-effect`, and an exit and an overlay read
+    // the purposes that stand over it too. The curve runs past its end and settles back, which is
+    // what a press let go of does.
     '--ui-duration-200',
     '--ui-easing-emphasis',
     // The step and the curve the focus ring's glide arrives with: a ring flown from one control
@@ -263,6 +264,12 @@ export const derivedTokens = [
     // the entrance's and the exit's, which a surface on the page takes at its own pace: a dialog
     // holds the page while it comes and goes, and the reader waits on it both ways.
     '--ui-duration-modal',
+    // How long an overlay takes to come and go — RFC 0004's: a tooltip's tip, as a menu's panel
+    // and a select's list will, each opened to be read or chosen from and gone once it is not. The
+    // same step both ways, a step quicker than a surface's entrance, as the review judged all
+    // three in the prototypes; apart from the effect's, so a host who wants livelier overlays
+    // leaves the pointer's and the focus's effects as they were.
+    '--ui-duration-overlay',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -585,6 +592,7 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-duration-enter': ground('--ui-duration-300'),
     '--ui-duration-exit': ground('--ui-duration-200'),
     '--ui-duration-modal': ground('--ui-duration-150'),
+    '--ui-duration-overlay': ground('--ui-duration-200'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast
@@ -782,7 +790,9 @@ export const taste: Taste = {
     // entrance and its exit are its own moments too: it fades in as it is put on the page, and out
     // as `leave()` takes it off. A toast slides in from the page's edge, springing past where it
     // lands and back, and slides out toward it; the time it has left is a ring round its dismiss
-    // button; and the toasts a toaster holds spring into their place as one arrives or leaves.
+    // button; and the toasts a toaster holds spring into their place as one arrives or leaves. A
+    // tooltip's tip rises toward where it sits as it shows, and sinks back toward its trigger as it
+    // goes.
     components: {
         checkbox: { check: 'draw', 'hover-border': 'none' },
         switch: { check: 'spring', 'hover-border': 'none' },
@@ -790,6 +800,7 @@ export const taste: Taste = {
         card: { enter: 'fade', exit: 'fade' },
         toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
         toaster: { stack: 'spring' },
+        tooltip: { enter: 'rise', exit: 'sink' },
     },
 };
 

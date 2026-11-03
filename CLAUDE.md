@@ -409,6 +409,13 @@ explains. This file restates none of them.
   awaited rather than thrown from a timer, which the runner grades as an error. `tests/rain.test.ts`
   records every character a canvas is asked to draw in place of drawing it, and pins `Math.random`;
   the canvas keeps a transform and a blur in single precision, so it compares them rounded.
+- **Why a tooltip's tip comes and goes by transitions, never scales, and plays its exit in Chromium
+  alone** — the comments beside its rules in `src/tooltip.ts`, and `docs/tooltip.md`'s _Motion_: the
+  placement reads the tip's box as it shows, transform and all; an exit is held by transitioning
+  display and overlay, which Firefox and WebKit do not honour for a popover; and the side the tip
+  comes from is `--ui-fx-toward`, written from `data-side` after the tip's first style.
+  `tests/tooltip.test.ts` leaves a trigger by `parkPointer()` rather than `unhover()`, which
+  scrolled the page under the tip and moved what its placement reads.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and

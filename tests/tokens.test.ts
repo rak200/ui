@@ -840,7 +840,7 @@ describe('tokenStyleSheet', () => {
         ]);
     });
 
-    it("takes the button's, the fields', the drawn controls', the card's and the toast's effects as the default theme's taste, the package's motion", () => {
+    it("takes the button's, the fields', the drawn controls', the card's, the toast's and the tooltip's effects as the default theme's taste, the package's motion", () => {
         expect(taste).toEqual({
             page: {
                 'hover-fill': 'highlight',
@@ -861,6 +861,7 @@ describe('tokenStyleSheet', () => {
                 card: { enter: 'fade', exit: 'fade' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
                 toaster: { stack: 'spring' },
+                tooltip: { enter: 'rise', exit: 'sink' },
             },
         });
     });
@@ -1141,6 +1142,7 @@ describe('the references components write', () => {
         ['--ui-duration-enter', '--ui-duration-300'],
         ['--ui-duration-exit', '--ui-duration-200'],
         ['--ui-duration-modal', '--ui-duration-150'],
+        ['--ui-duration-overlay', '--ui-duration-200'],
         ['--ui-elevation-raised', '--ui-elevation-100'],
         ['--ui-text-supporting', '--ui-text-100'],
     ] as const;

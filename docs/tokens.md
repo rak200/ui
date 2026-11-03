@@ -178,7 +178,9 @@ as it is put on the page, and out as it leaves. A surface's pieces and its grain
 again as the review judged them at these two's defaults, in proportion as either is moved. **A modal
 has an eighth**, `--ui-duration-modal` over `--ui-duration-150`, the step the ordinals left room for
 between the first two: every effect a dialog draws takes its 200ms whole, since the reader waits on
-a dialog both ways.
+a dialog both ways. **An overlay has a ninth**, `--ui-duration-overlay` over `--ui-duration-200`: a
+tooltip's tip comes and goes in its 240ms both ways, a step quicker than a surface's entrance, as
+the review judged the overlays in the prototypes.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
 focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
@@ -392,6 +394,7 @@ The roles computed from the grounds rather than declared beside them.
 | `--ui-duration-enter`            | how long an entrance takes                     |
 | `--ui-duration-exit`             | how long an exit takes                         |
 | `--ui-duration-modal`            | how long a modal's effect takes                |
+| `--ui-duration-overlay`          | how long an overlay takes to come and go       |
 | `--ui-elevation-raised`          | a surface lifted off the page                  |
 | `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
 | `--ui-text-supporting`           | text that explains what is beside it           |
