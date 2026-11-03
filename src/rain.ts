@@ -94,10 +94,12 @@ async function tile(
             // Stryker disable next-line EqualityOperator: equivalent — a centre is half a pitch or
             // half a row past a whole number of them, never a whole character's size from an edge.
             const across = [0, ...(x < size ? [width] : []), ...(x > width - size ? [-width] : [])];
-            // Stryker disable next-line EqualityOperator: equivalent, for the same reason.
+            // Each annotation sits on the line its operator is on, where the formatter left it.
             const down = [
                 0,
+                // Stryker disable next-line EqualityOperator: equivalent, for the same reason.
                 ...(y < size ? [height] : []),
+                // Stryker disable next-line EqualityOperator: equivalent, for the same reason.
                 ...(y > height - size ? [-height] : []),
             ];
 
