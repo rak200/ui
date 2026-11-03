@@ -791,3 +791,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#358](https://github.com/rak200/ui/pull/358) | the toast's time left as a ring round its dismiss button, none under the collapse       |
 | 4    | [#359](https://github.com/rak200/ui/pull/359) | the toaster's stack: its toasts sprung into place from where they stood, by a script    |
 | 4    | [#360](https://github.com/rak200/ui/pull/360) | the toast's wind under Matrix, its pieces sliding as they fade, and Glass's refocus     |
+| 4    | [#361](https://github.com/rak200/ui/pull/361) | the dialog's panel in pieces under Matrix and a grain under Glass, each in 200ms whole  |
