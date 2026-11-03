@@ -494,11 +494,13 @@ card as it is drawn, and its pieces fade where they are without shrinking toward
 copies did; its grain was one filter and no copy in the prototypes already, and a toast's wind
 slides its pieces without turning them. A dialog's panel takes each passage whole in one step,
 `--ui-duration-modal`, where a card's take as long as the review judged them: the reader waits on a
-dialog both ways, and it holds the page while it comes and goes. A name a component does not offer
-draws nothing. **`none` is nothing**: where a component answered a moment with nothing before
-effects existed it keeps the component as it was, and where it answered with something of its own —
-the button's colour under a press — the component draws `none` and takes that away, while
-`highlight` names what it did.
+dialog both ways, and it holds the page while it comes and goes. Matrix's rain over a dialog's scrim
+is a picture in the accent the page resolves, drawn on a canvas, since a picture cannot read a
+token; it settles inside the five seconds WCAG 2.2.2 allows into a still wall of code, and forced
+colours take it away. A name a component does not offer draws nothing. **`none` is nothing**: where
+a component answered a moment with nothing before effects existed it keeps the component as it was,
+and where it answered with something of its own — the button's colour under a press — the component
+draws `none` and takes that away, while `highlight` names what it did.
 
 **Where nobody chose, a theme's taste runs**: data beside its palette, and the default theme's
 stands under every theme, as its values do. That makes it the package's motion. On a page that

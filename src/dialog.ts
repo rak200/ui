@@ -1,6 +1,7 @@
 import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
-import { query } from './motion.js';
+import { kinds, query } from './motion.js';
 import { enter, exit, mend } from './passage.js';
+import { rain } from './rain.js';
 import { reference } from './reference.js';
 
 /** The class the exit is carried by, on the dialog for exactly as long as the exit runs. */
@@ -311,6 +312,58 @@ export class UiDialog extends LitElement {
             }
         }
 
+        /* char-rain: the reference's falling code at three depths over the scrim, each a tile
+           src/rain.ts draws in the accent, read off the scrim here, since a picture cannot read a
+           token — handed to the script, which lays the tiles on the dialog for the scrim to read.
+           It comes in as the blur does, over the dialog's step, and falls as a loop that settles
+           runs, slowing to rest within the five seconds WCAG 2.2.2 lets motion run unstoppable,
+           a still wall of code for as long as the dialog is open. Forced colours keep a picture
+           where they take a gradient away, so the rain stands down there itself, and nothing is
+           drawn. */
+        dialog {
+            --ui-fx-backdrop: none;
+        }
+
+        @container ${unsafeCSS(drawn('backdrop', 'char-rain'))} {
+            dialog {
+                --ui-fx-backdrop: char-rain;
+            }
+
+            dialog::backdrop {
+                color: ${reference('--ui-color-accent')};
+                background: var(--ui-fx-rain, none), ${reference('--ui-color-scrim')};
+                transition: opacity ${reference('--ui-duration-modal')}
+                    ${reference('--ui-easing-enter')};
+                animation: ui-rain
+                    calc(${reference('--ui-duration-loop')} * ${reference('--ui-iteration-settle')})
+                    cubic-bezier(0.33, 0.33, 0.5, 1);
+            }
+
+            @media (forced-colors: active) {
+                dialog {
+                    --ui-fx-backdrop: none;
+                }
+
+                dialog::backdrop {
+                    background-image: none;
+                    animation: none;
+                }
+            }
+        }
+
+        /* Each depth falls from a whole number of its tiles above and comes to rest where it
+           started, the nearest fastest: a tile every round of the loop for it, three in four for
+           the middle, one in two behind. */
+        @keyframes ui-rain {
+            from {
+                background-position:
+                    0 calc(${reference('--ui-iteration-settle')} * -600px),
+                    0 calc(${reference('--ui-iteration-settle')} * -390px),
+                    0 calc(${reference('--ui-iteration-settle')} * -220px),
+                    0 0;
+            }
+        }
+
         /* The panel's passage, RFC 0004's: the effect the dialog chose for each moment and how it
            runs, handed to src/passage.ts as a surface hands its own. Its own, never one inherited
            from a surface round the dialog, which would cut the panel as that surface's; and every
@@ -455,6 +508,9 @@ export class UiDialog extends LitElement {
         this.#label();
     });
 
+    /** The rain this dialog has drawn, by the colour and the density it was drawn at. */
+    readonly #rains = new Map<string, Promise<string>>();
+
     /** Builds the dialog, and routes Esc and every close through `open`, announcing `ui-close`. */
     constructor() {
         super();
@@ -579,6 +635,47 @@ export class UiDialog extends LitElement {
         // The entrance a sheet cannot draw, where the dialog's chose one: its pieces or its grain,
         // on the panel the top layer has laid out by now.
         enter(this.#dialog);
+        this.#rain();
+    }
+
+    /**
+     * Lays the rain over the scrim where the dialog's sheet chose it, drawn in the accent the
+     * scrim resolves to now.
+     *
+     * **After the frame the dialog is first drawn in**: a task asked for from that frame's
+     * callback, since the drawing holds the page for tens of milliseconds, which the opening
+     * should not wait on. The rain comes in while the scrim does. Each colour and density is
+     * drawn once a dialog, so only a theme, a scheme or a display changed since an opening draws
+     * it again.
+     */
+    #rain(): void {
+        const dialog = this.#dialog;
+
+        if (
+            getComputedStyle(dialog).getPropertyValue(`${kinds.animated}backdrop`) !== 'char-rain'
+        ) {
+            return;
+        }
+
+        const colour = getComputedStyle(dialog, '::backdrop').color;
+        const key = `${colour} at ${String(devicePixelRatio)}`;
+
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                void this.#lay(key, colour);
+            }, 0);
+        });
+    }
+
+    /**
+     * Lays the rain drawn for `key` on the dialog for the scrim to read, drawing it in `colour`
+     * first where this dialog has not.
+     */
+    async #lay(key: string, colour: string): Promise<void> {
+        const layers = this.#rains.get(key) ?? rain(colour);
+
+        this.#rains.set(key, layers);
+        this.#dialog.style.setProperty(`${kinds.animated}rain`, await layers);
     }
 
     /** Runs the exit, and closes once it has finished. */

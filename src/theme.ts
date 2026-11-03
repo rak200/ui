@@ -227,7 +227,7 @@ export const matrix: Theme = {
             select: { 'focus-fill': 'tint' },
             card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
             toast: { 'focus-fill': 'tint', enter: 'wind', exit: 'wind' },
-            dialog: { enter: 'materialize', exit: 'erode' },
+            dialog: { enter: 'materialize', exit: 'erode', backdrop: 'char-rain' },
         },
     },
 };
