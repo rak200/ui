@@ -788,3 +788,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#355](https://github.com/rak200/ui/pull/355) | the card under Glass: dissolve in and out, the grain beside the pieces in one module    |
 | 4    | [#356](https://github.com/rak200/ui/pull/356) | the toast's pointer and focus in every theme, a card's, its movements on its transform  |
 | 4    | [#357](https://github.com/rak200/ui/pull/357) | the toast's slide in and out, its own rise standing down, and its exit as a state       |
+| 4    | [#358](https://github.com/rak200/ui/pull/358) | the toast's time left as a ring round its dismiss button, none under the collapse       |

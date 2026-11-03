@@ -1152,6 +1152,130 @@ describe('arriving and leaving', () => {
     });
 });
 
+/**
+ * The time a toast has left, drawn as a ring round its dismiss button — RFC 0004's dwell, which the
+ * default theme's taste names under every theme.
+ */
+describe('the time left, a ring round the dismiss button', () => {
+    /** Mounts `markup` under the token sheet, and hands over its toast. */
+    async function sheeted(markup: string): Promise<UiToast> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+
+        return toast(await mount(markup));
+    }
+
+    /** The ring, as its button's layer draws it. */
+    function ring(element: UiToast): CSSStyleDeclaration {
+        return getComputedStyle(dismisser(element), '::after');
+    }
+
+    /** The ring's sweep, the one animation its button's layer runs. */
+    function sweep(element: UiToast): CSSAnimation {
+        const found = dismisser(element)
+            .getAnimations({ subtree: true })
+            .find(
+                (animation): animation is CSSAnimation =>
+                    animation instanceof CSSAnimation &&
+                    animation.animationName === 'ui-dwell-ring',
+            );
+
+        if (found === undefined) {
+            throw new Error('no ring sweeping');
+        }
+
+        return found;
+    }
+
+    it("rings a timed toast's dismiss button with the time it has left, over its own dwell", async () => {
+        const element = await sheeted(
+            '<ui-toaster><ui-toast duration="9000">Saved.</ui-toast></ui-toaster>',
+        );
+        const styles = ring(element);
+
+        expect([
+            styles.content,
+            styles.animationName,
+            styles.animationDuration,
+            styles.animationTimingFunction,
+            styles.animationFillMode,
+        ]).toEqual(['""', 'ui-dwell-ring', '9s', 'linear', 'forwards']);
+        expect(styles.backgroundImage, "in the button's own colour").toBe(
+            `conic-gradient(${getComputedStyle(dismisser(element)).color} 360deg, rgba(0, 0, 0, 0) 0deg)`,
+        );
+
+        const swept = sweep(element);
+
+        swept.pause();
+        swept.currentTime = 4500;
+
+        expect(ring(element).getPropertyValue('--ui-fx-swept'), 'half left').toBe('180deg');
+    });
+
+    it("draws no ring round an error's button, nor round one that stays until it is dismissed", async () => {
+        const error = await sheeted(
+            '<ui-toaster><ui-toast variant="danger">Failed.</ui-toast></ui-toaster>',
+        );
+        const kept = await sheeted(
+            '<ui-toaster><ui-toast duration="0">Saved.</ui-toast></ui-toaster>',
+        );
+
+        expect([ring(error).content, ring(kept).content]).toEqual(['none', 'none']);
+    });
+
+    it('holds the ring full while the pointer is on the toast', async () => {
+        const element = await sheeted(
+            `<ui-toaster><ui-toast duration="${String(patient)}">Saved.</ui-toast></ui-toaster>`,
+        );
+        await still(element);
+
+        await userEvent.hover(element);
+
+        expect([
+            ring(element).animationName,
+            ring(element).getPropertyValue('--ui-fx-swept'),
+        ]).toEqual(['none', '360deg']);
+    });
+
+    it('holds the ring full while the focus is in the toast', async () => {
+        const element = await sheeted(
+            `<ui-toaster><ui-toast duration="${String(patient)}">Saved.</ui-toast></ui-toaster>`,
+        );
+
+        await userEvent.tab();
+
+        expect(ring(element).animationName).toBe('none');
+    });
+
+    it('stands the ring down for a reader who asked for less motion, read off the count the collapse takes to one', async () => {
+        const element = await sheeted(
+            '<ui-toaster style="--ui-iteration-settle: 1"><ui-toast duration="9000">Saved.</ui-toast></ui-toaster>',
+        );
+
+        expect(ring(element).content).toBe('none');
+    });
+
+    it('writes its dwell where it has a clock, and takes it off where it has none', async () => {
+        const element = await sheeted(
+            '<ui-toaster><ui-toast duration="9000">Saved.</ui-toast></ui-toaster>',
+        );
+
+        expect([
+            element.style.getPropertyValue('--ui-fx-dwell'),
+            element.matches(':state(timed)'),
+        ]).toEqual(['9000ms', true]);
+
+        element.variant = 'danger';
+        await element.updateComplete;
+
+        expect([
+            element.style.getPropertyValue('--ui-fx-dwell'),
+            element.matches(':state(timed)'),
+        ]).toEqual(['', false]);
+    });
+});
+
 describe('the dismiss button, which every toast has', () => {
     it('carries a name, because an icon-only control has nothing else to be called', async () => {
         const host = await mount(fixture);

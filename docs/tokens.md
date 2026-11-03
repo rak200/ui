@@ -589,6 +589,7 @@ raise. A card's entrance and its exit are its own moments as well, and so are a 
 | `card`     | `exit`         | `fade`          | faded out as `leave()` takes it away           |
 | `toast`    | `enter`        | `slide-elastic` | slid in, springing past where it lands         |
 | `toast`    | `exit`         | `slide`         | slid out toward the edge it came from          |
+| `toast`    | `dwell`        | `ring`          | the time it has left, round its dismiss button |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a

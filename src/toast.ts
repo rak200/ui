@@ -58,6 +58,24 @@ const drawn = query('toast');
 const arriving = ['fade', 'slide-elastic'].map((effect) => drawn('enter', effect)).join(' or ');
 const leaving = ['fade', 'slide'].map((effect) => drawn('exit', effect)).join(' or ');
 
+// Stryker disable all: the ring's property is registered once, at import, in the page's one
+// registry — so in the warm process Stryker switches mutants in, the original registration stands
+// before any mutant is active, and none of them changes what a test can see. Outside the runner's
+// reach, not an equivalent mutant.
+try {
+    // The angle the time left's ring sweeps: registered, so it moves rather than jumping at half
+    // way, and its own, so nothing a toast holds inherits it.
+    CSS.registerProperty({
+        name: '--ui-fx-swept',
+        syntax: '<angle>',
+        inherits: false,
+        initialValue: '360deg',
+    });
+} catch {
+    // Registered already, by another copy of this package on the page, which stands.
+}
+// Stryker restore all
+
 /**
  * The live regions a toast is announced through, and the box the stack is drawn in.
  *
@@ -425,6 +443,49 @@ export class UiToast extends LitElement {
                 inline-size: ${reference('--ui-icon-size')};
                 stroke-width: ${reference('--ui-icon-stroke')};
             }
+
+            /* The time left: what is left of the time the toast stays, as a ring round its dismiss
+               button in the button's own colour, as its cross is — RFC 0004's dwell. Inside the
+               toast, so a choice made on the one toast reaches it, and only where the toast has a
+               clock, over that clock's own time. It holds full while the pointer or the focus is on
+               the toast and starts again from full when both have gone, as the clock does. The time
+               is no token and does not collapse, so for a reader who asked for less motion the ring
+               would run the whole of it: it stands down, read off the count the collapse takes to
+               one. */
+            @container ${unsafeCSS(drawn('dwell', 'ring'))} and (not style(--ui-iteration-settle: 1)) {
+                button {
+                    position: relative;
+                }
+
+                :host(:state(timed)) button::after {
+                    content: '';
+                    position: absolute;
+                    inset: -3px;
+                    border-radius: 50%;
+                    background: conic-gradient(currentColor var(--ui-fx-swept), transparent 0);
+                    mask: radial-gradient(
+                        closest-side,
+                        transparent calc(100% - 2px),
+                        #000 calc(100% - 2px)
+                    );
+                    pointer-events: none;
+                    animation: ui-dwell-ring var(--ui-fx-dwell) linear forwards;
+                }
+
+                :host(:state(timed):is(:hover, :focus-within)) button::after {
+                    animation: none;
+                }
+            }
+
+            @keyframes ui-dwell-ring {
+                from {
+                    --ui-fx-swept: 360deg;
+                }
+
+                to {
+                    --ui-fx-swept: 0deg;
+                }
+            }
         `,
         surfaceEffects('toast', true),
     ];
@@ -561,6 +622,16 @@ export class UiToast extends LitElement {
         // when the variant moved are the same write — and the guard would be a branch no
         // input can tell apart from its absence.
         this.#route();
+
+        // The time left, which the ring the taste may choose draws: the toast's own dwell, where
+        // it has a clock — never an error, and never a toast told to stay.
+        if (this.variant !== 'danger' && this.duration > 0) {
+            this.#internals.states.add('timed');
+            this.style.setProperty('--ui-fx-dwell', `${String(this.duration)}ms`);
+        } else {
+            this.#internals.states.delete('timed');
+            this.style.removeProperty('--ui-fx-dwell');
+        }
     }
 
     /**

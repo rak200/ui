@@ -441,7 +441,11 @@ explains. This file restates none of them.
   beside them in `src/toast.ts`: a transition outranks an animation in the cascade, and Firefox started
   the rise's beside a slide, so under one the toast transitions only its transform; they stay what it
   does under `none` and in an engine without style queries, and its exit is the `leaving` state the
-  card's is.
+  card's is. **Why the time left is a ring the toast's own dwell runs, and why it stands down under
+  reduced motion** — the comment beside the ring in `src/toast.ts`: the dwell is no token, for the
+  reason the constant gives, so the toast writes it on itself as `--ui-fx-dwell` and marks itself
+  `timed`; a ring that does not collapse would move for the whole of it, so it is read off the
+  count the collapse takes to one. Its angle is registered in script, for the shimmer's reason.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

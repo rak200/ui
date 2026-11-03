@@ -768,13 +768,14 @@ export const taste: Taste = {
     // a field's darkening, its one answer to the pointer beside the raise — RFC 0004. A card's
     // entrance and its exit are its own moments too: it fades in as it is put on the page, and out
     // as `leave()` takes it off. A toast slides in from the page's edge, springing past where it
-    // lands and back, and slides out toward it.
+    // lands and back, and slides out toward it; and the time it has left is a ring round its
+    // dismiss button.
     components: {
         checkbox: { check: 'draw', 'hover-border': 'none' },
         switch: { check: 'spring', 'hover-border': 'none' },
         radio: { check: 'pop', 'hover-border': 'none' },
         card: { enter: 'fade', exit: 'fade' },
-        toast: { enter: 'slide-elastic', exit: 'slide' },
+        toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
     },
 };
 
