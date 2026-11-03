@@ -13,6 +13,7 @@ import { held, released } from './held.js';
 import { query } from './motion.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
+import { watch } from './stack.js';
 
 /** What a toast is telling the reader, which decides how it looks *and* how it is announced. */
 export type ToastVariant = 'info' | 'success' | 'warning' | 'danger';
@@ -50,6 +51,12 @@ const dwell = 5000;
 
 /** The condition one of the toast's effects is drawn under, by moment and effect. */
 const drawn = query('toast');
+
+/**
+ * True wherever the toaster a toast stands in chose the spring for its stack: read where the toaster
+ * stands, so a choice written on the toaster reaches it.
+ */
+const springing = query('toaster')('stack', 'spring');
 
 /**
  * True wherever the toast's entrance is one a surface's effects animate, which its own rise stands
@@ -175,6 +182,15 @@ export class UiToaster extends LitElement {
             pointer-events: auto;
         }
     `;
+
+    /**
+     * Watches the stack for as long as the toaster lives, so its toasts move into their place as one
+     * arrives or leaves, wherever in the page it is put.
+     */
+    constructor() {
+        super();
+        watch(this);
+    }
 
     /** Becomes a manual popover and shows itself, so the stack sits above the page. */
     override connectedCallback(): void {
@@ -474,6 +490,17 @@ export class UiToast extends LitElement {
 
                 :host(:state(timed):is(:hover, :focus-within)) button::after {
                     animation: none;
+                }
+            }
+
+            /* The stack, its toaster's: how this toast moves into its place as another arrives or
+               leaves — handed to the toaster's script, src/stack.ts, with the time something takes
+               to travel to its place and the curve that runs past its end and settles back. */
+            @container ${unsafeCSS(springing)} {
+                :host {
+                    --ui-fx-stack: spring;
+                    --ui-fx-stack-time: ${reference('--ui-duration-travel')};
+                    --ui-fx-stack-curve: ${reference('--ui-easing-emphasis')};
                 }
             }
 

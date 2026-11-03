@@ -510,7 +510,8 @@ tick on, springs the switch's thumb over and pops the radio's dot in, as the rea
 card rises under the pointer, rises and lifts while a focus the reader can see is on something it
 holds, and fades in as it is put on the page and out as it leaves; and a toast rises under the
 pointer, rises and lifts while a focus the reader can see is in it, and slides in from the page's
-edge and back out toward it, the time it has left a ring round its dismiss button.
+edge and back out toward it, the time it has left a ring round its dismiss button; and the toasts a
+toaster holds spring into their place as one arrives or leaves.
 RFC 0004 accepted that as the cost of having motion at all. A shipped theme's taste replaces it
 moment by moment, and names `none` where it wants nothing in place of an effect; a component's own
 entry outweighs a page's in either, so a theme replaces one the default theme names for a component

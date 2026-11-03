@@ -234,6 +234,14 @@ whole of it: it stands down instead, read off the count the collapse takes to on
 `--ui-iteration-settle`. The toast writes its time on itself, as `--ui-fx-dwell`, while it has a
 clock.
 
+**The stack springs its toasts into place.** When a toast arrives or leaves, the others move from
+where they stood to where the change put them, past it and back, over `--ui-duration-travel` on
+`--ui-easing-emphasis`, under every theme's taste. The stack is the toaster's, so its choice,
+`--ui-motion-stack`, reaches it written on the `<ui-toaster>` itself or anywhere round it. The
+toaster measures the others while a toast going still holds its place, as it announces `ui-dismiss`,
+so a toast your code removes without `dismiss()` leaves them to jump into place as they did; and a
+toast on its way out is left to its exit.
+
 ## Styling
 
 Every value is a [token](tokens.md); nothing here is hardcoded.

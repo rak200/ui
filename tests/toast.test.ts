@@ -1276,6 +1276,90 @@ describe('the time left, a ring round the dismiss button', () => {
     });
 });
 
+/**
+ * The stack — RFC 0004's, the toaster's: how the toasts a change leaves standing move into their
+ * place. What the moves are is graded on a stack of the suite's own in `tests/stack.test.ts`; what
+ * these are about is that the toaster and its toasts draw them.
+ */
+describe('the stack, which springs its toasts into place', () => {
+    /** Mounts `markup` under the token sheet. */
+    async function sheeted(markup: string): Promise<HTMLElement> {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+
+        return mount(markup);
+    }
+
+    /** The moves the stack set going on `element`, apart from what its own sheet animates. */
+    function springs(element: Element): (readonly unknown[])[] {
+        return element
+            .getAnimations()
+            .filter(
+                (animation) =>
+                    !(animation instanceof CSSAnimation) && !(animation instanceof CSSTransition),
+            )
+            .map((animation) => {
+                const effect = animation.effect as KeyframeEffect;
+
+                return [effect.getKeyframes()[0]?.['translate'], effect.getTiming().duration];
+            });
+    }
+
+    it("hands a toast its toaster's spring, read where the toaster stands", async () => {
+        const host = await sheeted(`
+            <ui-toaster style="--ui-duration-travel: 0.7s; --ui-easing-emphasis: linear">
+                <ui-toast duration="0">Saved.</ui-toast>
+            </ui-toaster>
+            <ui-toaster style="--ui-motion-stack: none">
+                <ui-toast duration="0">Kept.</ui-toast>
+            </ui-toaster>
+        `);
+        const [springing, still] = [...host.querySelectorAll('ui-toast')];
+        const handed = (element: Element | undefined): string[] =>
+            ['', '-time', '-curve'].map((kind) =>
+                element === undefined
+                    ? ''
+                    : getComputedStyle(element).getPropertyValue(`--ui-fx-stack${kind}`),
+            );
+
+        expect(handed(springing)).toEqual(['spring', '0.7s', 'linear']);
+        expect(handed(still)[0], 'a choice written on the toaster itself').toBe('');
+    });
+
+    it('springs the others into their place as one is dismissed, leaving one on its way out where it is', async () => {
+        const host = await sheeted(`
+            <ui-toaster style="--ui-duration-travel: 10s">
+                <ui-toast duration="0" style="--ui-duration-exit: 10s">First.</ui-toast>
+                <ui-toast duration="0">Second.</ui-toast>
+                <ui-toast duration="0" style="--ui-duration-exit: 0s">Third.</ui-toast>
+            </ui-toaster>
+        `);
+        const [first, second, third] = [...host.querySelectorAll<UiToast>('ui-toast')];
+
+        if (first === undefined || second === undefined || third === undefined) {
+            throw new Error('three toasts in the fixture');
+        }
+
+        for (const element of [first, second, third]) {
+            await still(element);
+        }
+
+        first.dismiss();
+
+        const gone = dismissed(third);
+
+        third.dismiss();
+        await gone;
+        await new Promise(requestAnimationFrame);
+
+        expect(springs(second), 'let down from where it stood').toEqual([
+            [expect.stringMatching(/^0px -\d+(\.\d+)?px$/), 10000],
+        ]);
+        expect(springs(first), 'on its way out, left to its exit').toEqual([]);
+    });
+});
+
 describe('the dismiss button, which every toast has', () => {
     it('carries a name, because an icon-only control has nothing else to be called', async () => {
         const host = await mount(fixture);

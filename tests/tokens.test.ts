@@ -860,6 +860,7 @@ describe('tokenStyleSheet', () => {
                 radio: { check: 'pop', 'hover-border': 'none' },
                 card: { enter: 'fade', exit: 'fade' },
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
+                toaster: { stack: 'spring' },
             },
         });
     });

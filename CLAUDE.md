@@ -43,6 +43,7 @@ src/
 ├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
 ├── ripple.ts        # the press's ripple — internal, a circle the sheet draws and a press starts
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
+├── stack.ts         # the toaster's stack — internal, how its toasts spring into their place
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
 ├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
@@ -72,6 +73,7 @@ tests/               # mirrors src/, one test file per unit
 ├── ring.test.ts
 ├── ripple.test.ts
 ├── shatter.test.ts
+├── stack.test.ts
 ├── select.test.ts
 ├── table.test.ts
 ├── theme.test.ts
@@ -446,6 +448,13 @@ explains. This file restates none of them.
   reason the constant gives, so the toast writes it on itself as `--ui-fx-dwell` and marks itself
   `timed`; a ring that does not collapse would move for the whole of it, so it is read off the
   count the collapse takes to one. Its angle is registered in script, for the shimmer's reason.
+  **Why the stack is measured as a toast announces `ui-dismiss`, and why a toast hands it the spring
+  under its toaster's query** — the docblock on `src/stack.ts`: a layout move is animated from where
+  each toast stood, and `ui-dismiss` is the last moment the toast going holds its place, while a
+  newcomer is measured out of the layout and moved at the next frame; a toast's `:host` rule reads
+  where its toaster stands, so a choice written on the toaster reaches the stack, which S8 would have
+  kept a rule on the toaster's own host from. `tests/stack.test.ts` stacks undefined `ui-toast`
+  elements of its own, so only the stack moves them.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in
