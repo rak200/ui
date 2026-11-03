@@ -859,7 +859,7 @@ describe('tokenStyleSheet', () => {
                 switch: { check: 'spring', 'hover-border': 'none' },
                 radio: { check: 'pop', 'hover-border': 'none' },
                 card: { enter: 'fade', exit: 'fade' },
-                toast: { enter: 'slide-elastic', exit: 'slide' },
+                toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
             },
         });
     });

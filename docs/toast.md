@@ -225,6 +225,15 @@ transition outranks an animation in the cascade, and the two would move the same
 which your stylesheet reads as `ui-toast:state(leaving)`, and a toast put back after it was dismissed
 arrives anew. The state stands where an undocumented class, `closing`, stood before.
 
+**The time a toast has left is a ring round its dismiss button**, in the button's own colour, under
+every theme's taste. It runs over the toast's own `duration`, empties as the clock does, holds full
+while the pointer or the focus is on the toast, and starts again from full when both have gone, as
+the clock does. An error and a toast told to stay have no clock, and so no ring. The time is not a
+token and does not collapse, so for a reader who asked for less motion the ring would move for the
+whole of it: it stands down instead, read off the count the collapse takes to one,
+`--ui-iteration-settle`. The toast writes its time on itself, as `--ui-fx-dwell`, while it has a
+clock.
+
 ## Styling
 
 Every value is a [token](tokens.md); nothing here is hardcoded.
@@ -243,6 +252,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | lift          | `--ui-elevation-raised`, lit in the edge's colour if written in `currentColor`                                  |
 | font          | `--ui-font`                                                                                                     |
 | dismiss mark  | `--ui-icon-size` and `--ui-icon-stroke`, at 24 × 24 minimum                                                     |
+| time left     | a ring round the dismiss button, in its colour, `--ui-color-text-muted`                                         |
 | motion        | `--ui-duration-state`, `--ui-easing-enter`, `--ui-easing-exit`, and `--ui-duration-effect` for a movement       |
 
 A toast is **bounded as well as lifted**, for the reason [`<ui-card>`](card.md) gives: a shadow is one
