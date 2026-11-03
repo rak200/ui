@@ -2923,4 +2923,14 @@ describe("a surface's effects", () => {
             ).toEqual(['none', 'none']);
         }
     });
+
+    it("runs its passage at its own pace, never taking the whole of a dialog's it is held in", () => {
+        const outer = document.createElement('div');
+        outer.style.setProperty('--ui-fx-fit', 'whole');
+        const { region, host } = surface('test', { enter: 'materialize' });
+        outer.append(region);
+        document.body.append(outer);
+
+        expect(getComputedStyle(host).getPropertyValue('--ui-fx-fit')).toBe('pace');
+    });
 });

@@ -1,8 +1,17 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
+import { query } from './motion.js';
+import { enter, exit, mend } from './passage.js';
 import { reference } from './reference.js';
 
 /** The class the exit is carried by, on the dialog for exactly as long as the exit runs. */
 const closing = 'closing';
+
+/** The query each of the panel's effects is drawn under: the consumer's choice, else a taste. */
+const drawn = query('dialog');
+
+/** The queries an entrance and an exit drawn in script are under: the panel's pieces or grain. */
+const arriving = ['materialize', 'dissolve'].map((effect) => drawn('enter', effect)).join(' or ');
+const leaving = ['erode', 'dissolve'].map((effect) => drawn('exit', effect)).join(' or ');
 
 /** How many dialogs are holding the page still. */
 let locks = 0;
@@ -251,6 +260,94 @@ export class UiDialog extends LitElement {
             transition-timing-function: ${reference('--ui-easing-exit')};
         }
 
+        /* The panel's passage, RFC 0004's: the effect the dialog chose for each moment and how it
+           runs, handed to src/passage.ts as a surface hands its own. Its own, never one inherited
+           from a surface round the dialog, which would cut the panel as that surface's; and every
+           effect takes the dialog's step whole, rather than in proportion to the time the review
+           judged a card's at, since a dialog is opened to be used and closed to get back to the
+           page, and the reader waits on it both ways. */
+        dialog {
+            --ui-fx-enter: none;
+            --ui-fx-exit: none;
+            --ui-fx-fit: whole;
+        }
+
+        /* none: the panel there at once as the dialog opens, and gone at once as it closes. The
+           scrim keeps the fade it has today. */
+        @container ${unsafeCSS(drawn('enter', 'none'))} {
+            dialog[open]:not(.closing) {
+                transition: none;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'none'))} {
+            dialog.closing {
+                transition: none;
+            }
+        }
+
+        /* materialize and erode: the panel put together from pieces appearing where they belong,
+           at random, and broken into pieces vanishing where they are — drawn in script, on the
+           panel where the top layer holds it, handed each moment's curve. */
+        @container ${unsafeCSS(drawn('enter', 'materialize'))} {
+            dialog {
+                --ui-fx-enter: materialize;
+                --ui-fx-enter-time: ${reference('--ui-duration-modal')};
+                --ui-fx-enter-curve: ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'erode'))} {
+            dialog {
+                --ui-fx-exit: erode;
+                --ui-fx-exit-time: ${reference('--ui-duration-modal')};
+                --ui-fx-exit-curve: ${reference('--ui-easing-exit')};
+            }
+        }
+
+        /* dissolve: the panel brought out of a fine grain and dissolved into one, on a straight
+           clock, as a surface's is, and the scrim going with it on that clock. */
+        @container ${unsafeCSS(drawn('enter', 'dissolve'))} {
+            dialog {
+                --ui-fx-enter: dissolve;
+                --ui-fx-enter-time: ${reference('--ui-duration-modal')};
+                --ui-fx-enter-curve: linear;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'dissolve'))} {
+            dialog {
+                --ui-fx-exit: dissolve;
+                --ui-fx-exit-time: ${reference('--ui-duration-modal')};
+                --ui-fx-exit-curve: linear;
+            }
+
+            dialog.closing::backdrop {
+                transition-timing-function: linear;
+            }
+        }
+
+        /* Under a moment drawn in script the panel's own fade stands down, since it would fade
+           what the pieces or the grain draw; under an exit the panel stands whole, as the exit
+           takes it away itself. The scrim leaves with it, over the time the pieces or the grain
+           take, so neither is left on the page without the other. */
+        @container ${unsafeCSS(arriving)} {
+            dialog[open]:not(.closing) {
+                transition: none;
+            }
+        }
+
+        @container ${unsafeCSS(leaving)} {
+            dialog.closing {
+                opacity: 1;
+                transition: none;
+            }
+
+            dialog.closing::backdrop {
+                transition-duration: ${reference('--ui-duration-modal')};
+            }
+        }
+
         /* showModal() focuses the dialog itself when nothing inside it can take focus,
            and a focused thing with no ring is the most common way a component stops being
            usable by keyboard. */
@@ -428,6 +525,9 @@ export class UiDialog extends LitElement {
     #enter(): void {
         this.#dialog.showModal();
         hold();
+        // The entrance a sheet cannot draw, where the dialog's chose one: its pieces or its grain,
+        // on the panel the top layer has laid out by now.
+        enter(this.#dialog);
     }
 
     /** Runs the exit, and closes once it has finished. */
@@ -435,6 +535,9 @@ export class UiDialog extends LitElement {
         const dialog = this.#dialog;
 
         dialog.classList.add(closing);
+        // The exit a sheet cannot draw, on clocks of the panel's own, which the wait below waits
+        // out with the rest.
+        exit(dialog);
 
         // `finished` rejects when an animation is cancelled, which is exactly what
         // reopening mid-exit does — so what this waits for is settlement rather than
@@ -450,10 +553,12 @@ export class UiDialog extends LitElement {
 
         dialog.classList.remove(closing);
 
-        // Reopened while the exit was running. The dialog never left the top layer, so
-        // there is nothing to close, and taking the class back off is the whole of the
-        // way back.
+        // Reopened while the exit was running. The dialog never left the top layer, so there
+        // is nothing to close: taking the class back off brings the panel back where the sheet
+        // draws it, and the entrance runs again where a script draws it, which also gives back a
+        // panel an exit drawn so has left in pieces.
         if (this.open) {
+            enter(dialog);
             return;
         }
 
@@ -476,6 +581,8 @@ export class UiDialog extends LitElement {
 
         this.#dialog.close();
         release();
+        // The panel as it was, whatever passage was drawn on it, for the next opening.
+        mend(this.#dialog);
     }
 
     /**

@@ -101,7 +101,7 @@ export const tokens = [
     // directions are asked to feel different on purpose.
     //
     // No duration steps come with them. The scale is ordinal with gaps precisely so a step
-    // can be inserted when something needs one, and the dialog needs no duration the state
+    // can be inserted when something needs one, and the dialog's fade needs no duration the state
     // step does not already give it — inventing `--ui-duration-200` before a component
     // judges it against something is a claim this package does not make.
     '--ui-easing-enter',
@@ -137,6 +137,11 @@ export const tokens = [
     // the first step, in the gap the ordinals left for it. No component reads it — they read
     // `--ui-duration-follow`.
     '--ui-duration-50',
+    // The step a dialog's effects arrive with: every effect a dialog draws takes it whole, since a
+    // dialog is opened to be used and closed to get back to the page, so a reader waits on it both
+    // ways — RFC 0004's prototypes declared it between the first two steps, in the gap the
+    // ordinals left for it. No component reads it — they read `--ui-duration-modal`.
+    '--ui-duration-150',
     // The icon category, arriving with `ui-icon` rather than with the twelve components
     // that will eventually hold one. Two names, because an adopted set has exactly two
     // knobs that decide whether it looks like it belongs: how big a glyph is drawn and
@@ -253,6 +258,11 @@ export const derivedTokens = [
     // How long an exit takes, a step quicker than the entrance, RFC 0004's prototypes say: slow to
     // arrive and quick to be gone, so a departure does not linger over a decision already made.
     '--ui-duration-exit',
+    // How long a modal's effect takes — RFC 0004's: a dialog's panel put together from its pieces or
+    // brought out of a grain, and broken or dissolved again, each whole in the one step. Apart from
+    // the entrance's and the exit's, which a surface on the page takes at its own pace: a dialog
+    // holds the page while it comes and goes, and the reader waits on it both ways.
+    '--ui-duration-modal',
     // The boundary of a control, and the text inside one that is not a value yet. Both
     // arrive with `ui-input`, and both are the same mix at different strengths — which is
     // what makes them one category rather than two: a border and a placeholder are the
@@ -432,6 +442,8 @@ export const defaults: Readonly<Record<Token, string>> = {
     '--ui-iteration-settle': '4',
     // 75ms, the prototypes' step for a movement that follows the pointer, and the review's.
     '--ui-duration-50': '75ms',
+    // 200ms, the prototypes' step for a dialog's effects, and the review's.
+    '--ui-duration-150': '200ms',
     '--ui-icon-size': '1.25em',
     '--ui-icon-stroke': '2',
     // Two layers rather than one, which is what makes a shadow read as *lift* instead of
@@ -572,6 +584,7 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     '--ui-duration-follow': ground('--ui-duration-50'),
     '--ui-duration-enter': ground('--ui-duration-300'),
     '--ui-duration-exit': ground('--ui-duration-200'),
+    '--ui-duration-modal': ground('--ui-duration-150'),
     // Mixing toward the text rather than toward black or white is what makes one formula
     // right in both schemes: text is always the far pole from surface, so the mix darkens
     // on a light page and lightens on a dark one, without either being named. The contrast

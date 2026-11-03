@@ -227,6 +227,7 @@ export const matrix: Theme = {
             select: { 'focus-fill': 'tint' },
             card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
             toast: { 'focus-fill': 'tint', enter: 'wind', exit: 'wind' },
+            dialog: { enter: 'materialize', exit: 'erode' },
         },
     },
 };
@@ -403,6 +404,7 @@ export const glass: Theme = {
             switch: { 'hover-border': 'edge' },
             radio: { 'hover-border': 'edge' },
             card: { 'hover-move': 'tilt', enter: 'dissolve', exit: 'dissolve' },
+            dialog: { enter: 'dissolve', exit: 'dissolve' },
             // The toast raised with its boundary as it is at rest, apart from the page's cast and
             // edge, as RFC 0004 chose.
             toast: {

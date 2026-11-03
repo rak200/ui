@@ -2385,11 +2385,13 @@ export function surfaceEffects(component: string, transformed = false): CSSResul
         /* The host's one list of animations: its passage, an entrance as it is put on the page and
            an exit as it leaves. Its own on each surface, never one inherited from a surface round
            it, which a surface it holds would otherwise play as its own — and so are the entrance and
-           the exit drawn in script. */
+           the exit drawn in script, and how they are timed: a card in a dialog runs its pieces at
+           its own pace, where the dialog's panel takes them whole. */
         :host {
             --ui-fx-passage: none;
             --ui-fx-enter: none;
             --ui-fx-exit: none;
+            --ui-fx-fit: pace;
             animation: var(--ui-fx-passage, none);
         }
 
