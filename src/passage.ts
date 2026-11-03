@@ -1,8 +1,9 @@
 /**
  * A surface's passage in script — RFC 0004's pieces and grain: the entrances and the exits a sheet
  * cannot draw. Materialize puts a surface together from pieces appearing where they belong, at
- * random, as it arrives, and erode breaks it into pieces vanishing where they are as it leaves;
- * dissolve brings it out of a fine grain as it arrives, or dissolves it into one as it leaves.
+ * random, as it arrives, and erode breaks it into pieces vanishing where they are as it leaves; wind
+ * blows it together from pieces sliding in on a wind, or away into them; dissolve brings it out of a
+ * fine grain as it arrives, or dissolves it into one as it leaves.
  *
  * **One filter over the surface, and nothing is copied.** The prototypes cut a card from thirty-six
  * copies of itself, and a copy of what a host put in a card is that content again: an iframe loaded
@@ -19,7 +20,12 @@
  * while it is in pieces, as the shatter's button does. Each fades on a clock of its own: breaking, a
  * piece waits up to 465ms and fades over 390 to 585, a quarter quicker than the reference's own; put
  * together, every wait is run backward, so the piece that would go last comes first, and the whole is
- * fitted so the last piece lands at 650ms.
+ * fitted so the last piece lands at 650ms. **Along a wind they slide as they fade**: about
+ * thirty-six pieces, each about as tall as it is wide, since six by six cut a toast into slivers,
+ * blown toward the end of the line, the side the wind blows from first, and what lies further on
+ * further, 90px and 12 more for each sixth of the surface, drifting up to 14px either side. Put
+ * together, every flight is run backward, so they slide in from the end of the line, and the whole is
+ * fitted to 520ms either way. What a copy did and a piece here does not: turn as it went.
  *
  * **The grain is noise made the surface's alpha.** feTurbulence's noise becomes the alpha through a
  * colour matrix — six times the noise plus an offset, held between 0 and 1 — and the offset is a
@@ -59,14 +65,21 @@ interface Handed {
     readonly box: DOMRect;
     readonly width: number;
     readonly height: number;
+    /** Which way the end of the line lies across, which a wind blows toward: 1, or -1. */
+    readonly way: number;
 }
 
-/** One piece: its cell, as steps of the cut across and down, and its fade, in milliseconds. */
+/**
+ * One piece: its cell, as steps of the cut across and down; its fade, in milliseconds; and how far
+ * it goes as it fades, in pixels across and down.
+ */
 interface Piece {
     readonly row: number;
     readonly column: number;
     readonly wait: number;
     readonly length: number;
+    readonly dx: number;
+    readonly dy: number;
 }
 
 /** What is cutting each surface now: how to stop it and give the surface back as it was. */
@@ -92,6 +105,9 @@ const assembled = 650;
 
 /** How long the grain took either way at the judged times: a step and a half of a flourish. */
 const dissolved = 780;
+
+/** When the last piece of a wind landed or went at the judged times: a flourish, either way. */
+const windblown = 520;
 
 /** How hard a grain's edge is: the noise times this turns its ramp into a step. */
 const gain = 6;
@@ -139,6 +155,7 @@ function handed(surface: HTMLElement, moment: Moment): Handed | undefined {
         box,
         width: Number.parseFloat(style.width),
         height: Number.parseFloat(style.height),
+        way: Number.parseFloat(style.getPropertyValue(`${kinds.animated}end`)),
     };
 }
 
@@ -228,10 +245,10 @@ function run(
 }
 
 /**
- * The thirty-six pieces, row by row: each waits up to 465ms and fades over 390 to 585, at the
- * reference's pace less a quarter.
+ * The thirty-six pieces at random, row by row: each waits up to 465ms and fades over 390 to 585 where
+ * it lies, at the reference's pace less a quarter.
  */
-function plan(): Piece[] {
+function scattered(): Piece[] {
     const pieces: Piece[] = [];
 
     for (let row = 0; row < side; row += 1) {
@@ -241,6 +258,8 @@ function plan(): Piece[] {
                 column,
                 wait: Math.random() * 465,
                 length: 390 + Math.random() * 195,
+                dx: 0,
+                dy: 0,
             });
         }
     }
@@ -248,23 +267,79 @@ function plan(): Piece[] {
     return pieces;
 }
 
-/** Cuts `surface` into its pieces, and fades them in, `together`, or out, as `handed` says. */
+/**
+ * How a wind cuts a surface `width` by `height`, rows by columns: about thirty-six pieces, each about
+ * as tall as it is wide.
+ */
+function squared(width: number, height: number): readonly [number, number] {
+    const columns = Math.max(1, Math.round(Math.sqrt((36 * width) / height)));
+
+    return [Math.max(1, Math.round(36 / columns)), columns];
+}
+
+/**
+ * The pieces a wind blows across, `way`, cut `rows` by `columns`, row by row: the side it blows from
+ * goes first, and what lies further on flies further, 90px and 12 more for each sixth of the surface,
+ * drifting up to 14px either side; each waits 34ms for each sixth and up to 40 more, and fades over
+ * 520 to 780ms — the reference's own, counted in its six steps however the surface is cut.
+ */
+function blown(rows: number, columns: number, way: number): Piece[] {
+    const pieces: Piece[] = [];
+
+    for (let row = 0; row < rows; row += 1) {
+        for (let column = 0; column < columns; column += 1) {
+            const across = (column * (side - 1)) / Math.max(1, columns - 1);
+            // How far along the wind it lies: across, or across from the far side where the wind
+            // blows the other way.
+            const along = ((side - 1) * (1 - way)) / 2 + way * across;
+
+            pieces.push({
+                row,
+                column,
+                wait: along * 34 + Math.random() * 40,
+                length: 520 + Math.random() * 260,
+                dx: way * (90 + along * 12),
+                dy: Math.random() * 28 - 14,
+            });
+        }
+    }
+
+    return pieces;
+}
+
+/**
+ * Cuts `surface` into its pieces, at random or on a wind where `windy`, and fades them in,
+ * `together`, or out, as `handed` says: along a wind, each slides on the way it blows as it fades,
+ * from where it lands or to where it goes.
+ */
 function pieces(
     surface: HTMLElement,
-    { pace, curve, box, width, height }: Handed,
+    { pace, curve, box, width, height, way }: Handed,
     together: boolean,
+    windy: boolean,
 ): void {
-    const room = reach * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const [rows, columns] = windy ? squared(width, height) : [side, side];
+    const cut = windy ? blown(rows, columns, way) : scattered();
+    // An outer piece reaches 3rem past the surface, and the filter as far again as a piece goes.
+    const edge = reach * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const room =
+        edge + Math.max(...cut.map((piece) => Math.max(Math.abs(piece.dx), Math.abs(piece.dy))));
     const ratio = devicePixelRatio;
-    // Where cut `at` of the six falls across `length` of the surface's own pixels, drawn `drawn`
-    // pixels long on the page from `origin`: on a device pixel of the page, or `room` past an
+    // Where cut `at` of `count` falls across `length` of the surface's own pixels, drawn `drawn`
+    // pixels long on the page from `origin`: on a device pixel of the page, or `edge` past an
     // outer edge.
-    const line = (origin: number, drawn: number, length: number, at: number): number =>
+    const line = (
+        origin: number,
+        drawn: number,
+        length: number,
+        at: number,
+        count: number,
+    ): number =>
         at === 0
-            ? -room
-            : at === side
-              ? length + room
-              : ((Math.round((origin + (drawn * at) / side) * ratio) / ratio - origin) * length) /
+            ? -edge
+            : at === count
+              ? length + edge
+              : ((Math.round((origin + (drawn * at) / count) * ratio) / ratio - origin) * length) /
                 drawn;
     const filter = made('filter', {
         filterUnits: 'userSpaceOnUse',
@@ -276,22 +351,32 @@ function pieces(
         'color-interpolation-filters': 'sRGB',
     });
     const merge = made('feMerge', {});
-    const cut = plan();
     const end = Math.max(...cut.map((piece) => piece.wait + piece.length));
     const first = Math.min(...cut.map((piece) => piece.wait));
-    // Put together, the span from the first piece setting off to the last landing is fitted to
-    // its time; broken, every piece keeps its pace, and the pace follows the exit's time.
-    const scale = together ? (assembled * pace) / (end - first) : pace;
-    const faded = cut.map((piece, index) => {
-        const left = line(box.left, box.width, width, piece.column);
-        const top = line(box.top, box.height, height, piece.row);
-        const fade = made('feFuncA', { type: 'linear', slope: together ? '0' : '1' });
-        const cell = made('feComponentTransfer', {
+    // Put together, the span from the first piece setting off to the last landing is fitted to its
+    // time. Broken at random, every piece keeps its pace, which follows the exit's time; along a
+    // wind, the last goes as the time is up.
+    const scale = windy
+        ? (windblown * pace) / (together ? end - first : end)
+        : together
+          ? (assembled * pace) / (end - first)
+          : pace;
+    const drawn = cut.map((piece, index) => {
+        const left = line(box.left, box.width, width, piece.column, columns);
+        const top = line(box.top, box.height, height, piece.row, rows);
+        // Its cell of the surface, moved: the offset's own region is where the cell lands, which the
+        // fade's, reading nothing but it, takes.
+        const moved = made('feOffset', {
             in: 'SourceGraphic',
             x: String(left),
             y: String(top),
-            width: String(line(box.left, box.width, width, piece.column + 1) - left),
-            height: String(line(box.top, box.height, height, piece.row + 1) - top),
+            width: String(line(box.left, box.width, width, piece.column + 1, columns) - left),
+            height: String(line(box.top, box.height, height, piece.row + 1, rows) - top),
+            result: `moved-${String(index)}`,
+        });
+        const fade = made('feFuncA', { type: 'linear', slope: together ? '0' : '1' });
+        const shown = made('feComponentTransfer', {
+            in: `moved-${String(index)}`,
             result: `piece-${String(index)}`,
         });
         // Its clock, on the surface: put together, what would have gone last comes first.
@@ -302,11 +387,11 @@ function pieces(
             fill: 'both',
         });
 
-        cell.append(fade);
-        filter.append(cell);
+        shown.append(fade);
+        filter.append(moved, shown);
         merge.append(made('feMergeNode', { in: `piece-${String(index)}` }));
 
-        return { fade, timing };
+        return { piece, left, top, moved, fade, timing };
     });
 
     filter.append(merge);
@@ -314,12 +399,20 @@ function pieces(
         surface,
         'pieces',
         filter,
-        faded.map(({ timing }) => timing),
+        drawn.map(({ timing }) => timing),
         () => {
-            for (const { fade, timing } of faded) {
+            for (const { piece, left, top, moved, fade, timing } of drawn) {
+                // How far it has gone: put together, it comes in from where it would have gone.
                 const progress = timing.getComputedTiming().progress ?? 0;
+                const away = together ? 1 - progress : progress;
+                const across = Math.round(piece.dx * away * ratio) / ratio;
+                const down = Math.round(piece.dy * away * ratio) / ratio;
 
-                fade.setAttribute('slope', String(together ? progress : 1 - progress));
+                moved.setAttribute('dx', String(across));
+                moved.setAttribute('dy', String(down));
+                moved.setAttribute('x', String(left + across));
+                moved.setAttribute('y', String(top + down));
+                fade.setAttribute('slope', String(1 - away));
             }
         },
         together,
@@ -389,7 +482,8 @@ function grain(surface: HTMLElement, { pace, curve }: Handed, together: boolean)
 
 /**
  * Runs the entrance `surface`'s sheet chose for it as it arrives — putting it together from its
- * pieces, or bringing it out of a grain — and gives it back as it was once that is done. Whatever was
+ * pieces, at random or on a wind, or bringing it out of a grain — and gives it back as it was once
+ * that is done. Whatever was
  * running on it is ended first.
  */
 export function enter(surface: HTMLElement): void {
@@ -398,15 +492,17 @@ export function enter(surface: HTMLElement): void {
     const chosen = handed(surface, 'enter');
 
     if (chosen?.effect === 'materialize') {
-        pieces(surface, chosen, true);
+        pieces(surface, chosen, true, false);
+    } else if (chosen?.effect === 'wind') {
+        pieces(surface, chosen, true, true);
     } else if (chosen?.effect === 'dissolve') {
         grain(surface, chosen, true);
     }
 }
 
 /**
- * Runs the exit `surface`'s sheet chose for it as it leaves — breaking it into its pieces, or
- * dissolving it into a grain — and leaves it drawn gone until it is mended, which the component does
+ * Runs the exit `surface`'s sheet chose for it as it leaves — breaking it into its pieces, at random
+ * or on a wind, or dissolving it into a grain — and leaves it drawn gone until it is mended, which the component does
  * once it has taken the surface away. Whatever was running on it is ended first.
  */
 export function exit(surface: HTMLElement): void {
@@ -415,7 +511,9 @@ export function exit(surface: HTMLElement): void {
     const chosen = handed(surface, 'exit');
 
     if (chosen?.effect === 'erode') {
-        pieces(surface, chosen, false);
+        pieces(surface, chosen, false, false);
+    } else if (chosen?.effect === 'wind') {
+        pieces(surface, chosen, false, true);
     } else if (chosen?.effect === 'dissolve') {
         grain(surface, chosen, false);
     }

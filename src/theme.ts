@@ -148,7 +148,8 @@ export function themeStyleSheet(theme: Theme): string {
  * its ring glitches and its label glows; and in error its boundary splits, its fill as it is. A card
  * takes the tint and glows under the pointer, and takes the tint and a burst at a focus it holds; it
  * is put together from pieces appearing at random as it arrives, and broken into pieces vanishing at
- * random as it leaves. A toast takes the card's answers to the pointer and a focus in it.
+ * random as it leaves. A toast takes the card's answers to the pointer and a focus in it, and comes
+ * and goes on a wind, blown together from its pieces and away into them.
  */
 export const matrix: Theme = {
     name: 'matrix',
@@ -225,7 +226,7 @@ export const matrix: Theme = {
             textarea: { 'focus-fill': 'tint' },
             select: { 'focus-fill': 'tint' },
             card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
-            toast: { 'focus-fill': 'tint' },
+            toast: { 'focus-fill': 'tint', enter: 'wind', exit: 'wind' },
         },
     },
 };
@@ -268,7 +269,8 @@ export const matrix: Theme = {
  * nearest it, and leans toward it; at a focus it holds, its tint sweeps across it and a light holds
  * inside its boundary; and it comes out of a fine grain as it arrives, and dissolves into one as it
  * leaves. A toast takes its tint where the pointer is and rises, its edge as it rests; at a focus in
- * it, its tint sweeps across it and a light holds inside its boundary.
+ * it, its tint sweeps across it and a light holds inside its boundary; and it comes into focus as it
+ * arrives, and goes out of it as it leaves.
  */
 export const glass: Theme = {
     name: 'glass',
@@ -403,7 +405,12 @@ export const glass: Theme = {
             card: { 'hover-move': 'tilt', enter: 'dissolve', exit: 'dissolve' },
             // The toast raised with its boundary as it is at rest, apart from the page's cast and
             // edge, as RFC 0004 chose.
-            toast: { 'hover-shadow': 'raise', 'hover-border': 'none' },
+            toast: {
+                'hover-shadow': 'raise',
+                'hover-border': 'none',
+                enter: 'refocus',
+                exit: 'defocus',
+            },
         },
     },
 };

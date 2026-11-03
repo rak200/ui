@@ -2417,8 +2417,8 @@ export function surfaceEffects(component: string, transformed = false): CSSResul
         }
 
         /* Which way the end of the line lies on the x axis, where a slide comes in from and goes
-           out to: the page's right edge, where a toaster stands, and its left in right-to-left
-           text. */
+           out to and a wind blows toward: the page's right edge, where a toaster stands, and its
+           left in right-to-left text. */
         :host {
             --ui-fx-end: 1;
         }
@@ -2533,6 +2533,65 @@ export function surfaceEffects(component: string, transformed = false): CSSResul
                 --ui-fx-exit: dissolve;
                 --ui-fx-exit-time: ${reference('--ui-duration-exit')};
                 --ui-fx-exit-curve: linear;
+            }
+        }
+
+        /* wind: the surface blown together from pieces sliding in from the end of the line as it is
+           put on the page, and away into them toward it as it leaves — handed each moment's time
+           and curve. */
+        @container ${unsafeCSS(drawn('enter', 'wind'))} {
+            :host {
+                --ui-fx-enter: wind;
+                --ui-fx-enter-time: ${reference('--ui-duration-enter')};
+                --ui-fx-enter-curve: ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'wind'))} {
+            :host {
+                --ui-fx-exit: wind;
+                --ui-fx-exit-time: ${reference('--ui-duration-exit')};
+                --ui-fx-exit-curve: ${reference('--ui-easing-exit')};
+            }
+        }
+
+        /* refocus: the surface coming into focus as it is put on the page, from half a rem out of it
+           and faint, whole by half the way, over an entrance and a quarter again; and defocus, going
+           out of it as it leaves, over an exit and a quarter again — the times the review judged,
+           450ms and 300ms at their defaults. */
+        @container ${unsafeCSS(drawn('enter', 'refocus'))} {
+            :host {
+                --ui-fx-passage: ui-enter-refocus calc(${reference('--ui-duration-enter')} * 1.25)
+                    ${reference('--ui-easing-enter')} backwards;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'defocus'))} {
+            :host(:state(leaving)) {
+                --ui-fx-passage: ui-exit-defocus calc(${reference('--ui-duration-exit')} * 1.25)
+                    ${reference('--ui-easing-exit')} forwards;
+            }
+        }
+
+        @keyframes ui-enter-refocus {
+            from {
+                filter: blur(0.5rem);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes ui-exit-defocus {
+            50% {
+                opacity: 1;
+            }
+
+            to {
+                filter: blur(0.5rem);
+                opacity: 0;
             }
         }
 

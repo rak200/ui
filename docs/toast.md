@@ -225,6 +225,17 @@ transition outranks an animation in the cascade, and the two would move the same
 which your stylesheet reads as `ui-toast:state(leaving)`, and a toast put back after it was dismissed
 arrives anew. The state stands where an undocumented class, `closing`, stood before.
 
+**Under [Matrix](theme.md#matrix) a toast comes and goes on a wind**: as it is dismissed it is blown
+away into pieces of itself toward the end of the line, the side the wind blows from first, each
+sliding on as it fades, and it arrives the same way run backward, its pieces sliding in from that
+edge — 520ms either way at the defaults, in proportion to `--ui-duration-enter` and
+`--ui-duration-exit`. The pieces are a filter over the toast, as the card's are, and nothing of your
+message is copied; what the prototype's copies did and these do not is turn as they went. **Under
+[Glass](theme.md#glass) it comes into focus** from half a rem out of it, and goes out of it as it
+leaves, over an entrance and a quarter again, and an exit and a quarter. While a passage drawn
+through a filter runs, the toast stands at rest, its own sink's values left undrawn, so there is
+something to cut.
+
 **The time a toast has left is a ring round its dismiss button**, in the button's own colour, under
 every theme's taste. It runs over the toast's own `duration`, empties as the clock does, holds full
 while the pointer or the focus is on the toast, and starts again from full when both have gone, as
