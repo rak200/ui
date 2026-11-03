@@ -117,6 +117,7 @@ default theme's taste names, which would otherwise run under Matrix too.
 | `toast`                       | `exit`       | `wind`        |
 | `dialog`                      | `enter`      | `materialize` |
 | `dialog`                      | `exit`       | `erode`       |
+| `dialog`                      | `backdrop`   | `char-rain`   |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both

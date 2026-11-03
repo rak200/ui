@@ -40,6 +40,7 @@ src/
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
+├── rain.ts          # the scrim's rain — internal, falling code drawn on a canvas in the accent
 ├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
 ├── ripple.ts        # the press's ripple — internal, a circle the sheet draws and a press starts
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
@@ -70,6 +71,7 @@ tests/               # mirrors src/, one test file per unit
 ├── placement.test.ts
 ├── pointer.test.ts
 ├── radio.test.ts
+├── rain.test.ts
 ├── ring.test.ts
 ├── ripple.test.ts
 ├── shatter.test.ts
@@ -393,6 +395,20 @@ explains. This file restates none of them.
   and a query on the token itself took for glass. **Why the scrim always leaves over the panel's
   step** — the comment beside the exit's rule there: `#exit` waits on the panel alone, so a scrim
   that came in slower would be cut short as the dialog closed.
+- **Why Matrix's rain over a dialog's scrim is a picture drawn on a canvas, handed over by a blob
+  URL, and drawn after the opening's first frame** — the docblock on `src/rain.ts`, and the docblock
+  on `#rain()` in `src/dialog.ts`. A picture cannot read a token, so the accent is read off the
+  scrim, where the sheet writes it, and the tiles are drawn in it; a blob URL keeps the property the
+  scrim reads under a kilobyte where data URLs came to over a megabyte; and the drawing holds the
+  page for tens of milliseconds, which the opening should not wait on. **The module remembers
+  nothing and the dialog keeps what it drew**, by colour and density: a cache in the module would
+  live across the warm runner's mutants. **Why its loops walk `upTo()` and its tiles are whole
+  numbers written down** — the docblocks beside both: a slip could otherwise loop forever drawing,
+  or make a canvas thousands of columns wide, either holding the page's memory while the runner
+  waits it out. **`#lay()` is async for the floor's sake**: an `undefined` a mutant hands it is
+  awaited rather than thrown from a timer, which the runner grades as an error. `tests/rain.test.ts`
+  records every character a canvas is asked to draw in place of drawing it, and pins `Math.random`;
+  the canvas keeps a transform and a blur in single precision, so it compares them rounded.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and

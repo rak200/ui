@@ -182,7 +182,8 @@ a dialog both ways.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
 focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
-before a reader must be able to stop it. The shimmer at the focus reads both, and a count is a
+before a reader must be able to stop it. The shimmer at the focus reads both, as Matrix's rain over
+a dialog's scrim does, and a count is a
 category of its own, `--ui-iteration-*`. Which effect runs is a choice rather than a token, and
 [`taste`](#taste) is the default one.
 

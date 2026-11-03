@@ -206,6 +206,17 @@ reader asks for more contrast or less transparency the glass stands down, and th
 the blur again. However the scrim came in, it leaves over the panel's own step, so it is never cut
 short when the dialog closes.
 
+**Under [Matrix](theme.md#matrix) code rains over the scrim**, `char-rain`: columns of characters at
+three depths, each trail lit at its head and fading toward its tail, drawn in the colour your accent
+resolves to as the dialog opens. It comes in with the scrim, over `--ui-duration-modal`, and falls
+for four rounds of `--ui-duration-loop`, `--ui-iteration-settle` of them, slowing to rest inside the
+five seconds WCAG 2.2.2 lets motion run before a reader must be able to stop it; then it is a still
+wall of code for as long as the dialog is open, and under reduced motion it is that wall from the
+start. It is a picture, drawn on a canvas, since a picture cannot read a token, and each dialog
+draws it once for each colour and display density it opens in, after the frame the dialog is first
+drawn in, so the opening does not wait on it. Under forced colours the rain stands down and the
+scrim is left.
+
 ## Limits
 
 - **`<form method="dialog">` does not close it.** Measured, and it is a property of slotting rather

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`.
 import type {} from '@vitest/browser-playwright';
@@ -643,7 +643,9 @@ async function themed(theme: Theme, name: string): Promise<UiDialog> {
     style.textContent = tokenStyleSheet() + themeStyleSheet(theme);
     document.body.append(style);
 
-    return mount(`<div data-ui-theme="${name}">${fixture}</div>`);
+    // The rain's fall cut short, which the scrim's own tests time: `still()` waits out every
+    // animation the dialog runs, the rain's included.
+    return mount(`<div data-ui-theme="${name}" style="--ui-duration-loop: 10ms">${fixture}</div>`);
 }
 
 describe("the panel's passage, RFC 0004's", () => {
@@ -1006,6 +1008,219 @@ describe("the scrim's moment, RFC 0004's", () => {
             }
         },
     );
+});
+
+/** Records the colour of every character a canvas is asked to draw, in place of drawing it. */
+function drawing(): string[] {
+    const fills: string[] = [];
+    const spy = vi
+        .spyOn(OffscreenCanvasRenderingContext2D.prototype, 'fillText')
+        .mockImplementation(function (this: OffscreenCanvasRenderingContext2D) {
+            fills.push(typeof this.fillStyle === 'string' ? this.fillStyle : 'a pattern');
+        });
+
+    onTestFinished(() => {
+        spy.mockRestore();
+    });
+
+    return fills;
+}
+
+/** Waits past the frame the dialog is first drawn in, and the task its rain is drawn in. */
+async function past(): Promise<void> {
+    await new Promise(requestAnimationFrame);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/** The rain laid on the dialog for its scrim, once it has been. */
+async function rained(element: UiDialog): Promise<string> {
+    await expect
+        .poll(() => inner(element).style.getPropertyValue('--ui-fx-rain'))
+        .toMatch(/^url\("blob:/);
+
+    return inner(element).style.getPropertyValue('--ui-fx-rain');
+}
+
+describe("the scrim's rain, RFC 0004's", () => {
+    it.each([
+        ['where it is chosen', 'char-rain', 'none', 'char-rain'],
+        ['nowhere else', '', 'none', 'none'],
+        ['nor under forced colours', 'char-rain', 'active', 'none'],
+    ] as const)('hands the rain to draw %s', async (_name, backdrop, forced, handed) => {
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', backdrop);
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: forced }],
+        });
+
+        try {
+            expect(getComputedStyle(inner(element)).getPropertyValue('--ui-fx-backdrop')).toBe(
+                handed,
+            );
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it('lays the rain over the scrim, drawn in the accent the scrim resolves to', async () => {
+        const fills = drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 200, 30)');
+        element.style.setProperty('--ui-color-scrim', 'rgb(1, 2, 3)');
+
+        await opening(element);
+
+        const layers = await rained(element);
+        const scrim = getComputedStyle(inner(element), '::backdrop');
+
+        expect(layers.split(', ')).toHaveLength(3);
+        expect(
+            scrim.backgroundImage.split(', ').map((image) => image.startsWith('url("blob:')),
+        ).toEqual([true, true, true, false]);
+        expect(scrim.backgroundColor).toBe('rgb(1, 2, 3)');
+        expect([...new Set(fills)].sort()).toEqual(['#0ac81e', '#ffffff']);
+    });
+
+    it('lets the rain fall over a loop that settles, from whole tiles above to where it started', async () => {
+        drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+        element.style.setProperty('--ui-duration-loop', '2s');
+        element.style.setProperty('--ui-iteration-settle', '3');
+        element.style.setProperty('--ui-duration-modal', '0.45s');
+
+        await opening(element);
+        await rained(element);
+
+        const scrim = getComputedStyle(inner(element), '::backdrop');
+
+        expect([
+            scrim.animationName,
+            scrim.animationDuration,
+            scrim.animationTimingFunction,
+            scrim.transitionDuration,
+        ]).toEqual(['ui-rain', '6s', 'cubic-bezier(0.33, 0.33, 0.5, 1)', '0.45s']);
+
+        const falling = inner(element)
+            .getAnimations({ subtree: true })
+            .find((each) => each instanceof CSSAnimation);
+
+        falling?.pause();
+
+        if (falling !== undefined) {
+            falling.currentTime = 0;
+        }
+
+        // The rain's three tiles; the scrim's own layer holds no picture to move.
+        expect(scrim.backgroundPosition.split(', ').slice(0, 3)).toEqual([
+            '0px -1800px',
+            '0px -1170px',
+            '0px -660px',
+        ]);
+    });
+
+    it('takes the rain away under forced colours, and draws none', async () => {
+        const fills = drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            await opening(element);
+            await past();
+
+            const scrim = getComputedStyle(inner(element), '::backdrop');
+
+            expect([scrim.backgroundImage, scrim.animationName, fills.length]).toEqual([
+                'none',
+                'none',
+                0,
+            ]);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it('rains code over the scrim under Matrix', async () => {
+        drawing();
+        const element = await themed(matrix, 'matrix');
+
+        await opening(element);
+        await rained(element);
+
+        expect(getComputedStyle(inner(element), '::backdrop').animationName).toBe('ui-rain');
+    });
+
+    it('draws nothing where the rain is not chosen', async () => {
+        const fills = drawing();
+        const element = await mount(fixture);
+
+        await opening(element);
+        await past();
+
+        expect([fills.length, inner(element).style.getPropertyValue('--ui-fx-rain')]).toEqual([
+            0,
+            '',
+        ]);
+    });
+
+    it('draws the rain once for each colour a dialog opens in', async () => {
+        const fills = drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+        element.style.setProperty('--ui-duration-loop', '10ms');
+        element.style.setProperty('--ui-color-accent', 'rgb(10, 200, 30)');
+        await open(element);
+
+        const first = await rained(element);
+        const drawn = fills.length;
+
+        await close(element);
+        await open(element);
+        await past();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(fills.length, 'the same colour, kept').toBe(drawn);
+        expect(inner(element).style.getPropertyValue('--ui-fx-rain')).toBe(first);
+
+        await close(element);
+        element.style.setProperty('--ui-color-accent', 'rgb(200, 10, 30)');
+        await open(element);
+
+        await expect
+            .poll(() => inner(element).style.getPropertyValue('--ui-fx-rain'))
+            .not.toBe(first);
+        expect(fills.length, 'another, drawn').toBeGreaterThan(drawn);
+    });
+
+    it('draws the rain again on a display of another density', async () => {
+        const fills = drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+        element.style.setProperty('--ui-duration-loop', '10ms');
+        await open(element);
+        await rained(element);
+
+        const drawn = fills.length;
+
+        await close(element);
+        await cdp().send('Emulation.setDeviceMetricsOverride', {
+            width: 414,
+            height: 896,
+            deviceScaleFactor: 2,
+            mobile: false,
+        });
+        onTestFinished(async () => {
+            await cdp().send('Emulation.clearDeviceMetricsOverride');
+        });
+        await open(element);
+
+        await expect.poll(() => fills.length).toBeGreaterThan(drawn);
+    });
 });
 
 describe('the lifecycle', () => {
