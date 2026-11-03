@@ -197,6 +197,15 @@ The pieces and the grain are a filter over the panel, drawn in script, and nothi
 in the dialog is copied; the close waits for them as it waits for the fade. Under reduced motion
 `--ui-duration-modal` collapses as every duration does, and nothing is cut.
 
+**The scrim has a moment of its own**, `--ui-motion-backdrop`. Its fade is the default theme's, and
+`none` puts the scrim there at once and takes it away at once. Under [Glass](theme.md#glass) the
+page behind blurs as the scrim comes in, over `--ui-duration-modal`, and comes back into focus as
+the dialog closes, `blur`; and where the theme raises its surfaces as glass, the blur stands alone,
+with no scrim colour over it, which would tint the page the glass is there to let through. When the
+reader asks for more contrast or less transparency the glass stands down, and the scrim is laid over
+the blur again. However the scrim came in, it leaves over the panel's own step, so it is never cut
+short when the dialog closes.
+
 ## Limits
 
 - **`<form method="dialog">` does not close it.** Measured, and it is a property of slotting rather
