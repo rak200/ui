@@ -437,6 +437,11 @@ explains. This file restates none of them.
   `src/effects.ts`: its own rise holds its translate, so the sheet lifts it on its transform and
   leaves the transition to the toast's own list, which one rule of the sheet's would take the rise's
   out of. Its layers cover its edge, the wider stripe included, which its border leaves transparent.
+  **Why its own rise and sink stand down for an entrance or an exit the sheet animates** — the comment
+  beside them in `src/toast.ts`: a transition outranks an animation in the cascade, and Firefox started
+  the rise's beside a slide, so under one the toast transitions only its transform; they stay what it
+  does under `none` and in an engine without style queries, and its exit is the `leaving` state the
+  card's is.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

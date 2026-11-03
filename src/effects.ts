@@ -2416,6 +2416,84 @@ export function surfaceEffects(component: string, transformed = false): CSSResul
             }
         }
 
+        /* Which way the end of the line lies on the x axis, where a slide comes in from and goes
+           out to: the page's right edge, where a toaster stands, and its left in right-to-left
+           text. */
+        :host {
+            --ui-fx-end: 1;
+        }
+
+        :host(:dir(rtl)) {
+            --ui-fx-end: -1;
+        }
+
+        /* slide-elastic: in from its own width past the end of the line, flung past where it lands
+           by a rem and pulled back either side of it, each swing under half the last — its swing
+           is its curve, which no curve replaces — over five quarters of an entrance's time and a
+           little more, the review's 520ms at its default. */
+        @container ${unsafeCSS(drawn('enter', 'slide-elastic'))} {
+            :host {
+                --ui-fx-passage: ui-enter-slide-elastic
+                    calc(${reference('--ui-duration-enter')} * 13 / 9) linear backwards;
+            }
+        }
+
+        /* slide: out its own width past the end of the line, whole for three fifths of the way and
+           gone with the last of it, over an exit's time on the curve a departure takes. */
+        @container ${unsafeCSS(drawn('exit', 'slide'))} {
+            :host(:state(leaving)) {
+                --ui-fx-passage: ui-exit-slide ${reference('--ui-duration-exit')}
+                    ${reference('--ui-easing-exit')} forwards;
+            }
+        }
+
+        @keyframes ui-enter-slide-elastic {
+            0% {
+                opacity: 0;
+                translate: calc(var(--ui-fx-end) * 100%) 0;
+                animation-timing-function: ease-out;
+            }
+
+            30% {
+                opacity: 1;
+            }
+
+            42% {
+                translate: calc(var(--ui-fx-end) * -1rem) 0;
+                animation-timing-function: ease-in-out;
+            }
+
+            60% {
+                translate: calc(var(--ui-fx-end) * 0.5rem) 0;
+                animation-timing-function: ease-in-out;
+            }
+
+            76% {
+                translate: calc(var(--ui-fx-end) * -0.2rem) 0;
+                animation-timing-function: ease-in-out;
+            }
+
+            90% {
+                translate: calc(var(--ui-fx-end) * 0.07rem) 0;
+                animation-timing-function: ease-in-out;
+            }
+
+            100% {
+                translate: 0 0;
+            }
+        }
+
+        @keyframes ui-exit-slide {
+            60% {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+                translate: calc(var(--ui-fx-end) * 100%) 0;
+            }
+        }
+
         /* materialize: the surface put together from pieces appearing where they belong, at random,
            as it is put on the page — drawn in script, src/passage.ts, handed the entrance's time
            and curve, on which each piece fades in. */
