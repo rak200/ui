@@ -365,7 +365,7 @@ export class UiMenu extends LitElement {
         `,
         buttonEffects('menu'),
         // How the panel opens and closes and the caret turns, after the trigger's, as a select's
-        // list will: one sheet for every panel hung from a trigger.
+        // list does: one sheet for every panel hung from a trigger.
         panelEffects('menu', parts),
     ];
 

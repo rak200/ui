@@ -1,9 +1,32 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
-import { fieldEffects } from './effects.js';
+import { fieldEffects, panelEffects, type Panel } from './effects.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
+
+// Stryker disable all: read once, at import, into the styles the class is defined with — so in the
+// warm process Stryker switches mutants in, the original selectors stand before any mutant is
+// active. panelEffects() itself is graded where tests/effects.test.ts builds it at test time.
+/**
+ * Where the drawn list's parts are, for its effects: the base appearance's picker, the choices and
+ * the groups the component draws into the control, and the caret in the control's icon. The
+ * platform places the list, below the control unless there is no room, and writes nowhere which
+ * side it took, so no rule can read it, and the list comes from above: the side it hangs above on
+ * is a selector that matches nothing. Where the list is the system's, none of this is drawn.
+ */
+const parts: Panel = {
+    panel: 'select:not([multiple])::picker(select)',
+    open: 'select:not([multiple]):open::picker(select)',
+    closed: 'select:not([multiple]):not(:open)::picker(select)',
+    above: 'select:not(*)::picker(select)',
+    items: 'select:not([multiple]):open > :is(option, optgroup)',
+    item: (place) => `select:not([multiple]):open > :nth-child(${String(place)})`,
+    rest: 'select:not([multiple]):open > :nth-child(n + 7)',
+    caret: 'select:not([multiple])::picker-icon',
+    turned: 'select:not([multiple]):open::picker-icon',
+};
+// Stryker restore all
 
 /**
  * One arm of the caret, and the gap it keeps from the edge.
@@ -521,6 +544,9 @@ export class UiSelect extends LitElement {
             }
         `,
         fieldEffects('select', ':not(:disabled)'),
+        // How the drawn list opens and closes and the caret turns, as the menu's panel does: one
+        // sheet for every panel hung from a trigger.
+        panelEffects('select', parts),
     ];
 
     /** Takes part in the form it sits in. */

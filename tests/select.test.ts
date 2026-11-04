@@ -20,7 +20,7 @@ import '../src/tooltip.js';
 import type { UiOption, UiSelect } from '../src/select.js';
 import type { UiInput } from '../src/input.js';
 import { tokenStyleSheet } from '../src/tokens.js';
-import { matrix, themeStyleSheet } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
@@ -1655,6 +1655,73 @@ describe("a field's effects, which the select adopts", () => {
         expect(getComputedStyle(control(form)).boxShadow, 'at the focus').toBe(raised);
         expect(getComputedStyle(glow(select(form))).translate, 'lifted').toBe('0px -2px');
     });
+});
+
+/** What `element` moves as the sheet set it going: transitions by property. */
+function moving(element: Element): string[] {
+    return element
+        .getAnimations()
+        .map((each) => (each instanceof CSSTransition ? each.transitionProperty : 'something else'))
+        .sort();
+}
+
+/** What the list is drawn with: the animation it plays and what it transitions. */
+function drawing(element: UiSelect): readonly [string, string] {
+    return [list(element).animationName, list(element).transitionProperty];
+}
+
+// The list's own animations are not among the control's in Chromium, a pseudo-element's though
+// its caret's are, so the list is read by what the sheet hands it rather than by what runs.
+describe("the list's motion, RFC 0004's", () => {
+    it.each([
+        [
+            'the default theme',
+            '',
+            ['opacity', 'transform'],
+            ['none', 'all'],
+            ['none', 'clip-path, display, overlay'],
+        ],
+        [
+            'Matrix',
+            themeStyleSheet(matrix),
+            [],
+            ['ui-panel-glitch-in', 'all'],
+            ['ui-panel-glitch-out', 'display, overlay'],
+        ],
+        [
+            'Glass',
+            themeStyleSheet(glass),
+            [],
+            ['none', 'filter, opacity'],
+            ['none', 'filter, opacity, display, overlay'],
+        ],
+    ] as const)(
+        "opens and closes its list and turns its caret as %s's taste says",
+        async (name, sheet, first, opening, closing) => {
+            const style = document.createElement('style');
+            style.textContent = tokenStyleSheet() + sheet;
+            document.body.append(style);
+            const theme = sheet === '' ? '' : name.toLowerCase();
+            // Slowed, so everything is still moving when it is read, however long the click takes.
+            const form = await mount(
+                `<div data-ui-theme="${theme}" style="--ui-duration-overlay: 10s">${fixture}</div>`,
+            );
+            const element = select(form);
+
+            await open(element);
+
+            const [choice] = box(element).children;
+
+            expect(choice === undefined ? [] : moving(choice), 'the first choice').toEqual(first);
+            expect(drawing(element), 'the list').toEqual(opening);
+            expect(icon(element).transitionProperty, 'the caret').toBe('transform');
+
+            await userEvent.keyboard('{Escape}');
+
+            expect(box(element).matches(':open'), 'closed').toBe(false);
+            expect(drawing(element), 'closing').toEqual(closing);
+        },
+    );
 });
 
 describe('the description a tooltip hands over', () => {
