@@ -33,8 +33,11 @@ interface Closed {
     readonly at: number;
 }
 
-/** The tip before the first: on no page, closed before any time, so nothing glides from it. */
-const nowhere: Closed = { tip: document.createElement('span'), box: new DOMRect(), at: -Infinity };
+/**
+ * The tip before the first: an element on no page, which no tip glides from. Written with nothing a
+ * mutant could turn, since it is made once, at import, before any mutant is active.
+ */
+const nowhere: Closed = { tip: new Image(), box: new DOMRect(), at: 0 };
 
 /** The tip that closed last, which the next one to open glides from. */
 let last = nowhere;
