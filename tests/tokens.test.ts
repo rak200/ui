@@ -862,6 +862,7 @@ describe('tokenStyleSheet', () => {
                 toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
                 toaster: { stack: 'spring' },
                 tooltip: { enter: 'rise', exit: 'sink', next: 'glide' },
+                menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
             },
         });
     });

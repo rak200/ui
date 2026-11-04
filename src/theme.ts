@@ -230,6 +230,7 @@ export const matrix: Theme = {
             card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
             toast: { 'focus-fill': 'tint', enter: 'wind', exit: 'wind' },
             tooltip: { enter: 'typing', exit: 'glitch' },
+            menu: { enter: 'glitch', exit: 'glitch' },
             dialog: { enter: 'materialize', exit: 'erode', backdrop: 'char-rain' },
         },
     },
@@ -411,6 +412,7 @@ export const glass: Theme = {
             card: { 'hover-move': 'tilt', enter: 'dissolve', exit: 'dissolve' },
             dialog: { enter: 'dissolve', exit: 'dissolve', backdrop: 'blur' },
             tooltip: { enter: 'refocus', exit: 'defocus' },
+            menu: { enter: 'refocus', exit: 'defocus' },
             // The toast raised with its boundary as it is at rest, apart from the page's cast and
             // edge, as RFC 0004 chose.
             toast: {
