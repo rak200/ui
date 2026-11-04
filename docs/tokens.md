@@ -179,8 +179,8 @@ again as the review judged them at these two's defaults, in proportion as either
 has an eighth**, `--ui-duration-modal` over `--ui-duration-150`, the step the ordinals left room for
 between the first two: every effect a dialog draws takes its 200ms whole, since the reader waits on
 a dialog both ways. **An overlay has a ninth**, `--ui-duration-overlay` over `--ui-duration-200`: a
-tooltip's tip and a menu's panel come and go in its 240ms both ways, a step quicker than a surface's
-entrance, as the review judged the overlays in the prototypes.
+tooltip's tip, a menu's panel and a select's list come and go in its 240ms both ways, a step quicker
+than a surface's entrance, as the review judged the overlays in the prototypes.
 **A loop has a period and a count**: `--ui-duration-loop`, 1.2s, off the scale and so a purpose with
 a value of its own, and `--ui-iteration-settle`, the four rounds a loop runs where it settles — a
 focus can rest for minutes, and four rounds stay inside the five seconds WCAG 2.2.2 lets motion run
@@ -585,7 +585,7 @@ A check is each drawn control's own moment, so it is named for each. So is a dra
 boundary under the pointer, which stays as it rests while the fill moves: named for the page, its
 `none` would take a field's darkening too, which is a field's answer to the pointer beside the
 raise. A card's entrance and its exit are its own moments as well, and so are a toast's, a
-tooltip's and a menu's.
+tooltip's, a menu's and a select's.
 
 | Component  | Moment         | Effect          | What it draws                                     |
 | ---------- | -------------- | --------------- | ------------------------------------------------- |
@@ -607,6 +607,9 @@ tooltip's and a menu's.
 | `menu`     | `enter`        | `cascade`       | the items brought in one after another            |
 | `menu`     | `exit`         | `fold`          | the panel covered back toward its trigger         |
 | `menu`     | `caret`        | `flip`          | the caret turned over its middle line             |
+| `select`   | `enter`        | `cascade`       | the choices brought in one after another          |
+| `select`   | `exit`         | `fold`          | the list covered back toward its control          |
+| `select`   | `caret`        | `flip`          | the caret turned over its middle line             |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a

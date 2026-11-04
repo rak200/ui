@@ -225,6 +225,20 @@ appearance draws it in the icon, nothing is drawn behind them. A select has no p
 taste reaches it under its own name, `--ui-taste-select-<moment>`.
 A select has no read-only state, so the only one the pointer's effects step over is disabled.
 
+**Where the select draws its list, the list opens as a menu's panel does**: its entrance and exit
+and its caret's turn are its own moments, `--ui-motion-enter`, `--ui-motion-exit` and
+`--ui-motion-caret` under the select's taste name, drawn by the same internal sheet as the menu's,
+`panelEffects()` in `src/effects.ts`. Under the default theme the list is there at once and its
+choices come into it one after another from above, `cascade`; it closes covered back toward the
+control, `fold`; and the caret turns over its middle line, `flip`. Under [Matrix](theme.md#matrix)
+the list jumps in and flickers out in bands, its choices split into `--ui-color-danger` and
+`--ui-color-info`, `glitch`; under [Glass](theme.md#glass) it comes into focus and goes out of it,
+`refocus` and `defocus`. Every time is a part of `--ui-duration-overlay`, as the menu's are, and
+`none` takes each away. The platform places the list and writes nowhere which side it took, so its
+choices always come from above; only Chromium holds the list on the page while it goes; and where
+the list is the system's — a phone, or an engine without the base appearance — none of this is
+drawn.
+
 ## Styling
 
 Every colour is a [token](tokens.md); nothing here is hardcoded, including the caret.

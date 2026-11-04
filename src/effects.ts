@@ -2614,7 +2614,7 @@ export function surfaceEffects(component: string, transformed = false): CSSResul
 
 /**
  * Where a panel's parts are, as the shadow root that draws it has them — what
- * {@link panelEffects} draws on: `ui-menu`'s panel, and in time the list `ui-select` opens.
+ * {@link panelEffects} draws on: `ui-menu`'s panel, and the list `ui-select` opens.
  */
 export interface Panel {
     /** The panel, open or closed. */

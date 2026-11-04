@@ -264,8 +264,8 @@ export const derivedTokens = [
     // the entrance's and the exit's, which a surface on the page takes at its own pace: a dialog
     // holds the page while it comes and goes, and the reader waits on it both ways.
     '--ui-duration-modal',
-    // How long an overlay takes to come and go — RFC 0004's: a tooltip's tip and a menu's panel,
-    // as a select's list will, each opened to be read or chosen from and gone once it is not. The
+    // How long an overlay takes to come and go — RFC 0004's: a tooltip's tip, a menu's panel and a
+    // select's list, each opened to be read or chosen from and gone once it is not. The
     // same step both ways, a step quicker than a surface's entrance, as the review judged all
     // three in the prototypes; apart from the effect's, so a host who wants livelier overlays
     // leaves the pointer's and the focus's effects as they were.
@@ -802,6 +802,7 @@ export const taste: Taste = {
         toaster: { stack: 'spring' },
         tooltip: { enter: 'rise', exit: 'sink', next: 'glide' },
         menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
+        select: { enter: 'cascade', exit: 'fold', caret: 'flip' },
     },
 };
 
