@@ -99,6 +99,8 @@ const heard = {
         "Chrome's is partial only while another key is held too, where the last key's repeats read as fresh downs before 137, and on X11 before 139: src/ripple.ts then starts its circle over from the middle at each, and nothing else changes",
     'api.Window.devicePixelRatio':
         "Safari's is partial only in not following the page's zoom, and src/shatter.ts reads it to hold each piece on a device pixel: zoomed in Safari, a crack's edge lands a fraction of a pixel off, and nothing else changes",
+    'api.Window.requestIdleCallback':
+        'WebKit has none, and src/dialog.ts asks whether the window has one first: without it, the rain is drawn ahead a second after the dialog joins the page rather than in an idle moment',
     [styleQueries]:
         "every motion effect is drawn under src/motion.ts's query, and an engine without style queries matches none of them, so each component keeps today's motion",
     'css.at-rules.media.prefers-reduced-transparency':

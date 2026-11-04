@@ -499,7 +499,10 @@ slides its pieces without turning them. A dialog's panel takes each passage whol
 dialog both ways, and it holds the page while it comes and goes. Matrix's rain over a dialog's scrim
 is a picture in the accent the page resolves, drawn on a canvas, since a picture cannot read a
 token; it settles inside the five seconds WCAG 2.2.2 allows into a still wall of code, and forced
-colours take it away. **An overlay placed by its size moves, blurs and fades, and never scales**:
+colours take it away. It is drawn ahead of the opening, in a moment the page is idle, because
+drawing it holds the page: drawn as the dialog opened, it took most of the panel's entrance in
+Chromium and all of it in Firefox — measured for #292. **An overlay placed by its size moves,
+blurs and fades, and never scales**:
 the tooltip reads its tip's box, transform and all, as it shows, and a tip that started at 0.9 of
 its size landed 11px off its trigger's middle in all three engines — measured for RFC 0004. Its exit
 is held on the page by transitioning display and overlay, which only Chromium honours for a popover,

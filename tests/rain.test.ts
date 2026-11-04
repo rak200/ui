@@ -27,6 +27,16 @@ function near(value: number, digits = 3): number {
     return Number(value.toFixed(digits));
 }
 
+/**
+ * How far the layer a character is drawn on reaches past its tile, in the tile's own pixels: a
+ * character's size, in whole device pixels.
+ */
+function reach(font: string, scale: number): number {
+    const size = Number(/(\d+)px/.exec(font)?.[1] ?? 0);
+
+    return Math.ceil(size * scale) / scale;
+}
+
 /** Records every character the rain draws, in order, in place of drawing it. */
 function recorded(): Stroke[] {
     const strokes: Stroke[] = [];
@@ -36,11 +46,13 @@ function recorded(): Stroke[] {
         glyph: string,
     ) {
         const { a, d, e, f } = this.getTransform();
+        // Where it lands on the tile: where it lands on the layer, less the layer's reach.
+        const margin = reach(this.font, d);
 
         strokes.push({
             glyph,
-            x: near(e / d),
-            y: near(f / d),
+            x: near(e / d - margin),
+            y: near(f / d - margin),
             mirrored: a < 0,
             scale: d,
             alpha: this.globalAlpha,
@@ -54,6 +66,41 @@ function recorded(): Stroke[] {
     });
 
     return strokes;
+}
+
+/** One picture laid on a tile: its size and where, and the shadow it was laid with. */
+interface Laid {
+    readonly picture: readonly [number, number];
+    readonly at: readonly [number, number];
+    readonly tile: readonly [number, number];
+    readonly shadow: string;
+    readonly blur: number;
+    readonly alpha: number;
+}
+
+/** Records every picture laid on a canvas, in order, in place of laying it. */
+function laid(): Laid[] {
+    const pictures: Laid[] = [];
+
+    vi.spyOn(OffscreenCanvasRenderingContext2D.prototype, 'drawImage').mockImplementation(function (
+        this: OffscreenCanvasRenderingContext2D,
+        picture: CanvasImageSource,
+        x: number,
+        y: number,
+    ) {
+        const { width, height } = picture as OffscreenCanvas;
+
+        pictures.push({
+            picture: [width, height],
+            at: [x, y],
+            tile: [this.canvas.width, this.canvas.height],
+            shadow: this.shadowColor,
+            blur: near(this.shadowBlur),
+            alpha: this.globalAlpha,
+        });
+    });
+
+    return pictures;
 }
 
 /** Answers every draw of `Math.random` from `values`, round and round. */
@@ -130,12 +177,12 @@ describe('the rain', () => {
     );
 
     it.each([
-        [18, 1, 10.8],
-        [13, 0.7, 7.8],
-        [9, 0.45, 5.4],
+        [18, 1],
+        [13, 0.7],
+        [9, 0.45],
     ] as const)(
-        'draws its %spx depth in bold type, centred on its point, glowing in the colour handed in',
-        async (size, strength, blur) => {
+        'draws its %spx depth sharp, in bold type, centred on its point',
+        async (size, strength) => {
             const strokes = recorded();
             pinned([0.5]);
 
@@ -147,11 +194,11 @@ describe('the rain', () => {
                 font: `bold ${String(size)}px "Courier New", Courier, ui-monospace, monospace`,
                 align: 'center',
                 baseline: 'middle',
-                shadow: '#00ff41',
+                shadow: 'rgba(0, 0, 0, 0)',
                 fill: '#00ff41',
                 alpha: strength,
             });
-            expect(head?.blur).toBe(blur);
+            expect(head?.blur, 'its glow is laid with the tile').toBe(0);
             expect(white, 'its head lit nearly white over its own colour').toMatchObject({
                 fill: '#ffffff',
                 glyph: head?.glyph,
@@ -159,6 +206,96 @@ describe('the rain', () => {
                 y: head?.y,
             });
             expect(white?.alpha).toBeCloseTo(strength * 0.65, 9);
+        },
+    );
+
+    it.each([
+        [
+            1,
+            [
+                [
+                    [666, 636],
+                    [-18, -18],
+                    [630, 600],
+                ],
+                [
+                    [551, 546],
+                    [-13, -13],
+                    [525, 520],
+                ],
+                [
+                    [418, 458],
+                    [-9, -9],
+                    [400, 440],
+                ],
+            ],
+        ],
+        [
+            1.25,
+            [
+                [
+                    [834, 796],
+                    [-23, -23],
+                    [788, 750],
+                ],
+                [
+                    [690, 684],
+                    [-17, -17],
+                    [656, 650],
+                ],
+                [
+                    [524, 574],
+                    [-12, -12],
+                    [500, 550],
+                ],
+            ],
+        ],
+        [
+            2,
+            [
+                [
+                    [1332, 1272],
+                    [-36, -36],
+                    [1260, 1200],
+                ],
+                [
+                    [1102, 1092],
+                    [-26, -26],
+                    [1050, 1040],
+                ],
+                [
+                    [836, 916],
+                    [-18, -18],
+                    [800, 880],
+                ],
+            ],
+        ],
+    ] as const)(
+        "lays each depth's characters on its tile once, glowing in the colour handed in, at a density of %s",
+        async (density, expected) => {
+            // The layer reaches a character's size past each edge, in whole device pixels, so a
+            // character's glow is whole across an edge and the layer lies on the tile's pixels.
+            await cdp().send('Emulation.setDeviceMetricsOverride', {
+                width: 414,
+                height: 896,
+                deviceScaleFactor: density,
+                mobile: false,
+            });
+            onTestFinished(async () => {
+                await cdp().send('Emulation.clearDeviceMetricsOverride');
+            });
+            const pictures = laid();
+            recorded();
+            pinned([0.5]);
+
+            await rain('rgb(0, 255, 65)');
+
+            expect(pictures.map(({ picture, at, tile }) => [picture, at, tile])).toEqual(expected);
+            expect(pictures.map(({ shadow, blur, alpha }) => [shadow, blur, alpha])).toEqual([
+                ['#00ff41', 10.8, 1],
+                ['#00ff41', 7.8, 1],
+                ['#00ff41', 5.4, 1],
+            ]);
         },
     );
 

@@ -148,6 +148,24 @@ function build(): HTMLDialogElement {
     return dialog;
 }
 
+/** The rain a dialog draws: the colour it is drawn in, and the key it is kept under. */
+interface Drops {
+    readonly colour: string;
+    readonly key: string;
+}
+
+/**
+ * Runs `then` in a moment the page is idle, within two seconds where it never is; and a second
+ * from now in WebKit, which has no idle callback.
+ */
+function idle(then: () => void): void {
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(then, { timeout: 2000 });
+    } else {
+        setTimeout(then, 1000);
+    }
+}
+
 /**
  * A modal dialog.
  *
@@ -555,6 +573,7 @@ export class UiDialog extends LitElement {
         // changing, which is what a host's re-render looks like from here — so
         // characterData matters as much as childList, and both can happen below a wrapper.
         this.#observer.observe(this, { childList: true, characterData: true, subtree: true });
+        this.#ahead();
     }
 
     /** Stops watching the title, and gives the page back if the dialog was open. */
@@ -639,43 +658,69 @@ export class UiDialog extends LitElement {
     }
 
     /**
-     * Lays the rain over the scrim where the dialog's sheet chose it, drawn in the accent the
-     * scrim resolves to now.
-     *
-     * **After the frame the dialog is first drawn in**: a task asked for from that frame's
-     * callback, since the drawing holds the page for tens of milliseconds, which the opening
-     * should not wait on. The rain comes in while the scrim does. Each colour and density is
-     * drawn once a dialog, so only a theme, a scheme or a display changed since an opening draws
-     * it again.
+     * The rain the dialog's sheet chooses now: one, in the accent the scrim resolves to, where it
+     * chose the rain, and none elsewhere — a list, so nothing that reads it has a case to guard.
      */
-    #rain(): void {
+    #falling(): Drops[] {
         const dialog = this.#dialog;
 
         if (
             getComputedStyle(dialog).getPropertyValue(`${kinds.animated}backdrop`) !== 'char-rain'
         ) {
-            return;
+            return [];
         }
 
         const colour = getComputedStyle(dialog, '::backdrop').color;
-        const key = `${colour} at ${String(devicePixelRatio)}`;
 
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                void this.#lay(key, colour);
-            }, 0);
+        return [{ colour, key: `${colour} at ${String(devicePixelRatio)}` }];
+    }
+
+    /**
+     * Draws the rain ahead of the opening, in a moment the page is idle once the dialog is on it,
+     * where its sheet chose the rain by then.
+     *
+     * **The drawing holds the page**: 84 to 94ms in Chromium and 203ms in Firefox, which made at
+     * the opening fell across the panel's entrance and took most of it, or all of it — measured for
+     * #292. Drawn ahead, the opening finds it drawn, and only a theme, a scheme or a display changed
+     * since makes the opening draw it.
+     */
+    #ahead(): void {
+        idle(() => {
+            for (const drops of this.#falling()) {
+                void this.#drawing(drops);
+            }
         });
     }
 
     /**
-     * Lays the rain drawn for `key` on the dialog for the scrim to read, drawing it in `colour`
-     * first where this dialog has not.
+     * Lays the rain over the scrim where the dialog's sheet chose it, drawn ahead or drawn now.
+     *
+     * **After the frame the dialog is first drawn in**: a task asked for from that frame's
+     * callback, so a rain the dialog has not drawn ahead holds the page after the opening's first
+     * frame rather than before it. The rain comes in while the scrim does.
      */
-    async #lay(key: string, colour: string): Promise<void> {
+    #rain(): void {
+        for (const drops of this.#falling()) {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    void this.#lay(drops);
+                }, 0);
+            });
+        }
+    }
+
+    /** The rain drawn for `drops`, drawing it where this dialog has not: each once a dialog. */
+    #drawing({ colour, key }: Drops): Promise<string> {
         const layers = this.#rains.get(key) ?? rain(colour);
 
         this.#rains.set(key, layers);
-        this.#dialog.style.setProperty(`${kinds.animated}rain`, await layers);
+
+        return layers;
+    }
+
+    /** Lays the rain drawn for `drops` on the dialog for the scrim to read. */
+    async #lay(drops: Drops): Promise<void> {
+        this.#dialog.style.setProperty(`${kinds.animated}rain`, await this.#drawing(drops));
     }
 
     /** Runs the exit, and closes once it has finished. */

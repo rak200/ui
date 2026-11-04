@@ -400,19 +400,27 @@ explains. This file restates none of them.
   step** — the comment beside the exit's rule there: `#exit` waits on the panel alone, so a scrim
   that came in slower would be cut short as the dialog closed.
 - **Why Matrix's rain over a dialog's scrim is a picture drawn on a canvas, handed over by a blob
-  URL, and drawn after the opening's first frame** — the docblock on `src/rain.ts`, and the docblock
-  on `#rain()` in `src/dialog.ts`. A picture cannot read a token, so the accent is read off the
-  scrim, where the sheet writes it, and the tiles are drawn in it; a blob URL keeps the property the
-  scrim reads under a kilobyte where data URLs came to over a megabyte; and the drawing holds the
-  page for tens of milliseconds, which the opening should not wait on. **The module remembers
-  nothing and the dialog keeps what it drew**, by colour and density: a cache in the module would
-  live across the warm runner's mutants. **Why its loops walk `upTo()` and its tiles are whole
-  numbers written down** — the docblocks beside both: a slip could otherwise loop forever drawing,
-  or make a canvas thousands of columns wide, either holding the page's memory while the runner
-  waits it out. **`#lay()` is async for the floor's sake**: an `undefined` a mutant hands it is
-  awaited rather than thrown from a timer, which the runner grades as an error. `tests/rain.test.ts`
-  records every character a canvas is asked to draw in place of drawing it, and pins `Math.random`;
-  the canvas keeps a transform and a blur in single precision, so it compares them rounded.
+  URL, with one blur a tile, and drawn ahead of the opening** — the docblocks on `src/rain.ts` and
+  on its `tile()`, and on `#ahead()` and `#rain()` in `src/dialog.ts`. A picture cannot read a
+  token, so the accent is read off the scrim, where the sheet writes it, and the tiles are drawn in
+  it; a blob URL keeps the property the scrim reads under a kilobyte where data URLs came to over a
+  megabyte; the characters are drawn sharp on a layer that reaches a glow past each edge, in whole
+  device pixels, and laid on the tile once with the glow as its shadow, where a shadow a character
+  was thousands of blurs; and the drawing holds the page, so a dialog draws it in an idle moment
+  once it is on one, and the opening only where it was not, after its first frame.
+  `requestIdleCallback` is newer than the floor, which `tests/manual/browser-floor.mjs` sets aside
+  in `heard`: WebKit draws a second after the dialog joins the page. **The module remembers nothing
+  and the dialog keeps what it drew**, by colour and density: a cache in the module would live
+  across the warm runner's mutants; and what the rain is drawn in is a list, empty where it is not
+  chosen, so no mutant turns the idle callback into a throw. **Why its loops walk `upTo()` and its
+  tiles are whole numbers written down** — the docblocks beside both: a slip could otherwise loop
+  forever drawing, or make a canvas thousands of columns wide, either holding the page's memory
+  while the runner waits it out. **`#lay()` is async for the floor's sake**: an `undefined` a mutant
+  hands it is awaited rather than thrown from a timer, which the runner grades as an error.
+  `tests/rain.test.ts` records every character a canvas is asked to draw and every picture laid on a
+  tile, in place of drawing them, and pins `Math.random`; the canvas keeps a transform and a blur in
+  single precision, so it compares them rounded. `tests/dialog.test.ts` holds every idle moment a
+  dialog asks for, so no test finds the rain drawn or not by when the page happened to be idle.
 - **Why a tooltip's tip comes and goes by transitions, never scales, and plays its exit in Chromium
   alone** — the comments beside its rules in `src/tooltip.ts`, and `docs/tooltip.md`'s _Motion_: the
   placement reads the tip's box as it shows, transform and all; an exit is held by transitioning
