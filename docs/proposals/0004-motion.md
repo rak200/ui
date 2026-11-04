@@ -796,3 +796,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#363](https://github.com/rak200/ui/pull/363) | Matrix's rain over the scrim: falling code drawn on a canvas in the accent, settling    |
 | 4    | [#364](https://github.com/rak200/ui/pull/364) | the tooltip's rise and sink, Glass's refocus and defocus, and `--ui-duration-overlay`   |
 | 4    | [#365](https://github.com/rak200/ui/pull/365) | Matrix's tip: typed in through highlights behind a caret, and flickered out in bands    |
+| 4    | [#366](https://github.com/rak200/ui/pull/366) | the next tip: one opened as another closes glides over from where the other was         |
