@@ -39,6 +39,7 @@ data, sorts nothing, and selects nothing.
 - [It is not a data grid](#it-is-not-a-data-grid)
 - [The scroll, and when it takes a tab stop](#the-scroll-and-when-it-takes-a-tab-stop)
 - [Where the styles actually live](#where-the-styles-actually-live)
+- [Motion](#motion)
 - [Styling](#styling)
 
 ## The table is yours
@@ -139,6 +140,38 @@ So the cell rules are adopted into **your** tree instead, as a constructed style
   shadow root is styled in **that** root, which is the case a hardcoded `document` would leave bare.
 - One sheet per tree, however many tables are in it.
 
+## Motion
+
+**The row under the pointer is highlighted, and a row you add glows in**, in RFC 0004's motion,
+where you choose nothing and the default theme's taste runs: the row under the pointer takes a veil
+of `--ui-color-text` at 16% over its own colour, over `--ui-duration-state` on `--ui-easing-state`,
+and a row you add to a `<tbody>` arrives tinted with `--ui-color-accent` at 0.28, which drains away
+over `--ui-duration-flourish` on `--ui-easing-exit`, so the eye finds what changed after it has
+happened. Under [Glass](theme.md#glass) the row under the pointer turns to the theme's glass
+instead, `frost`: what is behind it blurred by `--ui-backdrop-raised` under a lighter veil, 12%,
+with the rules between rows drawn again inside its cells, since the glass blurs the table's own
+away. Where there is no glass, or it stands down, `frost` is the highlight.
+[Matrix](theme.md#matrix) keeps the default theme's. `--ui-motion-hover` and `--ui-motion-enter`,
+written on the `<ui-table>` or anywhere above it, choose for yourself, and `none` takes each away.
+
+**The highlight is a veil rather than `--ui-color-hover`**, which stood 1.235 to 1.25:1 from a
+stripe in the dark scheme, short of the 1.25:1 a neutral state owes. The veil holds 1.34:1 or more
+from a plain row and a striped one, in every shipped palette, both schemes and with more contrast.
+Its share and frost's are internal, `veils` in `src/table.ts`, and the floors in
+`tests/tokens.test.ts` measure both.
+
+**Only a row added once the table has settled glows**: two frames after the `<ui-table>` joins the
+page, so the rows it is first drawn with, or put back with after you move it, do not all glow at
+once. A row a framework takes out and puts back as it reorders is a row added, and glows; so is a
+row drawn again as its table comes back from `display: none`, which is how CSS draws an entrance.
+
+**The row's effects live where its other rules do**, in the sheet adopted into your tree, and each
+is a picture of one colour laid over the row, so your rows' own colour, a stripe or one you wrote,
+stays under them. Wherever an effect is chosen, which the default theme's taste does, they write the
+row's `background-image` and `transition`; a row of yours that sets either loses it to these rules,
+and `none` for both moments gives it back. Under `prefers-reduced-motion: reduce` every duration
+collapses, and each lands at once.
+
 ## Styling
 
 Everything comes from the [token layer](tokens.md); nothing here is a literal. Retune a token
@@ -151,7 +184,8 @@ The category that arrived with this component is the **type scale** — `--ui-te
 
 `--ui-color-surface-muted` arrived with it: a second surface tone, for the header and the stripes.
 It is deliberately lighter than `--ui-color-hover`, so a state drawn over a striped row is still a
-change. The table itself is filled with `--ui-color-surface-control`, the fill every control takes,
+change — and the row under the pointer is drawn as a veil over it rather than in that colour, which
+[Motion](#motion) says why. The table itself is filled with `--ui-color-surface-control`, the fill every control takes,
 which is the surface until a theme sets it.
 
 There are **no parts**. `::part()` reaches into a shadow root, and everything you would want to

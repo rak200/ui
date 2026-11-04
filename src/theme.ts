@@ -416,6 +416,7 @@ export const glass: Theme = {
             menu: { enter: 'refocus', exit: 'defocus' },
             select: { enter: 'refocus', exit: 'defocus' },
             icon: { enter: 'refocus', hover: 'pop' },
+            table: { hover: 'frost' },
             // The toast raised with its boundary as it is at rest, apart from the page's cast and
             // edge, as RFC 0004 chose.
             toast: {

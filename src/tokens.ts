@@ -804,6 +804,7 @@ export const taste: Taste = {
         menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
         select: { enter: 'cascade', exit: 'fold', caret: 'flip' },
         icon: { enter: 'draw', hover: 'glow' },
+        table: { hover: 'highlight', enter: 'glow' },
     },
 };
 
