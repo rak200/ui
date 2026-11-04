@@ -16,6 +16,7 @@ import '@rak200/ui/icons/x.js';
 - [The accessible name](#the-accessible-name)
 - [A mark the set does not have](#a-mark-the-set-does-not-have)
 - [What this costs](#what-this-costs)
+- [Motion](#motion)
 - [Styling](#styling)
 - [The set, and its licence](#the-set-and-its-licence)
 
@@ -131,6 +132,32 @@ A glyph module carries **the geometry alone** — the `<svg>` around it belongs 
 element, which is what keeps the grid, the stroke and the colour one decision rather than
 two thousand. Across the whole set that is 182 bytes of geometry against a 482-byte source
 file, measured.
+
+## Motion
+
+**An icon is drawn as it comes onto the page and lights up under the pointer**, in RFC 0004's
+motion, where you choose nothing and the default theme's taste runs: each stroke is drawn from its
+start over an entrance and a half, `draw`, and the pointer brings up a glow in `--ui-color-accent`
+round the strokes, `glow` — a drop shadow, which follows the strokes where a box shadow would light
+the square round them, held unlit until the pointer brings up its colour over
+`--ui-duration-effect`. Under [Matrix](theme.md#matrix) the icon grows in from a third of its size,
+past it and back, `pop`, and under the pointer jumps and splits once into `--ui-color-danger` and
+`--ui-color-info`, `glitch`; under [Glass](theme.md#glass) it comes into focus from an eighth of its
+size out of it, `refocus`, and grows a little under the pointer, past and back, `pop`.
+`--ui-motion-enter` and `--ui-motion-hover`, written on the icon or anywhere above it, choose for
+yourself, and `none` takes each away. An icon has no moment past these two: the button round it is
+what is pressed.
+
+**The glow is drawn on the icon itself**, which leaves the glyph's own filter to an entrance. A
+container query asks the icon's surroundings about it, never the icon, so **a glow chosen on the one
+icon alone does not light it**, where one chosen on anything round it does — RFC 0004's S8, as a
+card's lift. Every other effect moves the glyph inside the icon, and a choice on the icon reaches
+it.
+
+**A mark you slot takes each effect as a whole**, and is not drawn stroke by stroke: `::slotted()`
+reaches the `<svg>` you hand over and nothing inside it, so under `draw` a mark of your own is
+simply there. Under `prefers-reduced-motion: reduce` every duration collapses, and an icon is whole
+at once.
 
 ## Styling
 

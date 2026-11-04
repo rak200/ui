@@ -1,5 +1,14 @@
-import { LitElement, css, html, type SVGTemplateResult, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type SVGTemplateResult, type TemplateResult } from 'lit';
+import { query } from './motion.js';
 import { reference } from './reference.js';
+
+/** The query each of the icon's effects is drawn under: the consumer's choice, else a taste. */
+const drawn = query('icon');
+
+/** Where an effect is chosen that the svg eases: its scale, its opacity or its blur. */
+const eased = [drawn('enter', 'pop'), drawn('enter', 'refocus'), drawn('hover', 'pop')].join(
+    ' or ',
+);
 
 /**
  * The glyphs a page has imported, by the name they were registered under.
@@ -110,6 +119,140 @@ export class UiIcon extends LitElement {
             stroke-width: ${reference('--ui-icon-stroke')};
             stroke-linecap: round;
             stroke-linejoin: round;
+        }
+
+        /* RFC 0004's: how an icon comes onto the page and answers the pointer. An icon has no
+           moment of its own past those two — the button round it is what is pressed. A mark you
+           slot takes each as a whole, and is not drawn stroke by stroke: ::slotted() reaches the
+           svg and nothing inside it. */
+
+        /* What the svg eases, the entrances' and the pointer's alike: its scale on the emphasis,
+           which carries it past and back, over an effect's step, and its opacity and its blur on
+           the way in, over an entrance's — only where something is chosen that moves them, so an
+           icon nobody chose for is as it was. */
+        @container ${unsafeCSS(eased)} {
+            svg,
+            ::slotted(svg) {
+                transition-property: scale, opacity, filter;
+                transition-duration:
+                    ${reference('--ui-duration-effect')}, ${reference('--ui-duration-enter')},
+                    ${reference('--ui-duration-enter')};
+                transition-timing-function:
+                    ${reference('--ui-easing-emphasis')}, ${reference('--ui-easing-enter')},
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        /* draw: each stroke drawn from its start, over an entrance and a half. The dash is longer
+           than any stroke of a 24-unit glyph, so a whole stroke is one dash, hidden by the offset
+           and then shown — and only while it is drawn, so no stroke is cut by the gap after it. */
+        @container ${unsafeCSS(drawn('enter', 'draw'))} {
+            svg > * {
+                animation: ui-icon-draw calc(${reference('--ui-duration-enter')} * 1.5)
+                    ${reference('--ui-easing-enter')};
+            }
+        }
+
+        @keyframes ui-icon-draw {
+            from {
+                stroke-dasharray: 120;
+                stroke-dashoffset: 120;
+            }
+
+            to {
+                stroke-dasharray: 120;
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* pop: from a third of its size and nothing, carried past it and back. */
+        @container ${unsafeCSS(drawn('enter', 'pop'))} {
+            @starting-style {
+                svg,
+                ::slotted(svg) {
+                    scale: 0.3;
+                    opacity: 0;
+                }
+            }
+        }
+
+        /* refocus: out of focus by an eighth of its size, as the card is by half a rem. */
+        @container ${unsafeCSS(drawn('enter', 'refocus'))} {
+            @starting-style {
+                svg,
+                ::slotted(svg) {
+                    filter: blur(calc(${reference('--ui-icon-size')} / 8));
+                    opacity: 0;
+                }
+            }
+        }
+
+        /* glow, under the pointer: a drop shadow, which follows the strokes where a box shadow
+           would light the square round them, in the accent the controls' glow is drawn in — in
+           the icon's own colour it was a grey smudge round a dark icon in the light scheme. Held
+           round the host unlit, so the pointer brings up its colour alone: grown from none, its
+           reach came up with its colour, and 72ms in it had lit under a third of its light, where
+           held it had lit 44% — measured for RFC 0004. On the host, which leaves the svg's filter
+           to the entrance, and so out of reach of a choice written on the icon alone, RFC 0004's
+           S8. */
+        @container ${unsafeCSS(drawn('hover', 'glow'))} {
+            :host {
+                filter: drop-shadow(
+                    0 0 calc(${reference('--ui-icon-size')} / 8)
+                        rgb(from ${reference('--ui-color-accent')} r g b / 0)
+                );
+                transition: filter ${reference('--ui-duration-effect')}
+                    ${reference('--ui-easing-enter')};
+            }
+
+            :host(:hover) {
+                filter: drop-shadow(
+                    0 0 calc(${reference('--ui-icon-size')} / 8)
+                        rgb(from ${reference('--ui-color-accent')} r g b / 0.8)
+                );
+            }
+        }
+
+        /* pop, under the pointer: a little larger, past it and back. */
+        @container ${unsafeCSS(drawn('hover', 'pop'))} {
+            :host(:hover) svg,
+            :host(:hover) ::slotted(svg) {
+                scale: 1.15;
+            }
+        }
+
+        /* glitch, under the pointer: the glyph jumps and splits into the danger and the info
+           once, as a button's label does — in drop shadows, since a stroke has no text shadow. */
+        @container ${unsafeCSS(drawn('hover', 'glitch'))} {
+            :host(:hover) svg,
+            :host(:hover) ::slotted(svg) {
+                animation: ui-icon-glitch ${reference('--ui-duration-effect')} linear;
+            }
+        }
+
+        @keyframes ui-icon-glitch {
+            0%,
+            100% {
+                transform: none;
+            }
+
+            20% {
+                transform: translate(-4px, 2px) skewX(-5deg);
+                filter: drop-shadow(2px -2px ${reference('--ui-color-danger')});
+            }
+
+            40% {
+                transform: translate(4px, -2px) skewX(5deg);
+                filter: drop-shadow(-2px 2px ${reference('--ui-color-info')});
+            }
+
+            60% {
+                transform: translate(-2px, -2px) skewX(0deg);
+            }
+
+            80% {
+                transform: translate(2px, 2px) skewX(3deg);
+            }
         }
     `;
 

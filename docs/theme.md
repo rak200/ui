@@ -124,6 +124,8 @@ default theme's taste names, which would otherwise run under Matrix too.
 | `menu`                        | `exit`       | `glitch`      |
 | `select`                      | `enter`      | `glitch`      |
 | `select`                      | `exit`       | `glitch`      |
+| `icon`                        | `enter`      | `pop`         |
+| `icon`                        | `hover`      | `glitch`      |
 
 **It sets its own hover and pressed.** A green text is far from neutral, and the shared formula's
 mix left the dark hover at 1.24:1 and the light pressed 1.24 past the hover, under the 1.25 both
@@ -260,6 +262,8 @@ Glass's edge would never reach them. And it leans the card alone, as RFC 0004 ch
 | `menu`                        | `exit`         | `defocus`  |
 | `select`                      | `enter`        | `refocus`  |
 | `select`                      | `exit`         | `defocus`  |
+| `icon`                        | `enter`        | `refocus`  |
+| `icon`                        | `hover`        | `pop`      |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

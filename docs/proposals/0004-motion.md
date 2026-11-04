@@ -799,3 +799,4 @@ entrances take their direction from `data-side`, so retiring it touches both.
 | 4    | [#366](https://github.com/rak200/ui/pull/366) | the next tip: one opened as another closes glides over from where the other was         |
 | 4    | [#367](https://github.com/rak200/ui/pull/367) | the menu's panel: cascade and fold, glitch, refocus and defocus, and the caret's flip   |
 | 4    | [#368](https://github.com/rak200/ui/pull/368) | the select's drawn list, opened and closed by the menu's sheet, its caret flipping      |
+| 4    | [#369](https://github.com/rak200/ui/pull/369) | the icon: drawn in, popped or refocused, and a glow, glitch or pop under the pointer    |

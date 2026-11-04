@@ -610,6 +610,8 @@ tooltip's, a menu's and a select's.
 | `select`   | `enter`        | `cascade`       | the choices brought in one after another          |
 | `select`   | `exit`         | `fold`          | the list covered back toward its control          |
 | `select`   | `caret`        | `flip`          | the caret turned over its middle line             |
+| `icon`     | `enter`        | `draw`          | each stroke drawn from its start                  |
+| `icon`     | `hover`        | `glow`          | a light in the accent round its strokes           |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a

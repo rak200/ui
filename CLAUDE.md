@@ -457,6 +457,12 @@ explains. This file restates none of them.
   `spread()` to its `pointerdown` and `keydown` — a button through `pressed()` in `src/effects.ts`,
   one listener that calls the shatter's too. `tests/ripple.test.ts` holds a circle's `finished` before cancelling it: a
   cancelled animation hands out a new promise, which never settles.
+- **Why an icon's glow is drawn on the icon and its other effects on the glyph, and why `draw`
+  reaches no mark you slot** — the comments beside those rules in `src/icon.ts`, and
+  `docs/icon.md`'s _Motion_: the glow is a drop shadow on the host, which leaves the glyph's filter
+  to an entrance and puts the glow out of reach of a choice written on the one icon, RFC 0004's S8;
+  the dash `draw` hides each stroke behind is held only while it is drawn, so no stroke is cut by
+  the gap after it; and `::slotted()` reaches a slotted `<svg>` and nothing inside it.
 - **Why a drawn control's mark is played from its `change` rather than drawn under `:checked`, and
   why the control takes its colour at once while it plays** — the docblock on `src/check.ts`. The
   sheet's half is `controlEffects()` in `src/effects.ts`: the hand-offs, the `data-check` rule and

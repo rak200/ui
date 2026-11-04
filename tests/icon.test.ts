@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Bespoke, Decorative, IconOnly, Named, Sizes } from '../stories/icon.stories.js';
@@ -10,6 +11,8 @@ import '../src/icons/x.js';
 import '../src/icons/check.js';
 import '../src/icons/circle-alert.js';
 import { svg } from 'lit';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** Mounts markup and waits for every icon in it to render. */
 async function mount(markup: string): Promise<HTMLElement> {
@@ -401,6 +404,236 @@ describe('a slotted mark', () => {
  * `expectAccessible` runs per state, because a decorative icon and a named one are
  * different markup and each can fail on its own.
  */
+/** The fixture's icon under `choices`, at a size and with times each its own. */
+async function chosen(choices: string): Promise<HTMLElement> {
+    return mount(
+        `<div style="${choices}; --ui-icon-size: 64px; --ui-duration-enter: 2s; --ui-easing-enter: steps(3); --ui-duration-effect: 0.6s; --ui-easing-emphasis: steps(5); --ui-color-danger: rgb(200, 0, 0); --ui-color-info: rgb(0, 0, 200); --ui-color-accent: rgb(10, 20, 30)"><ui-icon name="check"></ui-icon></div>`,
+    );
+}
+
+/** What `element` moves as the sheet set it going: transitions by property, animations by name. */
+function moving(element: Element): string[] {
+    return element
+        .getAnimations()
+        .map((each) =>
+            each instanceof CSSTransition
+                ? each.transitionProperty
+                : each instanceof CSSAnimation
+                  ? each.animationName
+                  : 'something else',
+        )
+        .sort();
+}
+
+/** Holds every animation and transition on `element` at `time`. */
+function hold(element: Element, time: number): void {
+    for (const each of element.getAnimations()) {
+        each.pause();
+        each.currentTime = time;
+    }
+}
+
+describe("the icon's motion, RFC 0004's", () => {
+    it('draws each stroke from its start as it is put on the page, over an entrance and a half', async () => {
+        const host = await chosen('--ui-motion-enter: draw');
+        const [stroke] = drawn(host).children;
+
+        expect(stroke === undefined ? [] : moving(stroke)).toEqual(['ui-icon-draw']);
+
+        const [drawing] = stroke?.getAnimations() ?? [];
+        const style = getComputedStyle(stroke ?? drawn(host));
+
+        expect([drawing?.effect?.getTiming().duration, style.animationTimingFunction]).toEqual([
+            3000,
+            'steps(3)',
+        ]);
+
+        if (stroke !== undefined) {
+            hold(stroke, 0);
+        }
+
+        expect([style.strokeDasharray, style.strokeDashoffset], 'hidden by the offset').toEqual([
+            '120px',
+            '120px',
+        ]);
+
+        drawing?.finish();
+
+        expect(
+            [style.strokeDasharray, style.strokeDashoffset],
+            'whole, and no dash left to cut it',
+        ).toEqual(['none', '0px']);
+    });
+
+    it('pops in from a third of its size as it is put on the page, past it and back', async () => {
+        const host = await chosen('--ui-motion-enter: pop');
+        const glyph = drawn(host);
+
+        expect(
+            glyph
+                .getAnimations()
+                .filter((each): each is CSSTransition => each instanceof CSSTransition)
+                .map((each) => [
+                    each.transitionProperty,
+                    each.effect?.getTiming().duration,
+                    each.effect?.getTiming().easing,
+                ])
+                .sort(),
+        ).toEqual([
+            ['opacity', 2000, 'steps(3)'],
+            ['scale', 600, 'steps(5)'],
+        ]);
+
+        hold(glyph, 0);
+
+        expect([getComputedStyle(glyph).scale, getComputedStyle(glyph).opacity]).toEqual([
+            '0.3',
+            '0',
+        ]);
+    });
+
+    it('comes into focus as it is put on the page, from an eighth of its size out of it', async () => {
+        const host = await chosen('--ui-motion-enter: refocus');
+        const glyph = drawn(host);
+
+        expect(moving(glyph)).toEqual(['filter', 'opacity']);
+
+        hold(glyph, 0);
+
+        expect([getComputedStyle(glyph).filter, getComputedStyle(glyph).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+    });
+
+    it('lights up under the pointer in the accent, round its strokes', async () => {
+        const host = await chosen('--ui-motion-hover: glow');
+        const element = icon(host);
+        const reference = document.createElement('div');
+        document.body.append(reference);
+        /** A drop shadow of an eighth of the icon in the accent, as the engine writes it out. */
+        const shadow = (alpha: number): string => {
+            reference.style.filter = `drop-shadow(0 0 8px rgb(from rgb(10, 20, 30) r g b / ${String(alpha)}))`;
+
+            return getComputedStyle(reference).filter;
+        };
+
+        expect(getComputedStyle(element).filter, 'held unlit').toBe(shadow(0));
+        expect(getComputedStyle(element).transition).toBe('filter 0.6s steps(3)');
+
+        await userEvent.hover(element);
+        hold(element, 600);
+
+        expect(getComputedStyle(element).filter, 'lit').toBe(shadow(0.8));
+    });
+
+    it('grows a little under the pointer, past and back', async () => {
+        const host = await chosen('--ui-motion-hover: pop');
+
+        await userEvent.hover(icon(host));
+
+        expect(
+            drawn(host)
+                .getAnimations()
+                .map((each) => [
+                    each instanceof CSSTransition ? each.transitionProperty : '',
+                    each.effect?.getTiming().duration,
+                    each.effect?.getTiming().easing,
+                ]),
+            'eased over an effect, on the emphasis',
+        ).toEqual([['scale', 600, 'steps(5)']]);
+
+        hold(drawn(host), 600);
+
+        expect(getComputedStyle(drawn(host)).scale).toBe('1.15');
+    });
+
+    it.each([
+        [0.2, 'matrix(1, 0, -0.0874887, 1, -4, 2)', 'drop-shadow(rgb(200, 0, 0) 2px -2px 0px)'],
+        [0.4, 'matrix(1, 0, 0.0874887, 1, 4, -2)', 'drop-shadow(rgb(0, 0, 200) -2px 2px 0px)'],
+        // The second shadow fades toward the none the jump ends on.
+        [
+            0.6,
+            'matrix(1, 0, 0, 1, -2, -2)',
+            'drop-shadow(rgba(0, 0, 200, 0.667) -1.33333px 1.33333px 0px)',
+        ],
+        [
+            0.8,
+            'matrix(1, 0, 0.0524078, 1, 2, 2)',
+            'drop-shadow(rgba(0, 0, 200, 0.333) -0.666667px 0.666667px 0px)',
+        ],
+    ] as const)(
+        'jumps and splits into two colours once under the pointer, at %s of the way',
+        async (fraction, transform, filter) => {
+            const host = await chosen('--ui-motion-hover: glitch');
+
+            await userEvent.hover(icon(host));
+
+            const [jump] = drawn(host).getAnimations();
+
+            expect(jump instanceof CSSAnimation ? jump.animationName : '').toBe('ui-icon-glitch');
+            expect(getComputedStyle(drawn(host)).animationDuration).toBe('0.6s');
+
+            hold(drawn(host), 600 * fraction);
+
+            expect([
+                getComputedStyle(drawn(host)).transform,
+                getComputedStyle(drawn(host)).filter,
+            ]).toEqual([transform, filter]);
+        },
+    );
+
+    it('comes and answers the pointer as it did where nothing is chosen', async () => {
+        const host = await mount('<ui-icon name="check"></ui-icon>');
+        const [stroke] = drawn(host).children;
+
+        await userEvent.hover(icon(host));
+
+        expect([
+            ...moving(icon(host)),
+            ...moving(drawn(host)),
+            ...(stroke === undefined ? [] : moving(stroke)),
+        ]).toEqual([]);
+    });
+
+    it('draws nothing of a mark you slot, whose strokes are not its own to reach', async () => {
+        const host = await mount(
+            '<div style="--ui-motion-enter: draw"><ui-icon><svg viewBox="0 0 24 24"><path d="M4 12h16" /></svg></ui-icon></div>',
+        );
+        const mark = icon(host).querySelector('svg');
+
+        expect(mark === null ? [] : mark.getAnimations({ subtree: true })).toEqual([]);
+    });
+
+    it('pops in a mark you slot, as a whole', async () => {
+        const host = await mount(
+            '<div style="--ui-motion-enter: pop"><ui-icon><svg viewBox="0 0 24 24"><path d="M4 12h16" /></svg></ui-icon></div>',
+        );
+        const mark = icon(host).querySelector('svg');
+
+        expect(mark === null ? [] : moving(mark)).toEqual(['opacity', 'scale']);
+    });
+
+    it.each([
+        ['the default theme', '', ['ui-icon-draw'], 'drop-shadow'],
+        ['Matrix', themeStyleSheet(matrix), ['opacity', 'scale'], 'none'],
+        ['Glass', themeStyleSheet(glass), ['filter', 'opacity'], 'none'],
+    ] as const)("comes onto the page as %s's taste says", async (name, sheet, entering, glow) => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet() + sheet;
+        document.body.append(style);
+        const theme = sheet === '' ? '' : name.toLowerCase();
+        const host = await mount(
+            `<div data-ui-theme="${theme}" style="--ui-duration-enter: 10s; --ui-duration-effect: 10s"><ui-icon name="check"></ui-icon></div>`,
+        );
+        const [stroke] = drawn(host).children;
+        const moved = name === 'the default theme' ? stroke : drawn(host);
+
+        expect(moved === undefined ? [] : moving(moved)).toEqual(entering);
+        expect(getComputedStyle(icon(host)).filter.split('(')[0]).toBe(glow);
+    });
+});
+
 describe('accessibility', () => {
     it('has no violations as a decorative icon beside a word', async () => {
         await expectAccessible(await mountStory(Decorative, meta, 'Decorative'));
