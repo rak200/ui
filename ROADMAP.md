@@ -3,17 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## Motion, as RFC 0004 accepted it (#318)
-
-Which effect runs becomes a choice a consumer writes: one custom property per moment, inherited, so
-the narrowest choice wins. Each component draws the effects it offers in its own shadow root, under
-a container style query, and each shipped theme brings a taste of its own as data. What ships is the
-mechanism and the effects the three themes' tastes name; the rest of the catalogue stays in the
-prototypes under `docs/proposals/0004-motion/` until a consumer asks for an effect. Five steps, in
-an order that is the rule: the playground's reduced-motion control, the floor written down, the
-mechanism, the tastes a component at a time, each bringing the tokens and the script its effects
-need, then the catalogue on demand.
-
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
@@ -43,5 +32,5 @@ Baseline Widely available, and every engine has to be able to read the side an o
 By web-features 3.44.0 the first comes on 2028-08-24. The part of anchor positioning the two would
 use became complete in every engine with Firefox 148, on 2026-02-24, and wide availability is thirty
 months later. The second has no date: only Chromium reads the side back, through anchored container
-queries. RFC 0004's prototypes choose each overlay's direction of travel by `data-side`, so retiring
-it is that proposal's question too.
+queries. The overlays RFC 0004 set moving take their direction of travel from `data-side`, so
+retiring it is that proposal's question too.

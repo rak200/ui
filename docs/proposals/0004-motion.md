@@ -709,6 +709,11 @@ effect yet nothing would judge it but fixtures. The animated properties take `--
 **What this does not decide** is when any step is built. The rollout is ordered and each step makes
 the next possible; none is scheduled here.
 
+**Implemented on 2026-11-04**, when [#369](https://github.com/rak200/ui/pull/369) gave the table its
+rows' motion and so finished step 4: every component draws the effects the three themes' tastes
+name. The [Built](#built) table under _Rollout_ links each pull request. Step 5 has no last effect,
+so it holds nothing open: an effect a consumer asks for is an issue of its own.
+
 ## Rollout
 
 Tracked in [#318](https://github.com/rak200/ui/issues/318). Ordered, each step shippable alone.
