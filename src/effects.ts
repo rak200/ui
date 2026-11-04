@@ -2,9 +2,10 @@
  * The effects a component draws — RFC 0004's: one sheet for each kind of control, which a
  * component of that kind adopts. A button's, for what the pointer, the focus and a press do to it;
  * a field's, for what the pointer and the focus do to a control a reader types or chooses in,
- * {@link fieldEffects}; a drawn control's, {@link controlEffects}; and a surface's, for what the
- * pointer and a focus on something it holds do to a card, {@link surfaceEffects}. The rest of this
- * docblock is the button's, and each of the others says its own.
+ * {@link fieldEffects}; a drawn control's, {@link controlEffects}; a surface's, for what the pointer
+ * and a focus on something it holds do to a card, {@link surfaceEffects}; and a panel's, for how a
+ * panel hung from a trigger opens and closes and what its caret does, {@link panelEffects}. The
+ * rest of this docblock is the button's, and each of the others says its own.
  *
  * **Built for a component, under its own taste name.** A theme's taste reaches a component by its
  * tag — the button's is `--ui-taste-button-<moment>`, the menu's `--ui-taste-menu-<moment>` — so
@@ -2606,6 +2607,287 @@ export function surfaceEffects(component: string, transformed = false): CSSResul
         @keyframes ui-exit-fade {
             to {
                 opacity: 0;
+            }
+        }
+    `;
+}
+
+/**
+ * Where a panel's parts are, as the shadow root that draws it has them — what
+ * {@link panelEffects} draws on: `ui-menu`'s panel, and in time the list `ui-select` opens.
+ */
+export interface Panel {
+    /** The panel, open or closed. */
+    readonly panel: string;
+    /** The panel while it is open, which an entrance is drawn on. */
+    readonly open: string;
+    /** The panel while it is closed, which an exit is drawn on. */
+    readonly closed: string;
+    /** The panel hanging above its trigger, where the component writes that it does. */
+    readonly above: string;
+    /** Every item while the panel is open. */
+    readonly items: string;
+    /** The item at `place` among them, counted from one. */
+    readonly item: (place: number) => string;
+    /** Every item from the seventh on, which waits in the cascade as the seventh does. */
+    readonly rest: string;
+    /** The trigger's caret. */
+    readonly caret: string;
+    /** The caret while the panel is open. */
+    readonly turned: string;
+}
+
+/**
+ * A panel's effects — RFC 0004's: how a panel hung from its trigger opens and closes, and what the
+ * trigger's caret does, built for `component`'s taste over the parts `where` names. One sheet for
+ * every such panel, so a menu and a list open alike.
+ *
+ * **Nothing here changes the panel's size.** The menu measures its panel to place it, so an
+ * entrance that started scaled would be measured instead: the effects fade a panel, uncover it,
+ * blur it, make it jump and bring its items in one after another, and none scales it or turns it.
+ * The items move inside it, which its size does not see. **What comes from the trigger's side reads
+ * which side that is**, `--ui-fx-toward`, which a component that places the panel writes before
+ * the panel's first style, as the menu does.
+ *
+ * **An exit holds the panel on the page while it runs**, its display and its overlay transitioned
+ * as discrete values, and only where one is chosen, so a panel with none closes at once — which
+ * Firefox and WebKit do whatever is chosen, holding no popover so, as RFC 0004 measured.
+ *
+ * Every time is a part of the overlay's step, as the review judged them in the prototypes at its
+ * default: a panel's moments take the step, an item takes five sixths of it and waits five
+ * thirty-seconds more for each item before it, and the caret turns over in a step and a half.
+ */
+export function panelEffects(component: string, where: Panel): CSSResult {
+    /** The condition each effect is drawn under, wrapped where it is used, for buttonEffects()'s reason. */
+    const drawn = query(component);
+    const overlay = String(reference('--ui-duration-overlay'));
+    // Each of the first six items a wait of its own, and every one from the seventh on the
+    // seventh's: a panel of many items is not held open waiting on the last. Each rule ends its
+    // own line, so nothing is written between them.
+    const waits = [1, 2, 3, 4, 5, 6]
+        .map(
+            (place) =>
+                `${where.item(place)} { transition-delay: calc(${overlay} * 5 / 32 * ${String(place)}), calc(${overlay} * 5 / 32 * ${String(place)}), 0s; }\n`,
+        )
+        .join('');
+    const last = `${where.rest} { transition-delay: calc(${overlay} * 5 / 32 * 7), calc(${overlay} * 5 / 32 * 7), 0s; }`;
+
+    return css`
+        /* Which way the trigger is from the panel, as a sign on the block axis: below it, and
+           above it where the panel hangs there. */
+        ${unsafeCSS(where.panel)} {
+            --ui-fx-toward: -1;
+        }
+
+        ${unsafeCSS(where.above)} {
+            --ui-fx-toward: 1;
+        }
+
+        /* An exit that covers the panel covers it from an open clip, 3rem clear of the shadow the
+           panel casts, past what each theme's reaches — Glass's falls 32px. Ahead of the entrances:
+           written after a reveal's start, the open clip was the start, and nothing was uncovered,
+           in all three engines — measured for RFC 0004. */
+        @container ${unsafeCSS(drawn('exit', 'fold'))} {
+            ${unsafeCSS(where.open)} {
+                clip-path: inset(-3rem);
+            }
+        }
+
+        /* cascade: the panel at once, and its items into it one after another, each from the
+           trigger's side. A pointer that lands on one as it arrives still lights it, on the
+           state's own step. */
+        @container ${unsafeCSS(drawn('enter', 'cascade'))} {
+            ${unsafeCSS(where.items)} {
+                transition:
+                    opacity calc(${reference('--ui-duration-overlay')} * 5 / 6)
+                        ${reference('--ui-easing-enter')},
+                    transform calc(${reference('--ui-duration-overlay')} * 5 / 6)
+                        ${reference('--ui-easing-enter')},
+                    background-color ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')};
+            }
+
+            ${unsafeCSS(waits)}
+
+            ${unsafeCSS(last)}
+
+            @starting-style {
+                ${unsafeCSS(where.items)} {
+                    opacity: 0;
+                    transform: translateY(calc(var(--ui-fx-toward) * 0.25rem));
+                }
+            }
+        }
+
+        /* refocus: out of focus by half a rem and sharpening over a step and a quarter, there by
+           half the way. */
+        @container ${unsafeCSS(drawn('enter', 'refocus'))} {
+            ${unsafeCSS(where.open)} {
+                transition:
+                    filter calc(${reference('--ui-duration-overlay')} * 1.25)
+                        ${reference('--ui-easing-enter')},
+                    opacity calc(${reference('--ui-duration-overlay')} * 0.625)
+                        ${reference('--ui-easing-enter')};
+            }
+
+            @starting-style {
+                ${unsafeCSS(where.open)} {
+                    filter: blur(0.5rem);
+                    opacity: 0;
+                }
+            }
+        }
+
+        /* glitch: in jumps and in bands, its labels split into the danger and the info as a
+           button's label splits, each step held until the next. It moves only along its lines,
+           so the box it rests in is what placed it. */
+        @container ${unsafeCSS(drawn('enter', 'glitch'))} {
+            ${unsafeCSS(where.open)} {
+                animation: ui-panel-glitch-in ${reference('--ui-duration-overlay')} steps(1, end);
+            }
+        }
+
+        /* fold: covered back toward the trigger. */
+        @container ${unsafeCSS(drawn('exit', 'fold'))} {
+            ${unsafeCSS(where.closed)} {
+                clip-path: inset(
+                    calc(max(0, var(--ui-fx-toward)) * 100%) -3rem
+                        calc(max(0, -1 * var(--ui-fx-toward)) * 100%) -3rem
+                );
+                transition:
+                    clip-path ${reference('--ui-duration-overlay')} ${reference('--ui-easing-exit')},
+                    display ${reference('--ui-duration-overlay')} allow-discrete,
+                    overlay ${reference('--ui-duration-overlay')} allow-discrete;
+            }
+        }
+
+        /* defocus: blurring away by as much as the refocus sharpens from, over as long, and gone
+           over its second half. */
+        @container ${unsafeCSS(drawn('exit', 'defocus'))} {
+            ${unsafeCSS(where.closed)} {
+                filter: blur(0.5rem);
+                opacity: 0;
+                transition:
+                    filter calc(${reference('--ui-duration-overlay')} * 1.25)
+                        ${reference('--ui-easing-exit')},
+                    opacity calc(${reference('--ui-duration-overlay')} * 0.625)
+                        ${reference('--ui-easing-exit')}
+                        calc(${reference('--ui-duration-overlay')} * 0.625),
+                    display calc(${reference('--ui-duration-overlay')} * 1.25) allow-discrete,
+                    overlay calc(${reference('--ui-duration-overlay')} * 1.25) allow-discrete;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('exit', 'glitch'))} {
+            ${unsafeCSS(where.closed)} {
+                animation: ui-panel-glitch-out ${reference('--ui-duration-overlay')} steps(1, end)
+                    forwards;
+                transition:
+                    display ${reference('--ui-duration-overlay')} allow-discrete,
+                    overlay ${reference('--ui-duration-overlay')} allow-discrete;
+            }
+        }
+
+        @keyframes ui-panel-glitch-in {
+            0% {
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 1;
+                transform: translateX(-3px);
+                clip-path: inset(0 -3rem 55% -3rem);
+                text-shadow:
+                    2px 0 ${reference('--ui-color-danger')},
+                    -2px 0 ${reference('--ui-color-info')};
+            }
+
+            35% {
+                opacity: 0.5;
+                transform: translateX(3px);
+                clip-path: inset(40% -3rem 0 -3rem);
+                text-shadow:
+                    -2px 0 ${reference('--ui-color-danger')},
+                    2px 0 ${reference('--ui-color-info')};
+            }
+
+            55% {
+                opacity: 1;
+                transform: translateX(-1px);
+                clip-path: inset(20% -3rem 25% -3rem);
+                text-shadow:
+                    1px 0 ${reference('--ui-color-danger')},
+                    -1px 0 ${reference('--ui-color-info')};
+            }
+
+            75%,
+            100% {
+                opacity: 1;
+                transform: none;
+                clip-path: inset(-3rem);
+                text-shadow: none;
+            }
+        }
+
+        /* The entrance's bands the other way, flickering out. */
+        @keyframes ui-panel-glitch-out {
+            0% {
+                opacity: 1;
+            }
+
+            20% {
+                transform: translateX(2px);
+                clip-path: inset(20% -3rem 25% -3rem);
+                text-shadow:
+                    1px 0 ${reference('--ui-color-danger')},
+                    -1px 0 ${reference('--ui-color-info')};
+            }
+
+            40% {
+                opacity: 0.5;
+                transform: translateX(-3px);
+                clip-path: inset(40% -3rem 0 -3rem);
+                text-shadow:
+                    -2px 0 ${reference('--ui-color-danger')},
+                    2px 0 ${reference('--ui-color-info')};
+            }
+
+            60% {
+                opacity: 1;
+                transform: translateX(3px);
+                clip-path: inset(0 -3rem 55% -3rem);
+                text-shadow:
+                    2px 0 ${reference('--ui-color-danger')},
+                    -2px 0 ${reference('--ui-color-info')};
+            }
+
+            80%,
+            100% {
+                opacity: 0;
+                transform: translateX(3px);
+                clip-path: inset(0 -3rem 55% -3rem);
+            }
+        }
+
+        /* The caret: today it turns over on the state's step, which none takes away and flip
+           draws otherwise — over its middle line, edge-on halfway, as a card is turned over, in
+           a step and a half on a move's curve, pointing up at the end as the turn leaves it. */
+        @container ${unsafeCSS(drawn('caret', 'none'))} {
+            ${unsafeCSS(where.caret)} {
+                transition: none;
+            }
+        }
+
+        @container ${unsafeCSS(drawn('caret', 'flip'))} {
+            ${unsafeCSS(where.caret)} {
+                transform: perspective(3rem) rotateX(0deg);
+                transition: transform calc(${reference('--ui-duration-overlay')} * 1.5)
+                    ${reference('--ui-easing-move')};
+            }
+
+            ${unsafeCSS(where.turned)} {
+                rotate: none;
+                transform: perspective(3rem) rotateX(180deg);
             }
         }
     `;

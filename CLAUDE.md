@@ -440,6 +440,13 @@ explains. This file restates none of them.
   tip a time of nothing where the glide is not chosen, so no guard a mutant turns makes either
   throw. `tests/next.test.ts` pins `performance.now`, and so does the tooltip's own test of the
   glide, so the second tip opens inside the window however long the pointer takes.
+- **Why a menu's panel and, in time, a select's list are one sheet of effects, and why the menu's
+  parts are set aside from mutation** — the docblock on `panelEffects()` in `src/effects.ts`: a menu
+  and a list open alike, so the component hands the sheet the selectors its shadow root keeps its
+  panel, items and caret under; nothing scales the panel, which the menu measures to place it; every
+  time is a part of the overlay's step. The menu's `parts` are read once, at import, into its static
+  styles, so they carry the warm runner's annotation, and `tests/effects.test.ts` grades the sheet
+  by building it at test time for a panel of its own, every glitch keyframe read at its offset.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and

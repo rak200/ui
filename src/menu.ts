@@ -1,7 +1,7 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
 import { place, type Box } from './placement.js';
 import { Description } from './description.js';
-import { buttonEffects, pressed } from './effects.js';
+import { buttonEffects, panelEffects, pressed, type Panel } from './effects.js';
 import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
@@ -18,6 +18,27 @@ const panelId = 'menu';
 
 /** Which way the panel went, for a host that wants to select on it. */
 const side = 'data-side';
+
+// Stryker disable all: read once, at import, into the styles the class is defined with — so in the
+// warm process Stryker switches mutants in, the original selectors stand before any mutant is
+// active. panelEffects() itself is graded where tests/effects.test.ts builds it at test time.
+/**
+ * Where the panel's parts are, for its effects: the popover, the items the host slots into it,
+ * which are its children with no slot of their own, and the trigger's caret, turned as it opens.
+ */
+const parts: Panel = {
+    panel: '[popover]',
+    open: '[popover]:popover-open',
+    closed: '[popover]:not(:popover-open)',
+    above: "[popover][data-side='block-start']",
+    items: '[popover]:popover-open slot::slotted(:not([slot]))',
+    item: (place) =>
+        `[popover]:popover-open slot::slotted(:nth-child(${String(place)} of :not([slot])))`,
+    rest: '[popover]:popover-open slot::slotted(:nth-child(n + 7 of :not([slot])))',
+    caret: 'svg',
+    turned: ':host([open]) svg',
+};
+// Stryker restore all
 
 /**
  * How long a typeahead buffer survives a pause, in milliseconds.
@@ -343,6 +364,9 @@ export class UiMenu extends LitElement {
             }
         `,
         buttonEffects('menu'),
+        // How the panel opens and closes and the caret turns, after the trigger's, as a select's
+        // list will: one sheet for every panel hung from a trigger.
+        panelEffects('menu', parts),
     ];
 
     /** The properties Lit observes on this element. */

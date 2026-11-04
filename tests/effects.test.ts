@@ -6,8 +6,10 @@ import {
     buttonEffects,
     controlEffects,
     fieldEffects,
+    panelEffects,
     pressed,
     surfaceEffects,
+    type Panel,
 } from '../src/effects.js';
 import { held, released } from '../src/held.js';
 import { farPole } from '../src/tokens.js';
@@ -2932,5 +2934,384 @@ describe("a surface's effects", () => {
         document.body.append(outer);
 
         expect(getComputedStyle(host).getPropertyValue('--ui-fx-fit')).toBe('pace');
+    });
+});
+
+/** Where the suite's own panel keeps its parts, as the menu's does. */
+const parts: Panel = {
+    panel: '[popover]',
+    open: '[popover]:popover-open',
+    closed: '[popover]:not(:popover-open)',
+    above: "[popover][data-side='block-start']",
+    items: '[popover]:popover-open slot::slotted(:not([slot]))',
+    item: (place) =>
+        `[popover]:popover-open slot::slotted(:nth-child(${String(place)} of :not([slot])))`,
+    rest: '[popover]:popover-open slot::slotted(:nth-child(n + 7 of :not([slot])))',
+    caret: 'svg',
+    turned: ':host([open]) svg',
+};
+
+/**
+ * A panel of the suite's own: a host whose shadow root holds a caret and a popover round eight
+ * items, under `choices`, with `tokens` written round it.
+ */
+function hung(
+    choices: Readonly<Record<string, string>>,
+    tokens = '',
+): { host: HTMLElement; popover: HTMLElement; caret: SVGElement; items: HTMLElement[] } {
+    const region = document.createElement('div');
+    region.style.cssText = tokens;
+
+    for (const [moment, effect] of Object.entries(choices)) {
+        region.style.setProperty(`--ui-motion-${moment}`, effect);
+    }
+
+    const host = document.createElement('div');
+    const root = host.attachShadow({ mode: 'open' });
+    const sheet = panelEffects('test', parts).styleSheet;
+
+    if (sheet === undefined) {
+        throw new Error('the engine built no sheet to adopt');
+    }
+
+    root.adoptedStyleSheets = [sheet];
+    root.innerHTML =
+        '<svg viewBox="0 0 24 24" width="16" height="16"></svg><div popover="manual"><slot></slot></div>';
+    host.innerHTML = Array.from(
+        { length: 8 },
+        (_, index) => `<button>Item ${String(index + 1)}</button>`,
+    ).join('');
+    region.append(host);
+    document.body.append(region);
+
+    const popover = root.querySelector<HTMLElement>('[popover]');
+    const caret = root.querySelector('svg');
+
+    if (popover === null || caret === null) {
+        throw new Error('the panel holds no popover or no caret');
+    }
+
+    return { host, popover, caret, items: [...host.children] as HTMLElement[] };
+}
+
+/** The transitions `element` runs, sorted by the property each moves. */
+function transitions(element: Element): CSSTransition[] {
+    return element
+        .getAnimations()
+        .filter((each): each is CSSTransition => each instanceof CSSTransition)
+        .sort((one, other) => one.transitionProperty.localeCompare(other.transitionProperty));
+}
+
+/** The animation the sheet set going on `element`, held at `fraction` of its way. */
+function heldAt(element: Element, fraction: number): CSSAnimation | undefined {
+    const animation = element
+        .getAnimations()
+        .find((each): each is CSSAnimation => each instanceof CSSAnimation);
+    const duration = Number(animation?.effect?.getTiming().duration);
+
+    animation?.pause();
+
+    if (animation !== undefined) {
+        animation.currentTime = duration * fraction;
+    }
+
+    return animation;
+}
+
+/** What a glitch's shadows read as where they are not split: before its first step, the none it
+ *  starts from drawn as two shadows of nothing. */
+const drawnAs: Readonly<Record<string, string>> = {
+    nothing: 'rgba(0, 0, 0, 0) 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px',
+    none: 'none',
+};
+
+/** The colours the glitch splits a label into, each its own. */
+const split = '--ui-color-danger: rgb(200, 0, 0); --ui-color-info: rgb(0, 0, 200)';
+
+describe("a panel's effects", () => {
+    it('tells the panel which side of it its trigger is on', () => {
+        const { popover } = hung({});
+        const below = getComputedStyle(popover).getPropertyValue('--ui-fx-toward');
+
+        popover.setAttribute('data-side', 'block-start');
+
+        expect([below, getComputedStyle(popover).getPropertyValue('--ui-fx-toward')]).toEqual([
+            '-1',
+            '1',
+        ]);
+    });
+
+    it('brings the items in one after another, the seventh on together, over five sixths of the step', () => {
+        const { popover, items } = hung(
+            { enter: 'cascade' },
+            '--ui-duration-overlay: 1.2s; --ui-easing-enter: steps(3); --ui-duration-state: 0.3s; --ui-easing-state: steps(2)',
+        );
+
+        popover.showPopover();
+
+        expect(
+            items.map((item) => getComputedStyle(item).transitionDelay),
+            'a wait of five thirty-seconds of the step for each item before',
+        ).toEqual([
+            '0.1875s, 0.1875s, 0s',
+            '0.375s, 0.375s, 0s',
+            '0.5625s, 0.5625s, 0s',
+            '0.75s, 0.75s, 0s',
+            '0.9375s, 0.9375s, 0s',
+            '1.125s, 1.125s, 0s',
+            '1.3125s, 1.3125s, 0s',
+            '1.3125s, 1.3125s, 0s',
+        ]);
+
+        const style = getComputedStyle(items[0] ?? popover);
+
+        expect([
+            style.transitionProperty,
+            style.transitionDuration,
+            style.transitionTimingFunction,
+        ]).toEqual([
+            'opacity, transform, background-color',
+            '1s, 1s, 0.3s',
+            'steps(3), steps(3), steps(2)',
+        ]);
+
+        const first = items[0] ?? popover;
+
+        for (const each of transitions(first)) {
+            each.pause();
+            each.currentTime = 0;
+        }
+
+        expect(
+            [getComputedStyle(first).opacity, getComputedStyle(first).transform],
+            'from its trigger, below it',
+        ).toEqual(['0', 'matrix(1, 0, 0, 1, 0, -4)']);
+    });
+
+    it('comes into focus as it opens, over five quarters of the step, whole by half the way', () => {
+        const { popover } = hung(
+            { enter: 'refocus' },
+            '--ui-duration-overlay: 1.2s; --ui-easing-enter: steps(3)',
+        );
+
+        popover.showPopover();
+
+        expect(
+            transitions(popover).map((each) => [
+                each.transitionProperty,
+                each.effect?.getTiming().duration,
+                each.effect?.getTiming().easing,
+            ]),
+        ).toEqual([
+            ['filter', 1500, 'steps(3)'],
+            ['opacity', 750, 'steps(3)'],
+        ]);
+
+        for (const each of transitions(popover)) {
+            each.pause();
+            each.currentTime = 0;
+        }
+
+        expect([getComputedStyle(popover).filter, getComputedStyle(popover).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+    });
+
+    it.each([
+        [0.1, '0', 'matrix(1, 0, 0, 1, 0, 0)', 'none', 'nothing'],
+        [0.25, '1', 'matrix(1, 0, 0, 1, -3, 0)', 'inset(0% -48px 55%)', '2px|-2px'],
+        [0.45, '0.5', 'matrix(1, 0, 0, 1, 3, 0)', 'inset(40% -48px 0%)', '-2px|2px'],
+        [0.65, '1', 'matrix(1, 0, 0, 1, -1, 0)', 'inset(20% -48px 25%)', '1px|-1px'],
+        [0.85, '1', 'none', 'inset(-48px)', 'none'],
+    ] as const)(
+        'jumps in in bands as it opens, its labels split, held at %s of the way',
+        (fraction, opacity, transform, clip, shadow) => {
+            const { popover } = hung({ enter: 'glitch' }, `--ui-duration-overlay: 6s; ${split}`);
+
+            popover.showPopover();
+
+            const animation = heldAt(popover, fraction);
+            const style = getComputedStyle(popover);
+            const [red, blue] = shadow.split('|');
+
+            expect([
+                animation?.animationName,
+                animation?.effect?.getTiming().duration,
+                style.animationTimingFunction,
+            ]).toEqual(['ui-panel-glitch-in', 6000, 'steps(1)']);
+            expect([style.opacity, style.transform, style.clipPath, style.textShadow]).toEqual([
+                opacity,
+                transform,
+                clip,
+                drawnAs[shadow] ??
+                    `rgb(200, 0, 0) ${String(red)} 0px 0px, rgb(0, 0, 200) ${String(blue)} 0px 0px`,
+            ]);
+        },
+    );
+
+    it.each([
+        ['below its trigger', '', 'inset(0% -48px 100%)'],
+        ['above it', 'block-start', 'inset(100% -48px 0%)'],
+    ] as const)(
+        'folds back toward its trigger as it closes, %s, held on the page over the step',
+        (_name, side, covered) => {
+            const { popover } = hung(
+                { exit: 'fold' },
+                '--ui-duration-overlay: 1.2s; --ui-easing-exit: steps(4)',
+            );
+            popover.setAttribute('data-side', side);
+            popover.showPopover();
+
+            expect(getComputedStyle(popover).clipPath, 'open, clear of its shadow').toBe(
+                'inset(-48px)',
+            );
+
+            popover.hidePopover();
+
+            expect(
+                transitions(popover).map((each) => [
+                    each.transitionProperty,
+                    each.effect?.getTiming().duration,
+                    each.effect?.getTiming().easing,
+                ]),
+            ).toEqual([
+                ['clip-path', 1200, 'steps(4)'],
+                ['display', 1200, 'ease'],
+                ['overlay', 1200, 'ease'],
+            ]);
+            expect(getComputedStyle(popover).display, 'still on the page').not.toBe('none');
+
+            for (const each of transitions(popover)) {
+                each.finish();
+            }
+
+            expect(getComputedStyle(popover).clipPath).toBe(covered);
+        },
+    );
+
+    it('goes out of focus as it closes, gone over the second half', () => {
+        const { popover } = hung(
+            { exit: 'defocus' },
+            '--ui-duration-overlay: 0.8s; --ui-easing-exit: steps(5)',
+        );
+        popover.showPopover();
+
+        popover.hidePopover();
+
+        expect(
+            transitions(popover).map((each) => {
+                const timing = each.effect?.getTiming();
+
+                return [each.transitionProperty, timing?.duration, timing?.delay, timing?.easing];
+            }),
+        ).toEqual([
+            ['display', 1000, 0, 'ease'],
+            ['filter', 1000, 0, 'steps(5)'],
+            ['opacity', 500, 500, 'steps(5)'],
+            ['overlay', 1000, 0, 'ease'],
+        ]);
+
+        for (const each of transitions(popover)) {
+            each.finish();
+        }
+
+        expect([getComputedStyle(popover).filter, getComputedStyle(popover).opacity]).toEqual([
+            'blur(8px)',
+            '0',
+        ]);
+    });
+
+    it.each([
+        [0.25, '1', 'matrix(1, 0, 0, 1, 2, 0)', 'inset(20% -48px 25%)', '1px|-1px'],
+        [0.45, '0.5', 'matrix(1, 0, 0, 1, -3, 0)', 'inset(40% -48px 0%)', '-2px|2px'],
+        [0.65, '1', 'matrix(1, 0, 0, 1, 3, 0)', 'inset(0px -48px 55%)', '2px|-2px'],
+        [0.85, '0', 'matrix(1, 0, 0, 1, 3, 0)', 'inset(0px -48px 55%)', '2px|-2px'],
+    ] as const)(
+        'flickers out in bands as it closes, its labels split, held at %s of the way',
+        (fraction, opacity, transform, clip, shadow) => {
+            const { popover } = hung({ exit: 'glitch' }, `--ui-duration-overlay: 6s; ${split}`);
+            popover.showPopover();
+
+            popover.hidePopover();
+
+            const animation = heldAt(popover, fraction);
+            const style = getComputedStyle(popover);
+            const [red, blue] = shadow.split('|');
+
+            expect([
+                animation?.animationName,
+                animation?.effect?.getTiming().duration,
+                animation?.effect?.getTiming().fill,
+            ]).toEqual(['ui-panel-glitch-out', 6000, 'forwards']);
+            expect(transitions(popover).map((each) => each.transitionProperty)).toEqual([
+                'display',
+                'overlay',
+            ]);
+            expect([style.opacity, style.transform, style.clipPath, style.textShadow]).toEqual([
+                opacity,
+                transform,
+                clip,
+                `rgb(200, 0, 0) ${String(red)} 0px 0px, rgb(0, 0, 200) ${String(blue)} 0px 0px`,
+            ]);
+        },
+    );
+
+    it('flips the caret over its middle line as the panel opens, over a step and a half', () => {
+        const { host, caret } = hung(
+            { caret: 'flip' },
+            '--ui-duration-overlay: 1.2s; --ui-easing-move: steps(4)',
+        );
+        const reference = document.createElement('div');
+        document.body.append(reference);
+        const drawn = (transform: string): string => {
+            reference.style.transform = transform;
+
+            return getComputedStyle(reference).transform;
+        };
+        const style = getComputedStyle(caret);
+
+        expect([
+            style.transitionProperty,
+            style.transitionDuration,
+            style.transitionTimingFunction,
+        ]).toEqual(['transform', '1.8s', 'steps(4)']);
+        expect(style.transform, 'at rest').toBe(drawn('perspective(3rem) rotateX(0deg)'));
+
+        host.setAttribute('open', '');
+
+        // Turned over all the way, as the transition leaves it.
+        for (const each of transitions(caret)) {
+            each.finish();
+        }
+
+        expect(
+            [getComputedStyle(caret).rotate, getComputedStyle(caret).transform],
+            'turned',
+        ).toEqual(['none', drawn('perspective(3rem) rotateX(180deg)')]);
+    });
+
+    it('turns the caret over at once under none', () => {
+        const { caret } = hung({ caret: 'none' });
+
+        expect(getComputedStyle(caret).transitionProperty).toBe('none');
+    });
+
+    it('opens and closes at once where nothing is chosen', () => {
+        const { popover, items } = hung({});
+
+        popover.showPopover();
+
+        expect(
+            [...items, popover].flatMap((each) => transitions(each)),
+            'opening',
+        ).toEqual([]);
+
+        popover.hidePopover();
+
+        expect([transitions(popover), getComputedStyle(popover).display], 'closing').toEqual([
+            [],
+            'none',
+        ]);
     });
 });

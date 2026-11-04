@@ -11,7 +11,7 @@ import '../src/button.js';
 import '../src/tooltip.js';
 import { reference } from '../src/reference.js';
 import { tokenStyleSheet, type DerivedToken, type Token } from '../src/tokens.js';
-import { glass, themeStyleSheet } from '../src/theme.js';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import type { UiMenu } from '../src/menu.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -1921,6 +1921,76 @@ describe("the button's effects, which the trigger answers as a secondary button 
         expect(getComputedStyle(target).scale, 'sprung in').toBe('0.9');
         expect(target.hasAttribute('data-ripple'), 'a ripple').toBe(true);
     });
+});
+
+/** What each of `elements` moves as the sheet set it going: transitions by property, animations by name. */
+function moved(...elements: Element[]): string[] {
+    return elements
+        .flatMap((element) => element.getAnimations())
+        .map((each) =>
+            each instanceof CSSTransition
+                ? each.transitionProperty
+                : each instanceof CSSAnimation
+                  ? each.animationName
+                  : 'something else',
+        )
+        .sort();
+}
+
+describe("the panel's motion, RFC 0004's", () => {
+    it.each([
+        [
+            'the default theme',
+            '',
+            ['opacity', 'transform'],
+            ['transform'],
+            ['clip-path', 'display', 'overlay'],
+        ],
+        [
+            'Matrix',
+            themeStyleSheet(matrix),
+            [],
+            ['transform', 'ui-panel-glitch-in'],
+            ['display', 'overlay', 'ui-panel-glitch-out'],
+        ],
+        [
+            'Glass',
+            themeStyleSheet(glass),
+            [],
+            ['filter', 'opacity', 'transform'],
+            ['display', 'filter', 'opacity', 'overlay'],
+        ],
+    ] as const)(
+        "opens and closes its panel and turns its caret as %s's taste says",
+        async (_name, sheet, items, opening, closing) => {
+            const style = document.createElement('style');
+            style.textContent = tokenStyleSheet() + sheet;
+            document.body.append(style);
+            const theme = sheet === '' ? '' : _name.toLowerCase();
+            // Slowed, so everything is still moving when it is read, however long the click takes.
+            const host = await mount(
+                `<div data-ui-theme="${theme}" style="--ui-duration-overlay: 10s">${fixture}</div>`,
+            );
+            const element = menu(host);
+
+            await userEvent.click(trigger(element));
+
+            expect(moved(item(host, 0)), 'the first item').toEqual(items);
+            expect(moved(panel(element), caret(element)), 'the panel and the caret').toEqual(
+                opening,
+            );
+
+            for (const each of [panel(element), caret(element)].flatMap((one) =>
+                one.getAnimations(),
+            )) {
+                each.finish();
+            }
+
+            panel(element).hidePopover();
+
+            expect(moved(panel(element)), 'closing').toEqual(closing);
+        },
+    );
 });
 
 describe('the description a tooltip hands over', () => {

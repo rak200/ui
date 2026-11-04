@@ -202,8 +202,24 @@ region, every menu or one. **A theme's taste reaches it under the menu's own nam
 apart with it. The shipped themes name the pointer, the focus and a press once, for the page, so the
 trigger moves as every button does.
 
-**The panel's entrance and exit, and the caret's flip, are the menu's own moments**, and not drawn
-yet: the panel opens and closes at once, as it did, and the caret turns over as it did.
+**The panel's entrance and exit, and the caret's flip, are the menu's own moments**,
+`--ui-motion-enter`, `--ui-motion-exit` and `--ui-motion-caret`, under the menu's taste name. Under
+the default theme the panel is there at once and its items come into it one after another from the
+trigger's side, `cascade`, each over five sixths of `--ui-duration-overlay` and five thirty-seconds
+of it later than the one before, the seventh on together; it closes covered back toward the trigger,
+`fold`; and the caret turns over its middle line, edge-on halfway, as a card is turned, `flip`, over
+a step and a half on `--ui-easing-move`. Under [Matrix](theme.md#matrix) the panel jumps in and
+flickers out in bands, its labels split into `--ui-color-danger` and `--ui-color-info`, `glitch`;
+under [Glass](theme.md#glass) it comes into focus and goes out of it, `refocus` and `defocus`.
+`none` takes each away: the panel opens and closes at once, and the caret turns over at once.
+
+They are drawn by one internal sheet, `panelEffects()` in `src/effects.ts`, which the select's list
+will open by too. **None scales the panel**, which the menu measures to place it, and an entrance
+comes from the side the panel hangs on, written before the panel is first drawn. **Only Chromium
+plays an exit**: the panel is held on the page while it goes by transitioning its display and its
+overlay, which Firefox and WebKit do not honour for a popover, so there the panel is gone at once.
+In an engine without container style queries the panel opens and closes at once and the caret turns
+as it always did.
 
 ## Styling
 
