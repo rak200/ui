@@ -209,6 +209,14 @@ and `--ui-color-info`, over the overlay's step. The highlight's rules are adopte
 tip is in, which is where an engine draws them. An engine without highlights shows the tip whole, at
 once, and under reduced motion nothing is typed.
 
+**A tip opened as another closes glides over from where the other was**, in every theme, the
+default's taste naming `glide` for `--ui-motion-next`: along a row of triggers, one tip seems to
+follow the pointer. A tip that opens within 300ms of another closing is the next, a reading of the
+pointer rather than motion; both their effects are ended at once, the other's exit and the new one's
+entrance, typing and all, and it moves from the other's place by its middle and the edge nearest its
+trigger, over `--ui-duration-overlay` on `--ui-easing-move`. Only a tip still on the page hands
+over, and `none` lets each tip come and go as it would.
+
 ## Styling
 
 Every value is a [token](tokens.md); nothing here is hardcoded.

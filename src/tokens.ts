@@ -792,7 +792,7 @@ export const taste: Taste = {
     // lands and back, and slides out toward it; the time it has left is a ring round its dismiss
     // button; and the toasts a toaster holds spring into their place as one arrives or leaves. A
     // tooltip's tip rises toward where it sits as it shows, and sinks back toward its trigger as it
-    // goes.
+    // goes, and one opened as another closes glides over from where the other was.
     components: {
         checkbox: { check: 'draw', 'hover-border': 'none' },
         switch: { check: 'spring', 'hover-border': 'none' },
@@ -800,7 +800,7 @@ export const taste: Taste = {
         card: { enter: 'fade', exit: 'fade' },
         toast: { enter: 'slide-elastic', exit: 'slide', dwell: 'ring' },
         toaster: { stack: 'spring' },
-        tooltip: { enter: 'rise', exit: 'sink' },
+        tooltip: { enter: 'rise', exit: 'sink', next: 'glide' },
     },
 };
 

@@ -1,5 +1,6 @@
 import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { query } from './motion.js';
+import { arrived, left } from './next.js';
 import { place } from './placement.js';
 import { reference } from './reference.js';
 import { halt, ready, write } from './typing.js';
@@ -257,10 +258,24 @@ export class UiTooltip extends LitElement {
             }
         }
 
-        /* The tip's own hand-off to the typing, never one inherited from a surface round the
-           tooltip, which would type a tip nobody chose to. */
+        /* The tip's own hand-offs to the typing and to the next tip, never ones inherited from
+           a surface round the tooltip, which would type a tip nobody chose to; and a time of
+           nothing where the glide is not chosen, so a time is always there to read. */
         slot[name='tip']::slotted(*) {
             --ui-fx-enter: none;
+            --ui-fx-next: none;
+            --ui-fx-next-time: 0ms;
+            --ui-fx-next-curve: linear;
+        }
+
+        /* glide: a tip opened as another closes glides over from where the other was, both
+           their effects ended first — src/next.ts, over the overlay's step on a move's curve. */
+        @container ${unsafeCSS(drawn('next', 'glide'))} {
+            slot[name='tip']::slotted(*) {
+                --ui-fx-next: glide;
+                --ui-fx-next-time: ${reference('--ui-duration-overlay')};
+                --ui-fx-next-curve: ${reference('--ui-easing-move')};
+            }
         }
 
         /* typing: the tip's text typed out a character at a time behind a caret of the accent, a
@@ -777,6 +792,8 @@ export class UiTooltip extends LitElement {
         tip.showPopover();
         this.#place();
         write(tip);
+        // Over from where the tip that closed just before it was, where it is the next.
+        arrived(tip);
 
         this.#watching = new AbortController();
 
@@ -808,10 +825,11 @@ export class UiTooltip extends LitElement {
 
         const tip = this.#tip();
 
-        tip?.hidePopover();
-
-        // The typing stopped where it got to, for the exit to take away.
         if (tip !== undefined) {
+            // Where it is drawn as it starts to go, for a tip opened just after to glide from.
+            left(tip);
+            tip.hidePopover();
+            // The typing stopped where it got to, for the exit to take away.
             halt(tip);
         }
 

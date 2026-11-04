@@ -1370,7 +1370,7 @@ describe("Matrix's tip, RFC 0004's", () => {
     });
 
     it('types a tip shown again from its first character once it has gone', async () => {
-        const host = await chosen('--ui-motion-enter: typing; --ui-duration-overlay: 0.5s');
+        const host = await chosen('--ui-motion-enter: typing; --ui-duration-overlay: 50s');
         const errors = await escaped(async () => {
             await userEvent.hover(trigger(host));
 
@@ -1381,7 +1381,7 @@ describe("Matrix's tip, RFC 0004's", () => {
             first?.pause();
 
             if (first !== undefined) {
-                first.currentTime = 50 * 6.5;
+                first.currentTime = 5000 * 6.5;
             }
 
             // Gone at once, with no exit chosen, and pointed at again.
@@ -1392,7 +1392,9 @@ describe("Matrix's tip, RFC 0004's", () => {
                 tip(host)
                     .getAnimations()
                     .find((each) => each.id === 'ui-typing')?.currentTime,
-            ).toBe(0);
+                // Started over: inside its first character, which takes five seconds here, where
+                // going on would have stood six and a half characters in.
+            ).toBeLessThan(5000);
         });
 
         expect(errors).toEqual([]);
@@ -1471,6 +1473,67 @@ describe("Matrix's tip, RFC 0004's", () => {
         });
 
         expect(errors).toEqual([]);
+    });
+});
+
+describe("the next tip, RFC 0004's", () => {
+    it.each([
+        ['nothing where nothing is chosen', '', ['none', '0ms', 'linear']],
+        [
+            'the glide where it is chosen',
+            '--ui-motion-next: glide; --ui-duration-overlay: 0.5s; --ui-easing-move: steps(3)',
+            ['glide', '0.5s', 'steps(3)'],
+        ],
+    ] as const)('hands its tip %s', async (_name, style, values) => {
+        const host = await chosen(style);
+        const handed = getComputedStyle(tip(host));
+
+        expect(
+            ['', '-time', '-curve'].map((part) => handed.getPropertyValue(`--ui-fx-next${part}`)),
+        ).toEqual(values);
+    });
+
+    it('glides the tip pointed at next over from the one the pointer left', async () => {
+        const host = await mount(`
+            <div style="display: flex; gap: 120px; --ui-motion-next: glide; --ui-duration-overlay: 10s">
+                <ui-tooltip>
+                    <button type="button">Save</button>
+                    <span slot="tip">Saves without closing the dialog.</span>
+                </ui-tooltip>
+                <ui-tooltip>
+                    <button type="button">Discard</button>
+                    <span slot="tip">Throws the draft away.</span>
+                </ui-tooltip>
+            </div>
+        `);
+        const [save, discard] = host.querySelectorAll('button');
+        const [first, second] = host.querySelectorAll<HTMLElement>('[slot=tip]');
+        // One instant for both, so the second opens well inside the window whatever the pointer
+        // takes to cross.
+        vi.spyOn(performance, 'now').mockReturnValue(1000);
+
+        const errors = await escaped(async () => {
+            if (save !== undefined && discard !== undefined) {
+                await userEvent.hover(save);
+                await userEvent.hover(discard);
+            }
+        });
+        const glides = second
+            ?.getAnimations()
+            .filter((each) => (each.effect as KeyframeEffect).composite === 'add');
+
+        expect(errors).toEqual([]);
+        expect(glides?.map((each) => each.effect?.getTiming().duration)).toEqual([10000]);
+        expect(first?.getAnimations().filter((each) => each.playState === 'running')).toEqual([]);
+    });
+
+    it("glides under the default theme's taste", async () => {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+        const host = await mount(fixture);
+
+        expect(getComputedStyle(tip(host)).getPropertyValue('--ui-fx-next')).toBe('glide');
     });
 });
 

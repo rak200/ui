@@ -584,7 +584,8 @@ taste.page['press-move']; // 'squish'
 A check is each drawn control's own moment, so it is named for each. So is a drawn control's
 boundary under the pointer, which stays as it rests while the fill moves: named for the page, its
 `none` would take a field's darkening too, which is a field's answer to the pointer beside the
-raise. A card's entrance and its exit are its own moments as well, and so are a toast's.
+raise. A card's entrance and its exit are its own moments as well, and so are a toast's and a
+tooltip's.
 
 | Component  | Moment         | Effect          | What it draws                                     |
 | ---------- | -------------- | --------------- | ------------------------------------------------- |
@@ -600,6 +601,9 @@ raise. A card's entrance and its exit are its own moments as well, and so are a 
 | `toast`    | `exit`         | `slide`         | slid out toward the edge it came from             |
 | `toast`    | `dwell`        | `ring`          | the time it has left, round its dismiss button    |
 | `toaster`  | `stack`        | `spring`        | the others sprung into place as one comes or goes |
+| `tooltip`  | `enter`        | `rise`          | the tip risen toward where it sits as it shows    |
+| `tooltip`  | `exit`         | `sink`          | the tip sunk back toward its trigger as it goes   |
+| `tooltip`  | `next`         | `glide`         | a tip glided over from the one closed just before |
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
