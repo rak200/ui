@@ -264,6 +264,7 @@ Glass's edge would never reach them. And it leans the card alone, as RFC 0004 ch
 | `select`                      | `exit`         | `defocus`  |
 | `icon`                        | `enter`        | `refocus`  |
 | `icon`                        | `hover`        | `pop`      |
+| `table`                       | `hover`        | `frost`    |
 
 **It sets its own hover and pressed**, 20% and 32% of the text rather than the formula's 16% and
 26%. A menu's items and a toast's dismiss hover on the glass with nothing else to show the pointer

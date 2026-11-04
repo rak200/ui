@@ -529,6 +529,16 @@ explains. This file restates none of them.
   toast's `:host` rule reads where its toaster stands, so a choice written on the toaster reaches
   the stack, which S8 would have kept a rule on the toaster's own host from. `tests/stack.test.ts`
   stacks undefined `ui-toast` elements of its own, so only the stack moves them.
+- **Why a table's row effects are drawn in the adopted rules rather than a shadow root, why the
+  highlight is a veil, and why a row glows only once its table is settled** — the docblocks on
+  `rules` and `veils` in `src/table.ts`, the comments beside the row's rules there,
+  ARCHITECTURE.md's _Which effect runs is the consumer's_, and `docs/table.md`'s _Motion_. The hover
+  colour stood under 1.25:1 from a stripe in the dark scheme, which the row floors in
+  `tests/tokens.test.ts` now measure for the veils instead; the veil and the arriving tint are
+  layers of registered properties, one `background-image` and one `transition` for both, so neither
+  effect drops the other; and `settled` is a custom state the table adds two frames after it
+  connects, which `@starting-style` waits on. The token gate reads the table's adopted `rules` as it
+  reads every component's styles.
 - **Why the package ships themes, why a theme is data, and why its stylesheet resets states** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A theme and a scheme are two axes_ and _More contrast is the
   reader's setting_, and the docblocks on `Theme`, `themeStyleSheet`, `matrix` and `glass` in

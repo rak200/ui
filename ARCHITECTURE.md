@@ -557,6 +557,17 @@ asked for less motion would see. **So is the ripple**, a circle the sheet draws 
 as a press lands, on the time and curve the sheet hands it: a click is over before an effect drawn
 under `:active` could play out, and RFC 0004's S7 measured it cut short.
 
+**A table's row is the one place a component draws its effects outside its shadow root**, because
+the rows are the host's, in the host's tree, where `ui-table` already adopts the sheet that styles
+them; a row's container is its `tbody`, which inherits a choice from the element and anywhere above
+it, so every scope reaches it. **The row under the pointer takes a veil of the text rather than the
+hover colour** RFC 0004 named: the hover colour stood 1.235 to 1.25:1 from a stripe in the dark
+scheme — measured — short of the 1.25:1 a neutral state owes, where the text at the hover's own
+share, laid over the row as it rests, holds 1.34:1 or more from a plain row and a striped one in
+every shipped palette. And **a row the host adds glows only once its table has settled**, two frames
+after it joins the page, since a sheet's entrance is drawn for every element as it is first styled,
+and the rows a table arrives with are not rows anyone added.
+
 ### A shadow follows the scheme only through its colour
 
 `light-dark()` takes **colours**, so a ground whose value is a shadow has no dark value beside it

@@ -6,7 +6,9 @@ import meta, { NoCaption, RowHeaders, Scrolling, Table } from '../stories/table.
 import '../src/table.js';
 import { reference } from '../src/reference.js';
 import type { DerivedToken, Token } from '../src/tokens.js';
-import type { UiTable } from '../src/table.js';
+import { veils, type UiTable } from '../src/table.js';
+import { glass, matrix, themeStyleSheet } from '../src/theme.js';
+import { tokenStyleSheet } from '../src/tokens.js';
 
 /** The markup the tests use, unless one needs a different shape. */
 const fixture = `
@@ -554,6 +556,311 @@ describe('the values, all of which come from the token layer', () => {
 
         expect(getComputedStyle(only(host, 'caption')).fontSize).toBe('27px');
     });
+});
+
+/** The fixture under `choices`, written on the element round the table. */
+async function chosen(choices: string): Promise<HTMLElement> {
+    return mount(`<div style="${choices}">${fixture}</div>`);
+}
+
+/** The rows of the fixture's body, in order. */
+function rows(host: ParentNode): HTMLTableRowElement[] {
+    return [...host.querySelectorAll('tbody tr')] as HTMLTableRowElement[];
+}
+
+/** One row of the fixture's body, and a failure with a name where there is none. */
+function row(host: ParentNode, place: number): HTMLTableRowElement {
+    const found = rows(host)[place];
+
+    if (found === undefined) {
+        throw new Error(`no row ${String(place)} in the fixture`);
+    }
+
+    return found;
+}
+
+/** What `element` eases, as each transition's property, time and curve. */
+function easing(element: Element): (string | number | undefined)[][] {
+    return element
+        .getAnimations()
+        .map((each) => [
+            each instanceof CSSTransition ? each.transitionProperty : 'something else',
+            each.effect?.getTiming().duration as number | undefined,
+            each.effect?.getTiming().easing,
+        ]);
+}
+
+/** Puts the pointer on `target` and lets everything it eases there arrive. */
+async function rested(target: Element): Promise<void> {
+    await userEvent.hover(target);
+
+    for (const each of target.getAnimations()) {
+        each.finish();
+    }
+}
+
+/** A row the host adds to the end of the fixture's body. */
+function added(host: ParentNode): HTMLTableRowElement {
+    const fresh = document.createElement('tr');
+    fresh.innerHTML = '<td>0004</td><td>R$ 99,00</td>';
+    only(host, 'tbody').append(fresh);
+
+    return fresh;
+}
+
+/**
+ * A colour as the pixel it paints, so two spellings of one colour compare equal: a transition
+ * reports its ends in the space it interpolates in, never as they were written.
+ */
+function pixel(colour: string): number[] {
+    const context = document.createElement('canvas').getContext('2d');
+
+    for (const each of context === null ? [] : [context]) {
+        each.fillStyle = colour;
+        each.fillRect(0, 0, 1, 1);
+
+        return [...each.getImageData(0, 0, 1, 1).data];
+    }
+
+    return [];
+}
+
+/** `value` written on the row's registered property `name`, as the browser computes it there. */
+function registered(name: string, value: string): string {
+    const probe = document.createElement('div');
+    probe.style.setProperty(name, value);
+    document.body.append(probe);
+
+    try {
+        return getComputedStyle(probe).getPropertyValue(name);
+    } finally {
+        probe.remove();
+    }
+}
+
+/** The veil the sheet lays over a row, at `share` of the fixture's text. */
+const veil = (share: number): string =>
+    registered('--ui-fx-veil', `rgb(from rgb(10, 20, 30) r g b / ${String(share)})`);
+
+/** Distinct times for each part, so a part read off the wrong one fails. */
+const times =
+    '--ui-duration-state: 0.6s; --ui-easing-state: steps(3); --ui-duration-flourish: 2s; --ui-easing-exit: steps(4)';
+
+describe("a row's motion, RFC 0004's", () => {
+    it.each([0, 1])(
+        'lays a veil of the text over the row under the pointer, over a state, striped or not: row %s',
+        async (place) => {
+            const host = await chosen(
+                `--ui-motion-hover: highlight; --ui-color-text: rgb(10, 20, 30); ${times}`,
+            );
+            const target = row(host, place);
+            const resting = painted(target);
+
+            await userEvent.hover(target);
+
+            expect(easing(target)).toEqual([['--ui-fx-veil', 600, 'steps(3)']]);
+
+            await rested(target);
+
+            const style = getComputedStyle(target);
+
+            expect(
+                [style.getPropertyValue('--ui-fx-veil'), painted(target)],
+                "the veil, over the row's own colour",
+            ).toEqual([veil(veils.highlight), resting]);
+            expect(style.backgroundImage, 'laid as a picture of the one colour').toBe(
+                `linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), linear-gradient(${veil(veils.highlight)}, ${veil(veils.highlight)})`,
+            );
+            expect(
+                getComputedStyle(row(host, 1 - place)).getPropertyValue('--ui-fx-veil'),
+                'only the row under it',
+            ).toBe('rgba(0, 0, 0, 0)');
+        },
+    );
+
+    it('lays the highlight under frost where there is no glass, or the glass stands down', async () => {
+        for (const glassy of ['', '--ui-backdrop-raised: initial']) {
+            const host = await chosen(
+                `--ui-motion-hover: frost; --ui-color-text: rgb(10, 20, 30); ${glassy}`,
+            );
+            const target = row(host, 1);
+
+            await rested(target);
+
+            expect(
+                [
+                    getComputedStyle(target).getPropertyValue('--ui-fx-veil'),
+                    getComputedStyle(target).backdropFilter,
+                ],
+                glassy,
+            ).toEqual([veil(veils.highlight), 'none']);
+
+            host.remove();
+        }
+    });
+
+    it("turns the row under the pointer to the theme's glass under frost, its rules drawn again", async () => {
+        const host = await chosen(
+            '--ui-motion-hover: frost; --ui-backdrop-raised: blur(7px); --ui-color-text: rgb(10, 20, 30); --ui-color-border: rgb(40, 50, 60)',
+        );
+        const target = row(host, 1);
+
+        await rested(target);
+
+        expect([
+            getComputedStyle(target).getPropertyValue('--ui-fx-veil'),
+            getComputedStyle(target).backdropFilter,
+        ]).toEqual([veil(veils.frost), 'blur(7px)']);
+
+        for (const cell of target.children) {
+            expect(getComputedStyle(cell).boxShadow).toBe(
+                'rgb(40, 50, 60) 0px 1px 0px 0px inset, rgb(40, 50, 60) 0px -1px 0px 0px inset',
+            );
+        }
+
+        expect(getComputedStyle(row(host, 0)).backdropFilter, 'only the row under it').toBe('none');
+    });
+
+    it('settles the table two frames after it joins the page, and unsettles it as it leaves', async () => {
+        const host = await mount(fixture);
+        const element = table(host);
+
+        expect(element.matches(':state(settled)'), 'as it renders').toBe(false);
+
+        await frame();
+
+        expect(element.matches(':state(settled)'), 'once its rows are drawn').toBe(false);
+
+        await frame();
+
+        expect(element.matches(':state(settled)'), 'a frame later').toBe(true);
+
+        element.remove();
+
+        expect(element.matches(':state(settled)'), 'taken out').toBe(false);
+    });
+
+    it('leaves a table taken out before it settled unsettled', async () => {
+        const host = await mount(fixture);
+        const element = table(host);
+
+        element.remove();
+        await laidOut();
+        await frame();
+
+        expect(element.matches(':state(settled)')).toBe(false);
+    });
+
+    it('tints a row the host adds with the accent, and drains it over a flourish', async () => {
+        const host = await chosen(
+            `--ui-motion-enter: glow; --ui-color-accent: rgb(10, 20, 30); ${times}`,
+        );
+
+        await laidOut();
+
+        const fresh = added(host);
+
+        expect(easing(fresh)).toEqual([['--ui-fx-tint', 2000, 'steps(4)']]);
+
+        // The tint as the sheet writes it, through the property it drains along.
+        const probe = document.createElement('div');
+        probe.style.setProperty('--ui-fx-tint', 'rgb(from rgb(10, 20, 30) r g b / 0.28)');
+        document.body.append(probe);
+
+        const [drain] = fresh.getAnimations();
+
+        expect(
+            (drain?.effect as KeyframeEffect | null)
+                ?.getKeyframes()
+                .map((frame) => pixel(String(frame['--ui-fx-tint']))),
+            'from the tint to nothing',
+        ).toEqual([pixel(getComputedStyle(probe).getPropertyValue('--ui-fx-tint')), [0, 0, 0, 0]]);
+
+        drain?.pause();
+
+        const now = getComputedStyle(fresh).getPropertyValue('--ui-fx-tint');
+
+        expect(getComputedStyle(fresh).backgroundImage, 'laid as a picture of the one colour').toBe(
+            `linear-gradient(${now}, ${now}), linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0))`,
+        );
+
+        for (const each of fresh.getAnimations()) {
+            each.finish();
+        }
+
+        expect(getComputedStyle(fresh).getPropertyValue('--ui-fx-tint')).toBe('rgba(0, 0, 0, 0)');
+    });
+
+    it('tints none of the rows a table came with, or is put back with', async () => {
+        const host = await chosen(`--ui-motion-enter: glow; ${times}`);
+
+        expect(rows(host).flatMap(easing), 'as it renders').toEqual([]);
+
+        await laidOut();
+
+        expect(rows(host).flatMap(easing), 'as it settles').toEqual([]);
+
+        const element = table(host);
+
+        element.remove();
+        host.append(element);
+
+        expect(rows(host).flatMap(easing), 'put back').toEqual([]);
+    });
+
+    it('eases nothing, and changes nothing under the pointer, where nobody chose', async () => {
+        const host = await mount(fixture);
+
+        await laidOut();
+
+        const target = row(host, 0);
+        const resting = painted(target);
+
+        await userEvent.hover(target);
+
+        expect([
+            easing(target),
+            easing(added(host)),
+            painted(target),
+            getComputedStyle(target).backgroundImage,
+        ]).toEqual([[], [], resting, 'none']);
+    });
+
+    it.each([
+        ['the default theme', '', 'none'],
+        ['Matrix', themeStyleSheet(matrix), 'none'],
+        ['Glass', themeStyleSheet(glass), 'blur(10px) saturate(1.7)'],
+    ] as const)(
+        "answers the pointer and a row added as %s's taste says",
+        async (name, sheet, frost) => {
+            const style = document.createElement('style');
+            style.textContent = tokenStyleSheet() + sheet;
+            document.body.append(style);
+            const theme = sheet === '' ? '' : name.toLowerCase();
+            const host = await mount(
+                `<div data-ui-theme="${theme}" style="--ui-duration-flourish: 10s; --ui-duration-state: 10s">${fixture}</div>`,
+            );
+
+            await laidOut();
+
+            const target = row(host, 0);
+
+            await userEvent.hover(target);
+
+            expect(
+                easing(target).map(([property]) => property),
+                'under the pointer',
+            ).toEqual(['--ui-fx-veil']);
+
+            await rested(target);
+
+            expect(getComputedStyle(target).backdropFilter, 'frosted').toBe(frost);
+            expect(
+                easing(added(host)).map(([property]) => property),
+                'added',
+            ).toEqual(['--ui-fx-tint']);
+        },
+    );
 });
 
 describe('table stories', () => {

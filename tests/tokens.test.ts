@@ -34,6 +34,7 @@ import { UiInput, UiTextarea } from '../src/input.js';
 import { UiMenu } from '../src/menu.js';
 import { UiRadio, UiRadioGroup } from '../src/radio.js';
 import { UiSelect } from '../src/select.js';
+import { rules as tableRules, UiTable, veils } from '../src/table.js';
 import { UiToast, UiToaster } from '../src/toast.js';
 import { UiTooltip } from '../src/tooltip.js';
 
@@ -865,6 +866,7 @@ describe('tokenStyleSheet', () => {
                 menu: { enter: 'cascade', exit: 'fold', caret: 'flip' },
                 select: { enter: 'cascade', exit: 'fold', caret: 'flip' },
                 icon: { enter: 'draw', hover: 'glow' },
+                table: { hover: 'highlight', enter: 'glow' },
             },
         });
     });
@@ -1019,6 +1021,10 @@ describe('the references components write', () => {
         UiRadioGroup.styles,
         UiSelect.styles,
         UiSwitch.styles,
+        UiTable.styles,
+        // The rules the table adopts into the tree its rows are in, a component's as much as its
+        // shadow root's are.
+        tableRules,
         UiTextarea.styles,
         UiToast.styles,
         UiToaster.styles,
@@ -1880,6 +1886,57 @@ describe('the contrast floors', () => {
                         ).toBeGreaterThanOrEqual(4.5);
                     }
                 });
+
+                /** The row under the pointer as it shows: `share` of the text laid over the row. */
+                const veiled = (share: number, under: string): string =>
+                    layered(
+                        `rgb(from ${String(reference('--ui-color-text'))} r g b / ${String(share)})`,
+                        under,
+                        scheme,
+                        palette,
+                    );
+
+                it('moves a row visibly under the pointer, striped or not', () => {
+                    // The row under the pointer takes a veil of the text over its own colour,
+                    // which owes the 1.25 a neutral state does, as above: from a row resting on
+                    // the table's own fill, and from a stripe laid on it. The hover colour itself
+                    // fell short of the stripe in the dark scheme, which is why it is a veil.
+                    for (const table of over('--ui-color-surface-control', palette, scheme)) {
+                        const stripe = laid('--ui-color-surface-muted', table, scheme, palette);
+
+                        for (const [name, resting] of [
+                            ['plain', table],
+                            ['striped', stripe],
+                        ] as const) {
+                            expect(
+                                contrastRatio(veiled(veils.highlight, resting), resting),
+                                name,
+                            ).toBeGreaterThanOrEqual(1.25);
+                        }
+                    }
+                });
+
+                it.runIf(palette.page !== undefined && !more)(
+                    'moves a row visibly under the pointer where frost turns it to the glass',
+                    () => {
+                        // Over glass the veil is frost's, lighter, and owes the same from either
+                        // row. Where the glass stands down, as it does for more contrast, frost is
+                        // the highlight, which the floor above holds.
+                        for (const table of over('--ui-color-surface-control', palette, scheme)) {
+                            const stripe = laid('--ui-color-surface-muted', table, scheme, palette);
+
+                            for (const [name, resting] of [
+                                ['plain', table],
+                                ['striped', stripe],
+                            ] as const) {
+                                expect(
+                                    contrastRatio(veiled(veils.frost, resting), resting),
+                                    name,
+                                ).toBeGreaterThanOrEqual(1.25);
+                            }
+                        }
+                    },
+                );
 
                 it('keeps what is written in a control legible, whatever the control rests on', () => {
                     // A value, a placeholder and a value in error are text, so each owes 4.5:1

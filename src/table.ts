@@ -1,5 +1,45 @@
-import { LitElement, css, html, type CSSResult, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type CSSResult, type TemplateResult } from 'lit';
+import { query } from './motion.js';
 import { reference } from './reference.js';
+
+/** The query each of a table's effects is drawn under: the consumer's choice, else a taste. */
+const drawn = query('table');
+
+/** Where the row under the pointer takes a veil: highlight chosen, or frost, which is one too. */
+const lit = [drawn('hover', 'highlight'), drawn('hover', 'frost')].join(' or ');
+
+/** Where a row eases anything at all: an effect under the pointer, or an entrance. */
+const eased = [lit, drawn('enter', 'glow')].join(' or ');
+
+/**
+ * The veils the row under the pointer takes, each the share of the text laid over the row as it
+ * rests, plain or striped: `highlight`'s, and `frost`'s over glass. The highlight's is the default
+ * hover colour's own mix, laid over the row rather than taking its place, because the hover colour
+ * itself stood 1.235 to 1.25:1 from a stripe in the dark scheme, short of the 1.25 a neutral state
+ * owes, where the veil holds 1.34:1 or more from either row, in every shipped palette, both
+ * schemes and with more contrast — `tests/tokens.test.ts` measures both.
+ */
+export const veils = { highlight: 0.16, frost: 0.12 } as const;
+
+// Stryker disable all: the row's properties are registered once, at import, in the page's one
+// registry — so in the warm process Stryker switches mutants in, the original registration stands
+// before any mutant is active, and none of them changes what a test can see. Outside the runner's
+// reach, not an equivalent mutant.
+for (const name of ['--ui-fx-veil', '--ui-fx-tint']) {
+    try {
+        // The veil a row takes under the pointer and the tint it arrives in: registered, so each
+        // eases rather than jumping, and the row's own, so the stripe under them stays what it is.
+        CSS.registerProperty({
+            name,
+            syntax: '<color>',
+            inherits: false,
+            initialValue: 'transparent',
+        });
+    } catch {
+        // Registered already, by another copy of this package on the page, which stands.
+    }
+}
+// Stryker restore all
 
 /**
  * The rules that cannot live in a shadow root, and the reason they cannot.
@@ -18,8 +58,12 @@ import { reference } from './reference.js';
  *
  * Every selector is prefixed with the element, so what is adopted cannot reach a table
  * the host wrote somewhere else.
+ *
+ * **RFC 0004's motion for a row is here too, for the same reason**: the row under the pointer and
+ * a row the host adds are the host's, in the host's tree. A row's container is its `tbody`, which
+ * inherits a choice from the `<ui-table>` round it and anywhere above, so every scope reaches it.
  */
-const rules: CSSResult = css`
+export const rules: CSSResult = css`
     ui-table table {
         /* The box the cells' own borders are drawn against: separate borders would double
            every internal rule and leave a gap at each junction. */
@@ -68,6 +112,77 @@ const rules: CSSResult = css`
         padding-block: ${reference('--ui-space')};
         color: ${reference('--ui-color-text-muted')};
         font-size: ${reference('--ui-text-supporting')};
+    }
+
+    /* One list for everything a row eases and one for what it lays over itself, each part's time
+       handed over by the effect that moves it and nothing where none does — two rules writing
+       either would leave one unplayed. Only where an effect is chosen, so a table nobody chose for
+       keeps whatever the host's rows ease and paint. Each layer is a picture of the one colour, so
+       the row's own colour, a stripe or none, stays under both. :nth-child(n) matches every row,
+       and lifts these over the stripe's rule. */
+    @container ${unsafeCSS(eased)} {
+        ui-table tbody tr:nth-child(n) {
+            background-image:
+                linear-gradient(var(--ui-fx-tint), var(--ui-fx-tint)),
+                linear-gradient(var(--ui-fx-veil), var(--ui-fx-veil));
+            transition:
+                --ui-fx-veil var(--ui-fx-veil-time, 0s) ${reference('--ui-easing-state')},
+                --ui-fx-tint var(--ui-fx-tint-time, 0s) ${reference('--ui-easing-exit')};
+        }
+    }
+
+    /* highlight: the row under the pointer takes a veil of the text, over a state's step, since
+       what it does is recolour the row as a state recolours a control. */
+    @container ${unsafeCSS(lit)} {
+        ui-table tbody tr:nth-child(n) {
+            --ui-fx-veil-time: ${reference('--ui-duration-state')};
+        }
+
+        ui-table tbody tr:nth-child(n):hover {
+            --ui-fx-veil: rgb(from ${reference('--ui-color-text')} r g b / ${veils.highlight});
+        }
+    }
+
+    /* Whether the theme raises its surfaces as glass, as the dialog reads it: the backdrop filter
+       of a raised surface, through the token's fallback, which reads a glass standing down as
+       none where a query on the token itself took it for glass. */
+    ui-table tbody {
+        --ui-fx-glass: ${reference('--ui-backdrop-raised')};
+    }
+
+    /* frost: over glass, the row under the pointer turns to it — what is behind it blurred and
+       its colour lifted, under a lighter veil of the text, which held the row 1.30:1 or more from
+       itself at rest over the pages Glass holds. The blur is the row's, since each cell blurred
+       apart broke the page behind at every cell's edge; and the rules between rows went under the
+       glass and were blurred away, so the row draws them again inside its cells — measured for RFC
+       0004. Where there is no glass, or it stands down, frost is the highlight above. */
+    @container ${unsafeCSS(drawn('hover', 'frost'))} and (not style(--ui-fx-glass: none)) {
+        ui-table tbody tr:nth-child(n):hover {
+            --ui-fx-veil: rgb(from ${reference('--ui-color-text')} r g b / ${veils.frost});
+            backdrop-filter: ${reference('--ui-backdrop-raised')};
+        }
+
+        ui-table tbody tr:nth-child(n):hover > * {
+            box-shadow:
+                inset 0 1px 0 ${reference('--ui-color-border')},
+                inset 0 -1px 0 ${reference('--ui-color-border')};
+        }
+    }
+
+    /* glow: a row the host adds arrives tinted with the accent, and the tint drains away over a
+       flourish, so the eye finds what changed after it has happened. Only once the table is
+       settled: a row drawn as the table first is, or is put back, is not one the host added, and
+       would take the tint with every other row. */
+    @container ${unsafeCSS(drawn('enter', 'glow'))} {
+        ui-table tbody tr:nth-child(n) {
+            --ui-fx-tint-time: ${reference('--ui-duration-flourish')};
+        }
+
+        @starting-style {
+            ui-table:state(settled) tbody tr:nth-child(n) {
+                --ui-fx-tint: rgb(from ${reference('--ui-color-accent')} r g b / 0.28);
+            }
+        }
     }
 `;
 
@@ -160,6 +275,9 @@ export class UiTable extends LitElement {
     /** Set while this element writes the stop, so its own write is not read as the host's. */
     #writing = false;
 
+    /** Where the table keeps its states: `settled`, from two frames after it joins a page. */
+    readonly #internals = this.attachInternals();
+
     /**
      * The tables that rendered since the last pass, which one microtask weighs together. Every
      * box is read before any stop is written, so a page that renders many tables at once lays
@@ -193,10 +311,25 @@ export class UiTable extends LitElement {
         });
     }
 
-    /** Styles the table in the tree it joined. */
+    /** Styles the table in the tree it joined, and settles it once its rows are drawn. */
     override connectedCallback(): void {
         super.connectedCallback();
         this.#adopt();
+        this.#settle();
+    }
+
+    /** Unsettles the table, so the rows it is put back with are not taken for rows added. */
+    override disconnectedCallback(): void {
+        // Stryker disable next-line CallExpression: the reading `src/toast.ts` carries at its
+        // own, verified again here rather than inherited. In Lit this reaches exactly two things
+        // — `__controllers`, and `__childPart.setConnected(false)`, which speaks only to async
+        // directives — and this element has neither: nothing registers a reactive controller and
+        // the template is a slot and a listener. So no input distinguishes the call from its
+        // absence. It stays because Lit documents the super call as the extension point it
+        // reserves for later additions: the day this element grows a controller or an async
+        // directive the mutant stops being equivalent, and nothing else would say so.
+        super.disconnectedCallback();
+        this.#internals.states.delete('settled');
     }
 
     /**
@@ -245,6 +378,21 @@ export class UiTable extends LitElement {
             this.#owned = value === null;
             this.#measure();
         }
+    }
+
+    /**
+     * Marks the table `settled` two frames after it joins a page: the first draws the rows it came
+     * with, so only a row drawn after the second takes an entrance. A table taken out before then
+     * is left unsettled.
+     */
+    #settle(): void {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (this.isConnected) {
+                    this.#internals.states.add('settled');
+                }
+            });
+        });
     }
 
     /**
