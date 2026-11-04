@@ -36,6 +36,7 @@ src/
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
 ├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
 ├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
+├── next.ts          # the next tip — internal, a tip glided over from the one closed just before
 ├── passage.ts       # a surface's passage in script — internal, its pieces and its grain, one filter
 ├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
@@ -68,6 +69,7 @@ tests/               # mirrors src/, one test file per unit
 ├── input.test.ts
 ├── menu.test.ts
 ├── motion.test.ts
+├── next.test.ts
 ├── passage.test.ts
 ├── placement.test.ts
 ├── pointer.test.ts
@@ -430,6 +432,14 @@ explains. This file restates none of them.
   never touches the page's highlights. The clock is an animation of the tip's own, which
   `tests/typing.test.ts` holds where it likes, and the tests that type wrap the pointer in
   `escaped()`.
+- **Why the next tip glides from a record the page keeps, and why that record starts as a sentinel**
+  — the docblock on `src/next.ts`: a tip notes where it was and when as it closes, and one opened
+  within 300ms of it, a reading of the pointer rather than motion and so no token, ends both their
+  effects and glides from there; `left()` and `arrived()` run as every tip goes and shows, so the
+  tip before the first is on no page and closed before any time, and the tooltip's sheet hands every
+  tip a time of nothing where the glide is not chosen, so no guard a mutant turns makes either
+  throw. `tests/next.test.ts` pins `performance.now`, and so does the tooltip's own test of the
+  glide, so the second tip opens inside the window however long the pointer takes.
 - **Why the ripple is started by a script and drawn by the sheet, and why it takes the layer under
   the label from the shimmer while it spreads** — the docblock on `src/ripple.ts`, and the comment
   beside the ripple's rules in `src/effects.ts`. A component hands it `--ui-fx-ripple-time` and
