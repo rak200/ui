@@ -2662,13 +2662,14 @@ export function panelEffects(component: string, where: Panel): CSSResult {
     const drawn = query(component);
     const overlay = String(reference('--ui-duration-overlay'));
     // Each of the first six items a wait of its own, and every one from the seventh on the
-    // seventh's: a panel of many items is not held open waiting on the last.
+    // seventh's: a panel of many items is not held open waiting on the last. Each rule ends its
+    // own line, so nothing is written between them.
     const waits = [1, 2, 3, 4, 5, 6]
         .map(
             (place) =>
-                `${where.item(place)} { transition-delay: calc(${overlay} * 5 / 32 * ${String(place)}), calc(${overlay} * 5 / 32 * ${String(place)}), 0s; }`,
+                `${where.item(place)} { transition-delay: calc(${overlay} * 5 / 32 * ${String(place)}), calc(${overlay} * 5 / 32 * ${String(place)}), 0s; }\n`,
         )
-        .join('\n');
+        .join('');
     const last = `${where.rest} { transition-delay: calc(${overlay} * 5 / 32 * 7), calc(${overlay} * 5 / 32 * 7), 0s; }`;
 
     return css`
