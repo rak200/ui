@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.7](https://github.com/rak200/ui/compare/0.8.6...0.8.7) (2026-11-05)
+
+
+### Performance Improvements
+
+* **dialog:** Matrix's rain is drawn ahead in an idle moment, with one blur a tile, not as it opens ([#371](https://github.com/rak200/ui/issues/371)) ([aecfde3](https://github.com/rak200/ui/commit/aecfde3905ab368ad49ca73e739a435e8835286e))
+
 ## [0.8.6](https://github.com/rak200/ui/compare/0.8.5...0.8.6) (2026-11-04)
 
 
