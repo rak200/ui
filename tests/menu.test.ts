@@ -1072,50 +1072,100 @@ describe('where the panel lands', () => {
         await settle();
     });
 
-    it('leaves from where the reader saw it, whatever moved under it', async () => {
-        // Placed on the way in and not on the way out: a panel a host holds on the page as it
-        // closes would otherwise jump to wherever the trigger went, as its exit begins.
-        const host = await mount(fixture);
-        await open(menu(host));
-
-        const before = panel(menu(host)).style.insetInlineStart;
-
-        only(host, 'ui-menu').style.marginInlineStart = '80px';
-        await userEvent.keyboard('{Escape}');
-        await settle();
-
-        expect(panel(menu(host)).style.insetInlineStart).toBe(before);
-    });
-
-    it('stays inside the viewport at the trailing edge', async () => {
+    it('leaves on the side the reader saw it on, whatever moved under it', async () => {
+        // Foretold on the way in and not on the way out: taken to the bottom as it closes, a
+        // panel foretold again would turn above as its exit begins.
         const host = await mount(
-            `<div style="position: fixed; inset-block-start: 0; inset-inline-end: 0">${fixture}</div>`,
+            `<div id="spot" style="position: fixed; inset-block-start: 0; inset-inline-start: 0">${fixture}</div>`,
         );
         await open(menu(host));
 
-        const box = panel(menu(host)).getBoundingClientRect();
+        expect(panel(menu(host)).getAttribute('data-side')).toBe('block-end');
 
-        expect(box.right).toBeLessThanOrEqual(document.documentElement.clientWidth + 1);
+        const spot = only(host, '#spot');
+        spot.style.insetBlockStart = 'auto';
+        spot.style.insetBlockEnd = '0';
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        expect(panel(menu(host)).getAttribute('data-side')).toBe('block-end');
     });
 
+    it.each([
+        ['holds the panel and its gap', 0, 'block-end'],
+        ['falls a pixel short of them', 1, 'block-start'],
+    ] as const)(
+        'foretells its side as it is shown where the room below %s',
+        async (_room, short, side) => {
+            // The panel's height as it was last open, and its gap, half the space token: the
+            // room the platform needs below before it flips the panel above.
+            const host = await mount(
+                `<div id="spot" style="position: fixed; display: flex; inset-block-start: 0; inset-inline-start: 0">${fixture}</div>`,
+            );
+            await open(menu(host));
+
+            const height = panel(menu(host)).getBoundingClientRect().height;
+
+            await userEvent.keyboard('{Escape}');
+            await settle();
+
+            const spot = only(host, '#spot');
+            spot.style.insetBlockStart = 'auto';
+            spot.style.insetBlockEnd = `${String(height + 4 - short)}px`;
+
+            trigger(menu(host)).click();
+
+            expect(panel(menu(host)).getAttribute('data-side'), 'as it is shown').toBe(side);
+
+            await settle();
+
+            expect(panel(menu(host)).getAttribute('data-side'), 'and where it landed').toBe(side);
+        },
+    );
+    it("stays inside the viewport at the trailing edge, hung from its trigger's other edge", async () => {
+        // An item long enough that the panel, hung from the trigger's leading edge, would run off
+        // the screen: so it turns to the trigger's other edge.
+        const host = await mount(`
+            <div style="position: fixed; inset-block-start: 0; inset-inline-end: 0">
+                <ui-menu>
+                    <span slot="trigger">More</span>
+                    <button type="button">Rename this document to something longer</button>
+                </ui-menu>
+            </div>
+        `);
+        await open(menu(host));
+
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(box.width, 'wider than the room from the leading edge').toBeGreaterThan(
+            document.documentElement.clientWidth - anchor.left,
+        );
+        expect(box.right).toBeLessThanOrEqual(document.documentElement.clientWidth + 1);
+        expect(box.right).toBeCloseTo(anchor.right, 0);
+    });
     it('follows the trigger when the page moves under it', async () => {
         const host = await mount(`<div style="block-size: 200vh">${fixture}</div>`);
         await open(menu(host));
 
-        const before = panel(menu(host)).style.insetBlockStart;
-
         window.scrollTo(0, 120);
         await settle();
 
-        expect(panel(menu(host)).style.insetBlockStart).not.toBe(before);
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
 
         window.scrollTo(0, 0);
-    });
 
+        expect(box.top - anchor.bottom, 'still against the trigger, its gap and all').toBeCloseTo(
+            4,
+            0,
+        );
+    });
     it('follows the trigger when an ancestor scrolls under it', async () => {
         // A scroll event does not bubble from the element that scrolled, so a listener on
         // the window hears one from inside the page only while it is capturing — and the
-        // thing that scrolls is rarely the window.
+        // thing that scrolls is rarely the window. The platform follows it with no listener;
+        // the listener reads the side.
         const host = await mount(`
             <div id="scroller" style="block-size: 120px; overflow: auto">
                 ${fixture}
@@ -1124,15 +1174,19 @@ describe('where the panel lands', () => {
         `);
         await open(menu(host));
 
-        const before = panel(menu(host)).style.insetBlockStart;
-
-        only(host, '#scroller').scrollTop = 60;
+        only(host, '#scroller').scrollTop = 6;
         await settle();
         await settle();
 
-        expect(panel(menu(host)).style.insetBlockStart).not.toBe(before);
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(box.top - anchor.bottom, 'still against the trigger, its gap and all').toBeCloseTo(
+            4,
+            0,
+        );
+        expect(panel(menu(host)).getAttribute('data-side')).toBe('block-end');
     });
-
     it('follows the trigger when the viewport changes shape', async () => {
         const host = await mount(fixture);
         await open(menu(host));
@@ -1147,39 +1201,41 @@ describe('where the panel lands', () => {
     });
 
     it('stops following once it is closed', async () => {
+        // A closed panel measures nothing at the origin, whose middle is above any trigger's,
+        // so a listener left on would read the panel below as above.
         const host = await mount(fixture);
         await open(menu(host));
 
         await userEvent.keyboard('{Escape}');
         await settle();
 
-        const before = panel(menu(host)).style.insetInlineStart;
+        expect(panel(menu(host)).getAttribute('data-side'), 'below').toBe('block-end');
 
-        only(host, 'ui-menu').style.marginInlineStart = '80px';
         window.dispatchEvent(new Event('resize'));
         await settle();
 
-        expect(panel(menu(host)).style.insetInlineStart).toBe(before);
+        expect(panel(menu(host)).getAttribute('data-side'), 'nothing read it').toBe('block-end');
     });
-
     it('stops following a menu a framework took off the page while it was open', async () => {
-        const host = await mount(fixture);
+        // Measured: removing the element fires no `toggle`, so nothing else in this component
+        // drops those listeners. A removed menu measures nothing at the origin, trigger and
+        // panel alike, whose middles are level, which reads as below — on a panel the reader
+        // saw above.
+        const host = await mount(
+            `<div style="position: fixed; inset-block-end: 0; inset-inline-start: 0">${fixture}</div>`,
+        );
         const element = menu(host);
         await open(element);
 
-        const before = panel(element).style.insetBlockStart;
-        element.remove();
+        expect(panel(element).getAttribute('data-side'), 'above, at the bottom').toBe(
+            'block-start',
+        );
 
+        element.remove();
         window.dispatchEvent(new Event('resize'));
         await settle();
 
-        // The BLOCK inset, and that is the whole assertion rather than a second one: a
-        // detached trigger measures as a zero-sized box at the origin, and the panel hangs
-        // from the trigger's far edge — so this is the inset that was not zero already and
-        // the one a leaked listener would flatten. Measured: removing the element fires no
-        // `toggle`, so nothing else in this component drops those listeners.
-        expect(panel(element).style.insetBlockStart).toBe(before);
-        expect(before, 'a menu that was never placed would pass this vacuously').not.toBe('0px');
+        expect(panel(element).getAttribute('data-side'), 'nothing read it').toBe('block-start');
     });
 });
 
@@ -1350,7 +1406,7 @@ describe('the values, all of which come from the token layer', () => {
         expect(lift.top).toBe('-1px');
         expect(lift.borderTopLeftRadius).toBe('11px');
         expect(lift.pointerEvents).toBe('none');
-        expect(styles.translate, 'the gap, which the script cannot resolve').toBe('0px 5px');
+        expect(styles.marginBlockStart, 'the gap, on its trigger side').toBe('5px');
     });
 
     it('lights a lift written in currentColor in the accent, not in the text', async () => {
@@ -1374,9 +1430,11 @@ describe('the values, all of which come from the token layer', () => {
         menu(host).style.setProperty('--ui-space', '10px');
         await open(menu(host));
 
-        expect(getComputedStyle(panel(menu(host))).translate).toBe('0px -5px');
-    });
+        const anchor = trigger(menu(host)).getBoundingClientRect();
+        const box = panel(menu(host)).getBoundingClientRect();
 
+        expect(anchor.top - box.bottom).toBeCloseTo(5, 0);
+    });
     it('takes an item from the host', async () => {
         const host = await mount(fixture);
         const element = menu(host);

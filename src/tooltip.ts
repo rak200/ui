@@ -1,14 +1,13 @@
 import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { query } from './motion.js';
 import { arrived, left } from './next.js';
-import { place } from './placement.js';
 import { reference } from './reference.js';
 import { halt, ready, write } from './typing.js';
 
 /** Distinguishes one tooltip's generated id from another's. */
 let sequence = 0;
 
-/** How far the tip sits from the trigger, and which way the script placed it. */
+/** Which side of its trigger the tip landed on, read from where the platform put it. */
 const side = 'data-side';
 
 /** The query each of the tip's effects is drawn under: the consumer's choice, else a taste. */
@@ -68,31 +67,24 @@ function describing(trigger: HTMLElement): string[] {
  * handle: measured, a manual popover stays open on Escape. So this element wires it, which
  * WCAG 2.2's **1.4.13 Content on Hover or Focus** requires anyway.
  *
- * ## Why the placement is written here
+ * ## Where the tip lands
  *
- * The issue asked whether a clipping tooltip is solved with CSS anchor positioning or with
- * a dependency. All three engines have anchor positioning now, and it places the tip where
- * the script does. It is still not adopted, for the two reasons `ARCHITECTURE.md` gives
- * under _The platform owns what the platform is good at_, and both are this element's own.
+ * **The platform places it**, by CSS anchor positioning: above its trigger and centred on it,
+ * below where there is no room above, pulled inside the viewport at either edge, and kept against
+ * its trigger through every scroll with no script. #300 measured the CSS putting the tip where
+ * thirty lines of arithmetic used to, in all three engines, and the floor rose to meet it.
  *
- * **Without the rules, the component is broken rather than different.** Measured: a popover
- * whose anchor rules are ignored does not fall back to somewhere near the trigger — it is
- * `position: fixed` at `inset: 0`, which is the corner of the screen. **And the CSS writes
- * nowhere which side it took**, which is what `data-side` hands a host who draws an arrow;
- * only Chromium can read the side back from the CSS.
+ * **Two things stay script.** The CSS writes nowhere which side it took, which `data-side` hands
+ * a host who draws an arrow and the tip's motion reads, so the side is read off the two boxes as
+ * the tip shows, and again on every scroll and resize. And where the tip's direction is not the
+ * page's, Firefox mirrors a centred tip off the screen — Mozilla 2019601, in every form #300's
+ * follow-up measured — so the tip is marked an island as it shows, and the sheet hangs it from
+ * its trigger's leading edge there.
  *
- * A positioning dependency was the other option the issue named. It solves scroll
- * containers, virtual anchors and continuous auto-update, none of which a tooltip against
- * a real element needs — and it would be this package's second runtime dependency, where
- * RFC 0016's adoption was a *behaviour* library and not a layout one.
- *
- * So the placement is thirty lines of arithmetic, measured at the edges by a suite that
- * runs in a real browser. They go once the properties the CSS would use are Baseline Widely
- * available and every engine can read the side.
- *
- * **The arithmetic itself is one module over**, in `src/placement.ts`. It was written here
- * first and moved when `<ui-menu>` needed the same thing pointing the other way — which is
- * what issue #23 asked for in as many words: two answers to one problem is one too many.
+ * A positioning dependency was the other option the issue named. It solves scroll containers,
+ * virtual anchors and continuous auto-update, none of which a tooltip against a real element
+ * needs — and it would be this package's second runtime dependency, where RFC 0016's adoption
+ * was a *behaviour* library and not a layout one.
  *
  * @example
  * ```html
@@ -113,9 +105,9 @@ export class UiTooltip extends LitElement {
 
         /* The tip is the host's own element, reached through ::slotted — the shape every
            component in this kit has. position: fixed is what the popover already is;
-           it is restated because the script writes inset-block-start and
-           inset-inline-start against the viewport, and a reader of those two lines
-           should not have to know which stylesheet made them mean that.
+           it is restated because the anchor positioning below places the tip against the
+           viewport, and a reader of those rules should not have to know which stylesheet
+           made it fixed.
 
            max-content up to a ceiling: a tip is a phrase, and a phrase that wraps at the
            width of whatever it happens to sit near is unreadable. The ceiling is in the
@@ -123,11 +115,8 @@ export class UiTooltip extends LitElement {
         slot[name='tip']::slotted(*) {
             position: fixed;
             margin: 0;
-            /* Every inset the script does not write, let go, as the menu's panel lets go of
-               them. A popover is at inset: 0, so the inline inset the script leaves is still 0
-               and the two disagree, which the viewport's direction settles: right to left the
-               script writes right, and a left-to-right page kept left at 0 instead —
-               measured, the tip at the viewport's left edge wherever its trigger was (#301). */
+            /* Every inset let go, so the anchor is the only thing that places the tip: a popover
+               is at inset: 0 from the user agent's sheet, which holds it to the viewport. */
             inset: auto;
             inline-size: max-content;
             max-inline-size: calc(${reference('--ui-space')} * 40);
@@ -150,27 +139,57 @@ export class UiTooltip extends LitElement {
             box-shadow: ${reference('--ui-elevation-raised')};
         }
 
-        /* The gap between the tip and its trigger, in CSS because it is a token and the
-           script has no way to resolve one: a custom property reads back as it was
-           written, so 0.5rem would arrive at a function that needs pixels.
+        /* Where the tip lands, the platform's own: above its trigger and centred on it, below it
+           where there is no room above, and pulled inside the viewport at either edge — placed in
+           the task that shows it, and kept against its trigger through every scroll. The trigger
+           is named from this shadow root, so its name is this tooltip's alone. */
+        ::slotted(:not([slot])) {
+            anchor-name: --trigger;
+        }
+
+        slot[name='tip']::slotted(*) {
+            position-anchor: --trigger;
+            position-area: block-start;
+            position-try-fallbacks: flip-block;
+        }
+
+        /* The gap between the tip and its trigger: a margin on the side the trigger is on, which
+           the flip moves to the other side with the tip, so the gap and the side cannot disagree.
 
            It is deliberately small. WCAG 2.2's 1.4.13 asks that a pointer be able to
            travel onto the tip without it vanishing, and it travels across this gap — the
            tip stays open because it is a DOM child of this element, so entering it never
            leaves the host, but only if the pointer does not leave through the gap on the
            way. */
-        slot[name='tip']::slotted([data-side='block-start']) {
-            translate: 0 calc(${reference('--ui-space')} / -2);
+        slot[name='tip']::slotted(*) {
+            margin-block-end: calc(${reference('--ui-space')} / 2);
         }
 
-        slot[name='tip']::slotted([data-side='block-end']) {
-            translate: 0 calc(${reference('--ui-space')} / 2);
+        /* An island, where the tip's direction is not the page's: it hangs from its trigger's
+           leading edge rather than centring over it, turning to the other edge where that runs
+           off the screen. Firefox mirrors position-area's inline alignment there and put a centred
+           tip off the screen in every form measured — Mozilla 2019601 — where anchored insets are
+           not mirrored. */
+        :host(:state(island)) slot[name='tip']::slotted(*) {
+            position-area: none;
+            inset: auto;
+            bottom: anchor(top);
+            left: anchor(left);
+            position-try-fallbacks:
+                flip-block,
+                flip-inline,
+                flip-block flip-inline;
+        }
+
+        :host(:state(island)) slot[name='tip']::slotted(:dir(rtl)) {
+            left: auto;
+            right: anchor(right);
         }
 
         /* Which side of the tip its trigger is on, as a sign on the block axis, which what moves a
-           tip toward its trigger or away reads. The side is written by the placement, after the
-           tip's first style, so an entrance comes from the side the tip was last placed on —
-           above its trigger, where a tip goes first, until it has been placed below. */
+           tip toward its trigger or away reads. The side is read off where the tip landed, after
+           its first style, so an entrance comes from the side the tip last landed on — above its
+           trigger, where a tip goes first, until it has landed below. */
         slot[name='tip']::slotted(*) {
             --ui-fx-toward: 1;
         }
@@ -181,9 +200,8 @@ export class UiTooltip extends LitElement {
 
         /* RFC 0004's: how a tip comes and goes, each a transition, so a tip the reader leaves
            before it has arrived turns back from where it is, and one pointed at again as it
-           leaves comes back from where it got to. Each moves, blurs or fades the tip and none
-           scales it, since the placement reads the tip's box as it shows, transform and all.
-           Nothing is drawn where nothing is chosen, as a tooltip drew nothing before. */
+           leaves comes back from where it got to. Each moves, blurs or fades the tip. Nothing is
+           drawn where nothing is chosen, as a tooltip drew nothing before. */
 
         /* rise: from a quarter rem nearer its trigger, toward where it sits, as it fades in. */
         @container ${unsafeCSS(drawn('enter', 'rise'))} {
@@ -293,8 +311,8 @@ export class UiTooltip extends LitElement {
 
         /* glitch: the tip flickering out in bands, side to side, its text split into the danger
            and the info as a button's label splits, each step held until the next, over the
-           overlay's step. It moves only along its line, so the box it rests in is what placed
-           it. */
+           overlay's step. It moves only along its line, so the box it rests in is the one the
+           platform placed. */
         @container ${unsafeCSS(drawn('exit', 'glitch'))} {
             slot[name='tip']::slotted(:not(:popover-open)) {
                 animation: ui-tip-glitch-out ${reference('--ui-duration-overlay')} steps(1, end)
@@ -385,7 +403,7 @@ export class UiTooltip extends LitElement {
 
     /** Re-places the tip under anything that moves the trigger while it is open. */
     readonly #reflow = (): void => {
-        this.#place();
+        this.#side();
     };
 
     /**
@@ -419,6 +437,9 @@ export class UiTooltip extends LitElement {
         this.#dismissed = true;
         this.#hide();
     };
+
+    /** The tooltip's states: `island`, while its tip's direction is not the page's. */
+    readonly #internals = this.attachInternals();
 
     /**
      * Takes every listener off at once, and the reason is not brevity.
@@ -789,8 +810,9 @@ export class UiTooltip extends LitElement {
         // Its text hidden before it is first drawn, where the typing is chosen, and typed out
         // once it is placed, at the width it will be read at.
         ready(tip);
+        this.#island(tip);
         tip.showPopover();
-        this.#place();
+        this.#side();
         write(tip);
         // Over from where the tip that closed just before it was, where it is the next.
         arrived(tip);
@@ -837,15 +859,24 @@ export class UiTooltip extends LitElement {
     }
 
     /**
-     * Puts the tip above its trigger, below it when there is no room, and inside the
-     * viewport either way.
-     *
-     * Read rather than assumed: the tip's own box is measured after it is shown, because
-     * its height depends on how its text wrapped at this width in this font — a number
-     * this file cannot know and must not guess. What it does with the two boxes is
-     * `src/placement.ts`, which `<ui-menu>` reads as well.
+     * Marks the tooltip an island while its tip's direction is not the page's, for the sheet to
+     * place the tip by its trigger's edges there: read as the tip shows, before it is first drawn.
      */
-    #place(): void {
+    #island(tip: HTMLElement): void {
+        if (
+            getComputedStyle(tip).direction === getComputedStyle(document.documentElement).direction
+        ) {
+            this.#internals.states.delete('island');
+        } else {
+            this.#internals.states.add('island');
+        }
+    }
+
+    /**
+     * Writes which side of its trigger the tip landed on, read off where the platform put it: above
+     * or below by the two middles, which none of the tip's effects moves across.
+     */
+    #side(): void {
         const trigger = this.#trigger();
         const tip = this.#tip();
 
@@ -853,19 +884,15 @@ export class UiTooltip extends LitElement {
             return;
         }
 
-        const root = document.documentElement;
-        const placement = place(
-            trigger.getBoundingClientRect(),
-            tip.getBoundingClientRect(),
-            { width: root.clientWidth, height: root.clientHeight },
-            'block-start',
-            'center',
-            getComputedStyle(tip).direction,
-        );
+        const anchor = trigger.getBoundingClientRect();
+        const box = tip.getBoundingClientRect();
 
-        tip.setAttribute(side, placement.side);
-        tip.style.insetBlockStart = `${String(placement.blockStart)}px`;
-        tip.style.insetInlineStart = `${String(placement.inlineStart)}px`;
+        tip.setAttribute(
+            side,
+            // Stryker disable next-line EqualityOperator: equivalent — two middles level are a tip
+            // laid over its trigger's middle, which the platform never places it at.
+            box.top + box.height / 2 < anchor.top + anchor.height / 2 ? 'block-start' : 'block-end',
+        );
     }
 }
 

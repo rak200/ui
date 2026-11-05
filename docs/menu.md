@@ -129,29 +129,24 @@ that decision for the whole package.
 
 ## Where the panel lands
 
-It hangs from the trigger's leading edge, which right to left is its right edge, flips above when
-there is no room below, and is pulled back inside the viewport at either edge. It writes `data-side`
-— `block-start` or `block-end` — on the panel, so a host who wants a different gap has something to
-select on.
+**The platform places it**, by CSS anchor positioning. It hangs from the trigger's leading edge,
+which right to left is its right edge, flips above when there is no room below, and hangs from the
+trigger's other edge where it would run off the screen — placed as it is shown, and kept against the
+trigger through every scroll, with no script. A panel that flipped stays on the side it flipped to
+while it still fits there. It is hung by the trigger's edges rather than by an area, since Firefox
+mirrors an area's alignment in a part of the page whose direction is not the page's, and put the
+panel at the screen's other edge there (Mozilla bug 2019601).
+
+It writes `data-side` — `block-start` or `block-end` — on the panel, so a host who wants a different
+gap has something to select on. The CSS writes the side nowhere, so the element reads it off where
+the panel landed, and foretells it before the panel is first drawn, by the height the panel had when
+it was last open: the panel's entrance comes from that side.
 
 **It hangs from where the trigger rests**, which is the box the component takes up. A trigger you
-move through `::part(trigger)` — grown under the pointer, say — moves alone, and when it goes back
-the panel is still where it was hung.
-
-**The arithmetic is shared with [`<ui-tooltip>`](tooltip.md)**, which is what issue #23 asked for:
-two answers to one problem is one too many. It lives in one internal module, alongside `reference` —
-the exported `place` takes a `Box` for the anchor and one for the overlay, a `Side` to prefer, an
-`Align` to line up by and the overlay's computed `direction`, and returns a `Placement`: the side it
-took and the two insets to write. The inline one is counted from the edge the overlay's
-`inset-inline-start` is counted from, which right to left is the viewport's right edge. A tooltip
-asks for `block-start` and `center`; a menu asks for `block-end` and `inline-start`. Being a
-function of four boxes rather than of two elements is what lets the edges be checked directly, at
-values a rendered page reaches only by luck.
-
-CSS anchor positioning would do all of it and is not adopted yet, for the reasons
-[`<ui-tooltip>`](tooltip.md#where-it-lands-and-who-put-it-there) gives: an engine without the rules
-puts the panel in the corner of the screen, and the CSS writes nowhere which side it took, which is
-the `data-side` above. The two overlays move together, because they share the arithmetic.
+move through `::part(trigger)` — grown under the pointer, say — moves alone, and the panel stays
+where it was hung. The component takes its anchor name from its own stylesheet: give `<ui-menu>` an
+`anchor-name` of your own and yours replaces it, which leaves the panel nothing to hang from — write
+both, `anchor-name: --yours, --menu`.
 
 ## Submenus
 
@@ -214,12 +209,12 @@ under [Glass](theme.md#glass) it comes into focus and goes out of it, `refocus` 
 `none` takes each away: the panel opens and closes at once, and the caret turns over at once.
 
 They are drawn by one internal sheet, `panelEffects()` in `src/effects.ts`, which the select's list
-opens by too. **None scales the panel**, which the menu measures to place it, and an entrance
-comes from the side the panel hangs on, written before the panel is first drawn. **Only Chromium
-plays an exit**: the panel is held on the page while it goes by transitioning its display and its
-overlay, which Firefox and WebKit do not honour for a popover, so there the panel is gone at once.
-In an engine without container style queries the panel opens and closes at once and the caret turns
-as it always did.
+opens by too. **None scales the panel**, which the menu measures to foretell its side, and an
+entrance comes from the side the panel hangs on, written before the panel is first drawn. **Only
+Chromium plays an exit**: the panel is held on the page while it goes by transitioning its display
+and its overlay, which Firefox and WebKit do not honour for a popover, so there the panel is gone at
+once. In an engine without container style queries the panel opens and closes at once and the caret
+turns as it always did.
 
 ## Styling
 

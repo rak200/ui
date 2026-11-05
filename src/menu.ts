@@ -1,5 +1,4 @@
 import { LitElement, css, html, type TemplateResult } from 'lit';
-import { place, type Box } from './placement.js';
 import { Description } from './description.js';
 import { buttonEffects, panelEffects, pressed, type Panel } from './effects.js';
 import { follow } from './pointer.js';
@@ -251,9 +250,8 @@ export class UiMenu extends LitElement {
             }
 
             /* The panel's own box. position: fixed is what the popover already is; it is
-           restated because the script writes the two insets against the viewport, and a
-           reader of those lines should not have to know which stylesheet made them mean
-           that. */
+           restated because the anchored insets below place it against the viewport, and a
+           reader of those rules should not have to know which stylesheet made it fixed. */
             [popover] {
                 position: fixed;
                 margin: 0;
@@ -303,15 +301,38 @@ export class UiMenu extends LitElement {
                 display: flex;
             }
 
-            /* The gap between the panel and its trigger, in CSS because it is a token and the
-           script has no way to resolve one: a custom property reads back as it was
-           written, so 0.5rem would arrive at a function that needs pixels. */
-            [popover][data-side='block-end'] {
-                translate: 0 calc(${reference('--ui-space')} / 2);
+            /* Where the panel lands, the platform's own: below its trigger from the trigger's
+           leading edge, above it where there is no room below, and from the trigger's other
+           edge where the panel would run off the screen — placed as it is shown, and kept
+           against the trigger through every scroll. By anchored insets rather than an area,
+           since Firefox mirrors an area's inline alignment in a part of the page whose
+           direction is not the page's, and put the panel at the screen's other edge — Mozilla
+           2019601. The trigger is the host, named from this shadow root, so its name is this
+           menu's alone; and the host is where the trigger rests, so a transform a host gives the
+           trigger's part does not move the panel. */
+            :host {
+                anchor-name: --menu;
             }
 
-            [popover][data-side='block-start'] {
-                translate: 0 calc(${reference('--ui-space')} / -2);
+            [popover] {
+                position-anchor: --menu;
+                top: anchor(bottom);
+                left: anchor(left);
+                position-try-fallbacks:
+                    flip-block,
+                    flip-inline,
+                    flip-block flip-inline;
+            }
+
+            :host(:dir(rtl)) [popover] {
+                left: auto;
+                right: anchor(right);
+            }
+
+            /* The gap between the panel and its trigger: a margin on the side the trigger is on,
+           which the flip moves to the other side with the panel. */
+            [popover] {
+                margin-block-start: calc(${reference('--ui-space')} / 2);
             }
 
             /* An item is the host's own control, reached through ::slotted — so what is set
@@ -426,15 +447,15 @@ export class UiMenu extends LitElement {
     #returning = false;
 
     /**
-     * The panel as it was last measured open, which is what places it before it opens: a
-     * closed popover measures nothing. Empty until the first open, which then hangs below
-     * its trigger, as a panel does wherever it fits.
+     * The panel's height as it was last measured open, which foretells its side before it opens:
+     * a closed popover measures nothing. None until the first open, which then hangs below its
+     * trigger, as a panel does wherever it fits.
      */
-    #box: Box = { top: 0, left: 0, width: 0, height: 0 };
+    #height = 0;
 
-    /** Re-places the panel under anything that moves the trigger while it is open. */
+    /** Reads the panel's side again under anything that moves the trigger while it is open. */
     readonly #reflow = (): void => {
-        this.#place();
+        this.#side();
     };
 
     /** What is watching while the menu is open, dropped in one call when it closes. */
@@ -666,17 +687,19 @@ export class UiMenu extends LitElement {
     };
 
     /**
-     * Places the panel before it is shown, which `toggle` alone does a frame late.
+     * Writes the side the panel opens on before it is shown, which `toggle` alone does a frame
+     * late.
      *
      * `toggle` comes in a task of its own, and a frame can be drawn before it: measured, the
-     * first frame after a click drew the panel at the viewport's corner, 3ms before `toggle`
-     * placed it. So the panel is placed here by the size it had when it was last open, and
-     * again on `toggle` by the size it has now. Only on the way in: a panel on its way out
-     * leaves from where the reader saw it.
+     * first frame after a click drew the panel before `toggle` came. The platform places the panel
+     * as it is shown, but writes nowhere which side it took, and an entrance comes from the side
+     * written as it is first drawn. So the side is foretold here by the height the panel had when
+     * it was last open, and read on `toggle` from where the panel landed. Only on the way in: a
+     * panel on its way out leaves from the side the reader saw it on.
      */
     readonly #onBeforeToggle = (event: ToggleEvent): void => {
         if (event.newState === 'open') {
-            this.#place();
+            this.#predict();
         }
     };
 
@@ -697,7 +720,7 @@ export class UiMenu extends LitElement {
             return;
         }
 
-        this.#place();
+        this.#side();
         this.#edge(this.#fromEnd);
         this.#fromEnd = false;
 
@@ -778,39 +801,33 @@ export class UiMenu extends LitElement {
     }
 
     /**
-     * Hangs the panel from its trigger, above it when there is no room below, and inside
-     * the viewport either way.
-     *
-     * The arithmetic is `src/placement.ts`, which `<ui-tooltip>` reads as well — the issue
-     * behind this component asked for one answer rather than two, and what differs between
-     * the two callers is a preferred side and an alignment.
-     *
-     * **From where the trigger rests**, which is the host's own box: the trigger fills it, and
-     * nothing that moves the trigger moves the host. A host can move the trigger through its
-     * part, and a transform is drawn where it went and laid out where it was — grown by a tenth
-     * under the pointer that opened the menu, the trigger went back once the pointer was in the
-     * panel, and a panel hung from the trigger as drawn stayed 6px below it instead of 4,
-     * measured.
+     * Writes the side the panel will open on: below where the room under its trigger holds the
+     * panel and its gap as it was last open, and above where it does not, which is where the
+     * platform's flip takes it.
      */
-    #place(): void {
-        const root = document.documentElement;
+    #predict(): void {
+        const room = document.documentElement.clientHeight - this.getBoundingClientRect().bottom;
+        const gap = Number.parseFloat(getComputedStyle(this.#panel).marginBlockStart);
 
-        if (this.#panel.matches(':popover-open')) {
-            this.#box = this.#panel.getBoundingClientRect();
-        }
+        this.#panel.setAttribute(side, room >= this.#height + gap ? 'block-end' : 'block-start');
+    }
 
-        const placement = place(
-            this.getBoundingClientRect(),
-            this.#box,
-            { width: root.clientWidth, height: root.clientHeight },
-            'block-end',
-            'inline-start',
-            getComputedStyle(this.#panel).direction,
+    /**
+     * Writes which side of its trigger the panel landed on, read off where the platform put it,
+     * and remembers its height for the next time it opens: above or below by the two middles,
+     * which none of the panel's effects moves across.
+     */
+    #side(): void {
+        const anchor = this.getBoundingClientRect();
+        const box = this.#panel.getBoundingClientRect();
+
+        this.#height = box.height;
+        this.#panel.setAttribute(
+            side,
+            // Stryker disable next-line EqualityOperator: equivalent — two middles level are a
+            // panel laid over its trigger's middle, which the platform never places it at.
+            box.top + box.height / 2 < anchor.top + anchor.height / 2 ? 'block-start' : 'block-end',
         );
-
-        this.#panel.setAttribute(side, placement.side);
-        this.#panel.style.insetBlockStart = `${String(placement.blockStart)}px`;
-        this.#panel.style.insetInlineStart = `${String(placement.inlineStart)}px`;
     }
 }
 

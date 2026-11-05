@@ -149,18 +149,22 @@ under a pointer that hovers and is fine, so a phone keeps the picker it opens, a
 opens under the base appearance was not measured. Where the system draws the list, it stays
 unstyleable, which [docs/select.md](docs/select.md) says in as many words.
 
-**Where every engine has the feature but not for long enough, it is measured and waited for.**
-`<ui-tooltip>` and `<ui-menu>` place their popovers with thirty lines of arithmetic in
-`src/placement.ts`. CSS anchor positioning is in all three engines now, and #300 measured it putting
-both overlays where the script puts them, in the arrangements the two are built in. It is still not
-adopted, for two reasons. An engine without the rules shows a popover that is `position: fixed` at
-`inset: 0`, so the failure is an overlay in the corner of the screen rather than one that merely
-looks different — `<ui-select>`'s reason, one step harsher. And the CSS writes nowhere which side it
-took: `data-side` is what a host selects an arrow or a gap on, and only Chromium can read the side
-back from the CSS. A component with a CSS path and a script path is two components, so the script
-goes whole, and not before the properties the CSS would use are Baseline Widely available. The side
-is the second condition: every engine has to be able to read it, unless `data-side` is retired by a
-decision of its own.
+**Where every engine has the feature and it works as written, the platform places the overlay.**
+`<ui-tooltip>` and `<ui-menu>` hang their popovers by CSS anchor positioning: the tip centred over
+its trigger, the panel from the trigger's leading edge, each flipped where there is no room and kept
+against its trigger through every scroll, with no script — #300 measured both landing where thirty
+lines of arithmetic used to, in all three engines. That raised the floor to the releases where the
+tooltip's `position-area` works as written, since an engine without the rules shows the overlay at
+the screen's corner rather than near its trigger. **Two things stay script, both small.** The CSS
+writes nowhere which side it took, and `data-side` is what a host selects an arrow or a gap on and
+what the overlays' motion reads, so each component reads the side off the two boxes as it shows and
+on every scroll and resize. And Firefox mirrors an area's inline alignment where an overlay's
+direction is not the page's — Mozilla 2019601 — which put a centred tip off the screen in every form
+measured: the menu is hung by anchored insets, which Firefox does not mirror, and a tip in such an
+island is marked as it shows and hangs from its trigger's leading edge too. A flipped overlay stays
+on the side it flipped to while it still fits, where the script went back to the side it prefers,
+and a panel at the screen's trailing edge hangs from its trigger's other edge rather than being
+pushed inside.
 
 **Where no element exists, the component says so rather than pretending one does.** `<ui-switch>` is
 a native checkbox carrying `role="switch"` and a drawing, because there is nothing else for it to
@@ -175,12 +179,13 @@ the reason a component takes the drawing over only where the alternative is wors
 
 ## The browser floor
 
-**Chrome and Edge 125, Firefox 129 and Safari 18.2, or 18.3 on iOS**, and the same numbers on
+**Chrome and Edge 144, Firefox 148 and Safari 26.2, on iOS as well**, and the same numbers on
 Android. It is where everything renders as it was measured — the contrast floors, the focus ring and
 every drawing the suite asserts — and the features `src/` uses with nothing to fall back to set it:
 
 | Feature                                                         | Chrome | Firefox | Safari              | Without it                                                                   |
 | --------------------------------------------------------------- | ------ | ------- | ------------------- | ---------------------------------------------------------------------------- |
+| anchor positioning — the tooltip and the menu                   | 144    | 148     | 26.2                | the overlay at the screen's corner                                           |
 | `popover` — the tooltip, the menu, the toaster                  | 114    | 125     | 17, and 18.3 on iOS | the overlay never opens; before iOS 18.3, a tap outside leaves the menu open |
 | `ElementInternals.states` — the checkbox, the switch            | 125    | 126     | 17.4                | writing the checked state throws                                             |
 | `light-dark()` — every colour token's two schemes               | 123    | 120     | 17.5                | a colour that reads one is unset                                             |
@@ -189,17 +194,22 @@ every drawing the suite asserts — and the features `src/` uses with nothing to
 | `backdrop-filter` — the raised surfaces                         | 76     | 103     | 18                  | no blur behind a raised surface                                              |
 | `scrollbar-gutter` — the dialog's scroll lock                   | 94     | 97      | 18.2                | the page shifts by a scrollbar's width while it is locked                    |
 
-**It is the floor where the accessibility bar holds, not the lowest one where nothing throws.** That
-one is Chrome 125, Firefox 126 and Safari 17.4, the first two rows, and it was set aside because a
-colour token that resolves to nothing takes the contrast floors with it. Nothing below the floor was
-measured.
+**Anchor positioning's numbers are the releases that fixed it, past the ones that shipped it.**
+Written alone, as the tooltip's `block-start` is, `position-area` let the tip run off the screen
+before Chrome 144 and Firefox 148, and left `inset: auto` unresolved, the tip at the corner, in
+Chrome 130 to 142, Firefox 147 and Safari before 26.2 — #300's reading of the two engines' bugs.
+
+**It is the floor where every component works as measured, not the lowest one where nothing
+throws.** That one is Chrome 125, Firefox 126 and Safari 17.4, the `popover` and states rows: below
+the floor a colour token can resolve to nothing, which takes the contrast floors with it, and an
+overlay with no anchor rules sits at the screen's corner. Nothing below the floor was measured.
 
 **A feature newer than the floor either leaves a component as it was where it is missing, or raises
 the floor.** The select's drawn list sits under `@supports (appearance: base-select)`, and an engine
 without it keeps the system's list, and a tooltip's tip is typed only under
 `@supports selector(::highlight())`, so an engine without highlights shows it whole. RFC 0004's
 motion effects will draw under container style
-queries, which need Chrome 111, Firefox 151 and Safari 18: inside the floor, Firefox 129 to 150
+queries, which need Chrome 111, Firefox 151 and Safari 18: inside the floor, Firefox 148 to 150
 lacks them, and keeps each component's own motion.
 
 **The floor moves as an ordinary change.** A feature that raises it enters `src/` in a pull request
@@ -501,10 +511,9 @@ is a picture in the accent the page resolves, drawn on a canvas, since a picture
 token; it settles inside the five seconds WCAG 2.2.2 allows into a still wall of code, and forced
 colours take it away. It is drawn ahead of the opening, in a moment the page is idle, because
 drawing it holds the page: drawn as the dialog opened, it took most of the panel's entrance in
-Chromium and all of it in Firefox — measured for #292. **An overlay placed by its size moves,
-blurs and fades, and never scales**:
-the tooltip reads its tip's box, transform and all, as it shows, and a tip that started at 0.9 of
-its size landed 11px off its trigger's middle in all three engines — measured for RFC 0004. Its exit
+Chromium and all of it in Firefox — measured for #292. **An overlay moves, blurs and fades, and
+never scales**, as RFC 0004 settled it while a script placed both overlays by their boxes: a tip
+that started at 0.9 of its size landed 11px off its trigger's middle in all three engines. Its exit
 is held on the page by transitioning display and overlay, which only Chromium honours for a popover,
 so elsewhere a tip is gone at once. A name a component does not offer draws nothing. **`none` is
 nothing**: where a component answered a moment with nothing before effects existed it keeps the

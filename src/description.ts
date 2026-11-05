@@ -7,9 +7,8 @@
  * reference: the tooltip dispatches it at the trigger, and a control that accepts it
  * renders it into its own root where its own `aria-describedby` reaches.
  *
- * **This module exists because `<ui-menu>` is the second element to need it**, which is
- * the same moment and the same reason `src/placement.ts` was extracted: two answers to one
- * problem is one too many. Six classes carry the protocol — the eight elements are six
+ * **This module exists because `<ui-menu>` is the second element to need it**: two answers
+ * to one problem is one too many. Six classes carry the protocol — the eight elements are six
  * classes — and a copy in each would have been six chances for one of them to drift into
  * accepting text it never renders.
  *

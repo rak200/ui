@@ -24,7 +24,7 @@ npm install @rak200/ui
 
 ## Browser support
 
-Chrome and Edge 125, Firefox 129 and Safari 18.2, or 18.3 on iOS — where every component renders as
+Chrome and Edge 144, Firefox 148 and Safari 26.2, on iOS as well — where every component renders as
 it was measured. [ARCHITECTURE.md](ARCHITECTURE.md#the-browser-floor) says which features set it,
 what happens below it and how it moves.
 
