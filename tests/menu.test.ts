@@ -1200,6 +1200,41 @@ describe('where the panel lands', () => {
         expect(panel(menu(host)).getBoundingClientRect().left).toBeCloseTo(anchor.left, 0);
     });
 
+    it('reads its side again when the window resizes, once the platform has flipped it', async () => {
+        const host = await mount(
+            `<div id="spot" style="position: fixed; inset-block-start: 0; inset-inline-start: 0">${fixture}</div>`,
+        );
+        await open(menu(host));
+
+        expect(panel(menu(host)).getAttribute('data-side'), 'below, with room').toBe('block-end');
+
+        // Taken to the bottom while it is open: the platform flips the panel as the page lays
+        // out, and the resize is what reads the side it took.
+        const spot = only(host, '#spot');
+        spot.style.insetBlockStart = 'auto';
+        spot.style.insetBlockEnd = '0';
+        window.dispatchEvent(new Event('resize'));
+        await settle();
+
+        expect(panel(menu(host)).getAttribute('data-side')).toBe('block-start');
+    });
+
+    it.each([
+        ['below, where it has room', 'inset-block-start: 0', 'block-end'],
+        ['above, flipped at the bottom', 'inset-block-end: 0', 'block-start'],
+    ] as const)(
+        'reads its side by the two middles under a trigger taller than half its panel: %s',
+        async (_where, inset, side) => {
+            // A menu far taller than half its panel, so a side read off anything but the trigger's
+            // middle — its top, or a point past its bottom — reads the other side.
+            const host = await mount(
+                `<div style="position: fixed; ${inset}; inset-inline-start: 0"><style>ui-menu { display: inline-block; block-size: 160px; }</style>${fixture}</div>`,
+            );
+            await open(menu(host));
+
+            expect(panel(menu(host)).getAttribute('data-side')).toBe(side);
+        },
+    );
     it('stops following once it is closed', async () => {
         // A closed panel measures nothing at the origin, whose middle is above any trigger's,
         // so a listener left on would read the panel below as above.

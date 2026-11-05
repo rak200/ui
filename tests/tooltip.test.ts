@@ -1814,6 +1814,30 @@ describe('where it lands', () => {
     });
 
     it.each([
+        ['above, where it has room', '160px', 'block-start'],
+        ['below, flipped at the top', '0px', 'block-end'],
+    ] as const)(
+        'reads its side by the two middles under a trigger taller than its tip: %s',
+        async (_where, offset, side) => {
+            // A trigger far taller than the tip, so a side read off anything but the trigger's
+            // middle — its top, or a point past its bottom — reads the other side.
+            const host = await mount(
+                `
+            <ui-tooltip>
+                <button type="button" style="block-size: 120px">Save</button>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `,
+                offset,
+            );
+
+            await userEvent.hover(trigger(host));
+            await painted();
+
+            expect(tip(host).getAttribute('data-side')).toBe(side);
+        },
+    );
+    it.each([
         ['above', '120px'],
         ['below, where it flipped', '0px'],
     ] as const)('keeps its gap on its trigger side, %s', async (_where, offset) => {
