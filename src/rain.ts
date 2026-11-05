@@ -61,9 +61,30 @@ function upTo(count: number): number[] {
     return Array.from({ length: Math.max(count, 0) }, (_, at) => at);
 }
 
+/** Runs `draw` on `canvas`'s 2D context, which a canvas made here always has. */
+function on(
+    canvas: OffscreenCanvas,
+    draw: (context: OffscreenCanvasRenderingContext2D) => void,
+): void {
+    // A canvas made here answers null for nothing but a context of another kind, which it cannot
+    // have: iterated rather than asserted, so no branch stands for a case nothing reaches.
+    // Stryker disable next-line MethodExpression,ConditionalExpression: equivalent — without the
+    // filter, or with one that keeps everything, the one context is drawn on all the same, since
+    // it is never null; no input distinguishes either.
+    for (const context of [canvas.getContext('2d')].filter((each) => each !== null)) {
+        draw(context);
+    }
+}
+
 /**
  * One depth's tile in `colour`, at `ratio` device pixels to a page pixel, as a layer the sheet lays:
  * its blob URL, from its corner, at its size in the page's pixels.
+ *
+ * **One blur a tile.** The characters are drawn sharp on a layer that reaches a glow past each edge,
+ * and the layer is laid on the tile once, with the glow as its shadow. A shadow drawn with each
+ * character was thousands of blurs a tile, and drawing the three took the page 79ms in Chromium in
+ * software, 102ms on a GPU and 354ms in Firefox, as the dialog opened and over its entrance —
+ * measured for #292. The layer's reach is in whole device pixels, so it lies on the tile's own.
  */
 async function tile(
     colour: string,
@@ -72,20 +93,18 @@ async function tile(
 ): Promise<string> {
     const pitch = width / columns;
     const line = height / rows;
-    const canvas = new OffscreenCanvas(Math.round(width * ratio), Math.round(height * ratio));
+    const wide = Math.round(width * ratio);
+    const high = Math.round(height * ratio);
+    const reach = Math.ceil(size * ratio);
+    const layer = new OffscreenCanvas(wide + 2 * reach, high + 2 * reach);
+    const canvas = new OffscreenCanvas(wide, high);
 
-    // A canvas made here answers null for nothing but a context of another kind, which it cannot
-    // have: iterated rather than asserted, so no branch stands for a case nothing reaches.
-    // Stryker disable next-line MethodExpression,ConditionalExpression: equivalent — without the
-    // filter, or with one that keeps everything, the one context is drawn on all the same, since
-    // it is never null; no input distinguishes either.
-    for (const context of [canvas.getContext('2d')].filter((each) => each !== null)) {
+    on(layer, (context) => {
+        context.translate(reach, reach);
         context.scale(ratio, ratio);
         context.font = `bold ${String(size)}px 'Courier New', Courier, ui-monospace, monospace`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.shadowColor = colour;
-        context.shadowBlur = size * 0.6;
 
         /** Draws `glyph` at `x`, `y`, and again across each edge its glow reaches past. */
         const stamp = (glyph: string, x: number, y: number, mirrored: boolean): void => {
@@ -149,7 +168,15 @@ async function tile(
             trail(column);
             trail(column);
         }
-    }
+    });
+
+    on(canvas, (context) => {
+        // The glow each character had, in the colour handed in: a shadow's blur is in the canvas's
+        // own pixels, which no transform scales.
+        context.shadowColor = colour;
+        context.shadowBlur = size * 0.6;
+        context.drawImage(layer, -reach, -reach);
+    });
 
     const picture = await canvas.convertToBlob();
 

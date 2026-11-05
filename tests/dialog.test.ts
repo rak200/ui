@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`.
 import type {} from '@vitest/browser-playwright';
@@ -99,7 +99,30 @@ async function close(element: UiDialog): Promise<void> {
     await element.updateComplete;
 }
 
+/** The idle moments the dialogs asked for, held rather than run, so a test runs them as it means to. */
+let idling: { readonly then: IdleRequestCallback; readonly options?: IdleRequestOptions }[] = [];
+
+// Every dialog asks for an idle moment as it joins the page, to draw its rain ahead: held here, so
+// no test finds the rain drawn or not by when the page happened to be idle.
+beforeEach(() => {
+    idling = [];
+    vi.stubGlobal(
+        'requestIdleCallback',
+        (then: IdleRequestCallback, options?: IdleRequestOptions): number =>
+            idling.push(options === undefined ? { then } : { then, options }),
+    );
+});
+
+/** Runs every idle moment the dialogs asked for, as a page with nothing to do would. */
+function idled(): void {
+    for (const { then } of idling.splice(0)) {
+        then({ didTimeout: false, timeRemaining: () => 50 });
+    }
+}
+
 afterEach(() => {
+    vi.unstubAllGlobals();
+
     // Synchronous, and that is a property of the component rather than of this callback:
     // removing an open dialog closes it and gives the page back in the same turn, so no
     // lock survives into the next test. It did not always — the release used to hang off
@@ -1220,6 +1243,59 @@ describe("the scrim's rain, RFC 0004's", () => {
         await open(element);
 
         await expect.poll(() => fills.length).toBeGreaterThan(drawn);
+    });
+
+    it('draws the rain ahead, in a moment the page is idle, so the opening finds it drawn', async () => {
+        const fills = drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+
+        expect(
+            idling.map(({ options }) => options),
+            'asked for as it joins the page, within two seconds',
+        ).toEqual([{ timeout: 2000 }]);
+
+        idled();
+
+        const drawn = fills.length;
+
+        expect(drawn, 'drawn ahead').toBeGreaterThan(0);
+
+        await opening(element);
+        await rained(element);
+
+        expect(fills.length, 'and nothing drawn as it opens').toBe(drawn);
+    });
+
+    it('draws nothing ahead where the rain is not chosen', async () => {
+        const fills = drawing();
+
+        await mount(fixture);
+        idled();
+
+        expect(fills).toHaveLength(0);
+    });
+
+    it('draws ahead a second after it joins the page where the engine has no idle callback', async () => {
+        // WebKit has none. The stub goes too, and the suite puts the engine's own back after.
+        Reflect.deleteProperty(window, 'requestIdleCallback');
+        const timers = vi.spyOn(window, 'setTimeout');
+        onTestFinished(() => {
+            timers.mockRestore();
+        });
+        const fills = drawing();
+        const element = await mount(fixture);
+        element.style.setProperty('--ui-motion-backdrop', 'char-rain');
+
+        const asked = timers.mock.calls.filter(([, delay]) => delay === 1000);
+
+        expect(asked, 'a second from now').toHaveLength(1);
+
+        for (const [then] of asked) {
+            (then as () => void)();
+        }
+
+        expect(fills.length).toBeGreaterThan(0);
     });
 });
 
