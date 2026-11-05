@@ -117,7 +117,7 @@ const heard = {
     'css.selectors.picker': drawnList,
     'css.selectors.picker-icon': drawnList,
     'html.elements.optgroup.disabled':
-        "iOS takes the attribute and ignores it, so a disabled group's choices stay choosable in the picker it opens: a limit of the platform's select that no release lifts",
+        'iOS takes the attribute and ignores it, and src/select.ts draws each choice in a disabled group disabled too, which iOS honours on an option: by BCD, not yet seen on a device',
 };
 
 /**

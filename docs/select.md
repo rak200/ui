@@ -78,6 +78,11 @@ real `<option>` elements the platform needs are built from them.
 
 Exported as `UiOption` and `UiOptgroup`. Anything else you put inside a `<ui-select>` is ignored.
 
+**A disabled group refuses its choices one by one as well.** iOS takes `disabled` on a group and
+ignores it, so each choice the element draws inside a disabled group carries `disabled` itself,
+which iOS honours on a choice. That is by the browser compatibility data, and has not yet been seen
+on a device.
+
 **Change them however you like.** Adding one, removing one and writing a property all reach the
 control — including from inside a group:
 
