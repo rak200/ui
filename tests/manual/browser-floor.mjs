@@ -31,8 +31,13 @@
  * **What is depended on without being named** is `carried`: a behaviour BCD records on a key the
  * code never writes, which still sets the floor — the menu's light dismissal on iOS is recorded
  * on the `popover` property, and the menu sets the attribute. Each entry counts while the line
- * it depends on is found. An entry in either list that stops matching anything is reported, so
- * neither outlives the code it speaks for.
+ * it depends on is found.
+ *
+ * **What is mended past its date** is `mended`: a key BCD dates before the release that works the
+ * way `src/` writes it, a bug a later release fixed, which sets the floor at that release — the
+ * tooltip's `position-area` written alone. Each counts while the line it depends on is found. An
+ * entry in any of the three lists that stops matching anything is reported, so none outlives the
+ * code it speaks for.
  *
  * The step exits 1 when there is something to read and 0 when there is not.
  *
@@ -73,7 +78,7 @@ const version = process.argv[2] ?? '3.44.0';
  * The floor `ARCHITECTURE.md` and `README.md` state, which moves with them. Edge takes Chrome's
  * number, and Android takes the desktop numbers, in every key that sets it.
  */
-const floor = { chrome: '125', edge: '125', firefox: '129', safari: '18.2', safari_ios: '18.3' };
+const floor = { chrome: '144', edge: '144', firefox: '148', safari: '26.2', safari_ios: '26.2' };
 
 /** Why the select's drawn list moves no floor. */
 const drawnList =
@@ -110,6 +115,8 @@ const heard = {
     'css.properties.mask.content-box':
         "Safari reads no content-box in the standard mask, and src/effects.ts cuts the edge's band with Safari's own prefixed mask first, which reads it, and the standard one after, which the other engines take and Safari drops",
     'css.properties.cursor.pointer': noCursor,
+    'css.properties.position-anchor':
+        'partial only in its initial value, until Chrome 151, Firefox 151 and Safari 27, and src/tooltip.ts and src/menu.ts each name the anchor, which overrides it',
     'css.properties.resize':
         'iOS recognises it and does nothing, so a textarea there is not resized by hand',
     'css.selectors.highlight': typing,
@@ -129,6 +136,26 @@ const carried = {
         because:
             'a tap outside closes the menu\'s popover="auto" on iOS only from 18.3, which BCD records on the property; src/menu.ts sets the attribute',
         where: /setAttribute\(\s*'popover',\s*'auto'\s*\)/,
+    },
+};
+
+/**
+ * Keys BCD dates before the release that works the way `src/` writes them: a bug a later release
+ * fixed, which sets the floor at that release. Each counts while the line it depends on is still
+ * in `src/`.
+ */
+const mended = {
+    'css.properties.position-area': {
+        releases: {
+            chrome: '144',
+            edge: '144',
+            firefox: '148',
+            safari: '26.2',
+            safari_ios: '26.2',
+        },
+        because:
+            "written alone, as src/tooltip.ts writes block-start, it let the tip run off the viewport before Chrome 144 and Firefox 148 (crbug.com/438334710, bugzil.la/2008537), and left inset: auto unresolved, the tip in the screen's corner, in Chrome 130 to 142, Firefox 147 and Safari before 26.2, by #300's reading",
+        where: /position-area:\s*block-start;/,
     },
 };
 
@@ -325,6 +352,24 @@ for (const feature of Object.values(data.features)) {
     }
 }
 
+// A mended key needs the later of the release BCD dates and the one that fixed it.
+for (const [key, { releases }] of Object.entries(mended)) {
+    const dated = support.get(key) ?? {};
+
+    support.set(key, {
+        ...dated,
+        ...Object.fromEntries(
+            Object.keys(floor).map((engine) => [
+                engine,
+                rank(dated[engine]) > rank(releases[engine]) ? dated[engine] : releases[engine],
+            ]),
+        ),
+    });
+}
+
+/** The mended keys whose line is still in `src/`. */
+const mendedFound = new Set();
+
 const searched = [...support.keys()]
     .map((key) => ({ key, regex: pattern(key) }))
     .filter(({ regex }) => regex !== undefined);
@@ -368,6 +413,12 @@ for (const file of files) {
 
         if (found !== null) {
             use(key, source, found.index);
+        }
+    }
+
+    for (const [key, { where }] of Object.entries(mended)) {
+        if (where.test(source.text)) {
+            mendedFound.add(key);
         }
     }
 
@@ -486,12 +537,21 @@ for (const key of passing.sort()) {
     }
 }
 
-const stale = [...Object.keys(carried), ...Object.keys(heard)].filter((key) => !uses.has(key));
+const stale = [
+    ...[...Object.keys(carried), ...Object.keys(heard)].filter((key) => !uses.has(key)),
+    ...Object.keys(mended).filter((key) => !mendedFound.has(key)),
+];
 
 console.log('\nDepended on without being named:');
 
 for (const [key, { because }] of Object.entries(carried)) {
     console.log(`  ${key}${uses.has(key) ? '' : '  (NO LONGER FOUND)'}\n    ${because}`);
+}
+
+console.log('\nMended past its date:');
+
+for (const [key, { because }] of Object.entries(mended)) {
+    console.log(`  ${key}${mendedFound.has(key) ? '' : '  (NO LONGER FOUND)'}\n    ${because}`);
 }
 
 console.log('\nSet aside by a reading:');

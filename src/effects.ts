@@ -2642,12 +2642,12 @@ export interface Panel {
  * trigger's caret does, built for `component`'s taste over the parts `where` names. One sheet for
  * every such panel, so a menu and a list open alike.
  *
- * **Nothing here changes the panel's size.** The menu measures its panel to place it, so an
- * entrance that started scaled would be measured instead: the effects fade a panel, uncover it,
- * blur it, make it jump and bring its items in one after another, and none scales it or turns it.
- * The items move inside it, which its size does not see. **What comes from the trigger's side reads
- * which side that is**, `--ui-fx-toward`, which a component that places the panel writes before
- * the panel's first style, as the menu does.
+ * **Nothing here changes the panel's size.** The menu measures its panel to foretell the side it
+ * opens on, so an entrance that started scaled would be measured instead: the effects fade it,
+ * uncover it, blur it, make it jump and bring its items in one after another, and none scales it or
+ * turns it. The items move inside it, which its size does not see. **What comes from the trigger's
+ * side reads which side that is**, `--ui-fx-toward`, which a component writes before the panel's
+ * first style, as the menu does by foretelling it.
  *
  * **An exit holds the panel on the page while it runs**, its display and its overlay transitioned
  * as discrete values, and only where one is chosen, so a panel with none closes at once — which

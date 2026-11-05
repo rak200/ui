@@ -191,11 +191,6 @@ async function escaped(run: () => Promise<void> | void): Promise<string[]> {
     return thrown;
 }
 
-/** The component's own stylesheet, as text, for the rules no rendering can show. */
-function styleText(): string {
-    return String((customElements.get('ui-tooltip') as unknown as { styles: unknown }).styles);
-}
-
 /** Moves the pointer out of the way, because nothing in the page can — see checkbox.test.ts. */
 async function parkPointer(): Promise<void> {
     await cdp().send('Input.dispatchMouseEvent', {
@@ -906,44 +901,52 @@ describe('when it shows', () => {
         expect(tip(host).matches(':popover-open'), 'and open again').toBe(true);
     });
 
-    it('re-places when the window resizes, not only when something scrolls', async () => {
-        const host = await mount(`<div id="mover">${fixture}</div>`);
+    it('reads its side again when the window resizes, not only when something scrolls', async () => {
+        const host = await mount(
+            `<div id="mover" style="padding-block-start: 60px">${fixture}</div>`,
+            '0px',
+        );
 
         trigger(host).focus();
         await painted();
 
-        const before = tip(host).style.insetBlockStart;
+        expect(tip(host).getAttribute('data-side'), 'above, with room for it').toBe('block-start');
 
-        // Padding rather than margin, and that is not a detail: an adjoining top margin
-        // collapses into the wrapper's own, so the trigger would not have moved and the
-        // test would have failed against working code.
-        only(host, '#mover').style.paddingBlockStart = '40px';
+        // Taken to the top, where the tip has no room above: the platform flips it as the page
+        // lays out, and the resize is what reads the side it took. Padding rather than margin,
+        // since an adjoining top margin collapses into the wrapper's own and moves nothing.
+        only(host, '#mover').style.paddingBlockStart = '0px';
         window.dispatchEvent(new Event('resize'));
         await painted();
 
-        expect(tip(host).style.insetBlockStart).not.toBe(before);
+        expect(tip(host).getAttribute('data-side')).toBe('block-end');
     });
-
     it('stops following the trigger once it is closed', async () => {
         // The listeners are removed with the same options they were added with, which is
         // what makes the removal actually remove: a capturing listener taken off without
-        // the flag stays on, and the tip would keep being placed while hidden.
-        const host = await mount(`
+        // the flag stays on. A closed tip measures nothing at the origin, whose middle is above
+        // any trigger's, so a listener left on would read the tip below as above.
+        const host = await mount(
+            `
             <div id="scroller" style="block-size: 80px; overflow: auto">
-                <div style="block-size: 400px; padding-block-start: 40px">
+                <div style="block-size: 400px">
                     <ui-tooltip>
                         <button type="button">Save</button>
                         <span slot="tip">Saves.</span>
                     </ui-tooltip>
                 </div>
             </div>
-        `);
+        `,
+            '0px',
+        );
 
         await userEvent.hover(trigger(host));
         await painted();
+
+        expect(tip(host).getAttribute('data-side'), 'below, at the top').toBe('block-end');
+
         await userEvent.unhover(trigger(host));
 
-        const parked = tip(host).style.insetBlockStart;
         const scroller = only(host, '#scroller');
         const scrolled = new Promise((resolve) => {
             scroller.addEventListener('scroll', resolve, { once: true });
@@ -956,9 +959,8 @@ describe('when it shows', () => {
         window.dispatchEvent(new Event('resize'));
         await painted();
 
-        expect(tip(host).style.insetBlockStart, 'nothing moved it').toBe(parked);
+        expect(tip(host).getAttribute('data-side'), 'nothing read it').toBe('block-end');
     });
-
     it('answers nothing once it has left the document', async () => {
         // The listeners come off with it. Left on, the first pointer or focus event to
         // reach a detached element would call `showPopover()` on a node that is not in a
@@ -1005,11 +1007,10 @@ describe('when it shows', () => {
         expect(tip(host).matches(':popover-open'), 'it opens again').toBe(true);
     });
 
-    it('stops placing the moment it leaves the document, not when it is next asked', async () => {
-        // The window listeners are what a removal has to take with it. Left on, they keep
-        // calling the placement against a trigger that is no longer laid out — every rect
-        // is zero — and the tip is dragged to the corner of a page it is not on. Read off
-        // the written inset, because a detached element has no rendering to compare.
+    it('stops reading its side the moment it leaves the document, not when it is next asked', async () => {
+        // The listeners come off with it. Left on, a resize would read a trigger and a tip
+        // that are no longer laid out — every box is nothing at the origin, whose two middles
+        // are level, which reads as below — and write it on a tip the reader saw above.
         const host = await mount(fixture);
         const element = only(host, 'ui-tooltip');
 
@@ -1022,17 +1023,15 @@ describe('when it shows', () => {
 
         // Held before the removal takes it out of the fixture.
         const shown = tip(host);
-        const placed = shown.style.insetBlockStart;
 
-        expect(placed, 'it was placed to begin with').toMatch(/\d/);
+        expect(shown.getAttribute('data-side'), 'above to begin with').toBe('block-start');
 
         element.remove();
         window.dispatchEvent(new Event('resize'));
         await painted();
 
-        expect(shown.style.insetBlockStart, 'nothing placed it again').toBe(placed);
+        expect(shown.getAttribute('data-side'), 'nothing read it again').toBe('block-start');
     });
-
     it('closes without complaint when the pointer leaves after an Escape', async () => {
         // `hidePopover()` on a popover that is not showing throws, and leaving the trigger
         // after dismissing it is the ordinary way to arrive there.
@@ -1245,23 +1244,29 @@ describe("the tip's motion, RFC 0004's", () => {
         expect([moving(host), getComputedStyle(tip(host)).display], 'gone').toEqual([[], 'none']);
     });
 
-    it('places the tip where it would sit without motion, whatever its entrance moves', async () => {
+    it('lands where it would without motion, and reads the same side, whatever its entrance moves', async () => {
         const still = await mount(fixture);
         await userEvent.hover(trigger(still));
         await painted();
 
-        const placed = [tip(still).style.insetBlockStart, tip(still).style.insetInlineStart];
+        const placed = tip(still).getBoundingClientRect();
 
         await parkPointer();
         only(still, 'ui-tooltip').style.setProperty('--ui-motion-enter', 'rise');
         await userEvent.hover(trigger(still));
+
+        expect(tip(still).getAttribute('data-side'), 'read as it shows').toBe('block-start');
+
+        for (const each of tip(still).getAnimations()) {
+            each.finish();
+        }
+
         await painted();
 
-        expect([tip(still).style.insetBlockStart, tip(still).style.insetInlineStart]).toEqual(
-            placed,
-        );
-    });
+        const moved = tip(still).getBoundingClientRect();
 
+        expect([moved.top, moved.left]).toEqual([placed.top, placed.left]);
+    });
     it.each([
         ['the default theme', '', '', ['opacity', 'transform']],
         ['Glass', themeStyleSheet(glass), 'glass', ['filter', 'opacity']],
@@ -1690,9 +1695,9 @@ describe('where it lands', () => {
         expect(tip(host).getAttribute('data-side')).toBe('block-start');
     });
 
-    it('sits centred on its trigger in a right-to-left part of the page', async () => {
-        // Where the tip used to stay at the viewport's left edge, wherever its trigger was.
-        // Far enough in from the right that the tip has room to be centred.
+    it("hangs from its trigger's leading edge in a right-to-left part of a left-to-right page", async () => {
+        // An island: Firefox mirrors a centred tip there, and put it off the screen in every
+        // form measured — Mozilla 2019601 — so the tip hangs from its trigger's leading edge.
         const host = await mount(
             `<div dir="rtl" style="padding-inline-start: 150px">${fixture}</div>`,
         );
@@ -1703,10 +1708,54 @@ describe('where it lands', () => {
         const anchor = trigger(host).getBoundingClientRect();
         const box = tip(host).getBoundingClientRect();
 
+        expect(only(host, 'ui-tooltip').matches(':state(island)'), 'an island').toBe(true);
         expect(box.bottom).toBeLessThan(anchor.top);
-        expect((box.left + box.right) / 2).toBeCloseTo((anchor.left + anchor.right) / 2, 0);
+        expect(box.right).toBeCloseTo(anchor.right, 0);
     });
 
+    it("turns to its trigger's other edge in an island, where the leading one runs off the screen", async () => {
+        const host = await mount(`<div dir="rtl" style="text-align: left">
+            <ui-tooltip>
+                <button type="button">S</button>
+                <span slot="tip">A description long enough to run off the edge on its own.</span>
+            </ui-tooltip>
+        </div>`);
+
+        await userEvent.hover(trigger(host));
+        await painted();
+
+        const anchor = trigger(host).getBoundingClientRect();
+        const box = tip(host).getBoundingClientRect();
+
+        expect(box.left, 'inside the screen').toBeGreaterThanOrEqual(0);
+        expect(box.left).toBeCloseTo(anchor.left, 0);
+    });
+
+    it("lets the island go once its tip shows where its direction is the page's own again", async () => {
+        const host = await mount(
+            `<div dir="rtl" style="padding-inline-start: 150px">${fixture}</div>`,
+        );
+        const element = only(host, 'ui-tooltip');
+
+        await userEvent.hover(trigger(host));
+        await painted();
+        await parkPointer();
+
+        expect(element.matches(':state(island)'), 'an island').toBe(true);
+
+        only(host, 'div').dir = 'ltr';
+        await userEvent.hover(trigger(host));
+        await painted();
+
+        const anchor = trigger(host).getBoundingClientRect();
+        const box = tip(host).getBoundingClientRect();
+
+        expect(element.matches(':state(island)'), 'no island now').toBe(false);
+        expect((box.left + box.right) / 2, 'centred again').toBeCloseTo(
+            (anchor.left + anchor.right) / 2,
+            0,
+        );
+    });
     it('sits centred on its trigger in a right-to-left page', async () => {
         document.documentElement.dir = 'rtl';
 
@@ -1727,12 +1776,15 @@ describe('where it lands', () => {
         }
     });
 
-    it('goes above when the room is exactly enough, which is where the boundary sits', async () => {
-        // The comparison is `>=`, and this is the input that tells it from `>`: a tip whose
-        // height is exactly the room above it fits, flush against the trigger.
+    it.each([
+        ['holds the tip and its gap', 36, 'block-start'],
+        ['falls a pixel short of them', 35, 'block-end'],
+    ] as const)('goes above only where the room %s', async (_room, top, side) => {
+        // The gap is a margin, so the platform counts it in the room the tip needs: half the
+        // space token, 4px over a tip 32px tall.
         const host = await mount(
             `
-            <div style="position: absolute; inset-block-start: 32px">
+            <div style="position: absolute; inset-block-start: ${String(top)}px">
                 <ui-tooltip>
                     <button type="button">Save</button>
                     <span slot="tip" style="block-size: 32px; box-sizing: border-box">Saves.</span>
@@ -1745,11 +1797,9 @@ describe('where it lands', () => {
         await userEvent.hover(trigger(host));
         await painted();
 
-        expect(trigger(host).getBoundingClientRect().top, 'the room is the tip height').toBe(32);
-        expect(tip(host).getBoundingClientRect().height).toBe(32);
-        expect(tip(host).getAttribute('data-side')).toBe('block-start');
+        expect(trigger(host).getBoundingClientRect().top).toBe(top);
+        expect(tip(host).getAttribute('data-side')).toBe(side);
     });
-
     it('flips below when there is no room above', async () => {
         const host = await mount(fixture, '0px');
 
@@ -1763,19 +1813,47 @@ describe('where it lands', () => {
         expect(tip(host).getAttribute('data-side')).toBe('block-end');
     });
 
-    it('styles the gap from the side it wrote, so the two cannot disagree', async () => {
-        const host = await mount(fixture);
+    it.each([
+        ['above, where it has room', '160px', 'block-start'],
+        ['below, flipped at the top', '0px', 'block-end'],
+    ] as const)(
+        'reads its side by the two middles under a trigger taller than its tip: %s',
+        async (_where, offset, side) => {
+            // A trigger far taller than the tip, so a side read off anything but the trigger's
+            // middle — its top, or a point past its bottom — reads the other side.
+            const host = await mount(
+                `
+            <ui-tooltip>
+                <button type="button" style="block-size: 120px">Save</button>
+                <span slot="tip">Saves.</span>
+            </ui-tooltip>
+        `,
+                offset,
+            );
+
+            await userEvent.hover(trigger(host));
+            await painted();
+
+            expect(tip(host).getAttribute('data-side')).toBe(side);
+        },
+    );
+    it.each([
+        ['above', '120px'],
+        ['below, where it flipped', '0px'],
+    ] as const)('keeps its gap on its trigger side, %s', async (_where, offset) => {
+        // A margin the flip moves to the other side with the tip, so the gap and the side
+        // cannot disagree.
+        const host = await mount(fixture, offset);
 
         await userEvent.hover(trigger(host));
+        await painted();
 
-        const written = tip(host)
-            .getAttributeNames()
-            .find((name) => name.startsWith('data-'));
+        const anchor = trigger(host).getBoundingClientRect();
+        const box = tip(host).getBoundingClientRect();
+        const gap = box.top >= anchor.bottom ? box.top - anchor.bottom : anchor.top - box.bottom;
 
-        expect(written, 'the script wrote a side').toMatch(/\S/);
-        expect(styleText(), 'and the sheet reads that same name').toContain(`[${String(written)}=`);
+        expect(gap).toBeCloseTo(4, 0);
     });
-
     it('stays inside the viewport at the leading edge', async () => {
         const host = await mount(`
             <div style="position: absolute; inset-inline-start: 0">
@@ -1824,18 +1902,10 @@ describe('where it lands', () => {
 
         // Shown by focus rather than by the pointer, and that is the test learning
         // something: scrolling moves the trigger out from under the pointer, the browser
-        // dispatches the boundary event that follows, and the tip closes before the
-        // placement it was supposed to be running. Measured — the first version of this
-        // test passed against a *closed* tip, because a hidden popover has a rect of zero
-        // and zero is not where it was.
+        // dispatches the boundary event that follows, and the tip closes before anything
+        // could follow it.
         trigger(host).focus();
         await painted();
-
-        // The written inset rather than the measured rect: what is under test is that the
-        // placement ran again, and a rect can move for reasons that are not this component.
-        const before = tip(host).style.insetBlockStart;
-
-        expect(before, 'it was placed to begin with').toMatch(/\d/);
 
         const scroller = only(host, '#scroller');
         const scrolled = new Promise((resolve) => {
@@ -1849,10 +1919,12 @@ describe('where it lands', () => {
         const anchor = trigger(host).getBoundingClientRect();
         const box = tip(host).getBoundingClientRect();
 
-        expect(tip(host).style.insetBlockStart, 'it was placed again').not.toBe(before);
-        expect(box.bottom, 'and it is still against the trigger').toBeLessThan(anchor.top);
+        expect(anchor.top - box.bottom, 'still against the trigger, its gap and all').toBeCloseTo(
+            4,
+            0,
+        );
+        expect(tip(host).getAttribute('data-side')).toBe('block-start');
     });
-
     it('places nothing once the tip is gone, rather than throwing at a scroll', async () => {
         // Reachable, and only from here: `#show` refuses to open without a tip, so the
         // guard inside the placement is for the window that opens when a framework
@@ -1915,7 +1987,7 @@ describe('the drawing', () => {
         const styles = getComputedStyle(tip(host));
 
         expect(styles.position).toBe('fixed');
-        expect(styles.margin).toBe('0px');
+        expect(styles.margin, 'the gap, on its trigger side').toBe('0px 0px 4px');
         expect(styles.backgroundColor).toBe('rgb(255, 255, 255)');
         expect(styles.color).toBe('rgb(31, 41, 55)');
         expect(styles.borderTopWidth).toBe('1px');

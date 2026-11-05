@@ -48,8 +48,9 @@ element's shadow root could not be the target of the trigger's `aria-describedby
 constraint that shapes [`<ui-input>`](input.md) and every other control here.
 
 What the element writes on your tip: an `id` (only if it has none), `role="tooltip"` (only if you
-wrote no role), `popover="manual"`, and a `data-side` saying which way it was placed. What it writes
-on your trigger: `aria-describedby`, **added to** whatever was already there rather than replacing it.
+wrote no role), `popover="manual"`, and a `data-side` saying which side of the trigger it landed on.
+What it writes on your trigger: `aria-describedby`, **added to** whatever was already there rather
+than replacing it.
 
 **And it takes that one entry back out when it lets go.** Replace either child and the wiring
 follows: a new tip is described and the old id is removed, a new trigger is described and the old
@@ -133,20 +134,28 @@ touch user may never see. See the rule above about the tip never being the only 
 
 ## Where it lands, and who put it there
 
-The tip is a **popover**, so the platform promotes it to the top layer: it escapes `overflow: hidden`
-and every stacking context above it, and there is no `z-index` anywhere in this component to tune.
+The tip is a **popover**, so the platform promotes it to the top layer: it escapes `overflow:
+hidden` and every stacking context above it, and there is no `z-index` anywhere in this component to
+tune.
 
-**The placement is this package's, and that is a decision rather than an omission.** It goes above
-the trigger, centred on it, flips below when there is no room, and is pulled back inside the
-viewport at either edge. Right to left it lands where it does left to right, whether the whole page
-reads that way or only the part the trigger is in.
+**The platform places it too**, by CSS anchor positioning. It goes above the trigger, centred on it,
+flips below when there is no room, and is pulled back inside the viewport at either edge — placed as
+it is shown, and kept against the trigger through every scroll, with no script. A tip that flipped
+stays on the side it flipped to while it still fits there.
 
-CSS anchor positioning would do all of it, and all three engines have it. It is not adopted yet, for
-the two reasons [ARCHITECTURE.md](../ARCHITECTURE.md) gives under _The platform owns what the
-platform is good at_. In an engine without the rules a popover is `position: fixed` at `inset: 0`,
-the corner of the screen rather than near the trigger. And the CSS writes nowhere which side it
-took, which is what [`data-side`](#styling) tells you. The script goes once the properties are
-widely available and every engine can read the side.
+**In a part of the page whose direction is not the page's** — a right-to-left passage in a
+left-to-right page, or the reverse — the tip hangs from its trigger's leading edge instead of
+centring over it, and turns to the trigger's other edge where that would run off the screen. Firefox
+mirrors a centred tip there and put it off the screen in every form measured (Mozilla bug 2019601),
+where the trigger's edges are placed alike in all three engines. A right-to-left page is no such
+part: the tip is centred there, as it is left to right.
+
+**The side it took is written as [`data-side`](#styling)**, since the CSS writes it nowhere: the
+element reads it off where the tip landed as it is shown, and again on every scroll and resize.
+
+The trigger takes its anchor name from this element's own stylesheet. Give it an `anchor-name` of
+your own and yours replaces it, which leaves the tip nothing to hang from: write both, `anchor-name:
+--yours, --trigger`.
 
 A positioning dependency was the other option. It solves scroll containers, virtual anchors and
 continuous auto-update — none of which a tooltip against a real element needs — and it would be this
@@ -186,11 +195,9 @@ the tooltip or anywhere above it, choose for yourself, and `none` shows and hide
 a tooltip did before effects existed.
 
 Each is a transition, so a tip you leave before it has arrived turns back from where it is, and one
-pointed at again as it leaves comes back from where it got to. **None scales a tip**: the placement
-reads the tip's box as it shows, transform and all, and a tip that started smaller landed off its
-trigger's middle in RFC 0004's measurements. An entrance comes from the side the tip was last placed
-on, since the side is written once the tip is shown — above its trigger until it has been placed
-below.
+pointed at again as it leaves comes back from where it got to. **None scales a tip**, as RFC 0004
+chose. An entrance comes from the side the tip last landed on, since the side is read once the tip
+is shown — above its trigger until it has landed below.
 
 **Only Chromium plays an exit.** A tip is held on the page while it goes by transitioning its
 display and its overlay, which Chromium honours for a popover; Firefox and WebKit take a popover

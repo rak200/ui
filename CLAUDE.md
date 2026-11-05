@@ -38,7 +38,6 @@ src/
 ├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
 ├── next.ts          # the next tip — internal, a tip glided over from the one closed just before
 ├── passage.ts       # a surface's passage in script — internal, its pieces and its grain, one filter
-├── placement.ts     # where an overlay lands — internal, shared by the tooltip and the menu
 ├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── rain.ts          # the scrim's rain — internal, falling code drawn on a canvas in the accent
@@ -71,7 +70,6 @@ tests/               # mirrors src/, one test file per unit
 ├── motion.test.ts
 ├── next.test.ts
 ├── passage.test.ts
-├── placement.test.ts
 ├── pointer.test.ts
 ├── radio.test.ts
 ├── rain.test.ts
@@ -178,19 +176,27 @@ explains. This file restates none of them.
   the other two things `appearance: none` made this component's to own — and **the mixed state's
   forced-colors override lives in `UiCheckbox`'s own sheet rather than the shared one**, because a
   later sheet at equal specificity wins; the comment there carries the measurement.
-- **Why `ui-tooltip` and `ui-menu` place themselves instead of adopting CSS anchor positioning** —
-  [ARCHITECTURE.md](ARCHITECTURE.md), _The platform owns what the platform is good at_, which gives
-  both reasons and what retires the script: an engine without the rules puts a popover at `inset: 0`
-  rather than near the trigger, and the CSS writes nowhere the side `data-side` reports. #300 holds
-  the measurements and the dates, and the docblock on `UiTooltip` in `src/tooltip.ts` keeps the
-  element's own half. `popover="manual"` and the Escape handler carry their reasons beside them, and
-  `#complain()` carries the one a reader hits first: a reference written from out here reaches no
-  control drawn inside a shadow root, which #156 measured and RFC 0006 answered — so what the
-  warning is left pointing at is a trigger **someone else** wrote that does not take the handoff.
+- **Why `ui-tooltip` and `ui-menu` are placed by CSS anchor positioning, why each still reads its
+  side off the boxes, and why a tip in a direction island and the menu hang from the trigger's
+  edges** — [ARCHITECTURE.md](ARCHITECTURE.md), _The platform owns what the platform is good at_,
+  and the docblock on `UiTooltip` in `src/tooltip.ts` and the comments beside each component's
+  anchor rules. The CSS writes nowhere the side `data-side` reports, so `#side()` reads it from the
+  two middles as the overlay shows and on every scroll and resize, and the menu's `#predict()`
+  foretells it in `beforetoggle` by the panel's last height and its gap, since `toggle` comes a task
+  late; Firefox mirrors an area's inline alignment where an overlay's direction is not the page's
+  (Mozilla 2019601), so the menu takes anchored insets everywhere and a tip takes them in an island,
+  which `#island()` marks as the tip shows. The floor rose to Chrome 144, Firefox 148 and Safari
+  26.2 for the tooltip's `position-area`, which `tests/manual/browser-floor.mjs` carries in
+  `mended`, past the releases BCD dates. #300 holds the measurements. `popover="manual"` and the
+  Escape handler carry their reasons beside them, and `#complain()` carries the one a reader hits
+  first: a reference written from out here reaches no control drawn inside a shadow root, which #156
+  measured and RFC 0006 answered — so what the warning is left pointing at is a trigger **someone
+  else** wrote that does not take the handoff.
 - **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
   raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its
-  `heard` and `carried` lists keep each reading's reasons beside the keys they excuse or add.
+  `heard`, `carried` and `mended` lists keep each reading's reasons beside the keys they excuse, add
+  or date later.
 - **Why `ui-card` draws a boundary as well as a shadow, and claims no role** — the docblock on
   `UiCard` in `src/card.ts`, beside each. Only a shadow's colour can follow the scheme, and the
   default shadow writes one colour that all but vanishes on a dark page, so the derived boundary is
@@ -255,10 +261,6 @@ explains. This file restates none of them.
   measures it against a secondary `ui-button` state by state, with every duration the sheet moves
   over taken out — and never a script's, whose time of nothing is the collapse's, under which
   nothing runs.
-- **Why the placement is a module rather than a method** — `src/placement.ts`, which issue #23
-  asked for in as many words. `ui-tooltip` wrote it first and `ui-menu` needed it pointing the
-  other way; it takes boxes rather than elements for the reason `reservedGutter` in
-  `src/dialog.ts` takes numbers, so the viewport edges are checked directly.
 - **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
   lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided
@@ -422,12 +424,12 @@ explains. This file restates none of them.
   single precision, so it compares them rounded. `tests/dialog.test.ts` holds every idle moment a
   dialog asks for, so no test finds the rain drawn or not by when the page happened to be idle.
 - **Why a tooltip's tip comes and goes by transitions, never scales, and plays its exit in Chromium
-  alone** — the comments beside its rules in `src/tooltip.ts`, and `docs/tooltip.md`'s _Motion_: the
-  placement reads the tip's box as it shows, transform and all; an exit is held by transitioning
+  alone** — the comments beside its rules in `src/tooltip.ts`, and `docs/tooltip.md`'s _Motion_: RFC
+  0004 settled no scale while a script placed the tip by its box; an exit is held by transitioning
   display and overlay, which Firefox and WebKit do not honour for a popover; and the side the tip
   comes from is `--ui-fx-toward`, written from `data-side` after the tip's first style.
   `tests/tooltip.test.ts` leaves a trigger by `parkPointer()` rather than `unhover()`, which
-  scrolled the page under the tip and moved what its placement reads.
+  scrolled the page under the tip and moved where it lands.
 - **Why Matrix's tip is typed through highlights rather than by writing its text, and why the typing
   is handed over only under `@supports`** — the docblock on `src/typing.ts`: the tooltip hands its
   trigger the tip's sentence again whenever its text changes, so what is not typed yet is a
@@ -451,7 +453,7 @@ explains. This file restates none of them.
 - **Why a menu's panel and a select's list are one sheet of effects, and why each one's parts are
   set aside from mutation** — the docblock on `panelEffects()` in `src/effects.ts`: a menu and a
   list open alike, so the component hands the sheet the selectors its shadow root keeps its panel,
-  items and caret under; nothing scales the panel, which the menu measures to place it; every time
+  items and caret under; nothing scales the panel, which the menu measures to foretell its side; every time
   is a part of the overlay's step. Each component's `parts` are read once, at import, into its
   static styles, so they carry the warm runner's annotation; the select's list hangs where the
   platform puts it, so its side above is a selector that matches nothing, and its own animations are
