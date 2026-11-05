@@ -393,6 +393,34 @@ describe('the choices', () => {
         expect(control.options.length, 'the group is not an option').toBe(2);
     });
 
+    it("refuse every choice in a disabled group by the choice's own attribute too", async () => {
+        // iOS ignores `disabled` on an `<optgroup>` and honours it on an `<option>`, by BCD — #324.
+        // So a choice carries it itself, and gives it back with the group, keeping its own.
+        const form = await mount(`
+            <ui-select label="C" name="c">
+                <ui-optgroup label="Americas" disabled>
+                    <ui-option value="brl">Real</ui-option>
+                    <ui-option value="usd" disabled>Dollar</ui-option>
+                </ui-optgroup>
+                <ui-option value="eur">Euro</ui-option>
+            </ui-select>
+        `);
+        const control = box(select(form));
+        const refused = (): boolean[] => [...control.options].map((option) => option.disabled);
+        const group = select(form).querySelector('ui-optgroup');
+
+        if (group === null) {
+            throw new Error('no group in the fixture');
+        }
+
+        expect(refused(), "the group's, its own, and none").toEqual([true, true, false]);
+
+        group.disabled = false;
+        await settled(select(form));
+
+        expect(refused(), 'given back, but for its own').toEqual([false, true, false]);
+    });
+
     it('reflect what a host writes, so a stylesheet and a reader both see it', async () => {
         const form = await mount(`
             <ui-select label="C" name="c">

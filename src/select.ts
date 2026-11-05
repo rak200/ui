@@ -767,11 +767,19 @@ export class UiSelect extends LitElement {
         );
     }
 
-    /** One declaration, as the element the platform needs. */
-    #draw(node: Element, chosen: string): TemplateResult {
+    /**
+     * One declaration, as the element the platform needs: a choice `refused` where the group
+     * round it is.
+     *
+     * **A disabled group's choices carry the refusal themselves**, as well as the group: iOS takes
+     * `disabled` on an `<optgroup>` and ignores it, so their choices stayed choosable in the picker
+     * it opens, where it honours the attribute on an `<option>` — by BCD, #324. Elsewhere the two
+     * say one thing, since HTML calls an option in a disabled group disabled.
+     */
+    #draw(node: Element, chosen: string, refused = false): TemplateResult {
         if (node instanceof UiOptgroup) {
             return html`<optgroup label=${node.label} ?disabled=${node.disabled}>
-                ${[...node.children].map((child) => this.#draw(child, chosen))}
+                ${[...node.children].map((child) => this.#draw(child, chosen, node.disabled))}
             </optgroup>`;
         }
 
@@ -779,7 +787,7 @@ export class UiSelect extends LitElement {
             return html`<option
                 value=${node.value}
                 ?selected=${node.value === chosen}
-                ?disabled=${node.disabled}
+                ?disabled=${refused || node.disabled}
             >
                 ${node.textContent}
             </option>`;
