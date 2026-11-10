@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Every component</title>
+        <!--
+            A scratch page, written as a consumer writes one: the package imported, and the tags
+            below. The workbench inserts the token sheet and draws its shell over every page in
+            this folder, so neither is written here. Copy this file to start another page; the
+            shell lists every page in the folder.
+        -->
+        <script type="module" src="./index.ts"></script>
+        <style>
+            body {
+                margin: 0;
+                padding: 1.5rem;
+                background: var(--ui-color-surface);
+                color: var(--ui-color-text);
+                font-family: var(--ui-font);
+            }
+
+            main {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+                gap: 1.5rem;
+                align-items: start;
+                max-inline-size: 72rem;
+            }
+
+            form,
+            section {
+                display: grid;
+                gap: 1rem;
+            }
+
+            h2 {
+                margin: 0;
+                font-size: 1.125rem;
+            }
+
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                align-items: center;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <ui-card>
+                <h2 slot="header">Transfer</h2>
+                <form id="transfer">
+                    <ui-input
+                        label="Amount"
+                        name="amount"
+                        help="In BRL, two decimals."
+                        required
+                    ></ui-input>
+                    <ui-select label="Account" name="account">
+                        <ui-optgroup label="Personal">
+                            <ui-option value="checking">Checking</ui-option>
+                            <ui-option value="savings">Savings</ui-option>
+                        </ui-optgroup>
+                        <ui-optgroup label="Business" disabled>
+                            <ui-option value="company">Company</ui-option>
+                        </ui-optgroup>
+                    </ui-select>
+                    <ui-radio-group label="When" name="when">
+                        <ui-radio value="now" checked>Now</ui-radio>
+                        <ui-radio value="later">Later</ui-radio>
+                    </ui-radio-group>
+                    <ui-textarea label="Note" name="note" rows="3"></ui-textarea>
+                    <ui-checkbox label="Save as a template" name="template"></ui-checkbox>
+                    <ui-switch label="Notify me" name="notify" checked></ui-switch>
+                </form>
+                <div slot="footer" class="row">
+                    <ui-button id="send">Send</ui-button>
+                    <ui-button id="discard" variant="secondary">Discard</ui-button>
+                </div>
+            </ui-card>
+
+            <section>
+                <div class="row">
+                    <ui-tooltip>
+                        <ui-button variant="secondary"
+                            ><ui-icon name="search" label="Search"></ui-icon
+                        ></ui-button>
+                        <span slot="tip">Search every invoice</span>
+                    </ui-tooltip>
+                    <ui-menu>
+                        <span slot="trigger">More</span>
+                        <button type="button">Rename</button>
+                        <button type="button">Duplicate</button>
+                        <hr />
+                        <button type="button">Move to trash</button>
+                    </ui-menu>
+                    <ui-button id="open" variant="secondary"
+                        ><ui-icon name="trash-2"></ui-icon> Delete account</ui-button
+                    >
+                    <ui-button id="toast" variant="secondary"
+                        ><ui-icon name="check"></ui-icon> Raise a toast</ui-button
+                    >
+                </div>
+
+                <ui-table>
+                    <table id="invoices">
+                        <caption>
+                            Invoices this month
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Client</th>
+                                <th scope="col" style="text-align: end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </ui-table>
+            </section>
+        </main>
+
+        <ui-dialog id="confirm">
+            <h2 slot="title">Delete account</h2>
+            <p>This cannot be undone. Everything in the workspace goes with it.</p>
+            <ui-button slot="actions" variant="secondary">Cancel</ui-button>
+            <ui-button slot="actions">Delete</ui-button>
+        </ui-dialog>
+
+        <ui-toaster></ui-toaster>
+    </body>
+</html>

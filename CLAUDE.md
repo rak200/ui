@@ -88,6 +88,7 @@ tests/               # mirrors src/, one test file per unit
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 ├── manual/          # steps a person runs, collected by nothing — see each file's own header
+├── workbench/       # the page the components are used on while they are built — see its README
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
@@ -123,6 +124,12 @@ new path. `eslint.config.js` ignores it and says why.
 **`tests/tooling/` was the other half of that exception and is gone**: the `mutation` verb's binding
 moved into `@rak200/coding-standard-ts`, which now ships `rak200-mutate`.
 
+**`tests/workbench/` is a third kind of exception**: a page a person opens rather than a unit. Only
+`analyse` reads it, so a rename in `src/` fails it rather than leaving it dead, and nothing runs it.
+It sits here for `tests/manual/`'s reason. Its scratch is `reports/workbench/`, which every tool but
+ESLint already ignores and `eslint.config.js` names beside the harnesses: a nested `.gitignore` hides
+a folder from git and not from Prettier, which RFC 0007 measured.
+
 Each component lives in one file and registers itself with `customElements.define` at import — so
 a host imports the package and writes the tag.
 
@@ -131,10 +138,13 @@ opens it on port 6006, `npm run build-storybook` writes the static site. Neither
 asserts neither — what the pipeline runs against the stories is `test`, which composes each one and
 mounts it, so a story that stops compiling or stops rendering reds `ci / gate`.
 
-**`@rak200/ui` resolves to `src/index.ts` in three places**, because three tools resolve module
-names themselves: `.storybook/main.ts` for the bundler, `tsconfig.json`'s `paths` for the compiler,
-`vitest.config.js` for the suite. Adding a fourth reader means a fourth mapping; leaving one out
-means that tool silently loading `dist/` instead.
+**The workbench runs outside them as well**: `npm run workbench` serves the scratch on port 5180 and
+reloads it on every save. `tests/workbench/README.md` says how to use it.
+
+**`@rak200/ui` resolves to `src/index.ts` in four places**, because four tools resolve module names
+themselves: `.storybook/main.ts` for the bundler, `tsconfig.json`'s `paths` for the compiler,
+`vitest.config.js` for the suite, `tests/workbench/vite.config.ts` for the workbench. Adding a fifth
+reader means a fifth mapping; leaving one out means that tool silently loading `dist/` instead.
 
 ## Where the rules are
 
@@ -286,9 +296,10 @@ explains. This file restates none of them.
 - **Why the build is two `tsc` passes, and why the order matters** — `tsconfig.icons.json` runs
   first and emits the glyphs without source maps; `tsconfig.build.json` runs second and re-emits
   everything else with them. Reversing it strips the maps from the whole package.
-- **Why `@rak200/ui/icons/*` needs its own alias entry in three resolvers** — an alias matches by
+- **Why `@rak200/ui/icons/*` needs its own alias entry in four resolvers** — an alias matches by
   prefix, so a lone `@rak200/ui` entry rewrites `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`.
-  The specific entry comes first in `.storybook/main.ts`, `vitest.config.js` and `tsconfig.json`.
+  The specific entry comes first in `.storybook/main.ts`, `vitest.config.js`, `tsconfig.json` and
+  `tests/workbench/vite.config.ts`.
 - **Why `ui-table` adopts a stylesheet into the host's tree instead of styling with
   `::slotted()`** — the docblock on `rules` in `src/table.ts`, and `docs/table.md`'s _Where the
   styles actually live_. `::slotted()` matches the top level of what a slot was given and nothing

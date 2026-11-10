@@ -150,6 +150,8 @@ page under `reports/workbench/`, and creates that folder, with a starter page an
 The study settled the rest: the scratch in `reports/workbench/`, the workbench in
 `tests/workbench/`, `reports/**` among ESLint's ignores, and `vite` declared.
 
+**Built** in [#378](https://github.com/rak200/ui/pull/378).
+
 ## Rollout
 
 1. **The workbench**, in one pull request: the config, the shell, the starter page, the script,
