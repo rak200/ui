@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.8](https://github.com/rak200/ui/compare/0.8.7...0.8.8) (2026-11-05)
+
+
+### Features
+
+* **tooltip,menu:** placed by CSS anchor positioning, on Chrome 144, Firefox 148 and Safari 26.2 ([#375](https://github.com/rak200/ui/issues/375)) ([1120c56](https://github.com/rak200/ui/commit/1120c56a1fd31732d64c4e6f99c0cd4ab83699ca))
+
+
+### Bug Fixes
+
+* **select:** each choice in a disabled group carries disabled itself, which iOS honours ([#373](https://github.com/rak200/ui/issues/373)) ([8f7d63e](https://github.com/rak200/ui/commit/8f7d63eca3c202d172e06ce3368818b861c8eae0))
+
 ## [0.8.7](https://github.com/rak200/ui/compare/0.8.6...0.8.7) (2026-11-05)
 
 
