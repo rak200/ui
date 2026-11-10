@@ -135,6 +135,9 @@ toggling the box, which is the platform's own rule rather than one written here.
   [Selecting on state](#selecting-on-state) to style on it.
 - A `<fieldset disabled>` above the element disables it.
 - The browser restores the state on a back-navigation.
+- **<kbd>Enter</kbd> clicks the form's default button**, as on a native checkbox, and does nothing
+  in a form that has none: measured, Chromium and WebKit submit nothing there, where Firefox
+  submits. The element hands the key on a task after it, so a listener that cancels it stops it.
 
 Constraint validation is the element's, because a control in a shadow root is not a submittable
 one. `required` makes the form invalid while the box is off, `element.validity` and

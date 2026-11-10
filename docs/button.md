@@ -13,7 +13,11 @@ import '@rak200/ui';
 - [`<ui-button>`](#ui-button)
 - [`variant`](#variant)
 - [`disabled`](#disabled)
+- [`type`](#type)
+- [`name` and `value`](#name-and-value)
 - [`ButtonVariant`](#buttonvariant)
+- [`ButtonType`](#buttontype)
+- [In a form](#in-a-form)
 - [Supplementary text](#supplementary-text)
 - [Interaction states](#interaction-states)
 - [Motion](#motion)
@@ -59,13 +63,71 @@ does. A secondary button is the surface and the text.
 <ui-button disabled>Unavailable</ui-button>
 ```
 
-Whether the button rejects interaction. It sets `disabled` on the inner `<button>`, which is what
-actually stops the click and removes it from the tab order — the attribute on the host is reflected
-so a host stylesheet can select on it.
+Whether the button rejects interaction. The inner `<button>` is disabled while the element matches
+`:disabled`, by this attribute or by a `<fieldset disabled>` above it, and that is what actually
+stops the click and removes it from the tab order. The attribute is written from the property, so a
+host stylesheet can select on it.
+
+## `type`
+
+```html
+<ui-button type="reset">Clear</ui-button>
+```
+
+What a click does to the form the button is in, as on `<button>`: `submit`, the default, sends it;
+`reset` returns every field to its default; `button` leaves the form alone, and is the one to write
+for a button whose click you handle yourself. A value the platform does not know submits, as it
+does on `<button>`. Reflected.
+
+## `name` and `value`
+
+```html
+<ui-button name="action" value="publish">Publish</ui-button>
+```
+
+What the button puts among the form's entries while it is the one submitting it, as a `<button>`
+does: `action=publish` here, and nothing from a button with no `name`. Both reflected.
 
 ## `ButtonVariant`
 
 The union of accepted `variant` values: `'primary' | 'secondary'`.
+
+## `ButtonType`
+
+The union of accepted `type` values: `'submit' | 'reset' | 'button'`.
+
+## In a form
+
+```html
+<form>
+  <ui-input label="Title" name="title"></ui-input>
+  <ui-button name="action" value="draft" variant="secondary">Save a draft</ui-button>
+  <ui-button name="action" value="publish">Publish</ui-button>
+</form>
+```
+
+**The element is what the form sees**, through `ElementInternals`, as every field here is: a
+`<button>` in a shadow root has no form owner, and a click on it alone would submit nothing. A click
+by the pointer, <kbd>Enter</kbd> or <kbd>Space</kbd> submits the form through `requestSubmit()`, so
+the form's validation runs and a `submit` event fires, or resets it through `reset()`, as `type`
+says.
+
+- **Inside a form a button submits it unless it says otherwise**, which is the platform's default
+  and the one people forget: a button that opens a dialog or adds a row takes `type="button"`.
+- **It acts a task after the click.** By then the click has reached every listener, so one that
+  calls `preventDefault()` on it, wherever it sits, stops the submission, as it stops a `<button>`'s.
+- **`event.submitter` is `null`.** The platform takes only a real submit button as a submitter,
+  and `new FormData(form, submitter)` throws on anything else. The button's `name` and `value` are
+  among the entries all the same while it submits, so `new FormData(form)` in a `submit` listener
+  has them.
+- **A `<fieldset disabled>` above the element disables it**, and leaves the `disabled` attribute as
+  you wrote it, as it does on a `<button>`: enabling the fieldset enables the button again.
+- **`form="id"` ties it to a form it is not inside**, as on a `<button>`, and `element.form`
+  answers which form that is.
+- **It can be the form's default button.** <kbd>Enter</kbd> in a field clicks the form's first
+  submit button, a native one or a `<ui-button>`, as the platform does. `implicit()` in
+  `src/submit.ts` is where the fields hand the key on, and it knows a `<ui-button>` that submits by
+  `submitting()`, both of them internal.
 
 ## Supplementary text
 

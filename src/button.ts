@@ -8,6 +8,9 @@ import { arrive, watch } from './ring.js';
 /** How much visual weight a button carries. */
 export type ButtonVariant = 'primary' | 'secondary';
 
+/** What a button does to the form it is in, as `<button>` spells it. */
+export type ButtonType = 'submit' | 'reset' | 'button';
+
 /**
  * A button.
  *
@@ -15,6 +18,12 @@ export type ButtonVariant = 'primary' | 'secondary';
  * which is what makes the keyboard behaviour, the accessible name and the disabled
  * semantics the platform's job instead of this file's. No state machine is involved
  * because a button has no state to model.
+ *
+ * **What the platform cannot do from in there is act on a form**, so this element does it.
+ * A `<button>` in a shadow root has no form owner, and a click on it submits nothing,
+ * measured in three engines (#379). The element joins the form through `ElementInternals`,
+ * as the fields do, and a click submits or resets it as a `<button>` of the same `type`
+ * would, through `requestSubmit()` and `reset()`.
  *
  * @example
  * ```html
@@ -160,10 +169,17 @@ export class UiButton extends LitElement {
         buttonEffects('button'),
     ];
 
+    /** Takes part in the form it sits in. */
+    static readonly formAssociated = true;
+
     /** The properties Lit observes on this element. */
     static override readonly properties = {
         variant: { type: String, reflect: true },
-        disabled: { type: Boolean, reflect: true },
+        // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
+        disabled: { type: Boolean },
+        type: { type: String, reflect: true },
+        name: { type: String, reflect: true },
+        value: { type: String, reflect: true },
     };
 
     /**
@@ -177,8 +193,28 @@ export class UiButton extends LitElement {
      */
     variant: ButtonVariant = 'primary';
 
-    /** Whether the button rejects interaction. Reflected, so CSS can select on it. */
+    /** Whether the button rejects interaction. Written onto the attribute, so CSS can select on it. */
     disabled = false;
+
+    /**
+     * What a click does to the form the button is in: `submit` sends it, `reset` returns it to
+     * its defaults, and `button` leaves it alone. A value the platform does not know submits, as
+     * it does on `<button>`. Reflected, so CSS can select on it.
+     */
+    type: ButtonType = 'submit';
+
+    /**
+     * The name the button's `value` is submitted under, while it is the button submitting.
+     *
+     * **Reflected, and that is a requirement rather than a convenience**, as on every field
+     * here: a form names a form-associated custom element's entry from the content attribute.
+     */
+    name = '';
+
+    /** What the button submits under its `name`, while it is the one submitting. Reflected. */
+    value = '';
+
+    readonly #internals = this.attachInternals();
 
     /**
      * The sentence a `<ui-tooltip>` handed over, and the node its `<button>` points at.
@@ -196,6 +232,12 @@ export class UiButton extends LitElement {
      */
     readonly #description = new Description(this);
 
+    /** Hears every click that reaches the element, the inner button's and any dispatched on it. */
+    constructor() {
+        super();
+        this.addEventListener('click', this.#clicked);
+    }
+
     /**
      * Starts watching the page's focus as the first button connects, so the ring the reader saw
      * before the button's first focus is already recorded when the glide needs it.
@@ -205,12 +247,75 @@ export class UiButton extends LitElement {
         watch();
     }
 
+    /** The form the button acts on, for a host that needs it. */
+    get form(): HTMLFormElement | null {
+        return this.#internals.form;
+    }
+
+    /**
+     * Writes `disabled` onto the attribute before the render, where Lit would reflect it after.
+     *
+     * **The render reads the platform's word on whether the button is disabled**, `:disabled`,
+     * which follows the attribute and a `<fieldset disabled>` above the element together, so
+     * the attribute has to be there first. Reflected after the render, a change to the property
+     * would reach the inner button one update late.
+     *
+     * **The attribute stays the host's own**, as `disabled` does on `<button>`: a fieldset
+     * reaches the inner button through `:disabled` and never through the attribute. Written into
+     * it, a fieldset's state would outlive the fieldset, the attribute it left keeping the
+     * element disabled once the fieldset was enabled again.
+     */
+    override willUpdate(): void {
+        this.toggleAttribute('disabled', this.disabled);
+    }
+
+    /**
+     * A change to whether the platform holds the button disabled, which a `<fieldset disabled>`
+     * makes as well as the attribute: measured, the callback reports the two together in all
+     * three engines. The render reads the new state.
+     */
+    formDisabledCallback(): void {
+        this.requestUpdate();
+    }
+
+    /**
+     * A click, acted on a task later: by then it has reached every listener, so one that
+     * cancelled it, wherever it sits, has cancelled what it does, as it does on `<button>`.
+     */
+    readonly #clicked = (event: Event): void => {
+        setTimeout(() => {
+            this.#act(event);
+        });
+    };
+
+    /** What a click does to the form, once nothing cancelled it and the button can be used. */
+    #act(event: Event): void {
+        const { form } = this;
+
+        // Read here as well as given to the inner button, which refuses a click by hand and not one
+        // a script dispatches on the element.
+        if (event.defaultPrevented || this.matches(':disabled') || form === null) {
+            return;
+        }
+
+        if (this.type === 'reset') {
+            form.reset();
+        } else if (submitting(this)) {
+            // The platform takes only a real submit button as a submitter, and this one has no
+            // form, so the event reports none. The button's entry is its own form value instead,
+            // held while the submission builds its entries and dropped after.
+            this.#internals.setFormValue(this.value);
+            form.requestSubmit();
+            this.#internals.setFormValue(null);
+        }
+    }
+
     /** A native `<button>` around the default slot, described by what a tooltip hands it. */
     override render(): TemplateResult {
         return html`
             <button
                 class=${this.variant}
-                ?disabled=${this.disabled}
+                ?disabled=${this.matches(':disabled')}
                 aria-describedby=${this.#description.described()}
                 part="button"
                 @focus=${arrive}
@@ -224,6 +329,15 @@ export class UiButton extends LitElement {
             ${this.#description.carrier()}
         `;
     }
+}
+
+/**
+ * Whether an element is a `<ui-button>` that submits its form when it is clicked — internal,
+ * and what `src/submit.ts` finds a form's default button by among the platform's own. A `type`
+ * the platform does not know submits, as `<button>` reads its own.
+ */
+export function submitting(element: Element): boolean {
+    return element instanceof UiButton && element.type !== 'reset' && element.type !== 'button';
 }
 
 // Stryker disable next-line StringLiteral: the registration runs once, at import,

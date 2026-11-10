@@ -1711,3 +1711,41 @@ describe('accessibility', () => {
         await expectAccessible(await mountStory(RightToLeft, meta, 'RightToLeft'));
     });
 });
+
+/** Who submitted the form while `run` ran, once the choice has acted. */
+async function submitted(
+    form: HTMLFormElement,
+    run: () => Promise<void> | void,
+): Promise<string[]> {
+    const heard: string[] = [];
+    const hear = (event: SubmitEvent): void => {
+        event.preventDefault();
+        heard.push(event.submitter === null ? 'none' : event.submitter.id);
+    };
+
+    form.addEventListener('submit', hear);
+    await run();
+    // The choice acts a task after the key, so the submission lands a turn later.
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+    form.removeEventListener('submit', hear);
+
+    return heard;
+}
+
+describe('Enter, which a choice hands to its form', () => {
+    it("clicks the form's default button", async () => {
+        const form = await mount(`${fixture}<button id="go">Go</button>`);
+        radio(form).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual(['go']);
+    });
+
+    it('submits nothing to a form with no submit button, as Chromium and WebKit do', async () => {
+        const form = await mount(`${fixture}<input name="a" />`);
+        radio(form).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual([]);
+    });
+});

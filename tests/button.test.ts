@@ -4,6 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // which needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
+import { escaped } from './escaped.js';
 import { mountStory } from './stories.js';
 import meta, { Disabled, Primary, Secondary, States } from '../stories/button.stories.js';
 import '../src/button.js';
@@ -2132,5 +2133,318 @@ describe('ui-button stories', () => {
         const container = await mountStory(Disabled, meta, 'Disabled');
 
         expect(inner(only(container)).disabled).toBe(true);
+    });
+});
+
+/** Mounts markup in a form of its own and waits for each button in it to render. */
+async function inForm(markup: string): Promise<HTMLFormElement> {
+    const form = document.createElement('form');
+    form.innerHTML = markup;
+    document.body.append(form);
+
+    for (const element of form.querySelectorAll('ui-button')) {
+        await element.updateComplete;
+    }
+
+    return form;
+}
+
+/** The one `<ui-button>` in a form. */
+function button(form: HTMLFormElement): UiButton {
+    const element = form.querySelector('ui-button');
+
+    if (element === null) {
+        throw new Error('no ui-button in the form');
+    }
+
+    return element;
+}
+
+/** An element in a form, by its id. */
+function byId(form: HTMLFormElement, id: string): HTMLElement {
+    const element = form.querySelector<HTMLElement>(`#${id}`);
+
+    if (element === null) {
+        throw new Error(`no #${id} in the form`);
+    }
+
+    return element;
+}
+
+/** The plain field a form starts with, which the reset tests type into. */
+function field(form: HTMLFormElement): HTMLInputElement {
+    const element = form.querySelector('input');
+
+    if (element === null) {
+        throw new Error('no input in the form');
+    }
+
+    return element;
+}
+
+/** The fieldset a form holds its button in. */
+function fieldset(form: HTMLFormElement): HTMLFieldSetElement {
+    const element = form.querySelector('fieldset');
+
+    if (element === null) {
+        throw new Error('no fieldset in the form');
+    }
+
+    return element;
+}
+
+/** A task's turn, which is how long the button takes to act on a click. */
+async function turn(): Promise<void> {
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+}
+
+/** A click a script dispatches on the element, which no disabled inner button can refuse. */
+function dispatchClick(element: Element): void {
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+}
+
+/**
+ * What a form was submitted with and when it was reset while `run` ran, with nothing escaping on
+ * the way: a submission as who submitted it and the entries it carried.
+ */
+async function acted(form: HTMLFormElement, run: () => Promise<void> | void): Promise<string[]> {
+    const heard: string[] = [];
+    const submitted = (event: SubmitEvent): void => {
+        event.preventDefault();
+        const by = event.submitter === null ? 'none' : event.submitter.id;
+        heard.push(`submit by ${by} ${JSON.stringify([...new FormData(form)])}`);
+    };
+    const reset = (): void => {
+        heard.push('reset');
+    };
+
+    form.addEventListener('submit', submitted);
+    form.addEventListener('reset', reset);
+
+    const thrown = await escaped(async () => {
+        await run();
+        await turn();
+    });
+
+    form.removeEventListener('submit', submitted);
+    form.removeEventListener('reset', reset);
+    expect(thrown, 'nothing escaped').toEqual([]);
+
+    return heard;
+}
+
+describe('in a form', () => {
+    it('submits the form it is in when clicked, being a submit button until told otherwise', async () => {
+        const form = await inForm('<input name="a" value="1" /><ui-button>Send</ui-button>');
+        const element = button(form);
+
+        expect(element.type).toBe('submit');
+        expect(element.getAttribute('type'), 'reflected').toBe('submit');
+        expect(element.form).toBe(form);
+        expect(await acted(form, () => userEvent.click(element))).toEqual([
+            'submit by none [["a","1"]]',
+        ]);
+    });
+
+    it('submits from the keyboard, since Enter and Space click the button it draws', async () => {
+        const form = await inForm('<input name="a" value="1" /><ui-button>Send</ui-button>');
+        inner(button(form)).focus();
+
+        expect(await acted(form, () => userEvent.keyboard('{Enter}'))).toEqual([
+            'submit by none [["a","1"]]',
+        ]);
+        expect(await acted(form, () => userEvent.keyboard(' '))).toEqual([
+            'submit by none [["a","1"]]',
+        ]);
+    });
+
+    it('resets the form as type reset, and submits nothing', async () => {
+        const form = await inForm(
+            '<input name="a" value="1" /><ui-button type="reset">Clear</ui-button>',
+        );
+        field(form).value = 'changed';
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual(['reset']);
+        expect(field(form).value).toBe('1');
+    });
+
+    it('leaves the form alone as type button', async () => {
+        const form = await inForm(
+            '<input name="a" value="1" /><ui-button type="button">Plain</ui-button>',
+        );
+        field(form).value = 'changed';
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([]);
+        expect(field(form).value).toBe('changed');
+    });
+
+    it('submits under a type the platform does not know, as a button does', async () => {
+        const form = await inForm(
+            '<input name="a" value="1" /><ui-button type="go">Send</ui-button>',
+        );
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([
+            'submit by none [["a","1"]]',
+        ]);
+    });
+
+    it('reflects its type, its name and its value', async () => {
+        const form = await inForm('<ui-button>Send</ui-button>');
+        const element = button(form);
+        element.type = 'reset';
+        element.name = 'action';
+        element.value = 'save';
+        await element.updateComplete;
+
+        expect(['type', 'name', 'value'].map((name) => element.getAttribute(name))).toEqual([
+            'reset',
+            'action',
+            'save',
+        ]);
+    });
+
+    it('puts its name and value among the entries while it is the one submitting, and only then', async () => {
+        const form = await inForm(`
+            <input name="a" value="1" />
+            <ui-button name="action" value="save">Save</ui-button>
+            <button id="other">Other</button>
+        `);
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([
+            'submit by none [["a","1"],["action","save"]]',
+        ]);
+        expect(await acted(form, () => userEvent.click(byId(form, 'other')))).toEqual([
+            'submit by other [["a","1"]]',
+        ]);
+        expect([...new FormData(form)], 'outside a submission').toEqual([['a', '1']]);
+    });
+
+    it('puts in no entry of its own without a name, as a button does', async () => {
+        const form = await inForm(
+            '<input name="a" value="1" /><ui-button value="save">Save</ui-button>',
+        );
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([
+            'submit by none [["a","1"]]',
+        ]);
+    });
+
+    it('submits an empty value under its name where it was given none, as a button does', async () => {
+        const form = await inForm('<ui-button name="action">Go</ui-button>');
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([
+            'submit by none [["action",""]]',
+        ]);
+    });
+
+    it('names its entry by a name set as a property, which the form reads off the attribute', async () => {
+        const form = await inForm('<ui-button value="save">Save</ui-button>');
+        button(form).name = 'action';
+        await button(form).updateComplete;
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([
+            'submit by none [["action","save"]]',
+        ]);
+    });
+
+    it("runs the form's validation, so an invalid field stops it", async () => {
+        const form = await inForm('<input name="a" required /><ui-button>Send</ui-button>');
+
+        expect(await acted(form, () => userEvent.click(button(form)))).toEqual([]);
+    });
+
+    it('does nothing when a listener cancelled the click, wherever the listener sits', async () => {
+        const form = await inForm('<input name="a" /><ui-button>Send</ui-button>');
+        const element = button(form);
+        const cancel = (event: Event): void => {
+            event.preventDefault();
+        };
+
+        element.addEventListener('click', cancel);
+        expect(await acted(form, () => userEvent.click(element)), 'on the button').toEqual([]);
+        element.removeEventListener('click', cancel);
+
+        // Further out, so it hears the click after the button's own listener has.
+        form.addEventListener('click', cancel);
+        expect(await acted(form, () => userEvent.click(element)), 'on the form').toEqual([]);
+        form.removeEventListener('click', cancel);
+
+        expect(await acted(form, () => userEvent.click(element)), 'uncancelled').toEqual([
+            'submit by none [["a",""]]',
+        ]);
+    });
+
+    it('does nothing while disabled, even on a click a script dispatches on it', async () => {
+        const form = await inForm('<input name="a" /><ui-button disabled>Send</ui-button>');
+        const element = button(form);
+
+        expect(
+            await acted(form, () => {
+                dispatchClick(element);
+            }),
+        ).toEqual([]);
+
+        element.disabled = false;
+        await element.updateComplete;
+
+        expect(
+            await acted(form, () => {
+                dispatchClick(element);
+            }),
+            'enabled again',
+        ).toEqual(['submit by none [["a",""]]']);
+    });
+
+    it('is disabled by a fieldset above it and enabled with it again, its own attribute untouched', async () => {
+        const form = await inForm(
+            '<input name="a" /><fieldset><ui-button>Send</ui-button></fieldset>',
+        );
+        const element = button(form);
+
+        fieldset(form).disabled = true;
+        await element.updateComplete;
+
+        expect(inner(element).disabled, 'the inner button refuses a click').toBe(true);
+        expect(element.matches(':disabled'), 'the platform holds it disabled').toBe(true);
+        expect(element.hasAttribute('disabled'), 'and the attribute is the host’s').toBe(false);
+        expect(
+            await acted(form, () => {
+                dispatchClick(element);
+            }),
+        ).toEqual([]);
+
+        fieldset(form).disabled = false;
+        await element.updateComplete;
+
+        expect(inner(element).disabled, 'enabled again').toBe(false);
+        expect(await acted(form, () => userEvent.click(element))).toEqual([
+            'submit by none [["a",""]]',
+        ]);
+    });
+
+    it('acts on the form its form attribute names, from outside it', async () => {
+        const far = await inForm('<input name="a" value="1" />');
+        far.id = 'far';
+        const element = await mount('<ui-button form="far">Send</ui-button>');
+
+        expect(element.form).toBe(far);
+        expect(await acted(far, () => userEvent.click(element))).toEqual([
+            'submit by none [["a","1"]]',
+        ]);
+    });
+
+    it('answers for no form outside one, where a click does nothing and throws nothing', async () => {
+        const element = await mount('<ui-button>Send</ui-button>');
+
+        expect(element.form).toBeNull();
+
+        const thrown = await escaped(async () => {
+            await userEvent.click(element);
+            await turn();
+        });
+
+        expect(thrown).toEqual([]);
     });
 });

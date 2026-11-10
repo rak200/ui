@@ -1689,3 +1689,48 @@ describe('accessibility', () => {
         await expectAccessible(await mountStory(Markup, meta, 'Markup'));
     });
 });
+
+/** Who submitted the form while `run` ran, once the box has acted. */
+async function submitted(
+    form: HTMLFormElement,
+    run: () => Promise<void> | void,
+): Promise<string[]> {
+    const heard: string[] = [];
+    const hear = (event: SubmitEvent): void => {
+        event.preventDefault();
+        heard.push(event.submitter === null ? 'none' : event.submitter.id);
+    };
+
+    form.addEventListener('submit', hear);
+    await run();
+    // The box acts a task after the key, so the submission lands a turn later.
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+    form.removeEventListener('submit', hear);
+
+    return heard;
+}
+
+describe('Enter, which the box hands to its form', () => {
+    it.each(['ui-checkbox', 'ui-switch'])(
+        "clicks the form's default button from a %s",
+        async (tag) => {
+            const form = await mount(
+                `<${tag} label="B" name="b"></${tag}><button id="go">Go</button>`,
+            );
+            box(toggle(form)).focus();
+
+            expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual(['go']);
+        },
+    );
+
+    it('submits nothing to a form with no submit button, as Chromium and WebKit do', async () => {
+        const form = await mount(
+            '<ui-checkbox label="B" name="b"></ui-checkbox><input name="a" />',
+        );
+        box(toggle(form)).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual([]);
+    });
+});

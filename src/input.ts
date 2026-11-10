@@ -4,6 +4,7 @@ import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
+import { implicit } from './submit.js';
 
 /**
  * What a styled native control looks like, which both elements share.
@@ -414,6 +415,12 @@ class UiTextField extends LitElement {
 }
 
 /**
+ * The types whose `<input>` opens a picker on <kbd>Enter</kbd> rather than submitting its form,
+ * measured on the platform's own in three engines.
+ */
+const pickers: ReadonlySet<string> = new Set(['color', 'file']);
+
+/**
  * A text input, drawn from the token layer rather than replaced.
  *
  * **You write the tag, not a control.** RFC 0005 reversed the rule this element was built
@@ -461,6 +468,17 @@ export class UiInput extends UiTextField {
     /** The granularity the value must fall on, likewise. */
     step = '';
 
+    /**
+     * <kbd>Enter</kbd>, handed on to the form as the platform's own `<input>` would take it:
+     * `src/submit.ts` carries the whole of it. Not from a control that opens a picker on the key
+     * instead, which submits nothing in any engine.
+     */
+    readonly #entered = (event: KeyboardEvent): void => {
+        if (!pickers.has(this.type)) {
+            implicit(event, this, true);
+        }
+    };
+
     /** A native `<input>`, in the frame every text control shares. */
     override render(): TemplateResult {
         return this.frame(html`
@@ -487,6 +505,7 @@ export class UiInput extends UiTextField {
                 @focus=${arrive}
                 @input=${this.typed}
                 @change=${this.changed}
+                @keypress=${this.#entered}
             />
         `);
     }

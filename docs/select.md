@@ -133,6 +133,7 @@ phone opens are all still the platform's.
   starts on the first — the platform's own rule.
 - A form reset returns to that declared default.
 - A `<fieldset disabled>` above the element disables it.
+- <kbd>Enter</kbd> does not submit the form, as it does not from a native `<select>`.
 
 ## In error
 

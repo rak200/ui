@@ -109,6 +109,12 @@ no form owner, so the value reaches a submit because this element passes it on.
   does not follow it. Read `element.value` for the state.
 - A `<fieldset disabled>` above the element disables it.
 - The browser restores what was typed on a back-navigation.
+- **<kbd>Enter</kbd> submits the form**, as in a native `<input>`: by a click on the form's
+  default button where it has one, which a disabled one stops, and otherwise by submitting a form
+  whose only text field this is. The control in the shadow root has no form owner for the platform
+  to start from, so the element hands the key on, a task after it: a listener that cancels the
+  `keydown` or the `keypress` stops it. Not from `type="color"` or `type="file"`, which open a
+  picker instead, and not from a `<ui-textarea>`, where the key starts a line.
 
 ## Validation
 

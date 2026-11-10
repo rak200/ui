@@ -1,6 +1,7 @@
 /**
  * The starter page's script: what a page of these components does that its markup cannot — data
- * in the table, a dialog opened and closed, a toast raised, and the form sent.
+ * in the table, a dialog opened and closed, and a toast raised. The form is sent and cleared by
+ * its two buttons, which name it from the card's footer.
  */
 
 import '@rak200/ui';
@@ -50,16 +51,6 @@ for (const action of document.querySelectorAll('#confirm [slot="actions"]')) {
         dialog?.close();
     });
 }
-
-// A `ui-button` does not submit the form it sits in: the button it draws lies in its shadow
-// root, where it has no form owner. So the page sends the form itself.
-document.querySelector('#send')?.addEventListener('click', () => {
-    document.querySelector<HTMLFormElement>('#transfer')?.requestSubmit();
-});
-
-document.querySelector('#discard')?.addEventListener('click', () => {
-    document.querySelector<HTMLFormElement>('#transfer')?.reset();
-});
 
 document.querySelector('#toast')?.addEventListener('click', () => {
     const toast = document.createElement('ui-toast');

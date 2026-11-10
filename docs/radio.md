@@ -105,6 +105,10 @@ One entry is submitted for the set, under the group's `name`. `required` is vali
 — the platform computes it, and the message is the engine's own. A reset returns to the choice the
 declarations name, and a `<fieldset disabled>` above the element reaches it.
 
+<kbd>Enter</kbd> on a choice clicks the form's default button, as on a native radio, and does
+nothing in a form that has none: measured, Chromium and WebKit submit nothing there, where Firefox
+submits. The group hands the key on a task after it, so a listener that cancels it stops it.
+
 **`value` is the state, not the default.** It is not reflected, the way a native control's
 `checked` IDL attribute is not: the declared `<ui-radio checked>` is what a reset returns to, so an
 empty `value` means _whatever the declarations say_ rather than _nothing chosen_.
