@@ -45,6 +45,7 @@ src/
 ├── ripple.ts        # the press's ripple — internal, a circle the sheet draws and a press starts
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
 ├── stack.ts         # the toaster's stack — internal, how its toasts spring into their place
+├── state.ts         # what a field saves to be restored — internal, marked so it knows its own
 ├── submit.ts        # a form's implicit submission — internal, Enter handed on from a field's control
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
@@ -78,6 +79,7 @@ tests/               # mirrors src/, one test file per unit
 ├── ripple.test.ts
 ├── shatter.test.ts
 ├── stack.test.ts
+├── state.test.ts
 ├── submit.test.ts
 ├── select.test.ts
 ├── table.test.ts
@@ -254,6 +256,13 @@ explains. This file restates none of them.
   would keep it disabled once the fieldset was enabled again. `tests/escaped.ts` is what turns a
   throw in the task a click or a key schedules into a failure, which the tooltip's suite captured
   through first.
+- **Why a field saves a state of its own for the browser to restore, and refuses one it did not
+  write** — the docblock on `src/state.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md)'s paragraph on
+  a restored form. Firefox hands a form-associated element the state another saved where the two
+  joined the form out of tree order, measured with two plain elements (#380). The suite runs in
+  Chromium and cannot reload its own page, so each field's tests call `formStateRestoreCallback`
+  themselves, with a state another element would have saved, and read the state the field saved
+  off a spy on `ElementInternals.prototype.setFormValue`.
 - **Why a form control renders its own label, and what that costs** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and the docblock on
   each element. `src/input.ts`'s `attribute()` carries the rule an empty attribute breaks:

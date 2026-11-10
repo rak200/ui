@@ -308,6 +308,15 @@ the platform's own controls in three engines. **What no component here can be is
 platform takes only a real submit button there, so the `submit` event reports none, and a
 `<ui-button>` puts its own `name` and `value` among the entries while it is the one submitting.
 
+**A form the browser restores is the one the reader left**, which took two decisions (#380). Each
+field saves a state of its own through `setFormValue()`'s second argument, what brings it back as
+it was rather than what it submits: an unticked box submits nothing and a select with no choice made
+submits the declared one, and neither is the state. And each takes back only a state it wrote,
+because Firefox hands a form-associated element the state another saved where the two joined the
+form out of tree order — measured with two plain elements and no library, so a field cannot stop
+it. `src/state.ts` marks a state with the field's tag and `name`; one the mark does not open is
+refused, which leaves the field as its markup declares, as a reload does in Chromium and WebKit.
+
 **The attribute pass-through is a declared API rather than a forwarding table.** Each element
 declares the attributes it accepts, and the objection this shape used to answer — _no pass-through
 list to fall out of step with `type`, `inputmode` or whatever comes next_ — is answered differently

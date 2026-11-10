@@ -134,7 +134,9 @@ toggling the box, which is the platform's own rule rather than one written here.
   attribute does not follow it. Read `element.checked` for the state, and see
   [Selecting on state](#selecting-on-state) to style on it.
 - A `<fieldset disabled>` above the element disables it.
-- The browser restores the state on a back-navigation.
+- **The browser restores the state** on a back-navigation, and Firefox on a reload too, a box the
+  reader unticked included. The element saves a state of its own for it and takes back only that,
+  refusing the one another element saved, which Firefox hands over (#380).
 - **<kbd>Enter</kbd> clicks the form's default button**, as on a native checkbox, and does nothing
   in a form that has none: measured, Chromium and WebKit submit nothing there, where Firefox
   submits. The element hands the key on a task after it, so a listener that cancels it stops it.

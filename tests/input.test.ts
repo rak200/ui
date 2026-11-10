@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -10,6 +10,7 @@ import '../src/input.js';
 import '../src/tooltip.js';
 import type { UiInput, UiTextarea } from '../src/input.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { kept } from '../src/state.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
@@ -336,18 +337,56 @@ describe('the form, which the element joins in the place of the control', () => 
         expect(box(field(form)).disabled, 'and reached the control').toBe(true);
     });
 
-    it('restores what a back-navigation hands back', async () => {
+    it('restores what a back-navigation hands back, where it saved that itself', async () => {
         const form = await mount(fixture);
 
-        field(form).formStateRestoreCallback('kept');
+        field(form).formStateRestoreCallback(kept(field(form), 'kept'));
         await field(form).updateComplete;
 
         expect(field(form).value).toBe('kept');
+        expect(box(field(form)).value, 'and shows it').toBe('kept');
 
-        field(form).formStateRestoreCallback(null);
+        field(form).formStateRestoreCallback(kept(field(form), ''));
         await field(form).updateComplete;
 
-        expect(field(form).value).toBe('');
+        expect(field(form).value, 'an empty value is one too').toBe('');
+    });
+
+    it('saves the state it restores from, the value it holds', async () => {
+        const form = await mount(fixture);
+        const saving = vi.spyOn(ElementInternals.prototype, 'setFormValue');
+
+        field(form).value = '12';
+        await field(form).updateComplete;
+        const state: unknown = saving.mock.lastCall?.[1];
+        saving.mockRestore();
+
+        field(form).value = 'changed';
+        await field(form).updateComplete;
+        field(form).formStateRestoreCallback(state);
+        await field(form).updateComplete;
+
+        expect(field(form).value).toBe('12');
+    });
+
+    it('refuses a state another element saved, which Firefox hands over', async () => {
+        const form = await mount('<ui-input label="Amount" name="amount" value="12"></ui-input>');
+
+        for (const [which, state] of [
+            [
+                'another kind of field, of the same name',
+                kept({ localName: 'ui-checkbox', name: 'amount' }, 'true'),
+            ],
+            ['the same kind, of another name', kept({ localName: 'ui-input', name: 'note' }, 'on')],
+            ['the bare value an older version saved', 'on'],
+            ['nothing at all', null],
+            ['no text, as some other element may save', new FormData()],
+        ] as const) {
+            field(form).formStateRestoreCallback(state);
+            await field(form).updateComplete;
+
+            expect(field(form).value, which).toBe('12');
+        }
     });
 
     it('mirrors what was typed, and lets both events out', async () => {

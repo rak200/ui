@@ -132,6 +132,9 @@ phone opens are all still the platform's.
   `<ui-option selected>` mean what `<option selected>` means. With no choice marked, the control
   starts on the first — the platform's own rule.
 - A form reset returns to that declared default.
+- The browser restores the choice made on a back-navigation, and Firefox on a reload too. One
+  nobody made stays unmade, and a state another element saved, which Firefox hands over, is
+  refused (#380).
 - A `<fieldset disabled>` above the element disables it.
 - <kbd>Enter</kbd> does not submit the form, as it does not from a native `<select>`.
 
