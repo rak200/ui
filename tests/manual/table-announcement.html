@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>An overflowing table, at the focus</title>
+        <!--
+            What a screen reader says when the focus lands on a <ui-table> that overflows (#309).
+
+            A step, not a test: no engine the suite drives is a screen reader, so what a reader
+            hears there is measured by a person, with the screen readers readers use. It lives in
+            tests/manual/ for the reasons interaction-states.mjs gives beside it.
+
+            ## Running it
+
+                npm run workbench -- --host
+
+            Then open /tests/manual/table-announcement.html at the network address Vite prints, on
+            each device. The page imports the package from src/, as a scratch page does, and has
+            none of the workbench's shell, which a screen reader would read along with it.
+
+            ## The pairs
+
+            NVDA with Firefox and with Chrome, and JAWS with Chrome, on Windows; VoiceOver with
+            Safari, on macOS and on iOS; TalkBack with Chrome, on Android.
+
+            ## Each case
+
+            Each table below is held wider than its box, so the box overflows on any screen and
+            takes its tab stop. Put the focus on the button before a case and press Tab once; on a
+            phone, swipe to the next item from the button. Then write down:
+
+            - what is announced as the focus lands on the box, word for word;
+            - whether the arrow keys then scroll the box, or the screen reader takes them;
+            - whether the screen reader's own way to a table still finds this one: T in NVDA and
+              JAWS, the rotor in VoiceOver, the reading controls in TalkBack.
+
+            Case 4 asks for the link too: what the box's stop says before the link's.
+
+            ## Where it goes
+
+            A comment on #309, with the version of the screen reader, the browser and the system.
+            What the cases decide is written there: if the box as it ships is announced well
+            enough, the docs stay; if a pair says nothing useful, either the docs recommend
+            role="region" with a name, or the element takes that role itself while it is a stop.
+        -->
+        <script type="module">
+            import '@rak200/ui';
+        </script>
+        <style>
+            body {
+                margin: 0;
+                padding: 1rem;
+                font-family: system-ui, sans-serif;
+            }
+
+            section {
+                display: grid;
+                gap: 0.5rem;
+                margin-block-end: 2rem;
+            }
+
+            h2 {
+                margin: 0;
+                font-size: 1.125rem;
+            }
+
+            ui-table {
+                max-inline-size: 20rem;
+            }
+
+            table {
+                min-inline-size: 40rem;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>An overflowing table, at the focus</h1>
+
+            <section>
+                <h2>1. As the element ships</h2>
+                <button type="button">Before case 1</button>
+                <ui-table>
+                    <table>
+                        <caption>
+                            Every invoice raised this quarter.
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Client</th>
+                                <th scope="col">Due</th>
+                                <th scope="col">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0001</td>
+                                <td>Papelaria Aurora</td>
+                                <td>11/09/2026</td>
+                                <td>R$ 1.200,00</td>
+                            </tr>
+                            <tr>
+                                <td>0002</td>
+                                <td>Oficina Boa Vista</td>
+                                <td>18/09/2026</td>
+                                <td>R$ 860,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </ui-table>
+            </section>
+
+            <section>
+                <h2>2. With aria-label on the element</h2>
+                <button type="button">Before case 2</button>
+                <ui-table aria-label="Invoices">
+                    <table>
+                        <caption>
+                            Every invoice raised this quarter.
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Client</th>
+                                <th scope="col">Due</th>
+                                <th scope="col">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0001</td>
+                                <td>Papelaria Aurora</td>
+                                <td>11/09/2026</td>
+                                <td>R$ 1.200,00</td>
+                            </tr>
+                            <tr>
+                                <td>0002</td>
+                                <td>Oficina Boa Vista</td>
+                                <td>18/09/2026</td>
+                                <td>R$ 860,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </ui-table>
+            </section>
+
+            <section>
+                <h2>3. With role="region" and aria-label</h2>
+                <button type="button">Before case 3</button>
+                <ui-table role="region" aria-label="Invoices">
+                    <table>
+                        <caption>
+                            Every invoice raised this quarter.
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Client</th>
+                                <th scope="col">Due</th>
+                                <th scope="col">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0001</td>
+                                <td>Papelaria Aurora</td>
+                                <td>11/09/2026</td>
+                                <td>R$ 1.200,00</td>
+                            </tr>
+                            <tr>
+                                <td>0002</td>
+                                <td>Oficina Boa Vista</td>
+                                <td>18/09/2026</td>
+                                <td>R$ 860,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </ui-table>
+            </section>
+
+            <section>
+                <h2>4. As the element ships, with a link in the table</h2>
+                <button type="button">Before case 4</button>
+                <ui-table>
+                    <table>
+                        <caption>
+                            Every invoice raised this quarter.
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Client</th>
+                                <th scope="col">Due</th>
+                                <th scope="col">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a href="#0001">0001</a></td>
+                                <td>Papelaria Aurora</td>
+                                <td>11/09/2026</td>
+                                <td>R$ 1.200,00</td>
+                            </tr>
+                            <tr>
+                                <td>0002</td>
+                                <td>Oficina Boa Vista</td>
+                                <td>18/09/2026</td>
+                                <td>R$ 860,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </ui-table>
+            </section>
+        </main>
+    </body>
+</html>
