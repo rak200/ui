@@ -160,7 +160,8 @@ export class UiRadioGroup extends LitElement {
                 color: ${reference('--ui-color-text')};
             }
 
-            :host([disabled]) .label {
+            /* :disabled rather than [disabled], the host's own attribute and not a fieldset's. */
+            :host(:disabled) .label {
                 color: ${reference('--ui-color-text-muted')};
             }
 
@@ -379,7 +380,8 @@ export class UiRadioGroup extends LitElement {
         value: { type: String },
         orientation: { type: String, reflect: true },
         required: { type: Boolean, reflect: true },
-        disabled: { type: Boolean, reflect: true },
+        // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
+        disabled: { type: Boolean },
     };
 
     /**
@@ -541,9 +543,21 @@ export class UiRadioGroup extends LitElement {
         this.value = '';
     }
 
-    /** A `<fieldset disabled>` above this element, which reaches it and nothing below. */
-    formDisabledCallback(disabled: boolean): void {
-        this.disabled = disabled;
+    /**
+     * Writes `disabled` onto the attribute before the render, which gives the controls
+     * `:disabled`, for the reason `UiButton`'s `willUpdate()` gives: the attribute stays the
+     * host's own, so a `<fieldset disabled>` reaches the set without outliving the fieldset.
+     */
+    override willUpdate(): void {
+        this.toggleAttribute('disabled', this.disabled);
+    }
+
+    /**
+     * A change to whether the platform holds the set disabled, which a `<fieldset disabled>`
+     * above it makes as well as its own attribute. The render reads the new state.
+     */
+    formDisabledCallback(): void {
+        this.requestUpdate();
     }
 
     /**
@@ -607,7 +621,7 @@ export class UiRadioGroup extends LitElement {
                     name=${grouping}
                     value=${choice.value}
                     .checked=${choice.value === chosen}
-                    ?disabled=${this.disabled || choice.disabled}
+                    ?disabled=${this.matches(':disabled') || choice.disabled}
                     ?required=${this.required}
                     @change=${this.#changed}
                     @focus=${arrive}

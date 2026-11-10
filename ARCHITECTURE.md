@@ -317,6 +317,14 @@ form out of tree order — measured with two plain elements and no library, so a
 it. `src/state.ts` marks a state with the field's tag and `name`; one the mark does not open is
 refused, which leaves the field as its markup declares, as a reload does in Chromium and WebKit.
 
+**A `<fieldset disabled>` reaches every element here through `:disabled`, never through its
+attribute** (#382). The platform tells a form-associated element whether it is disabled by its own
+attribute and a fieldset together, and the fields once wrote that into their `disabled`, which
+reflected it: the attribute the fieldset left kept each field disabled once the fieldset was
+enabled again, and nothing called it back. So each element writes its own `disabled` onto the
+attribute before it renders and gives its controls `:disabled`, which takes both. The attribute
+stays the host's, and `disabled` reads `false` under a disabled fieldset, as on a native control.
+
 **The attribute pass-through is a declared API rather than a forwarding table.** Each element
 declares the attributes it accepts, and the objection this shape used to answer — _no pass-through
 list to fall out of step with `type`, `inputmode` or whatever comes next_ — is answered differently

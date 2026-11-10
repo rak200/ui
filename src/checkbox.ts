@@ -154,9 +154,10 @@ const toggle = css`
         box-shadow: none;
     }
 
-    /* Read off the host rather than through :has(), because the property is reflected and
-       the host attribute is therefore the same fact one selector earlier. */
-    :host([disabled]) label {
+    /* Read off the host rather than through :has(): the host's :disabled is the state the
+       control is given, one selector earlier. Not [disabled], which is the host's own
+       attribute and not a fieldset's. */
+    :host(:disabled) label {
         cursor: not-allowed;
         color: ${reference('--ui-color-text-muted')};
     }
@@ -244,7 +245,8 @@ class UiToggle extends LitElement {
         name: { type: String, reflect: true },
         value: { type: String, reflect: true },
         checked: { type: Boolean },
-        disabled: { type: Boolean, reflect: true },
+        // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
+        disabled: { type: Boolean },
         required: { type: Boolean, reflect: true },
         error: { type: String, reflect: true },
     };
@@ -283,7 +285,10 @@ class UiToggle extends LitElement {
      */
     checked = false;
 
-    /** Whether the control rejects interaction. Reflected, the way the platform's is. */
+    /**
+     * Whether the control rejects interaction. Written onto the attribute, as the platform's is,
+     * and never by a fieldset.
+     */
     disabled = false;
 
     /** Whether a form is invalid while this control is off. Reflected, likewise. */
@@ -434,9 +439,21 @@ class UiToggle extends LitElement {
         this.checked = this.hasAttribute('checked');
     }
 
-    /** A `<fieldset disabled>` above this element, which reaches it and nothing below. */
-    formDisabledCallback(disabled: boolean): void {
-        this.disabled = disabled;
+    /**
+     * Writes `disabled` onto the attribute before the render, which gives the control
+     * `:disabled`, for the reason `UiButton`'s `willUpdate()` gives: the attribute stays the
+     * host's own, so a `<fieldset disabled>` reaches the control without outliving the fieldset.
+     */
+    override willUpdate(): void {
+        this.toggleAttribute('disabled', this.disabled);
+    }
+
+    /**
+     * A change to whether the platform holds the control disabled, which a `<fieldset disabled>`
+     * above it makes as well as its own attribute. The render reads the new state.
+     */
+    formDisabledCallback(): void {
+        this.requestUpdate();
     }
 
     /**
@@ -508,7 +525,7 @@ class UiToggle extends LitElement {
                         role=${this.controlRole === '' ? nothing : this.controlRole}
                         .checked=${this.checked}
                         .indeterminate=${mixed}
-                        ?disabled=${this.disabled}
+                        ?disabled=${this.matches(':disabled')}
                         ?required=${this.required}
                         aria-invalid=${this.error === '' ? nothing : 'true'}
                         aria-describedby=${this.#described()}

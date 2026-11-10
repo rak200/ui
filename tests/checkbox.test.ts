@@ -44,6 +44,17 @@ function toggle(form: HTMLFormElement): Toggle {
     return element;
 }
 
+/** The fieldset a fixture holds its toggle in. */
+function fieldset(form: HTMLFormElement): HTMLFieldSetElement {
+    const element = form.querySelector('fieldset');
+
+    if (element === null) {
+        throw new Error('no fieldset in the fixture');
+    }
+
+    return element;
+}
+
 /** The rendered control, which is what every drawing assertion is about. */
 function box(element: Toggle): HTMLInputElement {
     const control = element.renderRoot.querySelector('input');
@@ -435,13 +446,59 @@ describe('the form, which the element joins in the place of the control', () => 
         expect([off.checked, on.checked]).toEqual([false, true]);
     });
 
-    it('follows a fieldset that disables it, which reaches it and nothing below', async () => {
-        const form = await mount(
-            '<fieldset disabled><ui-checkbox label="Send a receipt"></ui-checkbox></fieldset>',
-        );
+    it.each(['ui-checkbox', 'ui-switch'])(
+        'is disabled by a fieldset above it and enabled with it again, a %s, its attribute untouched',
+        async (tag) => {
+            const form = await mount(
+                `<fieldset disabled><${tag} label="Notify me" name="notify" checked></${tag}></fieldset>`,
+            );
+            const element = toggle(form);
+            element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
 
-        expect(toggle(form).disabled, 'the callback fired').toBe(true);
-        expect(box(toggle(form)).disabled, 'and reached the control').toBe(true);
+            expect(box(element).disabled, 'the control refuses interaction').toBe(true);
+            expect(element.matches(':disabled'), 'the platform holds it disabled').toBe(true);
+            expect(element.disabled, 'its own state stays its own, as on a native one').toBe(false);
+            expect(element.hasAttribute('disabled'), 'and so does the attribute').toBe(false);
+            expect(getComputedStyle(part(element, 'label')).color, 'muted').toBe('rgb(1, 2, 3)');
+            expect([...new FormData(form)], 'nothing submitted').toEqual([]);
+
+            fieldset(form).disabled = false;
+            await element.updateComplete;
+
+            expect(box(element).disabled, 'enabled again').toBe(false);
+            expect(getComputedStyle(part(element, 'label')).color, 'no more').not.toBe(
+                'rgb(1, 2, 3)',
+            );
+            expect([...new FormData(form)], 'and submitted').toEqual([['notify', 'on']]);
+
+            fieldset(form).disabled = true;
+            await element.updateComplete;
+
+            expect(box(element).disabled, 'and disabled again').toBe(true);
+        },
+    );
+
+    it('stays disabled by its own attribute through a fieldset disabled and enabled', async () => {
+        const form = await mount(`<fieldset>${fixture}</fieldset>`);
+        const element = toggle(form);
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(box(element).disabled, 'in the update a script started').toBe(true);
+
+        fieldset(form).disabled = true;
+        await element.updateComplete;
+        fieldset(form).disabled = false;
+        await element.updateComplete;
+
+        expect(element.hasAttribute('disabled'), 'the attribute it was given').toBe(true);
+        expect(box(element).disabled, 'and the control refusing').toBe(true);
+
+        element.disabled = false;
+        await element.updateComplete;
+
+        expect(box(element).disabled, 'until it is enabled itself').toBe(false);
     });
 
     it('restores what a back-navigation hands back, where it saved that itself', async () => {

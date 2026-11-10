@@ -110,7 +110,8 @@ const field = css`
         opacity: 0.5;
     }
 
-    :host([disabled]) label {
+    /* :disabled rather than [disabled], which is the host's own attribute and not a fieldset's. */
+    :host(:disabled) label {
         color: ${reference('--ui-color-text-muted')};
     }
 
@@ -200,7 +201,8 @@ class UiTextField extends LitElement {
         minlength: { type: String, reflect: true },
         maxlength: { type: String, reflect: true },
         required: { type: Boolean, reflect: true },
-        disabled: { type: Boolean, reflect: true },
+        // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
+        disabled: { type: Boolean },
         readonly: { type: Boolean, reflect: true },
     };
 
@@ -335,9 +337,21 @@ class UiTextField extends LitElement {
         this.value = this.getAttribute('value') ?? '';
     }
 
-    /** A `<fieldset disabled>` above this element, which reaches it and nothing below. */
-    formDisabledCallback(disabled: boolean): void {
-        this.disabled = disabled;
+    /**
+     * Writes `disabled` onto the attribute before the render, which gives the control
+     * `:disabled`, for the reason `UiButton`'s `willUpdate()` gives: the attribute stays the
+     * host's own, so a `<fieldset disabled>` reaches the control without outliving the fieldset.
+     */
+    override willUpdate(): void {
+        this.toggleAttribute('disabled', this.disabled);
+    }
+
+    /**
+     * A change to whether the platform holds the field disabled, which a `<fieldset disabled>`
+     * above it makes as well as its own attribute. The render reads the new state.
+     */
+    formDisabledCallback(): void {
+        this.requestUpdate();
     }
 
     /**
@@ -506,7 +520,7 @@ export class UiInput extends UiTextField {
                 max=${attribute(this.max)}
                 step=${attribute(this.step)}
                 ?required=${this.required}
-                ?disabled=${this.disabled}
+                ?disabled=${this.matches(':disabled')}
                 ?readonly=${this.readonly}
                 aria-invalid=${this.invalid()}
                 aria-describedby=${this.described()}
@@ -568,7 +582,7 @@ export class UiTextarea extends UiTextField {
                 maxlength=${attribute(this.maxlength)}
                 rows=${attribute(this.rows)}
                 ?required=${this.required}
-                ?disabled=${this.disabled}
+                ?disabled=${this.matches(':disabled')}
                 ?readonly=${this.readonly}
                 aria-invalid=${this.invalid()}
                 aria-describedby=${this.described()}
