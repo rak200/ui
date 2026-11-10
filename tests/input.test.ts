@@ -1292,3 +1292,73 @@ describe('accessibility', () => {
         await expectAccessible(await mountStory(Constrained, meta, 'Constrained'));
     });
 });
+
+/** Who submitted the form while `run` ran, `none` for the form itself, once the field has acted. */
+async function submitted(
+    form: HTMLFormElement,
+    run: () => Promise<void> | void,
+): Promise<string[]> {
+    const heard: string[] = [];
+    const hear = (event: SubmitEvent): void => {
+        event.preventDefault();
+        heard.push(event.submitter === null ? 'none' : event.submitter.id);
+    };
+
+    form.addEventListener('submit', hear);
+    await run();
+    // The field acts a task after the key, so the submission lands a turn later.
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+    form.removeEventListener('submit', hear);
+
+    return heard;
+}
+
+describe('Enter, which the field hands to its form', () => {
+    it("submits the form by its default button, as the platform's own input does", async () => {
+        const form = await mount(
+            '<ui-input label="A" name="a"></ui-input><button id="go">Go</button>',
+        );
+        box(field(form)).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual(['go']);
+    });
+
+    it('submits a form with no submit button, where it is the one field', async () => {
+        const form = await mount('<ui-input label="A" name="a"></ui-input>');
+        box(field(form)).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual(['none']);
+    });
+
+    // Handed over by hand: a real key opens the picker, which nothing in a suite can close.
+    it.each(['color', 'file'])(
+        'submits nothing from a %s control, which opens a picker instead',
+        async (type) => {
+            const form = await mount(
+                `<ui-input label="A" name="a" type="${type}"></ui-input><button id="go">Go</button>`,
+            );
+            const enter = new KeyboardEvent('keypress', {
+                key: 'Enter',
+                bubbles: true,
+                cancelable: true,
+            });
+
+            expect(
+                await submitted(form, () => {
+                    box(field(form)).dispatchEvent(enter);
+                }),
+            ).toEqual([]);
+        },
+    );
+
+    it('submits nothing from a textarea, where Enter starts a line', async () => {
+        const form = await mount(
+            '<ui-textarea label="Note" name="note"></ui-textarea><button id="go">Go</button>',
+        );
+        box(field(form)).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual([]);
+    });
+});

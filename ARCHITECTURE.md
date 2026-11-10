@@ -298,6 +298,16 @@ the rendered control is a real one, so it still computes its own `type="email"`,
 and `required`, and the element hands the whole `ValidityState` over with the message the engine
 wrote. `change` is re-dispatched, being non-composed; `input` is not, being composed.
 
+**A form is acted on from inside it too, and that half was missing until #379.** The form owner a
+control in a shadow root lacks is also what a click on a `<button>` submits through, and what the
+platform's implicit submission starts from when <kbd>Enter</kbd> is pressed in a field. So
+`<ui-button>` joins the form as the fields do and submits or resets it as its `type` says, and each
+field hands <kbd>Enter</kbd> on to the form's default button, or submits a form with no button from
+its one text field, as the native control would: `src/submit.ts` keeps the rules, measured against
+the platform's own controls in three engines. **What no component here can be is a submitter**: the
+platform takes only a real submit button there, so the `submit` event reports none, and a
+`<ui-button>` puts its own `name` and `value` among the entries while it is the one submitting.
+
 **The attribute pass-through is a declared API rather than a forwarding table.** Each element
 declares the attributes it accepts, and the objection this shape used to answer — _no pass-through
 list to fall out of step with `type`, `inputmode` or whatever comes next_ — is answered differently

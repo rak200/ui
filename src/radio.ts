@@ -5,6 +5,7 @@ import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
+import { implicit } from './submit.js';
 
 /** Which way a group lays its options out, and announces that it did. */
 export type RadioOrientation = 'vertical' | 'horizontal';
@@ -525,6 +526,15 @@ export class UiRadioGroup extends LitElement {
         this.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
+    /**
+     * <kbd>Enter</kbd> on a choice, handed on to the form as the platform's own radio would take
+     * it: to the form's default button, and never to a form with none. `src/submit.ts` carries
+     * the whole of it.
+     */
+    readonly #entered = (event: KeyboardEvent): void => {
+        implicit(event, this, false);
+    };
+
     /** A form reset, which returns to the choice the declarations name. */
     formResetCallback(): void {
         this.value = '';
@@ -592,6 +602,7 @@ export class UiRadioGroup extends LitElement {
                     ?required=${this.required}
                     @change=${this.#changed}
                     @focus=${arrive}
+                    @keypress=${this.#entered}
             /></span>
             <span part="option-label">${choice.textContent}</span>
         </label>`;

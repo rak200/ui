@@ -45,6 +45,7 @@ src/
 ├── ripple.ts        # the press's ripple — internal, a circle the sheet draws and a press starts
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
 ├── stack.ts         # the toaster's stack — internal, how its toasts spring into their place
+├── submit.ts        # a form's implicit submission — internal, Enter handed on from a field's control
 ├── select.ts        # <ui-select>, <ui-option>, <ui-optgroup> — the box, the caret, and choices
 │                   #   the platform could not take slotted
 ├── table.ts        # <ui-table> — a surface around your table, in the tree your table is in
@@ -77,6 +78,7 @@ tests/               # mirrors src/, one test file per unit
 ├── ripple.test.ts
 ├── shatter.test.ts
 ├── stack.test.ts
+├── submit.test.ts
 ├── select.test.ts
 ├── table.test.ts
 ├── theme.test.ts
@@ -86,6 +88,7 @@ tests/               # mirrors src/, one test file per unit
 ├── a11y.ts          # the axe assertion the component suite is built on
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
+├── escaped.ts       # the errors a listener or a timer threw, which a test turns into a failure
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 ├── manual/          # steps a person runs, collected by nothing — see each file's own header
 ├── workbench/       # the page the components are used on while they are built — see its README
@@ -111,8 +114,8 @@ docs/                # one page per unit, indexed by docs/README.md
 
 `tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
 export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules,
-`contrast.ts` and `stories.ts` are the exception the mirror does not cover: they are the suite's own
-scaffolding rather than units, so none has a counterpart in `src/`.
+`contrast.ts`, `escaped.ts` and `stories.ts` are the exception the mirror does not cover: they are
+the suite's own scaffolding rather than units, so none has a counterpart in `src/`.
 
 **`tests/manual/` is a second kind of exception**, and it is not the suite at all: it holds scripts
 rather than units — the steps a person runs, collected by nothing and gating nothing. It sits here
@@ -241,6 +244,16 @@ explains. This file restates none of them.
   own sees nothing when a choice moves inside an `<ui-optgroup>` — while a property change is
   announced by the declaration itself, an event from `disconnectedCallback` having no path left to
   bubble along.
+- **Why a `<ui-button>` acts on its form a task after the click, reports no submitter and is
+  disabled by `:disabled`, and why a field hands <kbd>Enter</kbd> on from its `keypress`** —
+  [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, the docblocks on
+  `UiButton` and its `willUpdate()` in `src/button.ts` and on `src/submit.ts`, and
+  `docs/button.md`'s _In a form_. A control in a shadow root has no form owner, so the element acts
+  on the form itself, and #379 measured the platform's own controls in three engines for the rules.
+  **The button never writes a fieldset's state into its `disabled`**: the attribute a fieldset left
+  would keep it disabled once the fieldset was enabled again. `tests/escaped.ts` is what turns a
+  throw in the task a click or a key schedules into a failure, which the tooltip's suite captured
+  through first.
 - **Why a form control renders its own label, and what that costs** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and the docblock on
   each element. `src/input.ts`'s `attribute()` carries the rule an empty attribute breaks:

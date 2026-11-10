@@ -5,6 +5,7 @@ import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
+import { implicit } from './submit.js';
 
 /**
  * The size both controls are drawn at, and a floor rather than a preference.
@@ -399,6 +400,15 @@ class UiToggle extends LitElement {
     };
 
     /**
+     * <kbd>Enter</kbd>, handed on to the form as the platform's own checkbox would take it: to
+     * the form's default button, and never to a form with none. `src/submit.ts` carries the
+     * whole of it.
+     */
+    readonly #entered = (event: KeyboardEvent): void => {
+        implicit(event, this, false);
+    };
+
+    /**
      * Mirrors the platform's own state back into the properties it came from.
      *
      * Read off the control rather than inverted from what was there: the platform is what
@@ -492,6 +502,7 @@ class UiToggle extends LitElement {
                         aria-describedby=${this.#described()}
                         @change=${this.changed}
                         @focus=${arrive}
+                        @keypress=${this.#entered}
                 /></span>
                 <span part="text"><slot name="label">${this.label}</slot></span>
             </label>
