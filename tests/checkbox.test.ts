@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -11,6 +11,7 @@ import '../src/tooltip.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { kept } from '../src/state.js';
 
 /** Either element, since almost everything under test is the pair's rather than one's. */
 type Toggle = UiCheckbox | UiSwitch;
@@ -443,18 +444,86 @@ describe('the form, which the element joins in the place of the control', () => 
         expect(box(toggle(form)).disabled, 'and reached the control').toBe(true);
     });
 
-    it('restores what a back-navigation hands back', async () => {
+    it('restores what a back-navigation hands back, where it saved that itself', async () => {
         const form = await mount(fixture);
 
-        toggle(form).formStateRestoreCallback('on');
+        toggle(form).formStateRestoreCallback(kept(toggle(form), 'true'));
         await toggle(form).updateComplete;
 
         expect(toggle(form).checked).toBe(true);
+        expect(box(toggle(form)).checked, 'and shows it').toBe(true);
 
-        toggle(form).formStateRestoreCallback(null);
+        toggle(form).formStateRestoreCallback(kept(toggle(form), 'false'));
         await toggle(form).updateComplete;
 
         expect(toggle(form).checked).toBe(false);
+    });
+
+    it.each(['ui-checkbox', 'ui-switch'])(
+        'saves the state it restores from, a %s ticked as well as unticked',
+        async (tag) => {
+            const form = await mount(`<${tag} label="Notify me" name="notify"></${tag}>`);
+            const saving = vi.spyOn(ElementInternals.prototype, 'setFormValue');
+
+            toggle(form).checked = true;
+            await toggle(form).updateComplete;
+            const ticked: unknown = saving.mock.lastCall?.[1];
+            toggle(form).checked = false;
+            await toggle(form).updateComplete;
+            const unticked: unknown = saving.mock.lastCall?.[1];
+            saving.mockRestore();
+
+            toggle(form).formStateRestoreCallback(ticked);
+            await toggle(form).updateComplete;
+
+            expect(toggle(form).checked, 'ticked').toBe(true);
+
+            toggle(form).formStateRestoreCallback(unticked);
+            await toggle(form).updateComplete;
+
+            expect(toggle(form).checked, 'unticked').toBe(false);
+        },
+    );
+
+    it('brings back a box the reader unticked, though its default is ticked', async () => {
+        const form = await mount('<ui-switch label="Notify me" name="notify" checked></ui-switch>');
+        const saving = vi.spyOn(ElementInternals.prototype, 'setFormValue');
+
+        // The reader unticks it, and the page comes back with the box at its default.
+        toggle(form).checked = false;
+        await toggle(form).updateComplete;
+        const state: unknown = saving.mock.lastCall?.[1];
+        saving.mockRestore();
+        toggle(form).checked = true;
+        await toggle(form).updateComplete;
+
+        toggle(form).formStateRestoreCallback(state);
+        await toggle(form).updateComplete;
+
+        expect(toggle(form).checked).toBe(false);
+    });
+
+    it('refuses a state another element saved, which Firefox hands over', async () => {
+        const form = await mount(fixture);
+
+        for (const [which, state] of [
+            [
+                'another kind of field, of the same name',
+                kept({ localName: 'ui-switch', name: 'receipt' }, 'true'),
+            ],
+            [
+                'the same kind, of another name',
+                kept({ localName: 'ui-checkbox', name: 'notify' }, 'true'),
+            ],
+            ['the bare value an older version saved', 'on'],
+            ['nothing at all', null],
+            ['no text, as some other element may save', new FormData()],
+        ] as const) {
+            toggle(form).formStateRestoreCallback(state);
+            await toggle(form).updateComplete;
+
+            expect(toggle(form).checked, which).toBe(false);
+        }
     });
 });
 

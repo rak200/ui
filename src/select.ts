@@ -4,6 +4,7 @@ import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
+import { kept, restored } from './state.js';
 
 // Stryker disable all: read once, at import, into the styles the class is defined with — so in the
 // warm process Stryker switches mutants in, the original selectors stand before any mutant is
@@ -704,7 +705,7 @@ export class UiSelect extends LitElement {
      * once rather than safety. `src/input.ts` carries the same shape for the same reason.
      */
     override updated(): void {
-        this.#internals.setFormValue(this.#chosen());
+        this.#internals.setFormValue(this.#chosen(), kept(this, this.value));
 
         for (const control of this.renderRoot.querySelectorAll('select')) {
             this.#publish(control);
@@ -731,9 +732,17 @@ export class UiSelect extends LitElement {
         this.disabled = disabled;
     }
 
-    /** Restoring after a back-navigation, where the browser hands the value back. */
-    formStateRestoreCallback(state: string | null): void {
-        this.value = state ?? '';
+    /**
+     * Restoring after a back-navigation, or a reload in Firefox, where the browser hands a state
+     * back: taken only where this element saved it, for the reason `src/state.ts` gives. The state
+     * is the choice made, empty where none was, so a choice nobody made stays unmade.
+     */
+    formStateRestoreCallback(state: unknown): void {
+        const held = restored(this, state);
+
+        if (held !== undefined) {
+            this.value = held;
+        }
     }
 
     /** The form this element participates in, for a host that needs it. */

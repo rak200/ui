@@ -103,7 +103,9 @@ The element joins the form itself, so the controls do not have to:
 
 One entry is submitted for the set, under the group's `name`. `required` is validated on the group
 — the platform computes it, and the message is the engine's own. A reset returns to the choice the
-declarations name, and a `<fieldset disabled>` above the element reaches it.
+declarations name, and a `<fieldset disabled>` above the element reaches it. The browser restores
+the choice made on a back-navigation, and Firefox on a reload too: one nobody made stays unmade,
+and a state another element saved, which Firefox hands over, is refused (#380).
 
 <kbd>Enter</kbd> on a choice clicks the form's default button, as on a native radio, and does
 nothing in a form that has none: measured, Chromium and WebKit submit nothing there, where Firefox

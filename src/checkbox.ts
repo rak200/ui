@@ -5,6 +5,7 @@ import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
+import { kept, restored } from './state.js';
 import { implicit } from './submit.js';
 
 /**
@@ -323,7 +324,10 @@ class UiToggle extends LitElement {
 
     /** The form value and the validity, which move together here or disagree anywhere. */
     #publish(): void {
-        this.#internals.setFormValue(this.checked ? this.value : null);
+        this.#internals.setFormValue(
+            this.checked ? this.value : null,
+            kept(this, String(this.checked)),
+        );
 
         if (this.error !== '') {
             this.#internals.setValidity({ customError: true }, this.error);
@@ -435,9 +439,17 @@ class UiToggle extends LitElement {
         this.disabled = disabled;
     }
 
-    /** Restoring after a back-navigation, where the browser hands the value back. */
-    formStateRestoreCallback(state: string | null): void {
-        this.checked = state !== null;
+    /**
+     * Restoring after a back-navigation, or a reload in Firefox, where the browser hands a state
+     * back: taken only where this element saved it, for the reason `src/state.ts` gives. An
+     * unticked box saves one too, which is what brings back a box the reader unticked.
+     */
+    formStateRestoreCallback(state: unknown): void {
+        const held = restored(this, state);
+
+        if (held !== undefined) {
+            this.checked = held === 'true';
+        }
     }
 
     /** The form this element participates in, for a host that needs it. */

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -20,6 +20,7 @@ import '../src/tooltip.js';
 import type { UiOption, UiSelect } from '../src/select.js';
 import type { UiInput } from '../src/input.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { kept } from '../src/state.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -602,19 +603,69 @@ describe('the form, which the element joins in the place of the control', () => 
         expect(box(select(form)).disabled, 'and reached the control').toBe(true);
     });
 
-    it('restores what a back-navigation hands back', async () => {
+    it('restores what a back-navigation hands back, where it saved that itself', async () => {
         const form = await mount(fixture);
 
-        select(form).formStateRestoreCallback('usd');
+        select(form).formStateRestoreCallback(kept(select(form), 'usd'));
         await select(form).updateComplete;
 
         expect(box(select(form)).value).toBe('usd');
 
-        select(form).formStateRestoreCallback(null);
+        select(form).formStateRestoreCallback(kept(select(form), ''));
         await select(form).updateComplete;
 
         expect(box(select(form)).value, 'back to the declared default').toBe('brl');
         expect(select(form).value, 'by emptying the property, not by naming a choice').toBe('');
+    });
+
+    it('saves the choice made as its state, and none where none was, which it submits all the same', async () => {
+        const form = await mount(fixture);
+        const saving = vi.spyOn(ElementInternals.prototype, 'setFormValue');
+
+        select(form).value = 'usd';
+        await select(form).updateComplete;
+        const chosen: unknown = saving.mock.lastCall?.[1];
+        select(form).value = '';
+        await select(form).updateComplete;
+        const none: unknown = saving.mock.lastCall?.[1];
+        saving.mockRestore();
+
+        expect([...new FormData(form)], 'the declared one submitted').toEqual([
+            ['currency', 'brl'],
+        ]);
+
+        select(form).formStateRestoreCallback(chosen);
+        await select(form).updateComplete;
+
+        expect(select(form).value).toBe('usd');
+
+        select(form).formStateRestoreCallback(none);
+        await select(form).updateComplete;
+
+        expect(select(form).value, 'a choice nobody made stays unmade').toBe('');
+    });
+
+    it('refuses a state another element saved, which Firefox hands over', async () => {
+        const form = await mount(fixture);
+
+        for (const [which, state] of [
+            [
+                'another kind of field, of the same name',
+                kept({ localName: 'ui-switch', name: 'currency' }, 'true'),
+            ],
+            [
+                'the same kind, of another name',
+                kept({ localName: 'ui-select', name: 'country' }, 'usd'),
+            ],
+            ['the bare value an older version saved', 'usd'],
+            ['nothing at all', null],
+            ['no text, as some other element may save', new FormData()],
+        ] as const) {
+            select(form).formStateRestoreCallback(state);
+            await select(form).updateComplete;
+
+            expect(select(form).value, which).toBe('');
+        }
     });
 
     it('mirrors a choice made by hand, and re-dispatches the change', async () => {

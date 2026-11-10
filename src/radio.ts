@@ -5,6 +5,7 @@ import { follow } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
+import { kept, restored } from './state.js';
 import { implicit } from './submit.js';
 
 /** Which way a group lays its options out, and announces that it did. */
@@ -506,7 +507,7 @@ export class UiRadioGroup extends LitElement {
      * is a coverage hole and an immortal mutant at once.
      */
     override updated(): void {
-        this.#internals.setFormValue(this.#chosen());
+        this.#internals.setFormValue(this.#chosen(), kept(this, this.value));
 
         for (const control of this.renderRoot.querySelectorAll('input')) {
             this.#publish(control);
@@ -545,9 +546,17 @@ export class UiRadioGroup extends LitElement {
         this.disabled = disabled;
     }
 
-    /** Restoring after a back-navigation, where the browser hands the value back. */
-    formStateRestoreCallback(state: string | null): void {
-        this.value = state ?? '';
+    /**
+     * Restoring after a back-navigation, or a reload in Firefox, where the browser hands a state
+     * back: taken only where this element saved it, for the reason `src/state.ts` gives. The state
+     * is the choice made, empty where none was, so a choice nobody made stays unmade.
+     */
+    formStateRestoreCallback(state: unknown): void {
+        const held = restored(this, state);
+
+        if (held !== undefined) {
+            this.value = held;
+        }
     }
 
     /** The form this element participates in, for a host that needs it. */

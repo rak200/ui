@@ -4,6 +4,7 @@ import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
+import { kept, restored } from './state.js';
 import { implicit } from './submit.js';
 
 /**
@@ -302,7 +303,7 @@ class UiTextField extends LitElement {
      * immortal mutant at once, rather than safety. A loop over what was rendered is total.
      */
     override updated(): void {
-        this.#internals.setFormValue(this.value);
+        this.#internals.setFormValue(this.value, kept(this, this.value));
 
         for (const control of this.renderRoot.querySelectorAll<
             HTMLInputElement | HTMLTextAreaElement
@@ -339,9 +340,16 @@ class UiTextField extends LitElement {
         this.disabled = disabled;
     }
 
-    /** Restoring after a back-navigation, where the browser hands the value back. */
-    formStateRestoreCallback(state: string | null): void {
-        this.value = state ?? '';
+    /**
+     * Restoring after a back-navigation, or a reload in Firefox, where the browser hands a state
+     * back: taken only where this element saved it, for the reason `src/state.ts` gives.
+     */
+    formStateRestoreCallback(state: unknown): void {
+        const held = restored(this, state);
+
+        if (held !== undefined) {
+            this.value = held;
+        }
     }
 
     /** The form this element participates in, for a host that needs it. */

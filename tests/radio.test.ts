@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -21,6 +21,7 @@ import type { UiRadio, UiRadioGroup } from '../src/radio.js';
 import type { UiCheckbox } from '../src/checkbox.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
+import { kept } from '../src/state.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
 const fixture = `
@@ -526,15 +527,15 @@ describe('the form, which the element joins in the place of the controls', () =>
         expect(radio(form).disabled, 'and reached the controls').toBe(true);
     });
 
-    it('restores what a back-navigation hands back', async () => {
+    it('restores what a back-navigation hands back, where it saved that itself', async () => {
         const form = await mount(fixture);
 
-        group(form).formStateRestoreCallback('max');
+        group(form).formStateRestoreCallback(kept(group(form), 'max'));
         await group(form).updateComplete;
 
         expect(controls(form)[2]?.checked).toBe(true);
 
-        group(form).formStateRestoreCallback(null);
+        group(form).formStateRestoreCallback(kept(group(form), ''));
         await group(form).updateComplete;
 
         expect(
@@ -542,6 +543,59 @@ describe('the form, which the element joins in the place of the controls', () =>
             'back to nothing',
         ).toBe(false);
         expect(group(form).value, 'by emptying the property, not by naming a choice').toBe('');
+    });
+
+    it('saves the choice made as its state, and none where none was, which it submits all the same', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" checked>Pro</ui-radio>
+            </ui-radio-group>
+        `);
+        const saving = vi.spyOn(ElementInternals.prototype, 'setFormValue');
+
+        group(form).value = 'free';
+        await group(form).updateComplete;
+        const chosen: unknown = saving.mock.lastCall?.[1];
+        group(form).value = '';
+        await group(form).updateComplete;
+        const none: unknown = saving.mock.lastCall?.[1];
+        saving.mockRestore();
+
+        expect([...new FormData(form)], 'the declared one submitted').toEqual([['plan', 'pro']]);
+
+        group(form).formStateRestoreCallback(chosen);
+        await group(form).updateComplete;
+
+        expect(group(form).value).toBe('free');
+
+        group(form).formStateRestoreCallback(none);
+        await group(form).updateComplete;
+
+        expect(group(form).value, 'a choice nobody made stays unmade').toBe('');
+    });
+
+    it('refuses a state another element saved, which Firefox hands over', async () => {
+        const form = await mount(fixture);
+
+        for (const [which, state] of [
+            [
+                'another kind of field, of the same name',
+                kept({ localName: 'ui-switch', name: 'plan' }, 'true'),
+            ],
+            [
+                'the same kind, of another name',
+                kept({ localName: 'ui-radio-group', name: 'tier' }, 'max'),
+            ],
+            ['the bare value an older version saved', 'max'],
+            ['nothing at all', null],
+            ['no text, as some other element may save', new FormData()],
+        ] as const) {
+            group(form).formStateRestoreCallback(state);
+            await group(form).updateComplete;
+
+            expect(group(form).value, which).toBe('');
+        }
     });
 
     it('mirrors a choice made by hand, and re-dispatches the change', async () => {
