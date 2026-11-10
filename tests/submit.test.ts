@@ -34,7 +34,11 @@ async function turn(): Promise<void> {
 
 /**
  * Every submission a form made while `run` ran, as who submitted it and what it carried, with
- * nothing escaping on the way.
+ * nothing escaping on the way. A submission of any other form is heard too, and says so.
+ *
+ * **Heard on the document, and every one held there.** A slip that sent another form's submit
+ * button its click would otherwise navigate the page the suite runs in, which fails no test and
+ * ends the file: measured, as a mutant the run could not grade, and one it timed out on.
  *
  * Two turns, because the longest way round is two tasks long: the field acts a task after the
  * key, and a `<ui-button>` it clicks acts a task after that click. `escaped()` waits a third.
@@ -43,10 +47,14 @@ async function submissions(form: HTMLFormElement, run: () => void): Promise<stri
     const heard: string[] = [];
     const hear = (event: SubmitEvent): void => {
         event.preventDefault();
-        heard.push(`${event.submitter?.id ?? 'none'} ${JSON.stringify([...new FormData(form)])}`);
+        const sent = event.target as HTMLFormElement;
+        const which = sent === form ? '' : 'another form, ';
+        heard.push(
+            `${which}${event.submitter?.id ?? 'none'} ${JSON.stringify([...new FormData(sent)])}`,
+        );
     };
 
-    form.addEventListener('submit', hear);
+    document.addEventListener('submit', hear, true);
 
     const thrown = await escaped(async () => {
         run();
@@ -54,7 +62,7 @@ async function submissions(form: HTMLFormElement, run: () => void): Promise<stri
         await turn();
     });
 
-    form.removeEventListener('submit', hear);
+    document.removeEventListener('submit', hear, true);
     expect(thrown, 'nothing escaped').toEqual([]);
 
     return heard;
