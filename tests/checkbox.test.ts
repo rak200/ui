@@ -519,10 +519,20 @@ describe('the form, which the element joins in the place of the control', () => 
             ['nothing at all', null],
             ['no text, as some other element may save', new FormData()],
         ] as const) {
-            toggle(form).formStateRestoreCallback(state);
-            await toggle(form).updateComplete;
+            // Each from both sides: an unticked box shows a state taken by mistake, and a ticked
+            // one a refusal that unticks it.
+            for (const [start, checked] of [
+                ['unticked', false],
+                ['ticked', true],
+            ] as const) {
+                toggle(form).checked = checked;
+                await toggle(form).updateComplete;
 
-            expect(toggle(form).checked, which).toBe(false);
+                toggle(form).formStateRestoreCallback(state);
+                await toggle(form).updateComplete;
+
+                expect(toggle(form).checked, `${which}, ${start}`).toBe(checked);
+            }
         }
     });
 });
