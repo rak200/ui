@@ -18,4 +18,4 @@ descends from one written elsewhere, is joined to it by mother↔daughter links.
 | [0004](0004-motion.md)               | Motion               | library | Implemented |
 | [0005](0005-form-association.md)     | Form association     | library | Implemented |
 | [0006](0006-supplementary-text.md)   | Supplementary text   | library | Implemented |
-| [0007](0007-workbench.md)            | The workbench        | tooling | Accepted    |
+| [0007](0007-workbench.md)            | The workbench        | tooling | Implemented |

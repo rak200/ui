@@ -17,6 +17,10 @@ export default [
             // nothing to run against. They sit under `tests/` because that path is already
             // `export-ignore`d and the alternative was editing a byte-compared seed.
             'tests/manual/**',
+            // Local material `.gitignore` already keeps out of the tree: the workbench's scratch
+            // and the measurement harnesses. ESLint reads no ignore file of its own accord, and
+            // a page written there in an afternoon would otherwise fail `analyse`.
+            'reports/**',
         ],
     },
     {
