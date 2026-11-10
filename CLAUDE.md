@@ -332,7 +332,9 @@ explains. This file restates none of them.
   component's shadow root would be bare otherwise. The tab stop beside it carries WCAG 2.1.1 and
   says why it is taken only while the table overflows, and what watching for that costs; **the box
   asks for no name**, because a focusable `generic` passes 4.1.2 and ARIA prohibits naming one.
-  `docs/table.md`'s _The scroll, and when it takes a tab stop_ is the consumer-facing half.
+  `docs/table.md`'s _The scroll, and when it takes a tab stop_ is the consumer-facing half. What a
+  screen reader says at that stop no engine the suite drives can tell, so a person measures it on
+  `tests/manual/table-announcement.html`, whose header holds the pairs and the steps (#309).
 - **Why the type scale arrived to fix something rather than to enable something** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _A category arrives with the component that consumes it_, and
   the comment beside `--ui-text-100` in `src/tokens.ts`. Three hardcoded `font-size: 0.875em`
