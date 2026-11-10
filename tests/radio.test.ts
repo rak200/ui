@@ -62,6 +62,17 @@ function group(form: HTMLFormElement): UiRadioGroup {
     return element;
 }
 
+/** The fieldset a fixture holds its group in. */
+function fieldset(form: HTMLFormElement): HTMLFieldSetElement {
+    const element = form.querySelector('fieldset');
+
+    if (element === null) {
+        throw new Error('no fieldset in the fixture');
+    }
+
+    return element;
+}
+
 /** The rendered controls, which is what every drawing assertion is about. */
 function controls(form: HTMLFormElement): HTMLInputElement[] {
     return [...group(form).renderRoot.querySelectorAll('input')];
@@ -514,17 +525,60 @@ describe('the form, which the element joins in the place of the controls', () =>
         expect(group(form).value, 'and the property is empty again').toBe('');
     });
 
-    it('follows a fieldset that disables it', async () => {
+    it('is disabled by a fieldset above it and enabled with it again, its own attribute untouched', async () => {
         const form = await mount(`
             <fieldset disabled>
                 <ui-radio-group label="Plan" name="plan">
-                    <ui-radio value="free">Free</ui-radio>
+                    <ui-radio value="free" checked>Free</ui-radio>
+                    <ui-radio value="pro">Pro</ui-radio>
                 </ui-radio-group>
             </fieldset>
         `);
+        const element = group(form);
+        const refusing = (): boolean[] => controls(form).map((control) => control.disabled);
+        element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
 
-        expect(group(form).disabled, 'the callback fired').toBe(true);
-        expect(radio(form).disabled, 'and reached the controls').toBe(true);
+        expect(refusing(), 'every control refuses interaction').toEqual([true, true]);
+        expect(element.matches(':disabled'), 'the platform holds it disabled').toBe(true);
+        expect(element.disabled, 'its own state stays its own, as on a native one').toBe(false);
+        expect(element.hasAttribute('disabled'), 'and so does the attribute').toBe(false);
+        expect(getComputedStyle(part(element, 'label')).color, 'muted').toBe('rgb(1, 2, 3)');
+        expect([...new FormData(form)], 'nothing submitted').toEqual([]);
+
+        fieldset(form).disabled = false;
+        await element.updateComplete;
+
+        expect(refusing(), 'enabled again').toEqual([false, false]);
+        expect(getComputedStyle(part(element, 'label')).color, 'no more').not.toBe('rgb(1, 2, 3)');
+        expect([...new FormData(form)], 'and submitted').toEqual([['plan', 'free']]);
+
+        fieldset(form).disabled = true;
+        await element.updateComplete;
+
+        expect(refusing(), 'and disabled again').toEqual([true, true]);
+    });
+
+    it('stays disabled by its own attribute through a fieldset disabled and enabled', async () => {
+        const form = await mount(`<fieldset>${fixture}</fieldset>`);
+        const element = group(form);
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(radio(form).disabled, 'in the update a script started').toBe(true);
+
+        fieldset(form).disabled = true;
+        await element.updateComplete;
+        fieldset(form).disabled = false;
+        await element.updateComplete;
+
+        expect(element.hasAttribute('disabled'), 'the attribute it was given').toBe(true);
+        expect(radio(form).disabled, 'and the controls refusing').toBe(true);
+
+        element.disabled = false;
+        await element.updateComplete;
+
+        expect(radio(form).disabled, 'until it is enabled itself').toBe(false);
     });
 
     it('restores what a back-navigation hands back, where it saved that itself', async () => {

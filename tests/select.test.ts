@@ -75,6 +75,17 @@ function select(form: HTMLFormElement): UiSelect {
     return element;
 }
 
+/** The fieldset a fixture holds its select in. */
+function fieldset(form: HTMLFormElement): HTMLFieldSetElement {
+    const element = form.querySelector('fieldset');
+
+    if (element === null) {
+        throw new Error('no fieldset in the fixture');
+    }
+
+    return element;
+}
+
 /** The rendered control, which is what every drawing assertion is about. */
 function box(element: UiSelect): HTMLSelectElement {
     const control = element.renderRoot.querySelector('select');
@@ -592,15 +603,56 @@ describe('the form, which the element joins in the place of the control', () => 
         expect(select(form).value, 'and the property is empty again').toBe('');
     });
 
-    it('follows a fieldset that disables it', async () => {
+    it('is disabled by a fieldset above it and enabled with it again, its own attribute untouched', async () => {
         const form = await mount(`
             <fieldset disabled>
                 <ui-select label="C" name="c"><ui-option value="brl">Real</ui-option></ui-select>
             </fieldset>
         `);
+        const element = select(form);
+        element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
 
-        expect(select(form).disabled, 'the callback fired').toBe(true);
-        expect(box(select(form)).disabled, 'and reached the control').toBe(true);
+        expect(box(element).disabled, 'the control refuses interaction').toBe(true);
+        expect(element.matches(':disabled'), 'the platform holds it disabled').toBe(true);
+        expect(element.disabled, 'its own state stays its own, as on a native one').toBe(false);
+        expect(element.hasAttribute('disabled'), 'and so does the attribute').toBe(false);
+        expect(getComputedStyle(part(element, 'label')).color, 'muted').toBe('rgb(1, 2, 3)');
+        expect([...new FormData(form)], 'nothing submitted').toEqual([]);
+
+        fieldset(form).disabled = false;
+        await element.updateComplete;
+
+        expect(box(element).disabled, 'enabled again').toBe(false);
+        expect(getComputedStyle(part(element, 'label')).color, 'no more').not.toBe('rgb(1, 2, 3)');
+        expect([...new FormData(form)], 'and submitted').toEqual([['c', 'brl']]);
+
+        fieldset(form).disabled = true;
+        await element.updateComplete;
+
+        expect(box(element).disabled, 'and disabled again').toBe(true);
+    });
+
+    it('stays disabled by its own attribute through a fieldset disabled and enabled', async () => {
+        const form = await mount(`<fieldset>${fixture}</fieldset>`);
+        const element = select(form);
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(box(element).disabled, 'in the update a script started').toBe(true);
+
+        fieldset(form).disabled = true;
+        await element.updateComplete;
+        fieldset(form).disabled = false;
+        await element.updateComplete;
+
+        expect(element.hasAttribute('disabled'), 'the attribute it was given').toBe(true);
+        expect(box(element).disabled, 'and the control refusing').toBe(true);
+
+        element.disabled = false;
+        await element.updateComplete;
+
+        expect(box(element).disabled, 'until it is enabled itself').toBe(false);
     });
 
     it('restores what a back-navigation hands back, where it saved that itself', async () => {

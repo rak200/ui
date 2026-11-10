@@ -252,10 +252,12 @@ explains. This file restates none of them.
   `UiButton` and its `willUpdate()` in `src/button.ts` and on `src/submit.ts`, and
   `docs/button.md`'s _In a form_. A control in a shadow root has no form owner, so the element acts
   on the form itself, and #379 measured the platform's own controls in three engines for the rules.
-  **The button never writes a fieldset's state into its `disabled`**: the attribute a fieldset left
-  would keep it disabled once the fieldset was enabled again. `tests/escaped.ts` is what turns a
-  throw in the task a click or a key schedules into a failure, which the tooltip's suite captured
-  through first.
+  **No element here writes a fieldset's state into its `disabled`**: the attribute a fieldset left
+  would keep it disabled once the fieldset was enabled again, which every field did until #382, and
+  ARCHITECTURE.md's paragraph on a `<fieldset disabled>` says how each reads `:disabled` instead.
+  Each field's `willUpdate()` points at the button's for the reason. `tests/escaped.ts` is what
+  turns a throw in the task a click or a key schedules into a failure, which the tooltip's suite
+  captured through first.
 - **Why a field saves a state of its own for the browser to restore, and refuses one it did not
   write** — the docblock on `src/state.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md)'s paragraph on
   a restored form. Firefox hands a form-associated element the state another saved where the two

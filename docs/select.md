@@ -135,7 +135,8 @@ phone opens are all still the platform's.
 - The browser restores the choice made on a back-navigation, and Firefox on a reload too. One
   nobody made stays unmade, and a state another element saved, which Firefox hands over, is
   refused (#380).
-- A `<fieldset disabled>` above the element disables it.
+- A `<fieldset disabled>` above the element disables it, and enabling the fieldset enables it
+  again. It leaves the `disabled` attribute as you wrote it, as it does on a `<select>`.
 - <kbd>Enter</kbd> does not submit the form, as it does not from a native `<select>`.
 
 ## In error

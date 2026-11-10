@@ -528,7 +528,8 @@ export class UiSelect extends LitElement {
                 color: ${reference('--ui-color-text')};
             }
 
-            :host([disabled]) label {
+            /* :disabled rather than [disabled], the host's own attribute and not a fieldset's. */
+            :host(:disabled) label {
                 color: ${reference('--ui-color-text-muted')};
             }
 
@@ -575,7 +576,8 @@ export class UiSelect extends LitElement {
         // declaration is written out to say which of the two `value` is, not to change it.
         value: { type: String },
         required: { type: Boolean, reflect: true },
-        disabled: { type: Boolean, reflect: true },
+        // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
+        disabled: { type: Boolean },
         multiple: { type: Boolean, reflect: true },
     };
 
@@ -727,9 +729,21 @@ export class UiSelect extends LitElement {
         this.value = '';
     }
 
-    /** A `<fieldset disabled>` above this element, which reaches it and nothing below. */
-    formDisabledCallback(disabled: boolean): void {
-        this.disabled = disabled;
+    /**
+     * Writes `disabled` onto the attribute before the render, which gives the control
+     * `:disabled`, for the reason `UiButton`'s `willUpdate()` gives: the attribute stays the
+     * host's own, so a `<fieldset disabled>` reaches the control without outliving the fieldset.
+     */
+    override willUpdate(): void {
+        this.toggleAttribute('disabled', this.disabled);
+    }
+
+    /**
+     * A change to whether the platform holds the control disabled, which a `<fieldset disabled>`
+     * above it makes as well as its own attribute. The render reads the new state.
+     */
+    formDisabledCallback(): void {
+        this.requestUpdate();
     }
 
     /**
@@ -821,7 +835,7 @@ export class UiSelect extends LitElement {
                         part="control"
                         name=${this.name === '' ? nothing : this.name}
                         ?required=${this.required}
-                        ?disabled=${this.disabled}
+                        ?disabled=${this.matches(':disabled')}
                         ?multiple=${this.multiple}
                         aria-invalid=${this.error === '' ? nothing : 'true'}
                         aria-describedby=${this.#described()}

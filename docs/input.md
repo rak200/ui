@@ -107,7 +107,8 @@ no form owner, so the value reaches a submit because this element passes it on.
 - **`value` is the default, not the live state.** It is the attribute a reset returns to, which is
   exactly what `value` does on a native `<input>`: the property tracks what was typed, the attribute
   does not follow it. Read `element.value` for the state.
-- A `<fieldset disabled>` above the element disables it.
+- A `<fieldset disabled>` above the element disables it, and enabling the fieldset enables it
+  again. It leaves the `disabled` attribute as you wrote it, as it does on an `<input>`.
 - **The browser restores what was typed** on a back-navigation, and Firefox on a reload too. The
   element saves a state of its own for it and takes back only that: Firefox hands a field the
   state another element saved where the two joined the form out of tree order (#380), and the
@@ -208,7 +209,8 @@ ui-input[readonly] {
 ```
 
 `:valid`, `:invalid` and `:disabled` match on the element, because a form-associated custom element
-takes part in them. `required`, `readonly` and `disabled` reflect, so their attributes reach it too.
+takes part in them. `required`, `readonly` and `disabled` reflect, so their attributes reach it too,
+though `[disabled]` is only the element's own: `:disabled` takes a `<fieldset disabled>` as well.
 
 **Do not select on `[error]`.** It reflects, and a reflected string whose default is empty is
 written as `error=""` — which a presence selector matches on every element, error or not.

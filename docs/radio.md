@@ -103,7 +103,8 @@ The element joins the form itself, so the controls do not have to:
 
 One entry is submitted for the set, under the group's `name`. `required` is validated on the group
 — the platform computes it, and the message is the engine's own. A reset returns to the choice the
-declarations name, and a `<fieldset disabled>` above the element reaches it. The browser restores
+declarations name. A `<fieldset disabled>` above the element disables the set, and enabling the
+fieldset enables it again, leaving the `disabled` attribute as you wrote it. The browser restores
 the choice made on a back-navigation, and Firefox on a reload too: one nobody made stays unmade,
 and a state another element saved, which Firefox hands over, is refused (#380).
 

@@ -133,7 +133,8 @@ toggling the box, which is the platform's own rule rather than one written here.
   is exactly what `checked` does on a native `<input>`: the property tracks what the user did, the
   attribute does not follow it. Read `element.checked` for the state, and see
   [Selecting on state](#selecting-on-state) to style on it.
-- A `<fieldset disabled>` above the element disables it.
+- A `<fieldset disabled>` above the element disables it, and enabling the fieldset enables it
+  again. It leaves the `disabled` attribute as you wrote it, as it does on an `<input>`.
 - **The browser restores the state** on a back-navigation, and Firefox on a reload too, a box the
   reader unticked included. The element saves a state of its own for it and takes back only that,
   refusing the one another element saved, which Firefox hands over (#380).
