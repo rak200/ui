@@ -432,7 +432,7 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
     });
 
-    it('lights a card where the pointer is under Glass, casts its shadow, edges it and leans it toward the pointer', async () => {
+    it('lights a card where the pointer is under Glass, casts its shadow and edges it, and keeps it flat', async () => {
         const host = await under(fixture, glass);
         const element = card(host);
         const box = element.getBoundingClientRect();
@@ -457,8 +457,14 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
             expect(getComputedStyle(layer(element, name)).opacity, name).toBe('1');
         }
 
-        expect(getComputedStyle(element).transform, 'leaning').not.toBe('none');
+        // The tilt is no longer Glass's: it turned the card under its blur on every frame.
+        expect(getComputedStyle(element).transform, 'flat').toBe('none');
         expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
+
+        // It is still a choice of the consumer's.
+        host.style.setProperty('--ui-motion-hover-move', 'tilt');
+
+        expect(getComputedStyle(element).transform, 'leaning where chosen').not.toBe('none');
     });
 
     it("sweeps a card's tint across it and holds a light inside it at a focus it holds under Glass", async () => {

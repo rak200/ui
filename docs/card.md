@@ -171,14 +171,14 @@ a passage like this runs, the card carries an inline `filter` of its own — and
 of nothing — in place of any you wrote there, and gives yours back after.
 
 **Under [Glass](theme.md#glass)** a card takes its tint where the pointer is, casts its shadow away
-from the pointer, lights a band along its boundary nearest it, and leans toward it, five degrees at
-most each way, over `--ui-duration-follow` — each as strong as the pointer is near, so they fade as
-it moves off the card. At a focus it holds, its tint sweeps across it, `--ui-iteration-settle`
-rounds of `--ui-duration-loop`, and a light of the accent holds along its inside; it neither lifts
-nor leans. **The sweep is the card's tint rather than a button's sheen**: the accent a button sweeps
-took the card's muted text to 1.97:1 at its peak, and a field's answer, a halo round its text, would
-be inherited by everything the card holds and ring a light label on a fill of its own in the card's
-colour. Over the tint the card's text and muted text hold 4.5:1 in every shipped palette.
+from the pointer and lights a band along its boundary nearest it, each as strong as the pointer is
+near, so they fade as it moves off the card. At a focus it holds, its tint sweeps across it,
+`--ui-iteration-settle` rounds of `--ui-duration-loop`, and a light of the accent holds along its
+inside; it does not lift. **The sweep is the card's tint rather than a button's sheen**: the accent
+a button sweeps took the card's muted text to 1.97:1 at its peak, and a field's answer, a halo round
+its text, would be inherited by everything the card holds and ring a light label on a fill of its
+own in the card's colour. Over the tint the card's text and muted text hold 4.5:1 in every shipped
+palette.
 
 Under Glass a card also comes out of a fine grain as it is put on the page, and dissolves into one as
 `leave()` takes it away, its glass and its glow with it: noise made the card's alpha, eaten grain by
@@ -186,12 +186,23 @@ grain. Each takes 780ms at the defaults, in proportion to `--ui-duration-enter` 
 `--ui-duration-exit`, on a straight clock, since the grain is sparse at both ends already. The grain
 is a filter over the card too, and copies nothing.
 
+**A card leans toward the pointer only where you choose it**, with `--ui-motion-hover-move: tilt`:
+five degrees at most each way, over `--ui-duration-follow`, as strong as the pointer is near. No
+shipped theme names it. The lean is a transform on the card itself, which makes the card a stacking
+context and the box what it holds that is fixed is placed in, as Glass's glass does already.
+
+**Under Glass, whatever follows the pointer paints the card's glass again on every frame it moves.**
+Measured on a page of nine Glass cards, with the pointer crossing one: the three lights took the
+page from 60 frames a second to 58 in Chromium on a GPU, and to 14 in Chromium and 9 in Firefox
+drawing in software; a lean on top took them to 53, 12 and 7. Where frames matter more than the
+lights, in a browser drawing in software above all, choose `none` for `hover-fill`, `hover-border`
+and `hover-shadow`, or `raise` for the last, which rises once as the pointer arrives: 60 frames a
+second on a GPU, and 42 to 45 in software.
+
 The lights that follow the pointer, and the lean, read where it is from an internal engine, bound to
 the card's `pointerover`, which follows nothing under reduced motion or for a pointer that cannot
-hover. The lean is a transform on the card itself, which makes the card a stacking context and the
-box what it holds that is fixed is placed in, as Glass's glass does already. The engine is handed its
-time on the card itself too, so S8 reaches the lights: chosen on the one card alone, and not round
-it, none of them is followed, and none shows.
+hover. The engine is handed its time on the card itself too, so S8 reaches the lights: chosen on the
+one card alone, and not round it, none of them is followed, and none shows.
 
 The effects are drawn by one internal sheet, `surfaceEffects()` in `src/effects.ts`. The card is
 marked by two internal helpers in `src/held.ts`, `held()` bound to its `focusin` and `released()` to
