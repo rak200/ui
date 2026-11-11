@@ -404,13 +404,15 @@ export const glass: Theme = {
         },
         // The page's edge, for the drawn controls: the default theme's taste names their none,
         // and a component's own entry outweighs a page's, so without these the band would never
-        // reach them under this theme. And the card leans toward the pointer, alone, as RFC 0004
-        // chose, and comes and goes in a grain.
+        // reach them under this theme. And the card comes and goes in a grain. It leans toward
+        // nothing, though RFC 0004 chose the tilt for it: the tilt turns the card under its blur on
+        // every frame the pointer moves, which on a page of nine cards cost 8% of the frames in
+        // Chromium on a GPU, 13% in Chromium drawing in software and 23% in Firefox.
         components: {
             checkbox: { 'hover-border': 'edge' },
             switch: { 'hover-border': 'edge' },
             radio: { 'hover-border': 'edge' },
-            card: { 'hover-move': 'tilt', enter: 'dissolve', exit: 'dissolve' },
+            card: { enter: 'dissolve', exit: 'dissolve' },
             dialog: { enter: 'dissolve', exit: 'dissolve', backdrop: 'blur' },
             tooltip: { enter: 'refocus', exit: 'defocus' },
             menu: { enter: 'refocus', exit: 'defocus' },
