@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/rak200/ui/compare/0.8.8...0.9.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **button,input,checkbox,radio:** a `<ui-button>` inside a form now submits it when clicked, since `type` defaults to `submit` as on `<button>`. Give `type="button"` to a button that should not, and drop any handler that sent the form from a button's click, which would now send it twice.
+
+### Bug Fixes
+
+* **button,input,checkbox,radio:** a form is submitted from inside it, by a ui-button or by Enter ([#381](https://github.com/rak200/ui/issues/381)) ([ac0e69c](https://github.com/rak200/ui/commit/ac0e69c317dba83e46dcf871bbb5c9fd43bb31aa))
+* **input,checkbox,select,radio:** a field is enabled again with the fieldset that disabled it ([#385](https://github.com/rak200/ui/issues/385)) ([8aa9240](https://github.com/rak200/ui/commit/8aa9240ec37af3bc069953af377d8b39c423a85e))
+* **input,checkbox,select,radio:** a form the browser restores comes back as the reader left it ([#384](https://github.com/rak200/ui/issues/384)) ([33266c7](https://github.com/rak200/ui/commit/33266c722cc5f411ae7c8ebfbf9f5cd27e11f561))
+
 ## [0.8.8](https://github.com/rak200/ui/compare/0.8.7...0.8.8) (2026-11-05)
 
 
