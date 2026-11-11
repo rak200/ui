@@ -218,7 +218,7 @@ switch's excepted, whose thumb a sheen could only pass over — and its ring com
 blur; in error it holds a light of the danger round it and flashes its fill. Under the pointer it
 takes its sheen where the pointer is, a switch's excepted again, a shadow cast away from it and a
 band along its boundary nearest it. A card takes its tint where the pointer is, a shadow cast away
-from it and a band along its boundary nearest it, and leans toward it; at a focus it holds, its tint
+from it and a band along its boundary nearest it; at a focus it holds, its tint
 sweeps across it — the card's own light, which keeps its muted text at 4.5:1 where a button's sheen
 did not — and a light holds along its inside; and it comes out of a fine grain as it arrives, and
 dissolves into one as it leaves. A toast takes its tint where the pointer is and rises, its edge as
@@ -241,12 +241,14 @@ and a light holds along its inside.
 
 It names the edge again for each drawn control, `checkbox`, `switch` and `radio`, where the default
 theme's taste names their `none`: a component's own entry outweighs a page's, so without its own
-Glass's edge would never reach them. And it leans the card alone, as RFC 0004 chose.
+Glass's edge would never reach them. It leans no card toward the pointer, though RFC 0004 chose the
+tilt for the card: turned under the blur on every frame the pointer moved, a card cost the page
+frames in every engine, so a card leans only where you choose `tilt`, as
+[the card says](card.md#motion).
 
 | Component                     | Moment         | Effect     |
 | ----------------------------- | -------------- | ---------- |
 | `checkbox`, `switch`, `radio` | `hover-border` | `edge`     |
-| `card`                        | `hover-move`   | `tilt`     |
 | `card`                        | `enter`        | `dissolve` |
 | `card`                        | `exit`         | `dissolve` |
 | `toast`                       | `hover-shadow` | `raise`    |

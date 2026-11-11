@@ -170,8 +170,8 @@ on its own once a moment fires it — the burst of light at the focus, the ring'
 press lets go on — which runs longer than an effect that holds for as long as its moment does. **A
 movement that follows the pointer has a fifth**, `--ui-duration-follow` over `--ui-duration-50`, the
 step the ordinals left room for under the first: what follows the pointer is moved again every frame
-the pointer moves, so it catches up in 75ms on a straight clock — the card leaning toward it under
-Glass — where an effect's time would leave it trailing. **An entrance and an exit have a sixth and
+the pointer moves, so it catches up in 75ms on a straight clock — a card leaning toward it in a
+tilt — where an effect's time would leave it trailing. **An entrance and an exit have a sixth and
 a seventh**, `--ui-duration-enter` over `--ui-duration-300` and `--ui-duration-exit` over
 `--ui-duration-200`, the exit a step quicker, beside the curves each already had — a card fading in
 as it is put on the page, and out as it leaves. A surface's pieces and its grain take as long
