@@ -389,10 +389,31 @@ export class UiIcon extends LitElement {
      * Measured on the spike: a name with no module imported renders an empty box, with no
      * error anywhere — so a typo in `name` and a missing import look exactly like a glyph
      * that draws nothing. A page that slots its own mark is doing that deliberately and is
-     * not warned.
+     * not warned, and nor is an icon no longer in the page.
+     *
+     * **Not before the page has loaded.** Whichever script imports the package first defines
+     * the element and upgrades every icon already in the page, so a glyph module a later script
+     * imports, or an `import()` the page started, registers after the icon's first update: each
+     * warned and then drew, measured in the three engines, and on the workbench every icon did,
+     * its shell being the page's first script (#399). Every static script has run by
+     * DOMContentLoaded, where an `import()` had not; by load it had, on a page an image held
+     * back. And load can be read off `readyState`, which says interactive while the page's
+     * module scripts run as after DOMContentLoaded. An arrow, so the listener is the same one
+     * however many times the icon updates before then, which the page adds once.
      */
-    #complain(): void {
-        if (this.name === '' || glyphs.has(this.name) || this.children.length > 0) {
+    readonly #complain = (): void => {
+        if (
+            this.name === '' ||
+            glyphs.has(this.name) ||
+            this.children.length > 0 ||
+            !this.isConnected
+        ) {
+            return;
+        }
+
+        if (document.readyState !== 'complete') {
+            window.addEventListener('load', this.#complain, { once: true });
+
             return;
         }
 
@@ -400,7 +421,7 @@ export class UiIcon extends LitElement {
             `<ui-icon name="${this.name}"> drew nothing: no glyph is registered under that name. ` +
                 `Import it — import '@rak200/ui/icons/${this.name}.js' — or slot an <svg> of your own.`,
         );
-    }
+    };
 }
 
 // Stryker disable next-line StringLiteral: the registration runs once, at import, inside

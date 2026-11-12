@@ -490,6 +490,66 @@ describe('the registry', () => {
 
         expect(warn).not.toHaveBeenCalled();
     });
+
+    /**
+     * A page still loading, as a script it runs sees it: `readyState` says interactive until the
+     * page has loaded, and the load is the test's to dispatch, #399.
+     */
+    function loading(): { load: () => void } {
+        const state = vi.spyOn(document, 'readyState', 'get').mockReturnValue('interactive');
+
+        return {
+            load: () => {
+                state.mockReturnValue('complete');
+                window.dispatchEvent(new Event('load'));
+            },
+        };
+    }
+
+    it('waits for the page to load, so a glyph a later script imports is not taken for a missing one', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const page = loading();
+        const host = await mount('<ui-icon name="imported-later"></ui-icon>');
+
+        expect(warn, 'nothing while the page loads').not.toHaveBeenCalled();
+
+        register('imported-later', svg`<path d="M4 12h16" />`);
+        await icon(host).updateComplete;
+        page.load();
+
+        expect(warn, 'nor once it has, the glyph being there').not.toHaveBeenCalled();
+        expect(drawn(host).querySelectorAll('path')).toHaveLength(1);
+    });
+
+    it('says so once the page has loaded, for a name still unregistered, and once', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const page = loading();
+        const host = await mount('<ui-icon name="never-imported"></ui-icon>');
+
+        // Updated again while the page loads, which asks the page to listen a second time.
+        icon(host).label = 'Never';
+        await icon(host).updateComplete;
+
+        expect(warn, 'nothing while the page loads').not.toHaveBeenCalled();
+
+        page.load();
+        // A second load, which a listener left behind would answer.
+        window.dispatchEvent(new Event('load'));
+
+        expect(warn).toHaveBeenCalledOnce();
+        expect(String(warn.mock.calls[0]?.[0])).toContain('<ui-icon name="never-imported">');
+    });
+
+    it('says nothing at load for an icon taken off the page before it', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const page = loading();
+        const host = await mount('<ui-icon name="taken-away"></ui-icon>');
+
+        host.remove();
+        page.load();
+
+        expect(warn).not.toHaveBeenCalled();
+    });
 });
 
 /**
