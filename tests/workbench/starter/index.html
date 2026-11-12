@@ -90,11 +90,13 @@
                         <span slot="tip">Search every invoice</span>
                     </ui-tooltip>
                     <ui-menu>
-                        <span slot="trigger">More</span>
-                        <button type="button">Rename</button>
-                        <button type="button">Duplicate</button>
+                        <span slot="trigger"><ui-icon name="ellipsis"></ui-icon> More</span>
+                        <button type="button"><ui-icon name="pencil"></ui-icon> Rename</button>
+                        <button type="button"><ui-icon name="copy"></ui-icon> Duplicate</button>
                         <hr />
-                        <button type="button">Move to trash</button>
+                        <button type="button">
+                            <ui-icon name="trash-2"></ui-icon> Move to trash
+                        </button>
                     </ui-menu>
                     <ui-button id="open" variant="secondary"
                         ><ui-icon name="trash-2"></ui-icon> Delete account</ui-button
