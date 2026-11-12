@@ -178,6 +178,164 @@ describe('ui-icon', () => {
 });
 
 /**
+ * Where an icon sits in a line of text, #395: on the middle of its text's line, by a baseline of
+ * its own, and taking the room it needs, half above and half below, wherever no control fits it to
+ * a line. Measured against the boxes lines of text are rather than against their glyphs, whose box
+ * is laid on the line by half of a leading that can fall between two pixels.
+ */
+describe('in a line of text', () => {
+    /** The middle of a box, top to bottom. */
+    const middle = (box: DOMRect): number => box.top + box.height / 2;
+
+    /** Where an element is drawn. */
+    const box = (element: Element): DOMRect => element.getBoundingClientRect();
+
+    /** The two lines a fixture holds, in order, and a failure with a name if it holds fewer. */
+    function lines(host: HTMLElement): [HTMLParagraphElement, HTMLParagraphElement] {
+        const [first, second] = [...host.querySelectorAll('p')];
+
+        if (first === undefined || second === undefined) {
+            throw new Error('the fixture holds fewer than two lines');
+        }
+
+        return [first, second];
+    }
+
+    it.each([
+        ['the page leaves it', ''],
+        ['a line no taller than the text', 'line-height: 1'],
+        ['a line twice the text', 'line-height: 2'],
+        ['smaller text', 'font-size: 12px'],
+        ['an icon larger than the text', '--ui-icon-size: 2em'],
+        ['text right to left', 'direction: rtl'],
+    ])(
+        'sits on the middle of its line, and opens it no further than it needs, on %s',
+        async (_, style) => {
+            const host = await mount(
+                [
+                    `<p style="margin: 0; white-space: nowrap; ${style}">Find <ui-icon name="x"></ui-icon> it</p>`,
+                    `<p style="margin: 0; white-space: nowrap; ${style}">Find it</p>`,
+                ].join(''),
+            );
+            const [line, bare] = lines(host);
+
+            expect(middle(box(icon(host))), "on the line's middle").toBeCloseTo(
+                middle(box(line)),
+                1,
+            );
+            expect(
+                box(line).height,
+                "the text's line, or the icon where it is the taller",
+            ).toBeCloseTo(Math.max(box(bare).height, box(icon(host)).height), 1);
+        },
+    );
+
+    it('stays where it stands against its text in a line something taller has opened', async () => {
+        // An empty inline-block stands on the baseline by its foot, so its top is the baseline.
+        const foot = '<span style="display: inline-block"></span>';
+        const host = await mount(
+            [
+                `<p style="margin: 0; white-space: nowrap">Find ${foot}<ui-icon name="x"></ui-icon> it</p>`,
+                `<p style="margin: 0; white-space: nowrap">Find ${foot}<ui-icon name="x"></ui-icon> it <span style="display: inline-block; block-size: 4em"></span></p>`,
+            ].join(''),
+        );
+        const offsets = lines(host).map((line) => {
+            const [baseline, glyph] = [line.querySelector('span'), line.querySelector('ui-icon')];
+
+            if (baseline === null || glyph === null) {
+                throw new Error('the line holds no baseline or no icon');
+            }
+
+            return middle(box(glyph)) - box(baseline).top;
+        });
+
+        expect(offsets[1], 'held to its text, not to the top of the line').toBeCloseTo(
+            offsets[0] ?? Number.NaN,
+            1,
+        );
+    });
+
+    it('stands on the middle of the text in a row a host lines up by baselines', async () => {
+        const host = await mount(
+            '<div style="display: flex; align-items: baseline; gap: 8px"><ui-icon name="x"></ui-icon><span>Label</span></div>',
+        );
+        const label = host.querySelector('span');
+
+        if (label === null) {
+            throw new Error('the row holds no label');
+        }
+
+        expect(middle(box(icon(host)))).toBeCloseTo(middle(box(label)), 1);
+    });
+
+    it('opens a line of its own as far as its size and no further, over no line beside it', async () => {
+        const host = await mount(
+            [
+                '<p style="margin: 0">Above</p>',
+                '<div><ui-icon name="x" style="--ui-icon-size: 48px"></ui-icon></div>',
+                '<p style="margin: 0">Below</p>',
+            ].join(''),
+        );
+        const line = host.querySelector('div');
+
+        if (line === null) {
+            throw new Error('the fixture holds no line for the icon');
+        }
+
+        expect(box(line).height, 'no room kept under it').toBeCloseTo(48, 1);
+        expect(box(icon(host)).top, 'none of it over the line above').toBeCloseTo(box(line).top, 1);
+    });
+
+    it('keeps the glyph its size, whatever spacing the text carries', async () => {
+        const host = await mount(
+            '<p style="letter-spacing: 0.5em; word-spacing: 1em; text-indent: 3em">Find <ui-icon name="x"></ui-icon> it</p>',
+        );
+
+        expect(box(drawn(host)).width).toBeCloseTo(20, 1);
+        expect(box(drawn(host)).left, 'drawn from the start of the icon').toBeCloseTo(
+            box(icon(host)).left,
+            1,
+        );
+    });
+
+    it.each([
+        ['a line no taller than the text', 'line-height: 1'],
+        ['an icon larger than the text', '--ui-icon-size: 2em'],
+        ['a line twice the text', 'line-height: 2'],
+    ])(
+        'takes no more of a line than the line where a control fits it to one, on %s',
+        async (_, style) => {
+            // Handed as a control hands it, on the icon.
+            const host = await mount(
+                [
+                    `<p style="margin: 0; white-space: nowrap; ${style}">Find <ui-icon name="x" style="--ui-fx-line: 1"></ui-icon> it</p>`,
+                    `<p style="margin: 0; white-space: nowrap; ${style}">Find it</p>`,
+                ].join(''),
+            );
+            const [line, bare] = lines(host);
+
+            expect(box(line).height, 'no taller than its text').toBeCloseTo(box(bare).height, 1);
+            expect(middle(box(icon(host))), "on the line's middle").toBeCloseTo(
+                middle(box(line)),
+                1,
+            );
+        },
+    );
+
+    it('gives way to a margin of yours, where a control fits it to a line', async () => {
+        const host = await mount(
+            [
+                '<style>ui-icon.mine { margin-block: 0 }</style>',
+                '<p style="margin: 0; line-height: 1">Find <ui-icon class="mine" name="x" style="--ui-fx-line: 1"></ui-icon> it</p>',
+            ].join(''),
+        );
+
+        expect(getComputedStyle(icon(host)).marginTop).toBe('0px');
+        expect(getComputedStyle(icon(host)).marginBottom).toBe('0px');
+    });
+});
+
+/**
  * The one part of an icon with a wrong answer. An icon beside a word is decoration and
  * must not be announced twice; an icon that *is* the control has nowhere else to get a
  * name from.

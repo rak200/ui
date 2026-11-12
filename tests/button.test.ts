@@ -332,6 +332,47 @@ describe('an icon beside the label', () => {
         expect(label(touching).left - icon(touching).right).toBeCloseTo(0, 0);
         expect(label(spaced).left - icon(spaced).right).toBeGreaterThan(2);
     });
+
+    it('centres an icon inside an element of yours, and leaves it the room it needs', async () => {
+        // A line shorter than the glyph, where an icon fitted to it and one that is not part.
+        const [labelled, nested] = await line(
+            'line-height: 1',
+            'Delete',
+            `<ui-button><span>${glyph} Delete</span></ui-button>`,
+        );
+
+        if (labelled === undefined || nested === undefined) {
+            throw new Error('the line holds fewer buttons than it was given');
+        }
+
+        const taller =
+            inner(nested).getBoundingClientRect().height -
+            inner(labelled).getBoundingClientRect().height;
+
+        expect(offset(icon(nested), nested), "on the button's middle").toBeCloseTo(0, 1);
+        expect(taller, 'taller by what the glyph has over the line').toBeCloseTo(
+            icon(nested).height - Number.parseFloat(getComputedStyle(inner(labelled)).lineHeight),
+            1,
+        );
+    });
+
+    it('fits no icon you lay out away from the line, over its label say', async () => {
+        const [, stacked] = await line(
+            '',
+            'Upload',
+            '<ui-button><span style="display: inline-flex; flex-direction: column; align-items: center"><ui-icon style="--ui-icon-size: 2em"><svg viewBox="0 0 24 24"></svg></ui-icon><span>Upload</span></span></ui-button>',
+        );
+        const under = stacked?.querySelector('span span');
+
+        if (stacked === undefined || under === null || under === undefined) {
+            throw new Error('the line holds no stacked button');
+        }
+
+        expect(icon(stacked).bottom, 'over none of the label').toBeCloseTo(
+            under.getBoundingClientRect().top,
+            1,
+        );
+    });
 });
 
 /**

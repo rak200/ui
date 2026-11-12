@@ -65,19 +65,17 @@ export class UiButton extends LitElement {
                 isolation: isolate;
             }
 
-            /* An icon beside the label sits centred on the label's line and makes it no taller:
-           half of what the line has to spare over the glyph goes above it and half below, as
-           the toast centres its own, and the icon is held to the top of the line rather than
-           stood on its baseline. Stood there, it sat 3.5 to 5px above the label's middle and
-           took the label 1 to 2.3px under the button's, in a button 2.5 to 4.5px taller —
-           measured in the three engines, #393. The line keeps its strut, so a button holding
-           only an icon is as tall as one with a label and shares its baseline; the room between
-           icon and label is the space the markup writes, as between two words. A flex row with
-           a gap would decide that room, and lift an icon alone 3.5 to 5px from a labelled
-           button beside it in a line of text. */
+            /* An icon written in the button is fitted to the label's line, which src/icon.ts says
+           how it takes: centred on it and no taller than it, so a button holding an icon, or
+           only one, is as tall as one with a label and stands on the same baseline beside it in
+           a line of text. Stood on its foot, it sat 3.5 to 5px above the label's middle in a
+           button 2.5 to 4.5px taller — measured in the three engines, #393. The room between
+           icon and label is the space the markup writes, as between two words, which a flex row
+           with a gap would decide. Written on the icon, so it reaches none inside an element of
+           yours, which may lay one out where no line is: in a column over its label, an icon
+           fitted to a line drew 4.5 to 5.5px over the label. */
             ::slotted(ui-icon) {
-                vertical-align: top;
-                margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
+                --ui-fx-line: 1;
             }
 
             /* What a theme's glow is drawn on: a layer over the button rather than the button,

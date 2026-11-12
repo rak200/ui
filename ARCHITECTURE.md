@@ -400,6 +400,17 @@ so in the console rather than leaving a blank box.
 stroke, caps and colour applied to it — so a brand glyph is indistinguishable from a vendored one,
 which is the condition under which drawing your own is worth doing at all.
 
+**An icon sits on the middle of its line of text, and a control fits it to its label's line.** The
+icon stands on a baseline of its own, the one a line of its text would have, centred on the glyph,
+so it stays with that text however the line around it is laid out, and opens the line as far as
+its size and no further. A rule holding it to the line's top lost its text in a line something
+taller had opened, and margins written for every icon drew a larger one over the lines beside it.
+A control is the one place a line must not grow, so the button and the menu hand the icon a fit,
+which takes it to the line's height by its margins: the button on an icon written in it, so a
+layout of the host's inside it is left alone, and the menu through its trigger's label and each
+item, which are the host's own elements and which no selector of the menu's reaches inside. #393,
+#395
+
 ## The accessibility bar
 
 **Every component meets WCAG 2.2 AA and conforms to its WAI-ARIA APG pattern.**

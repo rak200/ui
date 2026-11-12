@@ -5,9 +5,9 @@
  * **Three kinds of `--ui-` name live here, and none of them is a token.** A token has a default
  * at `:root` and a category its value is checked against. These have neither: a choice is
  * unwritten until a consumer writes one, a taste until a theme does, and the properties an effect
- * animates are this package's own state, which a host is never meant to set. `tests/tokens.test.ts`
- * refuses any `--ui-` name in a component's sheet that is neither a token nor of one of these
- * kinds, so a fourth cannot enter by accident.
+ * animates, with the few one sheet hands another, are this package's own state, which a host is
+ * never meant to set. `tests/tokens.test.ts` refuses any `--ui-` name in a component's sheet that
+ * is neither a token nor of one of these kinds, so a fourth cannot enter by accident.
  *
  * **This module imports no Lit, and imports nothing at all**, for the reason `src/reference.ts`
  * gives for `src/tokens.ts`: `src/tokens.ts` and `src/theme.ts` read the taste's shape and names
@@ -44,8 +44,10 @@ export interface Taste {
  *   narrowest wins.
  * - `taste` — `--ui-taste-<moment>` and `--ui-taste-<component>-<moment>`, the effect a theme
  *   chooses for the page and for one component, read only where no choice is written.
- * - `animated` — `--ui-fx-<name>`, a property an effect animates. Only this package writes one,
- *   and a host that sets one changes an effect partway through drawing it.
+ * - `animated` — `--ui-fx-<name>`, a property an effect animates, or one a component's sheet hands
+ *   another's: the side a tip comes from, the line a control fits an icon to. Only this package
+ *   writes one, and a host that sets one changes an effect partway through drawing it, or a
+ *   component's layout from under it.
  */
 export const kinds = {
     choice: '--ui-motion-',

@@ -59,8 +59,11 @@ and stands on the same baseline beside it in a line of text. The icon's size is 
 fraction of the label's, so it follows the text into a [compact](tokens.md#density) region as well.
 [The accessible name](icon.md#the-accessible-name) says when an icon needs a `label`.
 
-Only an icon written in the button itself is placed: one inside an element of yours, or a mark you
-slot without an `<ui-icon>` round it, sits as inline content does.
+**Only an icon written in the button itself is fitted to the label's line.** One inside an element
+of yours sits on the middle of its own line, as [an icon in a line of text](icon.md#in-a-line-of-text)
+does, and takes the room it needs: an element of yours may lay an icon out where no line is, in a
+column over the label say, and an icon fitted to a line would draw over the label there. A mark you
+slot without an `<ui-icon>` round it sits as inline content does.
 
 ## `variant`
 

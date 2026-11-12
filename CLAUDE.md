@@ -258,13 +258,22 @@ explains. This file restates none of them.
   Each field's `willUpdate()` points at the button's for the reason. `tests/escaped.ts` is what
   turns a throw in the task a click or a key schedules into a failure, which the tooltip's suite
   captured through first.
-- **Why an icon in a button is centred by its margins on the label's line rather than by a flex
-  row** — the comment beside `::slotted(ui-icon)` in `src/button.ts`, and `docs/button.md`'s _With
-  an icon_. The line keeps its strut, so an icon alone keeps a labelled button's height and
-  baseline, which a flex row lost; `tests/button.test.ts`'s _an icon beside the label_ compares each
-  button with a labelled one in a line of text, under line heights shorter and taller than the icon.
-  The menu's caret takes the same margin, beside its own rule in `src/menu.ts`, so a face whose line
-  is shorter than an icon leaves the trigger as tall as the button it is measured against.
+- **Why an icon sits on the middle of its line by a baseline of its own, and how a control fits it
+  to its label's line** — [ARCHITECTURE.md](ARCHITECTURE.md), _Glyphs are adopted, the delivery is
+  owned_, the comments beside `:host` and `:host::before` in `src/icon.ts`, beside
+  `::slotted(ui-icon)` in `src/button.ts` and beside `::slotted([slot='trigger'])` and the items in
+  `src/menu.ts`, and `docs/icon.md`'s _In a line of text_. The icon centres on a line of its text
+  drawn before the glyph, where `vertical-align: top` lost its text in a line something taller had
+  opened, and takes no margin of its own, where one written for every icon drew a larger icon over
+  the lines beside it (#395). A control hands it `--ui-fx-line`, which fits it to the line with the
+  margins #393 measured for the button: the button writes it on an icon written in it, so a layout
+  of the host's inside it is left alone, and the menu hands it on through its label and items, which
+  are the host's elements. No flex row lays it out: the line keeps its strut, so an icon alone keeps
+  a labelled button's height and baseline. `tests/icon.test.ts`'s _in a line of text_,
+  `tests/button.test.ts`'s _an icon beside the label_ and `tests/menu.test.ts`'s _an icon in the
+  trigger's label or in an item_ compare each against the same line without an icon. The menu's
+  caret takes the same margin, beside its own rule in `src/menu.ts`, so a face whose line is shorter
+  than an icon leaves the trigger as tall as the button it is measured against.
 - **Why a field saves a state of its own for the browser to restore, and refuses one it did not
   write** — the docblock on `src/state.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md)'s paragraph on
   a restored form. Firefox hands a form-associated element the state another saved where the two
