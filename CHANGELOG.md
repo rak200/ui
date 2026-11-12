@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/rak200/ui/compare/0.9.0...0.9.1) (2026-11-12)
+
+
+### Performance Improvements
+
+* **theme:** Glass's card no longer leans toward the pointer, which cost it frames ([#387](https://github.com/rak200/ui/issues/387)) ([d2974b3](https://github.com/rak200/ui/commit/d2974b3589172e88086d5f924f7589cc6f5b9a7b))
+
 ## [0.9.0](https://github.com/rak200/ui/compare/0.8.8...0.9.0) (2026-11-10)
 
 
