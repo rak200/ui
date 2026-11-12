@@ -235,9 +235,14 @@ export class UiMenu extends LitElement {
 
             /* One dimension, not two: an svg carrying a viewBox is a replaced element with an
            intrinsic ratio, so a square glyph given a width takes the same height from it.
-           src/toast.ts carries the measurement that made this a rule. */
+           src/toast.ts carries the measurement that made this a rule. And no taller than the
+           label's line: half of what the line has to spare over the caret goes above it and
+           half below, as the toast and the button centre an icon, so a face whose line is
+           shorter than the caret does not make the trigger taller than the button it is drawn
+           as — Matrix's took it to 38px beside a 36px button, measured. */
             svg {
                 flex: none;
+                margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
                 inline-size: ${reference('--ui-icon-size')};
                 stroke-width: ${reference('--ui-icon-stroke')};
                 color: ${reference('--ui-color-text-muted')};

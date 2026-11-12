@@ -196,11 +196,16 @@ describe('an icon beside the label', () => {
     /** An icon with a mark of the test's own, so no registry is asked for a glyph. */
     const glyph = '<ui-icon><svg viewBox="0 0 24 24"></svg></ui-icon>';
 
-    /** `buttons` in one line of text styled by `style`, after a labelled one to measure them by. */
-    async function line(style: string, ...buttons: string[]): Promise<UiButton[]> {
+    /**
+     * `buttons` in one line of text styled by `style`, after one labelled `text` to measure them by.
+     * The same text, so its glyphs come from the same face and are snapped to the same pixels: a
+     * label's box is its face's, laid on the line by half of a leading that can fall between two
+     * pixels, which put a label half a pixel off an icon measured to the line itself.
+     */
+    async function line(style: string, text: string, ...buttons: string[]): Promise<UiButton[]> {
         const host = document.createElement('p');
         host.style.cssText = `margin: 0; white-space: nowrap; ${style}`;
-        host.innerHTML = ['<ui-button>Save</ui-button>', ...buttons].join(' ');
+        host.innerHTML = [`<ui-button>${text}</ui-button>`, ...buttons].join(' ');
         document.body.append(host);
 
         const elements = [...host.querySelectorAll('ui-button')];
@@ -214,6 +219,10 @@ describe('an icon beside the label', () => {
 
     /** The middle of a box, top to bottom. */
     const middle = (box: DOMRect): number => box.top + box.height / 2;
+
+    /** How far the middle of `inside` lies below the middle of `element`'s button. */
+    const offset = (inside: DOMRect, element: UiButton): number =>
+        middle(inside) - middle(inner(element).getBoundingClientRect());
 
     /** The label a button holds, measured as it is drawn. */
     function label(element: UiButton): DOMRect {
@@ -245,34 +254,44 @@ describe('an icon beside the label', () => {
         return found.getBoundingClientRect();
     }
 
-    /** That `element` is as tall as `labelled`, and stands where it does in the line. */
-    function beside(element: UiButton, labelled: UiButton): void {
+    /**
+     * That `element` holds its icon on its button's middle and its label where `labelled` holds
+     * one, is as tall, and stands where it does in the line.
+     */
+    function alike(element: UiButton, labelled: UiButton): void {
         const box = inner(element).getBoundingClientRect();
         const by = inner(labelled).getBoundingClientRect();
+
+        expect(offset(icon(element), element), "the icon, on the button's middle").toBeCloseTo(
+            0,
+            1,
+        );
+
+        if (element.textContent.trim() !== '') {
+            expect(
+                offset(label(element), element),
+                'the label, where a labelled button holds it',
+            ).toBeCloseTo(offset(label(labelled), labelled), 1);
+        }
 
         expect(box.height, 'as tall').toBeCloseTo(by.height, 1);
         expect(box.top, 'on the same baseline').toBeCloseTo(by.top, 1);
     }
 
     it.each([
-        ['before the label', `${glyph} Delete`, ''],
-        ['after it', `Next ${glyph}`, ''],
-        ['before it, right to left', `${glyph} מחק`, 'direction: rtl'],
+        ['before the label', `${glyph} Delete`, 'Delete', ''],
+        ['after it', `Next ${glyph}`, 'Next', ''],
+        ['before it, right to left', `${glyph} מחק`, 'מחק', 'direction: rtl'],
     ])(
-        'centres an icon %s on the label, and the label on the button',
-        async (_, content, style) => {
-            const [labelled, iconed] = await line(style, `<ui-button>${content}</ui-button>`);
+        'centres an icon %s on the line, and keeps the label where it was',
+        async (_, content, text, style) => {
+            const [labelled, iconed] = await line(style, text, `<ui-button>${content}</ui-button>`);
 
             if (labelled === undefined || iconed === undefined) {
                 throw new Error('the line holds fewer buttons than it was given');
             }
 
-            expect(middle(icon(iconed)), 'the icon').toBeCloseTo(middle(label(iconed)), 0);
-            expect(middle(label(iconed)), 'the label').toBeCloseTo(
-                middle(inner(iconed).getBoundingClientRect()),
-                0,
-            );
-            beside(iconed, labelled);
+            alike(iconed, labelled);
         },
     );
 
@@ -285,6 +304,7 @@ describe('an icon beside the label', () => {
     ])('keeps a labelled button and one with an icon alone alike, on %s', async (_, style) => {
         const [labelled, iconed, alone] = await line(
             style,
+            'Delete',
             `<ui-button>${glyph} Delete</ui-button>`,
             `<ui-button>${glyph}</ui-button>`,
         );
@@ -293,18 +313,14 @@ describe('an icon beside the label', () => {
             throw new Error('the line holds fewer buttons than it was given');
         }
 
-        expect(middle(icon(iconed)), 'beside a label').toBeCloseTo(middle(label(iconed)), 0);
-        expect(middle(icon(alone)), 'alone').toBeCloseTo(
-            middle(inner(alone).getBoundingClientRect()),
-            0,
-        );
-        beside(iconed, labelled);
-        beside(alone, labelled);
+        alike(iconed, labelled);
+        alike(alone, labelled);
     });
 
     it('leaves the room between the icon and the label to the space the markup writes', async () => {
         const [, touching, spaced] = await line(
             '',
+            'Delete',
             `<ui-button>${glyph}Delete</ui-button>`,
             `<ui-button>${glyph} Delete</ui-button>`,
         );

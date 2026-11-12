@@ -1306,6 +1306,27 @@ describe('the values, all of which come from the token layer', () => {
         }
     });
 
+    it.each([
+        ['the page leaves it', ''],
+        ['a line shorter than the caret', 'line-height: 1'],
+        ['a line twice the text', 'line-height: 2'],
+    ])('stands as tall as the secondary button it is, on %s', async (_, style) => {
+        // The caret is an icon's size, which a face with a short line, Matrix's, sets taller
+        // than the label: it made the trigger 2px taller than a button beside it.
+        const host = await mount(
+            `<div style="${style}">${fixture}<ui-button variant="secondary">Actions</ui-button></div>`,
+        );
+        const mine = trigger(menu(host)).getBoundingClientRect();
+        const theirs = inner(only(host, 'ui-button'), 'button').getBoundingClientRect();
+
+        expect(mine.height).toBeCloseTo(theirs.height, 1);
+        expect(
+            caret(menu(host)).getBoundingClientRect().top +
+                caret(menu(host)).getBoundingClientRect().height / 2,
+            'the caret, on its middle',
+        ).toBeCloseTo(mine.top + mine.height / 2, 1);
+    });
+
     it('takes the trigger box from the host', async () => {
         const host = await mount(fixture);
         const element = menu(host);
