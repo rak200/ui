@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/rak200/ui/compare/0.9.1...0.9.2) (2026-11-12)
+
+
+### Features
+
+* **tokens,menu:** a compact density, chosen on any region with data-ui-density ([#392](https://github.com/rak200/ui/issues/392)) ([715e020](https://github.com/rak200/ui/commit/715e02042a95e104e3b581ed2e2d0b2f0573f940))
+
 ## [0.9.1](https://github.com/rak200/ui/compare/0.9.0...0.9.1) (2026-11-12)
 
 
