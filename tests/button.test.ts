@@ -187,6 +187,138 @@ describe('ui-button', () => {
 });
 
 /**
+ * An icon beside the label, centred on the label's line, #393: where the icon and the label each
+ * sit against the button's middle, how tall the button is against one with only a label, and where
+ * it stands beside one in a line of text, where buttons align by their baselines. Compared rather
+ * than written down, since a line's height is its font's.
+ */
+describe('an icon beside the label', () => {
+    /** An icon with a mark of the test's own, so no registry is asked for a glyph. */
+    const glyph = '<ui-icon><svg viewBox="0 0 24 24"></svg></ui-icon>';
+
+    /** `buttons` in one line of text styled by `style`, after a labelled one to measure them by. */
+    async function line(style: string, ...buttons: string[]): Promise<UiButton[]> {
+        const host = document.createElement('p');
+        host.style.cssText = `margin: 0; white-space: nowrap; ${style}`;
+        host.innerHTML = ['<ui-button>Save</ui-button>', ...buttons].join(' ');
+        document.body.append(host);
+
+        const elements = [...host.querySelectorAll('ui-button')];
+
+        for (const element of elements) {
+            await element.updateComplete;
+        }
+
+        return elements;
+    }
+
+    /** The middle of a box, top to bottom. */
+    const middle = (box: DOMRect): number => box.top + box.height / 2;
+
+    /** The label a button holds, measured as it is drawn. */
+    function label(element: UiButton): DOMRect {
+        const text = [...element.childNodes].find(
+            (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== '',
+        );
+
+        if (text === undefined) {
+            throw new Error('the button holds no label');
+        }
+
+        const content = text.textContent ?? '';
+        const start = content.indexOf(content.trim());
+        const range = document.createRange();
+        range.setStart(text, start);
+        range.setEnd(text, start + content.trim().length);
+
+        return range.getBoundingClientRect();
+    }
+
+    /** The icon a button holds. */
+    function icon(element: UiButton): DOMRect {
+        const found = element.querySelector('ui-icon');
+
+        if (found === null) {
+            throw new Error('the button holds no icon');
+        }
+
+        return found.getBoundingClientRect();
+    }
+
+    /** That `element` is as tall as `labelled`, and stands where it does in the line. */
+    function beside(element: UiButton, labelled: UiButton): void {
+        const box = inner(element).getBoundingClientRect();
+        const by = inner(labelled).getBoundingClientRect();
+
+        expect(box.height, 'as tall').toBeCloseTo(by.height, 1);
+        expect(box.top, 'on the same baseline').toBeCloseTo(by.top, 1);
+    }
+
+    it.each([
+        ['before the label', `${glyph} Delete`, ''],
+        ['after it', `Next ${glyph}`, ''],
+        ['before it, right to left', `${glyph} מחק`, 'direction: rtl'],
+    ])(
+        'centres an icon %s on the label, and the label on the button',
+        async (_, content, style) => {
+            const [labelled, iconed] = await line(style, `<ui-button>${content}</ui-button>`);
+
+            if (labelled === undefined || iconed === undefined) {
+                throw new Error('the line holds fewer buttons than it was given');
+            }
+
+            expect(middle(icon(iconed)), 'the icon').toBeCloseTo(middle(label(iconed)), 0);
+            expect(middle(label(iconed)), 'the label').toBeCloseTo(
+                middle(inner(iconed).getBoundingClientRect()),
+                0,
+            );
+            beside(iconed, labelled);
+        },
+    );
+
+    it.each([
+        ['the page leaves it', ''],
+        ['a line no taller than the text', 'line-height: 1'],
+        ['a line twice the text', 'line-height: 2'],
+        ['an icon larger than the line', '--ui-icon-size: 2em'],
+        ['smaller text', 'font-size: 12px'],
+    ])('keeps a labelled button and one with an icon alone alike, on %s', async (_, style) => {
+        const [labelled, iconed, alone] = await line(
+            style,
+            `<ui-button>${glyph} Delete</ui-button>`,
+            `<ui-button>${glyph}</ui-button>`,
+        );
+
+        if (labelled === undefined || iconed === undefined || alone === undefined) {
+            throw new Error('the line holds fewer buttons than it was given');
+        }
+
+        expect(middle(icon(iconed)), 'beside a label').toBeCloseTo(middle(label(iconed)), 0);
+        expect(middle(icon(alone)), 'alone').toBeCloseTo(
+            middle(inner(alone).getBoundingClientRect()),
+            0,
+        );
+        beside(iconed, labelled);
+        beside(alone, labelled);
+    });
+
+    it('leaves the room between the icon and the label to the space the markup writes', async () => {
+        const [, touching, spaced] = await line(
+            '',
+            `<ui-button>${glyph}Delete</ui-button>`,
+            `<ui-button>${glyph} Delete</ui-button>`,
+        );
+
+        if (touching === undefined || spaced === undefined) {
+            throw new Error('the line holds fewer buttons than it was given');
+        }
+
+        expect(label(touching).left - icon(touching).right).toBeCloseTo(0, 0);
+        expect(label(spaced).left - icon(spaced).right).toBeGreaterThan(2);
+    });
+});
+
+/**
  * *Every visual decision is a token* is a promise a component can quietly stop keeping.
  *
  * The assertion is the host's own act: declare the property above the component and read

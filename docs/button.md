@@ -11,6 +11,7 @@ import '@rak200/ui';
 ## Contents
 
 - [`<ui-button>`](#ui-button)
+- [With an icon](#with-an-icon)
 - [`variant`](#variant)
 - [`disabled`](#disabled)
 - [`type`](#type)
@@ -40,6 +41,26 @@ registers the element, so nothing has to be called.
 Every state below is asserted against [axe](https://github.com/dequelabs/axe-core) in the suite,
 for WCAG A/AA, inside the real browser it renders in — including through the shadow root, which is
 where a check that stops at the host silently passes.
+
+## With an icon
+
+An [`<ui-icon>`](icon.md) written in the button beside its label sits centred on the label's line,
+and the button stays as tall as one without it:
+
+```html
+<ui-button><ui-icon name="trash-2"></ui-icon> Delete</ui-button>
+<ui-button>Next <ui-icon name="arrow-right"></ui-icon></ui-button>
+<ui-button><ui-icon name="x" label="Close"></ui-icon></ui-button>
+```
+
+**The room between the icon and the label is the space you write**, as between two words: leave it
+out and the two touch. An icon alone is centred in the button, which is as tall as a labelled one
+and stands on the same baseline beside it in a line of text. The icon's size is `--ui-icon-size`, a
+fraction of the label's, so it follows the text into a [compact](tokens.md#density) region as well.
+[The accessible name](icon.md#the-accessible-name) says when an icon needs a `label`.
+
+Only an icon written in the button itself is placed: one inside an element of yours, or a mark you
+slot without an `<ui-icon>` round it, sits as inline content does.
 
 ## `variant`
 
