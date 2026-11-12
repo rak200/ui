@@ -111,8 +111,8 @@ export class UiIcon extends LitElement {
                half below, which is less than nothing where the glyph is the taller, so the icon
                makes the control's line no taller. Elsewhere none of it, so an icon larger than its
                text opens its line, half above and half below, and draws over no line beside it,
-               where a margin written for every icon took one of 48px 12 to 13.5px over the lines
-               above and below it. */
+               where a margin written for every icon took one of 48px 10.5 to 13.5px over the
+               lines above and below it. */
             margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2 * var(--ui-fx-line, 0));
         }
 

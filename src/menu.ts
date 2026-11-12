@@ -257,7 +257,7 @@ export class UiMenu extends LitElement {
             /* The line an icon in the label is fitted to: one of the label's, as a button fits one,
            so a trigger holding an icon is as tall as the button it is drawn as, and the icon and
            the label sit on its middle — src/icon.ts says how the icon takes it. Unfitted, the
-           icon stood 3.5 to 5px above the label's middle in a trigger 2.5 to 4.5px taller,
+           icon stood 3.5 to 5px above the label's middle in a trigger 2 to 4.5px taller,
            measured in the three engines, #395. The label is an element of yours, which
            ::slotted() reaches and nothing inside it, so the fit is handed on by inheritance, to
            an icon wherever the label holds one, and an icon slotted beside the label takes it

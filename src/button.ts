@@ -73,7 +73,7 @@ export class UiButton extends LitElement {
            icon and label is the space the markup writes, as between two words, which a flex row
            with a gap would decide. Written on the icon, so it reaches none inside an element of
            yours, which may lay one out where no line is: in a column over its label, an icon
-           fitted to a line drew 4.5 to 5.5px over the label. */
+           twice the text fitted to a line drew 4.5 to 5.5px over the label. */
             ::slotted(ui-icon) {
                 --ui-fx-line: 1;
             }
