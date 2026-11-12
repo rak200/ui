@@ -23,6 +23,7 @@ import {
 - [Overriding a token](#overriding-a-token)
 - [Light and dark](#light-and-dark)
 - [Themes](#themes)
+- [Density](#density)
 - [Motion](#motion)
 - [More contrast](#more-contrast)
 - [`tokens`](#tokens)
@@ -146,6 +147,42 @@ pressed.
 
 The package ships themes of its own as well, as data with a function that renders them — see
 [theme.md](theme.md).
+
+## Density
+
+**A region says it is dense, and every component in it answers.** Write
+`data-ui-density="compact"` on any element, and the sheet writes two things there: the space every
+component multiplies at its compact step, `--ui-space-compact`, and the text a step smaller,
+`--ui-text-compact`. A control 40px tall comes to about 33px, a table's row to 32px and a menu's item
+to 25px, in a page whose text is 16px.
+
+```html
+<form data-ui-density="compact">…</form>
+```
+
+**The text is written once, on the region.** A compact region inside another does not shrink again,
+and your own text in one shrinks with it unless you sized it in `rem` or `px`. **On the root element
+the sheet writes both on `<body>` instead**, so `rem` stays where it is: the space token is written
+in `rem`, and a smaller root would take every length you wrote in it along.
+
+**What it leaves alone.** A checkbox, a switch and a radio stay on the 24px WCAG 2.2's 2.5.8 asks of
+a target, which the default space already sets them on, and the gaps round them tighten. A menu's
+item takes the same floor, which compact comes within a pixel of, so your own compact space cannot
+take it under. A tooltip's ceiling and a textarea's least height stay on the space token, so they
+come down a quarter. The theme, the scheme and more contrast are axes of their own.
+
+**Retune compact as you retune the default**, through its two tokens:
+
+```css
+:root {
+  --ui-space-compact: 0.3125rem;
+  --ui-text-compact: 0.9em;
+}
+```
+
+Both rules sit under `:where()`, so a rule of yours outweighs either wherever you write it. There is
+one level, and the default needs no attribute. The attribute is matched where the token sheet is, in
+the document, so the sheet does not see one written inside a shadow root of your own.
 
 ## Motion
 
@@ -287,6 +324,8 @@ The names that have a default and are emitted at `:root` — the **ground** half
 | `--ui-elevation-button`    | the lift a theme gives a button, none by default                  |
 | `--ui-backdrop-raised`     | what a raised surface does to the page behind it, none by default |
 | `--ui-text-100`            | the first step of the type scale                                  |
+| `--ui-space-compact`       | the space a [compact](#density) region writes in `--ui-space`     |
+| `--ui-text-compact`        | a compact region's text, a step under the text around it          |
 
 It is not called `groundTokens`, and that is a cost rather than an oversight: renaming an exported
 name is breaking. Read it as _the names that have a default_.
@@ -639,7 +678,8 @@ button answers as the button does, and a field's box lifts rather than its contr
 
 Every token as CSS, for a host that wants them without importing a component. Returns the text of a
 `:root` block, the reduced-motion rule beside it, the answer to `prefers-contrast: more` after both,
-and the default theme's [`taste`](#taste) last; the host inserts them however it prefers.
+the default theme's [`taste`](#taste), and the two rules of the compact [density](#density) last;
+the host inserts them however it prefers.
 
 ```js
 tokenStyleSheet();
@@ -663,7 +703,13 @@ tokenStyleSheet();
 //
 // :where(:root) {
 //   --ui-taste-hover-shadow: raise;
-//   … }'
+//   … }
+//
+// :where([data-ui-density='compact']:not(:root), :root[data-ui-density='compact'] > body) {
+//   --ui-space: var(--ui-space-compact, 0.375rem); }
+//
+// :where([data-ui-density='compact']:not(:root, [data-ui-density='compact'] *), …) {
+//   font-size: var(--ui-text-compact, 0.875em); }'
 ```
 
 A token with a dark value is emitted as a `light-dark()` pair; one without is emitted plain. The

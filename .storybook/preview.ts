@@ -1,7 +1,7 @@
 /**
  * What every story renders under.
  *
- * Four entries, and none of them is ordinary configuration.
+ * Five entries, and none of them is ordinary configuration.
  *
  * **The token sheet is here because without it the site shows the fallbacks rather than
  * the tokens.** Every component writes `var(--ui-token, fallback)`, and a fallback is a
@@ -19,6 +19,11 @@
  * **The theme control is the scheme control's second axis**, which RFC 0003 asked for beside
  * it: a theme is the attribute `data-ui-theme`, written on the same root the scheme is, with
  * the theme's own block inserted where the token sheet is. A host does the same two things.
+ *
+ * **The density control is the third axis**, which RFC 0008 asked for beside the other two: the
+ * attribute `data-ui-density`, written on the same root. On the root the token sheet writes the
+ * compact space and text on `<body>`, so `rem` stays where it is, and that is the case a host
+ * writing the attribute on the whole page is in.
  *
  * **The reduced-motion control is the token sheet's own collapse, written out**, which RFC
  * 0004 put first in its rollout: the second state of every effect is the one easiest to ship
@@ -152,9 +157,24 @@ const preview: Preview = {
                 dynamicTitle: true,
             },
         },
+        density: {
+            description: 'Which density the preview renders under',
+            toolbar: {
+                title: 'Density',
+                icon: 'collapse',
+                // An empty value for the default, which is no attribute at all, as the theme's
+                // default palette is. Named apart from the theme's *Default* for the motion
+                // control's reason: the toolbar shows the chosen titles side by side.
+                items: [
+                    { value: '', title: 'Default density' },
+                    { value: 'compact', title: 'Compact density' },
+                ],
+                dynamicTitle: true,
+            },
+        },
     },
 
-    initialGlobals: { scheme: 'light dark', theme: '', motion: '' },
+    initialGlobals: { scheme: 'light dark', theme: '', motion: '', density: '' },
 
     decorators: [
         (story, context): TemplateResult => {
@@ -173,6 +193,13 @@ const preview: Preview = {
                 delete document.documentElement.dataset['uiTheme'];
             } else {
                 document.documentElement.dataset['uiTheme'] = theme.name;
+            }
+
+            // On the root as well, and removed for the theme's reason.
+            if (String(context.globals['density']) === 'compact') {
+                document.documentElement.dataset['uiDensity'] = 'compact';
+            } else {
+                delete document.documentElement.dataset['uiDensity'];
             }
 
             // In the story rather than on the root, which the collapse needs no more than the

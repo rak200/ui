@@ -487,6 +487,26 @@ floors. That
 is a condition on the host, documented with the theme, rather than an opacity raised until any page
 passes, which leaves the glass reading as milk.
 
+### Density is a third axis, chosen on a region
+
+**A page that holds a lot makes a region of it compact** — RFC 0008 — with
+`data-ui-density="compact"` on any element, and every component under it answers: the space at its
+compact step and the text a step smaller, each a ground of its own, so a host retunes compact as it
+retunes the default. There is one level, and the axis moves neither the theme nor the scheme.
+
+**The space token alone is not a density.** Brought down far enough to matter, it narrowed every
+tooltip and shortened every textarea, left the text as it was, and could not reach the checkbox, the
+switch or the radio, which already stood on the 24px WCAG 2.2's 2.5.8 asks of a target. With the
+text a step smaller beside it, the space comes down only a quarter, to 0.375rem: at 0.25rem a menu's
+item came to 23px, and items sit one against the next, so the criterion's spacing exception does not
+save them. A menu's item takes the floor itself, so a host's own compact space cannot take it under.
+
+**The text is written once, on the region, and never on the root.** Written on every component, it
+compounds where components nest — a button in a card two steps down. Written on the root, it moves
+`rem`, which the space token is written in, and every length a host wrote in it. So the sheet writes
+the size on the outermost compact region alone, and on `<body>` where that region is the root; the
+space it writes on every region, since a length in `rem` does not compound.
+
 ### Motion is tokens, and reduced motion is one rule
 
 Components read a **purpose** — `--ui-duration-state` — over a scale named by ordinals with gaps, so

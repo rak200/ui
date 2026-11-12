@@ -5,6 +5,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // provider, but a JS config file is not — so without this line `cdp().send` is a type
 // error and the emulation below cannot be written at all.
 import type {} from '@vitest/browser-playwright';
+import { LitElement } from 'lit';
 import { expectAccessible } from './a11y.js';
 import { contrastRatio } from './contrast.js';
 import { mountStory } from './stories.js';
@@ -40,6 +41,9 @@ import { UiTooltip } from '../src/tooltip.js';
 
 afterEach(() => {
     document.body.replaceChildren();
+    // The density a test or the playground's control wrote on the root, which would make every
+    // test after it compact.
+    delete document.documentElement.dataset['uiDensity'];
 });
 
 /** The axis `color-scheme` selects. A theme is the other one, and they are independent. */
@@ -740,6 +744,9 @@ describe('tokenStyleSheet', () => {
         expect(sheet).toContain('  --ui-radius: 0.375rem;');
         expect(sheet).toContain('  --ui-color-surface: light-dark(#ffffff, #111827);');
         expect(sheet).toContain('  --ui-duration-100: 150ms;');
+        // The compact density's two, at the values RFC 0008 settled.
+        expect(sheet).toContain('  --ui-space-compact: 0.375rem;');
+        expect(sheet).toContain('  --ui-text-compact: 0.875em;');
     });
 
     it('declares the scheme axis, which no token can carry', () => {
@@ -817,12 +824,12 @@ describe('tokenStyleSheet', () => {
     });
 
     it('parses as CSS the browser actually applies', () => {
-        expect(parsed().cssRules.length).toBe(4);
+        expect(parsed().cssRules.length).toBe(6);
     });
 
-    it("writes the default theme's taste last, at :root under :where(), the page's first", () => {
-        // Last, so the three rules above keep their places; under :where(), so a host's rule
-        // for a taste outweighs it wherever that rule is written.
+    it("writes the default theme's taste after them, at :root under :where(), the page's first", () => {
+        // After them, so the three rules above keep their places; under :where(), so a host's
+        // rule for a taste outweighs it wherever that rule is written.
         const rule = styleRule(parsed().cssRules[3]);
 
         expect(rule.selectorText).toBe(':where(:root)');
@@ -839,6 +846,24 @@ describe('tokenStyleSheet', () => {
                 ]),
             ),
         ]);
+    });
+
+    it('writes the compact density last, the space on every region and the text on the outermost', () => {
+        // Both under :where(), so a host's own rule outweighs either, as the taste's block is;
+        // and both on <body> where the region is the root, so `rem` stays where it is.
+        const space = styleRule(parsed().cssRules[4]);
+        const text = styleRule(parsed().cssRules[5]);
+
+        expect(space.selectorText).toBe(
+            ':where([data-ui-density="compact"]:not(:root), :root[data-ui-density="compact"] > body)',
+        );
+        expect([...declarations(space)]).toEqual([
+            ['--ui-space', 'var(--ui-space-compact, 0.375rem)'],
+        ]);
+        expect(text.selectorText).toBe(
+            ':where([data-ui-density="compact"]:not(:root, [data-ui-density="compact"] *), :root[data-ui-density="compact"] > body)',
+        );
+        expect([...declarations(text)]).toEqual([['font-size', 'var(--ui-text-compact, 0.875em)']]);
     });
 
     it("takes the button's, the fields', the drawn controls', the card's, the toast's and the tooltip's effects as the default theme's taste, the package's motion", () => {
@@ -919,7 +944,8 @@ describe('tokenStyleSheet', () => {
         // rule, its own `:root {`, one line per name it collapses, and the two closing braces; a
         // blank line, and the contrast rule laid out the same way; a blank line, and the
         // taste's block, its selector, one line per moment — the page's and each component's —
-        // and its brace.
+        // and its brace; and the density's two rules, each after a blank line, with its
+        // selector, its one declaration and its brace.
         expect(lines.length).toBe(
             tokens.length +
                 collapsed.length +
@@ -930,7 +956,8 @@ describe('tokenStyleSheet', () => {
                     (count, moments) => count + Object.keys(moments).length,
                     0,
                 ) +
-                3,
+                3 +
+                2 * 4,
         );
     });
 });
@@ -993,6 +1020,310 @@ describe('the reduced-motion collapse, as the browser applies it', () => {
         probe.style.opacity = '0';
 
         expect(await ended).toBe(true);
+    });
+});
+
+/**
+ * The compact density, RFC 0008's: an attribute on any element, and every component under it
+ * answers, with the space at its compact step and the text a step smaller.
+ *
+ * Each component is measured in three regions of one page: under the attribute, under the two
+ * values RFC 0008 settled written by hand, and under neither. Compact is the written region
+ * exactly and smaller than neither, unless a floor holds. Heights are compared rather than written
+ * down: a control's height is its text's line, and the line is the font's, which is not the same
+ * on every system the suite runs on.
+ */
+describe('the compact density, as the browser applies it', () => {
+    /** What each region writes: the attribute, RFC 0008's two values by hand, and nothing. */
+    const regions = {
+        compact: 'data-ui-density="compact"',
+        written: 'style="--ui-space: 0.375rem; font-size: 0.875em"',
+        plain: '',
+    } as const;
+
+    /** One of the three. */
+    type Region = keyof typeof regions;
+
+    /** The token sheet, as a host inserts it. */
+    function sheet(): HTMLStyleElement {
+        const style = document.createElement('style');
+        style.textContent = tokenStyleSheet();
+
+        return style;
+    }
+
+    /** The one element `selector` finds under `parent`, so a fixture that lost it fails here. */
+    function one(parent: ParentNode, selector: string): HTMLElement {
+        const found = parent.querySelector<HTMLElement>(selector);
+
+        if (found === null) {
+            throw new Error(`no ${selector} in the fixture`);
+        }
+
+        return found;
+    }
+
+    /** The element `selector` finds in the shadow root of the one `tag` under `parent`. */
+    function within(parent: ParentNode, tag: string, selector: string): HTMLElement {
+        const root = one(parent, tag).shadowRoot;
+
+        if (root === null) {
+            throw new Error(`${tag} has no shadow root`);
+        }
+
+        return one(root, selector);
+    }
+
+    /** Every component under `parent`, rendered. */
+    async function rendered(parent: ParentNode): Promise<void> {
+        for (const element of parent.querySelectorAll('*')) {
+            if (element instanceof LitElement) {
+                await element.updateComplete;
+            }
+        }
+    }
+
+    /** `markup` in each of the three regions, under the token sheet, with everything rendered. */
+    async function mount(markup: string): Promise<Readonly<Record<Region, HTMLElement>>> {
+        const page = document.createElement('div');
+        page.innerHTML = Object.entries(regions)
+            .map(([name, written]) => `<div data-region="${name}" ${written}>${markup}</div>`)
+            .join('');
+        document.body.append(sheet(), page);
+        await rendered(page);
+
+        const region = (name: Region): HTMLElement => one(page, `[data-region="${name}"]`);
+
+        return { compact: region('compact'), written: region('written'), plain: region('plain') };
+    }
+
+    /** How tall `element` is drawn. */
+    const height = (element: Element): number => element.getBoundingClientRect().height;
+
+    /** A length `element` computes for `property`, in pixels. */
+    const length = (element: Element, property: string): number =>
+        Number.parseFloat(getComputedStyle(element).getPropertyValue(property));
+
+    /** What `--ui-space` and the text come to at `element`, in pixels. */
+    function measures(element: HTMLElement): { space: number; text: number } {
+        const probe = document.createElement('div');
+        probe.style.paddingTop = 'var(--ui-space)';
+        element.append(probe);
+
+        try {
+            return { space: length(probe, 'padding-top'), text: length(probe, 'font-size') };
+        } finally {
+            probe.remove();
+        }
+    }
+
+    /** An item's height, in the menu `region` holds, open for as long as it takes to read. */
+    async function item(region: HTMLElement): Promise<number> {
+        const menu = one(region, 'ui-menu') as UiMenu;
+        menu.open = true;
+        await menu.updateComplete;
+
+        try {
+            return height(one(region, 'ui-menu > button'));
+        } finally {
+            menu.open = false;
+            await menu.updateComplete;
+        }
+    }
+
+    /** The menu both of its cases open. */
+    const menu =
+        '<ui-menu><span slot="trigger">Actions</span><button type="button">Rename</button></ui-menu>';
+
+    // Each component, by what a reader sees the density move: a control's height, a surface's
+    // padding, a tip's ceiling and a glyph's size. The tip and the glyph are the two measures
+    // that are no density at all, which RFC 0008 left on the space token and the text.
+    it.each([
+        [
+            'a button',
+            '<ui-button>Save</ui-button>',
+            (region: HTMLElement) => height(within(region, 'ui-button', 'button')),
+        ],
+        [
+            'an input',
+            '<ui-input label="Amount"></ui-input>',
+            (region: HTMLElement) => height(within(region, 'ui-input', 'input')),
+        ],
+        [
+            'a textarea',
+            '<ui-textarea label="Notes"></ui-textarea>',
+            (region: HTMLElement) => height(within(region, 'ui-textarea', 'textarea')),
+        ],
+        [
+            'a select',
+            '<ui-select label="Currency"><ui-option value="brl">Real</ui-option></ui-select>',
+            (region: HTMLElement) => height(within(region, 'ui-select', 'select')),
+        ],
+        [
+            "a menu's trigger",
+            menu,
+            (region: HTMLElement) => height(within(region, 'ui-menu', 'button')),
+        ],
+        ["a menu's item", menu, item],
+        [
+            "a table's row",
+            '<ui-table><table><caption>Invoices</caption><tr><td>1</td></tr></table></ui-table>',
+            (region: HTMLElement) => height(one(region, 'tr')),
+        ],
+        [
+            "a card's padding",
+            '<ui-card><p>Text</p></ui-card>',
+            (region: HTMLElement) => length(one(region, 'ui-card'), 'padding-top'),
+        ],
+        [
+            "a toast's padding",
+            '<ui-toaster><ui-toast duration="0">Saved.</ui-toast></ui-toaster>',
+            (region: HTMLElement) => length(one(region, 'ui-toast'), 'padding-top'),
+        ],
+        [
+            "a dialog's padding",
+            '<ui-dialog><h2 slot="title">Delete</h2><p>This cannot be undone.</p></ui-dialog>',
+            (region: HTMLElement) => length(within(region, 'ui-dialog', 'dialog'), 'padding-top'),
+        ],
+        [
+            "a tooltip's ceiling",
+            '<ui-tooltip><button type="button">Save</button><span slot="tip">Saves it.</span></ui-tooltip>',
+            (region: HTMLElement) => length(one(region, '[slot="tip"]'), 'max-inline-size'),
+        ],
+        // A mark of the page's own, so no registry is asked for a glyph it does not hold.
+        [
+            'an icon',
+            '<ui-icon><svg viewBox="0 0 24 24"></svg></ui-icon>',
+            (region: HTMLElement) => one(region, 'ui-icon').getBoundingClientRect().width,
+        ],
+    ] as const)('takes %s down to what the two values give it', async (_, markup, measure) => {
+        const { compact, written, plain } = await mount(markup);
+        const measured = await measure(compact);
+
+        expect(measured).toBeCloseTo(await measure(written), 1);
+        expect(measured).toBeLessThan(await measure(plain));
+    });
+
+    it.each([
+        ['a checkbox', '<ui-checkbox label="Send a receipt"></ui-checkbox>', 'ui-checkbox'],
+        ['a switch', '<ui-switch label="Notify me"></ui-switch>', 'ui-switch'],
+        [
+            'a radio',
+            '<ui-radio-group label="Plan"><ui-radio value="free">Free</ui-radio></ui-radio-group>',
+            'ui-radio-group',
+        ],
+    ] as const)(
+        'keeps %s on the 24px floor it stands on, and draws its label closer and smaller',
+        async (_, markup, tag) => {
+            const { compact, written, plain } = await mount(markup);
+            const box = (region: HTMLElement): DOMRect =>
+                within(region, tag, 'input').getBoundingClientRect();
+            const label = (region: HTMLElement): Element => {
+                const found = within(region, tag, 'input').closest('label');
+
+                if (found === null) {
+                    throw new Error(`${tag} draws no label round its control`);
+                }
+
+                return found;
+            };
+
+            expect(box(compact).height).toBe(24);
+            expect([box(compact).width, box(compact).height]).toEqual([
+                box(plain).width,
+                box(plain).height,
+            ]);
+
+            for (const property of ['column-gap', 'font-size']) {
+                expect(length(label(compact), property), property).toBe(
+                    length(label(written), property),
+                );
+                expect(length(label(compact), property), property).toBeLessThan(
+                    length(label(plain), property),
+                );
+            }
+        },
+    );
+
+    it('writes the compact space and the smaller text on the region, and nothing outside it', () => {
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<div id="inside" data-ui-density="compact"></div><div id="outside"></div>',
+        );
+        document.body.append(sheet());
+
+        expect(measures(one(document, '#inside'))).toEqual({ space: 6, text: 14 });
+        expect(measures(one(document, '#outside'))).toEqual({ space: 8, text: 16 });
+    });
+
+    it('takes the text a step down once, however many compact regions it is inside', () => {
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<div data-ui-density="compact"><div id="nested" data-ui-density="compact"></div></div>',
+        );
+        document.body.append(sheet());
+
+        expect(measures(one(document, '#nested'))).toEqual({ space: 6, text: 14 });
+    });
+
+    it('spaces a region compact again inside one a host spaced apart', () => {
+        // A length in `rem` does not compound, so the space is written on every region.
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<div data-ui-density="compact"><div style="--ui-space: 1rem"><div id="again" data-ui-density="compact"></div></div></div>',
+        );
+        document.body.append(sheet());
+
+        expect(measures(one(document, '#again'))).toEqual({ space: 6, text: 14 });
+    });
+
+    it('writes both on <body> when the root says compact, and leaves rem where it was', () => {
+        document.documentElement.dataset['uiDensity'] = 'compact';
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<div id="page"></div><div id="nested" data-ui-density="compact"></div>',
+        );
+        document.body.append(sheet());
+
+        const rem = document.createElement('div');
+        rem.style.paddingTop = '1rem';
+        document.body.append(rem);
+
+        expect(length(document.documentElement, 'font-size'), 'the root').toBe(16);
+        expect(length(rem, 'padding-top'), 'a rem').toBe(16);
+        expect(measures(one(document, '#page'))).toEqual({ space: 6, text: 14 });
+        // A region on a compact page is inside one already, so its text goes no further down.
+        expect(measures(one(document, '#nested'))).toEqual({ space: 6, text: 14 });
+    });
+
+    it('takes a step down on <body> too, when <body> is the region', () => {
+        document.body.dataset['uiDensity'] = 'compact';
+
+        try {
+            document.body.insertAdjacentHTML('beforeend', '<div id="page"></div>');
+            document.body.append(sheet());
+
+            expect(length(document.documentElement, 'font-size'), 'the root').toBe(16);
+            expect(measures(one(document, '#page'))).toEqual({ space: 6, text: 14 });
+        } finally {
+            delete document.body.dataset['uiDensity'];
+        }
+    });
+
+    it("lets a host's own rule outweigh it, and retunes it through its two tokens", () => {
+        const host = document.createElement('style');
+        host.textContent = [
+            ':root { --ui-space-compact: 0.25rem; --ui-text-compact: 0.75em; }',
+            '.roomy { --ui-space: 1rem; font-size: 20px; }',
+        ].join('\n');
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<div id="retuned" data-ui-density="compact"></div><div id="roomy" class="roomy" data-ui-density="compact"></div>',
+        );
+        document.body.append(sheet(), host);
+
+        expect(measures(one(document, '#retuned'))).toEqual({ space: 4, text: 12 });
+        expect(measures(one(document, '#roomy'))).toEqual({ space: 16, text: 20 });
     });
 });
 
@@ -2317,5 +2648,47 @@ describe('the reduced-motion control the playground carries', () => {
         const container = await mountStory(Primary, buttonMeta, 'Primary');
 
         expect(transition(container)).toBe(0.15);
+    });
+});
+
+/**
+ * The playground's density control, RFC 0008's axis beside the scheme and the theme: the
+ * attribute, written on the root as the theme is, where the token sheet makes the page compact
+ * from `<body>` down.
+ */
+describe('the density control the playground carries', () => {
+    /** The button a story rendered. */
+    function button(container: HTMLElement): HTMLButtonElement {
+        const found = container.querySelector('ui-button')?.shadowRoot?.querySelector('button');
+
+        if (found === null || found === undefined) {
+            throw new Error('the story rendered no button');
+        }
+
+        return found;
+    }
+
+    it('leaves the root without a density by default', async () => {
+        await mountStory(Primary, buttonMeta, 'Primary');
+
+        expect(document.documentElement.hasAttribute('data-ui-density')).toBe(false);
+    });
+
+    it('makes the page compact when the toolbar asks for it, from <body> down', async () => {
+        const container = await mountStory(Primary, buttonMeta, 'Primary', { density: 'compact' });
+
+        expect(document.documentElement.dataset['uiDensity']).toBe('compact');
+        expect(getComputedStyle(document.body).fontSize).toBe('14px');
+        expect(getComputedStyle(button(container)).paddingTop).toBe('6px');
+    });
+
+    it('takes the density away with the next story that asks for none', async () => {
+        await mountStory(Primary, buttonMeta, 'Primary', { density: 'compact' });
+        document.body.replaceChildren();
+
+        const container = await mountStory(Primary, buttonMeta, 'Primary');
+
+        expect(document.documentElement.hasAttribute('data-ui-density')).toBe(false);
+        expect(getComputedStyle(button(container)).paddingTop).toBe('8px');
     });
 });

@@ -1495,6 +1495,19 @@ describe('the values, all of which come from the token layer', () => {
         ).toBe('rgb(1, 2, 3)');
     });
 
+    it("keeps an item on the 24px WCAG 2.2's 2.5.8 asks, however small a host makes it", async () => {
+        // Items sit one against the next, so the criterion's spacing exception saves none, and
+        // RFC 0008's compact density comes within a pixel of the floor.
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        element.style.setProperty('--ui-space', '0px');
+        element.style.fontSize = '8px';
+        await open(element);
+
+        expect(item(host, 0).getBoundingClientRect().height).toBe(24);
+    });
+
     it('answers a pointer on an item, and never on one that cannot be chosen', async () => {
         const host = await mount(fixture);
         const element = menu(host);

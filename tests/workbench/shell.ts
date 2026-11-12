@@ -49,6 +49,8 @@ const titles: Readonly<Record<Tab, string>> = {
 interface Options {
     /** A shipped theme's name, or empty for the default palette. */
     theme: string;
+    /** `compact` for the compact density, or empty for what the page wrote. */
+    density: string;
     /** `light` or `dark`, or empty for the reader's own, which is what the token sheet declares. */
     scheme: string;
     /** `reduce` for the collapse the reader's setting asks for, or empty for the reader's own. */
@@ -94,7 +96,7 @@ const key = 'rak200-workbench';
 
 /** What the shell holds the first time, and whatever storage cannot give back. */
 const initial: Kept = {
-    options: { theme: '', scheme: '', motion: '', contrast: '', direction: '' },
+    options: { theme: '', density: '', scheme: '', motion: '', contrast: '', direction: '' },
     open: true,
     tab: 'options',
     tokens: {},
@@ -164,6 +166,7 @@ const themes: ReadonlyMap<string, ui.Theme> = new Map([
 const authored = {
     direction: document.documentElement.getAttribute('dir'),
     theme: document.documentElement.getAttribute('data-ui-theme'),
+    density: document.documentElement.getAttribute('data-ui-density'),
 };
 
 /** Writes `value` as `name` on the root, or takes the attribute away where `value` is `null`. */
@@ -196,6 +199,7 @@ function apply(options: Options): void {
     const root = document.documentElement;
 
     attribute('data-ui-theme', theme === undefined ? authored.theme : theme.name);
+    attribute('data-ui-density', options.density === '' ? authored.density : options.density);
     attribute('dir', options.direction === '' ? authored.direction : options.direction);
 
     if (options.scheme === '') {
@@ -630,7 +634,7 @@ class WorkbenchShell extends LitElement {
         `;
     }
 
-    /** The options: the theme, the scheme, the reader's settings, the direction. */
+    /** The options: the theme, the density, the scheme, the reader's settings, the direction. */
     #options(): TemplateResult {
         const named = [...themes.keys()].map(
             (name) => [name, `${name.charAt(0).toUpperCase()}${name.slice(1)}`] as const,
@@ -638,6 +642,10 @@ class WorkbenchShell extends LitElement {
 
         return html`
             ${this.#select('theme', 'Theme', [['', 'Default'], ...named])}
+            ${this.#select('density', 'Density', [
+                ['', 'As the page writes it'],
+                ['compact', 'Compact'],
+            ])}
             ${this.#select('scheme', 'Scheme', [
                 ['', 'System'],
                 ['light', 'Light'],

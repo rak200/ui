@@ -234,7 +234,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | separator             | `--ui-color-border`                                                                                         |
 | corner                | `--ui-radius`                                                                                               |
 | lift                  | `--ui-elevation-raised`, lit in the accent if written in `currentColor`                                     |
-| item padding          | `--ui-space` ÷ 2 and `--ui-space`                                                                           |
+| item padding          | `--ui-space` ÷ 2 and `--ui-space`, the item never under the 24px WCAG 2.2's 2.5.8 asks of a target          |
 | item hover            | `--ui-color-hover`                                                                                          |
 | focus ring            | `--ui-color-focus`                                                                                          |
 | trigger glow          | `--ui-elevation-control`, and `--ui-elevation-control-hover` under the pointer, in the accent               |

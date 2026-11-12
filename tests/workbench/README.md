@@ -28,13 +28,13 @@ written there reaches the tree or a gate.
 The panel in the corner is written into every page of the scratch, and what it holds survives the
 reload each save causes.
 
-| Tab           | What it does                                                          |
-| ------------- | --------------------------------------------------------------------- |
-| Options       | the theme, the scheme, reduced motion, more contrast, the direction   |
-| Events        | what a consumer listens for, and what each submission sends           |
-| Tokens        | a value for any token a host sets, and the CSS a consumer would write |
-| Effects       | an effect for a moment, on the page or on one component, and its CSS  |
-| Accessibility | axe over the page, with the suite's ruleset                           |
+| Tab           | What it does                                                                     |
+| ------------- | -------------------------------------------------------------------------------- |
+| Options       | the theme, the density, the scheme, reduced motion, more contrast, the direction |
+| Events        | what a consumer listens for, and what each submission sends                      |
+| Tokens        | a value for any token a host sets, and the CSS a consumer would write            |
+| Effects       | an effect for a moment, on the page or on one component, and its CSS             |
+| Accessibility | axe over the page, with the suite's ruleset                                      |
 
 - **Reduced motion and more contrast** are the sheets' own rules with the condition taken off, which
   is what the reader's setting does. A page cannot set either media feature.

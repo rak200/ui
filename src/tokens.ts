@@ -217,6 +217,16 @@ export const tokens = [
     // every component sets `font: inherit` and takes the page's own size, which is the
     // right default and not a step at all.
     '--ui-text-100',
+    // The compact density's space and text, arriving with the density — RFC 0008: what a region
+    // that says `data-ui-density="compact"` writes for everything under it. Each is a ground with
+    // a value of its own, as `--ui-duration-loop` is, in the category of the name it stands in
+    // for, so a host retunes compact as it retunes the default.
+    //
+    // The text is the type scale's first step written as a value rather than read through it: a
+    // region's text and a field's supporting text are two roles, and a host who moves one leaves
+    // the other where it was.
+    '--ui-space-compact',
+    '--ui-text-compact',
 ] as const;
 
 /** A CSS custom property this package defines and gives a default. */
@@ -468,6 +478,12 @@ export const defaults: Readonly<Record<Token, string>> = {
     // 16px page, which is the smallest size in wide use that is still ordinary body text
     // rather than fine print.
     '--ui-text-100': '0.875em',
+    // Three quarters of the default: in the compact text, 33px controls, 32px rows and 25px menu
+    // items, where 0.25rem took an item to 23px, under the 24px WCAG 2.2's 2.5.8 asks of a target
+    // — measured for RFC 0008.
+    '--ui-space-compact': '0.375rem',
+    // A step under whatever text the region is in, so the page's own size sets compact's too.
+    '--ui-text-compact': '0.875em',
 };
 
 /**
@@ -818,9 +834,33 @@ const collapse: Readonly<Record<string, string>> = {
 };
 
 /**
+ * What says a region is compact — RFC 0008's: the attribute, on any element, and everything under
+ * it answers. There is one level, so the attribute takes one value.
+ */
+const compact = "[data-ui-density='compact']";
+
+/**
+ * Where a compact region's space and text are written: on the element that says so, or on `<body>`
+ * where that element is the root. **The root itself is passed over**, because its size is what
+ * `rem` measures, and the space token is written in `rem`: a smaller text on the root took every
+ * control to 31.5px and every length a host wrote in `rem` with it — measured for RFC 0008.
+ */
+const regions = [`${compact}:not(:root)`, `:root${compact} > body`];
+
+/**
+ * The regions whose text goes a step smaller: those inside no other. A size in `em` is a fraction
+ * of the text around it, so a region inside another written again would be two steps down, as a
+ * button in a card was where RFC 0008 wrote the size on every component. The space is written on
+ * every region instead, since a length in `rem` does not compound: a region inside one a host
+ * spaced apart is compact again.
+ */
+const outermost = [`${compact}:not(:root, ${compact} *)`, `:root${compact} > body`];
+
+/**
  * The token defaults as a CSS rule, for a host that wants them without importing a
- * component. Returns the text of a `:root` block, the reduced-motion rule beside it and the
- * answer to `prefers-contrast: more` after both; a host inserts them however it prefers.
+ * component. Returns the text of a `:root` block, the reduced-motion rule beside it, the
+ * answer to `prefers-contrast: more` after both, the default theme's taste and the compact
+ * density; a host inserts them however it prefers.
  *
  * **It declares `color-scheme` as well as the tokens, and that is deliberate.**
  * `color-scheme` is a real property rather than a custom one, so it can never be a token —
@@ -842,8 +882,13 @@ const collapse: Readonly<Record<string, string>> = {
  * **More contrast is answered here too**, from {@link moreContrast} and for the same
  * reason: it is the reader's setting, so no component should have to learn it exists.
  *
- * **The default theme's {@link taste} comes last**, under `:where(:root)`, so a host's rule for
- * a taste outweighs it wherever that rule is written.
+ * **The default theme's {@link taste} comes after them**, under `:where(:root)`, so a host's rule
+ * for a taste outweighs it wherever that rule is written.
+ *
+ * **The compact density comes last, as two rules under `:where()`** — RFC 0008 — so a host's own
+ * rule outweighs either in the same way. The first writes the compact space on every region that
+ * says `data-ui-density="compact"`, and the second the text a step smaller on the outermost of
+ * them; both are written on `<body>` where the region is the root.
  */
 export function tokenStyleSheet(): string {
     const grounds = tokens
@@ -875,5 +920,7 @@ export function tokenStyleSheet(): string {
         `@media (prefers-reduced-motion: reduce) {\n  :root {\n${collapsed}\n  }\n}`,
         `@media (prefers-contrast: more) {\n  :root {\n${contrasted}\n  }\n}`,
         tasteBlock(':root', taste),
+        `:where(${regions.join(', ')}) {\n  --ui-space: ${ground('--ui-space-compact')};\n}`,
+        `:where(${outermost.join(', ')}) {\n  font-size: ${ground('--ui-text-compact')};\n}`,
     ].join('\n\n');
 }
