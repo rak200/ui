@@ -254,4 +254,4 @@ is closed. Two questions are settled, and the proposed design above is written t
 - [RFC 0010](0010-component-features.md), the features the components that exist gain, written
   beside this one.
 - [RFC 0004](0004-motion.md), whose catalogue reaches each new component once it lands.
-- RFC 0008, the density each new component is tested under.
+- [RFC 0008](0008-density.md), the density each new component is tested under.
