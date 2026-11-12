@@ -254,6 +254,20 @@ export class UiMenu extends LitElement {
                 rotate: 180deg;
             }
 
+            /* The line an icon in the label is fitted to: one of the label's, as a button fits one,
+           so a trigger holding an icon is as tall as the button it is drawn as, and the icon and
+           the label sit on its middle — src/icon.ts says how the icon takes it. Unfitted, the
+           icon stood 3.5 to 5px above the label's middle in a trigger 2 to 4.5px taller,
+           measured in the three engines, #395. The label is an element of yours, which
+           ::slotted() reaches and nothing inside it, so the fit is handed on by inheritance, to
+           an icon wherever the label holds one, and an icon slotted beside the label takes it
+           the same. Taken by an icon from its parent alone, through a property that does not
+           inherit, it still reached icons deeper in WebKit, measured — so a layout of yours
+           inside the label or an item is yours to leave unfitted, as docs/menu.md says. */
+            ::slotted([slot='trigger']) {
+                --ui-fx-line: 1;
+            }
+
             /* The panel's own box. position: fixed is what the popover already is; it is
            restated because the anchored insets below place it against the viewport, and a
            reader of those rules should not have to know which stylesheet made it fixed. */
@@ -346,9 +360,12 @@ export class UiMenu extends LitElement {
            WCAG 2.2's 2.5.8 asks of a target: items sit one against the next, so the
            criterion's spacing exception does not save one, and the compact density comes
            within a pixel of it — RFC 0008 — so a host's own compact space would take an item
-           under it. */
+           under it. And the line an icon in the item is fitted to, one of the item's, handed on
+           as the trigger's label hands its own, so an item holding an icon is as tall as one
+           without. */
             ::slotted(button),
             ::slotted(a) {
+                --ui-fx-line: 1;
                 display: block;
                 inline-size: 100%;
                 min-block-size: 24px;

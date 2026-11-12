@@ -6,6 +6,9 @@
 
 import '@rak200/ui';
 import '@rak200/ui/icons/check.js';
+import '@rak200/ui/icons/copy.js';
+import '@rak200/ui/icons/ellipsis.js';
+import '@rak200/ui/icons/pencil.js';
 import '@rak200/ui/icons/search.js';
 import '@rak200/ui/icons/trash-2.js';
 import type { UiDialog } from '@rak200/ui';

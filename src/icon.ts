@@ -93,11 +93,34 @@ export class UiIcon extends LitElement {
     static override readonly styles = css`
         :host {
             display: inline-flex;
+            /* Centred on a line of the text it sits in, drawn before the glyph with nothing on
+               it, so the icon's baseline is that line's: it stands where the text beside it
+               stands and its middle is the middle of that text's line — in running text, a
+               heading, a row a host lines up by baselines, and a line something taller than the
+               text has opened. Stood on the glyph's foot, as a picture stands, it sat 3.5 to 5px
+               above the text's middle and kept room under it for a descender, measured in the
+               three engines, #395. */
+            align-items: center;
             inline-size: ${reference('--ui-icon-size')};
             block-size: ${reference('--ui-icon-size')};
             /* An icon is a picture, not text: it never wants to be the thing that stretches
                a flex row or shrinks under one. */
             flex: none;
+            /* Fitted to its line where a control hands it --ui-fx-line at 1, as src/button.ts and
+               src/menu.ts do: half of what the line has to spare over the glyph goes above it and
+               half below, which is less than nothing where the glyph is the taller, so the icon
+               makes the control's line no taller. Elsewhere none of it, so an icon larger than its
+               text opens its line, half above and half below, and draws over no line beside it,
+               where a margin written for every icon took one of 48px 10.5 to 13.5px over the
+               lines above and below it. */
+            margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2 * var(--ui-fx-line, 0));
+        }
+
+        /* That line: one character with no width, in the text's own face and leading, so no
+           spacing the text carries takes any of the glyph's room. */
+        :host::before {
+            content: '\\200b';
+            inline-size: 0;
         }
 
         /* The icon takes the colour of whatever it sits in — colour inherits on its own,

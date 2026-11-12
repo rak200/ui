@@ -1610,6 +1610,161 @@ describe('the values, all of which come from the token layer', () => {
 });
 
 /**
+ * An icon in the trigger's label or in an item, #395: fitted to the line it is on, as a button
+ * fits one, so each is as tall as one without an icon, with the icon and the label on its middle.
+ * Compared rather than written down: a trigger against a secondary button and a trigger with no
+ * icon in the same line of text, where they align by their baselines, and an item against one
+ * with no icon in the same menu — each label against one with the same text, whose glyphs are
+ * snapped to the same pixels.
+ */
+describe("an icon in the trigger's label or in an item", () => {
+    /** An icon with a mark of the test's own, so no registry is asked for a glyph. */
+    const glyph = '<ui-icon><svg viewBox="0 0 24 24"></svg></ui-icon>';
+
+    /** The lines the menu is measured on, the compact density as it writes the space and text. */
+    const lines = [
+        ['the page leaves it', ''],
+        ['a line no taller than the text', 'line-height: 1'],
+        ['a line twice the text', 'line-height: 2'],
+        ['an icon larger than the line', '--ui-icon-size: 2em'],
+        ['smaller text', 'font-size: 12px'],
+        ['the compact density', '--ui-space: 0.375rem; font-size: 0.875em'],
+    ] as const;
+
+    /** Where a trigger holds its icon, and the way its line runs. */
+    const labels = [
+        ['before the label', `<span slot="trigger">${glyph} More</span>`, 'ltr'],
+        ['after it', `<span slot="trigger">More ${glyph}</span>`, 'ltr'],
+        ['before it, right to left', `<span slot="trigger">${glyph} More</span>`, 'rtl'],
+        [
+            'alone',
+            '<span slot="trigger"><ui-icon label="More"><svg viewBox="0 0 24 24"></svg></ui-icon></span>',
+            'ltr',
+        ],
+        ['inside an element of yours', `<span slot="trigger"><b>${glyph} More</b></span>`, 'ltr'],
+        [
+            'slotted beside the label',
+            '<ui-icon slot="trigger"><svg viewBox="0 0 24 24"></svg></ui-icon><span slot="trigger">More</span>',
+            'ltr',
+        ],
+    ] as const;
+
+    /** The middle of a box, top to bottom. */
+    const middle = (box: DOMRect): number => box.top + box.height / 2;
+
+    /** How far the middle of `inside` lies below the middle of `box`. */
+    const offset = (inside: DOMRect, box: DOMRect): number => middle(inside) - middle(box);
+
+    /** The first text a node holds, measured as it is drawn. */
+    function text(node: Node): DOMRect {
+        const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+
+        for (let found = walker.nextNode(); found !== null; found = walker.nextNode()) {
+            const content = found.textContent ?? '';
+
+            if (content.trim() !== '') {
+                const start = content.indexOf(content.trim());
+                const range = document.createRange();
+                range.setStart(found, start);
+                range.setEnd(found, start + content.trim().length);
+
+                return range.getBoundingClientRect();
+            }
+        }
+
+        throw new Error('the node holds no text');
+    }
+
+    /** The icon a node holds. */
+    const icon = (node: ParentNode): DOMRect => only(node, 'ui-icon').getBoundingClientRect();
+
+    it.each(
+        lines.flatMap(([on, style]) =>
+            labels.map(
+                ([where, label, direction]) =>
+                    [where, on, label, `${style}; direction: ${direction}`] as const,
+            ),
+        ),
+    )(
+        'keeps a trigger with an icon %s as tall as the button it is, on %s',
+        async (_, __, label, style) => {
+            const host = await mount(
+                `<p style="margin: 0; white-space: nowrap; ${style}">${[
+                    '<ui-button variant="secondary">More</ui-button>',
+                    '<ui-menu id="labelled"><span slot="trigger">More</span><button type="button">Rename</button></ui-menu>',
+                    `<ui-menu id="iconed">${label}<button type="button">Rename</button></ui-menu>`,
+                ].join(' ')}</p>`,
+            );
+            const labelled = only(host, '#labelled') as UiMenu;
+            const iconed = only(host, '#iconed') as UiMenu;
+            const box = trigger(iconed).getBoundingClientRect();
+            const by = inner(only(host, 'ui-button'), 'button').getBoundingClientRect();
+            const words = [...iconed.querySelectorAll('[slot="trigger"]')].find(
+                (node) => node.textContent.trim() !== '',
+            );
+
+            expect(offset(icon(iconed), box), "the icon, on the trigger's middle").toBeCloseTo(
+                0,
+                1,
+            );
+
+            if (words !== undefined) {
+                expect(
+                    offset(text(words), box),
+                    'the label, where a trigger with no icon holds it',
+                ).toBeCloseTo(
+                    offset(
+                        text(only(labelled, '[slot="trigger"]')),
+                        trigger(labelled).getBoundingClientRect(),
+                    ),
+                    1,
+                );
+            }
+
+            expect(box.height, 'as tall as the button').toBeCloseTo(by.height, 1);
+            expect(box.top, 'on the same baseline').toBeCloseTo(by.top, 1);
+        },
+    );
+
+    it.each(lines)('keeps an item with an icon as tall as one without, on %s', async (_, style) => {
+        const host = await mount(
+            `<div style="${style}"><ui-menu><span slot="trigger">More</span>${[
+                '<button type="button">Rename</button>',
+                `<button type="button">${glyph} Rename</button>`,
+                `<button type="button">Rename ${glyph}</button>`,
+                `<button type="button" dir="rtl">${glyph} Rename</button>`,
+                '<button type="button"><ui-icon label="Rename"><svg viewBox="0 0 24 24"></svg></ui-icon></button>',
+                `<button type="button"><span>${glyph} Rename</span></button>`,
+            ].join('')}</ui-menu></div>`,
+        );
+
+        await open(menu(host));
+
+        const [bare, ...iconed] = items(host);
+
+        if (bare === undefined || iconed.length !== 5) {
+            throw new Error('the menu holds fewer items than it was given');
+        }
+
+        const by = bare.getBoundingClientRect();
+
+        for (const each of iconed) {
+            const box = each.getBoundingClientRect();
+
+            expect(box.height, 'as tall').toBeCloseTo(by.height, 1);
+            expect(offset(icon(each), box), "the icon, on the item's middle").toBeCloseTo(0, 1);
+
+            if (each.textContent.trim() !== '') {
+                expect(
+                    offset(text(each), box),
+                    'the label, where an item with none holds it',
+                ).toBeCloseTo(offset(text(bare), by), 1);
+            }
+        }
+    });
+});
+
+/**
  * RFC 0006's second rollout step, first element. `<ui-menu>` renders its own trigger, so an
  * `aria-describedby` written in the host's tree names a node the trigger cannot resolve —
  * the tooltip hands the sentence over and this element renders it where the reference does.

@@ -14,6 +14,7 @@ import '@rak200/ui/icons/x.js';
 - [`<ui-icon>`](#ui-icon)
 - [Importing glyphs](#importing-glyphs)
 - [The accessible name](#the-accessible-name)
+- [In a line of text](#in-a-line-of-text)
 - [A mark the set does not have](#a-mark-the-set-does-not-have)
 - [What this costs](#what-this-costs)
 - [Motion](#motion)
@@ -84,6 +85,26 @@ it becomes an image with one:
 
 It is never both. Taking the `label` off puts it back to hidden; there is no state where
 the icon is announced and hidden at once.
+
+## In a line of text
+
+**An icon sits on the middle of the line of text it is in**, wherever that line is: running text,
+a heading, a row of yours lined up by baselines, a line something taller than the text has opened.
+It stands on a baseline of its own, the one a line of that text would have, centred on the glyph,
+so it stays with its text however the line around it is laid out.
+
+```html
+<p>Press <ui-icon name="search"></ui-icon> to find a file.</p>
+```
+
+**It takes the room it needs, half above it and half below.** An icon no taller than its text
+leaves the line as it was, and a larger one opens it as far as its size and no further: one
+standing alone keeps no room under it, and draws over no line beside it.
+
+**In a control it is fitted to the label's line instead**, and leaves the control no taller than
+its label does: in a [`<ui-button>`](button.md#with-an-icon), and in a
+[`<ui-menu>`](menu.md#with-an-icon)'s trigger and items. A `vertical-align` or a `margin` you
+write on `ui-icon` outweighs the element's own, as a rule of yours on any element does.
 
 ## A mark the set does not have
 

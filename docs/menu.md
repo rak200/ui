@@ -12,6 +12,7 @@ import '@rak200/ui';
 
 - [`<ui-menu>`](#ui-menu)
 - [Items are yours; the trigger is not](#items-are-yours-the-trigger-is-not)
+- [With an icon](#with-an-icon)
 - [The keyboard](#the-keyboard)
 - [What the platform does, and what is left](#what-the-platform-does-and-what-is-left)
 - [Where the panel lands](#where-the-panel-lands)
@@ -66,6 +67,30 @@ so the component styles it and leaves what it means alone.
 **A disabled item is stepped over rather than landed on.** Write `disabled` on a button, or
 `aria-disabled="true"` on a link; either is skipped by the arrow keys and by typeahead, and
 neither closes the menu when clicked.
+
+## With an icon
+
+An [`<ui-icon>`](icon.md) in the trigger's label or in an item sits centred on the line it is on,
+and the trigger and the item stay as tall as ones without it, as in a
+[`<ui-button>`](button.md#with-an-icon):
+
+```html
+<ui-menu>
+  <span slot="trigger"><ui-icon name="settings"></ui-icon> Settings</span>
+  <button type="button"><ui-icon name="pencil"></ui-icon> Rename</button>
+  <button type="button"><ui-icon name="copy"></ui-icon> Duplicate</button>
+</ui-menu>
+```
+
+**Wherever the label or the item holds one**, since both are elements of yours: an icon inside an
+element of yours in either is fitted to the line too. So is one slotted beside the label,
+`<ui-icon slot="trigger">`, and the room between the two is then the trigger's own gap, where an
+icon written in the label has the space you write. An icon alone, as in a menu opened from one,
+needs a `label`, as [the accessible name](icon.md#the-accessible-name) says.
+
+**A layout of your own inside the label or an item is not a line**: in a column over the text, say,
+an icon larger than the line would draw over the text. Give that icon `margin-block: 0`, which
+outweighs the element's own.
 
 ## The keyboard
 
