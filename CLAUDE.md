@@ -258,6 +258,13 @@ explains. This file restates none of them.
   Each field's `willUpdate()` points at the button's for the reason. `tests/escaped.ts` is what
   turns a throw in the task a click or a key schedules into a failure, which the tooltip's suite
   captured through first.
+- **Why an icon in a button is centred by its margins on the label's line rather than by a flex
+  row** — the comment beside `::slotted(ui-icon)` in `src/button.ts`, and `docs/button.md`'s _With
+  an icon_. The line keeps its strut, so an icon alone keeps a labelled button's height and
+  baseline, which a flex row lost; `tests/button.test.ts`'s _an icon beside the label_ compares each
+  button with a labelled one in a line of text, under line heights shorter and taller than the icon.
+  The menu's caret takes the same margin, beside its own rule in `src/menu.ts`, so a face whose line
+  is shorter than an icon leaves the trigger as tall as the button it is measured against.
 - **Why a field saves a state of its own for the browser to restore, and refuses one it did not
   write** — the docblock on `src/state.ts`, and [ARCHITECTURE.md](ARCHITECTURE.md)'s paragraph on
   a restored form. Firefox hands a form-associated element the state another saved where the two

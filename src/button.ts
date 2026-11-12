@@ -65,6 +65,21 @@ export class UiButton extends LitElement {
                 isolation: isolate;
             }
 
+            /* An icon beside the label sits centred on the label's line and makes it no taller:
+           half of what the line has to spare over the glyph goes above it and half below, as
+           the toast centres its own, and the icon is held to the top of the line rather than
+           stood on its baseline. Stood there, it sat 3.5 to 5px above the label's middle and
+           took the label 1 to 2.3px under the button's, in a button 2.5 to 4.5px taller —
+           measured in the three engines, #393. The line keeps its strut, so a button holding
+           only an icon is as tall as one with a label and shares its baseline; the room between
+           icon and label is the space the markup writes, as between two words. A flex row with
+           a gap would decide that room, and lift an icon alone 3.5 to 5px from a labelled
+           button beside it in a line of text. */
+            ::slotted(ui-icon) {
+                vertical-align: top;
+                margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2);
+            }
+
             /* What a theme's glow is drawn on: a layer over the button rather than the button,
            because a theme writes the glow in currentColor and a button's own colour is its
            label. inset: -1px reaches back over the border, so the glow hugs the boundary. */

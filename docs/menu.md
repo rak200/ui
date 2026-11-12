@@ -224,7 +224,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | trigger box           | the same as a secondary [`<ui-button>`](button.md), measured against it                                     |
 | trigger edge and lift | `--ui-color-border-button`, `--ui-color-border-button-hover` under the pointer, and `--ui-elevation-button` |
-| caret                 | `--ui-icon-size` and `--ui-icon-stroke`, in `--ui-color-text-muted`                                         |
+| caret                 | `--ui-icon-size` and `--ui-icon-stroke`, in `--ui-color-text-muted`, centred on the label's line            |
 | panel padding         | `--ui-space` ÷ 2                                                                                            |
 | panel width           | capped at `--ui-space` × 44                                                                                 |
 | gap from trigger      | `--ui-space` ÷ 2                                                                                            |
