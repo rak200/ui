@@ -592,3 +592,9 @@ explains. This file restates none of them.
   `src/theme.ts`. **The contrast floors run over every shipped palette**, in each scheme and under
   emulated `prefers-contrast: more`: a theme joins them by an entry in `palettes` in
   `tests/tokens.test.ts`, and the derived accent label is swept over a grid of accents there too.
+- **Why density is an attribute on a region, why its text is written once and on `<body>` at the
+  root, and why a menu's item has a floor of its own** — [ARCHITECTURE.md](ARCHITECTURE.md),
+  _Density is a third axis, chosen on a region_, the docblocks on `regions` and `outermost` in
+  `src/tokens.ts`, and the comment beside the item's floor in `src/menu.ts`. `tests/tokens.test.ts`
+  measures each component in a compact region against one with the two values written by hand, and
+  compares rather than writes down a height, since a control's height is its font's line.

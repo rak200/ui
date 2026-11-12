@@ -62,7 +62,8 @@ function sample(token: Token | DerivedToken, value: string): TemplateResult {
         ></span>`;
     }
 
-    if (token === '--ui-space') {
+    // The default space and the compact one, each drawn as the padding it is.
+    if (token.startsWith('--ui-space')) {
         return html`<span
             class="ruled"
             data-token=${token}

@@ -337,11 +337,16 @@ export class UiMenu extends LitElement {
 
             /* An item is the host's own control, reached through ::slotted — so what is set
            here is the only thing this component decides about it: that it fills the row,
-           reads left to right, and answers a pointer. */
+           reads left to right, and answers a pointer. And that it is no shorter than the 24px
+           WCAG 2.2's 2.5.8 asks of a target: items sit one against the next, so the
+           criterion's spacing exception does not save one, and the compact density comes
+           within a pixel of it — RFC 0008 — so a host's own compact space would take an item
+           under it. */
             ::slotted(button),
             ::slotted(a) {
                 display: block;
                 inline-size: 100%;
+                min-block-size: 24px;
                 box-sizing: border-box;
                 text-align: start;
                 font: inherit;

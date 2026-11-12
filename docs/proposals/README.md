@@ -19,6 +19,6 @@ descends from one written elsewhere, is joined to it by mother↔daughter links.
 | [0005](0005-form-association.md)     | Form association     | library | Implemented |
 | [0006](0006-supplementary-text.md)   | Supplementary text   | library | Implemented |
 | [0007](0007-workbench.md)            | The workbench        | tooling | Implemented |
-| [0008](0008-density.md)              | Density              | library | Accepted    |
+| [0008](0008-density.md)              | Density              | library | Implemented |
 | [0009](0009-new-components.md)       | New components       | library | Exploring   |
 | [0010](0010-component-features.md)   | Component features   | library | Exploring   |
