@@ -433,6 +433,25 @@ describe('opening and closing', () => {
         expect(menu(host).shadowRoot?.activeElement).toBe(trigger(menu(host)));
     });
 
+    it('closes when the click lands on what an item holds, its icon, and hands the focus back', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">Actions</span>
+                <button type="button"><ui-icon><svg viewBox="0 0 24 24"></svg></ui-icon> Rename</button>
+                <button type="button">Duplicate</button>
+            </ui-menu>
+        `);
+        await open(menu(host));
+
+        // Dispatched at the glyph, which a click on the icon names as what it landed on: a
+        // pointer driven at a box that small lands where the runner scales it to.
+        only(host, 'svg').dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        await settle();
+
+        expect(menu(host).open).toBe(false);
+        expect(menu(host).shadowRoot?.activeElement).toBe(trigger(menu(host)));
+    });
+
     it('stays open when the click lands on the panel rather than an item', async () => {
         const host = await mount(fixture);
         await open(menu(host));

@@ -701,11 +701,18 @@ export class UiMenu extends LitElement {
         event.preventDefault();
     };
 
-    /** Choosing an item closes the menu, which is what makes it a menu rather than a panel. */
+    /**
+     * Choosing an item closes the menu, which is what makes it a menu rather than a panel.
+     *
+     * **The item is found on the click's path, not as its target.** A click names what it
+     * landed on, and on an item that holds an icon or anything else of yours that is what the
+     * item holds: compared with the items, a click on an item's icon chose it — the platform
+     * clicked the item — and left the menu open over it.
+     */
     readonly #onChoose = (event: MouseEvent): void => {
-        const chosen = event.target;
+        const path = event.composedPath();
 
-        if (!(chosen instanceof HTMLElement) || !this.#enabled().includes(chosen)) {
+        if (!this.#enabled().some((item) => path.includes(item))) {
             return;
         }
 
