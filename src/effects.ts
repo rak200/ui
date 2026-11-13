@@ -1944,22 +1944,17 @@ const surfaceGlow = css`0 0 1rem 0.125rem rgb(from ${reference('--ui-color-accen
     0 0 2.5rem 0.5rem rgb(from ${reference('--ui-color-accent')} r g b / 0.25)`;
 
 /**
- * A surface's tint: a little of the accent in its own fill, as a field's is in its own. Held light
- * in the light scheme and at a tenth in the dark, so every shipped palette's text and muted text
- * hold 4.5:1 over it, and at least 0.6 opaque over a surface a theme lets the page through, where
- * at the glass's own opacity nothing showed — measured for RFC 0004, the card at both of Glass's
- * page limits.
+ * A surface's tint is a field's: a little of the accent in a control's fill, rather than in the
+ * surface's own. A theme may raise its surfaces in a colour that is not its surface's, as Glass's
+ * dark glass is black, and a light mixed into that was a grey that barely lit the card: under the
+ * pointer its spotlight took the card from rgb(9 19 40) to rgb(17 23 35), where a field's beside it
+ * went to rgb(38 46 62) — measured. A control's fill is the surface's own colour, at whatever
+ * opacity a theme gives it. Held light in the light scheme and at a tenth in the dark, so every
+ * shipped palette's text and muted text hold 4.5:1 over it, and at least 0.6 opaque over a surface
+ * a theme lets the page through, where at the glass's own opacity nothing showed — measured for RFC
+ * 0004, the card at both of Glass's page limits.
  */
-const surfaceTint = css`light-dark(
-    oklch(
-        from color-mix(in oklab, ${reference('--ui-color-surface-raised')} 88%, ${reference('--ui-color-accent')})
-            max(l, 0.98) c h / max(alpha, 0.6)
-    ),
-    oklch(
-        from color-mix(in oklab, ${reference('--ui-color-surface-raised')} 90%, ${reference('--ui-color-accent')})
-            l c h / max(alpha, 0.6)
-    )
-)`;
+const surfaceTint = tint;
 
 /**
  * A surface's cast: the pointer as a light, the shadow falling away from it the further the further
