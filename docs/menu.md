@@ -88,6 +88,9 @@ element of yours in either is fitted to the line too. So is one slotted beside t
 icon written in the label has the space you write. An icon alone, as in a menu opened from one,
 needs a `label`, as [the accessible name](icon.md#the-accessible-name) says.
 
+**A click on an item's icon chooses the item**, as a click anywhere else on it does, and so does one
+on anything else of yours the item holds: the menu closes and hands the focus back.
+
 **A layout of your own inside the label or an item is not a line**: in a column over the text, say,
 an icon larger than the line would draw over the text. Give that icon `margin-block: 0`, which
 outweighs the element's own.
