@@ -2309,7 +2309,7 @@ describe("a surface's effects", () => {
 
         expect(getComputedStyle(host).translate, 'the lift').toBe('none');
     });
-    /** The surface's tint over `surface` with `accent` in it, as the engine computes it on a light page. */
+    /** The tint over a control's fill `surface` with `accent` in it, as the engine computes it on a light page. */
     function tinted(surface: string, accent: string): string {
         return colour(
             `light-dark(oklch(from color-mix(in oklab, ${surface} 88%, ${accent}) max(l, 0.98) c h / max(alpha, 0.6)), oklch(from color-mix(in oklab, ${surface} 90%, ${accent}) l c h / max(alpha, 0.6)))`,
@@ -2356,9 +2356,11 @@ describe("a surface's effects", () => {
         expect(getComputedStyle(host).isolation).toBe('auto');
     });
 
-    it("tints a surface under the pointer with a little of the accent in its own fill, over the state's time", async () => {
+    it("tints a surface under the pointer with a little of the accent in a control's fill, over the state's time", async () => {
         const { region, host, fill } = surface('test', { 'hover-fill': 'tint' });
-        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        // The tint is a control's fill's, and a raised surface of another colour is not read.
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(0, 0, 0)');
+        region.style.setProperty('--ui-color-surface-control', 'rgb(240, 240, 240)');
         region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
         region.style.setProperty('--ui-duration-state', '0.3s');
         region.style.setProperty('--ui-easing-state', 'ease-in');
@@ -2382,7 +2384,9 @@ describe("a surface's effects", () => {
 
     it("tints a surface while a focus the reader can see is in it, on its own layer, over the state's time", async () => {
         const { region, fill, focusFill } = surface('test', { 'focus-fill': 'tint' });
-        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        // The tint is a control's fill's, and a raised surface of another colour is not read.
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(0, 0, 0)');
+        region.style.setProperty('--ui-color-surface-control', 'rgb(240, 240, 240)');
         region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
         region.style.setProperty('--ui-duration-state', '0.3s');
         region.style.setProperty('--ui-easing-state', 'ease-in');
@@ -2526,7 +2530,9 @@ describe("a surface's effects", () => {
 
     it('lights the surface with its tint where the pointer is, as strong as it is near, on its fill', async () => {
         const { region, host, fill } = surface('test', { 'hover-fill': 'spotlight' });
-        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        // The tint is a control's fill's, and a raised surface of another colour is not read.
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(0, 0, 0)');
+        region.style.setProperty('--ui-color-surface-control', 'rgb(240, 240, 240)');
         region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
 
         pointed(host, 0.5, 30, 10);
@@ -2605,7 +2611,9 @@ describe("a surface's effects", () => {
 
     it("sweeps the surface's tint across it at a focus the reader can see in it, four rounds of the loop and then at rest", async () => {
         const { region, focusFill } = surface('test', { 'focus-fill': 'shimmer' });
-        region.style.setProperty('--ui-color-surface-raised', 'rgb(240, 240, 240)');
+        // The tint is a control's fill's, and a raised surface of another colour is not read.
+        region.style.setProperty('--ui-color-surface-raised', 'rgb(0, 0, 0)');
+        region.style.setProperty('--ui-color-surface-control', 'rgb(240, 240, 240)');
         region.style.setProperty('--ui-color-accent', 'rgb(0, 0, 200)');
         region.style.setProperty('--ui-duration-loop', '10s');
         region.style.setProperty('--ui-iteration-settle', '3');

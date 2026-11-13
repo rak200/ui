@@ -148,11 +148,12 @@ card: **a choice written on the one card alone does not reach them**, where one 
 round it does — RFC 0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce`
 each lands at once.
 
-**Under [Matrix](theme.md#matrix)** a card takes a tint under the pointer, a little of the accent in
-its own fill, and glows, a light of the accent round it; at a focus it holds it takes the tint and a
-burst of light, and does not lift. The tint holds the card's text and muted text at 4.5:1 in every
-shipped palette. **A fill lies under the card's content, and so does a light held inside its
-boundary, and that isolates the card**: the layer each is drawn on stays over the card's own fill
+**Under [Matrix](theme.md#matrix)** a card takes a tint under the pointer, a field's — a little of the
+accent in a control's fill, which there is the card's own — and glows, a light of the accent round it;
+at a focus it holds it takes the tint and a burst of light, and does not lift. The tint holds the
+card's text and muted text at 4.5:1 in every shipped palette. **A fill lies under the card's content,
+and so does a light held inside its boundary, and that isolates the card**: the layer each is drawn
+on stays over the card's own fill
 only in a stacking context of the card's, and in one anything the card holds with a `z-index` of its
 own — a dropdown that is no popover — stops stacking over what follows the card. So the card is
 isolated only where one of them is chosen, under Matrix and Glass, whose glass isolates it already;
@@ -178,7 +179,9 @@ inside; it does not lift. **The sweep is the card's tint rather than a button's 
 a button sweeps took the card's muted text to 1.97:1 at its peak, and a field's answer, a halo round
 its text, would be inherited by everything the card holds and ring a light label on a fill of its
 own in the card's colour. Over the tint the card's text and muted text hold 4.5:1 in every shipped
-palette.
+palette. **The tint is a field's**, the accent in a control's fill rather than in the card's: Glass
+raises the card in a dark glass that is black, and mixed into that the card's lights were a grey
+that barely lit it beside the fields it holds.
 
 Under Glass a card also comes out of a fine grain as it is put on the page, and dissolves into one as
 `leave()` takes it away, its glass and its glow with it: noise made the card's alpha, eaten grain by
