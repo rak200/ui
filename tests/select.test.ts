@@ -1673,7 +1673,7 @@ describe("a field's effects, which the select adopts", () => {
             await over(control(form), 20, 10);
 
             expect(glow(select(form)).style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
-            expect(getComputedStyle(glow(select(form)), '::before').opacity).toBe('1');
+            expect(getComputedStyle(glow(select(form)), '::after').opacity).toBe('1');
         } finally {
             await away();
         }
@@ -1731,7 +1731,7 @@ describe("a field's effects, which the select adopts", () => {
         const form = await mount(fixture.replace('<ui-select', '<ui-select error="Pick one."'));
         stilled(form);
 
-        expect(getComputedStyle(glow(select(form)), '::before').animationName, 'the pulse').toBe(
+        expect(getComputedStyle(glow(select(form)), '::after').animationName, 'the pulse').toBe(
             'ui-pulse-danger',
         );
         expect(getComputedStyle(control(form)).animationName, "the flash, its list's third").toBe(
