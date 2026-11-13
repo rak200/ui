@@ -8,9 +8,13 @@
  * measured. So the surface listens to the focus arriving and leaving inside it, and marks its host
  * with `data-focus-visible` while the focus it holds is one the reader can see.
  *
- * **Two listeners, one for each way.** A focus that moves from one thing in the surface to another
- * leaves and arrives, so the mark follows it: taken off as it leaves, and put back as it arrives
- * where the reader sees it.
+ * **A focus that moves inside the surface leaves the mark where it is.** It leaves one thing the
+ * surface holds and arrives at another, and a mark taken off as it left and put back as it arrived
+ * started the surface's answer over at each step, Matrix's burst and Glass's sweep, in Chromium,
+ * Firefox and WebKit — measured. So the departure reads where the focus is going, off its
+ * `relatedTarget`, and takes the mark off only where that is outside the surface, or nowhere, as
+ * when the page loses the focus; the arrival writes the mark again, which changes it only where
+ * the focus starts or stops being one the reader can see.
  *
  * Internal — it is not re-exported from `src/index.ts`.
  */
@@ -29,9 +33,16 @@ export function held(event: FocusEvent): void {
 }
 
 /**
- * Takes the mark off the surface a focus left. Its listener's event, `focusout` on the surface's
- * host.
+ * Takes the mark off the surface a focus left, where it went outside the surface or nowhere. Its
+ * listener's event, `focusout` on the surface's host, whose `relatedTarget` is where the focus is
+ * going, retargeted into the host's tree: a control inside another component the surface holds is
+ * that component there, which the host contains, and one inside the surface's own shadow root is
+ * the host.
  */
 export function released(event: FocusEvent): void {
-    (event.currentTarget as HTMLElement).removeAttribute('data-focus-visible');
+    const host = event.currentTarget as HTMLElement;
+
+    if (!host.contains(event.relatedTarget as Node | null)) {
+        host.removeAttribute('data-focus-visible');
+    }
 }

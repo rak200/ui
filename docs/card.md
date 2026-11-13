@@ -141,12 +141,14 @@ choose nothing the theme's taste runs. Under the default theme's:
   [`leave()`](#taking-a-card-away) takes it away, a step quicker, over `--ui-duration-exit` on
   `--ui-easing-exit`.
 
-A focus a click left is not one the reader sees, and changes nothing. Each rise is drawn on a layer of
-its own in the card's shadow root, an empty span that means nothing. The lift, the entrance and the
-exit move the card itself, which a container query asks the card's surroundings about, never the
-card: **a choice written on the one card alone does not reach them**, where one written on anything
-round it does — RFC 0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce`
-each lands at once.
+A focus a click left is not one the reader sees, and changes nothing. **A focus that moves from one
+thing the card holds to another stays the card's**, so what the card does at a focus plays as the
+focus arrives in it, and not again at each step inside it, and ends as the focus leaves it. Each
+rise is drawn on a layer of its own in the card's shadow root, an empty span that means nothing. The
+lift, the entrance and the exit move the card itself, which a container query asks the card's
+surroundings about, never the card: **a choice written on the one card alone does not reach
+them**, where one written on anything round it does — RFC 0004's S8, which the card leaves marked.
+Under `prefers-reduced-motion: reduce` each lands at once.
 
 **A choice for cards alone goes under the card's own name**, `--ui-motion-card-<moment>`. A choice
 is inherited, so a rule on `ui-card` reaches every button and field a card holds too:
