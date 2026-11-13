@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.3](https://github.com/rak200/ui/compare/0.9.2...0.9.3) (2026-11-13)
+
+
+### Bug Fixes
+
+* **button,menu:** an icon beside a label sits centred on its line, and the label with it ([#396](https://github.com/rak200/ui/issues/396)) ([3bc5ccc](https://github.com/rak200/ui/commit/3bc5ccc52abe0983818fa09e7212b8ef7e5c9834))
+* **icon,button,menu:** an icon sits on its line's middle, fitted to it in a control ([#398](https://github.com/rak200/ui/issues/398)) ([db16e8e](https://github.com/rak200/ui/commit/db16e8ecbb65ff6f068a6503c060788cba4d2ccf))
+* **icon:** a name that drew nothing is warned about once the page has loaded ([#400](https://github.com/rak200/ui/issues/400)) ([ae91858](https://github.com/rak200/ui/commit/ae91858f7538b71c1bb3884ff4a469bd641a8343))
+
 ## [0.9.2](https://github.com/rak200/ui/compare/0.9.1...0.9.2) (2026-11-12)
 
 
