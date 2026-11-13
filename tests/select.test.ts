@@ -4,6 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // which needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
+import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, {
     BesideAnInput,
@@ -1640,21 +1641,6 @@ describe("a field's effects, which the select adopts", () => {
         });
     }
 
-    /** The pointer coming over `target` at `x`, `y` in its own pixels, and a frame let pass. */
-    async function over(target: HTMLElement, x: number, y: number): Promise<void> {
-        const rect = target.getBoundingClientRect();
-
-        target.dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                composed: true,
-                clientX: rect.left + x,
-                clientY: rect.top + y,
-            }),
-        );
-        await frame();
-    }
-
     /** The pointer far off every field, so the engine lets go before the next test. */
     async function away(): Promise<void> {
         document.dispatchEvent(
@@ -1670,7 +1656,7 @@ describe("a field's effects, which the select adopts", () => {
         form.style.setProperty('--ui-motion-hover-border', 'edge');
 
         try {
-            await over(control(form), 20, 10);
+            await pointTo(control(form), 20, 10);
 
             expect(glow(select(form)).style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
             expect(getComputedStyle(glow(select(form)), '::after').opacity).toBe('1');

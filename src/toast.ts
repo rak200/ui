@@ -636,7 +636,7 @@ export class UiToast extends LitElement {
         // pointer from.
         this.addEventListener('focusin', held, watched);
         this.addEventListener('focusout', released, watched);
-        this.addEventListener('pointerover', follow, watched);
+        follow(this);
 
         this.#start();
     }

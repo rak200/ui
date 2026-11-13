@@ -1,7 +1,7 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { checked } from './check.js';
 import { controlEffects } from './effects.js';
-import { follow } from './pointer.js';
+import { followed } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
@@ -614,7 +614,7 @@ export class UiRadioGroup extends LitElement {
      */
     #draw(choice: UiRadio, chosen: string): TemplateResult {
         return html`<label class="option" part="option">
-            <span class="frame" @pointerover=${follow}
+            <span class="frame" ${followed()}
                 ><input
                     type="radio"
                     part="control"

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
+import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, { BodyOnly, Card, OutOfOrder, Row, WithLink } from '../stories/card.stories.js';
 import '../src/card.js';
@@ -440,16 +441,7 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         host.style.setProperty('--ui-duration-effect', '0.3s');
         host.style.setProperty('--ui-duration-follow', '0s');
 
-        // Dispatched rather than driven, so the pointer is where the test says: a driven one lands
-        // where the runner's scaled frame is drawn.
-        element.dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                clientX: box.right - 1,
-                clientY: box.top + box.height / 2,
-            }),
-        );
-        await new Promise(requestAnimationFrame);
+        await pointTo(element, box.width - 1, box.height / 2);
 
         expect(element.style.getPropertyValue('--ui-fx-pointer-near'), 'followed').toBe('1');
 

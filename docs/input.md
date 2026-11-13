@@ -264,13 +264,13 @@ it four times and its ring comes into focus from a blur, its label staying as it
 it holds a light of the danger round it and flashes its fill.
 
 **The spotlight, the cast and the edge follow the pointer**, as the button's do: the pointer engine
-hands the box round the control where the pointer is, a frame at a time, from the moment it comes
-over the field until it is 96px away, and each light fades over that distance. The spotlight is the
-field's tint rather than the button's light, since a light any stronger darkened the ground under
-the placeholder past 4.5:1. The band is drawn on the layer round the box, the one an error's border
-draws on, and leaves it to a field in error. All three follow only where the pointer can hover and
-can change the field, never under reduced motion, and the focus wins over all three. The box binds
-`follow()` from `src/pointer.ts` to its `pointerover`.
+hands the box round the control where the pointer is, a frame at a time, from 96px away as the
+pointer nears until it is 96px away again as it leaves, and each light rises and fades over that
+distance. The spotlight is the field's tint rather than the button's light, since a light any
+stronger darkened the ground under the placeholder past 4.5:1. The band is drawn on the layer round
+the box, the one an error's border draws on, and leaves it to a field in error. All three follow
+only where the pointer can hover and can change the field, never under reduced motion, and the focus
+wins over all three. The box is handed to `follow()` from `src/pointer.ts` as it is drawn.
 
 **The label's accent has a fifth of the text in it**, so it clears 4.5:1 in every theme and scheme,
 where the accent alone fell under it. **The flash mixes a fifth of the danger into the fill** rather

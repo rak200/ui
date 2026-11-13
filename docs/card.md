@@ -200,23 +200,24 @@ five degrees at most each way, over `--ui-duration-follow`, as strong as the poi
 shipped theme names it. The lean is a transform on the card itself, which makes the card a stacking
 context and the box what it holds that is fixed is placed in, as Glass's glass does already.
 
-**Under Glass, whatever follows the pointer paints the card's glass again on every frame it moves.**
-Measured on a page of nine Glass cards, with the pointer crossing one: the three lights took the
-page from 60 frames a second to 58 in Chromium on a GPU, and to 14 in Chromium and 9 in Firefox
-drawing in software; a lean on top took them to 53, 12 and 7. Where frames matter more than the
-lights, in a browser drawing in software above all, choose `none` for `hover-fill`, `hover-border`
-and `hover-shadow`, or `raise` for the last, which rises once as the pointer arrives: 60 frames a
-second on a GPU, and 42 to 45 in software.
+**Under Glass, whatever follows the pointer paints the card's glass again on every frame it moves**,
+and the glass of every card it is near: a light comes in from 96px off, so the cards beside the one
+it crosses light too. Measured on a page of nine Glass cards 1.5rem apart, with the pointer crossing
+one: the three lights took the page from 60 frames a second to 46 in Chromium on a GPU, and to 13 in
+Chromium and 8 in Firefox drawing in software; a lean on top took them to 43, 11 and 6. Where
+frames matter more than the lights, in a browser drawing in software above all, choose `none` for
+`hover-fill`, `hover-border` and `hover-shadow`, or `raise` for the last, which rises once as the
+pointer arrives: 60 frames a second on a GPU, and 42 to 45 in software.
 
-The lights that follow the pointer, and the lean, read where it is from an internal engine, bound to
-the card's `pointerover`, which follows nothing under reduced motion or for a pointer that cannot
-hover. The engine is handed its time on the card itself too, so S8 reaches the lights: chosen on the
-one card alone, and not round it, none of them is followed, and none shows.
+The lights that follow the pointer, and the lean, read where it is from an internal engine, which
+follows the card from 96px away as the pointer nears, and nothing under reduced motion or for a
+pointer that cannot hover. The engine is handed its time on the card itself too, so S8 reaches the
+lights: chosen on the one card alone, and not round it, none of them is followed, and none shows.
 
 The effects are drawn by one internal sheet, `surfaceEffects()` in `src/effects.ts`. The card is
 marked by two internal helpers in `src/held.ts`, `held()` bound to its `focusin` and `released()` to
 its `focusout`, since no selector reads a focus the reader can see in what a host holds in every
-engine, and followed by `follow()` in `src/pointer.ts`, bound to its `pointerover`.
+engine, and handed to `follow()` in `src/pointer.ts` as it is made.
 
 ## Styling
 

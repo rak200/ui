@@ -4,6 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // which needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
+import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, { AtTheEdge, Disabled, Links, Menu } from '../stories/menu.stories.js';
 import '../src/menu.js';
@@ -2087,16 +2088,8 @@ describe("the button's effects, which the trigger answers as a secondary button 
     it('hands the trigger where the pointer is, and lights its band there', async () => {
         const host = await chosen(fixture, { 'hover-border': 'edge' });
         const target = control(host);
-        const box = target.getBoundingClientRect();
 
-        target.dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                composed: true,
-                clientX: box.left + 20,
-                clientY: box.top + 10,
-            }),
-        );
+        await pointTo(target, 20, 10);
         await settle();
 
         try {
