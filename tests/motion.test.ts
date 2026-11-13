@@ -31,8 +31,24 @@ class HostProbe extends HTMLElement {
     }
 }
 
+/**
+ * A component that holds others, as a card does: the same effect drawn inside its shadow root under
+ * a name of its own, `holder`, and a slot for what it holds.
+ */
+class HolderProbe extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = `<style>
+            @container ${query('holder')('hover-fill', 'glow')} {
+                span { color: ${drawn}; }
+            }
+        </style><span>holder</span><slot></slot>`;
+    }
+}
+
 customElements.define('test-motion', Probe);
 customElements.define('test-motion-host', HostProbe);
+customElements.define('test-motion-holder', HolderProbe);
 
 afterEach(() => {
     document.body.replaceChildren();
@@ -72,12 +88,12 @@ describe('kinds', () => {
 });
 
 describe('query', () => {
-    it("asks for the choice, then the component's taste, then the page's, each `not` in parentheses of its own", () => {
+    it("asks for the component's own choice, then the choice, then its own taste, then the page's, each `not` in parentheses of its own", () => {
         // Without the parentheses Chromium and WebKit dropped the rule and Firefox read only its
         // first half, which is a measurement the suite cannot repeat in the two engines it does
         // not run. The string is held here so a rewrite cannot lose them unnoticed.
         expect(query('card')('hover-move', 'tilt')).toBe(
-            '(style(--ui-motion-hover-move: tilt) or ((not style(--ui-motion-hover-move)) and (style(--ui-taste-card-hover-move: tilt) or ((not style(--ui-taste-card-hover-move)) and style(--ui-taste-hover-move: tilt)))))',
+            '(style(--ui-motion-card-hover-move: tilt) or ((not style(--ui-motion-card-hover-move)) and (style(--ui-motion-hover-move: tilt) or ((not style(--ui-motion-hover-move)) and (style(--ui-taste-card-hover-move: tilt) or ((not style(--ui-taste-card-hover-move)) and style(--ui-taste-hover-move: tilt)))))))',
         );
     });
 
@@ -118,6 +134,60 @@ describe('query', () => {
         expect(draws(holder, '#own'), 'the instance').toBe(true);
     });
 
+    it('lets a component choose under its own name, which reaches nothing it holds', () => {
+        const holder = mount(
+            ':root { --ui-motion-holder-hover-fill: glow; }',
+            '<test-motion-holder><test-motion></test-motion></test-motion-holder>',
+        );
+
+        expect(draws(holder, 'test-motion-holder'), 'the component').toBe(true);
+        expect(draws(holder, 'test-motion'), 'what it holds').toBe(false);
+    });
+
+    it('reaches what a component holds by a rule on its type, as a region does', () => {
+        // Why the component's own name is there: a choice is inherited, and a moment has one name
+        // on every component, so a rule on a card's type reached every button in the card.
+        const holder = mount(
+            'test-motion-holder { --ui-motion-hover-fill: glow; }',
+            '<test-motion-holder><test-motion></test-motion></test-motion-holder>',
+        );
+
+        expect(draws(holder, 'test-motion-holder'), 'the component').toBe(true);
+        expect(draws(holder, 'test-motion'), 'what it holds').toBe(true);
+    });
+
+    it("takes the component's own choice over the choice, wherever each is written, in both directions", () => {
+        expect(
+            draws(
+                mount(
+                    ':root { --ui-motion-probe-hover-fill: glow; } .region { --ui-motion-hover-fill: raise; }',
+                    '<div class="region"><test-motion></test-motion></div>',
+                ),
+            ),
+            'its own names the effect',
+        ).toBe(true);
+        document.body.replaceChildren();
+        expect(
+            draws(
+                mount(
+                    ':root { --ui-motion-probe-hover-fill: raise; } .region { --ui-motion-hover-fill: glow; }',
+                    '<div class="region"><test-motion></test-motion></div>',
+                ),
+            ),
+            'its own names another',
+        ).toBe(false);
+    });
+
+    it('lets one instance choose under its own name apart from its type', () => {
+        const holder = mount(
+            ':root { --ui-motion-probe-hover-fill: raise; }',
+            '<test-motion id="typed"></test-motion><div style="--ui-motion-probe-hover-fill: glow"><test-motion id="own"></test-motion></div>',
+        );
+
+        expect(draws(holder, '#typed'), 'every instance').toBe(false);
+        expect(draws(holder, '#own'), 'the one').toBe(true);
+    });
+
     it("draws the page's taste where nothing is chosen", () => {
         expect(draws(mount(':root { --ui-taste-hover-fill: glow; }'))).toBe(true);
     });
@@ -142,7 +212,16 @@ describe('query', () => {
         const sheet =
             ':root { --ui-taste-hover-fill: glow; --ui-taste-probe-hover-fill: glow; --ui-motion-hover-fill: raise; }';
 
-        expect(draws(mount(sheet))).toBe(false);
+        expect(draws(mount(sheet)), 'the choice').toBe(false);
+        document.body.replaceChildren();
+        expect(
+            draws(
+                mount(
+                    ':root { --ui-taste-hover-fill: glow; --ui-taste-probe-hover-fill: glow; --ui-motion-probe-hover-fill: raise; }',
+                ),
+            ),
+            "the component's own",
+        ).toBe(false);
     });
 
     it('draws nothing for none, for an effect the component does not offer, or for a misspelling', () => {
@@ -154,8 +233,13 @@ describe('query', () => {
         }
     });
 
-    it("reads another component's taste, or another moment's choice, as none of its own", () => {
+    it("reads another component's taste or choice, or another moment's choice, as none of its own", () => {
         expect(draws(mount(':root { --ui-taste-other-hover-fill: glow; }')), 'taste').toBe(false);
+        document.body.replaceChildren();
+        expect(
+            draws(mount(':root { --ui-motion-other-hover-fill: glow; }')),
+            "another's choice",
+        ).toBe(false);
         document.body.replaceChildren();
         expect(draws(mount(':root { --ui-motion-hover-shadow: glow; }')), 'choice').toBe(false);
     });

@@ -538,7 +538,13 @@ would otherwise have to fix on its own.
 A component answers the pointer, the focus and a press with an **effect**, and which one runs is a
 custom property written per moment — `--ui-motion-press-move: squish` — inherited, so the page, a
 region, every instance of a component and one instance choose apart and the narrowest wins
-(RFC 0004). **What an effect is stays the package's.** The ring nothing delays, the press that lands
+(RFC 0004). **Every instance of one component chooses under the component's own name**,
+`--ui-motion-card-hover-fill`, read before the name every component shares and outweighing it
+wherever each is written, as a component's own taste outweighs the page's. A rule on the component's
+type was the scope RFC 0004 measured, and it reaches what the component holds as well, since a moment
+has one name on every component: a card's lit every button and field in the card, and nothing a
+consumer can write lets a value from above through while stopping the card's own (#404). **What an
+effect is stays the package's.** The ring nothing delays, the press that lands
 with the finger and the text kept at 4.5:1 are written into each effect, and a choice picks among
 effects rather than retuning one. **Where a light passes under a field's text, the text takes a
 halo**: the fill made opaque, round each letter, for as long as the light plays. The placeholder's

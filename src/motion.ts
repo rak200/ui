@@ -41,7 +41,9 @@ export interface Taste {
  *
  * - `choice` — `--ui-motion-<moment>`, the effect a consumer chooses for a moment, at any scope:
  *   inherited, so the page, a region, a component type and one instance choose apart and the
- *   narrowest wins.
+ *   narrowest wins. And `--ui-motion-<component>-<moment>`, the effect chosen for one component,
+ *   which every other component leaves alone: a rule on a component's type is inherited by what the
+ *   component holds, so a card's reached every button and field in it.
  * - `taste` — `--ui-taste-<moment>` and `--ui-taste-<component>-<moment>`, the effect a theme
  *   chooses for the page and for one component, read only where no choice is written.
  * - `animated` — `--ui-fx-<name>`, a property an effect animates, or one a component's sheet hands
@@ -58,12 +60,15 @@ export const kinds = {
 /**
  * The condition one component draws an effect under, written inside `@container`.
  *
- * True where the consumer chose that effect for the moment at any scope; or, where they chose
- * nothing, where the component's own taste names it; or, where that is unwritten too, where the
- * page's taste does. A choice of any other name — an effect the component does not offer, a
- * misspelling — matches no query, so the component does what it does today: a choice costs the
- * effect and nothing else. The queries ask the element's ancestors, never the element itself, so
- * an effect drawn on a host misses a choice written on that host alone — RFC 0004's S8.
+ * True where the consumer chose that effect for the moment on this component, at any scope; or,
+ * where they chose nothing for it, where they chose that effect for the moment at any scope; or,
+ * where they chose nothing, where the component's own taste names it; or, where that is unwritten
+ * too, where the page's taste does. So the component's own choice outweighs the one every component
+ * reads, wherever each is written, as its own taste outweighs the page's. A choice of any other
+ * name — an effect the component does not offer, a misspelling — matches no query, so the component
+ * does what it does today: a choice costs the effect and nothing else. The queries ask the element's
+ * ancestors, never the element itself, so an effect drawn on a host misses a choice written on that
+ * host alone — RFC 0004's S8.
  *
  * **`none` is nothing**, RFC 0004 says. Where a component answered a moment with nothing before
  * effects existed, it matches no query and the component does what it did. Where it answered
@@ -78,15 +83,24 @@ export const kinds = {
  * css`@container ${unsafeCSS(is('hover-shadow', 'raise'))} { … }`;
  * ```
  *
- * @param component - The component's tag less `ui-`, which names its own taste.
+ * @param component - The component's tag less `ui-`, which names its own choice and its own taste.
  */
 export function query(component: string): (moment: string, effect: string) => string {
     return (moment, effect) => {
-        const chosen = `${kinds.choice}${moment}`;
-        const own = `${kinds.taste}${component}-${moment}`;
-        const page = `${kinds.taste}${moment}`;
+        /** True where `name` is `effect`, or where it is unwritten and `rest` is true. */
+        const first = (name: string, rest: string): string =>
+            `(style(${name}: ${effect}) or ((not style(${name})) and ${rest}))`;
 
-        return `(style(${chosen}: ${effect}) or ((not style(${chosen})) and (style(${own}: ${effect}) or ((not style(${own})) and style(${page}: ${effect})))))`;
+        return first(
+            `${kinds.choice}${component}-${moment}`,
+            first(
+                `${kinds.choice}${moment}`,
+                first(
+                    `${kinds.taste}${component}-${moment}`,
+                    `style(${kinds.taste}${moment}: ${effect})`,
+                ),
+            ),
+        );
     };
 }
 

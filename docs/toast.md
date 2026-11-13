@@ -209,7 +209,9 @@ A focus a click left is not one the reader sees, and changes nothing; the pointe
 with a focus in it changes nothing either. Each effect drawn on the toast itself — the lift — reads
 its choice from round the toast, never from the toast: **a choice written on one toast alone does not
 reach it**, where one written on the toaster or anything round it does — RFC 0004's S8. Under
-`prefers-reduced-motion: reduce` each lands at once.
+`prefers-reduced-motion: reduce` each lands at once. A choice for toasts alone goes under the
+toast's own name, `--ui-motion-toast-<moment>`, which nothing a toast holds reads, where a rule on
+`ui-toast` reaches any component in it too — [Theme](theme.md#taste).
 
 **A toast slides in and slides out.** Under the default theme's taste it comes in from its own width
 past the page's edge, the one the toaster stands at, flung a rem past where it lands and pulled back

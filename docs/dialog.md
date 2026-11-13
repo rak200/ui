@@ -179,7 +179,9 @@ themselves, and an empty list resolves rather than blocks.
 
 **The fade is the default theme's, and one of four choices**, RFC 0004's: `--ui-motion-enter` and
 `--ui-motion-exit`, written on the dialog or anywhere above it, choose its entrance and its exit,
-and where you choose nothing the theme's taste runs. Under [Matrix](theme.md#matrix) the panel is
+and where you choose nothing the theme's taste runs. Written on the dialog, they reach a card or an
+icon it holds as well; the dialog's own names, `--ui-motion-dialog-enter` and
+`--ui-motion-dialog-exit`, reach dialogs alone — [Theme](theme.md#taste). Under [Matrix](theme.md#matrix) the panel is
 put together from pieces appearing where they belong, at random, `materialize`, and broken into
 pieces vanishing where they are, `erode`; under [Glass](theme.md#glass) it is brought out of a fine
 grain and dissolved into one, `dissolve`. `none` takes the fade away: the panel is there at once and

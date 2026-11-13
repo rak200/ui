@@ -238,10 +238,25 @@ function overrides(kept: Kept): string {
     return written(Object.entries(kept.tokens).map(([name, value]) => [':root', name, value]));
 }
 
-/** The effects `kept` chooses, as CSS. */
+/**
+ * The property `choice` is written under: the page's under the name every component reads, and one
+ * component's under the component's own, which nothing it holds reads. Nothing where the component
+ * no longer draws that moment, which a choice kept from an older page can name.
+ */
+function property({ scope, moment }: Choice): string | undefined {
+    const name = scope === ':root' ? moment : offered.get(moment)?.get(scope)?.own;
+
+    return name === undefined ? undefined : `--ui-motion-${name}`;
+}
+
+/** The effects `kept` chooses, as CSS: all of them at the page, each under its own property. */
 function chosen(kept: Kept): string {
     return written(
-        kept.choices.map(({ scope, moment, effect }) => [scope, `--ui-motion-${moment}`, effect]),
+        kept.choices.flatMap((choice) => {
+            const name = property(choice);
+
+            return name === undefined ? [] : [[':root', name, choice.effect] as const];
+        }),
     );
 }
 
@@ -272,21 +287,33 @@ function isElement(value: unknown): value is typeof LitElement {
     return typeof value === 'function' && value.prototype instanceof LitElement;
 }
 
-/**
- * For each moment a consumer can choose an effect for, each component that draws one and the
- * effects it draws: read off every component the barrel exports, and off the rules the table
- * adopts into the document, where its rows are drawn.
- */
-function catalogue(): ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<string>>> {
-    const found = new Map<string, Map<string, Set<string>>>();
-    const read = (component: string, sheet: string): void => {
-        for (const match of sheet.matchAll(/style\(--ui-motion-([a-z0-9-]+):\s*([a-z0-9-]+)\)/g)) {
-            const [, moment = '', effect = ''] = match;
-            const components = found.get(moment) ?? new Map<string, Set<string>>();
-            const effects = components.get(component) ?? new Set<string>();
+/** The effects one component draws for a moment, and the name it reads a choice for it alone under. */
+interface Offer {
+    /** The choice's name less `--ui-motion-`: the component's own name and the moment. */
+    readonly own: string;
+    readonly effects: Set<string>;
+}
 
-            effects.add(effect);
-            components.set(component, effects);
+/**
+ * For each moment a consumer can choose an effect for, each component that draws one, the effects
+ * it draws and its own name for the moment: read off every component the barrel exports, and off
+ * the rules the table adopts into the document, where its rows are drawn. Each query asks for the
+ * component's own choice and then for the one every component reads, so the pair names both, and
+ * the own name is the query's rather than the tag's: the radio group draws its radios under
+ * `radio`, and a toast reads its toaster's stack under `toaster`.
+ */
+function catalogue(): ReadonlyMap<string, ReadonlyMap<string, Offer>> {
+    const found = new Map<string, Map<string, Offer>>();
+    const read = (component: string, sheet: string): void => {
+        for (const match of sheet.matchAll(
+            /style\(--ui-motion-([a-z0-9-]+): ([a-z0-9-]+)\) or \(\(not style\(--ui-motion-\1\)\) and \(style\(--ui-motion-([a-z0-9-]+):/g,
+        )) {
+            const [, own = '', effect = '', moment = ''] = match;
+            const components = found.get(moment) ?? new Map<string, Offer>();
+            const offer = components.get(component) ?? { own, effects: new Set<string>() };
+
+            offer.effects.add(effect);
+            components.set(component, offer);
             found.set(moment, components);
         }
     };
@@ -309,10 +336,10 @@ const offered = catalogue();
 
 /** The effects offered for `moment` at `scope`: one component's, or every component's. */
 function effectsFor(moment: string, scope: string): string[] {
-    const components = offered.get(moment) ?? new Map<string, ReadonlySet<string>>();
-    const sets = scope === ':root' ? [...components.values()] : [components.get(scope) ?? []];
+    const components = offered.get(moment) ?? new Map<string, Offer>();
+    const offers = scope === ':root' ? [...components.values()] : [components.get(scope)];
 
-    return [...new Set(sets.flatMap((set) => [...set]))].sort();
+    return [...new Set(offers.flatMap((offer) => [...(offer?.effects ?? [])]))].sort();
 }
 
 /** The events a consumer listens for, which the log hears from the document. */
@@ -843,7 +870,8 @@ class WorkbenchShell extends LitElement {
                     (choice) => html`
                         <li>
                             <code
-                                >${choice.scope} --ui-motion-${choice.moment}:
+                                >${choice.scope === ':root' ? 'The page' : choice.scope}
+                                ${property(choice) ?? `--ui-motion-${choice.moment}, not drawn`}:
                                 ${choice.effect}</code
                             >
                             <button
