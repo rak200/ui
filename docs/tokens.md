@@ -656,7 +656,9 @@ tooltip's, a menu's and a select's.
 
 **It stands under every theme, as `defaults` does**, so a shipped theme's own taste replaces it
 moment by moment, and **it is the package's motion**: each entry changes what a component does on a
-page that inserts the sheet and chooses nothing. A choice runs instead, at any scope:
+page that inserts the sheet and chooses nothing. A choice runs instead, at any scope, and one made
+for a component alone goes under its own name, `--ui-motion-card-hover-fill` —
+[Theme](theme.md#taste) says how:
 
 ```css
 :root {

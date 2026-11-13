@@ -192,7 +192,9 @@ back toward its trigger as it fades out, over `--ui-duration-overlay` on `--ui-e
 instead, `refocus`, and goes out of it, `defocus`, over an overlay's step and a quarter, whole by
 half the way and gone over the second half. `--ui-motion-enter` and `--ui-motion-exit`, written on
 the tooltip or anywhere above it, choose for yourself, and `none` shows and hides a tip at once, as
-a tooltip did before effects existed.
+a tooltip did before effects existed. Written on the tooltip, they reach the trigger it holds too,
+an icon's entrance among them; the tooltip's own names, `--ui-motion-tooltip-enter` and
+`--ui-motion-tooltip-exit`, reach tips alone — [Theme](theme.md#taste).
 
 Each is a transition, so a tip you leave before it has arrived turns back from where it is, and one
 pointed at again as it leaves comes back from where it got to. **None scales a tip**, as RFC 0004

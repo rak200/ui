@@ -148,6 +148,12 @@ card: **a choice written on the one card alone does not reach them**, where one 
 round it does — RFC 0004's S8, which the card leaves marked. Under `prefers-reduced-motion: reduce`
 each lands at once.
 
+**A choice for cards alone goes under the card's own name**, `--ui-motion-card-<moment>`. A choice
+is inherited, so a rule on `ui-card` reaches every button and field a card holds too:
+`ui-card { --ui-motion-hover-fill: spotlight; }` lights them all, where
+`:root { --ui-motion-card-hover-fill: spotlight; }` lights the cards alone —
+[Theme](theme.md#taste) says how the two names weigh.
+
 **Under [Matrix](theme.md#matrix)** a card takes a tint under the pointer, a field's — a little of the
 accent in a control's fill, which there is the card's own — and glows, a light of the accent round it;
 at a focus it holds it takes the tint and a burst of light, and does not lift. The tint holds the

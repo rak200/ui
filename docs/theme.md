@@ -335,6 +335,22 @@ interface Taste {
 a component reads its theme's taste only where no choice is written. A name a component does not
 offer runs nothing there, and the component does what it does today.
 
+**A choice for one component goes under its own name**, `--ui-motion-<component>-<moment>`, by its
+tag less `ui-`, as its taste does, and no other component reads it:
+
+```css
+/* Every card lit where the pointer is, and none of the buttons and fields a card holds. */
+:root {
+  --ui-motion-card-hover-fill: spotlight;
+}
+```
+
+A choice is inherited, and a moment has one name on every component, so a rule on a component's type
+reaches whatever the component holds: `ui-card { --ui-motion-hover-fill: spotlight; }` lights every
+button and field in a card too, as a region's choice does. **The component's own outweighs the one
+every component reads**, wherever each is written, as its own taste outweighs the page's — so a region
+that chooses `none` for every component names a component's own too where one is chosen at the page.
+
 **The default theme's taste stands under every theme**, as its values do: the token sheet carries
 it, as [`taste`](tokens.md#taste), and a theme's own replaces it moment by moment where the theme
 names one. So a theme that wants nothing where the default theme has an effect names `none` there,

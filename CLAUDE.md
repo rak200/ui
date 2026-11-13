@@ -374,7 +374,10 @@ explains. This file restates none of them.
 - **Which `--ui-` names are not tokens, and how a component asks for an effect** — the docblock on
   `src/motion.ts`, which keeps the three kinds RFC 0004 added (a consumer's choice, a theme's taste,
   and a property an effect animates under `--ui-fx-`, which a host never sets), the `query()` each
-  effect is drawn under, and the `Taste` shape with `tasteBlock()`, which writes one. It imports
+  effect is drawn under, and the `Taste` shape with `tasteBlock()`, which writes one. **Why a
+  component reads a choice of its own first, `--ui-motion-<component>-<moment>`** — the same docblock
+  and ARCHITECTURE.md's _Which effect runs is the consumer's_: a rule on a component's type reaches
+  what it holds (#404), and the workbench writes a choice for one component under that name. It imports
   nothing, for `src/reference.ts`'s reason, because `src/tokens.ts` and `src/theme.ts` read from it.
   The gate in `tests/tokens.test.ts` lets a component's sheet name a token or one of the three
   kinds, and nothing else, and refuses a taste that names an effect no component draws.

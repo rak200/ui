@@ -38,6 +38,9 @@ reload each save causes.
 
 - **Reduced motion and more contrast** are the sheets' own rules with the condition taken off, which
   is what the reader's setting does. A page cannot set either media feature.
+- **An effect for one component is written under the component's own name**, at the page:
+  `--ui-motion-card-hover-fill` reaches every card and nothing a card holds, where a rule on
+  `ui-card` would reach its buttons and fields too. The page's is `--ui-motion-hover-fill`.
 - **A submission is held on the page**, so the log keeps what it sent.
 - **While a modal dialog is open the shell is inert**, as everything outside a modal is.
 

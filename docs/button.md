@@ -259,8 +259,9 @@ sheen sweeping across it and its ring coming into focus there, and a press sprin
 spreads a circle from where it landed, with no colour of its own.
 
 A choice is inherited, so it reaches as far as the selector it is written under: the page, a region,
-every button, or one. A name the button does not offer draws nothing, and the button does what it
-does today there.
+every button, or one, and whatever each holds. The button's own name, `--ui-motion-button-<moment>`,
+reaches buttons alone, and outweighs the one every component reads — [Theme](theme.md#taste) says
+how. A name the button does not offer draws nothing, and the button does what it does today there.
 
 **`none` is nothing.** Where the button answered a moment with nothing before effects existed —
 every move, the ring's flight, the focus's fill, a press's shadow — `none` keeps it as it was. Where
