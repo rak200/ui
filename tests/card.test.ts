@@ -399,17 +399,24 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(card(host)).isolation).toBe('auto');
     });
 
-    it('tints and glows a card under the pointer under Matrix, isolated for its fill', async () => {
+    it('glows a card under the pointer under Matrix, its fill as it is, and tints it where a consumer chooses', async () => {
         const host = await under(fixture, matrix);
         const element = card(host);
 
         await userEvent.hover(element);
 
-        expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted').toBe('1');
+        // The tint a field or a drawn control takes under the pointer is the card's, so a card
+        // tinted round one hid it.
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'not tinted').toBe('0');
         expect(getComputedStyle(layer(element, 'shadow')).boxShadow, 'glowing').toMatch(
             / 0px 0px 16px 2px, .+ 0px 0px 40px 8px$/,
         );
+        // Isolated still, for the tint a focus it holds takes.
         expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
+
+        host.style.setProperty('--ui-motion-card-hover-fill', 'tint');
+
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted where chosen').toBe('1');
     });
 
     it('tints a card and bursts light round it at a focus it holds under Matrix, which names its tint', async () => {

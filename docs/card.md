@@ -154,12 +154,16 @@ is inherited, so a rule on `ui-card` reaches every button and field a card holds
 `:root { --ui-motion-card-hover-fill: spotlight; }` lights the cards alone —
 [Theme](theme.md#taste) says how the two names weigh.
 
-**Under [Matrix](theme.md#matrix)** a card takes a tint under the pointer, a field's — a little of the
-accent in a control's fill, which there is the card's own — and glows, a light of the accent round it;
-at a focus it holds it takes the tint and a burst of light, and does not lift. The tint holds the
-card's text and muted text at 4.5:1 in every shipped palette. **A fill lies under the card's content,
-and so does a light held inside its boundary, and that isolates the card**: the layer each is drawn
-on stays over the card's own fill
+**Under [Matrix](theme.md#matrix)** a card glows under the pointer, a light of the accent round it,
+and keeps its fill as it is; at a focus it holds it takes a tint, a field's — a little of the accent
+in a control's fill, which there is the card's own — and a burst of light, and does not lift. The
+tint holds the card's text and muted text at 4.5:1 in every shipped palette. **The card takes no
+tint under the pointer, because a field's is the card's**: the pointer over a field, a checkbox, a
+radio or a switch the card holds is over the card too, and over a tinted card the tint each takes
+there stood at 1.01:1 at most from the card round it, in both schemes.
+`--ui-motion-card-hover-fill: tint` gives the cards theirs back. **A fill lies under the card's
+content, and so does a light held inside its boundary, and that isolates the card**: the layer each
+is drawn on stays over the card's own fill
 only in a stacking context of the card's, and in one anything the card holds with a `z-index` of its
 own — a dropdown that is no popover — stops stacking over what follows the card. So the card is
 isolated only where one of them is chosen, under Matrix and Glass, whose glass isolates it already;

@@ -146,10 +146,11 @@ export function themeStyleSheet(theme: Theme): string {
  * its boundary splits into the danger and the info, its fill as it is. A drawn control tints and
  * glows under the pointer, its boundary at rest; at the focus it takes its hover colour and a burst,
  * its ring glitches and its label glows; and in error its boundary splits, its fill as it is. A card
- * takes the tint and glows under the pointer, and takes the tint and a burst at a focus it holds; it
- * is put together from pieces appearing at random as it arrives, and broken into pieces vanishing at
- * random as it leaves. A toast takes the card's answers to the pointer and a focus in it, and comes
- * and goes on a wind, blown together from its pieces and away into them. A dialog's panel is put
+ * glows under the pointer, its fill as it is, so what it holds keeps the tint it takes there, and
+ * takes the tint and a burst at a focus it holds; it is put together from pieces appearing at
+ * random as it arrives, and broken into pieces vanishing at random as it leaves. A toast tints and
+ * glows under the pointer, takes the card's answer to a focus in it, and comes and goes on a wind,
+ * blown together from its pieces and away into them. A dialog's panel is put
  * together and broken as a card is, and code rains over its scrim. A tooltip's tip is typed out
  * behind a caret of the accent, and flickers out in bands, its text split.
  */
@@ -202,8 +203,9 @@ export const matrix: Theme = {
         '--ui-color-text': ['#000000', '#ffffff'],
         '--ui-color-border-overlay': ['#000000', '#ffffff'],
     },
-    // The review's, read off each page under this theme — RFC 0004. Each `none` takes back an
-    // effect the default theme's taste names, which would otherwise run here too.
+    // The review's, read off each page under this theme — RFC 0004, but for the card's fill under
+    // the pointer, below. Each `none` takes back an effect that would otherwise run here too: the
+    // card's, the page's tint here, and every other one an effect the default theme's taste names.
     taste: {
         page: {
             'hover-fill': 'tint',
@@ -222,12 +224,22 @@ export const matrix: Theme = {
         },
         // A field and the card leave the hover colour out, so at the focus each takes a little of
         // the accent in the highlight's place, as RFC 0004 chose for every component that leaves it
-        // out. And the card comes and goes in pieces.
+        // out. The card takes no fill under the pointer, where RFC 0004's review left it the page's
+        // tint: the pointer over a field or a drawn control the card holds is over the card too,
+        // and the tint each takes there is the card's, so over a tinted card one stood at 1.01:1 at
+        // most from the card round it in both schemes, where it stands at 1.05:1 or more in the
+        // light and 1.11:1 or more in the dark from one left as it is. And the card comes and goes
+        // in pieces.
         components: {
             input: { 'focus-fill': 'tint' },
             textarea: { 'focus-fill': 'tint' },
             select: { 'focus-fill': 'tint', enter: 'glitch', exit: 'glitch' },
-            card: { 'focus-fill': 'tint', enter: 'materialize', exit: 'erode' },
+            card: {
+                'hover-fill': 'none',
+                'focus-fill': 'tint',
+                enter: 'materialize',
+                exit: 'erode',
+            },
             toast: { 'focus-fill': 'tint', enter: 'wind', exit: 'wind' },
             tooltip: { enter: 'typing', exit: 'glitch' },
             menu: { enter: 'glitch', exit: 'glitch' },

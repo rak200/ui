@@ -82,13 +82,17 @@ glows; and in error its boundary splits into the danger and the info, its fill a
 leaves the hover colour out, so the theme names the tint for each field at the focus, over the
 page's highlight. A drawn control tints and glows under the pointer, its boundary at rest; at the
 focus it takes its hover colour and a burst, its ring glitches and its label glows; and in error
-its boundary splits, its fill as it is. A card takes the tint and glows under the pointer; at a
+its boundary splits, its fill as it is. A card glows under the pointer, its fill as it is; at a
 focus it holds it takes the tint and a burst; and it comes and goes in pieces, appearing and
-vanishing at random. The card leaves the hover colour out as a field does, so the theme names the
-tint for it at the focus too, and its entrance and its exit are its own moments. A toast takes the
-card's answers to the pointer and a focus in it, and the tint at the focus for the same reason. Each
-`none` in it takes back an effect the
-default theme's taste names, which would otherwise run under Matrix too.
+vanishing at random. **The card takes no tint under the pointer**: the pointer over a field or a
+drawn control the card holds is over the card too, and the tint each takes there is the card's, so
+over a tinted card one stood at 1.01:1 at most from the card round it in both schemes, where it
+stands at 1.05:1 or more in the light and 1.11:1 or more in the dark from a card left as it is. The
+card leaves the hover colour out as a field does, so the theme names the tint for it at the focus,
+and its entrance and its exit are its own moments. A toast tints and glows under the pointer and
+takes the card's answer to a focus in it, the tint named for it at the focus for the same reason.
+Each `none` in it takes back an effect that would otherwise run under Matrix too: the card's, the
+page's tint, and every other one an effect the default theme's taste names.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |
@@ -109,6 +113,7 @@ default theme's taste names, which would otherwise run under Matrix too.
 | Component                     | Moment       | Effect        |
 | ----------------------------- | ------------ | ------------- |
 | `input`, `textarea`, `select` | `focus-fill` | `tint`        |
+| `card`                        | `hover-fill` | `none`        |
 | `card`                        | `focus-fill` | `tint`        |
 | `card`                        | `enter`      | `materialize` |
 | `card`                        | `exit`       | `erode`       |
