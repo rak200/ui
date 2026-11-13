@@ -58,7 +58,7 @@ export class UiCard extends LitElement {
         super();
         this.addEventListener('focusin', held);
         this.addEventListener('focusout', released);
-        this.addEventListener('pointerover', follow);
+        follow(this);
     }
 
     /**

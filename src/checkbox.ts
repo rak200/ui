@@ -1,7 +1,7 @@
 import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
 import { checked } from './check.js';
 import { controlEffects } from './effects.js';
-import { follow } from './pointer.js';
+import { followed } from './pointer.js';
 import { arrive, watch } from './ring.js';
 import { reference } from './reference.js';
 import { Description } from './description.js';
@@ -518,7 +518,7 @@ class UiToggle extends LitElement {
     protected template(mixed: boolean): TemplateResult {
         return html`
             <label part="label">
-                <span class="frame" @pointerover=${follow}
+                <span class="frame" ${followed()}
                     ><input
                         type="checkbox"
                         part="box"

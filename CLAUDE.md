@@ -91,6 +91,7 @@ tests/               # mirrors src/, one test file per unit
 ├── a11y-ruleset.ts  # the axe ruleset, free of the test runner so a second reader can have it
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── escaped.ts       # the errors a listener or a timer threw, which a test turns into a failure
+├── pointing.ts      # the pointer where the engine hears it, once its observer has seen the element
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 ├── manual/          # steps a person runs, collected by nothing — see each file's own header
 ├── workbench/       # the page the components are used on while they are built — see its README
@@ -116,8 +117,8 @@ docs/                # one page per unit, indexed by docs/README.md
 
 `tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
 export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules,
-`contrast.ts`, `escaped.ts` and `stories.ts` are the exception the mirror does not cover: they are
-the suite's own scaffolding rather than units, so none has a counterpart in `src/`.
+`contrast.ts`, `escaped.ts`, `pointing.ts` and `stories.ts` are the exception the mirror does not
+cover: they are the suite's own scaffolding rather than units, so none has a counterpart in `src/`.
 
 **`tests/manual/` is a second kind of exception**, and it is not the suite at all: it holds scripts
 rather than units — the steps a person runs, collected by nothing and gating nothing. It sits here
@@ -403,8 +404,8 @@ explains. This file restates none of them.
   the floors in `tests/tokens.test.ts` that measure the placeholder against it. **Why a field's control reads one list of
   animations from a property per kind** — the comment beside that rule in `src/effects.ts`: the
   focus's burst and an error's flash both animate the control, and two rules writing `animation`
-  leave one unplayed. **Why a field's pointer engine is bound to the box round the control rather
-  than to the control** — the comment beside the hand-off there: the box's own layer draws the
+  leave one unplayed. **Why a field's pointer engine is handed the box round the control rather
+  than the control** — the comment beside the hand-off there: the box's own layer draws the
   band, and it reads where the pointer is only from an ancestor. **Why `none` takes the pressed colour away where it keeps the lift
   as it was** — the docblock on `query()` in `src/motion.ts`, which states it once for every
   component. `tests/manual/browser-floor.mjs` counts each call to `query()` as a
@@ -428,9 +429,12 @@ explains. This file restates none of them.
   is.
 - **Why the pointer's lights are handed their point by one engine, why the edge's band is an
   element of its own, and why its mask is written twice** — the docblock on `src/pointer.ts`, and the
-  comments beside `.edge` in `src/effects.ts`. `tests/pointer.test.ts` dispatches its points and
-  parks the real pointer at the far corner first, since a real pointer left over a control as it is
-  laid gets a `pointerover` of the browser's own.
+  comments beside `.edge` in `src/effects.ts`. **Why a light comes in as the pointer nears, and
+  why the engine keeps what each sheet chose for a second** — the same docblock: an element is
+  followed from `reach` pixels out, and only the elements that draw a light are measured, since
+  nothing says when a sheet chooses otherwise. `tests/pointer.test.ts` dispatches its points, waits
+  for the engine's observer through `tests/pointing.ts` and parks the real pointer at the far
+  corner first, since a move of the real pointer would hand the engine its own point.
 - **Why the shatter is a filter over the button, what of the button it breaks, and when it lets
   go** — the docblock on `src/shatter.ts`. A component hands it `--ui-fx-press: shatter` and the
   pieces' return time and curve on its control while it can be used, and binds `press()` to its
@@ -564,9 +568,9 @@ explains. This file restates none of them.
   is its tint rather than a button's** — the docblock on `surfaceSheen` there, ARCHITECTURE.md's
   _Which effect runs is the consumer's_, and the floor in `tests/tokens.test.ts`: the accent's sheen
   took the muted text to 1.97:1, and the halo a field's text takes would be inherited by everything a
-  card holds. **How the lights that follow the pointer reach a card** — the same docblock: `follow()`
-  is bound to its `pointerover` and handed its time on the host, so S8 reaches them as it reaches the
-  lift and the tilt. **Why a card leaves through `leave()` and removes itself** — the docblock on
+  card holds. **How the lights that follow the pointer reach a card** — the same docblock: the card
+  is handed to `follow()` and its time on the host, so S8 reaches them as it reaches the lift and
+  the tilt. **Why a card leaves through `leave()` and removes itself** — the docblock on
   `UiCard` in `src/card.ts`, and `docs/card.md`'s _Taking a card away_: no element can hold off a
   removal it did not ask for, so the exit is the card's own way out, as `close()` is the dialog's,
   and `ui-leave` fires while the card is still in the tree, as the toast's `ui-dismiss` does. **Why

@@ -2,7 +2,7 @@ import { LitElement, css, html, type TemplateResult } from 'lit';
 import { Description } from './description.js';
 import { buttonEffects, pressed } from './effects.js';
 import { reference } from './reference.js';
-import { follow } from './pointer.js';
+import { followed } from './pointer.js';
 import { arrive, watch } from './ring.js';
 
 /** How much visual weight a button carries. */
@@ -332,7 +332,7 @@ export class UiButton extends LitElement {
                 aria-describedby=${this.#description.described()}
                 part="button"
                 @focus=${arrive}
-                @pointerover=${follow}
+                ${followed()}
                 @pointerdown=${pressed}
                 @keydown=${pressed}
             >

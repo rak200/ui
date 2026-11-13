@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
+import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, { BodyOnly, Card, OutOfOrder, Row, WithLink } from '../stories/card.stories.js';
 import '../src/card.js';
@@ -398,20 +399,28 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(card(host)).isolation).toBe('auto');
     });
 
-    it('tints and glows a card under the pointer under Matrix, isolated for its fill', async () => {
+    it('glows a card under the pointer under Matrix, its fill as it is and unisolated, and tints it where a consumer chooses', async () => {
         const host = await under(fixture, matrix);
         const element = card(host);
 
         await userEvent.hover(element);
 
-        expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted').toBe('1');
+        // The tint a field or a drawn control takes under the pointer is the card's, so a card
+        // tinted round one hid it.
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'not tinted').toBe('0');
         expect(getComputedStyle(layer(element, 'shadow')).boxShadow, 'glowing').toMatch(
             / 0px 0px 16px 2px, .+ 0px 0px 40px 8px$/,
         );
-        expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
+        // Nothing lies under its content at either moment, so nothing isolates it.
+        expect(getComputedStyle(element).isolation, 'unisolated').toBe('auto');
+
+        host.style.setProperty('--ui-motion-card-hover-fill', 'tint');
+
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted where chosen').toBe('1');
+        expect(getComputedStyle(element).isolation, 'isolated for it').toBe('isolate');
     });
 
-    it('tints a card and bursts light round it at a focus it holds under Matrix, which names its tint', async () => {
+    it('bursts light round a card at a focus it holds under Matrix, its fill as it is', async () => {
         const host = await under(
             `
             <ui-card>
@@ -425,14 +434,16 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
 
         await userEvent.tab();
 
-        expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'tinted').toBe('1');
+        // A field takes the tint at the focus too, so a card tinted round one hid it. The card
+        // takes the page's highlight, which it leaves out.
+        expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'not tinted').toBe('0');
         expect(getComputedStyle(layer(element, 'focus-shadow')).animationName, 'a burst').toBe(
             'ui-burst',
         );
         expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
     });
 
-    it('lights a card where the pointer is under Glass, casts its shadow and edges it, and keeps it flat', async () => {
+    it("casts a card's shadow and edges it under Glass, its fill as it is and flat, and lights or leans it where a consumer chooses", async () => {
         const host = await under(fixture, glass);
         const element = card(host);
         const box = element.getBoundingClientRect();
@@ -440,30 +451,26 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         host.style.setProperty('--ui-duration-effect', '0.3s');
         host.style.setProperty('--ui-duration-follow', '0s');
 
-        // Dispatched rather than driven, so the pointer is where the test says: a driven one lands
-        // where the runner's scaled frame is drawn.
-        element.dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                clientX: box.right - 1,
-                clientY: box.top + box.height / 2,
-            }),
-        );
-        await new Promise(requestAnimationFrame);
+        await pointTo(element, box.width - 1, box.height / 2);
 
         expect(element.style.getPropertyValue('--ui-fx-pointer-near'), 'followed').toBe('1');
 
-        for (const name of ['fill', 'shadow', 'border']) {
+        for (const name of ['shadow', 'border']) {
             expect(getComputedStyle(layer(element, name)).opacity, name).toBe('1');
         }
 
-        // The tilt is no longer Glass's: it turned the card under its blur on every frame.
+        // The spotlight is no longer Glass's for the card: it lit the card round a control the card
+        // holds as the control lit.
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'unlit').toBe('0');
+        // Nor the tilt: it turned the card under its blur on every frame.
         expect(getComputedStyle(element).transform, 'flat').toBe('none');
         expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
 
-        // It is still a choice of the consumer's.
+        // Each is still a choice of the consumer's.
+        host.style.setProperty('--ui-motion-card-hover-fill', 'spotlight');
         host.style.setProperty('--ui-motion-hover-move', 'tilt');
 
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'lit where chosen').toBe('1');
         expect(getComputedStyle(element).transform, 'leaning where chosen').not.toBe('none');
     });
 

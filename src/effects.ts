@@ -17,8 +17,8 @@
  * of `primary` or `secondary`, laid out against itself and a stacking context of its own, with the
  * `::before` a theme's glow is drawn on and an `::after` under the label that carries the edge; a
  * `<span class="edge">` in the control, for the edge's band; and the scripts bound as `ui-button`
- * binds them — `arrive()` to its focus, `follow()` to its `pointerover` and {@link pressed} to its
- * `pointerdown` and `keydown` — with `watch()` called as it connects. The sheet comes after the
+ * binds them — `arrive()` to its focus and {@link pressed} to its `pointerdown` and `keydown`, the
+ * control handed to `follow()` as it is drawn — with `watch()` called as it connects. The sheet comes after the
  * component's own, which it is drawn over where the two weigh the same.
  *
  * Internal — it is not re-exported from `src/index.ts`.
@@ -882,7 +882,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
         }
 
         /* The lights that follow the pointer, which the pointer engine follows for — src/pointer.ts
-           — bound to the box round the control, so the control and the box's own layer both read
+           — handed the box round the control, so the control and the box's own layer both read
            where the pointer is. Handed a duration it reads no other way, where the sheet chose a
            light, the pointer can hover and can change the field, so the collapse takes it to
            nothing and nothing follows. */
@@ -1347,7 +1347,8 @@ const bounce = css`linear(0, 0.45 7%, 0.98 15%, 1.18 22%, 1.22 26%, 1.15 32%, 0.
  * that labels it the frame's next sibling; a switch's carries `role="switch"` and draws its thumb as
  * a background layer, whose `background-position` is the third of its transitions. `checked()` from
  * `src/check.ts` is called from the control's `change` listener, `arrive()` is bound to its focus
- * and `follow()` to the frame's `pointerover`, with `watch()` called as the component connects. The
+ * and the frame handed to `follow()` as it is drawn, with `watch()` called as the component
+ * connects. The
  * sheet comes after the component's own.
  *
  * Built once for each component, as it is defined: a function, and safe as one, for the reason
@@ -2047,8 +2048,9 @@ const surfaceMoves = [
  * stacking context.** A layer under the content but over the surface's own fill needs the surface
  * isolated, and an isolated surface keeps what it holds from stacking over what follows it: a
  * host's own dropdown with a `z-index`, one that is no popover, falls under the next card. So the
- * surface is isolated only where one of them is chosen — under Matrix and Glass, the second of which
- * isolates it already with its glass — and the default theme leaves it as it was.
+ * surface is isolated only where one of them is chosen — under Glass, which isolates it already
+ * with its glass, and for a toast under Matrix — and the default theme leaves it as it was, as
+ * Matrix leaves a card.
  *
  * **The lights that follow the pointer read where it is from the engine**, `src/pointer.ts`, which
  * the sheet hands a duration on the host where one of them is chosen and the pointer can hover. The
@@ -2068,8 +2070,8 @@ const surfaceMoves = [
  *
  * **What it asks of the component.** Its surface is its host, laid out against itself, holding the
  * layers, marked `data-focus-visible` while a focus the reader can see is in it, by `held()` from
- * `src/held.ts` bound to its `focusin` and `released()` to its `focusout`, followed by `follow()`
- * from `src/pointer.ts` bound to its `pointerover`, and in the custom state `leaving` from when it is
+ * `src/held.ts` bound to its `focusin` and `released()` to its `focusout`, handed to `follow()`
+ * from `src/pointer.ts`, and in the custom state `leaving` from when it is
  * asked to leave until it has gone. The sheet comes after the component's own. An effect drawn on the
  * host — a move, the isolation, the duration the engine is handed, an entrance and an exit — is drawn
  * under a query that asks the host's surroundings and never the host itself: a choice written on the

@@ -304,16 +304,16 @@ Over the primary's fill, which is the accent already, the accent is moved two fi
 label, which stands off that fill.
 
 **The spotlight, the cast and the edge follow the pointer.** One listener on the page hands the
-button where the pointer is, a frame at a time, from the moment the pointer comes over it until it
-is 96px away, the lights fading out over that distance. The spotlight is a light 4rem across where
-the pointer is, on the layer under the label, in the shimmer's light at a quarter of its strength, so
-the label keeps its 4.5:1 under it; it takes the hover colour's place. The cast is a shadow on the
-button that falls away from the pointer, and on a dark page the accent spills round the side the
-pointer is on. The edge is a band 2px wide on the edge, lit where the pointer is nearest, on a layer
-of its own so the band can be cut to the edge; it takes the place of the edge a theme gives the
-pointer. All three follow only where the pointer can hover and the button can be used, never under
-reduced motion, and the focus wins over all three. The button binds one internal helper,
-`follow()` in `src/pointer.ts`, to its `pointerover`.
+button where the pointer is, a frame at a time, from 96px away as the pointer nears until it is
+96px away again as it leaves, the lights rising and fading over that distance. The spotlight is a
+light 4rem across where the pointer is, on the layer under the label, in the shimmer's light at a
+quarter of its strength, so the label keeps its 4.5:1 under it; it takes the hover colour's place.
+The cast is a shadow on the button that falls away from the pointer, and on a dark page the accent
+spills round the side the pointer is on. The edge is a band 2px wide on the edge, lit where the
+pointer is nearest, on a layer of its own so the band can be cut to the edge; it takes the place of
+the edge a theme gives the pointer. All three follow only where the pointer can hover and the button
+can be used, never under reduced motion, and the focus wins over all three. The button hands its
+control to one internal helper, `follow()` in `src/pointer.ts`, as it draws it.
 
 **The shimmer is a sheen swept across the button**, ten degrees off upright and three quarters as
 wide as the button, four rounds of `--ui-duration-loop` and then at rest before the start: a focus

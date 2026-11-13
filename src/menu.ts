@@ -515,7 +515,7 @@ export class UiMenu extends LitElement {
         // as ui-button binds them — src/effects.ts says what it asks of a button.
         trigger.className = 'secondary';
         trigger.addEventListener('focus', arrive);
-        trigger.addEventListener('pointerover', follow);
+        follow(trigger);
         trigger.addEventListener('pointerdown', pressed);
         trigger.addEventListener('keydown', pressed);
         trigger.append(slot('trigger'), caret(), band());

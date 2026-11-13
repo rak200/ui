@@ -4,6 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // which needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
+import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, { Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
 import '../src/toast.js';
@@ -994,15 +995,7 @@ describe("the pointer and a focus in it, under each theme's taste", () => {
         // The engine is handed an effect's time, and follows nothing under none.
         element.style.setProperty('--ui-duration-effect', '0.3s');
 
-        // Dispatched rather than driven, so the pointer is where the test says.
-        element.dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                clientX: box.left + box.width / 2,
-                clientY: box.top + box.height / 2,
-            }),
-        );
-        await new Promise(requestAnimationFrame);
+        await pointTo(element, box.width / 2, box.height / 2);
 
         expect(element.style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
     });

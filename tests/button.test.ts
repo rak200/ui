@@ -5,6 +5,7 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { escaped } from './escaped.js';
+import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, { Disabled, Primary, Secondary, States } from '../stories/button.stories.js';
 import '../src/button.js';
@@ -1944,21 +1945,7 @@ describe("the effects Glass's taste names", () => {
             element.style.setProperty(`--ui-motion-${moment}`, effect);
         }
 
-        const box = inner(element).getBoundingClientRect();
-
-        inner(element).dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                composed: true,
-                clientX: box.left + x,
-                clientY: box.top + y,
-            }),
-        );
-        await new Promise<void>((resolve) => {
-            requestAnimationFrame(() => {
-                resolve();
-            });
-        });
+        await pointTo(inner(element), x, y);
 
         return element;
     }
@@ -2099,22 +2086,9 @@ describe("the effects Glass's taste names", () => {
         );
         element.parentElement?.setAttribute('data-ui-theme', glass.name);
 
-        // The theme's taste reaches the button once its region is Glass's: brought over it again.
-        const box = inner(element).getBoundingClientRect();
-
-        inner(element).dispatchEvent(
-            new PointerEvent('pointerover', {
-                bubbles: true,
-                composed: true,
-                clientX: box.left + 30,
-                clientY: box.top + 10,
-            }),
-        );
-        await new Promise<void>((resolve) => {
-            requestAnimationFrame(() => {
-                resolve();
-            });
-        });
+        // The theme's taste reaches the button once its region is Glass's, and the engine reads it
+        // again as the pointer comes over the button.
+        await pointTo(inner(element), 30, 10);
 
         expect(getComputedStyle(band(element)).opacity, 'band').toBe('1');
         expect(getComputedStyle(inner(element), '::after').backgroundImage, 'spotlight').toMatch(

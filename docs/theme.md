@@ -82,13 +82,18 @@ glows; and in error its boundary splits into the danger and the info, its fill a
 leaves the hover colour out, so the theme names the tint for each field at the focus, over the
 page's highlight. A drawn control tints and glows under the pointer, its boundary at rest; at the
 focus it takes its hover colour and a burst, its ring glitches and its label glows; and in error
-its boundary splits, its fill as it is. A card takes the tint and glows under the pointer; at a
-focus it holds it takes the tint and a burst; and it comes and goes in pieces, appearing and
-vanishing at random. The card leaves the hover colour out as a field does, so the theme names the
-tint for it at the focus too, and its entrance and its exit are its own moments. A toast takes the
-card's answers to the pointer and a focus in it, and the tint at the focus for the same reason. Each
-`none` in it takes back an effect the
-default theme's taste names, which would otherwise run under Matrix too.
+its boundary splits, its fill as it is. A card glows under the pointer and takes a burst at a focus
+it holds, its fill as it is at both; and it comes and goes in pieces, appearing and vanishing at
+random. **The card takes no tint**: the pointer over a field or a drawn control the card holds, and
+a focus in a field, are the card's too, and the tint each takes there is the card's, so over a
+tinted card one stood at 1.01:1 at most from the card round it in both schemes, where it stands at
+1.05:1 or more in the light and 1.11:1 or more in the dark from a card left as it is. The card
+leaves the hover colour out as a field does, so the page's highlight leaves it as it is at the
+focus, and its entrance and its exit are its own moments. A toast tints and glows under the
+pointer, and takes the tint and a burst at a focus in it, the tint named for it at the focus since
+it leaves the hover colour out too. Each `none` in it takes back an effect that would otherwise run
+under Matrix too: the card's, the page's tint, and every other one an effect the default theme's
+taste names.
 
 | Moment           | Effect      |
 | ---------------- | ----------- |
@@ -109,7 +114,7 @@ default theme's taste names, which would otherwise run under Matrix too.
 | Component                     | Moment       | Effect        |
 | ----------------------------- | ------------ | ------------- |
 | `input`, `textarea`, `select` | `focus-fill` | `tint`        |
-| `card`                        | `focus-fill` | `tint`        |
+| `card`                        | `hover-fill` | `none`        |
 | `card`                        | `enter`      | `materialize` |
 | `card`                        | `exit`       | `erode`       |
 | `toast`                       | `focus-fill` | `tint`        |
@@ -217,8 +222,8 @@ own. A drawn control keeps a light along its inside at the focus, a sheen sweeps
 switch's excepted, whose thumb a sheen could only pass over — and its ring comes into focus from a
 blur; in error it holds a light of the danger round it and flashes its fill. Under the pointer it
 takes its sheen where the pointer is, a switch's excepted again, a shadow cast away from it and a
-band along its boundary nearest it. A card takes its tint where the pointer is, a shadow cast away
-from it and a band along its boundary nearest it; at a focus it holds, its tint
+band along its boundary nearest it. A card takes a shadow cast away from the pointer and a band
+along its boundary nearest it, its fill as it is; at a focus it holds, its tint
 sweeps across it — the card's own light, which keeps its muted text at 4.5:1 where a button's sheen
 did not — and a light holds along its inside; and it comes out of a fine grain as it arrives, and
 dissolves into one as it leaves. A toast takes its tint where the pointer is and rises, its edge as
@@ -244,11 +249,15 @@ theme's taste names their `none`: a component's own entry outweighs a page's, so
 Glass's edge would never reach them. It leans no card toward the pointer, though RFC 0004 chose the
 tilt for the card: turned under the blur on every frame the pointer moved, a card cost the page
 frames in every engine, so a card leans only where you choose `tilt`, as
-[the card says](card.md#motion).
+[the card says](card.md#motion). Nor does a card take the spotlight under the pointer, which RFC
+0004 chose for it too: the pointer over a control the card holds is over the card too, and the card
+round the control lit as the control did — 1.17:1 to 1.19:1 from its rest in the light scheme, where
+the control moved 1.11:1 to 1.21:1 from its own — so the control's light was no longer its own.
 
 | Component                     | Moment         | Effect     |
 | ----------------------------- | -------------- | ---------- |
 | `checkbox`, `switch`, `radio` | `hover-border` | `edge`     |
+| `card`                        | `hover-fill`   | `none`     |
 | `card`                        | `enter`        | `dissolve` |
 | `card`                        | `exit`         | `dissolve` |
 | `toast`                       | `hover-shadow` | `raise`    |
