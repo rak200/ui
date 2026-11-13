@@ -2402,6 +2402,48 @@ describe('the description a tooltip hands over', () => {
     });
 });
 
+/**
+ * A tooltip on an item: written inside it, round its label, since the menu takes an item only as
+ * its own child — one written round the item takes it out of the menu.
+ */
+describe('a tooltip on an item', () => {
+    it('keeps the item an item, whose tip shows as the keys land on it, and chooses it from its label', async () => {
+        const host = await mount(`
+            <div style="padding-block: 6rem">
+                <ui-menu>
+                    <span slot="trigger">Actions</span>
+                    <button type="button">
+                        <ui-tooltip>Rename<span slot="tip">Rename the invoice</span></ui-tooltip>
+                    </button>
+                    <button type="button">Duplicate</button>
+                </ui-menu>
+            </div>
+        `);
+        const element = menu(host);
+        const tip = only(host, '[slot="tip"]');
+
+        await open(element);
+
+        expect(item(host, 0).getAttribute('role'), 'an item').toBe('menuitem');
+        expect(document.activeElement, 'the keys landed on it').toBe(item(host, 0));
+        expect(tip.matches(':popover-open'), 'its tip shown').toBe(true);
+
+        await expectAccessible(host);
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(tip.matches(':popover-open'), 'gone as the keys move on').toBe(false);
+
+        // Where a click on the label lands: the tooltip, which the item holds.
+        only(host, 'ui-tooltip').dispatchEvent(
+            new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }),
+        );
+        await settle();
+
+        expect(element.open, 'chosen').toBe(false);
+    });
+});
+
 describe('menu stories', () => {
     it.each([
         ['Menu', Menu],

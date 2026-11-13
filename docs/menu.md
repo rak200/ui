@@ -209,6 +209,22 @@ which is the trigger. Opening the menu does not disturb it.
 The copy in here is not painted, because the tip is already showing it. Take the tip away and the
 description goes with it.
 
+**On an item, write the tooltip inside it**, round its label, and it describes the item, as
+[`<ui-tooltip>`](tooltip.md#inside-a-button-or-a-link) says:
+
+```html
+<ui-menu>
+  <span slot="trigger">Actions</span>
+  <button type="button">
+    <ui-tooltip>Rename<span slot="tip">Rename the invoice</span></ui-tooltip>
+  </button>
+</ui-menu>
+```
+
+The item stays an item: the keys land on it and show its tip, and a click on its label chooses it.
+**A tooltip written round an item takes it out of the menu**, which takes an item only as its own
+child: unstyled, passed over by the keys, and a button no menu claims.
+
 ## Motion
 
 **The trigger answers as the secondary button it is.** It takes every effect a

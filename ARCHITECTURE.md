@@ -372,6 +372,15 @@ is asked for, available on all eight. `help` stays for the case a popover cannot
 instructions read together, or one read beside a neighbour's error — and that is a capability
 rather than a recommendation. #156
 
+**Where a trigger's place is fixed, the tooltip is written inside it.** A menu takes an item only as
+its own child, so a tooltip written round an item took it out of the menu: drawn as the browser's
+own button, passed over by the keys, and a button in a `role="menu"`. Written inside the item, round
+its label, a tooltip describes the button or the link it lies in, which is what the reader points at
+and focuses, and the tip is shown from it, which anchors the tip with no name to collide. A tip
+inside its trigger costs two things a tip beside it does not: its text joined the trigger's name
+while it showed, in all three engines, and a click on it clicked the trigger. So the tip is hidden
+from the name, which the description still reaches, and a click on it is kept from the trigger.
+
 ## Glyphs are adopted, the delivery is owned
 
 The icons come from [Lucide](https://lucide.dev), vendored under its ISC licence; `<ui-icon>`, the

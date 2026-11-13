@@ -17,6 +17,7 @@ import '@rak200/ui';
 - [Touch](#touch)
 - [Where it lands, and who put it there](#where-it-lands-and-who-put-it-there)
 - [On a control you wrote](#on-a-control-you-wrote)
+- [Inside a button or a link](#inside-a-button-or-a-link)
 - [Motion](#motion)
 - [Styling](#styling)
 
@@ -153,9 +154,8 @@ part: the tip is centred there, as it is left to right.
 **The side it took is written as [`data-side`](#styling)**, since the CSS writes it nowhere: the
 element reads it off where the tip landed as it is shown, and again on every scroll and resize.
 
-The trigger takes its anchor name from this element's own stylesheet. Give it an `anchor-name` of
-your own and yours replaces it, which leaves the tip nothing to hang from: write both, `anchor-name:
---yours, --trigger`.
+**The tip is shown from its trigger, which is what anchors it**, so it needs no anchor name: an
+`anchor-name` of your own on the trigger leaves the tip where it is.
 
 A positioning dependency was the other option. It solves scroll containers, virtual anchors and
 continuous auto-update — none of which a tooltip against a real element needs — and it would be this
@@ -182,6 +182,34 @@ replaced another is the failure nobody sees.
 A tooltip around [`<ui-input>`](input.md) or any other control this package draws needs none of
 this. Those take the sentence rather than the reference, and render it where their own control can
 resolve it — so the composition above is for a control of yours, not for one of theirs.
+
+## Inside a button or a link
+
+```html
+<ui-menu>
+  <span slot="trigger">Actions</span>
+  <button type="button">
+    <ui-tooltip>
+      <ui-icon name="pencil"></ui-icon> Rename
+      <span slot="tip">Rename the invoice</span>
+    </ui-tooltip>
+  </button>
+  <button type="button">Duplicate</button>
+</ui-menu>
+```
+
+**Written inside a `<button>` or an `<a href>`, round its label, a tooltip describes the button or
+the link**, whatever it holds itself: the button carries the description, the tip shows as the
+reader focuses the button or points anywhere on it, and it sits against the button. It is the
+composition for a trigger whose place is fixed, as a [menu's](menu.md#supplementary-text) item is:
+the menu takes an item only as its own child, so a tooltip written round one takes it out of the
+menu.
+
+**The tip is kept out of the button's name, and a click on it from the button.** It lies inside the
+button, so its text would join the name while it shows, read after the button's own words, and a
+click on it would click the button. So the tooltip writes `aria-hidden="true"` on the tip, which the
+description still reaches, and a click on the tip chooses nothing and follows no link. Both are
+undone once the tooltip leaves the button.
 
 ## Motion
 

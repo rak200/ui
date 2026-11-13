@@ -184,6 +184,8 @@ describe('ui-tooltip', () => {
         expect(tip(host).getAttribute('role')).toBe('tooltip');
         expect(tip(host).id).toMatch(/\S/);
         expect(trigger(host).getAttribute('aria-describedby')).toBe(tip(host).id);
+        // Beside its trigger, the tip joins no name, so it stays where a reader can find it.
+        expect(tip(host).hasAttribute('aria-hidden'), 'left in the tree').toBe(false);
     });
 
     it('numbers each tooltip separately, so two on one page do not collide', async () => {
@@ -1919,6 +1921,130 @@ describe('where it lands', () => {
             tip(host).getBoundingClientRect().width,
             'wider than the box that clips',
         ).toBeGreaterThan(40);
+    });
+});
+
+/**
+ * A tooltip written inside a button or a link, round its label: the composition for a trigger
+ * whose place is fixed, as a menu's item is, which the menu takes as an item only as its own
+ * child. The label starts at the button's start, as an item's does, so its middle is not the
+ * button's.
+ */
+describe('inside a button or a link', () => {
+    /** A button, or a link, holding a tooltip round its label: a mark and a word. */
+    const inside = (tag: 'button' | 'a'): string => `
+        <div style="display: flex; justify-content: center">
+            <${tag} ${tag === 'a' ? 'href="#renamed"' : 'type="button"'}
+                style="display: block; inline-size: 16rem; text-align: start">
+                <ui-tooltip>
+                    <span class="mark">✎</span> Rename
+                    <span slot="tip">Rename the invoice</span>
+                </ui-tooltip>
+            </${tag}>
+        </div>
+    `;
+
+    const holder = (host: ParentNode): HTMLElement => only(host, 'button, a');
+
+    /** A click as a pointer would make one: it bubbles, it crosses roots, and it can be cancelled. */
+    const click = (): MouseEvent =>
+        new MouseEvent('click', { bubbles: true, cancelable: true, composed: true });
+
+    it.each([
+        ['button', 'button'],
+        ['link', 'a'],
+    ] as const)(
+        'describes the %s it lies in, not what it holds, and keeps its tip out of the name',
+        async (_name, tag) => {
+            const host = await mount(inside(tag));
+
+            expect(holder(host).getAttribute('aria-describedby'), 'described').toBe(tip(host).id);
+            expect(only(host, '.mark').hasAttribute('aria-describedby'), 'not its label').toBe(
+                false,
+            );
+            // Inside it, the tip's text joined the name while it showed, after the trigger's own.
+            expect(tip(host).getAttribute('aria-hidden'), 'out of the name').toBe('true');
+        },
+    );
+
+    it('shows as the button takes the focus, and as the pointer comes onto any of it', async () => {
+        const host = await mount(inside('button'));
+
+        await userEvent.tab();
+
+        expect(document.activeElement, 'the button focused').toBe(holder(host));
+        expect(tip(host).matches(':popover-open'), 'shown at the focus').toBe(true);
+
+        await userEvent.tab();
+
+        expect(tip(host).matches(':popover-open'), 'gone as the focus leaves').toBe(false);
+
+        // At the button, which the pointer reaches past the label this element holds: an enter
+        // does not bubble, so only a listener on the button itself hears it.
+        holder(host).dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+
+        expect(tip(host).matches(':popover-open'), 'shown under the pointer').toBe(true);
+
+        holder(host).dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
+
+        expect(tip(host).matches(':popover-open'), 'gone as it leaves').toBe(false);
+    });
+
+    it('sits above the button, centred on it rather than on what it holds', async () => {
+        const host = await mount(inside('button'));
+
+        await userEvent.tab();
+        await painted();
+
+        const anchor = holder(host).getBoundingClientRect();
+        const label = only(host, '.mark').getBoundingClientRect();
+        const box = tip(host).getBoundingClientRect();
+
+        expect(box.bottom, 'above it').toBeLessThan(anchor.top);
+        expect((box.left + box.right) / 2, 'on its middle').toBeCloseTo(
+            (anchor.left + anchor.right) / 2,
+            0,
+        );
+        expect(label.right, 'which its label is nowhere near').toBeLessThan(
+            (anchor.left + anchor.right) / 2,
+        );
+        expect(tip(host).getAttribute('data-side')).toBe('block-start');
+    });
+
+    it('keeps a click on its tip from the link, where one on the label reaches it', async () => {
+        const host = await mount(inside('a'));
+        let clicks = 0;
+        holder(host).addEventListener('click', (event) => {
+            clicks += 1;
+            // The test page stays where it is, whatever the link says.
+            event.preventDefault();
+        });
+
+        expect(tip(host).dispatchEvent(click()), 'cancelled, so nothing is followed').toBe(false);
+        expect(clicks, 'and never heard on the link').toBe(0);
+
+        only(host, '.mark').dispatchEvent(click());
+
+        expect(clicks, 'where the label is the link').toBe(1);
+    });
+
+    it('leaves the button and the tip as it found them once it is taken out', async () => {
+        const host = await mount(inside('button'));
+        const button = holder(host);
+        let clicks = 0;
+        host.addEventListener('click', () => {
+            clicks += 1;
+        });
+
+        // Out of the button and beside it, holding what it held, so its mark is its trigger now.
+        host.append(only(host, 'ui-tooltip'));
+
+        expect(button.hasAttribute('aria-describedby'), 'the button let go').toBe(false);
+        expect(tip(host).hasAttribute('aria-hidden'), 'the tip back in the tree').toBe(false);
+
+        tip(host).dispatchEvent(click());
+
+        expect(clicks, 'and its clicks its own again').toBe(1);
     });
 });
 
