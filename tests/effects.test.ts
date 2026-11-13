@@ -355,7 +355,7 @@ describe("a field's effects", () => {
         host.style.setProperty('--ui-easing-enter', 'ease-in');
         host.style.setProperty('--ui-iteration-settle', '3');
 
-        const layer = getComputedStyle(box, '::before');
+        const layer = getComputedStyle(box, '::after');
 
         expect([
             layer.animationName,
@@ -390,13 +390,13 @@ describe("a field's effects", () => {
         const danger = (opacity: number): string =>
             colour(`oklab(from rgb(200, 0, 0) l a b / ${String(opacity)})`);
 
-        expect(getComputedStyle(box, '::before').boxShadow, 'leaving').toBe(
+        expect(getComputedStyle(box, '::after').boxShadow, 'leaving').toBe(
             `${danger(0.5)} 0px 0px 0px 0px`,
         );
 
         pulse.currentTime = 5000;
 
-        expect(getComputedStyle(box, '::before').boxShadow, 'halfway').toBe(
+        expect(getComputedStyle(box, '::after').boxShadow, 'halfway').toBe(
             `${danger(0.25)} 0px 0px 0px 6px`,
         );
     });
@@ -448,7 +448,7 @@ describe("a field's effects", () => {
             'invalid-fill': 'flash',
         });
 
-        expect(playing(box, '::before'), 'the band').toEqual([]);
+        expect(playing(box, '::after'), 'the band').toEqual([]);
         expect(playing(control), 'the fill').toEqual([]);
     });
 
@@ -513,23 +513,30 @@ describe("a field's effects", () => {
         expect(getComputedStyle(control).backgroundColor, 'at the focus').toBe(buttons);
     });
 
-    it("takes the darkening's place under the pointer with the boundary at rest, a field in error's red kept", async () => {
-        const plain = field('input', typed, { 'hover-border': 'none' });
-        const erring = field('input', typed, { 'hover-border': 'none' }, 'aria-invalid="true"');
+    // The edge too, whose band is the pointer's answer in the darkening's place: under the
+    // darkening the whole boundary went to the text, and the band was lost in it.
+    it.each([['none'], ['edge']])(
+        "takes the darkening's place under the pointer under %s, the boundary at rest, a field in error's red kept",
+        async (effect) => {
+            const plain = field('input', typed, { 'hover-border': effect });
+            const erring = field('input', typed, { 'hover-border': effect }, 'aria-invalid="true"');
 
-        for (const { host } of [plain, erring]) {
-            host.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
-            host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
-        }
+            for (const { host } of [plain, erring]) {
+                host.style.setProperty('--ui-color-border', 'rgb(1, 2, 3)');
+                host.style.setProperty('--ui-color-danger', 'rgb(200, 0, 0)');
+            }
 
-        await userEvent.hover(plain.control);
+            await userEvent.hover(plain.control);
 
-        expect(getComputedStyle(plain.control).borderTopColor, 'at rest').toBe('rgb(1, 2, 3)');
+            expect(getComputedStyle(plain.control).borderTopColor, 'at rest').toBe('rgb(1, 2, 3)');
 
-        await userEvent.hover(erring.control);
+            await userEvent.hover(erring.control);
 
-        expect(getComputedStyle(erring.control).borderTopColor, 'in error').toBe('rgb(200, 0, 0)');
-    });
+            expect(getComputedStyle(erring.control).borderTopColor, 'in error').toBe(
+                'rgb(200, 0, 0)',
+            );
+        },
+    );
 
     it("bursts light out round a field as the focus arrives, on the shadow's place in its list", async () => {
         const { host, control } = field('input', typed, { 'focus-shadow': 'burst' });
@@ -636,7 +643,7 @@ describe("a field's effects", () => {
         host.style.setProperty('--ui-duration-effect', '0.2s');
         host.style.setProperty('--ui-iteration-settle', '3');
 
-        const layer = getComputedStyle(box, '::before');
+        const layer = getComputedStyle(box, '::after');
 
         expect([
             layer.animationName,
@@ -669,7 +676,7 @@ describe("a field's effects", () => {
         for (const [time, shadow] of thrown) {
             split.currentTime = time;
 
-            expect(getComputedStyle(box, '::before').boxShadow, String(time)).toBe(shadow);
+            expect(getComputedStyle(box, '::after').boxShadow, String(time)).toBe(shadow);
         }
     });
 
@@ -894,7 +901,7 @@ describe("a field's effects", () => {
 
         pointed(box, 1, 30, 10);
 
-        const layer = getComputedStyle(box, '::before');
+        const layer = getComputedStyle(box, '::after');
 
         expect(layer.opacity, 'as near as the pointer').toBe('1');
         expect(layer.backgroundImage).toMatch(/^radial-gradient\(100% 100% at 30px 10px, /);
@@ -919,11 +926,11 @@ describe("a field's effects", () => {
             pointed(box, 1, 30, 10);
         }
 
-        expect(getComputedStyle(erring.box, '::before').backgroundImage, 'in error').toBe('none');
+        expect(getComputedStyle(erring.box, '::after').backgroundImage, 'in error').toBe('none');
 
         await userEvent.tab();
 
-        expect(getComputedStyle(focused.box, '::before').opacity, 'the band').toBe('0');
+        expect(getComputedStyle(focused.box, '::after').opacity, 'the band').toBe('0');
         expect(getComputedStyle(focused.control).boxShadow, 'the cast').toBe('none');
         expect(getComputedStyle(focused.control).backgroundImage, 'the light').toBe('none');
     });
@@ -958,7 +965,7 @@ describe("a field's effects", () => {
             host.style.setProperty('--ui-color-danger', 'rgb(10, 20, 30)');
         }
 
-        const layer = getComputedStyle(erring.box, '::before');
+        const layer = getComputedStyle(erring.box, '::after');
 
         expect(layer.boxShadow, 'in error').toBe(
             'color(srgb 0.0392157 0.0784314 0.117647 / 0.5) 0px 0px 12px 2px',
@@ -967,7 +974,7 @@ describe("a field's effects", () => {
             'absolute',
             'none',
         ]);
-        expect(getComputedStyle(disabled.box, '::before').boxShadow, 'disabled').toBe('none');
+        expect(getComputedStyle(disabled.box, '::after').boxShadow, 'disabled').toBe('none');
     });
 
     it.each([

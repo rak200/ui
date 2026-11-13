@@ -793,6 +793,14 @@ export function fieldEffects(component: string, able: string): CSSResult {
         ].join(' or '),
     );
 
+    /**
+     * True wherever the boundary under the pointer is left as it rests: `none`, and the edge, whose
+     * band is the pointer's answer in the darkening's place.
+     */
+    const resting = unsafeCSS(
+        ['none', 'edge'].map((effect) => drawn('hover-border', effect)).join(' or '),
+    );
+
     return css`
         /* What they move transitions only once one of them is chosen, so with none the boundary
            is still the only thing that moves: the shadow and the fill on the control's own, and
@@ -834,7 +842,9 @@ export function fieldEffects(component: string, able: string): CSSResult {
            every component's lights are drawn in and over which every shipped palette's text and
            placeholder hold 4.5:1 — measured for RFC 0004. none, for the boundary: today's
            darkening taken away, so it stays as it rests, and a field in error keeps its red, which
-           the darkening covers. */
+           the darkening covers. The edge takes it away too, its band the pointer's answer in its
+           place, as a button's and a drawn control's is: under the darkening the whole boundary
+           went to the text, and the band was lost in it. */
         @media (hover: hover) {
             @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
                 ${control}:hover${pointable}:not(:focus-visible) {
@@ -854,7 +864,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
                 }
             }
 
-            @container ${unsafeCSS(drawn('hover-border', 'none'))} {
+            @container ${resting} {
                 ${control}:hover${pointable}:not(:focus-visible) {
                     border-color: ${reference('--ui-color-border')};
                 }
@@ -912,7 +922,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
            button's is, Safari's prefixed mask first and the standard one after, for the reason the
            button's gives. The focus wins. */
         @container ${unsafeCSS(drawn('hover-border', 'edge'))} {
-            .glow:not(:has(> [aria-invalid='true']))::before {
+            .glow:not(:has(> [aria-invalid='true']))::after {
                 padding: 2px;
                 background: radial-gradient(
                     ellipse 100% 100% at var(--ui-fx-pointer-x, -999px)
@@ -932,7 +942,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
 
             .glow:has(
                     > ${control}${pointable}:not(:focus-visible):not([aria-invalid='true'])
-                )::before {
+                )::after {
                 opacity: var(--ui-fx-pointer-near, 0);
             }
         }
@@ -1074,13 +1084,15 @@ export function fieldEffects(component: string, able: string): CSSResult {
 
         /* The layer an error's border draws on, and the pointer's band on a field with no error:
            round the box, which it is laid out against, and taking no pointer, so the field itself
-           never moves. */
+           never moves. After the control, since the two are drawn in the order of the tree where
+           both are positioned: a select under the base appearance is, and drew over the band while
+           the layer came before it. */
         @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} or ${unsafeCSS(drawn('invalid-border', 'split'))} or ${unsafeCSS(drawn('invalid-border', 'glow'))} or ${unsafeCSS(drawn('hover-border', 'edge'))} {
             .glow {
                 position: relative;
             }
 
-            .glow::before {
+            .glow::after {
                 content: '';
                 position: absolute;
                 inset: 0;
@@ -1093,7 +1105,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
            flourish and then at rest, as a loop does for a state that stands for as long as the
            reader leaves it. */
         @container ${unsafeCSS(drawn('invalid-border', 'pulse'))} {
-            .glow:has(> [aria-invalid='true'])::before {
+            .glow:has(> [aria-invalid='true'])::after {
                 animation: ui-pulse-danger ${reference('--ui-duration-flourish')}
                     ${reference('--ui-easing-enter')} ${reference('--ui-iteration-settle')};
             }
@@ -1103,7 +1115,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
            either way and back, as the glitch splits the ring. Its rounds are an effect's, about
            half the pulse's, so it plays twice as many and ends close to it, then rests. */
         @container ${unsafeCSS(drawn('invalid-border', 'split'))} {
-            .glow:has(> [aria-invalid='true'])::before {
+            .glow:has(> [aria-invalid='true'])::after {
                 animation: ui-split ${reference('--ui-duration-effect')} linear
                     calc(${reference('--ui-iteration-settle')} * 2);
             }
@@ -1113,7 +1125,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
            round it in the accent, for as long as the error stands; not round one that cannot be
            used, which lights nothing. */
         @container ${unsafeCSS(drawn('invalid-border', 'glow'))} {
-            .glow:has(> [aria-invalid='true']:not(:disabled))::before {
+            .glow:has(> [aria-invalid='true']:not(:disabled))::after {
                 box-shadow: 0 0 0.75rem 0.125rem
                     rgb(from ${reference('--ui-color-danger')} r g b / 0.5);
             }

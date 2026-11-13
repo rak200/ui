@@ -232,7 +232,7 @@ runs:
 | `--ui-motion-hover-shadow`   | `glow`      | a light of the accent round the control                   |
 | `--ui-motion-hover-shadow`   | `cast`      | a shadow cast away from the pointer, as near as it is     |
 | `--ui-motion-hover-border`   | `none`      | the boundary as it rests, its darkening taken away        |
-| `--ui-motion-hover-border`   | `edge`      | a band lit along the boundary nearest the pointer         |
+| `--ui-motion-hover-border`   | `edge`      | a band lit nearest the pointer, in the darkening's place  |
 | `--ui-motion-focus-fill`     | `tint`      | the same tint, while the focus stays                      |
 | `--ui-motion-focus-fill`     | `shimmer`   | the button's sheen swept across it four times             |
 | `--ui-motion-focus-shadow`   | `raise`     | the same drop, while the focus stays                      |
@@ -258,10 +258,10 @@ it. The message comes as it did. **Under [Matrix](theme.md#matrix)** a field tin
 the pointer, and its boundary no longer darkens there; at the focus it takes the tint and a burst of
 light, its ring glitches and its label glows; and in error its boundary splits into the danger and
 the info, and its fill stays as it is. **Under [Glass](theme.md#glass)** a field takes its tint
-where the pointer is, a shadow cast away from it and a band lit along its boundary nearest it; it
-keeps a light along its inside at the focus, a sheen sweeps across it four times and its ring comes
-into focus from a blur, its label staying as it is; and in error it holds a light of the danger
-round it and flashes its fill.
+where the pointer is, a shadow cast away from it and a band lit along its boundary nearest it, in
+the place of its darkening; it keeps a light along its inside at the focus, a sheen sweeps across
+it four times and its ring comes into focus from a blur, its label staying as it is; and in error
+it holds a light of the danger round it and flashes its fill.
 
 **The spotlight, the cast and the edge follow the pointer**, as the button's do: the pointer engine
 hands the box round the control where the pointer is, a frame at a time, from the moment it comes

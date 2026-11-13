@@ -1017,7 +1017,7 @@ describe("a field's effects, which the pair adopts", () => {
                 await over(box(element), 20, 10);
 
                 expect(glow(element).style.getPropertyValue('--ui-fx-pointer-near')).toBe('1');
-                expect(getComputedStyle(glow(element), '::before').opacity).toBe('1');
+                expect(getComputedStyle(glow(element), '::after').opacity).toBe('1');
             } finally {
                 await away();
             }
@@ -1041,7 +1041,7 @@ describe("a field's effects, which the pair adopts", () => {
                 /^radial-gradient\(256px at /,
             );
             expect(getComputedStyle(box(element)).boxShadow, 'a shadow cast').toMatch(/px/);
-            expect(getComputedStyle(glow(element), '::before').opacity, 'a band').toBe('1');
+            expect(getComputedStyle(glow(element), '::after').opacity, 'a band').toBe('1');
         } finally {
             await away();
         }
@@ -1165,7 +1165,7 @@ describe("a form's moments on a field", () => {
     it("answers an error under the default theme's taste: a band sent out, and the fill flashed", async () => {
         const element = await erring();
 
-        expect(playing(glow(element), '::before'), 'the pulse').toEqual(['ui-pulse-danger']);
+        expect(playing(glow(element), '::after'), 'the pulse').toEqual(['ui-pulse-danger']);
         expect(playing(box(element)), 'the flash, and its halo').toEqual(['ui-flash', 'ui-halo']);
     });
 
@@ -1181,7 +1181,7 @@ describe("a form's moments on a field", () => {
     it("splits a field in error's boundary under Matrix, and keeps its fill as it is", async () => {
         const element = await erring(matrix);
 
-        expect(playing(glow(element), '::before'), 'the split').toEqual(['ui-split']);
+        expect(playing(glow(element), '::after'), 'the split').toEqual(['ui-split']);
         expect(playing(box(element)), 'no flash').toEqual([]);
     });
 
@@ -1264,7 +1264,7 @@ describe("a form's moments on a field", () => {
         ).toEqual(['ui-shimmer', 'ui-halo', 'ui-flash', 'ui-halo']);
         expect(getComputedStyle(box(element)).boxShadow, 'a light inside').toMatch(/ inset$/);
         expect(
-            getComputedStyle(glow(element), '::before').boxShadow,
+            getComputedStyle(glow(element), '::after').boxShadow,
             'a light of the danger',
         ).not.toBe('none');
     });
