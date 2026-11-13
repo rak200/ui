@@ -205,8 +205,10 @@ Each is drawn on a layer of its own in the toast's shadow root, an empty span th
 the same internal sheet as the card's, `surfaceEffects()` in `src/effects.ts`, and the layers cover
 the toast's edge, the wider stripe at its start included. **What moves a toast goes on its
 `transform`**, since its own rise holds its `translate`, and the toast transitions it beside its rise.
-A focus a click left is not one the reader sees, and changes nothing; the pointer resting on a toast
-with a focus in it changes nothing either. Each effect drawn on the toast itself — the lift — reads
+A focus a click left is not one the reader sees, and changes nothing; a focus that moves from one
+thing in the toast to another, from a link in its message to its dismiss button, stays the toast's,
+so nothing it does at a focus plays again; and the pointer resting on a toast with a focus in it
+changes nothing either. Each effect drawn on the toast itself — the lift — reads
 its choice from round the toast, never from the toast: **a choice written on one toast alone does not
 reach it**, where one written on the toaster or anything round it does — RFC 0004's S8. Under
 `prefers-reduced-motion: reduce` each lands at once. A choice for toasts alone goes under the

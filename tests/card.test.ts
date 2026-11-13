@@ -443,6 +443,30 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
     });
 
+    it('bursts light round a card once under Matrix, as the focus arrives in it and not as it moves from one thing the card holds to another', async () => {
+        const host = await under(
+            `
+            <ui-card>
+                <p style="margin: 0">Everything in the free tier.</p>
+                <div slot="footer"><ui-button>Back</ui-button><ui-button>Choose</ui-button></div>
+            </ui-card>
+        `,
+            matrix,
+        );
+        const element = card(host);
+        // A burst that outlasts the step from one button to the next.
+        host.style.setProperty('--ui-duration-flourish', '60s');
+
+        await userEvent.tab();
+
+        const burst = running(layer(element, 'focus-shadow'), 'ui-burst');
+
+        await userEvent.tab();
+
+        expect(document.activeElement?.textContent, 'moved').toBe('Choose');
+        expect(running(layer(element, 'focus-shadow'), 'ui-burst'), 'the same burst').toBe(burst);
+    });
+
     it("casts a card's shadow and edges it under Glass, its fill as it is and flat, and lights or leans it where a consumer chooses", async () => {
         const host = await under(fixture, glass);
         const element = card(host);
