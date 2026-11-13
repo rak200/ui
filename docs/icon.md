@@ -53,6 +53,12 @@ and one failure mode it is worth knowing about — **an unregistered name draws 
 warns** in the console, naming the import you are missing. A typo in `name` and a module
 nobody imported look identical otherwise.
 
+**It warns once the page has loaded**, for an icon still drawing nothing then, so a glyph a later
+script imports is not taken for a missing one, nor one an `import()` brings in while the page is
+still loading. An icon drawn after that warns as it is drawn. A glyph an `import()` brings in after
+the page has loaded is warned about, since the icon drew nothing until then: import it with the
+page's own scripts, or give the icon its name once the glyph is there.
+
 **Import all of them when the name is decided at runtime:**
 
 ```js

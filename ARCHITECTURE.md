@@ -394,7 +394,8 @@ which is what keeps the grid, the stroke and the colour one decision rather than
 decision in this document: a page that only emits tags has no way to hand a component a value. So
 importing a glyph module registers it, and `<ui-icon name>` starts working. The price is a global map
 of names and one silent failure — an unregistered name draws nothing — which is why the element says
-so in the console rather than leaving a blank box.
+so in the console rather than leaving a blank box: once the page has loaded, since a glyph a later
+script imports registers after the icon is first drawn (#399).
 
 **A mark the set does not have is slotted rather than registered**, and gets the adopted grid's
 stroke, caps and colour applied to it — so a brand glyph is indistinguishable from a vendored one,
