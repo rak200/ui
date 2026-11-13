@@ -399,7 +399,7 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(card(host)).isolation).toBe('auto');
     });
 
-    it('glows a card under the pointer under Matrix, its fill as it is, and tints it where a consumer chooses', async () => {
+    it('glows a card under the pointer under Matrix, its fill as it is and unisolated, and tints it where a consumer chooses', async () => {
         const host = await under(fixture, matrix);
         const element = card(host);
 
@@ -411,15 +411,16 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
         expect(getComputedStyle(layer(element, 'shadow')).boxShadow, 'glowing').toMatch(
             / 0px 0px 16px 2px, .+ 0px 0px 40px 8px$/,
         );
-        // Isolated still, for the tint a focus it holds takes.
-        expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
+        // Nothing lies under its content at either moment, so nothing isolates it.
+        expect(getComputedStyle(element).isolation, 'unisolated').toBe('auto');
 
         host.style.setProperty('--ui-motion-card-hover-fill', 'tint');
 
         expect(getComputedStyle(layer(element, 'fill')).opacity, 'tinted where chosen').toBe('1');
+        expect(getComputedStyle(element).isolation, 'isolated for it').toBe('isolate');
     });
 
-    it('tints a card and bursts light round it at a focus it holds under Matrix, which names its tint', async () => {
+    it('bursts light round a card at a focus it holds under Matrix, its fill as it is', async () => {
         const host = await under(
             `
             <ui-card>
@@ -433,14 +434,16 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
 
         await userEvent.tab();
 
-        expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'tinted').toBe('1');
+        // A field takes the tint at the focus too, so a card tinted round one hid it. The card
+        // takes the page's highlight, which it leaves out.
+        expect(getComputedStyle(layer(element, 'focus-fill')).opacity, 'not tinted').toBe('0');
         expect(getComputedStyle(layer(element, 'focus-shadow')).animationName, 'a burst').toBe(
             'ui-burst',
         );
         expect(getComputedStyle(element).translate, 'not lifted').toBe('none');
     });
 
-    it('lights a card where the pointer is under Glass, casts its shadow and edges it, and keeps it flat', async () => {
+    it("casts a card's shadow and edges it under Glass, its fill as it is and flat, and lights or leans it where a consumer chooses", async () => {
         const host = await under(fixture, glass);
         const element = card(host);
         const box = element.getBoundingClientRect();
@@ -452,17 +455,22 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
 
         expect(element.style.getPropertyValue('--ui-fx-pointer-near'), 'followed').toBe('1');
 
-        for (const name of ['fill', 'shadow', 'border']) {
+        for (const name of ['shadow', 'border']) {
             expect(getComputedStyle(layer(element, name)).opacity, name).toBe('1');
         }
 
-        // The tilt is no longer Glass's: it turned the card under its blur on every frame.
+        // The spotlight is no longer Glass's for the card: it lit the card round a control the card
+        // holds as the control lit.
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'unlit').toBe('0');
+        // Nor the tilt: it turned the card under its blur on every frame.
         expect(getComputedStyle(element).transform, 'flat').toBe('none');
         expect(getComputedStyle(element).isolation, 'isolated').toBe('isolate');
 
-        // It is still a choice of the consumer's.
+        // Each is still a choice of the consumer's.
+        host.style.setProperty('--ui-motion-card-hover-fill', 'spotlight');
         host.style.setProperty('--ui-motion-hover-move', 'tilt');
 
+        expect(getComputedStyle(layer(element, 'fill')).opacity, 'lit where chosen').toBe('1');
         expect(getComputedStyle(element).transform, 'leaning where chosen').not.toBe('none');
     });
 

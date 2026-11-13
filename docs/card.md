@@ -155,21 +155,21 @@ is inherited, so a rule on `ui-card` reaches every button and field a card holds
 [Theme](theme.md#taste) says how the two names weigh.
 
 **Under [Matrix](theme.md#matrix)** a card glows under the pointer, a light of the accent round it,
-and keeps its fill as it is; at a focus it holds it takes a tint, a field's — a little of the accent
-in a control's fill, which there is the card's own — and a burst of light, and does not lift. The
-tint holds the card's text and muted text at 4.5:1 in every shipped palette. **The card takes no
-tint under the pointer, because a field's is the card's**: the pointer over a field, a checkbox, a
-radio or a switch the card holds is over the card too, and over a tinted card the tint each takes
-there stood at 1.01:1 at most from the card round it, in both schemes.
-`--ui-motion-card-hover-fill: tint` gives the cards theirs back. **A fill lies under the card's
-content, and so does a light held inside its boundary, and that isolates the card**: the layer each
-is drawn on stays over the card's own fill
+and takes a burst of light at a focus it holds; it does not lift, and keeps its fill as it is at
+both. **The card takes no tint, because a field's is the card's**: a field's tint is a little of the
+accent in a control's fill, which there is the card's own, and the pointer over a field, a
+checkbox, a radio or a switch the card holds, or a focus in a field, is the card's too. Over a
+tinted card the tint each takes there stood at 1.01:1 at most from the card round it, in both
+schemes. `--ui-motion-card-hover-fill: tint` and `--ui-motion-card-focus-fill: tint` give the cards
+theirs back, over which the card's text and muted text hold 4.5:1 in every shipped palette. **A
+fill lies under the card's content, and so does a light held inside its boundary, and that isolates
+the card**: the layer each is drawn on stays over the card's own fill
 only in a stacking context of the card's, and in one anything the card holds with a `z-index` of its
 own — a dropdown that is no popover — stops stacking over what follows the card. So the card is
-isolated only where one of them is chosen, under Matrix and Glass, whose glass isolates it already;
-the default theme leaves it as it was. The isolation is drawn on the card itself, so S8 reaches it
-too: a fill chosen on the one card alone, and not round it, lies behind the card's own and does not
-show.
+isolated only where one of them is chosen, as under Glass, whose glass isolates it already; the
+default theme and Matrix leave it as it was. The isolation is drawn on the card itself, so S8
+reaches it too: a fill chosen on the one card alone, and not round it, lies behind the card's own
+and does not show.
 
 Under Matrix a card also comes and goes in pieces: it is put together from pieces appearing where
 they belong, at random, as it is put on the page, and broken into pieces vanishing where they are,
@@ -181,17 +181,21 @@ loaded and a video played once a copy, a field in your form submitted with each 
 a passage like this runs, the card carries an inline `filter` of its own — and in pieces a `rotate`
 of nothing — in place of any you wrote there, and gives yours back after.
 
-**Under [Glass](theme.md#glass)** a card takes its tint where the pointer is, casts its shadow away
-from the pointer and lights a band along its boundary nearest it, each as strong as the pointer is
-near, so they fade as it moves off the card. At a focus it holds, its tint sweeps across it,
-`--ui-iteration-settle` rounds of `--ui-duration-loop`, and a light of the accent holds along its
-inside; it does not lift. **The sweep is the card's tint rather than a button's sheen**: the accent
-a button sweeps took the card's muted text to 1.97:1 at its peak, and a field's answer, a halo round
-its text, would be inherited by everything the card holds and ring a light label on a fill of its
-own in the card's colour. Over the tint the card's text and muted text hold 4.5:1 in every shipped
-palette. **The tint is a field's**, the accent in a control's fill rather than in the card's: Glass
-raises the card in a dark glass that is black, and mixed into that the card's lights were a grey
-that barely lit it beside the fields it holds.
+**Under [Glass](theme.md#glass)** a card casts its shadow away from the pointer and lights a band
+along its boundary nearest it, each as strong as the pointer is near, so they fade as it moves off
+the card; its fill stays as it is. **The card takes no light where the pointer is**: the pointer
+over a control the card holds is over the card too, and a spotlight on the card lit the card round
+the control as the control lit, 1.17:1 to 1.19:1 from its rest in the light scheme where the
+control moved 1.11:1 to 1.21:1, so the control's light was no longer its own.
+`--ui-motion-card-hover-fill: spotlight` gives the cards theirs back. At a focus it holds, its tint
+sweeps across it, `--ui-iteration-settle` rounds of `--ui-duration-loop`, and a light of the accent
+holds along its inside; it does not lift. **The sweep is the card's tint rather than a button's
+sheen**: the accent a button sweeps took the card's muted text to 1.97:1 at its peak, and a field's
+answer, a halo round its text, would be inherited by everything the card holds and ring a light
+label on a fill of its own in the card's colour. Over the tint the card's text and muted text hold
+4.5:1 in every shipped palette. **The tint is a field's**, the accent in a control's fill rather
+than in the card's: Glass raises the card in a dark glass that is black, and mixed into that the
+card's lights were a grey that barely lit it beside the fields it holds.
 
 Under Glass a card also comes out of a fine grain as it is put on the page, and dissolves into one as
 `leave()` takes it away, its glass and its glow with it: noise made the card's alpha, eaten grain by
@@ -206,9 +210,10 @@ context and the box what it holds that is fixed is placed in, as Glass's glass d
 
 **Under Glass, whatever follows the pointer paints the card's glass again on every frame it moves**,
 and the glass of every card it is near: a light comes in from 96px off, so the cards beside the one
-it crosses light too. Measured on a page of nine Glass cards 1.5rem apart, with the pointer crossing
-one: the three lights took the page from 60 frames a second to 46 in Chromium on a GPU, and to 13 in
-Chromium and 8 in Firefox drawing in software; a lean on top took them to 43, 11 and 6. Where
+it crosses light too. Measured on a page of nine Glass cards 1.5rem apart, each holding a button,
+with the pointer crossing one: the card's two lights and the button's three took the page from 60
+frames a second to 46 in Chromium on a GPU, and to 13 in Chromium and 8 in Firefox drawing in
+software; a lean on top took them to 42, 11 and 6. Where
 frames matter more than the lights, in a browser drawing in software above all, choose `none` for
 `hover-fill`, `hover-border` and `hover-shadow`, or `raise` for the last, which rises once as the
 pointer arrives: 60 frames a second on a GPU, and 42 to 45 in software.

@@ -2048,8 +2048,9 @@ const surfaceMoves = [
  * stacking context.** A layer under the content but over the surface's own fill needs the surface
  * isolated, and an isolated surface keeps what it holds from stacking over what follows it: a
  * host's own dropdown with a `z-index`, one that is no popover, falls under the next card. So the
- * surface is isolated only where one of them is chosen — under Matrix and Glass, the second of which
- * isolates it already with its glass — and the default theme leaves it as it was.
+ * surface is isolated only where one of them is chosen — under Glass, which isolates it already
+ * with its glass, and for a toast under Matrix — and the default theme leaves it as it was, as
+ * Matrix leaves a card.
  *
  * **The lights that follow the pointer read where it is from the engine**, `src/pointer.ts`, which
  * the sheet hands a duration on the host where one of them is chosen and the pointer can hover. The
