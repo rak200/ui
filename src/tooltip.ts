@@ -22,17 +22,17 @@ const drawn = query('tooltip');
 const focusable = 'a[href], button, input, select, textarea, [tabindex]';
 
 /**
- * The ids already describing a trigger, as a list rather than the attribute's string.
- *
- * Both halves of the wiring read it — one to add an id, the other to take the same one
- * back out — and they have to agree about what the string means. The empty filter is what
- * makes an absent attribute an empty list: `''.split(' ')` is `['']`, and a list with one
- * empty entry joins back with a leading space.
+ * What a tooltip written inside one describes: the button or the link it lies in, which is what
+ * the reader points at and focuses. A menu's item is one, which the menu takes as an item only
+ * where it is the menu's own child, so a tooltip cannot be written round it.
  */
+const holders = 'button, a[href]';
+
 /**
- * One trigger, one tip, and the observer that keeps the copy fresh between them.
+ * One trigger, one tip, and what wiring the pair set up: the observer that keeps the copy fresh
+ * between them, and what a tip inside its trigger is kept from.
  *
- * Named so the three can be **compared as one thing**. What a deferred handoff has to ask
+ * Named so the pair can be **compared as one thing**. What a deferred handoff has to ask
  * is *am I still the current wiring?*, and asking it of the object rather than of a field
  * of the object is both the honest question and the one with no absent case: a cleared
  * wiring is unequal to this one, where reading a field of it has to be guarded first.
@@ -41,10 +41,38 @@ interface Wiring {
     readonly trigger: HTMLElement;
     readonly tip: HTMLElement;
     readonly observer: MutationObserver;
+    /**
+     * Whether the tip lies inside its trigger, as in a tooltip written inside a button or a
+     * link, where its text is kept out of the trigger's name and a click on it from the trigger.
+     */
+    readonly within: boolean;
+    /** The tip's `aria-hidden` before it was wired, which letting go of it puts back. */
+    readonly hidden: string | null;
+    /** What the wiring listens to on the tip, which letting go of it ends. */
+    readonly listening: AbortController;
 }
 
+/**
+ * The ids already describing a trigger, as a list rather than the attribute's string.
+ *
+ * Both halves of the wiring read it — one to add an id, the other to take the same one
+ * back out — and they have to agree about what the string means. The empty filter is what
+ * makes an absent attribute an empty list: `''.split(' ')` is `['']`, and a list with one
+ * empty entry joins back with a leading space.
+ */
 function describing(trigger: HTMLElement): string[] {
     return (trigger.getAttribute('aria-describedby') ?? '').split(' ').filter((id) => id !== '');
+}
+
+/**
+ * Keeps a click on a tip from the trigger it lies inside. The tip is no part of the button or the
+ * link it describes, though it lies in it, so a click on it chooses nothing and follows nothing:
+ * cancelled, no link is followed and no form sent, and stopped, nothing listening on the trigger
+ * or round it hears it — a menu, which a click on its item closes.
+ */
+function contain(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
 }
 
 /**
@@ -53,6 +81,17 @@ function describing(trigger: HTMLElement): string[] {
  * **Everything is slotted**, for a measured reason: an IDREF does not cross a shadow
  * boundary, so a tip rendered in here could not be the target of the trigger's
  * `aria-describedby`. The trigger is the child with no `slot`; the tip is `slot="tip"`.
+ *
+ * ## Inside a button or a link
+ *
+ * **Written inside one, round its label, a tooltip describes the button or the link**, whatever
+ * it holds itself: that is what the reader points at and focuses. It is the composition for a
+ * trigger whose place is fixed — a menu's item, which the menu takes as an item only where it is
+ * the menu's own child. The tip then lies inside its trigger, which costs two things a tip beside
+ * it does not: its text would join the trigger's name while it shows, read out after the
+ * trigger's own words — measured, in all three engines — and a click on it would click the
+ * trigger. So the tip is hidden from the name, where an id still reaches it as the description,
+ * and a click on it is kept from the trigger.
  *
  * ## What the platform does, and what is left
  *
@@ -73,6 +112,10 @@ function describing(trigger: HTMLElement): string[] {
  * below where there is no room above, pulled inside the viewport at either edge, and kept against
  * its trigger through every scroll with no script. #300 measured the CSS putting the tip where
  * thirty lines of arithmetic used to, in all three engines, and the floor rose to meet it.
+ *
+ * **The tip is shown from its trigger**, `showPopover({ source })`, which makes the trigger its
+ * anchor with no name. A name this sheet gave the trigger reached only a child it wraps, never a
+ * button it lies inside, and an `anchor-name` of the host's on the trigger replaced it.
  *
  * **Two things stay script.** The CSS writes nowhere which side it took, which `data-side` hands
  * a host who draws an arrow and the tip's motion reads, so the side is read off the two boxes as
@@ -141,14 +184,10 @@ export class UiTooltip extends LitElement {
 
         /* Where the tip lands, the platform's own: above its trigger and centred on it, below it
            where there is no room above, and pulled inside the viewport at either edge — placed in
-           the task that shows it, and kept against its trigger through every scroll. The trigger
-           is named from this shadow root, so its name is this tooltip's alone. */
-        ::slotted(:not([slot])) {
-            anchor-name: --trigger;
-        }
-
+           the task that shows it, and kept against its trigger through every scroll. The anchor
+           is the element the tip is shown from, its trigger, so it needs no name. */
         slot[name='tip']::slotted(*) {
-            position-anchor: --trigger;
+            position-anchor: auto;
             position-area: block-start;
             position-try-fallbacks: flip-block;
         }
@@ -469,10 +508,15 @@ export class UiTooltip extends LitElement {
         // document, which throws.
         const watched = { signal: this.#listeners.signal };
 
-        this.addEventListener('pointerenter', this.#onPointer, watched);
-        this.addEventListener('pointerleave', this.#onLeave, watched);
-        this.addEventListener('focusin', this.#onFocus, watched);
-        this.addEventListener('focusout', this.#onLeave, watched);
+        // Inside a button or a link, that is what the reader points at and focuses, anywhere on
+        // it and not only on the label this element holds; and it holds the tip too, so the
+        // pointer travelling onto the tip has not left it. Round a trigger, this holds both.
+        const region = this.closest<HTMLElement>(holders) ?? this;
+
+        region.addEventListener('pointerenter', this.#onPointer, watched);
+        region.addEventListener('pointerleave', this.#onLeave, watched);
+        region.addEventListener('focusin', this.#onFocus, watched);
+        region.addEventListener('focusout', this.#onLeave, watched);
 
         // A tooltip a framework moved in the tree comes back wired. `disconnectedCallback`
         // withdraws the description, and nothing fires a `slotchange` on reconnection to
@@ -504,9 +548,12 @@ export class UiTooltip extends LitElement {
         `;
     }
 
-    /** The element the tip is about: the one child carrying no `slot` attribute. */
+    /**
+     * The element the tip is about: the button or the link this element is written inside, or
+     * else the one child carrying no `slot` attribute.
+     */
     #trigger(): HTMLElement | undefined {
-        const found = this.querySelector(':scope > :not([slot])');
+        const found = this.closest(holders) ?? this.querySelector(':scope > :not([slot])');
 
         return found instanceof HTMLElement ? found : undefined;
     }
@@ -590,7 +637,23 @@ export class UiTooltip extends LitElement {
             this.#hand(wiring);
         });
 
-        const wiring: Wiring = { trigger, tip, observer };
+        // A tip inside its trigger, as in a tooltip written inside a button or a link, would join
+        // the trigger's name while it shows and pass a click on it to the trigger. Hidden, it is
+        // still the description: an id reaches a hidden element as it reaches a shown one.
+        const within = trigger.contains(tip);
+        const wiring: Wiring = {
+            trigger,
+            tip,
+            observer,
+            within,
+            hidden: tip.ariaHidden,
+            listening: new AbortController(),
+        };
+
+        if (within) {
+            tip.ariaHidden = 'true';
+            tip.addEventListener('click', contain, { signal: wiring.listening.signal });
+        }
 
         observer.observe(tip, { characterData: true, childList: true, subtree: true });
 
@@ -687,7 +750,8 @@ export class UiTooltip extends LitElement {
      * The attribute is removed rather than left empty when nothing else was in it, because
      * an empty `aria-describedby` is not the same shape as an absent one — `src/input.ts`
      * keeps a whole helper for that distinction — and a trigger this element found bare
-     * should be bare again when it lets go.
+     * should be bare again when it lets go. So is a tip it hid: it takes clicks again, and
+     * its `aria-hidden` is what it was.
      */
     #unwire(): void {
         const wired = this.#wired;
@@ -698,6 +762,8 @@ export class UiTooltip extends LitElement {
 
         this.#wired = undefined;
         wired.observer.disconnect();
+        wired.listening.abort();
+        wired.tip.ariaHidden = wired.hidden;
 
         // The withdrawal, on the same event rather than a second name: `detail` is a
         // string whose empty value means *absent*, which is the shape `help` and `error`
@@ -798,20 +864,27 @@ export class UiTooltip extends LitElement {
         return node instanceof Node && this.contains(node);
     }
 
-    /** Opens the tip and starts watching whatever can move its trigger. */
+    /**
+     * Opens the tip, shown from its trigger, and starts watching whatever can move the trigger.
+     * Only a tip that was wired, which is a tip with a trigger: one with none was never made a
+     * popover, so showing it would throw.
+     */
     #show(): void {
-        const tip = this.#tip();
+        const wired = this.#wired;
 
-        if (tip === undefined || this.#shown || this.#dismissed) {
+        if (wired === undefined || this.#shown || this.#dismissed) {
             return;
         }
+
+        const { trigger, tip } = wired;
 
         this.#shown = true;
         // Its text hidden before it is first drawn, where the typing is chosen, and typed out
         // once it is placed, at the width it will be read at.
         ready(tip);
         this.#island(tip);
-        tip.showPopover();
+        // The element it is shown from is its anchor, which the sheet places it against.
+        tip.showPopover({ source: trigger });
         this.#side();
         write(tip);
         // Over from where the tip that closed just before it was, where it is the next.

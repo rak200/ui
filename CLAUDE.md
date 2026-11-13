@@ -208,6 +208,12 @@ explains. This file restates none of them.
   first: a reference written from out here reaches no control drawn inside a shadow root, which #156
   measured and RFC 0006 answered — so what the warning is left pointing at is a trigger **someone
   else** wrote that does not take the handoff.
+- **Why a tooltip written inside a button or a link describes it, hides its tip from the name and
+  keeps a click on the tip from it** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one
+  tree scope_, the docblock on `UiTooltip` in `src/tooltip.ts`, and `docs/tooltip.md`'s _Inside a
+  button or a link_. A menu takes an item only as its own child, so a tooltip on an item is written
+  inside it; the tip is shown from its trigger, `showPopover({ source })`, which anchors it with no
+  name, inside the button or round a child alike.
 - **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
   raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its

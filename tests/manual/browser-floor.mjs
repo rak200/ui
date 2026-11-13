@@ -116,7 +116,9 @@ const heard = {
         "Safari reads no content-box in the standard mask, and src/effects.ts cuts the edge's band with Safari's own prefixed mask first, which reads it, and the standard one after, which the other engines take and Safari drops",
     'css.properties.cursor.pointer': noCursor,
     'css.properties.position-anchor':
-        'partial only in its initial value, until Chrome 151, Firefox 151 and Safari 27, and src/tooltip.ts and src/menu.ts each name the anchor, which overrides it',
+        'partial only in its initial value, until Chrome 151, Firefox 151 and Safari 27, and each overlay writes its own, which overrides it: src/menu.ts names the anchor, and src/tooltip.ts writes auto, the trigger its tip is shown from',
+    'css.properties.position-anchor.auto':
+        "web-features dates the value by the property's initial value, until Chrome 151, Firefox 151 and Safari 27, where BCD dates auto itself at Chrome 127, Firefox 147 and Safari 26: src/tooltip.ts writes it, so the initial value is never read, and the trigger its tip is shown from is the anchor it names, by showPopover's source, from Chrome 137, Firefox 147 and Safari 26",
     'css.properties.resize':
         'iOS recognises it and does nothing, so a textarea there is not resized by hand',
     'css.selectors.highlight': typing,
