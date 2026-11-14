@@ -322,15 +322,34 @@ What it does with every line:
 - **It writes the code first and the link last**, the link to the code's heading in
   `docs/console.md` on `master`, which rule 3 states.
 - **It hands the element over** as the second argument, which the devtools show as a node.
-- **It says it as `console.warn`**, and has no other level to say it at, which rule 4 states.
+- **It says it at one of the console's four levels**, `log`, `info`, `warn` and `error`, through
+  the call of that name, and rule 4 says which level a line takes.
+- **It leaves out what the page has quieted**, a code, a level or all of it, which the page writes
+  on its root, below.
 
 **What a component no longer does** is decide whether it has spoken, write a code or build a link.
 The icon's listener, one an icon, and the tooltip's warning, said again at every edit, each become
 one call, and the manager's memory is what keeps each to one line.
 
-**It is internal**, as `src/description.ts` is. What a page meets is the console's lines and
-`diagnose()`, never the manager. The diagnosis logs through it too, so a finding a warning has said
-is not said again, and one an earlier log said is not repeated by the next.
+**It is internal**, as `src/description.ts` is. What a page meets is the console's lines,
+`diagnose()` and the attribute that quiets them, never the manager. The diagnosis logs through it
+too, so a finding a warning has said is not said again, and one an earlier log said is not repeated
+by the next.
+
+### Quieting
+
+**A page quiets the manager from its root, with `data-ui-quiet` on `<html>`**, as it chooses a
+theme with `data-ui-theme`. The attribute takes a list, and each word in it is one of three:
+
+- **a code**, `ui-icon:unregistered`, which quiets that code alone;
+- **a level**, `log`, `info`, `warn` or `error`, which quiets every line said at it;
+- **`all`**, which quiets everything the package says.
+
+**The attribute is read at every line**, so a page that changes it changes what the lines after it
+say, and a page with no build step, a framework and a test each write it the same way. **A line
+quieted is not remembered**, so once the quiet is lifted, the next line of that cause speaks.
+Quieting takes nothing from `diagnose()`, whose findings come back whole: what it quiets is what
+the console is told.
 
 ### Two tiers
 
@@ -365,8 +384,12 @@ The manager holds each to four rules:
    code. GitHub anchors that heading as the code with its colon left out, `#ui-tooltipstranded`. The
    message ends with a link to that anchor on the repository's `master`, and a code never changes,
    so the link holds as the page around it moves.
-4. **`console.warn`, never `console.error`**, which a monitor reads as a failure. The message keeps
-   today's three parts: what happened, what it costs, the way out.
+4. **Each line takes the level that says what it is.** `warn` is a mistake of the page's that the
+   page can mend, which every warning in this proposal is. `info` is what the page asked to hear,
+   which the diagnosis's log is, so a page that quiets `warn` still hears what it asks for. `error`
+   is a failure of the package's own, which a monitor is right to read as one, and never a mistake
+   of the page's. `log` is left for a line that is none of these. No line takes `error` or `log`
+   today. The message keeps today's three parts: what happened, what it costs, the way out.
 
 **The rest is a diagnosis, said only when asked.** `diagnose(root)` returns what it finds, the code,
 the element and the message, and prints nothing. A page logs it, and a consumer's test asserts it
@@ -423,13 +446,14 @@ warn(
 );
 ```
 
-The diagnosis, asked to log, hands each finding to the same function, with the cause it found it
-under, so what any of them has said is said once:
+The other three levels are calls of the same shape, `log`, `info` and `error`. The diagnosis,
+asked to log, hands each finding to `info`, with the cause it found it under, so what any of them
+has said is said once:
 
 ```ts
 // src/diagnose.ts
 for (const finding of found) {
-  warn(finding.code, finding.cause, finding.message, finding.element);
+  info(finding.code, finding.cause, finding.message, finding.element);
 }
 ```
 
@@ -441,9 +465,9 @@ And the pipeline holds the rest of `src/` to it:
 ```
 
 ```ts
-// src/console.ts, the one line set aside
+// src/console.ts, the one line set aside, whichever of the four levels the line takes
 // eslint-disable-next-line no-console -- every line the package says is said here, once
-console.warn(`[${code}] ${message} ${docs}#${code.replace(':', '')}`, element);
+console[level](`[${code}] ${message} ${docs}#${code.replace(':', '')}`, element);
 ```
 
 #### The warnings that speak always
@@ -520,7 +544,7 @@ import { diagnose } from '@rak200/ui/diagnose.js';
 const findings = diagnose(document);
 // [{ code: 'ui-menu:not-an-item', element: <ui-tooltip>, message: '<ui-menu> holds …' }, …]
 
-// The same findings, and what is new among them logged too, through the manager:
+// The same findings, and what is new among them logged too, at `info`, through the manager:
 // a second call at the next route prints only the mistakes the page has not heard yet.
 diagnose(document, { log: true });
 ```
@@ -540,7 +564,7 @@ saying it is done, and these besides:
 | `ui-dialog:unnamed`      | a dialog with no title                                             |
 | `ui-density:unknown`     | `data-ui-density="compacted"`                                      |
 
-One of them, as the log prints it:
+One of them, as the log prints it, at `info`:
 
 ```text
 [ui-menu:not-an-item] <ui-menu> holds a <ui-tooltip> that is not an item: the menu takes as items only the <button> and <a href> written as its own children, so what this one holds is drawn as written, passed over by the keys and left out of the menu's choices. Write the item as the menu's child, and the tooltip inside it. https://github.com/rak200/ui/blob/master/docs/console.md#ui-menunot-an-item
@@ -558,22 +582,30 @@ it('writes the components the way they work', () => {
 });
 ```
 
-#### Quieting one code
+#### Quieting a code, a level, or all of it
 
-In the devtools, a filter of `-ui-icon:unregistered` hides that code's lines and no other. In a
-suite that fails on any warning, the code is what lets one through by name:
+```html
+<html lang="en" data-ui-quiet="ui-icon:unregistered"></html>
+```
+
+What the console is told, for each value the page might write:
+
+| `data-ui-quiet`               | The console is told                                        |
+| ----------------------------- | ---------------------------------------------------------- |
+| `ui-icon:unregistered`        | every line but that code's                                 |
+| `warn`                        | no warning, and the diagnosis's log, at `info`, when asked |
+| `ui-tooltip:unreachable info` | every line but that code's and the diagnosis's log         |
+| `all`                         | nothing                                                    |
+
+A page that decides as it runs, or a suite that wants the package silent while it tests something
+else, writes the same attribute:
 
 ```js
-const warn = vi.spyOn(console, 'warn');
-
-afterEach(() => {
-  const unexpected = warn.mock.calls.filter(
-    ([text]) => !String(text).startsWith('[ui-icon:unregistered]'),
-  );
-
-  expect(unexpected).toEqual([]);
-});
+document.documentElement.dataset.uiQuiet = 'all';
 ```
+
+The devtools can still hide one code by itself, with a filter of `-ui-icon:unregistered`, and a
+suite that fails on any warning can still let one through by the code each line starts with.
 
 #### In `docs/console.md`
 
@@ -625,6 +657,12 @@ names its code, and Lit's dev-mode warning is set aside by its own, `dev-mode`.
   of every page that disables a button with a tip, a common pattern the docs can answer instead.
 - **A menu taking forwarded items now.** Its `::slotted()` reaches no item forwarded through a
   slot, so they need another way to be drawn, which is a feature rather than a warning.
+- **A function to quiet with**, `quiet('ui-tooltip')`. A page with no build step hands the package
+  a choice by an attribute, as it picks a theme, and one way to say it is one place to read it.
+- **A category as the code's component, or as a kind of problem.** Review chose the console's own
+  levels, which a page already knows and its devtools already filter by.
+- **Every line at `warn`.** The diagnosis's log would go quiet with the warnings a page had quieted,
+  though the page asked for it.
 - **A code with no link, or a link to the published version.** The first leaves the reader to find
   the page, and the second needs the version written into the build. A link to `master`, under an
   anchor that is the code and never changes, needs neither.
@@ -653,6 +691,11 @@ answers:
    there, on `master`.
 8. **A repeat is the same code and the same cause**, so it is left out wherever it falls, as review
    asked.
+9. **A page quiets a code, a level, or all of it**, with `data-ui-quiet` on its root, as it
+   chooses a theme with `data-ui-theme`.
+10. **The levels are the console's own four**, `log`, `info`, `warn` and `error`, and each line
+    takes the one that says what it is: `warn` for a mistake of the page's, `info` for the
+    diagnosis's log.
 
 The proposal stays in study until it is accepted, which is the step left.
 
@@ -665,10 +708,12 @@ If it is accepted, one pull request for each step, in this order:
    answered.
 2. **The console manager, `src/console.ts`.** It says a line once a page for each code and cause,
    wherever the repeat falls, writes the code first and the link last, hands the element over, and
-   says it as `console.warn` alone. `docs/console.md` explains each code under its own heading,
-   which each link lands on. The icon's and the tooltip's warnings move onto it in the same step,
-   and `no-console` turns on over `src/`, so the manager's own call is the one line set aside. Its
-   tests say one cause twice with another between, and read one line for it.
+   says it at the level its caller names, unless the page's `data-ui-quiet` quiets its code, its
+   level or all of it. `docs/console.md` explains each code under its own heading, which each link
+   lands on, and says how to quiet one. The icon's and the tooltip's warnings move onto it in the
+   same step, and `no-console` turns on over `src/`, so the manager's own call is the one line set
+   aside. Its tests say one cause twice with another between and read one line for it, and quiet a
+   code, a level and all, each read at the line.
 3. **The warnings that speak always, on the manager**: the icon's wait, two seconds past `load`,
    then the two new ones, a tooltip whose trigger takes no tab stop and a toast outside a toaster.
 4. **`docs/tooltip.md` says a tooltip on a disabled control is never reached by the keys**, and
