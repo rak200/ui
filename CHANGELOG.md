@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.4](https://github.com/rak200/ui/compare/0.9.3...0.9.4) (2026-11-14)
+
+
+### Features
+
+* **motion:** a component reads a choice of its own first, which reaches nothing it holds ([#405](https://github.com/rak200/ui/issues/405)) ([00d4d47](https://github.com/rak200/ui/commit/00d4d474e00d517274eea5d384e5117233d38e60))
+* **tooltip:** a tooltip written inside a button or a link describes it, as on a menu's item ([#409](https://github.com/rak200/ui/issues/409)) ([b0bf41a](https://github.com/rak200/ui/commit/b0bf41ac70e5b5a0adcc157bcec82c248a3a9c07))
+
+
+### Bug Fixes
+
+* a light that follows the pointer comes in as the pointer nears, as it goes as it leaves ([#406](https://github.com/rak200/ui/issues/406)) ([197d9ba](https://github.com/rak200/ui/commit/197d9ba3e5e1731ed07497735c198feb8b2b4cf3))
+* **card,toast:** a surface answers a focus once, and not again as the focus moves inside it ([#407](https://github.com/rak200/ui/issues/407)) ([608aafb](https://github.com/rak200/ui/commit/608aafb0a03f9831165bfe46fa584965239dee3a))
+* **card,toast:** a surface's lights take a field's tint, where dark Glass drew them grey ([#401](https://github.com/rak200/ui/issues/401)) ([e00d102](https://github.com/rak200/ui/commit/e00d102e516983fed207a9c884495f4585f505d8))
+* **input,select:** a field's edge takes the darkening's place, and its band shows over a select ([#403](https://github.com/rak200/ui/issues/403)) ([41893b1](https://github.com/rak200/ui/commit/41893b187db067973be94cfcb7d333d25a4ced64))
+* **menu:** a click on what an item holds chooses it, as a click on the item does ([#408](https://github.com/rak200/ui/issues/408)) ([3d20d33](https://github.com/rak200/ui/commit/3d20d33188c19c2d9d32448dfd5aa8d15437a100))
+* **menu:** an item written hidden is left out, and one the page hides no longer stops the keys ([#414](https://github.com/rak200/ui/issues/414)) ([7f9ea66](https://github.com/rak200/ui/commit/7f9ea667873fd06e5dc6b0b78950eabb06447e2f))
+* **tooltip:** written into a page through innerHTML, a tooltip hands its trigger the sentence ([#413](https://github.com/rak200/ui/issues/413)) ([d652ecc](https://github.com/rak200/ui/commit/d652ecc752ff18d4c820c1f675e033eacea70984))
+
 ## [0.9.3](https://github.com/rak200/ui/compare/0.9.2...0.9.3) (2026-11-13)
 
 
