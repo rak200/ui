@@ -293,20 +293,33 @@ The first round found two defects, and each was fixed on its own:
 - **A `hidden` item was drawn**, 30px tall, and the keys reached it, #412. An item the page hid
   itself stopped the keys, which never got past it. Both are left out now, #414.
 
-This round found a third:
+The second round found a third, fixed on its own too:
 
-- **`docs/toast.md` says a toast outside a toaster renders nothing.** Written into a plain element,
-  it was drawn in the flow, 42px tall with its dismiss button, carried `slot="polite"`, and sat in
-  no live region. The sentence holds only where the toast's parent is another component's host,
-  whose shadow root has no slot of that name.
+- **`docs/toast.md` said a toast outside a toaster renders nothing**, #416. Written into a plain
+  element, it was drawn in the flow, 42px tall with its dismiss button, carried `slot="polite"`, and
+  sat in no live region. The sentence held only where the toast's parent is another component's
+  host, whose shadow root has no slot of that name. The page now says what each place does, #417.
 
 ## Proposed design
 
 ### Two tiers
 
-**A failure speaks always only where it is silent, known at once, and out of axe's sight**: the
-description that will not arrive, a tooltip whose trigger the keys cannot reach, and a toast
-outside a toaster. It speaks under four rules:
+**A failure speaks always where it is silent, known at once, and out of axe's sight**:
+
+- the description that will not arrive, `ui-tooltip:stranded`, as today;
+- a tooltip whose trigger takes no tab stop, so the keys never show its tip;
+- a toast written outside a toaster, drawn and announced by nothing.
+
+**The icon speaks always too, once its glyph has had time to arrive.** Its failure shows, as an
+empty box, and what it checks is missing, so by the rule above it would be the diagnosis's. But the
+box never says why, and the why is the mistake this design meets most, a typo or a missing import.
+So the icon waits two seconds past the later of the page's `load` and its own first update, and
+says it only for a name still unregistered then. A glyph a page imports as it renders the icon
+arrived 6 to 53ms later, measured, which the wait takes in. One on a network slower than the wait
+is the false positive left, and once a name keeps it to one line. Two seconds is a reading of the
+network rather than of motion, so it is no token, as the toast's dwell is not.
+
+Each speaks under four rules:
 
 1. **No false positive, held by a gate.** Every story and every example in `docs/` mounts silent,
    and a console call no test expected fails the suite. A test that means a warning says so, and
@@ -316,8 +329,11 @@ outside a toaster. It speaks under four rules:
    is left out however far from the first it comes and whatever was said between them: thirty
    icons under one typo are one line, and so are five edits of one tip. The element goes as the
    second argument, so the devtools reveal which one.
-3. **A code in the message**, such as `ui-tooltip:stranded`, which a consumer's suite and the
-   devtools' filter can name and `docs/` explains.
+3. **A code in the message, and a link to what it means.** Each code, such as
+   `ui-tooltip:stranded`, which a consumer's suite and the devtools' filter can name, has an entry
+   of its own in `docs/console.md`, with what it means and the way out, under an anchor that is the
+   code. The message ends with a link to that anchor on the repository's `master`, and a code never
+   changes, so the link holds as the page around it moves.
 4. **`console.warn`, never `console.error`**, which a monitor reads as a failure. The message keeps
    today's three parts: what happened, what it costs, the way out.
 
@@ -332,44 +348,25 @@ that logs the diagnosis at each route hears each mistake once a page, and never 
 warning has said it.
 
 **Asked, what is missing can be said.** The page asks once it is done, which no component can
-tell, so what is known only at the end belongs to the diagnosis: a missing name, tip, item or
-glyph. So does what is visible and wrong, a menu's child that is not an item, an `<option>` in a
-select, a radio outside its group, an unknown density, and what holds while a state lasts. It walks
-every shadow root it can open.
+tell, so what is known only at the end belongs to the diagnosis: a missing tip, item or glyph, and
+the two names axe does not judge, a radio group's and a dialog's. So does what is visible and
+wrong: a menu's child that is not an item, an `<a>` with no `href` and a `<span>` naming a section
+among them, for the page to judge; items a component forwards to a menu through a slot; an
+`<option>` in a select; a radio outside its group; an unknown density. It walks every shadow root
+it can open.
+
+**It leaves to axe what axe reports**, the five missing names axe holds as critical, so a page that
+runs both reads each once.
+
+**Nothing is said for a tooltip on a disabled control.** It is common, and meant to say why the
+control is disabled, and the keys never reach it, in the three engines. `docs/tooltip.md` says so
+and points at `aria-disabled`, and the package says nothing.
 
 **Nothing is said for a name that may be the page's own**, as a theme's may, nor for what the
 platform already says.
 
 **No development build.** A page with no build step would never hear it, and it would be the second
 behaviour the standard refuses.
-
-### What the measurements leave open
-
-1. **The icon's warning fails both of the first tier's tests.** An empty box shows, and what it
-   checks is missing, known only at the end, which is where its one false positive came from: a
-   glyph registered after the page has loaded, as a view loaded later imports its own. The first
-   tier would move it to the diagnosis, and a typo would go back to drawing nothing with nothing
-   said. Either it keeps speaking, once a name, for a reason the rule does not give, or it moves.
-2. **axe already reports every menu situation that is certainly wrong, and five of the seven
-   missing names**, as critical, the menu's with the menu open. A diagnosis earns its place by what
-   axe cannot see: a shut menu, a description that will not arrive, a glyph that never registered,
-   a radio group's name and a dialog's. Whether it repeats what axe says is open.
-3. **Two situations are ones a host can mean**: an `<a>` with no `href`, and a section's name. They
-   are either set aside or said by the diagnosis alone.
-4. **A menu takes no item that a component of the page forwards through a slot.** That is either
-   diagnosed or made to work, by reading the slot's flattened assignment, and the second is a
-   feature rather than a warning.
-5. **A tooltip on a disabled button is common, and meant to say why the button is disabled.** The
-   keys never reach it, in the three engines. It is either said always, for as long as it lasts,
-   or only when asked.
-6. **Two warnings would be new, and would speak always**: a tooltip whose trigger the keys cannot
-   reach, and a toast outside a toaster. Each is the first tier's case exactly, and each is one
-   more line in someone's console.
-7. **A code's explanation needs a place to live.** A link in each message needs a page that stays
-   put, and `docs/` moves with the code.
-8. **What counts as the same cause decides what a repeat is.** By code and cause, a typo is one line
-   however many icons carry it. By code alone, a second typo would go unsaid, and by element, a
-   typo copied down a list would be thirty lines again.
 
 ### Alternatives, and what retired each
 
@@ -381,11 +378,42 @@ behaviour the standard refuses.
   measured: it would speak at every menu Alpine writes.
 - **A check, as a component connects, for what it is missing.** A tip and an item written in half a
   second later retired it, measured: it would have spoken at both, and both worked.
+- **Telling a typo from a missing import by the names the set ships.** The 2048 names weigh 8,028
+  bytes gzipped, about 11% of the package, on every page, for what the wait already answers.
+- **The icon's warning moved to the diagnosis.** A typo would go back to an empty box with nothing
+  said, and the wait leaves a false positive only where the network is slower than it.
+- **The diagnosis repeating what axe reports.** A page that runs both would read each name twice,
+  and the diagnosis is for what axe cannot see.
+- **A tooltip on a disabled control said always, or when asked.** It would be a line in the console
+  of every page that disables a button with a tip, a common pattern the docs can answer instead.
+- **A menu taking forwarded items now.** Its `::slotted()` reaches no item forwarded through a
+  slot, so they need another way to be drawn, which is a feature rather than a warning.
+- **A code with no link, or a link to the published version.** The first leaves the reader to find
+  the page, and the second needs the version written into the build. A link to `master`, under an
+  anchor that is the code and never changes, needs neither.
 
 ## Decision
 
-**Not taken yet.** The proposal stays in study while more situations are weighed, and nothing above
-is settled.
+**Every question the study left is settled**, and the proposed design above is written to the
+answers:
+
+1. **The icon keeps speaking, once its glyph has had time to arrive**: two seconds past `load`,
+   once a name. Its box shows that something is missing and never why, and the wait takes in a
+   glyph a page imports as it renders the icon.
+2. **The two new warnings speak always**: a tooltip whose trigger takes no tab stop, and a toast
+   outside a toaster. Each is silent, known at once and out of axe's sight.
+3. **A tooltip on a disabled control is the docs' alone.**
+4. **The diagnosis leaves to axe the five names axe reports**, and says what axe cannot see.
+5. **An `<a>` with no `href` and a `<span>` naming a section are the diagnosis's**, as children
+   that are not items, for the page to judge.
+6. **Items forwarded to a menu through a slot are diagnosed now.** Taking them joins
+   [RFC 0010](0010-component-features.md)'s catalogue.
+7. **Each code is explained in `docs/console.md`**, and each message links to its anchor there, on
+   `master`.
+8. **A repeat is the same code and the same cause**, so it is left out wherever it falls, as review
+   asked.
+
+The proposal stays in study until it is accepted, which is the step left.
 
 ## Rollout
 
@@ -394,19 +422,26 @@ If it is accepted, one pull request for each step, in this order:
 1. **The gate, first**, because it is what keeps every later warning honest. The suite fails on a
    console call no test expected, and the eight it lets through today are either asked for or
    answered.
-2. **The warnings that speak always onto the rules**: a code each, said once for each cause, with
-   the element handed over, and the two new ones if they are taken. Its tests say one cause twice
-   with another between, and read one line for it.
-3. **`diagnose()`**, with the menu's check first and a page in `docs/`, and the icon's and the
-   tooltip's beside it.
+2. **The memory and the codes.** One helper says a warning once a page for each code and cause,
+   wherever the repeat falls, with the element handed over, and `docs/console.md` explains each
+   code under its own anchor, which each message links to. Its tests say one cause twice with
+   another between, and read one line for it.
+3. **The warnings that speak always, onto it**: the tooltip's stranded description, once a
+   trigger's tag; the icon's, two seconds past `load`, once a name; then the two new ones, a
+   tooltip whose trigger takes no tab stop and a toast outside a toaster.
+4. **`docs/tooltip.md` says a tooltip on a disabled control is never reached by the keys**, and
+   points at `aria-disabled`.
+5. **`diagnose()`**, with the menu's check first, then the rest the design lists, a page in
+   `docs/`, and its logging on the memory of the second step.
 
-The first round's two defects were fixed on their own, in #413 and #414. The toast's page is
-corrected before any of these, on its own.
+The defects found on the way were fixed on their own, in #413, #414 and #417.
 
 ## Related
 
 - RFC 0006, which made the tooltip's warning the test of whether a trigger will be announced.
 - #399, where the icon's warning learned to wait for the page to load.
-- [RFC 0010](0010-component-features.md), whose menu sections would give a section's name a place.
+- [RFC 0010](0010-component-features.md), whose menu sections would give a section's name a place,
+  and whose catalogue takes the items a menu is forwarded through a slot.
 - #409, which made a tooltip work inside a menu's item.
-- #413 and #414, which fixed what this proposal's first round found.
+- #413 and #414, which fixed what this proposal's first round found, and #417, what its second
+  found.
