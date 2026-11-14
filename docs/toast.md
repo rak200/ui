@@ -51,9 +51,12 @@ package registers both elements, so nothing has to be called.
 One message. A child of the toaster, in **your** tree — the component writes its `slot` to route it
 into the region its variant names, and nothing else about it moves.
 
-**A toast outside a `<ui-toaster>` renders nothing.** The `slot` it wrote on itself names a region
-that is not there, so the element is in the document and assigned to no slot. That is the same thing
-a stray `<option>` or `<td>` does, and the fix is the same: put it in the element that holds it.
+**Outside a `<ui-toaster>`, a toast is announced by nothing.** The two regions that announce it are
+the toaster's, so the `slot` it writes on itself assigns it to nothing. Written in an element of
+yours, it is drawn where you wrote it, in the flow of the page, and still leaves when its time is
+up. Written inside another component, whose shadow root has no slot of that name, it is not drawn at
+all. Either way the fix is the one a stray `<option>` or `<td>` takes: put it in the element that
+holds it.
 
 | Attribute       | Type                    | Default   | Means                                          |
 | --------------- | ----------------------- | --------- | ---------------------------------------------- |
