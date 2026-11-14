@@ -383,6 +383,14 @@ export class UiMenu extends LitElement {
                     ${reference('--ui-easing-state')};
             }
 
+            /* An item written hidden is not drawn, as the platform draws nothing hidden. The
+           display above is this root's own rule, which outweighs the browser's [hidden] as any
+           author's does, so it showed, in the three engines (#412). This says it again,
+           heavier by its attribute. */
+            ::slotted([hidden]) {
+                display: none;
+            }
+
             /* The :not() guards are measured rather than assumed, the same way src/button.ts
            measured its own: a disabled control still matches :hover, so without them an
            item that cannot be chosen would light up under a pointer. */
@@ -615,9 +623,20 @@ export class UiMenu extends LitElement {
         ];
     }
 
-    /** The ones a reader can actually land on, which is what every key below moves over. */
+    /**
+     * The ones a reader can actually land on, which is what every key below moves over.
+     *
+     * **An item that is not drawn is passed over**, written `hidden` or hidden by the page.
+     * Moving onto one asked it for the focus, which an element that is not drawn refuses, so
+     * the focus stayed where it was and the next press asked the same item again: the arrows
+     * never got past it, in the three engines (#412). `checkVisibility()` reads both, and
+     * every key, every click and the opening ask while the panel is open, where whatever it
+     * holds that can be drawn is drawn.
+     */
     #enabled(): HTMLElement[] {
-        return this.#items().filter((item) => !item.matches('[disabled], [aria-disabled="true"]'));
+        return this.#items().filter(
+            (item) => item.checkVisibility() && !item.matches('[disabled], [aria-disabled="true"]'),
+        );
     }
 
     /**
