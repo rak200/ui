@@ -96,8 +96,6 @@ const styleQueries = 'css.at-rules.container.style_queries_for_custom_properties
 
 /** The keys a reading set aside, each with why it does not move the floor. */
 const heard = {
-    'api.CustomElementRegistry.get':
-        "Safari's is partial for customized built-in elements alone, and src/tooltip.ts asks only for a name with a hyphen, an autonomous element's",
     'api.Highlight': typing,
     'api.Highlight.Highlight': typing,
     'api.KeyboardEvent.repeat':
