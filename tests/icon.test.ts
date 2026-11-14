@@ -418,6 +418,11 @@ describe('the registry', () => {
         // upgrades every instance in the document *before* the glyph modules below it have
         // run, so without a redraw on registration the fix looks like reordering imports
         // and the symptom is a blank box.
+        //
+        // The page has loaded, so the icon says the name drew nothing before the glyph
+        // arrives, which is the false positive RFC 0011 measured and #424 answers by waiting.
+        // Until then the test asks for the line it hears.
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         const host = await mount('<ui-icon name="late-arrival"></ui-icon>');
 
         expect(icon(host).shadowRoot?.querySelector('svg'), 'nothing drawn yet').toBeNull();
@@ -426,9 +431,13 @@ describe('the registry', () => {
         await icon(host).updateComplete;
 
         expect(drawn(host).querySelectorAll('path')).toHaveLength(1);
+        expect(warn, 'said before the glyph arrived, until #424').toHaveBeenCalledOnce();
     });
 
     it('stops waiting on a name once the element leaves the document', async () => {
+        // The name is unregistered while the icon is in the page, so it is said once, and
+        // the glyph registered after the icon left says nothing more.
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         const host = await mount('<ui-icon name="departed"></ui-icon>');
         const element = icon(host);
 
@@ -440,6 +449,7 @@ describe('the registry', () => {
         // never let go would be kept alive by module state for the life of the page —
         // and would redraw itself somewhere nobody can see.
         expect(element.shadowRoot?.querySelector('svg')).toBeNull();
+        expect(warn, 'said while the icon was in the page, and not again').toHaveBeenCalledOnce();
     });
 
     it('lets a host replace a vendored glyph with their own drawing', async () => {

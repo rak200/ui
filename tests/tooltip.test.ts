@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -1591,6 +1591,22 @@ describe('the dismissal, which 1.4.13 asks to hold', () => {
             <span slot="tip">Everything else lives here.</span>
         </ui-tooltip>
     `;
+
+    /**
+     * The warning every test here hears. The trigger hands focus on from a control in its own
+     * shadow root, which is the arrangement the tooltip warns about: the description written in
+     * this tree reaches no control in there. So each test asks for the line, and the line is
+     * checked to be that one.
+     */
+    let warned: MockInstance<Console['warn']>;
+
+    beforeEach(() => {
+        warned = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+        expect(warned).toHaveBeenCalledWith(expect.stringContaining('<test-hands-focus-on>'));
+    });
 
     /** The button inside the trigger's shadow root, which is where focus starts. */
     function own(host: ParentNode): HTMLElement {
