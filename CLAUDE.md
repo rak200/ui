@@ -27,6 +27,7 @@ src/
 ├── card.ts          # <ui-card> — a surface, three regions, and the elevation category
 ├── check.ts         # the check's mark — internal, the tick and the dot played on a reader's change
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
+├── console.ts       # the console manager — internal, every line the package says, once a cause
 ├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── effects.ts       # the effects a component draws — internal, one sheet for each kind: a button's, a field's
@@ -62,6 +63,7 @@ tests/               # mirrors src/, one test file per unit
 ├── card.test.ts
 ├── check.test.ts
 ├── checkbox.test.ts
+├── console.test.ts
 ├── description.test.ts
 ├── dialog.test.ts
 ├── effects.test.ts
@@ -218,6 +220,15 @@ explains. This file restates none of them.
   button or a link_. A menu takes an item only as its own child, so a tooltip on an item is written
   inside it; the tip is shown from its trigger, `showPopover({ source })`, which anchors it with no
   name, inside the button or round a child alike.
+- **Why every line the package says goes through `src/console.ts`, said once a page for each code
+  and cause, and quieted with `data-ui-quiet`** — [ARCHITECTURE.md](ARCHITECTURE.md), _One place
+  speaks to the console_, the docblock on `src/console.ts`, `docs/console.md`, and RFC 0011.
+  `eslint.config.js` turns `no-console` on over `src/` and says why beside it, and the manager's four
+  calls are the lines set aside, each level a call of its own so no path there can throw. **Its
+  memory outlives a test**, being module state in a page the suite and the mutation runner keep, so
+  a test that expects a line says it under a cause made fresh for the run, as
+  `tests/console.test.ts`, `tests/icon.test.ts` and `tests/tooltip.test.ts` do. `tests/silence.ts`
+  fails a test on any console call it did not expect.
 - **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
   raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its

@@ -24,6 +24,15 @@ export default [
         ],
     },
     {
+        // Every line the package says goes through src/console.ts, which RFC 0011 decided: once
+        // a page for each code and cause, with its code and its link, quieted from the page's
+        // root. A console call anywhere else in src/ would say a line the manager never saw, so
+        // it fails `analyse`, and the manager's own four calls are set aside where they are
+        // written, with the reason beside them. #423
+        files: ['src/**/*.ts'],
+        rules: { 'no-console': 'error' },
+    },
+    {
         // A story shows what a consumer can have. Reaching under the barrel would let one
         // demonstrate something `src/index.ts` does not export — a demo of an API nobody
         // can import — so the path that bypasses the alias fails `analyse`, which

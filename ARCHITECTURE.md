@@ -434,6 +434,26 @@ Verification is two-layered, because automated tooling catches only a fraction o
 - **Manual**, and required per component: a keyboard-only pass and a screen-reader pass. This is a
   recurring cost the automated floor cannot absorb.
 
+## One place speaks to the console
+
+**Every line this package says in the console goes through one module, `src/console.ts`**, and
+nothing else in `src/` calls the console, which `eslint.config.js` holds through `no-console`. RFC
+0011 decided it once it had measured two components saying it for themselves: the icon said a
+missing glyph once an icon, so a typo copied down a list was a line for each, and the tooltip said
+a stranded description again at every edit of its tip, neither with a code.
+
+**A line is said once a page for each code and cause**, however far apart its repeats come. It
+starts with its code, ends with a link to the code's entry in `docs/console.md`, and hands the
+element over for the devtools to reveal. It takes the console's level that says what it is: `warn`
+for a mistake of the page's, `info` for what the page asked to hear, `error` for a failure of the
+package's own and never a mistake of the page's. **A page quiets a code, a level or all of it**
+with `data-ui-quiet` on its root, as it chooses a theme, read at every line.
+
+**A console that speaks too often is one nobody reads**, so a line speaks unasked only for a
+failure the page cannot see otherwise: silent, known the moment it is written, and out of axe's
+sight. RFC 0011 holds the rest for a diagnosis the page asks for, and `tests/silence.ts` fails any
+test on a console call it did not expect, every story and every example in `docs/` among them.
+
 ## Every visual decision is a token
 
 Colour, radius, spacing and motion are CSS custom properties with fallbacks, so a host restyles the

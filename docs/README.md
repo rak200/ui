@@ -18,3 +18,4 @@ One page per unit, sized by what a reader would look up on its own.
 | `UiToaster`    | [toast.md](toast.md)       | `<ui-toaster>` and `<ui-toast>`, the two regions and the clock     |
 | `UiTooltip`    | [tooltip.md](tooltip.md)   | the `<ui-tooltip>` element, when it shows, and where it lands      |
 | tokens         | [tokens.md](tokens.md)     | the design tokens, their defaults, and how a host overrides them   |
+| console        | [console.md](console.md)   | every line the package says, its codes, and how a page quiets them |

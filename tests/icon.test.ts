@@ -27,6 +27,14 @@ async function mount(markup: string): Promise<HTMLElement> {
     return host;
 }
 
+/**
+ * A name of its own for the run. The console manager says a name once a page, and the suite and
+ * the mutation runner keep the page, so a test that expects the line names an icon no test has.
+ */
+function fresh(stem: string): string {
+    return `${stem}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 /** The icon under test, and a failure with a name rather than a null dereference. */
 function icon(host: HTMLElement): UiIcon {
     const element = host.querySelector('ui-icon');
@@ -423,11 +431,12 @@ describe('the registry', () => {
         // arrives, which is the false positive RFC 0011 measured and #424 answers by waiting.
         // Until then the test asks for the line it hears.
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const host = await mount('<ui-icon name="late-arrival"></ui-icon>');
+        const name = fresh('late-arrival');
+        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
 
         expect(icon(host).shadowRoot?.querySelector('svg'), 'nothing drawn yet').toBeNull();
 
-        register('late-arrival', svg`<path d="M1 1 23 23" />`);
+        register(name, svg`<path d="M1 1 23 23" />`);
         await icon(host).updateComplete;
 
         expect(drawn(host).querySelectorAll('path')).toHaveLength(1);
@@ -438,11 +447,12 @@ describe('the registry', () => {
         // The name is unregistered while the icon is in the page, so it is said once, and
         // the glyph registered after the icon left says nothing more.
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const host = await mount('<ui-icon name="departed"></ui-icon>');
+        const name = fresh('departed');
+        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
         const element = icon(host);
 
         element.remove();
-        register('departed', svg`<path d="M1 1 23 23" />`);
+        register(name, svg`<path d="M1 1 23 23" />`);
         await element.updateComplete;
 
         // The registry holds every icon still waiting for a glyph, so an element that
@@ -467,10 +477,16 @@ describe('the registry', () => {
         // The other measured failure: a typo in `name` and a module nobody imported look
         // exactly alike, and both look like a glyph that draws nothing.
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-        await mount('<ui-icon name="not-imported"></ui-icon>');
+        const name = fresh('not-imported');
+        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
 
         expect(warn).toHaveBeenCalledOnce();
+        expect(warn, 'with its code, its link, and the icon handed over').toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^\[ui-icon:unregistered\] .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-iconunregistered$/,
+            ),
+            icon(host),
+        );
 
         // Both halves are asserted because both carry the fix. A warning that names the
         // element without naming the import leaves the reader where they started: a typo
@@ -478,10 +494,35 @@ describe('the registry', () => {
         const message = String(warn.mock.calls[0]?.[0]);
 
         expect(message, 'names the element that drew nothing').toContain(
-            '<ui-icon name="not-imported">',
+            `<ui-icon name="${name}">`,
         );
         expect(message, 'and the import that would fix it').toContain(
-            "import '@rak200/ui/icons/not-imported.js'",
+            `import '@rak200/ui/icons/${name}.js'`,
+        );
+    });
+
+    it('says it once a name, however many icons carry it, and again for another', async () => {
+        // A typo copied down a list was a line for every icon when each said it for itself;
+        // the console manager remembers the name for the page. RFC 0011, #423
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const typo = fresh('typo');
+        const other = fresh('other');
+        const host = await mount(
+            `<ui-icon name="${typo}"></ui-icon><ui-icon name="${typo}"></ui-icon>` +
+                `<ui-icon name="${other}"></ui-icon><ui-icon name="${typo}"></ui-icon>`,
+        );
+        const [first, , third] = host.querySelectorAll('ui-icon');
+
+        expect(warn).toHaveBeenCalledTimes(2);
+        expect(warn).toHaveBeenNthCalledWith(
+            1,
+            expect.stringContaining(`<ui-icon name="${typo}">`),
+            first,
+        );
+        expect(warn).toHaveBeenNthCalledWith(
+            2,
+            expect.stringContaining(`<ui-icon name="${other}">`),
+            third,
         );
     });
 
@@ -534,7 +575,8 @@ describe('the registry', () => {
     it('says so once the page has loaded, for a name still unregistered, and once', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         const page = loading();
-        const host = await mount('<ui-icon name="never-imported"></ui-icon>');
+        const name = fresh('never-imported');
+        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
 
         // Updated again while the page loads, which asks the page to listen a second time.
         icon(host).label = 'Never';
@@ -547,7 +589,7 @@ describe('the registry', () => {
         window.dispatchEvent(new Event('load'));
 
         expect(warn).toHaveBeenCalledOnce();
-        expect(String(warn.mock.calls[0]?.[0])).toContain('<ui-icon name="never-imported">');
+        expect(String(warn.mock.calls[0]?.[0])).toContain(`<ui-icon name="${name}">`);
     });
 
     it('says nothing at load for an icon taken off the page before it', async () => {

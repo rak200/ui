@@ -51,7 +51,9 @@ That is what makes `name` an attribute rather than a value: a page with no build
 write it, which is the premise this package is built on. The cost is a global map of names,
 and one failure mode it is worth knowing about — **an unregistered name draws nothing and
 warns** in the console, naming the import you are missing. A typo in `name` and a module
-nobody imported look identical otherwise.
+nobody imported look identical otherwise. The line is
+[`ui-icon:unregistered`](console.md#ui-iconunregistered), said once a name however many icons
+carry it, and a page quiets it as [console.md](console.md) says.
 
 **It warns once the page has loaded**, for an icon still drawing nothing then, so a glyph a later
 script imports is not taken for a missing one, nor one an `import()` brings in while the page is
