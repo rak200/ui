@@ -1,4 +1,5 @@
 import { LitElement, css, html, unsafeCSS, type SVGTemplateResult, type TemplateResult } from 'lit';
+import { warn } from './console.js';
 import { query } from './motion.js';
 import { reference } from './reference.js';
 
@@ -400,6 +401,10 @@ export class UiIcon extends LitElement {
      * back. And load can be read off `readyState`, which says interactive while the page's
      * module scripts run as after DOMContentLoaded. An arrow, so the listener is the same one
      * however many times the icon updates before then, which the page adds once.
+     *
+     * **Once a name, through the console manager**, as `ui-icon:unregistered`: thirty icons under
+     * one typo said it thirty times when each icon said it for itself, and the manager is what
+     * remembers the name, for the page, wherever its repeat falls. RFC 0011, #423
      */
     readonly #complain = (): void => {
         if (
@@ -417,9 +422,12 @@ export class UiIcon extends LitElement {
             return;
         }
 
-        console.warn(
+        warn(
+            'ui-icon:unregistered',
+            this.name,
             `<ui-icon name="${this.name}"> drew nothing: no glyph is registered under that name. ` +
                 `Import it — import '@rak200/ui/icons/${this.name}.js' — or slot an <svg> of your own.`,
+            this,
         );
     };
 }

@@ -82,7 +82,8 @@ told about in a warning naming the trigger and the way out — nothing on the pa
 otherwise, because the tip shows and lands where it should. So the question _will my trigger be
 announced?_ is answered by opening the console rather than by counting elements here: a roster of
 tags goes stale the way the sentence it replaced did, which named one element and was true when it
-was written.
+was written. The line is [`ui-tooltip:stranded`](console.md#ui-tooltipstranded), said once a page
+for the trigger's tag, however often its tip is edited.
 
 **Every control in this package takes it**, so wrapping one is the whole of what you write. What
 the warning is left for is a trigger of your **own** that draws a control inside a shadow root:

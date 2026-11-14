@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -111,6 +111,19 @@ customElements.define('test-takes-the-text', TakesTheText);
 customElements.define('test-hands-focus-on', HandsFocusOn);
 customElements.define('test-focuses-inside', FocusesInside);
 customElements.define('test-draws-inside', DrawsInside);
+
+/**
+ * A trigger of `base`'s shape under a tag of its own for the run. The console manager says the
+ * stranded description once a page for a trigger's tag, and the suite and the mutation runner keep
+ * the page, so a test that expects the line writes a trigger no test has. #423
+ */
+function fresh(base: CustomElementConstructor, stem: string): string {
+    const tag = `${stem}-${crypto.randomUUID().slice(0, 8)}`;
+
+    customElements.define(tag, class extends base {});
+
+    return tag;
+}
 
 /** The one element a selector has to match, so a fixture typo fails where it happened. */
 function only(host: ParentNode, selector: string): HTMLElement {
@@ -733,10 +746,11 @@ describe('ui-tooltip', () => {
 
         it('says that a description will not arrive at a trigger written in with it', async () => {
             const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const tag = fresh(FocusesInside, 'test-focuses-inside');
 
             await written(`
                 <ui-tooltip>
-                    <test-focuses-inside></test-focuses-inside>
+                    <${tag}></${tag}>
                     <span slot="tip">Saves.</span>
                 </ui-tooltip>
             `);
@@ -765,27 +779,65 @@ describe('ui-tooltip', () => {
         // page reports: the tip shows, it lands where it should, and the reference points
         // at an element the screen reader never reaches.
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-        await mount(`
+        const tag = fresh(FocusesInside, 'test-focuses-inside');
+        const host = await mount(`
             <ui-tooltip>
-                <test-focuses-inside></test-focuses-inside>
+                <${tag}></${tag}>
                 <span slot="tip">Saves.</span>
             </ui-tooltip>
         `);
 
         expect(warn).toHaveBeenCalledOnce();
+        expect(warn, 'with its code, its link, and the trigger handed over').toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^\[ui-tooltip:stranded\] .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-tooltipstranded$/,
+            ),
+            only(host, tag),
+        );
 
         // Every claim the message makes, for the reason `icon.test.ts` gives beside its own
         // warning: naming the element without naming the way out leaves the reader where
         // they started, and a warning nobody can act on is noise.
         const message = String(warn.mock.calls[0]?.[0]);
 
-        expect(message, 'names the trigger').toContain('<test-focuses-inside>');
+        expect(message, 'names the trigger').toContain(`<${tag}>`);
         expect(message, 'says where the description got stranded').toContain('shadow root');
         expect(message, 'and why it cannot be reached').toContain(
             'an id in your tree cannot reach',
         );
         expect(message, 'and what a trigger has to be instead').toContain('a native <button>');
+    });
+
+    it("says it once a trigger's tag, however often the tip is edited, and again for another", async () => {
+        // Each edit of a tip hands its sentence over again, and each said the warning again when
+        // the tooltip said it for itself; the console manager remembers the tag for the page. #423
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const tag = fresh(FocusesInside, 'test-focuses-inside');
+        const another = fresh(FocusesInside, 'test-focuses-inside');
+        const host = await mount(`
+            <ui-tooltip><${tag}></${tag}><span slot="tip">Saves.</span></ui-tooltip>
+            <ui-tooltip><${tag}></${tag}><span slot="tip">Saves too.</span></ui-tooltip>
+            <ui-tooltip><${another}></${another}><span slot="tip">Saves as well.</span></ui-tooltip>
+        `);
+
+        for (const edit of ['Saves now.', 'Saves again.', 'Saves once more.']) {
+            tip(host).textContent = edit;
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        }
+
+        expect(warn).toHaveBeenCalledTimes(2);
+        expect(warn).toHaveBeenNthCalledWith(
+            1,
+            expect.stringContaining(`<${tag}>`),
+            only(host, tag),
+        );
+        expect(warn).toHaveBeenNthCalledWith(
+            2,
+            expect.stringContaining(`<${another}>`),
+            only(host, another),
+        );
     });
 
     it('says nothing about a trigger in your own tree', async () => {
@@ -1593,19 +1645,13 @@ describe('the dismissal, which 1.4.13 asks to hold', () => {
     `;
 
     /**
-     * The warning every test here hears. The trigger hands focus on from a control in its own
-     * shadow root, which is the arrangement the tooltip warns about: the description written in
-     * this tree reaches no control in there. So each test asks for the line, and the line is
-     * checked to be that one.
+     * The warning the trigger here earns. It hands focus on from a control in its own shadow root,
+     * which is the arrangement the tooltip warns about, and the console manager says that once a
+     * page for the trigger's tag, so whichever test comes first hears it. None of them is about the
+     * line, so each takes it. #423
      */
-    let warned: MockInstance<Console['warn']>;
-
     beforeEach(() => {
-        warned = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    });
-
-    afterEach(() => {
-        expect(warned).toHaveBeenCalledWith(expect.stringContaining('<test-hands-focus-on>'));
+        vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     });
 
     /** The button inside the trigger's shadow root, which is where focus starts. */

@@ -1,4 +1,5 @@
 import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
+import { warn } from './console.js';
 import { query } from './motion.js';
 import { arrived, left } from './next.js';
 import { reference } from './reference.js';
@@ -817,6 +818,10 @@ export class UiTooltip extends LitElement {
      * **The condition is the focusable descendant, not the shadow root.** A component
      * whose shadow content is decoration is named and described on the host itself, and is
      * correct as it stands.
+     *
+     * **Once a trigger's tag, through the console manager**, as `ui-tooltip:stranded`: it was
+     * said again at every edit of the tip, since each edit hands the sentence over again, and
+     * the manager is what remembers the tag, for the page. RFC 0011, #423
      */
     #complain(trigger: HTMLElement): void {
         const inside = trigger.shadowRoot?.querySelector(focusable) ?? null;
@@ -825,11 +830,14 @@ export class UiTooltip extends LitElement {
             return;
         }
 
-        console.warn(
+        warn(
+            'ui-tooltip:stranded',
+            trigger.localName,
             `<ui-tooltip> described <${trigger.localName}>, and the description will not ` +
                 `arrive: it focuses a control inside its own shadow root, which an id in ` +
                 `your tree cannot reach. Where the text has to be announced, the trigger has ` +
                 `to be a control you wrote — a native <button>, <a href> or form control.`,
+            trigger,
         );
     }
 
