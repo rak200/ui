@@ -16,9 +16,14 @@ being read: `docs/tooltip.md` says _the test is the console_ for whether a trigg
 announced. A warning that fires on correct markup teaches a reader to stop looking, and takes that
 test with it.
 
-So this proposal decides when a component here speaks, how often, and who hears it, for every
-component at once. The menu is its first case, and the two warnings that ship are measured under
-it.
+**Each component decides for itself today.** The icon and the tooltip each call `console.warn`
+themselves, each its own way: the icon once an icon, the tooltip again at every edit of its tip,
+neither with a code. A third warning would be a third way.
+
+So this proposal builds **one console manager**, which every line the package says goes through in
+place of `console` itself. It decides what the manager lets through: when a component here speaks,
+how often, and who hears it, for every component at once. The menu is its first case, and the two
+warnings that ship are measured under it.
 
 ## Study
 
@@ -209,11 +214,11 @@ above, where the check is right (from Angular's documentation, not measured here
 The prototype has three checks, the menu's, the tooltip's and the icon's, with messages as long as
 today's. Minified by esbuild 0.28.2, in bytes:
 
-| Bundle                               | Minified | gzip   | brotli |
-| ------------------------------------ | -------- | ------ | ------ |
-| the package, with Lit left out       | 297,433  | 70,580 | 55,251 |
-| `diagnose()`                         | 1,672    | 832    | 663    |
-| a helper that warns once for a cause | 123      | 130    | 114    |
+| Bundle                             | Minified | gzip   | brotli |
+| ---------------------------------- | -------- | ------ | ------ |
+| the package, with Lit left out     | 297,433  | 70,580 | 55,251 |
+| `diagnose()`                       | 1,672    | 832    | 663    |
+| the console manager, as prototyped | 123      | 130    | 114    |
 
 **The diagnosis is a little over 1% of the package**, and only a page that imports it loads it.
 
@@ -302,6 +307,31 @@ The second round found a third, fixed on its own too:
 
 ## Proposed design
 
+### The console manager
+
+**Every line the package says goes through one module, `src/console.ts`, and nothing else in `src/`
+calls the console.** A component hands it a code, a cause, the message and the element, and the
+manager decides whether the line is said, and says it. `analyse` holds the second half: ESLint's
+`no-console` turns on over `src/`, and the manager's one call to `console.warn` is the line set
+aside, with its reason beside it, so a call written anywhere else fails the pipeline.
+
+What it does with every line:
+
+- **It remembers the line by its code and its cause**, and leaves out a repeat wherever it falls,
+  once a page, which rule 2 below states.
+- **It writes the code first and the link last**, the link to the code's heading in
+  `docs/console.md` on `master`, which rule 3 states.
+- **It hands the element over** as the second argument, which the devtools show as a node.
+- **It says it as `console.warn`**, and has no other level to say it at, which rule 4 states.
+
+**What a component no longer does** is decide whether it has spoken, write a code or build a link.
+The icon's listener, one an icon, and the tooltip's warning, said again at every edit, each become
+one call, and the manager's memory is what keeps each to one line.
+
+**It is internal**, as `src/description.ts` is. What a page meets is the console's lines and
+`diagnose()`, never the manager. The diagnosis logs through it too, so a finding a warning has said
+is not said again, and one an earlier log said is not repeated by the next.
+
 ### Two tiers
 
 **A failure speaks always where it is silent, known at once, and out of axe's sight**:
@@ -319,7 +349,7 @@ arrived 6 to 53ms later, measured, which the wait takes in. One on a network slo
 is the false positive left, and once a name keeps it to one line. Two seconds is a reading of the
 network rather than of motion, so it is no token, as the toast's dwell is not.
 
-Each speaks under four rules:
+The manager holds each to four rules:
 
 1. **No false positive, held by a gate.** Every story and every example in `docs/` mounts silent,
    and a console call no test expected fails the suite. A test that means a warning says so, and
@@ -345,7 +375,7 @@ there too, where they can be asked about a shut menu, a fragment or a test. It i
 own, `@rak200/ui/diagnose.js`, beside the glyphs', so a page that never asks loads none of it.
 
 **Asked to log what it finds, it says only what is new.** It returns every finding, so a test sees
-them all. Logged, a finding already said is left out by the memory the warnings keep, so a page
+them all. Logged, a finding already said is left out by the manager's memory, so a page
 that logs the diagnosis at each route hears each mistake once a page, and never again after a
 warning has said it.
 
@@ -375,6 +405,46 @@ behaviour the standard refuses.
 Every example below is what the design above will make available, written as a page writes it and
 shown as the console will show it. A warning is one line in the console. Each is printed here on
 one line too, and the devtools show the element after the link as a node they can reveal.
+
+#### The manager, as the package calls it
+
+A component calls one function, with the code, the cause, the message and the element:
+
+```ts
+// src/icon.ts, two seconds past the later of load and the icon's first update
+import { warn } from './console.js';
+
+warn(
+  'ui-icon:unregistered',
+  this.name,
+  `<ui-icon name="${this.name}"> drew nothing: no glyph is registered under that name. ` +
+    `Import it — import '@rak200/ui/icons/${this.name}.js' — or slot an <svg> of your own.`,
+  this,
+);
+```
+
+The diagnosis, asked to log, hands each finding to the same function, with the cause it found it
+under, so what any of them has said is said once:
+
+```ts
+// src/diagnose.ts
+for (const finding of found) {
+  warn(finding.code, finding.cause, finding.message, finding.element);
+}
+```
+
+And the pipeline holds the rest of `src/` to it:
+
+```js
+// eslint.config.js: nothing in src/ calls the console but the manager
+{ files: ['src/**/*.ts'], rules: { 'no-console': 'error' } },
+```
+
+```ts
+// src/console.ts, the one line set aside
+// eslint-disable-next-line no-console -- every line the package says is said here, once
+console.warn(`[${code}] ${message} ${docs}#${code.replace(':', '')}`, element);
+```
 
 #### The warnings that speak always
 
@@ -450,7 +520,7 @@ import { diagnose } from '@rak200/ui/diagnose.js';
 const findings = diagnose(document);
 // [{ code: 'ui-menu:not-an-item', element: <ui-tooltip>, message: '<ui-menu> holds …' }, …]
 
-// The same findings, and what is new among them logged too, from the memory the warnings keep:
+// The same findings, and what is new among them logged too, through the manager:
 // a second call at the next route prints only the mistakes the page has not heard yet.
 diagnose(document, { log: true });
 ```
@@ -561,6 +631,10 @@ names its code, and Lit's dev-mode warning is set aside by its own, `dev-mode`.
 
 ## Decision
 
+**The aim, as review put it, is one console manager.** Every line the package says goes through
+`src/console.ts`, nothing else in `src/` calls the console, and `analyse` holds that through
+`no-console`. The tiers and the rules are what the manager lets through and how it says it.
+
 **Every question the study left is settled**, and the proposed design above is written to the
 answers:
 
@@ -589,17 +663,18 @@ If it is accepted, one pull request for each step, in this order:
 1. **The gate, first**, because it is what keeps every later warning honest. The suite fails on a
    console call no test expected, and the eight it lets through today are either asked for or
    answered.
-2. **The memory and the codes.** One helper says a warning once a page for each code and cause,
-   wherever the repeat falls, with the element handed over, and `docs/console.md` explains each
-   code under its own anchor, which each message links to. Its tests say one cause twice with
-   another between, and read one line for it.
-3. **The warnings that speak always, onto it**: the tooltip's stranded description, once a
-   trigger's tag; the icon's, two seconds past `load`, once a name; then the two new ones, a
-   tooltip whose trigger takes no tab stop and a toast outside a toaster.
+2. **The console manager, `src/console.ts`.** It says a line once a page for each code and cause,
+   wherever the repeat falls, writes the code first and the link last, hands the element over, and
+   says it as `console.warn` alone. `docs/console.md` explains each code under its own heading,
+   which each link lands on. The icon's and the tooltip's warnings move onto it in the same step,
+   and `no-console` turns on over `src/`, so the manager's own call is the one line set aside. Its
+   tests say one cause twice with another between, and read one line for it.
+3. **The warnings that speak always, on the manager**: the icon's wait, two seconds past `load`,
+   then the two new ones, a tooltip whose trigger takes no tab stop and a toast outside a toaster.
 4. **`docs/tooltip.md` says a tooltip on a disabled control is never reached by the keys**, and
    points at `aria-disabled`.
 5. **`diagnose()`**, with the menu's check first, then the rest the design lists, a page in
-   `docs/`, and its logging on the memory of the second step.
+   `docs/`, and its logging through the manager.
 
 The defects found on the way were fixed on their own, in #413, #414 and #417.
 
