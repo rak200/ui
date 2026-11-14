@@ -378,10 +378,10 @@ describe('ui-tooltip', () => {
         expect(thrown, 'and nothing threw on the way').toEqual([]);
     });
 
-    it('hands it the moment it is wired, when the definition has already arrived', () => {
-        // Synchronously, and nothing is awaited here on purpose. A registry that already
-        // holds the name needs no waiting, and waiting anyway would put every description
-        // in this package a turn behind for the sake of the one case it cannot help.
+    it('hands it the moment it is wired, when the trigger has already upgraded', () => {
+        // Synchronously, and nothing is awaited here on purpose. A trigger that has already
+        // upgraded needs no waiting, and waiting anyway would put every description in this
+        // package a turn behind for the sake of the triggers that have not.
         const element = document.createElement('ui-tooltip');
         const taker = document.createElement('test-takes-the-text') as TakesTheText;
         const tip = document.createElement('span');
@@ -665,6 +665,99 @@ describe('ui-tooltip', () => {
 
         expect((only(host, tag) as TakesTheText).handed).toEqual(['Saves.']);
         expect(warn).not.toHaveBeenCalled();
+    });
+
+    /**
+     * The ways a page writes markup in where its elements upgrade as they connect, in tree
+     * order, so the tooltip connects before its trigger has upgraded, with the trigger's
+     * definition already there. Handed over then, the sentence reached nobody. #411
+     */
+    describe.each([
+        {
+            way: 'through innerHTML on an element in the page',
+            write: (host: HTMLElement, markup: string): void => {
+                host.innerHTML = markup;
+            },
+        },
+        {
+            way: 'through insertAdjacentHTML',
+            write: (host: HTMLElement, markup: string): void => {
+                host.insertAdjacentHTML('beforeend', markup);
+            },
+        },
+        {
+            way: "as a template's content, cloned",
+            write: (host: HTMLElement, markup: string): void => {
+                const template = document.createElement('template');
+
+                template.innerHTML = markup;
+                host.append(template.content.cloneNode(true));
+            },
+        },
+        {
+            way: 'as a document DOMParser made',
+            write: (host: HTMLElement, markup: string): void => {
+                host.append(
+                    ...new DOMParser().parseFromString(markup, 'text/html').body.childNodes,
+                );
+            },
+        },
+    ])('written into the page $way', ({ write }) => {
+        async function written(markup: string): Promise<HTMLElement> {
+            const host = document.createElement('div');
+
+            document.body.append(host);
+            write(host, markup);
+
+            for (const element of host.querySelectorAll('ui-tooltip')) {
+                await element.updateComplete;
+            }
+
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+
+            return host;
+        }
+
+        it('hands the sentence to the trigger written in with it, once it has upgraded', async () => {
+            const host = await written(`
+                <ui-tooltip>
+                    <test-takes-the-text></test-takes-the-text>
+                    <span slot="tip">Saves.</span>
+                </ui-tooltip>
+            `);
+
+            expect((only(host, 'test-takes-the-text') as TakesTheText).handed).toEqual(['Saves.']);
+        });
+
+        it('says that a description will not arrive at a trigger written in with it', async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+            await written(`
+                <ui-tooltip>
+                    <test-focuses-inside></test-focuses-inside>
+                    <span slot="tip">Saves.</span>
+                </ui-tooltip>
+            `);
+
+            expect(warn).toHaveBeenCalledOnce();
+        });
+    });
+
+    it('asks the registry nothing about a trigger whose name could never be a custom element', async () => {
+        // An `<abbr>` is a plain HTMLElement, as a trigger that has not upgraded is, so the
+        // name is what tells the two apart: `whenDefined` rejects a name with no hyphen.
+        const thrown = await escaped(async () => {
+            await mount(`
+                <ui-tooltip>
+                    <abbr tabindex="0">WCAG</abbr>
+                    <span slot="tip">Web Content Accessibility Guidelines</span>
+                </ui-tooltip>
+            `);
+        });
+
+        expect(thrown).toEqual([]);
     });
 
     it('says out loud that a description will not arrive, rather than losing it quietly', async () => {

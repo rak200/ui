@@ -665,17 +665,27 @@ export class UiTooltip extends LitElement {
     /**
      * Hands the sentence over, once the trigger is in a state where refusal means refusal.
      *
-     * A dispatch at an element whose definition has not arrived is heard by nobody and
-     * comes back **uncancelled** — which is exactly what a trigger that accepts no text
-     * returns. The two are indistinguishable, so warning on that answer would warn at an
-     * element that would have accepted. Measured, and measured again for the recovery:
-     * the upgrade fires no `slotchange`, no hook and no event at all, so this promise is
-     * the only signal there is and waiting on it is a requirement rather than a
-     * refinement. RFC 0006
+     * A dispatch at an element that has not upgraded is heard by nobody and comes back
+     * **uncancelled** — which is exactly what a trigger that accepts no text returns. The
+     * two are indistinguishable, so warning on that answer would warn at an element that
+     * would have accepted. Measured, and measured again for the recovery: the upgrade fires
+     * no `slotchange`, no hook and no event at all, so this promise is the only signal there
+     * is and waiting on it is a requirement rather than a refinement. RFC 0006
+     *
+     * **What is waited for is the trigger's upgrade, not its definition.** Markup written
+     * into the page — through `innerHTML` on an element in it, `insertAdjacentHTML`, a
+     * template's content cloned, `DOMParser` — upgrades as it connects, in tree order, so
+     * this element connects before its trigger has upgraded, with the definition already
+     * there. Handed over then, the sentence reached nobody and no warning was said, in the
+     * three engines (#411). An element that has not upgraded is still a plain `HTMLElement`,
+     * with its definition or without it, and `whenDefined` resolves at once for a definition
+     * that is there, after the upgrades the insertion queued, so one wait takes in both. The
+     * prototype is read rather than `:defined` matched: a selector is a string, and an
+     * emptied one throws, here inside `connectedCallback`, where a throw reaches no test.
      *
      * **The hyphen test is load-bearing rather than a shortcut**: `whenDefined` refuses a
-     * name that could never be a custom element, so `<button>` has to be answered before
-     * the registry is asked about it.
+     * name that could never be a custom element, and an `<abbr>` or a `<b>` is a plain
+     * `HTMLElement` too, so the name has to be answered before the registry is asked.
      *
      * **It refuses by rejecting rather than by throwing**, which is the part that decides
      * where the failure lands. The promise is voided here, so a rejection surfaces as an
@@ -687,10 +697,13 @@ export class UiTooltip extends LitElement {
     #offer(wiring: Wiring): void {
         const name = wiring.trigger.localName;
 
-        if (name.includes('-') && customElements.get(name) === undefined) {
+        if (
+            name.includes('-') &&
+            Reflect.getPrototypeOf(wiring.trigger) === HTMLElement.prototype
+        ) {
             void customElements.whenDefined(name).then((): void => {
-                // The wiring can have moved on while the definition was travelling, and
-                // this element only ever speaks for the one it is holding now.
+                // The wiring can have moved on while the trigger was upgrading, and this
+                // element only ever speaks for the one it is holding now.
                 if (this.#wired === wiring) {
                     this.#hand(wiring);
                 }
