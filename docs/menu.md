@@ -68,6 +68,10 @@ so the component styles it and leaves what it means alone.
 `aria-disabled="true"` on a link; either is skipped by the arrow keys and by typeahead, and
 neither closes the menu when clicked.
 
+**A hidden item is left out.** Write `hidden` on it, or hide it with a rule of your own: it is not
+drawn, and the arrow keys and typeahead pass over it. Take `hidden` off and it is back, in its
+place.
+
 ## With an icon
 
 An [`<ui-icon>`](icon.md) in the trigger's label or in an item sits centred on the line it is on,
