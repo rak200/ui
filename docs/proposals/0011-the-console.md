@@ -311,8 +311,11 @@ outside a toaster. It speaks under four rules:
 1. **No false positive, held by a gate.** Every story and every example in `docs/` mounts silent,
    and a console call no test expected fails the suite. A test that means a warning says so, and
    Lit's dev-mode warning is the one line set aside, by its code.
-2. **Once a page for each cause**: once a name for the icon, once a trigger's tag for the tooltip.
-   The element goes as the second argument, so the devtools reveal which one.
+2. **Once a page for each cause, wherever the repeat falls.** What has been said is remembered by
+   its code and its cause, a name for the icon and a trigger's tag for the tooltip, and a repeat
+   is left out however far from the first it comes and whatever was said between them: thirty
+   icons under one typo are one line, and so are five edits of one tip. The element goes as the
+   second argument, so the devtools reveal which one.
 3. **A code in the message**, such as `ui-tooltip:stranded`, which a consumer's suite and the
    devtools' filter can name and `docs/` explains.
 4. **`console.warn`, never `console.error`**, which a monitor reads as a failure. The message keeps
@@ -322,6 +325,11 @@ outside a toaster. It speaks under four rules:
 the element and the message, and prints nothing. A page logs it, and a consumer's test asserts it
 empty, as this suite asserts axe. The menu's check is its first. The icon's and the tooltip's run
 there too, where they can be asked about a shut menu, a fragment or a test.
+
+**Asked to log what it finds, it says only what is new.** It returns every finding, so a test sees
+them all. Logged, a finding already said is left out by the memory the warnings keep, so a page
+that logs the diagnosis at each route hears each mistake once a page, and never again after a
+warning has said it.
 
 **Asked, what is missing can be said.** The page asks once it is done, which no component can
 tell, so what is known only at the end belongs to the diagnosis: a missing name, tip, item or
@@ -359,6 +367,9 @@ behaviour the standard refuses.
    more line in someone's console.
 7. **A code's explanation needs a place to live.** A link in each message needs a page that stays
    put, and `docs/` moves with the code.
+8. **What counts as the same cause decides what a repeat is.** By code and cause, a typo is one line
+   however many icons carry it. By code alone, a second typo would go unsaid, and by element, a
+   typo copied down a list would be thirty lines again.
 
 ### Alternatives, and what retired each
 
@@ -384,7 +395,8 @@ If it is accepted, one pull request for each step, in this order:
    console call no test expected, and the eight it lets through today are either asked for or
    answered.
 2. **The warnings that speak always onto the rules**: a code each, said once for each cause, with
-   the element handed over, and the two new ones if they are taken.
+   the element handed over, and the two new ones if they are taken. Its tests say one cause twice
+   with another between, and read one line for it.
 3. **`diagnose()`**, with the menu's check first and a page in `docs/`, and the icon's and the
    tooltip's beside it.
 
