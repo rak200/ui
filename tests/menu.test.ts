@@ -819,6 +819,63 @@ describe('the keys inside it', () => {
     });
 });
 
+describe('an item that is not drawn', () => {
+    /** A menu whose second and last items are hidden, the way `how` hides them. #412 */
+    const hiding = (how: string): string => `
+        <ui-menu>
+            <span slot="trigger">Actions</span>
+            <button type="button">Rename</button>
+            <button type="button" ${how}>Secret</button>
+            <button type="button">Duplicate</button>
+            <button type="button" ${how}>Shred</button>
+        </ui-menu>
+    `;
+
+    it('draws none written hidden, though the item rule gives each a display of its own', async () => {
+        const host = await mount(hiding('hidden'));
+        await open(menu(host));
+
+        for (const hidden of [item(host, 1), item(host, 3)]) {
+            expect(getComputedStyle(hidden).display, hidden.textContent).toBe('none');
+            expect(hidden.getBoundingClientRect().height, hidden.textContent).toBe(0);
+        }
+    });
+
+    it.each([
+        ['written hidden', 'hidden'],
+        ['the page hides', 'style="display: none"'],
+    ])('passes over one %s, with the arrows, the ends and typing', async (_how, attribute) => {
+        const host = await mount(hiding(attribute));
+        await open(menu(host));
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(focused(), 'the arrow down').toBe('Duplicate');
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(focused(), 'the arrow down, round from the last').toBe('Rename');
+
+        await userEvent.keyboard('{End}');
+
+        expect(focused(), 'End').toBe('Duplicate');
+
+        await userEvent.keyboard('{Home}s');
+
+        expect(focused(), 'typing the letter both begin with').toBe('Rename');
+    });
+
+    it('reaches an item again once hidden comes off it', async () => {
+        const host = await mount(hiding('hidden'));
+        item(host, 1).hidden = false;
+        await open(menu(host));
+
+        await userEvent.keyboard('{ArrowDown}');
+
+        expect(focused()).toBe('Secret');
+    });
+});
+
 describe('choosing from the keyboard', () => {
     /**
      * Two labels that share a word, and a link: the shape #298 was measured on, where Space
