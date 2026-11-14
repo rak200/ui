@@ -195,6 +195,7 @@ corner.
 | `ui-menu`     | items that tick        | `menuitemcheckbox` and `menuitemradio`, `aria-checked`, on the host's items  | low    |
 | `ui-menu`     | sections               | `role="group"` named by a heading, both in the host's tree                   | low    |
 | `ui-menu`     | submenus               | the platform's layer and dismissal, measured above; the pointer's way in     | high   |
+| `ui-menu`     | items forwarded        | a slot's flattened assignment, styled where `::slotted()` cannot reach       | medium |
 | `ui-card`     | a picture              | a region at the top, edge to edge                                            | low    |
 
 ## Proposed design
@@ -285,3 +286,5 @@ closed. Two questions are settled, and the proposed design above is written to t
   indeterminate progress is what the busy button draws.
 - RFC 0016, which deferred sorting and selection in a table, and submenus in a menu, which this
   proposal takes back up.
+- [RFC 0011](0011-the-console.md), which measured that a menu takes no item a component of the
+  page forwards through a slot, and sent taking them here.
