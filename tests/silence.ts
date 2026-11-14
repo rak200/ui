@@ -20,7 +20,8 @@
  * it.
  */
 
-import { afterAll, afterEach, expect } from 'vitest';
+import { afterAll, afterEach, beforeEach, expect } from 'vitest';
+import { forget } from '../src/console.js';
 
 /** Every level a test could write at, each of them watched. */
 const levels = ['debug', 'error', 'info', 'log', 'warn'] as const;
@@ -103,6 +104,10 @@ function answer(): void {
 
     expect(said, 'a console call no test expected').toEqual([]);
 }
+
+// The console manager remembers what it has said for as long as the page lives, and the page
+// outlives a test, so each test starts with nothing said: a line it expects is one it will hear.
+beforeEach(forget);
 
 afterEach(answer);
 

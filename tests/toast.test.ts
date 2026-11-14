@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
 // The playwright provider is what puts `send` on `CDPSession` — see `button.test.ts`,
 // which needs the same line for the same reason.
@@ -8,6 +8,7 @@ import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, { Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
 import '../src/toast.js';
+import '../src/card.js';
 // The vendored glyphs the toast's icons are copied from, registered here so the copy can be
 // compared with them. Importing them is the test's doing and never the toast's.
 import '../src/icon.js';
@@ -222,6 +223,8 @@ afterEach(async () => {
     await parkPointer();
 
     document.body.replaceChildren();
+    // A spy left on a console method would take the next test's lines for it, unasked.
+    vi.restoreAllMocks();
 });
 
 describe('ui-toaster', () => {
@@ -422,6 +425,49 @@ const tones = [
  * The icon, which tells the variant by its shape, so colour is not the only thing that does —
  * WCAG 1.4.1, and the one cue that survives forced colors, where the edge goes flat.
  */
+describe('outside a toaster', () => {
+    // RFC 0011, #424: the regions that announce a toast are the toaster's, so one written
+    // anywhere else is drawn and announced by nothing.
+    it('says that nothing announces it, with its code, its link and the toast', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const host = await mount('<main><ui-toast duration="0">Invoice sent.</ui-toast></main>');
+
+        expect(warn).toHaveBeenCalledOnce();
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^\[ui-toast:outside\] <ui-toast> is outside a <ui-toaster>, so nothing announces it: .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-toastoutside$/,
+            ),
+            only(host, 'ui-toast'),
+        );
+    });
+
+    it('says it inside another component too, where it is drawn nowhere', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount('<ui-card><ui-toast duration="0">Invoice sent.</ui-toast></ui-card>');
+
+        expect(warn).toHaveBeenCalledOnce();
+    });
+
+    it('says it once a page, however many toasts are written outside one', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount(
+            '<div><ui-toast duration="0">One.</ui-toast><ui-toast duration="0">Two.</ui-toast></div>',
+        );
+
+        expect(warn).toHaveBeenCalledOnce();
+    });
+
+    it('says nothing in a toaster', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await mount(fixture);
+
+        expect(warn).not.toHaveBeenCalled();
+    });
+});
+
 describe('the icon, which tells the variant apart without its colour', () => {
     /** The icon a toast draws, which is the one svg in it that is not the dismiss mark. */
     function icon(element: UiToast): SVGSVGElement {

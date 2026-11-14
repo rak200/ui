@@ -35,6 +35,20 @@ function fresh(stem: string): string {
     return `${stem}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+/** How long an icon waits before it says a name drew nothing, as `grace` in `src/icon.ts` says. */
+const grace = 2000;
+
+/** Runs a test on a clock it moves, which is how the icon's wait is read. #424 */
+async function clocked(run: () => Promise<void>): Promise<void> {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+    try {
+        await run();
+    } finally {
+        vi.useRealTimers();
+    }
+}
+
 /** The icon under test, and a failure with a name rather than a null dereference. */
 function icon(host: HTMLElement): UiIcon {
     const element = host.querySelector('ui-icon');
@@ -427,39 +441,43 @@ describe('the registry', () => {
         // run, so without a redraw on registration the fix looks like reordering imports
         // and the symptom is a blank box.
         //
-        // The page has loaded, so the icon says the name drew nothing before the glyph
-        // arrives, which is the false positive RFC 0011 measured and #424 answers by waiting.
-        // Until then the test asks for the line it hears.
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const name = fresh('late-arrival');
-        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
+        // The glyph arrives within the wait, so nothing is said: the false positive RFC 0011
+        // measured, which the wait took away. #424
+        await clocked(async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const name = fresh('late-arrival');
+            const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
 
-        expect(icon(host).shadowRoot?.querySelector('svg'), 'nothing drawn yet').toBeNull();
+            expect(icon(host).shadowRoot?.querySelector('svg'), 'nothing drawn yet').toBeNull();
 
-        register(name, svg`<path d="M1 1 23 23" />`);
-        await icon(host).updateComplete;
+            register(name, svg`<path d="M1 1 23 23" />`);
+            await icon(host).updateComplete;
+            vi.advanceTimersByTime(grace);
 
-        expect(drawn(host).querySelectorAll('path')).toHaveLength(1);
-        expect(warn, 'said before the glyph arrived, until #424').toHaveBeenCalledOnce();
+            expect(drawn(host).querySelectorAll('path')).toHaveLength(1);
+            expect(warn, 'the glyph came within the wait').not.toHaveBeenCalled();
+        });
     });
 
     it('stops waiting on a name once the element leaves the document', async () => {
-        // The name is unregistered while the icon is in the page, so it is said once, and
-        // the glyph registered after the icon left says nothing more.
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const name = fresh('departed');
-        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
-        const element = icon(host);
+        // The icon leaves within the wait, so nothing is said for it either.
+        await clocked(async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const name = fresh('departed');
+            const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
+            const element = icon(host);
 
-        element.remove();
-        register(name, svg`<path d="M1 1 23 23" />`);
-        await element.updateComplete;
+            element.remove();
+            register(name, svg`<path d="M1 1 23 23" />`);
+            await element.updateComplete;
+            vi.advanceTimersByTime(grace);
 
-        // The registry holds every icon still waiting for a glyph, so an element that
-        // never let go would be kept alive by module state for the life of the page —
-        // and would redraw itself somewhere nobody can see.
-        expect(element.shadowRoot?.querySelector('svg')).toBeNull();
-        expect(warn, 'said while the icon was in the page, and not again').toHaveBeenCalledOnce();
+            // The registry holds every icon still waiting for a glyph, so an element that
+            // never let go would be kept alive by module state for the life of the page —
+            // and would redraw itself somewhere nobody can see.
+            expect(element.shadowRoot?.querySelector('svg')).toBeNull();
+            expect(warn, 'it left within the wait').not.toHaveBeenCalled();
+        });
     });
 
     it('lets a host replace a vendored glyph with their own drawing', async () => {
@@ -476,54 +494,79 @@ describe('the registry', () => {
     it('says out loud that a name drew nothing, rather than leaving a blank box', async () => {
         // The other measured failure: a typo in `name` and a module nobody imported look
         // exactly alike, and both look like a glyph that draws nothing.
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const name = fresh('not-imported');
-        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
+        await clocked(async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const name = fresh('not-imported');
+            const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
 
-        expect(warn).toHaveBeenCalledOnce();
-        expect(warn, 'with its code, its link, and the icon handed over').toHaveBeenCalledWith(
-            expect.stringMatching(
-                /^\[ui-icon:unregistered\] .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-iconunregistered$/,
-            ),
-            icon(host),
-        );
+            vi.advanceTimersByTime(grace);
 
-        // Both halves are asserted because both carry the fix. A warning that names the
-        // element without naming the import leaves the reader where they started: a typo
-        // in `name` and a module nobody imported are the same blank box.
-        const message = String(warn.mock.calls[0]?.[0]);
+            expect(warn).toHaveBeenCalledOnce();
+            expect(warn, 'with its code, its link, and the icon handed over').toHaveBeenCalledWith(
+                expect.stringMatching(
+                    /^\[ui-icon:unregistered\] .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-iconunregistered$/,
+                ),
+                icon(host),
+            );
 
-        expect(message, 'names the element that drew nothing').toContain(
-            `<ui-icon name="${name}">`,
-        );
-        expect(message, 'and the import that would fix it').toContain(
-            `import '@rak200/ui/icons/${name}.js'`,
-        );
+            // Both halves are asserted because both carry the fix. A warning that names the
+            // element without naming the import leaves the reader where they started: a typo
+            // in `name` and a module nobody imported are the same blank box.
+            const message = String(warn.mock.calls[0]?.[0]);
+
+            expect(message, 'names the element that drew nothing').toContain(
+                `<ui-icon name="${name}">`,
+            );
+            expect(message, 'and the import that would fix it').toContain(
+                `import '@rak200/ui/icons/${name}.js'`,
+            );
+        });
+    });
+
+    it('waits two seconds past its first update before it says so', async () => {
+        // A glyph a page imports as it renders the icon arrived 6 to 53ms later, measured,
+        // which the wait takes in. RFC 0011, #424
+        await clocked(async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+            await mount(`<ui-icon name="${fresh('not-yet')}"></ui-icon>`);
+            vi.advanceTimersByTime(grace - 1);
+
+            expect(warn, 'a moment short of the wait').not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(1);
+
+            expect(warn, 'once it is over').toHaveBeenCalledOnce();
+        });
     });
 
     it('says it once a name, however many icons carry it, and again for another', async () => {
         // A typo copied down a list was a line for every icon when each said it for itself;
         // the console manager remembers the name for the page. RFC 0011, #423
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const typo = fresh('typo');
-        const other = fresh('other');
-        const host = await mount(
-            `<ui-icon name="${typo}"></ui-icon><ui-icon name="${typo}"></ui-icon>` +
-                `<ui-icon name="${other}"></ui-icon><ui-icon name="${typo}"></ui-icon>`,
-        );
-        const [first, , third] = host.querySelectorAll('ui-icon');
+        await clocked(async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const typo = fresh('typo');
+            const other = fresh('other');
+            const host = await mount(
+                `<ui-icon name="${typo}"></ui-icon><ui-icon name="${typo}"></ui-icon>` +
+                    `<ui-icon name="${other}"></ui-icon><ui-icon name="${typo}"></ui-icon>`,
+            );
+            const [first, , third] = host.querySelectorAll('ui-icon');
 
-        expect(warn).toHaveBeenCalledTimes(2);
-        expect(warn).toHaveBeenNthCalledWith(
-            1,
-            expect.stringContaining(`<ui-icon name="${typo}">`),
-            first,
-        );
-        expect(warn).toHaveBeenNthCalledWith(
-            2,
-            expect.stringContaining(`<ui-icon name="${other}">`),
-            third,
-        );
+            vi.advanceTimersByTime(grace);
+
+            expect(warn).toHaveBeenCalledTimes(2);
+            expect(warn).toHaveBeenNthCalledWith(
+                1,
+                expect.stringContaining(`<ui-icon name="${typo}">`),
+                first,
+            );
+            expect(warn).toHaveBeenNthCalledWith(
+                2,
+                expect.stringContaining(`<ui-icon name="${other}">`),
+                third,
+            );
+        });
     });
 
     it('says nothing when a glyph is there', async () => {
@@ -572,24 +615,32 @@ describe('the registry', () => {
         expect(drawn(host).querySelectorAll('path')).toHaveLength(1);
     });
 
-    it('says so once the page has loaded, for a name still unregistered, and once', async () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const page = loading();
-        const name = fresh('never-imported');
-        const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
+    it('says so two seconds past the load, for a name still unregistered, and once', async () => {
+        await clocked(async () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const page = loading();
+            const name = fresh('never-imported');
+            const host = await mount(`<ui-icon name="${name}"></ui-icon>`);
 
-        // Updated again while the page loads, which asks the page to listen a second time.
-        icon(host).label = 'Never';
-        await icon(host).updateComplete;
+            // Updated again while the page loads, which asks the page to listen a second time.
+            icon(host).label = 'Never';
+            await icon(host).updateComplete;
+            vi.advanceTimersByTime(grace * 2);
 
-        expect(warn, 'nothing while the page loads').not.toHaveBeenCalled();
+            expect(warn, 'nothing while the page loads, however long').not.toHaveBeenCalled();
 
-        page.load();
-        // A second load, which a listener left behind would answer.
-        window.dispatchEvent(new Event('load'));
+            page.load();
+            // A second load, which a listener left behind would answer.
+            window.dispatchEvent(new Event('load'));
+            vi.advanceTimersByTime(grace - 1);
 
-        expect(warn).toHaveBeenCalledOnce();
-        expect(String(warn.mock.calls[0]?.[0])).toContain(`<ui-icon name="${name}">`);
+            expect(warn, 'a moment short of the wait past the load').not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(1);
+
+            expect(warn).toHaveBeenCalledOnce();
+            expect(String(warn.mock.calls[0]?.[0])).toContain(`<ui-icon name="${name}">`);
+        });
     });
 
     it('says nothing at load for an icon taken off the page before it', async () => {

@@ -34,6 +34,22 @@ const glyphs = new Map<string, SVGTemplateResult>();
 const pending = new Set<UiIcon>();
 
 /**
+ * How long an icon waits, past the later of the page's load and its own first update, before it
+ * says a name drew nothing. RFC 0011, #424
+ *
+ * **A glyph a page imports as it renders the icon arrives within it.** Measured, an `import()`
+ * started as an icon was written in, after the page had loaded, drew 6 to 53ms later in Chromium
+ * and Firefox, and the icon had said the name drew nothing first: the one false positive RFC 0011
+ * measured of this warning. A network slower than the wait still meets one, and the console
+ * manager keeps that to a line for the name.
+ *
+ * **Not a token**, for the reason the toast's dwell gives: `tokenStyleSheet()` collapses every
+ * `--ui-duration-*` under reduced motion, and a glyph's module does not arrive sooner for a reader
+ * who asked for less movement. It is a reading of the network rather than of motion.
+ */
+const grace = 2000;
+
+/**
  * Adds a glyph to the registry, which is what a glyph module does when it is imported.
  *
  * Called by the vendored modules under `src/icons/`; a host calls it directly only to add
@@ -402,23 +418,48 @@ export class UiIcon extends LitElement {
      * module scripts run as after DOMContentLoaded. An arrow, so the listener is the same one
      * however many times the icon updates before then, which the page adds once.
      *
+     * **Nor for two seconds after that**, which is `grace`, and the reason is beside it: a glyph a
+     * page imports as it renders the icon arrived a moment late, and was taken for a missing one.
+     *
      * **Once a name, through the console manager**, as `ui-icon:unregistered`: thirty icons under
      * one typo said it thirty times when each icon said it for itself, and the manager is what
      * remembers the name, for the page, wherever its repeat falls. RFC 0011, #423
      */
     readonly #complain = (): void => {
-        if (
-            this.name === '' ||
-            glyphs.has(this.name) ||
-            this.children.length > 0 ||
-            !this.isConnected
-        ) {
+        if (!this.#blank()) {
             return;
         }
 
         if (document.readyState !== 'complete') {
             window.addEventListener('load', this.#complain, { once: true });
 
+            return;
+        }
+
+        window.setTimeout(this.#speak, grace);
+    };
+
+    /**
+     * Whether the icon draws nothing it was asked to: a name with no glyph registered, and no
+     * mark slotted in its place, in the page.
+     */
+    #blank(): boolean {
+        return (
+            this.name !== '' &&
+            !glyphs.has(this.name) &&
+            this.children.length === 0 &&
+            this.isConnected
+        );
+    }
+
+    /**
+     * Says it, once the wait is over and only for an icon that still draws nothing then: a glyph
+     * that registered, a mark slotted, a name taken away and an icon that left the page in the
+     * meantime each say nothing. Every update the icon has after the page has loaded asks for one,
+     * and the console manager keeps them all to a line for the name.
+     */
+    readonly #speak = (): void => {
+        if (!this.#blank()) {
             return;
         }
 

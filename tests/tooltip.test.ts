@@ -14,6 +14,7 @@ import meta, {
 } from '../stories/tooltip.stories.js';
 import '../src/tooltip.js';
 import '../src/input.js';
+import '../src/button.js';
 import type { UiTooltip } from '../src/tooltip.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
@@ -1185,6 +1186,108 @@ async function chosen(style: string): Promise<HTMLElement> {
 
 // The pointer leaves by `parkPointer()` rather than `unhover()`, which scrolled the page under the
 // tip and moved what its placement reads.
+describe('a trigger the keys cannot reach', () => {
+    /** A tooltip on `trigger`, with a tip about it. */
+    const on = (trigger: string): string =>
+        `<ui-tooltip>${trigger}<span slot="tip">Saved two minutes ago.</span></ui-tooltip>`;
+
+    /** The trigger of the tooltip at `index`. */
+    function written(host: ParentNode, index = 0): HTMLElement {
+        const found = host.querySelectorAll<HTMLElement>('ui-tooltip > :not([slot])')[index];
+
+        if (found === undefined) {
+            throw new Error(`no trigger ${String(index)} in the fixture`);
+        }
+
+        return found;
+    }
+
+    it('says so as the pointer shows the tip, with its code, its link and the trigger', async () => {
+        // RFC 0011, #424: the reader the pointer stands for cannot see the failure, so it is said
+        // where they meet the tip, and a trigger of someone else's has drawn its control by then.
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const host = await mount(on('<span>Draft</span>'));
+
+        expect(warn, 'nothing before the pointer').not.toHaveBeenCalled();
+
+        const thrown = await escaped(async () => {
+            await userEvent.hover(written(host));
+        });
+
+        expect(thrown).toEqual([]);
+        expect(tip(host).matches(':popover-open'), 'the pointer showed the tip').toBe(true);
+        expect(warn).toHaveBeenCalledOnce();
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^\[ui-tooltip:unreachable\] <ui-tooltip> describes a <span> the keys never reach: .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-tooltipunreachable$/,
+            ),
+            written(host),
+        );
+    });
+
+    it.each([
+        ['a <button>', '<button type="button">Save</button>'],
+        ['a <ui-button>, by the control it draws', '<ui-button>Save</ui-button>'],
+        [
+            'a disabled <button>, which the docs answer',
+            '<button type="button" disabled>Save</button>',
+        ],
+    ])('says nothing for %s', async (_name, trigger) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const host = await mount(on(trigger));
+
+        const thrown = await escaped(async () => {
+            await userEvent.hover(written(host));
+        });
+
+        expect(thrown).toEqual([]);
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('says nothing for an item of a toolbar, which Tab passes by and the arrows reach', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const host = await mount(
+            '<div role="toolbar" aria-label="Format"><button type="button">Bold</button>' +
+                on('<button type="button" tabindex="-1">Italic</button>') +
+                '</div>',
+        );
+
+        const thrown = await escaped(async () => {
+            await userEvent.hover(written(host));
+        });
+
+        expect(thrown).toEqual([]);
+        expect(tip(host).matches(':popover-open'), 'the pointer showed the tip').toBe(true);
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("says it once a trigger's tag, however many tooltips stand on one, and again for another", async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const host = await mount(
+            on('<span>One</span>') + on('<span>Two</span>') + on('<a>Three</a>'),
+        );
+
+        for (const index of [0, 1, 2]) {
+            await userEvent.hover(written(host, index));
+        }
+
+        expect(warn).toHaveBeenCalledTimes(2);
+        expect(String(warn.mock.calls[0]?.[0])).toContain('describes a <span>');
+        expect(String(warn.mock.calls[1]?.[0])).toContain('describes a <a>');
+    });
+
+    it('says nothing for the pointer a touch screen reports, which shows no tip', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const host = await mount(on('<span>Draft</span>'));
+
+        only(host, 'ui-tooltip').dispatchEvent(
+            new PointerEvent('pointerenter', { pointerType: 'touch' }),
+        );
+
+        expect(warn).not.toHaveBeenCalled();
+    });
+});
+
 describe("the tip's motion, RFC 0004's", () => {
     it('tells the tip which side of it its trigger is on', async () => {
         // The one below first, so it is at the top of the page, with no room above its trigger.

@@ -3,16 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## The lines that speak always (#424)
-
-The third of [RFC 0011](docs/proposals/0011-the-console.md)'s steps, on the manager the second
-built. The icon's warning waits two seconds past `load`, and two join it: a tooltip whose trigger
-the keys cannot reach, and a toast outside a toaster, which nothing announces.
-
 ## A tooltip on a disabled control, in the docs (#425)
 
-`docs/tooltip.md` says such a tip is shown by no key, and points at `aria-disabled`, which keeps
-the control in the tab order.
+The fourth of [RFC 0011](docs/proposals/0011-the-console.md)'s steps. `docs/tooltip.md` says such a
+tip is shown by no key, and points at `aria-disabled`, which keeps the control in the tab order.
 
 ## `diagnose()`, said only when asked (#426)
 

@@ -1,12 +1,12 @@
 /**
  * The console manager, which every line the package says goes through. RFC 0011, #423.
  *
- * Every code and cause here is made fresh for the run: the manager remembers what it has said for
- * as long as the page lives, and the suite and the mutation runner both keep the page.
+ * The suite forgets what the manager has said before each test, in `silence.ts`; the codes and
+ * causes here are made fresh too, so a test reads only the lines it said.
  */
 
 import { afterEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { error, info, log, warn } from '../src/console.js';
+import { error, forget, info, log, warn } from '../src/console.js';
 
 /** The four levels, by the name each is quieted under. */
 const levels = { log, info, warn, error } as const;
@@ -43,8 +43,21 @@ const element = document.createElement('div');
 
 afterEach(() => {
     document.documentElement.removeAttribute('data-ui-quiet');
+    document.body.replaceChildren();
     vi.restoreAllMocks();
 });
+
+/** An element in the page, inside a region that quiets `words`. */
+function region(words: string): { region: HTMLElement; inside: HTMLElement } {
+    const around = document.createElement('section');
+    const inside = document.createElement('span');
+
+    around.setAttribute('data-ui-quiet', words);
+    around.append(inside);
+    document.body.append(around);
+
+    return { region: around, inside };
+}
 
 describe('a line', () => {
     it.each(names)('is said at %s through the console call of that name, and no other', (name) => {
@@ -184,5 +197,70 @@ describe('quieting', () => {
 
         expect(heard.warn).toHaveBeenCalledOnce();
         expect(String(heard.warn.mock.calls[0]?.[0])).toContain('Said now.');
+    });
+});
+
+describe('quieting a region', () => {
+    it('quiets a line about an element inside a region that names it, and not one outside', () => {
+        const heard = hear();
+        const quieted = code();
+        const { inside } = region(quieted);
+        const outside = document.createElement('span');
+
+        document.body.append(outside);
+        warn(quieted, fresh('cause'), 'Quieted, inside.', inside);
+        warn(quieted, fresh('cause'), 'Said, outside.', outside);
+
+        expect(heard.warn).toHaveBeenCalledOnce();
+        expect(String(heard.warn.mock.calls[0]?.[0])).toContain('Said, outside.');
+    });
+
+    it('quiets a line about the element the region is written on', () => {
+        const heard = hear();
+        const quieted = code();
+        const { region: around } = region(quieted);
+
+        warn(quieted, fresh('cause'), 'Quieted.', around);
+
+        expect(heard.warn).not.toHaveBeenCalled();
+    });
+
+    it('quiets a level for what is inside, and leaves another level said', () => {
+        const heard = hear();
+        const { inside } = region('warn');
+
+        warn(code(), fresh('cause'), 'Quieted.', inside);
+        info(code(), fresh('cause'), 'Said.', inside);
+
+        expect(heard.warn).not.toHaveBeenCalled();
+        expect(heard.info).toHaveBeenCalledOnce();
+    });
+
+    it('quiets across the shadow root the element is drawn in', () => {
+        const heard = hear();
+        const quieted = code();
+        const { inside: host } = region(quieted);
+        const drawn = document.createElement('span');
+
+        host.attachShadow({ mode: 'open' }).append(drawn);
+        warn(quieted, fresh('cause'), 'Quieted, from inside a shadow root.', drawn);
+
+        expect(heard.warn).not.toHaveBeenCalled();
+    });
+});
+
+describe('forgetting', () => {
+    it('lets a line already said be said again, which only the suite asks for', () => {
+        const heard = hear();
+        const one = code();
+        const cause = fresh('cause');
+
+        warn(one, cause, 'Said.', element);
+        warn(one, cause, 'Remembered, so not said.', element);
+        forget();
+        warn(one, cause, 'Said again, once forgotten.', element);
+
+        expect(heard.warn).toHaveBeenCalledTimes(2);
+        expect(String(heard.warn.mock.calls[1]?.[0])).toContain('Said again, once forgotten.');
     });
 });

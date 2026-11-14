@@ -29,8 +29,9 @@ Each line takes the console's own level that says what it is:
 
 ## Quieting
 
-**Write `data-ui-quiet` on the root element**, as you write `data-ui-theme` to choose a theme. It
-takes a list, and each word in it is one of three:
+**Write `data-ui-quiet` on any element**, as you write `data-ui-density` on a region. It quiets the
+lines about what is inside it, across the shadow roots that is drawn in, and on the root element
+it quiets the whole page. It takes a list, and each word in it is one of three:
 
 - **a code**, `ui-icon:unregistered`, which quiets that code alone;
 - **a level**, `log`, `info`, `warn` or `error`, which quiets every line said at it;
@@ -42,6 +43,15 @@ takes a list, and each word in it is one of three:
 | `warn`                      | no warning                 |
 | `ui-tooltip:stranded error` | every line but those       |
 | `all`                       | nothing                    |
+
+A region quiets what it holds and nothing else. A page that shows a toast where none is ever
+written, as a specimen of a theme does, quiets that one code round it:
+
+```html
+<div data-ui-quiet="ui-toast:outside">
+  <ui-toast duration="0">Draft saved.</ui-toast>
+</div>
+```
 
 **The attribute is read at every line**, so a page that changes it as it runs changes what the
 lines after say, and a test that wants the package silent while it tests something else writes it
@@ -58,9 +68,10 @@ said. The devtools can still hide one code by itself, with a filter of `-ui-icon
 
 ### `ui-icon:unregistered`
 
-**An icon whose `name` has no glyph registered draws nothing**, and says so once the page has
-loaded, once a name. A typo in `name` and a glyph module nobody imported look alike: an empty box,
-with no error anywhere else.
+**An icon whose `name` has no glyph registered draws nothing**, and says so two seconds past the
+later of the page's load and the icon's first update, once a name. A typo in `name` and a glyph
+module nobody imported look alike: an empty box, with no error anywhere else. A glyph a page
+imports as it draws the icon arrives within the two seconds, and says nothing.
 
 Import the glyph's module, `import '@rak200/ui/icons/x.js'`, or slot an `<svg>` of your own.
 [icon.md](icon.md) says how glyphs are registered.
@@ -74,3 +85,27 @@ a page for the trigger's tag.
 
 Make the trigger a control you wrote, a native `<button>`, `<a href>` or form control, or one of
 this package's, which take the sentence. [tooltip.md](tooltip.md) says how the sentence crosses.
+
+### `ui-tooltip:unreachable`
+
+**A tooltip whose trigger takes no tab stop is shown by a pointer alone.** The keys never land on a
+`<span>`, an `<a>` with no `href` or an element with `tabindex="-1"`, so a reader on the keyboard
+never sees the tip, and a reader with a mouse sees nothing wrong. It is said the first time a
+pointer shows the tip, once a page for the trigger's tag. A disabled control says nothing, and
+[tooltip.md](tooltip.md) says what to write instead.
+
+Write the trigger as a `<button>` or an `<a href>`, which take a tab stop, or as one of this
+package's controls. A trigger the keys reach by something it holds, a `<ui-button>` or a box round
+a button, is reached, and so is an item with `tabindex="-1"` inside a widget the arrows move
+through: a toolbar, a menu or a menu bar, a list box, a tab list, a tree, a grid or a radio group,
+written as its `role`. A `<ui-menu>`'s items are among them.
+
+### `ui-toast:outside`
+
+**A toast written outside a `<ui-toaster>` is announced by nothing**, since the regions that
+announce a toast are the toaster's. In an element of your own it is drawn where you wrote it, and
+inside another component not at all. It is said once a page.
+
+Write it inside the page's `<ui-toaster>`, which [toast.md](toast.md) says where to put. A toast
+shown on purpose where none is ever written, as a specimen is, takes
+`data-ui-quiet="ui-toast:outside"` on the element round it.

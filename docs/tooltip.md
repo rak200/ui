@@ -89,6 +89,14 @@ for the trigger's tag, however often its tip is edited.
 the warning is left for is a trigger of your **own** that draws a control inside a shadow root:
 there the description has to come from a control you wrote, which is the composition below.
 
+**A trigger the keys never reach is shown by a pointer alone.** A `<span>`, an `<a>` with no
+`href` and an element with `tabindex="-1"` take no tab stop, so a reader on the keyboard never
+sees the tip, and a reader with a mouse sees nothing wrong. The tooltip says
+[`ui-tooltip:unreachable`](console.md#ui-tooltipunreachable) the first time a pointer shows such a
+tip, once a page for the trigger's tag. Write the trigger as a control, which a `<ui-button>`, or a
+box round a button, already is by what it holds. An item with `tabindex="-1"` inside a toolbar, a
+menu or another widget the arrows move through is reached by the arrows, and says nothing.
+
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.
 
