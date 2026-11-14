@@ -92,9 +92,11 @@ tests/               # mirrors src/, one test file per unit
 ├── contrast.ts      # the WCAG ratio, for the floor axe has no rule for
 ├── escaped.ts       # the errors a listener or a timer threw, which a test turns into a failure
 ├── pointing.ts      # the pointer where the engine hears it, once its observer has seen the element
+├── silence.ts       # a console call no test expected, which fails the test it was made in
 ├── stories.ts       # mounts a composed story, which is what puts the playground behind the gate
 ├── manual/          # steps a person runs, collected by nothing — see each file's own header
 ├── workbench/       # the page the components are used on while they are built — see its README
+├── docs.test.ts     # every html example in docs/, mounted, and nothing said as it mounts
 └── a11y.test.ts
 stories/             # mirrors src/ too — what the playground shows
 ├── button.stories.ts
@@ -117,8 +119,10 @@ docs/                # one page per unit, indexed by docs/README.md
 
 `tests/` mirrors `src/`, one test file per unit — the Layer 2 layout, and what `/tests/
 export-ignore` in the seeded `.gitattributes` has always been written for. The two `a11y` modules,
-`contrast.ts`, `escaped.ts`, `pointing.ts` and `stories.ts` are the exception the mirror does not
-cover: they are the suite's own scaffolding rather than units, so none has a counterpart in `src/`.
+`contrast.ts`, `escaped.ts`, `pointing.ts`, `silence.ts` and `stories.ts` are the exception the
+mirror does not cover: they are the suite's own scaffolding rather than units, so none has a
+counterpart in `src/`. `docs.test.ts`, like `a11y.test.ts`, checks across components rather than
+one of them.
 
 **`tests/manual/` is a second kind of exception**, and it is not the suite at all: it holds scripts
 rather than units — the steps a person runs, collected by nothing and gating nothing. It sits here

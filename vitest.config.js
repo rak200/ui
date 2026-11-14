@@ -43,6 +43,11 @@ export default mergeConfig(
             // byte-for-byte against the pinned scaffold.
             attachmentsDir: 'reports/vitest-attachments',
 
+            // A console call no test expected fails the test it was made in, which is the gate
+            // RFC 0011's console manager is held to: the file says how a test asks for a line, and
+            // why Lit's dev-mode warning is the one it sets aside. #422
+            setupFiles: ['tests/silence.ts'],
+
             coverage: {
                 // The generated glyph modules are excluded, and `tsc` is what covers them
                 // instead — `tsconfig.json` includes `src`, so all two thousand and the

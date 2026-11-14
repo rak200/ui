@@ -3,17 +3,12 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A console call no test expected fails the suite (#422)
-
-The first of [RFC 0011](docs/proposals/0011-the-console.md)'s five steps, and the gate the rest are
-held to: every story and every example in `docs/` mounts with nothing said, and a test that means a
-line says so. Lit's dev-mode warning is the one line set aside, by its code.
-
 ## The console manager, with its levels, its codes and `data-ui-quiet` (#423)
 
-`src/console.ts`, which every line the package says goes through, once a page for each code and
-cause, at the console's own four levels, with a link to its entry in `docs/console.md`. A page
-quiets a code, a level or all of it from its root, and nothing else in `src/` calls the console.
+[RFC 0011](docs/proposals/0011-the-console.md)'s manager, `src/console.ts`, which every line the
+package says goes through, once a page for each code and cause, at the console's own four levels,
+with a link to its entry in `docs/console.md`. A page quiets a code, a level or all of it from its
+root, and nothing else in `src/` calls the console.
 
 ## The lines that speak always (#424)
 
