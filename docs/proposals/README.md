@@ -22,3 +22,4 @@ descends from one written elsewhere, is joined to it by mother↔daughter links.
 | [0008](0008-density.md)              | Density              | library | Implemented |
 | [0009](0009-new-components.md)       | New components       | library | Exploring   |
 | [0010](0010-component-features.md)   | Component features   | library | Exploring   |
+| [0011](0011-the-console.md)          | The console          | library | Exploring   |
