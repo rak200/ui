@@ -703,9 +703,10 @@ names its code, and Lit's dev-mode warning is set aside by its own, `dev-mode`.
 
 ## Decision
 
-**The aim, as review put it, is one console manager.** Every line the package says goes through
-`src/console.ts`, nothing else in `src/` calls the console, and `analyse` holds that through
-`no-console`. The tiers and the rules are what the manager lets through and how it says it.
+**Accepted** on 2026-11-14. **The aim, as review put it, is one console manager.** Every line the
+package says goes through `src/console.ts`, nothing else in `src/` calls the console, and `analyse`
+holds that through `no-console`. The tiers and the rules are what the manager lets through and how
+it says it.
 
 **Every question the study left is settled**, and the proposed design above is written to the
 answers:
@@ -732,15 +733,15 @@ answers:
     takes the one that says what it is: `warn` for a mistake of the page's, `info` for the
     diagnosis's log.
 
-The proposal stays in study until it is accepted, which is the step left.
+It is built in the rollout's order, each step an issue of its own, #422 to #426.
 
 ## Rollout
 
-If it is accepted, one pull request for each step, in this order:
+One pull request for each step, in this order, each closing the issue named at its end:
 
 1. **The gate, first**, because it is what keeps every later warning honest. The suite fails on a
    console call no test expected, and the eight it lets through today are either asked for or
-   answered.
+   answered. #422
 2. **The console manager, `src/console.ts`.** It says a line once a page for each code and cause,
    wherever the repeat falls, writes the code first and the link last, hands the element over, and
    says it at the level its caller names, unless the page's `data-ui-quiet` quiets its code, its
@@ -748,13 +749,14 @@ If it is accepted, one pull request for each step, in this order:
    lands on, and says how to quiet one. The icon's and the tooltip's warnings move onto it in the
    same step, and `no-console` turns on over `src/`, so the manager's own call is the one line set
    aside. Its tests say one cause twice with another between and read one line for it, and quiet a
-   code, a level and all, each read at the line.
+   code, a level and all, each read at the line. #423
 3. **The warnings that speak always, on the manager**: the icon's wait, two seconds past `load`,
    then the two new ones, a tooltip whose trigger takes no tab stop and a toast outside a toaster.
+   #424
 4. **`docs/tooltip.md` says a tooltip on a disabled control is never reached by the keys**, and
-   points at `aria-disabled`.
+   points at `aria-disabled`. #425
 5. **`diagnose()`**, with the menu's check first, then the rest the design lists, a page in
-   `docs/`, and its logging through the manager.
+   `docs/`, and its logging through the manager. It marks this proposal `Implemented`. #426
 
 The defects found on the way were fixed on their own, in #413, #414 and #417.
 

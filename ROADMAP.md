@@ -3,6 +3,34 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
+## A console call no test expected fails the suite (#422)
+
+The first of [RFC 0011](docs/proposals/0011-the-console.md)'s five steps, and the gate the rest are
+held to: every story and every example in `docs/` mounts with nothing said, and a test that means a
+line says so. Lit's dev-mode warning is the one line set aside, by its code.
+
+## The console manager, with its levels, its codes and `data-ui-quiet` (#423)
+
+`src/console.ts`, which every line the package says goes through, once a page for each code and
+cause, at the console's own four levels, with a link to its entry in `docs/console.md`. A page
+quiets a code, a level or all of it from its root, and nothing else in `src/` calls the console.
+
+## The lines that speak always (#424)
+
+The icon's warning waits two seconds past `load`, and two join it: a tooltip whose trigger the keys
+cannot reach, and a toast outside a toaster, which nothing announces.
+
+## A tooltip on a disabled control, in the docs (#425)
+
+`docs/tooltip.md` says such a tip is shown by no key, and points at `aria-disabled`, which keeps
+the control in the tab order.
+
+## `diagnose()`, said only when asked (#426)
+
+Everything the components can tell is wrong under a root, as data, from an entry of its own, logged
+only when the page asks and only what it has not heard. The last step, which marks RFC 0011
+`Implemented`.
+
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
