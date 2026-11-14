@@ -331,16 +331,18 @@ Each speaks under four rules:
    second argument, so the devtools reveal which one.
 3. **A code in the message, and a link to what it means.** Each code, such as
    `ui-tooltip:stranded`, which a consumer's suite and the devtools' filter can name, has an entry
-   of its own in `docs/console.md`, with what it means and the way out, under an anchor that is the
-   code. The message ends with a link to that anchor on the repository's `master`, and a code never
-   changes, so the link holds as the page around it moves.
+   of its own in `docs/console.md`, with what it means and the way out, under a heading that is the
+   code. GitHub anchors that heading as the code with its colon left out, `#ui-tooltipstranded`. The
+   message ends with a link to that anchor on the repository's `master`, and a code never changes,
+   so the link holds as the page around it moves.
 4. **`console.warn`, never `console.error`**, which a monitor reads as a failure. The message keeps
    today's three parts: what happened, what it costs, the way out.
 
 **The rest is a diagnosis, said only when asked.** `diagnose(root)` returns what it finds, the code,
 the element and the message, and prints nothing. A page logs it, and a consumer's test asserts it
 empty, as this suite asserts axe. The menu's check is its first. The icon's and the tooltip's run
-there too, where they can be asked about a shut menu, a fragment or a test.
+there too, where they can be asked about a shut menu, a fragment or a test. It is an entry of its
+own, `@rak200/ui/diagnose.js`, beside the glyphs', so a page that never asks loads none of it.
 
 **Asked to log what it finds, it says only what is new.** It returns every finding, so a test sees
 them all. Logged, a finding already said is left out by the memory the warnings keep, so a page
@@ -367,6 +369,171 @@ platform already says.
 
 **No development build.** A page with no build step would never hear it, and it would be the second
 behaviour the standard refuses.
+
+### What each looks like
+
+Every example below is what the design above will make available, written as a page writes it and
+shown as the console will show it. A warning is one line in the console. Each is printed here on
+one line too, and the devtools show the element after the link as a node they can reveal.
+
+#### The warnings that speak always
+
+**`ui-tooltip:stranded`**, a trigger that focuses a control inside its own shadow root:
+
+```html
+<ui-tooltip>
+  <x-save-button></x-save-button>
+  <span slot="tip">Saves the draft.</span>
+</ui-tooltip>
+```
+
+```text
+[ui-tooltip:stranded] <ui-tooltip> described <x-save-button>, and the description will not arrive: it focuses a control inside its own shadow root, which an id in your tree cannot reach. Where the text has to be announced, the trigger has to be a control you wrote — a native <button>, <a href> or form control. https://github.com/rak200/ui/blob/master/docs/console.md#ui-tooltipstranded
+```
+
+**`ui-tooltip:unreachable`**, a trigger that takes no tab stop:
+
+```html
+<ui-tooltip>
+  <span>Draft</span>
+  <span slot="tip">Saved two minutes ago.</span>
+</ui-tooltip>
+```
+
+```text
+[ui-tooltip:unreachable] <ui-tooltip> describes a <span> the keys never reach: it takes no tab stop, so only a pointer shows the tip. Write the trigger as a <button> or an <a href>, which take one. https://github.com/rak200/ui/blob/master/docs/console.md#ui-tooltipunreachable
+```
+
+**`ui-toast:outside`**, a toast written outside a toaster:
+
+```html
+<main>
+  <ui-toast variant="success">Invoice sent.</ui-toast>
+</main>
+```
+
+```text
+[ui-toast:outside] <ui-toast> is outside a <ui-toaster>, so nothing announces it: the regions that do are the toaster's. Write it inside the page's <ui-toaster>. https://github.com/rak200/ui/blob/master/docs/console.md#ui-toastoutside
+```
+
+**`ui-icon:unregistered`**, a name with no glyph two seconds past the later of `load` and the icon's
+first update:
+
+```html
+<ui-icon name="pencl"></ui-icon>
+```
+
+```text
+[ui-icon:unregistered] <ui-icon name="pencl"> drew nothing: no glyph is registered under that name. Import it — import '@rak200/ui/icons/pencl.js' — or slot an <svg> of your own. https://github.com/rak200/ui/blob/master/docs/console.md#ui-iconunregistered
+```
+
+#### A repeat, wherever it falls
+
+```html
+<ui-icon name="pencl"></ui-icon>
+<main><ui-toast variant="success">Invoice sent.</ui-toast></main>
+<ui-icon name="pencl"></ui-icon>
+<ui-icon name="trsh"></ui-icon>
+```
+
+**Three lines**: the toast's at once, and two seconds on, one for `pencl`, whose second icon repeats
+the first with the toast's line between them, and one for `trsh`, a cause of its own. Thirty icons
+under `pencl` would still be one line, and so would five edits of a stranded tip.
+
+#### The diagnosis
+
+```js
+import { diagnose } from '@rak200/ui/diagnose.js';
+
+// Everything wrong under a root, as data, with nothing printed. The root is walked into every
+// shadow root it can open, so the document reaches the components an app's own shell holds.
+const findings = diagnose(document);
+// [{ code: 'ui-menu:not-an-item', element: <ui-tooltip>, message: '<ui-menu> holds …' }, …]
+
+// The same findings, and what is new among them logged too, from the memory the warnings keep:
+// a second call at the next route prints only the mistakes the page has not heard yet.
+diagnose(document, { log: true });
+```
+
+It finds the four that speak always, the icon's without waiting, since the page asking is the page
+saying it is done, and these besides:
+
+| Code                     | A page writes                                                      |
+| ------------------------ | ------------------------------------------------------------------ |
+| `ui-menu:not-an-item`    | a tooltip round an item, an `<a>` with no `href`, a section's name |
+| `ui-menu:forwarded`      | a `<slot>` that forwards a component's items to its menu           |
+| `ui-menu:no-items`       | a menu with no item                                                |
+| `ui-tooltip:no-tip`      | a tooltip with no tip                                              |
+| `ui-select:option`       | an `<option>` in a `<ui-select>`                                   |
+| `ui-radio:outside`       | a `<ui-radio>` outside a group                                     |
+| `ui-radio-group:unnamed` | a group with no `label`                                            |
+| `ui-dialog:unnamed`      | a dialog with no title                                             |
+| `ui-density:unknown`     | `data-ui-density="compacted"`                                      |
+
+One of them, as the log prints it:
+
+```text
+[ui-menu:not-an-item] <ui-menu> holds a <ui-tooltip> that is not an item: the menu takes as items only the <button> and <a href> written as its own children, so what this one holds is drawn as written, passed over by the keys and left out of the menu's choices. Write the item as the menu's child, and the tooltip inside it. https://github.com/rak200/ui/blob/master/docs/console.md#ui-menunot-an-item
+```
+
+#### In a consumer's test
+
+```js
+import { diagnose } from '@rak200/ui/diagnose.js';
+
+it('writes the components the way they work', () => {
+  container.innerHTML = toolbar();
+
+  expect(diagnose(container)).toEqual([]);
+});
+```
+
+#### Quieting one code
+
+In the devtools, a filter of `-ui-icon:unregistered` hides that code's lines and no other. In a
+suite that fails on any warning, the code is what lets one through by name:
+
+```js
+const warn = vi.spyOn(console, 'warn');
+
+afterEach(() => {
+  const unexpected = warn.mock.calls.filter(
+    ([text]) => !String(text).startsWith('[ui-icon:unregistered]'),
+  );
+
+  expect(unexpected).toEqual([]);
+});
+```
+
+#### In `docs/console.md`
+
+Each code has an entry under its own heading, which the warning's link lands on:
+
+```md
+### `ui-icon:unregistered`
+
+**An icon whose name has no glyph registered draws nothing**, and says so two seconds past the
+later of the page's load and its own first update, once a name. A typo in `name` and a glyph
+module nobody imported look the same.
+
+Import the glyph's module, `import '@rak200/ui/icons/x.js'`, or slot an `<svg>` of your own.
+```
+
+#### In `docs/tooltip.md`
+
+The disabled control, which the package says nothing about:
+
+```md
+**A tooltip on a disabled control is shown by no key.** A disabled button takes no tab stop, so
+only a pointer shows its tip. Where the tip says why the button is disabled, write
+`aria-disabled="true"` instead, which keeps the button in the tab order, and refuse the press in
+your own handler.
+```
+
+#### In this repository's suite
+
+**A console call no test expected fails the test it was made in.** A test that means a warning
+names its code, and Lit's dev-mode warning is set aside by its own, `dev-mode`.
 
 ### Alternatives, and what retired each
 
@@ -408,8 +575,8 @@ answers:
    that are not items, for the page to judge.
 6. **Items forwarded to a menu through a slot are diagnosed now.** Taking them joins
    [RFC 0010](0010-component-features.md)'s catalogue.
-7. **Each code is explained in `docs/console.md`**, and each message links to its anchor there, on
-   `master`.
+7. **Each code is explained in `docs/console.md`**, and each message links to its heading's anchor
+   there, on `master`.
 8. **A repeat is the same code and the same cause**, so it is left out wherever it falls, as review
    asked.
 
