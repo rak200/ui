@@ -289,6 +289,31 @@ density has one level, `compact`, and no way to name another, so an unknown dens
 its own shadow roots. From the document, the prototype found nothing in an app's shell; from the
 shell's root, it found the item a tooltip had taken out of its menu.
 
+### Measured: which triggers the keys reach
+
+The warning for a trigger the keys cannot reach has to stay silent at every trigger they can,
+`<ui-button>` among them, whose own element takes no focus. Each trigger was written in a tooltip
+between two buttons, Tab pressed once from the first, and the tip read. Chromium 153, Firefox 155
+and WebKit 26.5 measured alike:
+
+| The trigger                      | Tab lands on it | Its tip shows | The rule below |
+| -------------------------------- | --------------- | ------------- | -------------- |
+| a `<button>`                     | yes             | yes           | silent         |
+| an `<a href>`                    | yes             | yes           | silent         |
+| an `<input>`                     | yes             | yes           | silent         |
+| an element with `tabindex="0"`   | yes             | yes           | silent         |
+| a `<ui-button>`                  | yes, inside it  | yes           | silent         |
+| a `<ui-menu>`                    | yes, inside it  | yes           | silent         |
+| a control drawn in a shadow root | yes, inside it  | yes           | silent         |
+| a `<span>`                       | no              | no            | warns          |
+| an `<a>` with no `href`          | no              | no            | warns          |
+| an element with `tabindex="-1"`  | no              | no            | warns          |
+| a disabled `<button>`            | no              | no            | the docs'      |
+
+**`tabIndex` alone cannot say it.** An `<a>` with no `href` reports 0, as the platform defines the
+property for every link, and the keys pass it by, in the three engines. A first rule written on
+`tabIndex` stayed silent there.
+
 ### Found on the way
 
 The first round found two defects, and each was fixed on its own:
@@ -358,6 +383,15 @@ the console is told.
 - the description that will not arrive, `ui-tooltip:stranded`, as today;
 - a tooltip whose trigger takes no tab stop, so the keys never show its tip;
 - a toast written outside a toaster, drawn and announced by nothing.
+
+**A trigger takes a tab stop where it, or an element in its own shadow root, is one the platform
+stops at**: one carrying a `tabindex` of 0 or more, or, carrying none, a link with an `href`, an
+enabled button or form control, or an editable element. So a `<button>`, an `<a href>`, a form
+control, an element with `tabindex="0"`, a `<ui-button>` and a `<ui-menu>` take one, the last two
+by the control drawn inside them. A `<span>`, an `<a>` with no `href` and an element with
+`tabindex="-1"` take none, and are the warning's. A disabled control takes none either, and is the
+docs' alone, as the Decision's third answer says. The rule matched where the keys go in every case
+measured above.
 
 **The icon speaks always too, once its glyph has had time to arrive.** Its failure shows, as an
 empty box, and what it checks is missing, so by the rule above it would be the diagnosis's. But the
@@ -679,8 +713,9 @@ answers:
 1. **The icon keeps speaking, once its glyph has had time to arrive**: two seconds past `load`,
    once a name. Its box shows that something is missing and never why, and the wait takes in a
    glyph a page imports as it renders the icon.
-2. **The two new warnings speak always**: a tooltip whose trigger takes no tab stop, and a toast
-   outside a toaster. Each is silent, known at once and out of axe's sight.
+2. **The two new warnings speak always**: a tooltip whose trigger takes no tab stop, by the rule
+   the design states and the measurement matched, and a toast outside a toaster. Each is silent,
+   known at once and out of axe's sight.
 3. **A tooltip on a disabled control is the docs' alone.**
 4. **The diagnosis leaves to axe the five names axe reports**, and says what axe cannot see.
 5. **An `<a>` with no `href` and a `<span>` naming a section are the diagnosis's**, as children
