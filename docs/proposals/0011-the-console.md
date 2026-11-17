@@ -747,7 +747,9 @@ answers:
     takes the one that says what it is: `warn` for a mistake of the page's, `info` for the
     diagnosis's log.
 
-It is built in the rollout's order, each step an issue of its own, #422 to #426.
+It was built in the rollout's order, each step an issue of its own, #422 to #426, and each closed by
+a pull request of its own: the gate in #428, the manager in #429, the lines that speak always in
+#431, the docs' answer for a disabled control in #432, and the diagnosis in #433.
 
 ## Rollout
 
