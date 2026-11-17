@@ -3,16 +3,11 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A tooltip on a disabled control, in the docs (#425)
-
-The fourth of [RFC 0011](docs/proposals/0011-the-console.md)'s steps. `docs/tooltip.md` says such a
-tip is shown by no key, and points at `aria-disabled`, which keeps the control in the tab order.
-
 ## `diagnose()`, said only when asked (#426)
 
 Everything the components can tell is wrong under a root, as data, from an entry of its own, logged
-only when the page asks and only what it has not heard. The last step, which marks RFC 0011
-`Implemented`.
+only when the page asks and only what it has not heard. The last of
+[RFC 0011](docs/proposals/0011-the-console.md)'s steps, which marks it `Implemented`.
 
 ## Design tokens beyond the web (#24)
 

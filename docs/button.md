@@ -90,7 +90,9 @@ does. A secondary button is the surface and the text.
 Whether the button rejects interaction. The inner `<button>` is disabled while the element matches
 `:disabled`, by this attribute or by a `<fieldset disabled>` above it, and that is what actually
 stops the click and removes it from the tab order. The attribute is written from the property, so a
-host stylesheet can select on it.
+host stylesheet can select on it. A tooltip on a disabled button is therefore shown by no key, and
+[tooltip.md](tooltip.md#the-trigger-has-to-be-focusable-and-in-your-tree) says what to write where
+the reason it is disabled matters to a reader on the keyboard.
 
 ## `type`
 
