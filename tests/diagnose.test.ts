@@ -604,6 +604,36 @@ describe('the walk', () => {
         ]);
     });
 
+    it('reads a page whose components have not upgraded, as the page wrote it', () => {
+        // A document the parser made has no browsing context, so nothing in it upgrades and no
+        // property is reflected: an icon with no name and a group with no label carry no
+        // attribute at all, which reads as empty.
+        const page = new DOMParser().parseFromString(
+            '<ui-icon></ui-icon><ui-icon name="pencl"></ui-icon>' +
+                '<ui-radio-group><ui-radio value="a">Monthly</ui-radio></ui-radio-group>',
+            'text/html',
+        );
+        const [, named] = page.querySelectorAll('ui-icon');
+
+        if (named === undefined) {
+            throw new Error('the page holds two icons');
+        }
+
+        expect(only(page, 'ui-icon').hasAttribute('name'), 'not upgraded').toBe(false);
+        expectFound(diagnose(page), [
+            {
+                code: 'ui-icon:unregistered',
+                element: named,
+                message: lines.unregistered('pencl'),
+            },
+            {
+                code: 'ui-radio-group:unnamed',
+                element: only(page, 'ui-radio-group'),
+                message: said.group,
+            },
+        ]);
+    });
+
     it("finds nothing in a template's content, which is no part of the page", async () => {
         const host = await mount('<template><ui-menu></ui-menu><ui-radio></ui-radio></template>');
 
