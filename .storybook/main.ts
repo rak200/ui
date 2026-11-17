@@ -16,6 +16,9 @@ const barrel = fileURLToPath(new URL('../src/index.ts', import.meta.url));
 /** The vendored glyph modules, which are a second published subpath. */
 const icons = fileURLToPath(new URL('../src/icons/', import.meta.url));
 
+/** The diagnosis, which is a third published subpath. */
+const diagnosis = fileURLToPath(new URL('../src/diagnose.ts', import.meta.url));
+
 const config: StorybookConfig = {
     // `stories/` mirrors `src/`, one file per unit, beside `tests/button.test.ts`.
     //
@@ -67,6 +70,7 @@ const config: StorybookConfig = {
             // safe on its own.
             alias: [
                 { find: /^@rak200\/ui\/icons\/(.*)\.js$/, replacement: `${icons}$1.ts` },
+                { find: '@rak200/ui/diagnose.js', replacement: diagnosis },
                 { find: '@rak200/ui', replacement: barrel },
             ],
         },

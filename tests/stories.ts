@@ -22,6 +22,7 @@ import { render } from 'lit';
 import { composeStory, setProjectAnnotations } from 'storybook/preview-api';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import * as preview from '../.storybook/preview.js';
+import { diagnose } from '../src/diagnose.js';
 import { rendered } from './a11y.js';
 
 /**
@@ -73,6 +74,10 @@ export async function mountStory<TArgs>(
     document.body.append(container);
     render(composed(), container);
     await rendered(container);
+    // What a diagnosis finds in a story is logged, so `silence.ts` fails the test that mounted it:
+    // every story is written the way the components work, and a region of one that shows a mistake
+    // on purpose quiets that code, as the theme's specimen toasts do. RFC 0011, #426
+    diagnose(container, { log: true });
 
     return container;
 }

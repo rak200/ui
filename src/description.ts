@@ -84,6 +84,35 @@ const clipped = [
     'clip-path:inset(50%)',
 ].join(';');
 
+/**
+ * What makes a trigger's shadow root the thing the browser actually focuses.
+ *
+ * A tab stop the host wrote counts with the natives: what decides this is that focus lands
+ * inside the boundary, not how the element was made able to take it.
+ */
+const focusable = 'a[href], button, input, select, textarea, [tabindex]';
+
+/**
+ * Every element a {@link Description} was built for, which is every element that takes the sentence.
+ *
+ * **A registry, beside the dispatch rather than in its place.** A tooltip learns whether its trigger
+ * takes the sentence from the dispatch that hands it over; `diagnose()` asks without handing
+ * anything, so it reads the answer here. The dispatch is taken where a {@link Description} listens,
+ * and one listens on the host it was built for, so the two answer alike. RFC 0011, #426
+ */
+const takers = new WeakSet<Element>();
+
+/**
+ * Whether a trigger strands the sentence a tooltip hands it: it takes none, and focuses a control
+ * inside its own shadow root, which an id in the page cannot reach.
+ *
+ * **The condition is the focusable descendant, not the shadow root.** A component whose shadow
+ * content is decoration is named and described on the host itself, and is correct as it stands.
+ */
+export function stranded(trigger: Element): boolean {
+    return !takers.has(trigger) && (trigger.shadowRoot?.querySelector(focusable) ?? null) !== null;
+}
+
 /** The sentence a `<ui-tooltip>` hands over, and the node a control points at. */
 export class Description {
     #sentence = '';
@@ -100,6 +129,7 @@ export class Description {
      */
     constructor(host: Described) {
         this.#host = host;
+        takers.add(host);
         host.addEventListener('ui-describe', this.#take);
     }
 

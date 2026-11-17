@@ -20,6 +20,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./diagnose.js": {
+      "types": "./dist/diagnose.d.ts",
+      "default": "./dist/diagnose.js"
+    },
     "./icons/*.js": {
       "types": "./dist/icons/*.d.ts",
       "default": "./dist/icons/*.js"

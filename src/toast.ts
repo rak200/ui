@@ -9,6 +9,7 @@ import {
     type TemplateResult,
 } from 'lit';
 import { warn } from './console.js';
+import * as lines from './lines.js';
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
 import { query } from './motion.js';
@@ -618,13 +619,7 @@ export class UiToast extends LitElement {
         // drawn and announced by nothing: in an element of the page's own it is drawn in the flow,
         // and inside another component not at all. Read by its kind, once a page. RFC 0011, #424
         if (!(this.parentElement instanceof UiToaster)) {
-            warn(
-                'ui-toast:outside',
-                this.localName,
-                `<ui-toast> is outside a <ui-toaster>, so nothing announces it: the regions that ` +
-                    `do are the toaster's. Write it inside the page's <ui-toaster>.`,
-                this,
-            );
+            warn('ui-toast:outside', this.localName, lines.outside(), this);
         }
 
         // A fresh one per connection: an aborted signal stays aborted, so a toast a

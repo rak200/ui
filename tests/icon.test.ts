@@ -4,7 +4,7 @@ import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Bespoke, Decorative, IconOnly, Named, Sizes } from '../stories/icon.stories.js';
 import { forget } from '../src/console.js';
-import { register, UiIcon } from '../src/icon.js';
+import { register, registered, UiIcon } from '../src/icon.js';
 import '../src/button.js';
 // Three glyphs, imported the way a host imports them. Not the barrel: importing all two
 // thousand costs 9.4 seconds here, measured, and buys nothing this file asserts.
@@ -436,6 +436,12 @@ describe('the accessible name', () => {
  * failure modes were measured on a spike before this element existed.
  */
 describe('the registry', () => {
+    it('says which names it has a glyph for, which is what diagnose() asks of an icon', () => {
+        // Imported above, and never registered by anything, respectively. #426
+        expect(registered('x')).toBe(true);
+        expect(registered('pencl')).toBe(false);
+    });
+
     it('draws a glyph registered after the element was already in the document', async () => {
         // The measured failure this whole mechanism exists for: importing the element
         // upgrades every instance in the document *before* the glyph modules below it have

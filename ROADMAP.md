@@ -3,12 +3,6 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `diagnose()`, said only when asked (#426)
-
-Everything the components can tell is wrong under a root, as data, from an entry of its own, logged
-only when the page asks and only what it has not heard. The last of
-[RFC 0011](docs/proposals/0011-the-console.md)'s steps, which marks it `Implemented`.
-
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by

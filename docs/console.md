@@ -10,6 +10,10 @@ same rules:
   an icon, once a tag for a tooltip's trigger. Thirty icons under one typo are one line.
 - **The element it is about follows the text**, which the devtools show as a node you can reveal.
 
+**Four codes speak always**, for a mistake that is silent otherwise and known the moment it is
+written. **The rest are a [diagnosis](diagnose.md)'s**, said only when a page asks, since what is
+missing as a component connects may still arrive.
+
 ## Contents
 
 - [Levels](#levels)
@@ -20,12 +24,12 @@ same rules:
 
 Each line takes the console's own level that says what it is:
 
-| Level   | A line at it is                                                           |
-| ------- | ------------------------------------------------------------------------- |
-| `warn`  | a mistake of the page's, which the page can mend: every code below is one |
-| `info`  | what the page asked to hear                                               |
-| `error` | a failure of the package's own, and never a mistake of the page's         |
-| `log`   | none of these                                                             |
+| Level   | A line at it is                                                              |
+| ------- | ---------------------------------------------------------------------------- |
+| `warn`  | a mistake of the page's, which the page can mend: the four that speak always |
+| `info`  | what the page asked to hear: a [diagnosis](diagnose.md)'s log                |
+| `error` | a failure of the package's own, and never a mistake of the page's            |
+| `log`   | none of these                                                                |
 
 ## Quieting
 
@@ -111,3 +115,81 @@ inside another component not at all. It is said once a page.
 Write it inside the page's `<ui-toaster>`, which [toast.md](toast.md) says where to put. A toast
 shown on purpose where none is ever written, as a specimen is, takes
 `data-ui-quiet="ui-toast:outside"` on the element round it.
+
+### `ui-menu:not-an-item`
+
+**A menu takes as items only the `<button>` and `<a href>` written as its own children**, so a
+child that is neither is drawn as written, passed over by the keys and left out of the menu's
+choices. A [diagnosis](diagnose.md) says it for each one, for the page to judge. A tooltip, a
+`<div>` or a list written round items, a form round a submit button, a label round a checkbox and a
+component's own element round each item are mistakes, which axe reports too once the menu is open.
+An `<a>` with no `href` may be a link left inert on purpose, and a `<span>` naming a section has no
+place in a menu yet.
+
+Write each item as the menu's own child, and what was round it, a tooltip among them, inside it.
+[menu.md](menu.md#items-are-yours-the-trigger-is-not) says what a menu takes.
+
+### `ui-menu:forwarded`
+
+**A `<slot>` that forwards a component's items to the menu it draws hands the menu nothing it
+takes.** The menu reads its own children, and what a slot forwards is not among them, so the items
+are drawn as written and passed over by the keys. A [diagnosis](diagnose.md) says it.
+
+Write the items as the menu's own children, in the tree the menu is in: in the component that draws
+the menu, rather than forwarded to it.
+
+### `ui-menu:no-items`
+
+**A menu with no item opens an empty panel.** An item written a moment after the menu connects
+works once it arrives, so only a [diagnosis](diagnose.md) says it.
+
+Write its items as its own children, each a `<button>` or an `<a href>`.
+
+### `ui-tooltip:no-tip`
+
+**A tooltip with no tip describes nothing and shows nothing.** A tip written a moment after the
+tooltip connects is wired as it arrives, so only a [diagnosis](diagnose.md) says it.
+
+Write the tip in it, with `slot="tip"`, or take the tooltip away. [tooltip.md](tooltip.md) says
+how.
+
+### `ui-select:option`
+
+**A select draws only the `<ui-option>`s it holds**, so an `<option>` written in it is left out of
+the list and cannot be chosen. A [diagnosis](diagnose.md) says it for each one.
+
+Write each choice as a `<ui-option>`, and a group of them as a `<ui-optgroup>`.
+[select.md](select.md#why-the-choices-are-not-option) says why a choice is not an `<option>`.
+
+### `ui-radio:outside`
+
+**A choice is drawn by the group it is written in**, so a `<ui-radio>` outside a
+`<ui-radio-group>` draws nothing. A [diagnosis](diagnose.md) says it.
+
+Write it inside its `<ui-radio-group>`. [radio.md](radio.md) says why a choice is a `<ui-radio>`.
+
+### `ui-radio-group:unnamed`
+
+**A radio group with no `label` is announced as a group with no name**, which axe does not judge.
+A [diagnosis](diagnose.md) says it.
+
+Give it one with `label="…"`.
+
+### `ui-dialog:unnamed`
+
+**A dialog with no title opens with no name for a screen reader to announce.** Its name is copied
+from the heading written in it with `slot="title"`, and axe judges a dialog's name only as best
+practice. A [diagnosis](diagnose.md) says it.
+
+Write its heading in it with `slot="title"`. [dialog.md](dialog.md#the-accessible-name) says how
+the name is made.
+
+### `ui-density:unknown`
+
+**A density the package does not have leaves the region as it was**, with the default space and
+text. There is one density, `compact`, and no way to name another, so any other value is a typo,
+where a theme the package does not ship may be the page's own and is nothing to say. A
+[diagnosis](diagnose.md) says it, once a page for each value.
+
+Write `data-ui-density="compact"`. [tokens.md](tokens.md#density) says what a compact region
+writes.

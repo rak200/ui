@@ -7,7 +7,8 @@
  * that the package warns at correct markup, which is the noise RFC 0011 keeps out. The examples are
  * read from the pages themselves, every `html` block in each, so a new one is held to this the day
  * it is written. The glyphs an example names are imported first, as the page around it says to.
- * The silence is `silence.ts`'s to check, after each example. #422
+ * The silence is `silence.ts`'s to check, after each example, and so is a diagnosis of it, which
+ * logs what it finds: an example is written the way the components work. #422, #426
  *
  * A check that spans components rather than a unit, as `a11y.test.ts` is, so the mirror does not
  * cover it.
@@ -15,6 +16,7 @@
 
 import { ReactiveElement } from 'lit';
 import { afterEach, describe, expect, it } from 'vitest';
+import { diagnose } from '../src/diagnose.js';
 import '../src/index.js';
 
 /** Every page in `docs/`, as its text. */
@@ -115,6 +117,7 @@ describe('the examples in docs/', () => {
             const host = await mount(example);
 
             expect(host.hasChildNodes(), 'the example mounted something').toBe(true);
+            diagnose(host, { log: true });
         },
     );
 });
