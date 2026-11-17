@@ -97,6 +97,34 @@ tip, once a page for the trigger's tag. Write the trigger as a control, which a 
 box round a button, already is by what it holds. An item with `tabindex="-1"` inside a toolbar, a
 menu or another widget the arrows move through is reached by the arrows, and says nothing.
 
+**A tooltip on a disabled control is shown by no key**, and the console says nothing of it, since a
+tip on one is common and meant to say why the control is disabled. The platform takes a disabled
+control out of the tab order: Tab passes a disabled `<button>` or `<ui-button>` by, and a pointer
+alone shows its tip, in Chromium 153, Firefox 155 and WebKit 26.5 alike. Where the reason matters to
+a reader on the keyboard, write `aria-disabled="true"` on a `<button>` in place of `disabled`. The
+button keeps its tab stop, so the keys show the tip, and a screen reader hears it as disabled all
+the same. The press still arrives and the platform draws the button as enabled, so refusing the
+press and drawing the disabled look are the page's:
+
+```html
+<ui-tooltip>
+  <button type="button" aria-disabled="true">Save</button>
+  <span slot="tip">Saving needs a name first.</span>
+</ui-tooltip>
+```
+
+```js
+const save = document.querySelector('button[aria-disabled]');
+
+save.addEventListener('click', () => {
+  if (save.getAttribute('aria-disabled') === 'true') {
+    return;
+  }
+
+  // Save.
+});
+```
+
 **Never make the tip the only place information exists.** A tooltip is supplementary by definition:
 anything a person must have in order to complete the task belongs in the page, not behind a hover.
 
