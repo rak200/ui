@@ -56,7 +56,8 @@ the toaster's, so the `slot` it writes on itself assigns it to nothing. Written 
 yours, it is drawn where you wrote it, in the flow of the page, and still leaves when its time is
 up. Written inside another component, whose shadow root has no slot of that name, it is not drawn at
 all. Either way the fix is the one a stray `<option>` or `<td>` takes: put it in the element that
-holds it.
+holds it. It says [`ui-toast:outside`](console.md#ui-toastoutside), once a page, and a specimen
+that shows one on purpose quiets that code round it.
 
 | Attribute       | Type                    | Default   | Means                                          |
 | --------------- | ----------------------- | --------- | ---------------------------------------------- |

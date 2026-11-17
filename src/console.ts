@@ -9,17 +9,22 @@
  * far from the first its repeat falls, with the code first, a link to the code's entry in
  * `docs/console.md` last, and the element handed over for the devtools to reveal. #423
  *
- * **A page quiets it from its root**, with `data-ui-quiet` on `<html>`: a code, a level, or `all`.
- * The attribute is read at every line, so a page that changes it changes the lines after, and a
- * line quieted is not remembered, so it speaks once the quiet is lifted.
+ * **A page quiets it with `data-ui-quiet`**, a code, a level or `all`, on any element, as it
+ * chooses a density on a region: a line about an element inside it is quieted, across the shadow
+ * roots the element is drawn in, and on `<html>` it quiets the whole page. A theme's specimen
+ * quiets the toasts it draws outside a toaster on purpose, #424. The attribute is read at every
+ * line, so a page that changes it changes the lines after, and a line quieted is not remembered,
+ * so it speaks once the quiet is lifted.
  *
  * **Each level is a call of its own**, which is what keeps every path here from throwing: a level
  * read off a string would hand a slip `console['']` to call, from inside a component's update,
  * where a throw reaches no test. The four calls are the four lines `no-console` sets aside.
  *
- * **The memory outlives a test.** It is module state, in a page the suite and the mutation runner
- * keep between tests and between mutants, so a test that expects a line says it under a cause of its
- * own.
+ * **The memory outlives a test**, being module state in a page the suite and the mutation runner
+ * keep between tests and between mutants, so the suite forgets it before each test, through
+ * {@link forget}. Without that, a cause a test cannot make its own, a `<span>` or the toast itself,
+ * would be heard only by the first test to say it, and a test that expects silence would pass on
+ * a line a mutant had made, for being remembered from an earlier run.
  */
 
 /** A level of the console's own, which is also the word that quiets it. */
@@ -31,14 +36,40 @@ const docs = 'https://github.com/rak200/ui/blob/master/docs/console.md#';
 /** What has been said this page, by code and cause. */
 const said = new Set<string>();
 
-/** Whether the page has quieted a line, by its code, by its level, or all of them. */
-function quieted(code: string, level: Level): boolean {
-    // `String()` reads a missing attribute as `null`, a word no code and no level is, so a page
+/** Whether one element's `data-ui-quiet` names a line, by its code, its level, or all. */
+function names(region: Element, code: string, level: Level): boolean {
+    // `String()` reads a missing attribute as `null`, a word no code and no level is, so an element
     // that quiets nothing needs no branch here. The split is at every space rather than at runs of
     // them: the empty words two spaces leave match no code and no level, so the two are one.
-    const words = String(document.documentElement.getAttribute('data-ui-quiet')).split(/\s/);
+    const words = String(region.getAttribute('data-ui-quiet')).split(/\s/);
 
     return words.includes('all') || words.includes(level) || words.includes(code);
+}
+
+/**
+ * The element a node sits in, or else the host of the shadow root it is drawn in. Anything else
+ * a node can sit in, a page or a fragment, has no host, which ends the walk below.
+ */
+function above(node: Element): unknown {
+    return node.parentElement ?? (node.getRootNode() as ShadowRoot).host;
+}
+
+/**
+ * Whether a region round the element, or the page's root, has quieted a line.
+ *
+ * The walk stops at anything that is not an element, so nothing a slip hands back can be asked
+ * for an attribute, and its step is the loop's own, so a body a slip empties still walks to the end
+ * rather than holding the page. The root is asked last whether or not the walk reached it, since a
+ * line about an element out of the page is still the page's.
+ */
+function quieted(code: string, level: Level, element: Element): boolean {
+    for (let node: unknown = element; node instanceof Element; node = above(node)) {
+        if (names(node, code, level)) {
+            return true;
+        }
+    }
+
+    return names(document.documentElement, code, level);
 }
 
 /** Says a line through `speak`, unless the page has quieted it or heard it already. */
@@ -48,8 +79,9 @@ function say(
     code: string,
     cause: string,
     message: string,
+    element: Element,
 ): void {
-    if (quieted(code, level)) {
+    if (quieted(code, level, element)) {
         return;
     }
 
@@ -61,6 +93,17 @@ function say(
 
     said.add(key);
     speak(`[${code}] ${message} ${docs}${code.replace(':', '')}`);
+}
+
+/**
+ * Forgets everything said so far, so the next line of any cause is said again.
+ *
+ * **Only the suite calls it**, before each test, from `tests/silence.ts`: the page outlives a test,
+ * and the mutation runner keeps it between mutants. Nothing in the package does, so a page hears
+ * each cause once for as long as it lives.
+ */
+export function forget(): void {
+    said.clear();
 }
 
 /* eslint-disable no-console -- every line the package says is said by one of these four, once */
@@ -82,6 +125,7 @@ export function log(code: string, cause: string, message: string, element: Eleme
         code,
         cause,
         message,
+        element,
     );
 }
 
@@ -102,6 +146,7 @@ export function info(code: string, cause: string, message: string, element: Elem
         code,
         cause,
         message,
+        element,
     );
 }
 
@@ -122,6 +167,7 @@ export function warn(code: string, cause: string, message: string, element: Elem
         code,
         cause,
         message,
+        element,
     );
 }
 
@@ -143,6 +189,7 @@ export function error(code: string, cause: string, message: string, element: Ele
         code,
         cause,
         message,
+        element,
     );
 }
 

@@ -42,6 +42,7 @@ src/
 ├── pointer.ts       # the pointer engine — internal, where the pointer is for the lights that follow it
 ├── radio.ts         # <ui-radio-group> and <ui-radio> — the drawing, over a group the platform runs
 ├── rain.ts          # the scrim's rain — internal, falling code drawn on a canvas in the accent
+├── reach.ts         # whether the keys reach an element — internal, read off its kind
 ├── ring.ts          # the focus ring the page flies — internal, the one popover laid in the page
 ├── ripple.ts        # the press's ripple — internal, a circle the sheet draws and a press starts
 ├── shatter.ts       # the press's shatter — internal, a filter over the button it breaks
@@ -77,6 +78,7 @@ tests/               # mirrors src/, one test file per unit
 ├── pointer.test.ts
 ├── radio.test.ts
 ├── rain.test.ts
+├── reach.test.ts
 ├── ring.test.ts
 ├── ripple.test.ts
 ├── shatter.test.ts
@@ -221,14 +223,20 @@ explains. This file restates none of them.
   inside it; the tip is shown from its trigger, `showPopover({ source })`, which anchors it with no
   name, inside the button or round a child alike.
 - **Why every line the package says goes through `src/console.ts`, said once a page for each code
-  and cause, and quieted with `data-ui-quiet`** — [ARCHITECTURE.md](ARCHITECTURE.md), _One place
+  and cause, and quieted with `data-ui-quiet` on any region** — [ARCHITECTURE.md](ARCHITECTURE.md), _One place
   speaks to the console_, the docblock on `src/console.ts`, `docs/console.md`, and RFC 0011.
   `eslint.config.js` turns `no-console` on over `src/` and says why beside it, and the manager's four
   calls are the lines set aside, each level a call of its own so no path there can throw. **Its
   memory outlives a test**, being module state in a page the suite and the mutation runner keep, so
-  a test that expects a line says it under a cause made fresh for the run, as
-  `tests/console.test.ts`, `tests/icon.test.ts` and `tests/tooltip.test.ts` do. `tests/silence.ts`
-  fails a test on any console call it did not expect.
+  `tests/silence.ts` forgets it before each test through the manager's `forget()`, which nothing in
+  the package calls, and fails a test on any console call it did not expect.
+- **Why a tooltip says a trigger the keys cannot reach at the pointer, and which triggers they
+  reach** — the docblocks on `#reach()` in `src/tooltip.ts` and on `src/reach.ts`, and RFC 0011's
+  _Measured: which triggers the keys reach_. An element is read by its kind, and asked one
+  selector, `:disabled`, which a `<ui-button disabled>` matches; one with `tabindex="-1"` is reached
+  inside a widget the arrows move through, by its `role` on what it is drawn in, which is how a
+  `<ui-menu>`'s slotted item is reached. Both walks that climb a tree, here and in
+  `src/console.ts`, step in the loop's header, so a body a slip empties still ends.
 - **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
   raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its

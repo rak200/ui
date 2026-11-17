@@ -8,6 +8,7 @@ import {
     type SVGTemplateResult,
     type TemplateResult,
 } from 'lit';
+import { warn } from './console.js';
 import { surfaceEffects } from './effects.js';
 import { held, released } from './held.js';
 import { query } from './motion.js';
@@ -612,6 +613,19 @@ export class UiToast extends LitElement {
         // region its variant names in the same task it was inserted — nothing ever observes
         // it in the other one, and no message is announced twice by being moved.
         this.#route();
+
+        // The regions that announce a toast are the toaster's, so one written anywhere else is
+        // drawn and announced by nothing: in an element of the page's own it is drawn in the flow,
+        // and inside another component not at all. Read by its kind, once a page. RFC 0011, #424
+        if (!(this.parentElement instanceof UiToaster)) {
+            warn(
+                'ui-toast:outside',
+                this.localName,
+                `<ui-toast> is outside a <ui-toaster>, so nothing announces it: the regions that ` +
+                    `do are the toaster's. Write it inside the page's <ui-toaster>.`,
+                this,
+            );
+        }
 
         // A fresh one per connection: an aborted signal stays aborted, so a toast a
         // framework moved in the tree would come back deaf.

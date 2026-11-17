@@ -447,7 +447,8 @@ starts with its code, ends with a link to the code's entry in `docs/console.md`,
 element over for the devtools to reveal. It takes the console's level that says what it is: `warn`
 for a mistake of the page's, `info` for what the page asked to hear, `error` for a failure of the
 package's own and never a mistake of the page's. **A page quiets a code, a level or all of it**
-with `data-ui-quiet` on its root, as it chooses a theme, read at every line.
+with `data-ui-quiet` on any element, as it chooses a density on a region: what is inside it, across
+the shadow roots it is drawn in, and on the root the whole page, read at every line.
 
 **A console that speaks too often is one nobody reads**, so a line speaks unasked only for a
 failure the page cannot see otherwise: silent, known the moment it is written, and out of axe's

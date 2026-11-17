@@ -26,6 +26,11 @@ function sheet(theme: Theme): HTMLStyleElement {
 /**
  * One scheme's worth of components, under the theme, on `page` — the theme's surface unless
  * the theme lets the page through, where it is the page the theme documents holding over.
+ *
+ * **The toasts are drawn in the flow, as a specimen**, where a page never writes one: outside a
+ * toaster, which is the arrangement `ui-toast:outside` warns about, since nothing announces them.
+ * The box round them quiets that one line for itself, as `data-ui-quiet` on a region does, so the
+ * story mounts with nothing said. RFC 0011, #424
  */
 function panel(
     theme: Theme,
@@ -54,7 +59,7 @@ function panel(
                     <ui-button variant="secondary">Cancel</ui-button>
                 </div>
             </ui-card>
-            <div style="display: grid; gap: 0.5rem">
+            <div style="display: grid; gap: 0.5rem" data-ui-quiet="ui-toast:outside">
                 <ui-toast duration="0">Draft saved.</ui-toast>
                 <ui-toast variant="success" duration="0">Transfer sent.</ui-toast>
                 <ui-toast variant="danger">Could not reach the bank.</ui-toast>

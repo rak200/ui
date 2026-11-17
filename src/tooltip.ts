@@ -2,6 +2,7 @@ import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { warn } from './console.js';
 import { query } from './motion.js';
 import { arrived, left } from './next.js';
+import { unreachable } from './reach.js';
 import { reference } from './reference.js';
 import { halt, ready, write } from './typing.js';
 
@@ -851,8 +852,44 @@ export class UiTooltip extends LitElement {
     readonly #onPointer = (event: PointerEvent): void => {
         if (event.pointerType !== 'touch') {
             this.#show();
+            this.#reach();
         }
     };
+
+    /**
+     * Says it, as the pointer shows a tip, where the keys never could: a trigger that takes no tab
+     * stop, by itself or by anything it holds. RFC 0011, #424
+     *
+     * **At the pointer, and not as the tooltip is wired**, for two reasons. It is the reader the
+     * pointer stands for that cannot see the failure, so it is said where they meet the tip. And a
+     * trigger of someone else's draws its control when it renders, which can come later than
+     * either upgrade, so the shadow root read any earlier could be one that holds nothing yet.
+     *
+     * **A disabled control says nothing**: it is common, and meant to say why the control is
+     * disabled, and RFC 0011 left it to `docs/tooltip.md`. Once a page for each trigger's tag.
+     */
+    #reach(): void {
+        const wired = this.#wired;
+
+        if (wired === undefined) {
+            return;
+        }
+
+        const { trigger } = wired;
+
+        if (!unreachable(trigger)) {
+            return;
+        }
+
+        warn(
+            'ui-tooltip:unreachable',
+            trigger.localName,
+            `<ui-tooltip> describes a <${trigger.localName}> the keys never reach: it takes no ` +
+                `tab stop, so only a pointer shows the tip. Write the trigger as a <button> or an ` +
+                `<a href>, which take one.`,
+            trigger,
+        );
+    }
 
     readonly #onFocus = (): void => {
         this.#show();

@@ -364,7 +364,9 @@ by the next.
 ### Quieting
 
 **A page quiets the manager from its root, with `data-ui-quiet` on `<html>`**, as it chooses a
-theme with `data-ui-theme`. The attribute takes a list, and each word in it is one of three:
+theme with `data-ui-theme`, and on any element below it, as a region chooses its density, which
+the ninth answer of the Decision added as it was built. The attribute takes a list, and each word
+in it is one of three:
 
 - **a code**, `ui-icon:unregistered`, which quiets that code alone;
 - **a level**, `log`, `info`, `warn` or `error`, which quiets every line said at it;
@@ -392,6 +394,16 @@ by the control drawn inside them. A `<span>`, an `<a>` with no `href` and an ele
 `tabindex="-1"` take none, and are the warning's. A disabled control takes none either, and is the
 docs' alone, as the Decision's third answer says. The rule matched where the keys go in every case
 measured above.
+
+**An item the arrows move to is reached as well**, which building the rule added: the suite's
+silence heard it warn at a tooltip on a `<ui-menu>`'s item, a `<button>` with `tabindex="-1"`
+whose tip shows as the arrows land on it. So an element carrying any `tabindex` is reached inside a
+widget the arrows move through, a `toolbar`, `menu`, `menubar`, `listbox`, `tablist`, `tree`,
+`treegrid`, `grid` or `radiogroup` round it as it is drawn, which is the slot a menu's item is
+assigned to. The widget rather than the item's own role, since a toolbar's items are buttons. And a
+disabled control is what `:disabled` matches, which takes in a control a `<fieldset disabled>`
+disables and a `<ui-button disabled>`: the first rule read `disabled` off a native control, and
+the mutation run found it warning at a `<ui-button disabled>`, whose own control is disabled. #424
 
 **The icon speaks always too, once its glyph has had time to arrive.** Its failure shows, as an
 empty box, and what it checks is missing, so by the rule above it would be the diagnosis's. But the
@@ -728,7 +740,9 @@ answers:
 8. **A repeat is the same code and the same cause**, so it is left out wherever it falls, as review
    asked.
 9. **A page quiets a code, a level, or all of it**, with `data-ui-quiet` on its root, as it
-   chooses a theme with `data-ui-theme`.
+   chooses a theme with `data-ui-theme`. Building it, review took it to any element, as a region
+   chooses its density, since a theme's specimen draws toasts outside a toaster on purpose and
+   quiets that one code round them; on the root it still quiets the whole page. #424
 10. **The levels are the console's own four**, `log`, `info`, `warn` and `error`, and each line
     takes the one that says what it is: `warn` for a mistake of the page's, `info` for the
     diagnosis's log.

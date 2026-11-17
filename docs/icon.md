@@ -55,11 +55,11 @@ nobody imported look identical otherwise. The line is
 [`ui-icon:unregistered`](console.md#ui-iconunregistered), said once a name however many icons
 carry it, and a page quiets it as [console.md](console.md) says.
 
-**It warns once the page has loaded**, for an icon still drawing nothing then, so a glyph a later
-script imports is not taken for a missing one, nor one an `import()` brings in while the page is
-still loading. An icon drawn after that warns as it is drawn. A glyph an `import()` brings in after
-the page has loaded is warned about, since the icon drew nothing until then: import it with the
-page's own scripts, or give the icon its name once the glyph is there.
+**It warns two seconds past the later of the page's load and the icon's first update**, for an
+icon still drawing nothing then, so a glyph a later script imports is not taken for a missing one,
+nor one an `import()` brings in as the icon is drawn. That glyph arrived 6 to 53ms after the icon,
+measured, in Chromium and Firefox. One that takes longer than the wait is warned about: import it
+with the page's own scripts, or give the icon its name once the glyph is there.
 
 **Import all of them when the name is decided at runtime:**
 
