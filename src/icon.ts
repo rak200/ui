@@ -426,10 +426,8 @@ export class UiIcon extends LitElement {
      * remembers the name, for the page, wherever its repeat falls. RFC 0011, #423
      */
     readonly #complain = (): void => {
-        if (!this.#blank()) {
-            return;
-        }
-
+        // Asked of every icon, drawn or not: whether it still draws nothing is read once the wait is
+        // over, by `#speak`, since a glyph can arrive and a mark be slotted in the meantime.
         if (document.readyState !== 'complete') {
             window.addEventListener('load', this.#complain, { once: true });
 

@@ -91,8 +91,9 @@ this package's, which take the sentence. [tooltip.md](tooltip.md) says how the s
 **A tooltip whose trigger takes no tab stop is shown by a pointer alone.** The keys never land on a
 `<span>`, an `<a>` with no `href` or an element with `tabindex="-1"`, so a reader on the keyboard
 never sees the tip, and a reader with a mouse sees nothing wrong. It is said the first time a
-pointer shows the tip, once a page for the trigger's tag. A disabled control says nothing, and
-[tooltip.md](tooltip.md) says what to write instead.
+pointer shows the tip, once a page for the trigger's tag. A disabled control says nothing, whether
+its own `disabled` or a `<fieldset disabled>` round it disabled it, and a `<ui-button disabled>` is
+one.
 
 Write the trigger as a `<button>` or an `<a href>`, which take a tab stop, or as one of this
 package's controls. A trigger the keys reach by something it holds, a `<ui-button>` or a box round

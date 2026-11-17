@@ -400,7 +400,10 @@ silence heard it warn at a tooltip on a `<ui-menu>`'s item, a `<button>` with `t
 whose tip shows as the arrows land on it. So an element carrying any `tabindex` is reached inside a
 widget the arrows move through, a `toolbar`, `menu`, `menubar`, `listbox`, `tablist`, `tree`,
 `treegrid`, `grid` or `radiogroup` round it as it is drawn, which is the slot a menu's item is
-assigned to. The widget rather than the item's own role, since a toolbar's items are buttons. #424
+assigned to. The widget rather than the item's own role, since a toolbar's items are buttons. And a
+disabled control is what `:disabled` matches, which takes in a control a `<fieldset disabled>`
+disables and a `<ui-button disabled>`: the first rule read `disabled` off a native control, and
+the mutation run found it warning at a `<ui-button disabled>`, whose own control is disabled. #424
 
 **The icon speaks always too, once its glyph has had time to arrive.** Its failure shows, as an
 empty box, and what it checks is missing, so by the rule above it would be the diagnosis's. But the

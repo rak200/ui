@@ -10,8 +10,9 @@
  * the Tab half against where Tab lands in Chromium 153, Firefox 155 and WebKit 26.5, at eleven
  * triggers, and it matched at each.
  *
- * **The element is read by its kind, never matched against a selector**, since what calls this
- * runs from a listener, and a selector a slip empties throws where no test is listening.
+ * **The element is read by its kind, and asked one selector, `:disabled`**, the platform's own word
+ * for a control that is disabled. What calls this runs from a listener, so `tests/reach.test.ts`
+ * calls the rule itself, where a slip that empties the selector throws inside a test, which fails.
  */
 
 /**
@@ -60,10 +61,8 @@ function roved(element: Element): boolean {
     return false;
 }
 
-/** A control a page can disable. */
-function control(
-    element: Element,
-): element is HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
+/** A control, which takes a tab stop while it is enabled. */
+function control(element: Element): boolean {
     return (
         element instanceof HTMLButtonElement ||
         element instanceof HTMLInputElement ||
@@ -86,7 +85,7 @@ function stops(element: Element): boolean {
     }
 
     if (control(element)) {
-        return !element.disabled;
+        return !element.matches(':disabled');
     }
 
     return (
@@ -110,8 +109,10 @@ export function reached(element: Element): boolean {
  * Whether a trigger is one the keys never reach and that is no disabled control.
  *
  * **A disabled control is left out**: a tip on one is common, and meant to say why the control is
- * disabled, and RFC 0011 left it to `docs/tooltip.md`.
+ * disabled, and RFC 0011 left it to `docs/tooltip.md`. **It is what `:disabled` matches**, whether
+ * its own attribute disabled it or a `<fieldset disabled>` round it did, and a form-associated
+ * element such as `<ui-button disabled>`, whose own control the keys cannot reach, is one.
  */
 export function unreachable(trigger: Element): boolean {
-    return !(control(trigger) && trigger.disabled) && !reached(trigger);
+    return !trigger.matches(':disabled') && !reached(trigger);
 }

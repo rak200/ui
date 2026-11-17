@@ -1218,9 +1218,10 @@ describe('a trigger the keys cannot reach', () => {
         expect(tip(host).matches(':popover-open'), 'the pointer showed the tip').toBe(true);
         expect(warn).toHaveBeenCalledOnce();
         expect(warn).toHaveBeenCalledWith(
-            expect.stringMatching(
-                /^\[ui-tooltip:unreachable\] <ui-tooltip> describes a <span> the keys never reach: .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-tooltipunreachable$/,
-            ),
+            '[ui-tooltip:unreachable] <ui-tooltip> describes a <span> the keys never reach: it ' +
+                'takes no tab stop, so only a pointer shows the tip. Write the trigger as a ' +
+                '<button> or an <a href>, which take one. ' +
+                'https://github.com/rak200/ui/blob/master/docs/console.md#ui-tooltipunreachable',
             written(host),
         );
     });
@@ -1232,6 +1233,7 @@ describe('a trigger the keys cannot reach', () => {
             'a disabled <button>, which the docs answer',
             '<button type="button" disabled>Save</button>',
         ],
+        ['a disabled <ui-button>, which the docs answer', '<ui-button disabled>Save</ui-button>'],
     ])('says nothing for %s', async (_name, trigger) => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         const host = await mount(on(trigger));

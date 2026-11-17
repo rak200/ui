@@ -434,9 +434,9 @@ describe('outside a toaster', () => {
 
         expect(warn).toHaveBeenCalledOnce();
         expect(warn).toHaveBeenCalledWith(
-            expect.stringMatching(
-                /^\[ui-toast:outside\] <ui-toast> is outside a <ui-toaster>, so nothing announces it: .* https:\/\/github\.com\/rak200\/ui\/blob\/master\/docs\/console\.md#ui-toastoutside$/,
-            ),
+            '[ui-toast:outside] <ui-toast> is outside a <ui-toaster>, so nothing announces it: ' +
+                "the regions that do are the toaster's. Write it inside the page's <ui-toaster>. " +
+                'https://github.com/rak200/ui/blob/master/docs/console.md#ui-toastoutside',
             only(host, 'ui-toast'),
         );
     });

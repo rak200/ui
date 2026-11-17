@@ -232,11 +232,11 @@ explains. This file restates none of them.
   the package calls, and fails a test on any console call it did not expect.
 - **Why a tooltip says a trigger the keys cannot reach at the pointer, and which triggers they
   reach** — the docblocks on `#reach()` in `src/tooltip.ts` and on `src/reach.ts`, and RFC 0011's
-  _Measured: which triggers the keys reach_. An element is read by its kind and never matched
-  against a selector, and one with `tabindex="-1"` is reached inside a widget the arrows move
-  through, by its `role` on what it is drawn in, which is how a `<ui-menu>`'s slotted item is
-  reached. Both walks that climb a tree, here and in `src/console.ts`, step in the loop's header, so
-  a body a slip empties still ends.
+  _Measured: which triggers the keys reach_. An element is read by its kind, and asked one
+  selector, `:disabled`, which a `<ui-button disabled>` matches; one with `tabindex="-1"` is reached
+  inside a widget the arrows move through, by its `role` on what it is drawn in, which is how a
+  `<ui-menu>`'s slotted item is reached. Both walks that climb a tree, here and in
+  `src/console.ts`, step in the loop's header, so a body a slip empties still ends.
 - **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
   raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its

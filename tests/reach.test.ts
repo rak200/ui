@@ -103,8 +103,22 @@ describe('the keys never reach', () => {
         ['a disabled <button>', '<button type="button" disabled>Save</button>'],
         ['a disabled <input>', '<input aria-label="Name" disabled />'],
         ['a box round a <span>', '<div><span>Draft</span></div>'],
+        ['an element with an href that is no link', '<span href="#saved">Draft</span>'],
+        [
+            'a disabled <ui-button>, whose own control is disabled',
+            '<ui-button disabled>Save</ui-button>',
+        ],
     ])('%s', async (_name, markup) => {
         expect(reached(await element(markup))).toBe(false);
+    });
+
+    it('a <button> a <fieldset disabled> disables', async () => {
+        const button = await element(
+            '<fieldset disabled><button type="button">Save</button></fieldset>',
+            'button',
+        );
+
+        expect(reached(button)).toBe(false);
     });
 });
 
@@ -191,6 +205,19 @@ describe('a trigger the warning is about', () => {
         expect(unreachable(await element('<button type="button" disabled>Save</button>'))).toBe(
             false,
         );
+    });
+
+    it('is never a <ui-button disabled>, which is a disabled control too', async () => {
+        expect(unreachable(await element('<ui-button disabled>Save</ui-button>'))).toBe(false);
+    });
+
+    it('is never a control a <fieldset disabled> disables', async () => {
+        const button = await element(
+            '<fieldset disabled><button type="button">Save</button></fieldset>',
+            'button',
+        );
+
+        expect(unreachable(button)).toBe(false);
     });
 
     it('is never one the keys reach', async () => {

@@ -3,6 +3,7 @@ import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, { Bespoke, Decorative, IconOnly, Named, Sizes } from '../stories/icon.stories.js';
+import { forget } from '../src/console.js';
 import { register, UiIcon } from '../src/icon.js';
 import '../src/button.js';
 // Three glyphs, imported the way a host imports them. Not the barrel: importing all two
@@ -569,18 +570,24 @@ describe('the registry', () => {
         });
     });
 
-    it('says nothing when a glyph is there', async () => {
+    it('says nothing when a glyph is there, past the wait as well', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-        await mount('<ui-icon name="x"></ui-icon>');
+        await clocked(async () => {
+            await mount('<ui-icon name="x"></ui-icon>');
+            vi.advanceTimersByTime(grace);
+        });
 
         expect(warn).not.toHaveBeenCalled();
     });
 
-    it('says nothing about an icon carrying no name at all', async () => {
+    it('says nothing about an icon carrying no name at all, past the wait as well', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-        await mount('<ui-icon></ui-icon>');
+        await clocked(async () => {
+            await mount('<ui-icon></ui-icon>');
+            vi.advanceTimersByTime(grace);
+        });
 
         expect(warn).not.toHaveBeenCalled();
     });
@@ -643,15 +650,38 @@ describe('the registry', () => {
         });
     });
 
-    it('says nothing at load for an icon taken off the page before it', async () => {
+    it('says nothing at load for an icon taken off the page before it, past the wait as well', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        const page = loading();
-        const host = await mount('<ui-icon name="taken-away"></ui-icon>');
 
-        host.remove();
-        page.load();
+        await clocked(async () => {
+            const page = loading();
+            const host = await mount('<ui-icon name="taken-away"></ui-icon>');
+
+            host.remove();
+            page.load();
+            vi.advanceTimersByTime(grace);
+        });
 
         expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('listens for the load once, so a second one asks nothing again', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        await clocked(async () => {
+            const page = loading();
+
+            await mount('<ui-icon name="loaded-once"></ui-icon>');
+            page.load();
+            vi.advanceTimersByTime(grace);
+            // What the manager remembers would keep a second line back, so it is forgotten here,
+            // and what is read is whether the icon asked again.
+            forget();
+            window.dispatchEvent(new Event('load'));
+            vi.advanceTimersByTime(grace);
+        });
+
+        expect(warn).toHaveBeenCalledOnce();
     });
 });
 
@@ -703,10 +733,13 @@ describe('a slotted mark', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
         // A name and a slotted mark together is not the failure the warning is for: the
-        // page drew something, and it drew it on purpose.
-        await mount(
-            '<ui-icon name="our-mark"><svg viewBox="0 0 24 24"><path d="M12 2 2 22h20Z" /></svg></ui-icon>',
-        );
+        // page drew something, and it drew it on purpose. Past the wait, which is when it is read.
+        await clocked(async () => {
+            await mount(
+                '<ui-icon name="our-mark"><svg viewBox="0 0 24 24"><path d="M12 2 2 22h20Z" /></svg></ui-icon>',
+            );
+            vi.advanceTimersByTime(grace);
+        });
 
         expect(warn).not.toHaveBeenCalled();
     });
@@ -714,7 +747,10 @@ describe('a slotted mark', () => {
     it('is not warned about, because it is deliberate', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-        await mount(bespoke);
+        await clocked(async () => {
+            await mount(bespoke);
+            vi.advanceTimersByTime(grace);
+        });
 
         expect(warn).not.toHaveBeenCalled();
     });
