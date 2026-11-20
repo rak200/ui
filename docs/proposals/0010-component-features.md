@@ -176,8 +176,17 @@ open too.
 - **The pointer's way from an item to its submenu.** It crosses the other items, so a submenu that
   closed as soon as the pointer left its item could never be reached.
 
-That last is what the study has still to measure: how long a submenu waits for the pointer, or
-across which shape.
+**The pointer's way in is one the prior art agrees on.** Radix's menu keeps a submenu open while the
+pointer moves inside the area from where it left the item, five pixels back, to the submenu's
+corners, for 300ms after it left, and opens a submenu 100ms after the pointer moves onto its item
+([Radix](https://github.com/radix-ui/primitives/blob/main/packages/react/menu/src/menu.tsx)).
+jQuery-menu-aim waits 300ms where the pointer seems to be heading for the submenu, read from the
+slopes of the pointer's last points toward the submenu's corners
+([menu-aim](https://github.com/kamens/jQuery-menu-aim)). So a submenu waits across that
+area, for 300ms at most, and an item opens its submenu 100ms after the pointer comes onto it, while
+the items the pointer crosses on its way open nothing. Whether the area is reckoned in script, as
+Radix reckons it, or drawn as a shape of the submenu's own over the items is its pull request's to
+choose.
 
 ### Measured: a column sticks inside the box that already scrolls
 
@@ -204,6 +213,34 @@ button's `::part(button)` from the host's tree, where a rule can, or the button 
 corner.
 
 **A segmented row of radios is the same drawing** over a radio group, so the two share it.
+
+### Measured: a group squares its buttons' corners from outside
+
+Three `<ui-button>`s were set in a row, and a rule squared the corners they share through
+`::part(button)`, written in the page's sheet, and again in one adopted into the page as a group
+would adopt it. In Chromium 153, Firefox 155 and WebKit 26.5, the button drawn in each root took the
+corners it was given, and so did the three layers its effects are drawn on, its `::before`, its
+`::after` and its edge band, which take their corners from it. Right to left, the logical corners
+turned with the row. So the group squares the corners from outside, and the button learns nothing.
+
+### Measured: a toolbar's one tab stop needs the button to hand its focus on
+
+A toolbar keeps one tab stop by a roving tabindex: `-1` on every control but the one the reader was
+last on, and `focus()` on the next as the arrows move. Over `<ui-button>`s the tabindex lands on the
+host, and the button the reader presses is in its root. Two bare elements, each with a `<button>` in
+its root, were set between two buttons, and Tab was pressed through them. The three engines measured
+alike:
+
+| The host            | No tabindex          | `tabindex="-1"` | `tabindex="0"`         | `focus()` on it    |
+| ------------------- | -------------------- | --------------- | ---------------------- | ------------------ |
+| as `<ui-button>` is | a stop on its button | no stop         | two, itself and button | itself, or nothing |
+| delegating focus    | a stop on its button | no stop         | a stop on its button   | its button         |
+
+**Only a host that delegates its focus can rove.** As `<ui-button>` is, `-1` takes its button out of
+the order, but `focus()` lands on the host, where <kbd>Enter</kbd> and <kbd>Space</kbd> press
+nothing, and `0` makes two stops of one button. With `delegatesFocus`, `focus()` lands on the button
+the host draws, and the host's tabindex decides that button's stop, while a host with none keeps the
+one stop it has. So a group that takes the toolbar's keyboard has `<ui-button>` delegate its focus.
 
 ### The rest of the catalogue
 
@@ -256,7 +293,7 @@ those three are measured below:
 | `ui-input`    | a button at its end       | the host's button after the control, named by itself, in the tab order              | medium |
 | `ui-menu`     | a shortcut, a description | rules adopted into the host's tree, as the table's: `::slotted()` stops at the item | medium |
 | `ui-radio`    | choices drawn as cards    | the segmented row's drawing, larger, with a description each                        | medium |
-| `ui-menu`     | opened at the pointer     | `contextmenu`, the menu key, and a panel placed at a point, not an anchor           | high   |
+| `ui-menu`     | opened at the pointer     | `contextmenu`, the menu key, and a panel placed at a point, not at a trigger        | high   |
 | `ui-toaster`  | a corner of its own       | the host's element, which `inset` places, as `docs/toast.md` says                   | —      |
 | `ui-tooltip`  | links and buttons in it   | a tip describes and is never reached; what is reached is RFC 0009's popover         | —      |
 
@@ -321,6 +358,40 @@ in place in all three. So the arrow moves by `translate`.
 forced colors. Glass's surface is translucent, so any part of the arrow laid over the tip shows
 twice, and how the arrow meets the edge there is its pull request's to draw.
 
+### Measured: a context menu's keys, and a panel shown from a point
+
+A context menu is opened by the pointer's secondary button, and from the keyboard by the menu key or
+<kbd>Shift</kbd>+<kbd>F10</kbd> on the element with the focus. In Chromium 153, a focused button
+heard `contextmenu` for both keys, with its middle as the point. In Firefox 155 and WebKit 26.5,
+driven by Playwright, neither key brought one, where the secondary button did in all three. The keys
+reached the page as `keydown` in all three. So the menu opens from the two keys itself, at the
+focused element's box, and from `contextmenu` for the pointer, and opens once where an engine sends
+both.
+
+**A point anchors a panel.** A panel was shown from a zero-size element placed where the menu was
+asked for, `showPopover({ source })`, and placed by `position-area`, below the point and toward the
+inline end. In the three engines it was placed against the point, and turned back inside the screen
+at its edges, above and toward the start in a corner. So the panel is placed at a point by the
+anchoring the menu already uses.
+
+### Measured: a tip's own side in an island
+
+A tip on a side of its own was placed by `position-area`, and by anchored insets read in the tip's
+own direction, the way an island's tip is hung above its trigger today. In a page left to right, and
+in a page right to left, the two put the tip on the same side in the three engines. In a
+right-to-left passage of a page left to right, they parted:
+
+| In an island                         | `inline-start`             | `inline-end`          | `block-end`    |
+| ------------------------------------ | -------------------------- | --------------------- | -------------- |
+| `position-area`, Chromium and WebKit | the page's start, left     | the page's end, right | below          |
+| `position-area`, Firefox             | left, at the screen's edge | left, apart from it   | off the screen |
+| anchored insets, all three           | the tip's start, right     | the tip's end, left   | below          |
+
+So `position-area` reads an island's inline sides in the page's direction in two engines, and
+Firefox misplaces the tip on every side there, as it misplaces a centred one (Mozilla 2019601). A
+side of its own takes anchored insets in an island, read in the tip's direction, as the tip above
+its trigger already does.
+
 ## Proposed design
 
 ### What enters, in this order
@@ -361,22 +432,25 @@ first, being the cheapest, and the menu last, where the two dearest steps are.
     field sends its form. It keeps its tab stop, so the keys show a tooltip on it, and its own
     button carries the state, for a tree that does not take it from the host. `docs/tooltip.md`'s
     answer for a disabled control then points at it.
-11. **`<ui-button-group>`**: the buttons drawn joined, and named together as a group. It comes after
-    the toggle, whose buttons a toolbar most often holds. Whether it takes the toolbar's keyboard
-    too is the study's to settle.
-12. **A busy `<ui-button>`**, once RFC 0009's progress has landed, and at the end of the list if it
-    has not by its turn. It refuses a press and keeps its tab stop, as an `aria-disabled` one does.
-    After a second it draws the indeterminate ring in place of its label, keeping its width. How it
-    says it is busy to a reader is its manual page's to measure: a name that changes on the focused
-    button is announced by some readers and not by others.
+11. **`<ui-button-group>`**: the buttons drawn joined, their shared corners squared through
+    `::part(button)` by rules the group adopts into the host's tree, and named together as a group.
+    With `toolbar` it takes the APG toolbar's keyboard: one tab stop, by a roving tabindex on the
+    buttons' hosts, the arrows and their mirror, Home and End, for which `<ui-button>` delegates its
+    focus. It comes after the toggle, whose buttons a toolbar most often holds.
+12. **A busy `<ui-button>`**, #439, once RFC 0009's progress has landed, and at the end of the list
+    if it has not by its turn. It refuses a press and keeps its tab stop, as an `aria-disabled` one
+    does. After a second it draws the indeterminate ring in place of its label, keeping its width.
+    How it says it is busy to a reader is its manual page's to measure: a name that changes on the
+    focused button is announced by some readers and not by others.
 
 **The icon and the tooltip.**
 
 13. **`<ui-icon>` turned where the text runs right to left**, for a glyph the host marks as pointing
     one way, by `:host(:dir(rtl))`.
 14. **A side of its own for `<ui-tooltip>`'s tip**, below its trigger or beside it where the host
-    asks, by `position-area` and its fallbacks for each side, and an island's edges for each.
-    `data-side` names the side it took, the inline ones too.
+    asks, by `position-area` and its fallbacks for each side, and in an island by anchored insets
+    read in the tip's direction, as measured. `data-side` names the side it took, the inline ones
+    too.
 15. **An arrow on `<ui-tooltip>`'s tip, pointing at its trigger**, after the side, so it is drawn
     once for every side, where `docs/tooltip.md` leaves it to the host today. The sheet draws it as
     the tip's `::before`, in the gap on the side `data-side` names, in the tip's surface, edge and
@@ -422,12 +496,16 @@ first, being the cheapest, and the menu last, where the two dearest steps are.
 27. **A shortcut and a description on `<ui-menu>`'s items**, drawn at the item's end and under its
     label, by rules the menu adopts into the host's tree as the table adopts its own, since
     `::slotted()` stops at the item.
-28. **Submenus in `<ui-menu>`**, once the pointer's way into one is measured. The layer and its
-    dismissal are left to the platform, as measured. The menu writes <kbd>→</kbd>, <kbd>←</kbd> and
-    the focus between the two panels.
-29. **`<ui-menu>` opened at the pointer**, last: a context menu, which `contextmenu` and the menu
-    key open where the pointer or the focus is, its panel placed at a point rather than against an
-    anchor.
+28. **Submenus in `<ui-menu>`.** The layer and its dismissal are left to the platform, as measured.
+    The menu writes <kbd>→</kbd>, <kbd>←</kbd> and the focus between the two panels. An item opens
+    its submenu 100ms after the pointer comes onto it, and an open submenu waits for the pointer
+    across the area from where it left the item to the submenu's corners, for 300ms at most, while
+    the items it crosses open nothing.
+29. **`<ui-menu>` opened at the pointer**, last: a context menu. The pointer's `contextmenu` opens
+    it where the pointer is, and the menu key and <kbd>Shift</kbd>+<kbd>F10</kbd> open it at the
+    focused element, read as keys, since only Chromium sends `contextmenu` for them, measured. Its
+    panel is shown from a point, a zero-size element where it was asked for, which places it and
+    turns it back inside the screen in the three engines.
 
 **The rest of the first catalogue is left out for now**, each for the reason its row gives, and so
 are the two rows the second look turns down. The proposal stays in study, so another feature can
@@ -465,11 +543,19 @@ still join it.
 - **The arrow left to the host**, as `docs/tooltip.md` leaves it now: every page draws the same
   shape, and none can keep it at the trigger's middle where the tip is pulled inside the screen
   without the boxes the element already reads.
+- **A radius per corner on `<ui-button>`**: a second way into the corners, where `::part(button)`
+  reaches all four from outside and the effects' layers follow, measured.
+- **A roving tabindex over buttons that keep their focus**: measured, `focus()` on such a host lands
+  on the host, where the keys press nothing.
+- **`contextmenu` alone for the keyboard**: measured, Firefox and WebKit sent none for the menu key
+  or <kbd>Shift</kbd>+<kbd>F10</kbd>.
+- **`position-area` for a side in an island**: measured, it reads the page's direction in two
+  engines and misplaces the tip in Firefox.
 
 ## Decision
 
 **Not taken yet.** The proposal stays in study, so that more features can join it before its set is
-closed. Five questions are settled, and the proposed design above is written to them:
+closed. Six questions are settled, and the proposed design above is written to them:
 
 1. **A card opens where it is clicked by the stretched link**, over the redundant click.
 2. **Five more join the eight proposed**: the input's clear button, password and count; the table's
@@ -481,11 +567,18 @@ closed. Five questions are settled, and the proposed design above is written to 
    look.
 5. **The second look joins them whole**, cost being no reason to leave a feature out, but for the
    two rows it turns down: the toaster's corner and links in a tip.
+6. **What the study had left is settled**, each by what it measured or by what the prior art agrees
+   on:
+   - the group squares its buttons' corners through `::part(button)`, by rules it adopts;
+   - `toolbar` gives the group the toolbar's keyboard, and `<ui-button>` delegates its focus for it;
+   - a submenu waits for the pointer across the area Radix's waits across, for 300ms at most;
+   - a context menu reads its keys itself, and its panel is placed from a point;
+   - a tip's own side takes anchored insets in an island.
 
 ## Rollout
 
 1. **One pull request for each step above**, in its order. The busy button waits for RFC 0009's
-   progress. The last pull request marks this proposal `Implemented`.
+   progress, which #439 holds. The last pull request marks this proposal `Implemented`.
 2. **Each step enters ROADMAP.md with an issue of its own** once this proposal is accepted.
 
 ## Related
