@@ -7,6 +7,7 @@ import { expectAccessible } from './a11y.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, {
+    Action,
     Affixes,
     Constrained,
     Tools,
@@ -1133,12 +1134,12 @@ describe('a prefix and a suffix', () => {
         element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
 
         expect(getComputedStyle(mark(element, 'prefix')).color).toBe('rgb(1, 2, 3)');
-        expect(getComputedStyle(side(element, 'prefix')).opacity).toBe('1');
+        expect(getComputedStyle(mark(element, 'prefix')).opacity).toBe('1');
 
         element.disabled = true;
         await element.updateComplete;
 
-        expect(getComputedStyle(side(element, 'prefix')).opacity).toBe('0.5');
+        expect(getComputedStyle(mark(element, 'prefix')).opacity).toBe('0.5');
     });
 });
 
@@ -1477,6 +1478,131 @@ describe('the clear button, the password shown, and the count', () => {
 
     it('has no violations with its buttons and its count', async () => {
         await expectAccessible(await mountStory(Tools, meta, 'Tools'));
+    });
+});
+
+/** A button the page writes at the box's end, after the ones the element draws there. */
+describe("a button of the host's at the end", () => {
+    /** Two frames, so the observer measuring each side has answered the first. */
+    async function measured(): Promise<void> {
+        for (let frame = 0; frame < 2; frame++) {
+            await new Promise(requestAnimationFrame);
+        }
+    }
+
+    /** What the page slotted at the end. */
+    function action(element: Field): HTMLElement {
+        const found = element.querySelector<HTMLElement>('[slot="action"]');
+
+        if (found === null) {
+            throw new Error('nothing is slotted at the end');
+        }
+
+        return found;
+    }
+
+    it("is drawn at the box's end, the side shown for it alone, the padding widened to hold it", async () => {
+        const form = await mount(
+            '<ui-input label="Find" name="q"><button slot="action" id="go">Go</button></ui-input>',
+        );
+        const element = field(form);
+        const button = action(element);
+        const suffix = part(element, 'suffix');
+
+        await measured();
+
+        expect(suffix.hidden, 'shown for it').toBe(false);
+        expect(part(element, 'prefix').hidden, 'at the end alone').toBe(true);
+        expect(button.assignedSlot?.closest('[part="suffix"]')).toBe(suffix);
+        expect(Number.parseFloat(getComputedStyle(box(element)).paddingInlineEnd)).toBe(
+            suffix.offsetWidth,
+        );
+        expect(
+            box(element).getBoundingClientRect().right - button.getBoundingClientRect().right,
+            "the side's padding from the end",
+        ).toBe(Number.parseFloat(getComputedStyle(suffix).paddingInlineEnd));
+        expect(button.getAttributeNames(), 'named by itself, written on by nothing').toEqual([
+            'slot',
+            'id',
+        ]);
+
+        button.remove();
+        await element.updateComplete;
+        await measured();
+
+        expect(suffix.hidden, 'gone with it').toBe(true);
+    });
+
+    it('is reached by Tab after the control and the buttons the element draws', async () => {
+        const form = await mount(
+            '<ui-input label="Password" name="p" type="password" value="hunter2" clear-label="Clear" reveal-label="Show password"><button slot="action" id="generate">Generate</button></ui-input>',
+        );
+        const element = field(form);
+        const reached: string[] = [];
+
+        await measured();
+        box(element).focus();
+
+        for (let step = 0; step < 3; step++) {
+            await userEvent.tab();
+            reached.push(
+                document.activeElement === element
+                    ? (element.shadowRoot?.activeElement?.getAttribute('part') ?? 'none')
+                    : (document.activeElement?.id ?? 'none'),
+            );
+        }
+
+        expect(reached).toEqual(['clear', 'reveal', 'generate']);
+    });
+
+    it("takes the pointer, and the text's colour rather than the box's, invalid too", async () => {
+        const form = await mount(
+            '<ui-input label="Token" name="t" value="abc"><button slot="action" style="color: inherit">Copy</button></ui-input>',
+        );
+        const element = field(form);
+        const button = action(element);
+
+        await measured();
+        element.style.setProperty('--ui-color-text', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-accent', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-danger', 'rgb(7, 8, 9)');
+
+        const at = button.getBoundingClientRect();
+
+        expect(document.elementFromPoint(at.left + at.width / 2, at.top + at.height / 2)).toBe(
+            button,
+        );
+        expect(getComputedStyle(button).color, '--ui-color-text').toBe('rgb(1, 2, 3)');
+
+        element.error = 'Expired.';
+        await element.updateComplete;
+
+        expect(getComputedStyle(button).color, 'not the danger').toBe('rgb(1, 2, 3)');
+    });
+
+    it('keeps the state the page gave it, while the parts the element draws dim with the control', async () => {
+        const form = await mount(
+            '<ui-input label="Password" name="p" type="password" suffix-text="8 or more" reveal-label="Show password"><button slot="action" id="generate">Generate</button></ui-input>',
+        );
+        const element = field(form);
+        const suffix = part(element, 'suffix');
+        const mark = suffix.querySelector('.affix');
+
+        if (mark === null) {
+            throw new Error('the suffix draws no mark');
+        }
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(getComputedStyle(mark).opacity, 'the text').toBe('0.5');
+        expect(getComputedStyle(part(element, 'reveal')).opacity, 'the button').toBe('0.5');
+        expect(getComputedStyle(suffix).opacity, 'and nothing round the page').toBe('1');
+        expect(action(element).matches(':disabled'), "the page's to disable").toBe(false);
+    });
+
+    it("has no violations with a button of the page's at its end", async () => {
+        await expectAccessible(await mountStory(Action, meta, 'Action'));
     });
 });
 
@@ -2053,6 +2179,16 @@ async function submitted(
 }
 
 describe('Enter, which the field hands to its form', () => {
+    it("submits by a button of the page's at the box's end, the form's first", async () => {
+        const form = await mount(
+            '<ui-input label="Find" name="q"><button slot="action" id="go">Go</button></ui-input>',
+        );
+
+        box(field(form)).focus();
+
+        expect(await submitted(form, () => userEvent.keyboard('{Enter}'))).toEqual(['go']);
+    });
+
     it("submits the form by its default button, as the platform's own input does", async () => {
         const form = await mount(
             '<ui-input label="A" name="a"></ui-input><button id="go">Go</button>',

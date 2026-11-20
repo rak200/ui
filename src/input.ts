@@ -465,6 +465,9 @@ const pickers: ReadonlySet<string> = new Set(['color', 'file']);
 /** The two sides a field's control carries something on, read in its own direction. */
 type Side = 'prefix' | 'suffix';
 
+/** The slots a text input fills: a glyph on either side, and a host's button at its end. */
+type Slotted = Side | 'action';
+
 /**
  * How long a field waits after the last key before it says its count: a reading of typing rather
  * than of motion, so no token. GOV.UK's own says its count within a second of the reader stopping.
@@ -555,8 +558,18 @@ const affixes = css`
         display: none;
     }
 
-    .glow:has(> :disabled) > .side {
+    /* What the element draws dims with a control that cannot be used; a button the page slotted
+       keeps the state the page gave it, which a dimmed button it could still press would belie. */
+    .glow:has(> :disabled) :is(.affix, .tool) {
         opacity: 0.5;
+    }
+
+    /* What the page slots at the end takes the pointer, as the side's own buttons do, and the
+       text's colour rather than the box's, which is the accent a theme's glow is drawn in and
+       turns to the danger on an invalid control: both are inherited, so the slot hands them on. */
+    slot[name='action'] {
+        color: ${reference('--ui-color-text')};
+        pointer-events: auto;
     }
 
     input {
@@ -640,6 +653,11 @@ const affixes = css`
  * tree is one the control could not be described by; and a glyph in the `prefix` or `suffix`
  * slot, hidden from the tree. {@link affixes} says how they are laid out.
  *
+ * **A button of the host's goes in the `action` slot**, at the box's end, after the clear button
+ * and the password's: it is the host's own element, named by itself and reached by Tab after the
+ * control and them, and the element neither names it nor dims it with a disabled control, since
+ * what it does and when it can be pressed are the page's.
+ *
  * @example
  * ```html
  * <ui-input label="Amount" help="In BRL, two decimals." type="number" name="amount"></ui-input>
@@ -722,18 +740,18 @@ export class UiInput extends UiTextField {
     /** The wait after the last key, at whose end the count is said. */
     #waiting: ReturnType<typeof setTimeout> | undefined;
 
-    /** The sides a glyph was slotted on, which a slot's change reports. */
-    readonly #slotted = new Set<Side>();
+    /** The slots something was slotted in, which a slot's change reports. */
+    readonly #slotted = new Set<Slotted>();
 
-    /** Takes note of a glyph slotted on a side, or taken from it. */
+    /** Takes note of something slotted, a glyph or the host's button, or taken away. */
     readonly #assigned = (event: Event): void => {
         const slot = event.target as HTMLSlotElement;
-        const side = slot.name as Side;
+        const name = slot.name as Slotted;
 
         if (slot.assignedNodes().length > 0) {
-            this.#slotted.add(side);
+            this.#slotted.add(name);
         } else {
-            this.#slotted.delete(side);
+            this.#slotted.delete(name);
         }
 
         this.requestUpdate();
@@ -866,22 +884,26 @@ export class UiInput extends UiTextField {
     /**
      * One side of the box: the glyph slotted there and the text, which the control's description
      * names, an empty span where there is none, hidden from the tree, which hears the text through
-     * the description; and the buttons the side carries, which are not. Not drawn while it holds
-     * none of them.
+     * the description; the buttons the side carries, which are not; and, on the side that `acts`,
+     * the slot a button of the host's is written in, after them. Not drawn while it holds none of
+     * them.
      */
-    #side(side: Side, tools: readonly TemplateResult[]): TemplateResult {
+    #side(side: Side, tools: readonly TemplateResult[], acts = false): TemplateResult {
         const text = this[`${side}Text` as const];
         const marked = text !== '' || this.#slotted.has(side);
+        const acting = acts && this.#slotted.has('action');
 
         return html`<span
             class="side"
             data-side=${side}
             part=${side}
-            ?hidden=${!marked && tools.length === 0}
+            ?hidden=${!marked && tools.length === 0 && !acting}
             ><span class="affix" aria-hidden="true" ?hidden=${!marked}
                 ><slot name=${side} @slotchange=${this.#assigned}></slot
                 ><span id=${side}>${text}</span></span
-            >${tools}</span
+            >${tools}${
+                acts ? html`<slot name="action" @slotchange=${this.#assigned}></slot>` : nothing
+            }</span
         >`;
     }
 
@@ -942,7 +964,7 @@ export class UiInput extends UiTextField {
                     @change=${this.changed}
                     @keypress=${this.#entered}
                 />
-                ${this.#side('suffix', this.#tools())}
+                ${this.#side('suffix', this.#tools(), true)}
             `,
             this.#count(),
         );
