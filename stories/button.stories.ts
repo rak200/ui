@@ -56,6 +56,19 @@ export const Danger: StoryObj<ButtonArgs> = {
 };
 
 /**
+ * Two toggles, one pressed: a secondary's weight until a click turns one, the selected names while
+ * it is, and `aria-pressed` on its own button saying which.
+ */
+export const Toggle: StoryObj<ButtonArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; gap: 0.5rem; align-items: center">
+            <ui-button toggle type="button">Bold</ui-button>
+            <ui-button toggle pressed type="button">Italic</ui-button>
+        </div>
+    `,
+};
+
+/**
  * Refusing interaction, which is a different rendering rather than the same one greyed:
  * the cursor changes with the opacity, and the real `<button>` underneath carries the
  * semantics the platform gives it.

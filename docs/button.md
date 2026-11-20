@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [`disabled`](#disabled)
 - [`type`](#type)
 - [`name` and `value`](#name-and-value)
+- [`toggle` and `pressed`](#toggle-and-pressed)
 - [`ButtonVariant`](#buttonvariant)
 - [`ButtonType`](#buttontype)
 - [In a form](#in-a-form)
@@ -126,6 +127,34 @@ does on `<button>`. Reflected.
 
 What the button puts among the form's entries while it is the one submitting it, as a `<button>`
 does: `action=publish` here, and nothing from a button with no `name`. Both reflected.
+
+## `toggle` and `pressed`
+
+```html
+<ui-button toggle type="button">Bold</ui-button>
+<ui-button toggle pressed type="button">Italic</ui-button>
+```
+
+**`toggle` makes the button a toggle**, which says whether it is pressed: its own button carries
+`aria-pressed`, `false` until `pressed` is written and `true` while it is. A button that is not a
+toggle carries none, as a `<button>` that toggles nothing does.
+
+**A click turns it**, and the element says so with a `change` that bubbles. It turns a task after
+the click, as the button acts on a form, so a listener that cancels the click keeps it as it was,
+and a listener on the click reads the state before it turned: listen for `change`. A disabled
+toggle stays as it is. Writing `pressed` yourself turns it and says nothing. In a form it still
+does what its `type` says, as a `<button>` does, so a toggle that sends nothing is written
+`type="button"`.
+
+**A toggle has one weight of its own, whatever its `variant`**: a secondary's while it is not
+pressed, and a primary's in the selected names while it is — `--ui-color-selected`, its label
+`--ui-color-selected-contrast`, and `--ui-color-selected-hover` under the pointer and pressed, the
+names [a select's chosen option](select.md#the-list-where-the-engine-hands-it-to-the-page) is drawn
+in. A primary's fill is the accent those names are too, so a primary toggle would look the same
+pressed or not. In forced colours a pressed toggle names the system's `Highlight` and
+`HighlightText`, which the mode keeps, as a checked box does.
+
+Both are reflected, so either can be selected on in CSS.
 
 ## `ButtonVariant`
 

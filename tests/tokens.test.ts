@@ -303,11 +303,16 @@ async function tint(scheme: Scheme, palette: Palette): Promise<string> {
 }
 
 /**
- * The sheen a shimmer sweeps across a `variant` button, resolved in `scheme` under `palette` as the
- * button hands it to the layer that draws it — an effect's, so read off a button rather than a
- * token, as the tint is.
+ * The sheen a shimmer sweeps across a `variant` button, with any `attributes` besides, resolved in
+ * `scheme` under `palette` as the button hands it to the layer that draws it — an effect's, so read
+ * off a button rather than a token, as the tint is.
  */
-async function sheen(scheme: Scheme, palette: Palette, variant: string): Promise<string> {
+async function sheen(
+    scheme: Scheme,
+    palette: Palette,
+    variant: string,
+    attributes = '',
+): Promise<string> {
     const style = document.createElement('style');
     style.textContent = tokenStyleSheet() + palette.sheet;
 
@@ -318,7 +323,7 @@ async function sheen(scheme: Scheme, palette: Palette, variant: string): Promise
         host.dataset['uiTheme'] = palette.theme;
     }
 
-    host.innerHTML = `<ui-button variant="${variant}" style="${kinds.choice}focus-fill: shimmer">Save</ui-button>`;
+    host.innerHTML = `<ui-button variant="${variant}" ${attributes} style="${kinds.choice}focus-fill: shimmer">Save</ui-button>`;
     document.body.append(style, host);
 
     try {
@@ -2097,6 +2102,23 @@ describe('the contrast floors', () => {
                     for (const beside of outside(palette, scheme)) {
                         expect(
                             contrastRatio(label, layered(tinted, beside, scheme, palette)),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
+                it("keeps a pressed toggle's label legible where the shimmer's sheen passes under it", async () => {
+                    // Drawn as a primary in the selected names, so the sheen is the accent moved
+                    // toward the selected names' label, over their fill.
+                    const swept = await sheen(scheme, palette, 'secondary', 'toggle pressed');
+
+                    for (const beside of outside(palette, scheme)) {
+                        const under = laid('--ui-color-selected', beside, scheme, palette);
+
+                        expect(
+                            contrastRatio(
+                                paint('--ui-color-selected-contrast'),
+                                layered(swept, under, scheme, palette),
+                            ),
                         ).toBeGreaterThanOrEqual(4.5);
                     }
                 });
