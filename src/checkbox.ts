@@ -174,6 +174,11 @@ const toggle = css`
         color: ${reference('--ui-color-danger')};
     }
 
+    .help {
+        color: ${reference('--ui-color-text')};
+        font-size: ${reference('--ui-text-supporting')};
+    }
+
     .error {
         color: ${reference('--ui-color-danger')};
         font-size: ${reference('--ui-text-supporting')};
@@ -248,6 +253,7 @@ class UiToggle extends LitElement {
         // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
         disabled: { type: Boolean },
         required: { type: Boolean, reflect: true },
+        help: { type: String, reflect: true },
         error: { type: String, reflect: true },
     };
 
@@ -294,6 +300,12 @@ class UiToggle extends LitElement {
     /** Whether a form is invalid while this control is off. Reflected, likewise. */
     required = false;
 
+    /**
+     * An instruction, painted under the control and announced with it after an error, as a
+     * field's help is.
+     */
+    help = '';
+
     /** The error message, which paints the boundary and is announced with the control. */
     error = '';
 
@@ -321,10 +333,14 @@ class UiToggle extends LitElement {
      * file's, so the elements still to come replace the composer they already have with a
      * call to that one instead of each restating where the handed id goes.
      *
-     * There is no `help` here, which is why nothing ever had to compose.
+     * **The help comes between them**, as a field's does: the error first, the instruction
+     * written beside the control next, and the sentence a tooltip hands over last.
      */
     #described(): string | typeof nothing {
-        return this.#description.described(this.error === '' ? '' : 'error');
+        return this.#description.described(
+            this.error === '' ? '' : 'error',
+            this.help === '' ? '' : 'help',
+        );
     }
 
     /** The form value and the validity, which move together here or disagree anywhere. */
@@ -535,6 +551,11 @@ class UiToggle extends LitElement {
                 /></span>
                 <span part="text"><slot name="label">${this.label}</slot></span>
             </label>
+            ${
+                this.help === ''
+                    ? nothing
+                    : html`<span class="help" id="help" part="help">${this.help}</span>`
+            }
             ${
                 this.error === ''
                     ? nothing

@@ -13,6 +13,7 @@
 // type-only import whole, so a lone `import type` would drop the side effect that
 // registers the elements and the tags below would never upgrade.
 import '@rak200/ui';
+import '@rak200/ui/icons/search.js';
 import { html, type TemplateResult } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 
@@ -63,7 +64,7 @@ export default meta;
 /** The ordinary case, which is one tag and its attributes. */
 export const Text: StoryObj<InputArgs> = {};
 
-/** The same box around a control that grows, which is the one rule that differs. */
+/** The same box around a control that grows with its text, from the four rows it starts at. */
 export const Multiline: StoryObj<InputArgs> = {
     args: { label: 'Notes', help: '', placeholder: 'Anything worth remembering' },
     render: ({ label, placeholder, disabled }): TemplateResult => html`
@@ -74,6 +75,55 @@ export const Multiline: StoryObj<InputArgs> = {
             rows="4"
             ?disabled=${disabled}
         ></ui-textarea>
+    `,
+};
+
+/**
+ * Text before and after the value, inside the box, and a glyph in a slot of the same name.
+ *
+ * The text is heard with the control, after an error and before the help; the glyph is hidden
+ * from the tree. Either is laid over the control's padding, which widens to hold it.
+ */
+export const Affixes: StoryObj<InputArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+            <ui-input
+                label="Price"
+                name="price"
+                help="Billed monthly."
+                prefix-text="R$"
+                suffix-text="per month"
+            ></ui-input>
+            <ui-input label="Search" name="q" type="search">
+                <ui-icon slot="prefix" name="search"></ui-icon>
+            </ui-input>
+        </div>
+    `,
+};
+
+/**
+ * The buttons a field carries at its end, each named by its label, and the count under it.
+ *
+ * The clear button keeps its place while there is nothing to clear; the password's is pressed
+ * while its text is shown; the count is heard again once the reader stops typing.
+ */
+export const Tools: StoryObj<InputArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+            <ui-input label="Search" name="q" type="search" clear-label="Clear"></ui-input>
+            <ui-input
+                label="Password"
+                name="password"
+                type="password"
+                reveal-label="Show password"
+            ></ui-input>
+            <ui-input
+                label="Headline"
+                name="headline"
+                maxlength="60"
+                count-text="{remaining} characters left"
+            ></ui-input>
+        </div>
     `,
 };
 

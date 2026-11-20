@@ -408,9 +408,10 @@ first, being the cheapest, and the menu last, where the two dearest steps are.
    joined to the description as a field's is. #442
 3. **A placeholder on `<ui-select>`**, the platform's own: a first choice with no value, which a
    required select refuses. #443
-4. **A prefix and a suffix on `<ui-input>`.** The text comes as the `prefix` and `suffix`
-   attributes, rendered in the root and joining the description; a glyph comes as a slot of the same
-   name, hidden from the tree. #444
+4. **A prefix and a suffix on `<ui-input>`.** The text comes as the `prefix-text` and
+   `suffix-text` attributes, rendered in the root and joining the description, since `prefix` is
+   every element's namespace prefix, read-only; a glyph comes as a slot named `prefix` or `suffix`,
+   hidden from the tree. #444
 5. **A clear button, the password shown, and a count on `<ui-input>`**, each a part of the root,
    after the suffix. The clear button and the password's switch are named by attributes. The count
    is a sentence describing the control, written by an attribute with a place for the number, and

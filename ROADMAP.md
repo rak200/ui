@@ -3,32 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-textarea>` grows with its text (#441)
-
-The first of [RFC 0010](docs/proposals/0010-component-features.md)'s twenty-nine steps: the box
-grows by `field-sizing` up to a greatest height the host sets, and keeps its rows where the engine
-has none.
-
-## A `help` on `<ui-checkbox>` and `<ui-switch>` (#442)
-
-The instruction every other field takes, joined to the control's description.
-
-## A placeholder on `<ui-select>` (#443)
-
-The platform's placeholder label option, which a required select refuses.
-
-## A prefix and a suffix on `<ui-input>` (#444)
-
-The text as attributes, joined to the control's description, and a glyph as a slot hidden from the
-tree.
-
-## A clear button, the password shown, and a count on `<ui-input>` (#445)
-
-Three parts of the field's root, named by attributes, the count heard once the reader stops typing.
-
 ## A button of the host's at `<ui-input>`'s end (#446)
 
-Slotted after the control, named by itself, and reached by Tab after it.
+[RFC 0010](docs/proposals/0010-component-features.md)'s sixth step: slotted after the control,
+named by itself, and reached by Tab after it.
 
 ## Suggestions on `<ui-input>` (#447)
 

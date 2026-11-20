@@ -31,8 +31,8 @@ import '@rak200/ui';
 <ui-checkbox label="Send a receipt" name="receipt"></ui-checkbox>
 ```
 
-A checkbox. It renders the control, its label and — when there is one — its error message, and it
-is the thing the form talks to.
+A checkbox. It renders the control, its label and — where there are any — its help and its error
+message, and it is the thing the form talks to.
 
 The class is exported as `UiCheckbox` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
@@ -46,6 +46,7 @@ registers the element, so nothing has to be called.
 | `indeterminate` | boolean | `false` | the mixed state, `<ui-checkbox>` only               |
 | `disabled`      | boolean | `false` | refuses interaction, and submits nothing            |
 | `required`      | boolean | `false` | the form is invalid while the box is off            |
+| `help`          | string  | `''`    | an instruction under the control, announced with it |
 | `error`         | string  | `''`    | a message, which also makes the control invalid     |
 
 `form`, `validity` and `validationMessage` are read-only properties, and they answer for the
@@ -186,7 +187,8 @@ lives in the tip, and editing the tip changes what is announced. It works the sa
 
 **It does not compete with `error`.** Both are announced, in that order — the message first,
 because it is what sent the reader looking, then the instruction. Neither replaces the other, and
-clearing `error` leaves the tip's sentence where it was.
+clearing `error` leaves the tip's sentence where it was. A `help` is announced between the two, as a
+field's is: the error, the help written under the control, then the tip's sentence.
 
 The copy in here is not painted, because the tip is already showing it. Take the tip away and the
 description goes with it.
@@ -350,19 +352,21 @@ Every colour is a [token](tokens.md); nothing here is hardcoded, including the t
 | the tick and the dash       | `--ui-color-accent-contrast`                                                            |
 | the switch's thumb          | `--ui-color-border` when off, `--ui-color-accent-contrast` on                           |
 | label text                  | `--ui-color-text`, and `--ui-color-text-muted` when disabled                            |
+| help                        | `--ui-color-text`, at `--ui-text-supporting`                                            |
 | in error                    | `--ui-color-danger`, at `--ui-text-supporting`                                          |
 | focus ring                  | `--ui-color-focus`                                                                      |
 | glow                        | `--ui-elevation-control`, lit in the accent, or the danger in error; none when disabled |
 | corner                      | `--ui-radius` (the switch is always a pill)                                             |
 | motion                      | `--ui-duration-state`, `--ui-easing-state`                                              |
 
-**Four parts are exposed**, because the drawing is now in here:
+**Five parts are exposed**, because the drawing is now in here:
 
 | `::part()` | Is                                        |
 | ---------- | ----------------------------------------- |
 | `label`    | the `<label>`, which wraps the whole pair |
 | `box`      | the `<input>` itself                      |
 | `text`     | the span holding the label text           |
+| `help`     | the instruction, when there is one        |
 | `error`    | the message, when there is one            |
 
 **The tick is a shape and a token, not a picture**, and that is what keeps it overridable. An SVG

@@ -91,6 +91,10 @@ const typing =
 /** Why a cursor moves no floor. */
 const noCursor = 'iOS draws no cursor, and an iPad shows its own pointer instead';
 
+/** Why a textarea's growth moves no floor. */
+const grows =
+    "Firefox has none before 152, and there src/input.ts's textarea keeps the box at its rows and scrolls, as it always has: the least height it writes from the rows is the height the attribute draws";
+
 /** The key a container style query is dated by, which every motion effect is drawn under. */
 const styleQueries = 'css.at-rules.container.style_queries_for_custom_properties';
 
@@ -110,6 +114,8 @@ const heard = {
         'only Chromium knows it, and src/theme.ts lists it beside prefers-contrast: more, so an engine without it still answers the list through the other',
     'css.properties.appearance.base-select': drawnList,
     'css.properties.cursor.not-allowed': noCursor,
+    'css.properties.field-sizing': grows,
+    'css.properties.field-sizing.content': grows,
     'css.properties.mask.content-box':
         "Safari reads no content-box in the standard mask, and src/effects.ts cuts the edge's band with Safari's own prefixed mask first, which reads it, and the standard one after, which the other engines take and Safari drops",
     'css.properties.cursor.pointer': noCursor,

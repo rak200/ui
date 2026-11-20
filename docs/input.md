@@ -12,6 +12,8 @@ import '@rak200/ui';
 
 - [`<ui-input>`](#ui-input)
 - [`<ui-textarea>`](#ui-textarea)
+- [A prefix and a suffix](#a-prefix-and-a-suffix)
+- [A clear button, the password shown, and a count](#a-clear-button-the-password-shown-and-a-count)
 - [The element is the control](#the-element-is-the-control)
 - [In a form](#in-a-form)
 - [Validation](#validation)
@@ -51,6 +53,11 @@ the element, so nothing has to be called.
 | `min`          | string  | `''`     | the lowest accepted value                              |
 | `max`          | string  | `''`     | the highest accepted value                             |
 | `step`         | string  | `''`     | the granularity the value must fall on                 |
+| `prefix-text`  | string  | `''`     | text drawn before the value, inside the box            |
+| `suffix-text`  | string  | `''`     | text drawn after the value, inside the box             |
+| `clear-label`  | string  | `''`     | names a button that empties the control                |
+| `reveal-label` | string  | `''`     | names a button that shows a password's text            |
+| `count-text`   | string  | `''`     | a sentence counting what the control holds             |
 | `required`     | boolean | `false`  | the form is invalid while the control is empty         |
 | `disabled`     | boolean | `false`  | refuses interaction, and submits nothing               |
 | `readonly`     | boolean | `false`  | shows a value it will not let you change               |
@@ -73,11 +80,87 @@ The same box around a control that grows. It takes every attribute above except 
 `<textarea>` has no use for — `type`, `inputmode`, `pattern`, `min`, `max` and `step` — and adds
 `rows`.
 
-Two rules differ, and only two: a height to start at, and resizing left on the vertical axis. A
-control that cannot grow is one people fight, and one that grows sideways breaks the layout around
+**It grows with its text**, from the height its `rows` ask for to a greatest one you set on its
+control, past which it scrolls:
+
+```html
+<style>
+  .notes::part(control) {
+    max-block-size: 12lh;
+  }
+</style>
+<ui-textarea class="notes" label="Notes" name="notes" rows="4"></ui-textarea>
+```
+
+`lh` is the height of one of the control's own lines, so `12lh` caps it at twelve of them, its
+padding inside. It is never drawn shorter than a least height in the space token, rows or none, and
+it grows by `field-sizing`: an engine without it, Firefox before 152, keeps the box at its rows and
+scrolls, as it always has.
+
+**Resizing is left on the vertical axis.** A control that grows sideways breaks the layout around
 it.
 
 Exported as `UiTextarea`.
+
+## A prefix and a suffix
+
+```html
+<ui-input label="Price" name="price" prefix-text="R$" suffix-text="per month"></ui-input>
+```
+
+**Text comes as an attribute**, `prefix-text` or `suffix-text`, and is drawn inside the box before
+or after the value, at the start and the end of its own direction. It is heard with the control, as
+part of its description, after an error and before the help: `R$` is the unit the value is read in.
+Not `prefix`, which is a property every element already has, its namespace prefix, read-only, so a
+framework that sets properties would write to it and fail.
+
+**A glyph comes in a slot of the same name**, hidden from the tree, where a text would be heard:
+
+```html
+<ui-input label="Search" name="q">
+  <ui-icon slot="prefix" name="search"></ui-icon>
+</ui-input>
+```
+
+**Either side is laid over the control's padding**, which widens to hold it, so the box, its
+boundary and every effect on it stay the control's own, and a click on either side reaches the
+control. The text is drawn in `--ui-color-text-muted`, as a placeholder is, and takes the halo the
+control's text takes while a light passes under it.
+
+## A clear button, the password shown, and a count
+
+```html
+<ui-input label="Search" name="q" type="search" clear-label="Clear"></ui-input>
+<ui-input label="Password" name="password" type="password" reveal-label="Show password"></ui-input>
+<ui-input
+  label="Headline"
+  name="headline"
+  maxlength="60"
+  count-text="{remaining} characters left"
+></ui-input>
+```
+
+Each is drawn only where its attribute is written, and the attribute is the words a reader hears,
+so a page in another language writes its own.
+
+**`clear-label` names a button at the control's end that empties it.** It is there while the control
+holds a value the reader can change, and keeps its place while there is nothing to clear, so the
+value does not move as the first character arrives. Pressed, it empties the control, says so with
+`input` and `change` as the platform's own clear does, and hands the focus back to the control. On
+a `search`, the clear button Chromium and WebKit draw of their own gives way to it.
+
+**`reveal-label` names a button at the end of a password's control** that shows its text while it
+is pressed, which `aria-pressed` says, and hides it again. The element's own `type` stays
+`password`, so a form and a password manager read it as one. A control of another type draws none.
+
+**`count-text` is a sentence counting what the control holds**, drawn under the box and describing
+the control, after a prefix and a suffix and before the help: `{count}` is where the number of its
+characters goes, and `{remaining}` where the number its `maxlength` still allows. The count drawn
+changes at each key; what a screen reader hears is said a second after the reader stops typing, as
+GOV.UK's character count says its own, so a reader typing is not interrupted at each letter.
+
+The buttons are drawn as the toast's dismiss button is, in the muted text, with a hover, a ring and
+a 24px target, and the box's padding widens to hold them.
 
 ## The element is the control
 
@@ -328,6 +411,11 @@ Every colour is a [token](tokens.md); nothing here is hardcoded.
 | `control`  | the `<input>` or `<textarea>` itself   |
 | `help`     | the supporting text, when there is one |
 | `error`    | the message, when there is one         |
+| `prefix`   | what is drawn before the value         |
+| `suffix`   | what is drawn after the value          |
+| `clear`    | the button that empties the control    |
+| `reveal`   | the button that shows a password       |
+| `count`    | the count drawn under the box          |
 
 The hover rules are guarded against `:disabled` **and** `[readonly]`, measured rather than assumed:
 a disabled control still matches `:hover`, and a readonly one accepts a pointer it will do nothing

@@ -12,6 +12,7 @@ import meta, {
     Grouped,
     Invalid,
     Multiple,
+    Placeholder,
     RightToLeft,
     Select,
 } from '../stories/select.stories.js';
@@ -542,6 +543,86 @@ describe('the choices', () => {
         await settled(select(form));
 
         expect(box(select(form)).options.length).toBe(1);
+    });
+});
+
+describe('the placeholder', () => {
+    const placeheld = `
+        <ui-select label="Currency" name="currency" placeholder="Choose a currency">
+            <ui-option value="brl">Real</ui-option>
+            <ui-option value="usd">Dollar</ui-option>
+        </ui-select>
+    `;
+
+    it('is the first choice, with no value, disabled, and in force while none is made', async () => {
+        const form = await mount(placeheld);
+        const control = box(select(form));
+
+        expect([...control.options].map((option) => option.value)).toEqual(['', 'brl', 'usd']);
+        expect(control.options[0]?.text).toBe('Choose a currency');
+        expect(control.options[0]?.disabled, 'never a choice the reader makes').toBe(true);
+        expect(control.value, 'in force while nothing is chosen').toBe('');
+        expect([...new FormData(form)], 'and submitted empty').toEqual([['currency', '']]);
+
+        select(form).placeholder = 'Pick one';
+        await select(form).updateComplete;
+
+        expect(select(form).getAttribute('placeholder'), 'reflected').toBe('Pick one');
+    });
+
+    it('is refused by a required select, and gives way to a choice', async () => {
+        const form = await mount(placeheld.replace('placeholder=', 'required placeholder='));
+
+        expect(select(form).validity.valueMissing).toBe(true);
+        expect(form.checkValidity()).toBe(false);
+
+        select(form).value = 'usd';
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value).toBe('usd');
+        expect(select(form).validity.valid).toBe(true);
+    });
+
+    it('comes back with a reset, rather than the first real choice', async () => {
+        const form = await mount(placeheld);
+
+        select(form).value = 'usd';
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value).toBe('usd');
+
+        form.reset();
+        await select(form).updateComplete;
+
+        expect(box(select(form)).value).toBe('');
+    });
+
+    it('gives way to a choice declared selected', async () => {
+        const form = await mount(`
+            <ui-select label="C" name="c" placeholder="Choose">
+                <ui-option value="brl">Real</ui-option>
+                <ui-option value="usd" selected>Dollar</ui-option>
+            </ui-select>
+        `);
+
+        expect(box(select(form)).value).toBe('usd');
+    });
+
+    it('is drawn in no list, and nowhere none was written', async () => {
+        const list = await mount(placeheld.replace('placeholder=', 'multiple placeholder='));
+
+        expect([...box(select(list)).options].map((option) => option.value)).toEqual([
+            'brl',
+            'usd',
+        ]);
+
+        const bare = await mount(fixture);
+
+        expect([...box(select(bare)).options].map((option) => option.value)).toEqual([
+            'brl',
+            'usd',
+        ]);
+        expect(box(select(bare)).value, 'the first choice, as before').toBe('brl');
     });
 });
 
@@ -1961,6 +2042,10 @@ describe('accessibility', () => {
 
     it('has no violations with its choices under headings', async () => {
         await expectAccessible(await mountStory(Grouped, meta, 'Grouped'));
+    });
+
+    it('has no violations with a placeholder in force', async () => {
+        await expectAccessible(await mountStory(Placeholder, meta, 'Placeholder'));
     });
 
     it('has no violations in error', async () => {
