@@ -3,6 +3,131 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
+## `<ui-textarea>` grows with its text (#441)
+
+The first of [RFC 0010](docs/proposals/0010-component-features.md)'s twenty-nine steps: the box
+grows by `field-sizing` up to a greatest height the host sets, and keeps its rows where the engine
+has none.
+
+## A `help` on `<ui-checkbox>` and `<ui-switch>` (#442)
+
+The instruction every other field takes, joined to the control's description.
+
+## A placeholder on `<ui-select>` (#443)
+
+The platform's placeholder label option, which a required select refuses.
+
+## A prefix and a suffix on `<ui-input>` (#444)
+
+The text as attributes, joined to the control's description, and a glyph as a slot hidden from the
+tree.
+
+## A clear button, the password shown, and a count on `<ui-input>` (#445)
+
+Three parts of the field's root, named by attributes, the count heard once the reader stops typing.
+
+## A button of the host's at `<ui-input>`'s end (#446)
+
+Slotted after the control, named by itself, and reached by Tab after it.
+
+## Suggestions on `<ui-input>` (#447)
+
+The platform's `<datalist>`, drawn in the root from choices the host writes.
+
+## A `danger` `<ui-button>` (#448)
+
+Four names of its own, computed from the danger as the primary's are from the accent.
+
+## A toggle `<ui-button>` (#449)
+
+`pressed`, written as `aria-pressed` and drawn in the selected names.
+
+## An `aria-disabled` `<ui-button>` (#450)
+
+Drawn and refused as a disabled button, and still reached by the keys, so a tooltip on it is shown
+by them.
+
+## `<ui-button-group>` (#451)
+
+The buttons joined, their shared corners squared through `::part(button)`, and with `toolbar` the
+APG toolbar's keyboard, for which `<ui-button>` delegates its focus.
+
+## A busy `<ui-button>` (#439)
+
+Blocked until RFC 0009's progress and the `aria-disabled` button land, and moved to the end of the
+list if they have not by its turn.
+
+## `<ui-icon>` turned right to left (#452)
+
+For a glyph the host marks as pointing one way, by `:host(:dir(rtl))`.
+
+## A side of its own for `<ui-tooltip>`'s tip (#453)
+
+Below or beside its trigger, and in a passage of another direction by anchored insets read in the
+tip's own.
+
+## An arrow on `<ui-tooltip>`'s tip (#454)
+
+Pointing at its trigger's middle, drawn as the tip's `::before` and moved by `translate`.
+
+## `<ui-dialog>` opened from markup (#455)
+
+`--show` and `--close`, from any button aimed at it with `commandfor`.
+
+## `<ui-dialog>` closed by its form (#456)
+
+A `<form method="dialog">` in it closes it, with the value of the button that sent it.
+
+## An alert `<ui-dialog>` (#457)
+
+`role="alertdialog"`, for a choice the reader has to make.
+
+## A heading on `<ui-toast>` (#458)
+
+A slot above the message, read with it.
+
+## An action on `<ui-toast>` (#459)
+
+A slot for a button the host writes, on a toast that then never expires.
+
+## A card that opens where it is clicked (#460)
+
+By the stretched link the card draws, lifting what it holds above it.
+
+## Numeric columns on `<ui-table>` (#461)
+
+End-aligned in tabular figures, for the cells the host marks.
+
+## A sticky header and a sticky first column on `<ui-table>` (#462)
+
+The column within the box that scrolls already, and the header within a box given a height.
+
+## `<ui-radio>` choices drawn as cards (#463)
+
+The button group's joined drawing, larger, with a description for each choice.
+
+## `<ui-menu>` hung from the trigger's other edge (#464)
+
+The trailing edge, where the host asks.
+
+## Items that tick, and sections, in `<ui-menu>` (#465)
+
+`menuitemcheckbox` and `menuitemradio` on the host's items, and groups named by a heading.
+
+## A shortcut and a description on `<ui-menu>`'s items (#466)
+
+Drawn by rules the menu adopts into the host's tree.
+
+## Submenus in `<ui-menu>` (#467)
+
+The platform's layer, the menu's keys, and the pointer's way in across the area Radix's waits
+across.
+
+## `<ui-menu>` opened at the pointer (#468)
+
+A context menu, opened by the pointer and by the menu key and Shift+F10 read as keys. The last
+step, which marks RFC 0010 `Implemented`.
+
 ## Design tokens beyond the web (#24)
 
 Tokens exist as CSS custom properties today. RFC 0016 keeps a native shell (M4) reachable by
