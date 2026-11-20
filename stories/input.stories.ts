@@ -128,6 +128,41 @@ export const Tools: StoryObj<InputArgs> = {
 };
 
 /**
+ * A button of the page's at the box's end, after the element's own: a search's submit button, and
+ * a copy button beside a value the reader cannot change.
+ *
+ * Each is written compact, so it is drawn inside the box with room round it; one at the page's
+ * density is as tall as the box. The element draws neither: each is named by its own text.
+ */
+export const Action: StoryObj<InputArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+            <form
+                role="search"
+                @submit=${(event: SubmitEvent) => {
+                    event.preventDefault();
+                }}
+            >
+                <ui-input label="Search the docs" name="q" type="search" clear-label="Clear">
+                    <ui-button
+                        slot="action"
+                        type="submit"
+                        variant="secondary"
+                        data-ui-density="compact"
+                        >Search</ui-button
+                    >
+                </ui-input>
+            </form>
+            <ui-input label="Token" name="token" value="3f9a-77c2" readonly>
+                <ui-button slot="action" variant="secondary" data-ui-density="compact"
+                    >Copy</ui-button
+                >
+            </ui-input>
+        </div>
+    `,
+};
+
+/**
  * In error, and one property says it once.
  *
  * The red boundary, the message under the control and the `aria-describedby` that ties

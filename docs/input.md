@@ -14,6 +14,7 @@ import '@rak200/ui';
 - [`<ui-textarea>`](#ui-textarea)
 - [A prefix and a suffix](#a-prefix-and-a-suffix)
 - [A clear button, the password shown, and a count](#a-clear-button-the-password-shown-and-a-count)
+- [A button of the page's at the end](#a-button-of-the-pages-at-the-end)
 - [The element is the control](#the-element-is-the-control)
 - [In a form](#in-a-form)
 - [Validation](#validation)
@@ -161,6 +162,39 @@ GOV.UK's character count says its own, so a reader typing is not interrupted at 
 
 The buttons are drawn as the toast's dismiss button is, in the muted text, with a hover, a ring and
 a 24px target, and the box's padding widens to hold them.
+
+## A button of the page's at the end
+
+```html
+<form role="search">
+  <ui-input label="Search the docs" name="q" type="search" clear-label="Clear">
+    <ui-button slot="action" type="submit" variant="secondary" data-ui-density="compact"
+      >Search</ui-button
+    >
+  </ui-input>
+</form>
+```
+
+**A button of the page's goes in the `action` slot**, drawn at the box's end after the clear button
+and the password's, and reached by Tab after the control and them. It is the page's own element,
+named by its own text or label, which the element neither writes nor reads, and it does whatever
+the page has it do. As the form's first submit button, it is the one <kbd>Enter</kbd> in the
+control presses.
+
+**The box gives it a place, the pointer and a colour**: it is laid over the control's padding,
+which widens to hold it, so the value never runs under it; it takes the pointer, which the rest of
+the side passes through to the control; and anything in it that inherits a colour takes the text's,
+`--ui-color-text`, rather than the accent the box is drawn in for a theme's glow, which turns to the
+danger on an invalid control.
+
+**A disabled control leaves it as the page left it.** The element dims what it draws, and a button
+it dimmed while it could still be pressed would say the wrong thing, so disabling it with the field
+is the page's to write. A `<fieldset disabled>` round both disables both, as it does every control
+in it.
+
+**Written compact, a `<ui-button>` is drawn inside the box with room round it**:
+`data-ui-density="compact"` on the button takes its space and its text a step down. At the page's
+density it is as tall as the box, and fills it.
 
 ## The element is the control
 
@@ -401,8 +435,9 @@ Every colour is a [token](tokens.md); nothing here is hardcoded.
 | corner             | `--ui-radius`                                                                                               |
 | padding and rhythm | `--ui-space`                                                                                                |
 | motion             | `--ui-duration-state`, `--ui-easing-state`                                                                  |
+| the `action` slot  | `--ui-color-text`, to anything in it that inherits a colour                                                 |
 
-**Four parts are exposed**, because the drawing is now in here:
+**These parts are exposed**, because the drawing is now in here:
 
 | `::part()` | Is                                     |
 | ---------- | -------------------------------------- |
