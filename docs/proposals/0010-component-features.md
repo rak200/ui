@@ -233,6 +233,58 @@ corner.
 | `ui-menu`     | items forwarded        | a slot's flattened assignment, styled where `::slotted()` cannot reach       | medium |
 | `ui-card`     | a picture              | a region at the top, edge to edge                                            | low    |
 
+### A second look
+
+The set was left open, so the components were looked over again for what a page asks of them that
+the package does not give. Three of the answers rest on what the platform does across a root, and
+those three are measured below:
+
+| Component     | Feature                   | What it rests on                                                                    | Cost   |
+| ------------- | ------------------------- | ----------------------------------------------------------------------------------- | ------ |
+| `ui-button`   | a toggle                  | `aria-pressed` on the platform's button, drawn in the selected names                | low    |
+| `ui-dialog`   | closed by its form        | the slotted form's `submit`, which reaches it, measured below                       | low    |
+| `ui-dialog`   | an alert dialog           | `role="alertdialog"` on the platform's dialog, for a choice to be made              | low    |
+| `ui-icon`     | turned right to left      | `:host(:dir(rtl))`, measured below, on a glyph the host marks                       | low    |
+| `ui-checkbox` | a `help`, as a field has  | the description `src/description.ts` composes, which a field's help joins           | low    |
+| `ui-toast`    | a heading                 | a slot above the message, read with it in the toaster's region                      | low    |
+| `ui-table`    | numeric columns           | end-aligned tabular figures for cells the host marks, in the rules it adopts        | low    |
+| `ui-menu`     | hung from the other edge  | the edge the panel already turns to where the first would run off                   | low    |
+| `ui-tooltip`  | a side of its own         | `position-area` and its fallbacks for each side, and an island's edges              | medium |
+| `ui-input`    | suggestions               | a `<datalist>` in the root, from choices the host writes, measured below            | medium |
+| `ui-input`    | a button at its end       | the host's button after the control, named by itself, in the tab order              | medium |
+| `ui-menu`     | a shortcut, a description | rules adopted into the host's tree, as the table's: `::slotted()` stops at the item | medium |
+| `ui-radio`    | choices drawn as cards    | the segmented row's drawing, larger, with a description each                        | medium |
+| `ui-menu`     | opened at the pointer     | `contextmenu`, the menu key, and a panel placed at a point, not an anchor           | high   |
+| `ui-toaster`  | a corner of its own       | the host's element, which `inset` places, as `docs/toast.md` says                   | —      |
+| `ui-tooltip`  | links and buttons in it   | a tip describes and is never reached; what is reached is RFC 0009's popover         | —      |
+
+### Measured: a dialog form's `submit` reaches the element
+
+`docs/dialog.md` lists a `<form method="dialog">` among its limits. The platform closes the form's
+nearest ancestor `<dialog>`, and a form slotted into the element has none, since the `<dialog>` is
+in the element's root. In Chromium 153, Firefox 155 and WebKit 26.5, such a form was slotted into a
+bare element whose root held a modal `<dialog>`, and sent by one of its buttons. The engines
+measured alike. The `submit` reached the element, with the button as its `submitter`, and the dialog
+stayed open, with nothing sent anywhere. Closed from that `submit` with the button's `value`, the
+dialog took the value as its `returnValue`.
+
+So the element can close itself for its form, with the value of the button that sent it, which is
+what the platform does for a form in a `<dialog>` it holds.
+
+### Measured: `:dir()` reaches into a root
+
+An arrow that points onward points the other way where the text runs right to left. A bare element
+was turned by `:host(:dir(rtl))` in its own sheet, and in the three engines the rule matched it
+under a `dir="rtl"` ancestor, and drawn in the root of an element under one, and matched nothing in
+a page left to right. A glyph cannot say which way it points, so the host marks the ones that turn.
+
+### Measured: a datalist is found in its input's tree
+
+A field's suggestions are the platform's `<datalist>`, which an `<input>` names by its `list`. In
+the three engines, an input in a root found a datalist written beside it there, with both its
+options, and found none written in the host's tree, which is the tree-scope rule again. So a field's
+suggestions are drawn in its root, from choices the host writes, as a select's are.
+
 ## Proposed design
 
 ### What enters, in this order
@@ -281,8 +333,8 @@ corner.
     its dismissal are left to the platform, as measured. The menu writes <kbd>→</kbd>, <kbd>←</kbd>
     and the focus between the two panels.
 
-**The rest of the catalogue is left out for now**, each for the reason its row gives. The proposal
-stays in study, so another feature can still join it.
+**The rest of the catalogue is left out for now**, each for the reason its row gives, and the second
+look is yet to be chosen from. The proposal stays in study, so another feature can still join it.
 
 ### What each feature brings with it
 
