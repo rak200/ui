@@ -5,7 +5,14 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { Checkbox, Invalid, Markup, States, Switch } from '../stories/checkbox.stories.js';
+import meta, {
+    Checkbox,
+    Help,
+    Invalid,
+    Markup,
+    States,
+    Switch,
+} from '../stories/checkbox.stories.js';
 import '../src/checkbox.js';
 import '../src/tooltip.js';
 import type { UiCheckbox, UiSwitch } from '../src/checkbox.js';
@@ -1694,6 +1701,74 @@ describe("the pointer, the focus and a form's moments, under the default theme's
     );
 });
 
+/** The instruction every field takes, which these two take as well. */
+describe('the help', () => {
+    it.each(['ui-checkbox', 'ui-switch'])(
+        'paints a help under a %s, describes the control by it, and takes it away',
+        async (tag) => {
+            const form = await mount(`<${tag} label="Send a receipt" name="receipt"></${tag}>`);
+            const element = toggle(form);
+
+            expect(element.shadowRoot?.querySelector('[part="help"]'), 'none unasked').toBeNull();
+            expect(box(element).hasAttribute('aria-describedby')).toBe(false);
+
+            element.help = 'One goes to the address on the order.';
+            await element.updateComplete;
+
+            const help = part(element, 'help');
+
+            expect(help.textContent).toBe('One goes to the address on the order.');
+            expect(element.getAttribute('help'), 'reflected').toBe(
+                'One goes to the address on the order.',
+            );
+            expect(box(element).getAttribute('aria-describedby')).toBe(help.id);
+
+            element.help = '';
+            await element.updateComplete;
+
+            expect(element.shadowRoot?.querySelector('[part="help"]'), 'gone').toBeNull();
+            expect(box(element).hasAttribute('aria-describedby')).toBe(false);
+        },
+    );
+
+    it("comes after the error and before a tooltip's sentence, as a field's does", async () => {
+        const form = await mount(fixture);
+        const element = toggle(form);
+
+        element.error = 'The terms have to be accepted.';
+        element.help = 'They are linked below.';
+        element.dispatchEvent(
+            new CustomEvent('ui-describe', { detail: 'Read them first.', cancelable: true }),
+        );
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby')).toBe('error help description');
+    });
+
+    it('is drawn in the text at the supporting size, between the label and the error', async () => {
+        const form = await mount(
+            '<ui-checkbox label="Terms" help="They are linked below." error="Accept them."></ui-checkbox>',
+        );
+        const element = toggle(form);
+
+        element.style.setProperty('--ui-color-text', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-text-supporting', '19px');
+
+        const help = part(element, 'help');
+        const styles = getComputedStyle(help);
+
+        expect(styles.color).toBe('rgb(1, 2, 3)');
+        expect(styles.fontSize).toBe('19px');
+
+        const label = part(element, 'label').getBoundingClientRect();
+        const drawn = help.getBoundingClientRect();
+        const error = part(element, 'error').getBoundingClientRect();
+
+        expect(drawn.top, 'under the label').toBeGreaterThanOrEqual(label.bottom);
+        expect(error.top, 'over the error').toBeGreaterThanOrEqual(drawn.bottom);
+    });
+});
+
 describe('the description a tooltip hands over', () => {
     /** Dispatches the handoff the way `<ui-tooltip>` does, and reports whether it was taken. */
     function hand(element: Toggle, detail: unknown): boolean {
@@ -1819,6 +1894,10 @@ describe('accessibility', () => {
 
     it('has no violations in error', async () => {
         await expectAccessible(await mountStory(Invalid, meta, 'Invalid'));
+    });
+
+    it('has no violations with a help, on either control', async () => {
+        await expectAccessible(await mountStory(Help, meta, 'Help'));
     });
 
     it('has no violations named by markup the slot carries', async () => {

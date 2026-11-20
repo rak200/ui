@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A `help` on `<ui-checkbox>` and `<ui-switch>` (#442)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s second step: the instruction every other
-field takes, joined to the control's description.
-
 ## A placeholder on `<ui-select>` (#443)
 
-The platform's placeholder label option, which a required select refuses.
+[RFC 0010](docs/proposals/0010-component-features.md)'s third step: the platform's placeholder label
+option, which a required select refuses.
 
 ## A prefix and a suffix on `<ui-input>` (#444)
 

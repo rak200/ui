@@ -95,6 +95,26 @@ export const States: StoryObj<ToggleArgs> = {
 };
 
 /**
+ * An instruction under each control, announced with it after an error, as a field's help is.
+ */
+export const Help: StoryObj<ToggleArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: start">
+            <ui-checkbox
+                label="Send a receipt"
+                name="receipt"
+                help="One goes to the address on the order."
+            ></ui-checkbox>
+            <ui-switch
+                label="Email notifications"
+                name="notify"
+                help="Once a day, at most."
+            ></ui-switch>
+        </div>
+    `,
+};
+
+/**
  * In error, and one property says it once.
  *
  * The red boundary, the message under the control and the `aria-describedby` that ties
