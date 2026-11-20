@@ -125,6 +125,23 @@ async function settle(): Promise<void> {
     });
 }
 
+/**
+ * Waits for whatever the opening set moving to finish: the items, which are the host's own, and
+ * the trigger and its caret, in the menu's root, which the host's animations do not take in.
+ *
+ * A story's sheet carries the default taste, under which the items cascade in, each a little after
+ * the one before. axe read part-way through finds an item's text too faint, a different item each
+ * time: a fifth of the way into its fade, an item reads 1.88:1.
+ */
+async function still(element: UiMenu): Promise<void> {
+    const moving = [
+        ...element.getAnimations({ subtree: true }),
+        ...(element.shadowRoot?.getAnimations() ?? []),
+    ];
+
+    await Promise.allSettled(moving.map((animation) => animation.finished));
+}
+
 function wait(ms: number): Promise<void> {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
@@ -2516,6 +2533,7 @@ describe('menu stories', () => {
         const element = menu(container);
 
         await open(element);
+        await still(element);
 
         expect(element.open).toBe(true);
         await expectAccessible(container);
