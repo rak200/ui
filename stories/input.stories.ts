@@ -63,7 +63,7 @@ export default meta;
 /** The ordinary case, which is one tag and its attributes. */
 export const Text: StoryObj<InputArgs> = {};
 
-/** The same box around a control that grows, which is the one rule that differs. */
+/** The same box around a control that grows with its text, from the four rows it starts at. */
 export const Multiline: StoryObj<InputArgs> = {
     args: { label: 'Notes', help: '', placeholder: 'Anything worth remembering' },
     render: ({ label, placeholder, disabled }): TemplateResult => html`

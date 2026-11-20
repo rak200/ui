@@ -533,13 +533,21 @@ export class UiInput extends UiTextField {
     }
 }
 
+/** The least height a textarea is drawn at, whatever its rows and its text. */
+const least = css`calc(${reference('--ui-space')} * 10)`;
+
 /**
  * A multi-line text control, drawn from the token layer rather than replaced.
  *
- * Everything {@link UiInput} says applies. What differs is two rules — a height to start
- * at, and resizing left on the vertical axis, because a control that cannot grow is one
- * people fight and one that grows sideways breaks the layout around it — and that a
- * `<textarea>` has no `type` and no `pattern` to validate against.
+ * Everything {@link UiInput} says applies. What differs is that it grows with its text, from
+ * the least height its rows ask for to a greatest one the host sets on its control, past which it
+ * scrolls; that resizing is left on the vertical axis, because a control that grows sideways
+ * breaks the layout around it; and that a `<textarea>` has no `type` and no `pattern` to validate
+ * against.
+ *
+ * **It grows by `field-sizing: content`**, which draws the box at its text's height and reads
+ * `rows` for nothing, so the rows are written as its least height instead. An engine without it,
+ * Firefox before 152, keeps the box at its rows and scrolls, as it always has.
  *
  * @example
  * ```html
@@ -552,8 +560,11 @@ export class UiTextarea extends UiTextField {
         field,
         css`
             textarea {
-                min-block-size: calc(${reference('--ui-space')} * 10);
+                min-block-size: ${least};
                 resize: vertical;
+                /* The box at its text's height, from its least height to a greatest one the host
+                   sets on ::part(control), past which it scrolls. */
+                field-sizing: content;
             }
         `,
         fieldEffects('textarea', typed),
@@ -565,8 +576,31 @@ export class UiTextarea extends UiTextField {
         rows: { type: String, reflect: true },
     };
 
-    /** How many lines the control starts at. Empty leaves the platform's own default. */
+    /**
+     * How many lines the control starts at, which it grows past as its text does. Empty leaves
+     * the platform's own default.
+     */
     rows = '';
+
+    /**
+     * The least height the rows ask for, written on the control, or nothing where there are no
+     * rows to read.
+     *
+     * Under `field-sizing: content` the platform reads `rows` for nothing: measured in Chromium
+     * 153, Firefox 155 and WebKit 26.5, an empty box of four rows was drawn one line tall. So the
+     * rows are written as a least height, in lines of the control's own, `lh`, with its padding
+     * and its border, never below the sheet's. An engine without `field-sizing` reads the
+     * attribute as it always has, and draws the same height.
+     */
+    #least(): string | typeof nothing {
+        const rows = Number.parseInt(this.rows, 10);
+        const space = String(reference('--ui-space'));
+
+        // The border is the 1px each side the shared sheet draws.
+        return Number.isNaN(rows)
+            ? nothing
+            : `min-block-size: max(${String(least)}, calc(${String(rows)}lh + ${space} * 2 + 2px))`;
+    }
 
     /** A native `<textarea>`, in the frame every text control shares. */
     override render(): TemplateResult {
@@ -581,6 +615,7 @@ export class UiTextarea extends UiTextField {
                 minlength=${attribute(this.minlength)}
                 maxlength=${attribute(this.maxlength)}
                 rows=${attribute(this.rows)}
+                style=${this.#least()}
                 ?required=${this.required}
                 ?disabled=${this.matches(':disabled')}
                 ?readonly=${this.readonly}

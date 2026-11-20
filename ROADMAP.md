@@ -3,15 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-textarea>` grows with its text (#441)
-
-The first of [RFC 0010](docs/proposals/0010-component-features.md)'s twenty-nine steps: the box
-grows by `field-sizing` up to a greatest height the host sets, and keeps its rows where the engine
-has none.
-
 ## A `help` on `<ui-checkbox>` and `<ui-switch>` (#442)
 
-The instruction every other field takes, joined to the control's description.
+[RFC 0010](docs/proposals/0010-component-features.md)'s second step: the instruction every other
+field takes, joined to the control's description.
 
 ## A placeholder on `<ui-select>` (#443)
 

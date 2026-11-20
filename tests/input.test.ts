@@ -820,17 +820,96 @@ describe('ui-textarea', () => {
         }
     });
 
-    it('adds the two rules that differ, and only those two', async () => {
+    it('adds the rules that differ: it grows, by its height alone, from a least height', async () => {
         const form = await mount(fixture);
         const styles = getComputedStyle(box(field(form)));
 
-        // A control that cannot grow is one people fight, and one that grows sideways
-        // breaks the layout around it.
+        expect(styles.getPropertyValue('field-sizing')).toBe('content');
+        // One that grows sideways breaks the layout around it.
         expect(styles.resize).toBe('vertical');
 
         field(form).style.setProperty('--ui-space', '10px');
 
         expect(getComputedStyle(box(field(form))).minBlockSize).toBe('100px');
+    });
+
+    /** Text of so many lines, each a word or two. */
+    function lines(count: number): string {
+        return Array.from({ length: count }, (_, line) => `line ${String(line + 1)}`).join('\n');
+    }
+
+    it('grows with its text past its least height, with nothing to scroll', async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+        const control = box(element);
+
+        element.style.setProperty('--ui-space', '10px');
+
+        expect(control.getBoundingClientRect().height, 'empty, at its least height').toBe(100);
+
+        element.value = lines(12);
+        await element.updateComplete;
+
+        expect(control.getBoundingClientRect().height).toBeGreaterThan(100);
+        expect(control.scrollHeight, 'all of the text in sight').toBe(control.clientHeight);
+    });
+
+    it('starts at the rows it was given, and grows past them as its text does', async () => {
+        const form = await mount(
+            '<ui-textarea label="Notes" name="notes" rows="12"></ui-textarea>',
+        );
+        const element = field(form);
+        const control = box(element);
+
+        element.style.setProperty('--ui-space', '10px');
+
+        const empty = control.getBoundingClientRect().height;
+
+        expect(empty, 'twelve rows ask for more than the least height').toBeGreaterThan(100);
+
+        element.value = lines(12);
+        await element.updateComplete;
+
+        expect(control.getBoundingClientRect().height, 'twelve lines fill them').toBeCloseTo(
+            empty,
+            0,
+        );
+
+        element.value = lines(13);
+        await element.updateComplete;
+
+        expect(control.getBoundingClientRect().height, 'and a thirteenth grows it').toBeGreaterThan(
+            empty + 1,
+        );
+    });
+
+    it('writes no least height of its own without rows, nor for rows the platform reads none of', async () => {
+        const bare = await mount(fixture);
+
+        expect(box(field(bare)).hasAttribute('style')).toBe(false);
+
+        const unread = await mount(
+            '<ui-textarea label="Notes" name="notes" rows="many"></ui-textarea>',
+        );
+
+        expect(box(field(unread)).hasAttribute('style')).toBe(false);
+    });
+
+    it('stops at a greatest height the host sets on its control, and scrolls past it', async () => {
+        const form = await mount(`
+            <style>.capped::part(control) { max-block-size: 150px; }</style>
+            <ui-textarea class="capped" label="Notes" name="notes"></ui-textarea>
+        `);
+        const element = field(form);
+        const control = box(element);
+
+        element.value = lines(30);
+        await element.updateComplete;
+
+        expect(control.getBoundingClientRect().height).toBe(150);
+        expect(control.scrollHeight, 'the rest is scrolled to').toBeGreaterThan(
+            control.clientHeight,
+        );
     });
 
     it('takes the rows it was given, and writes none when it was given none', async () => {

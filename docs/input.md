@@ -73,8 +73,24 @@ The same box around a control that grows. It takes every attribute above except 
 `<textarea>` has no use for — `type`, `inputmode`, `pattern`, `min`, `max` and `step` — and adds
 `rows`.
 
-Two rules differ, and only two: a height to start at, and resizing left on the vertical axis. A
-control that cannot grow is one people fight, and one that grows sideways breaks the layout around
+**It grows with its text**, from the height its `rows` ask for to a greatest one you set on its
+control, past which it scrolls:
+
+```html
+<style>
+  .notes::part(control) {
+    max-block-size: 12lh;
+  }
+</style>
+<ui-textarea class="notes" label="Notes" name="notes" rows="4"></ui-textarea>
+```
+
+`lh` is the height of one of the control's own lines, so `12lh` caps it at twelve of them, its
+padding inside. It is never drawn shorter than a least height in the space token, rows or none, and
+it grows by `field-sizing`: an engine without it, Firefox before 152, keeps the box at its rows and
+scrolls, as it always has.
+
+**Resizing is left on the vertical axis.** A control that grows sideways breaks the layout around
 it.
 
 Exported as `UiTextarea`.
