@@ -569,6 +569,7 @@ export class UiSelect extends LitElement {
         label: { type: String, reflect: true },
         help: { type: String, reflect: true },
         error: { type: String, reflect: true },
+        placeholder: { type: String, reflect: true },
         name: { type: String, reflect: true },
         // Stryker disable next-line ObjectLiteral: `{}` is what Lit's default converter
         // already does for a string — `type` only switches the converter for Boolean,
@@ -594,6 +595,14 @@ export class UiSelect extends LitElement {
 
     /** The message, which paints the boundary and is announced with the control. */
     error = '';
+
+    /**
+     * The words shown while no choice is made, as the platform's own placeholder: a first choice
+     * with no value, which a required select refuses. Disabled, so it is the state before a
+     * choice and never one the reader makes; a choice declared `selected` wins over it. Empty
+     * draws none, and a list draws none, having nothing to show before a choice.
+     */
+    placeholder = '';
 
     /**
      * The name the value is submitted under.
@@ -675,7 +684,8 @@ export class UiSelect extends LitElement {
      *
      * The fallback is the platform's own rule, read off the declarations — the first
      * choice marked `selected`, and failing that the first choice at all, which is what a
-     * native `<select>` does with no `selected` option in it.
+     * native `<select>` does with no `selected` option in it. With a placeholder, the
+     * placeholder is that first choice.
      */
     #chosen(): string {
         const options = this.#options();
@@ -684,7 +694,32 @@ export class UiSelect extends LitElement {
             return this.value;
         }
 
-        return (options.find((option) => option.selected) ?? options[0])?.value ?? '';
+        return (
+            (
+                options.find((option) => option.selected) ??
+                (this.#placeholding() ? undefined : options[0])
+            )?.value ?? ''
+        );
+    }
+
+    /** Whether a placeholder is drawn: one was written, and the control is a drop-down. */
+    #placeholding(): boolean {
+        return this.placeholder !== '' && !this.multiple;
+    }
+
+    /**
+     * The placeholder, as the first choice, with no value.
+     *
+     * **Selected by name where it is the choice in force**, since it is disabled and the
+     * platform, with nothing selected, selects the first choice that is not: a placeholder left
+     * to it would give way to the first real choice.
+     */
+    #placeholder(chosen: string): TemplateResult | typeof nothing {
+        return this.#placeholding()
+            ? html`<option value="" disabled ?selected=${chosen === ''}>
+                  ${this.placeholder}
+              </option>`
+            : nothing;
     }
 
     /** The validity, taken from the control that computed it. */
@@ -842,6 +877,7 @@ export class UiSelect extends LitElement {
                         @focus=${arrive}
                         @change=${this.#changed}
                     >
+                        ${this.#placeholder(chosen)}
                         ${[...this.children].map((node) => this.#draw(node, chosen))}
                     </select></span
                 >

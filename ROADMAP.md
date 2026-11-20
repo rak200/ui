@@ -3,15 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A placeholder on `<ui-select>` (#443)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s third step: the platform's placeholder label
-option, which a required select refuses.
-
 ## A prefix and a suffix on `<ui-input>` (#444)
 
-The text as attributes, joined to the control's description, and a glyph as a slot hidden from the
-tree.
+[RFC 0010](docs/proposals/0010-component-features.md)'s fourth step: the text as attributes,
+joined to the control's description, and a glyph as a slot hidden from the tree.
 
 ## A clear button, the password shown, and a count on `<ui-input>` (#445)
 

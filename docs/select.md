@@ -34,18 +34,32 @@ import '@rak200/ui';
 The class is exported as `UiSelect` for a host that needs the type; importing the package registers
 the element, so nothing has to be called.
 
-| Attribute  | Type    | Default | Means                                                   |
-| ---------- | ------- | ------- | ------------------------------------------------------- |
-| `label`    | string  | `''`    | the accessible name, and the text above the control     |
-| `help`     | string  | `''`    | supporting text under it, which an error does not hide  |
-| `error`    | string  | `''`    | a message, which also makes the control invalid         |
-| `name`     | string  | `''`    | what the choice is submitted under                      |
-| `value`    | string  | `''`    | the choice in force; empty means _the declared default_ |
-| `required` | boolean | `false` | the form is invalid while no choice is made             |
-| `disabled` | boolean | `false` | refuses interaction, and submits nothing                |
-| `multiple` | boolean | `false` | a list rather than a drop-down                          |
+| Attribute     | Type    | Default | Means                                                   |
+| ------------- | ------- | ------- | ------------------------------------------------------- |
+| `label`       | string  | `''`    | the accessible name, and the text above the control     |
+| `help`        | string  | `''`    | supporting text under it, which an error does not hide  |
+| `error`       | string  | `''`    | a message, which also makes the control invalid         |
+| `placeholder` | string  | `''`    | the words shown while no choice is made                 |
+| `name`        | string  | `''`    | what the choice is submitted under                      |
+| `value`       | string  | `''`    | the choice in force; empty means _the declared default_ |
+| `required`    | boolean | `false` | the form is invalid while no choice is made             |
+| `disabled`    | boolean | `false` | refuses interaction, and submits nothing                |
+| `multiple`    | boolean | `false` | a list rather than a drop-down                          |
 
 `form`, `validity` and `validationMessage` are read-only properties.
+
+**A placeholder is the platform's own**: the first choice, with no value, which a `required` select
+refuses, so the form cannot be sent before a choice is made.
+
+```html
+<ui-select label="Currency" name="currency" placeholder="Choose a currency" required>
+  <ui-option value="brl">Real</ui-option>
+  <ui-option value="usd">Dollar</ui-option>
+</ui-select>
+```
+
+It is disabled, so it is the state before a choice and never one the reader makes, and a reset
+returns to it. A choice declared `selected` is in force over it, and a `multiple` list draws none.
 
 ## `<ui-option>` and `<ui-optgroup>`
 

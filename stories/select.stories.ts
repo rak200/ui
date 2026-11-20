@@ -91,6 +91,17 @@ export const Grouped: StoryObj<SelectArgs> = {
     `,
 };
 
+/** A placeholder in force until a choice is made, which a required select refuses. */
+export const Placeholder: StoryObj<SelectArgs> = {
+    render: ({ label }): TemplateResult => html`
+        <ui-select label=${label} name="currency" placeholder="Choose a currency" required>
+            <ui-option value="brl">Real</ui-option>
+            <ui-option value="usd">Dollar</ui-option>
+            <ui-option value="eur">Euro</ui-option>
+        </ui-select>
+    `,
+};
+
 /** In error, from the one property that also reaches `setValidity`. */
 export const Invalid: StoryObj<SelectArgs> = {
     args: { error: 'Pick a currency.' },
