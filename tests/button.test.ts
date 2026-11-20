@@ -7,7 +7,7 @@ import { expectAccessible } from './a11y.js';
 import { escaped } from './escaped.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { Disabled, Primary, Secondary, States } from '../stories/button.stories.js';
+import meta, { Danger, Disabled, Primary, Secondary, States } from '../stories/button.stories.js';
 import '../src/button.js';
 import '../src/tooltip.js';
 import type { UiButton } from '../src/button.js';
@@ -117,6 +117,16 @@ describe('ui-button', () => {
 
         expect(element.variant).toBe('primary');
         expect(inner(element).classList.contains('primary')).toBe(true);
+    });
+
+    it('draws a danger button as a primary, in the danger', async () => {
+        const element = await mount('<ui-button variant="danger">Delete</ui-button>');
+
+        expect(element.variant).toBe('danger');
+        expect([...inner(element).classList], "the primary's rules, and its own").toEqual([
+            'primary',
+            'danger',
+        ]);
     });
 
     it('carries the variant onto the inner button', async () => {
@@ -417,6 +427,37 @@ describe('every visual decision a button paints is a token', () => {
         expect(styles.color, "the accent's pole").toBe('color(srgb-linear 1 1 1)');
     });
 
+    it('takes its danger colours from the host, as a danger button', async () => {
+        const element = await mount('<ui-button variant="danger">Delete</ui-button>');
+
+        element.style.setProperty('--ui-color-danger-button', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-danger-button-contrast', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-primary', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-color-primary-contrast', 'rgb(7, 8, 9)');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor, '--ui-color-danger-button').toBe('rgb(1, 2, 3)');
+        expect(styles.color, '--ui-color-danger-button-contrast').toBe('rgb(4, 5, 6)');
+    });
+
+    it('fills a danger button with the danger and its label, and lights it in the danger', async () => {
+        // Its names compute what the primary's do, from the danger, and what the effects light a
+        // primary in, the accent, is the danger here.
+        const element = await mount('<ui-button variant="danger">Delete</ui-button>');
+
+        element.style.setProperty('--ui-color-danger', 'rgb(0, 0, 0)');
+        element.style.setProperty('--ui-color-accent', 'rgb(1, 2, 3)');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor).toBe('rgb(0, 0, 0)');
+        expect(styles.color, "the danger's pole").toBe('color(srgb-linear 1 1 1)');
+        expect(getComputedStyle(inner(element), '::before').color, 'what a glow is drawn in').toBe(
+            'rgb(0, 0, 0)',
+        );
+    });
+
     it('takes the neutral pair from the host, as a secondary button', async () => {
         const element = await mount('<ui-button variant="secondary">Cancel</ui-button>');
 
@@ -443,6 +484,11 @@ describe('every visual decision a button paints is a token', () => {
 
     it.each([
         ['primary', '<ui-button>Save</ui-button>', '--ui-color-primary-hover'],
+        [
+            'danger',
+            '<ui-button variant="danger">Delete</ui-button>',
+            '--ui-color-danger-button-hover',
+        ],
         ['secondary', '<ui-button variant="secondary">Cancel</ui-button>', '--ui-color-hover'],
     ])('takes the hover colour from the host, as a %s button', async (_v, markup, token) => {
         const element = await mount(markup);
@@ -459,6 +505,11 @@ describe('every visual decision a button paints is a token', () => {
 
     it.each([
         ['primary', '<ui-button>Save</ui-button>', '--ui-color-primary-pressed'],
+        [
+            'danger',
+            '<ui-button variant="danger">Delete</ui-button>',
+            '--ui-color-danger-button-pressed',
+        ],
         ['secondary', '<ui-button variant="secondary">Cancel</ui-button>', '--ui-color-pressed'],
     ])('takes the pressed colour from the host, as a %s button', async (_v, markup, token) => {
         const element = await mount(markup);
@@ -2283,6 +2334,7 @@ describe('ui-button stories', () => {
     it.each([
         ['Primary', Primary],
         ['Secondary', Secondary],
+        ['Danger', Danger],
         ['Disabled', Disabled],
         ['States', States],
     ] as const)('%s renders a real button and meets the bar', async (name, story) => {

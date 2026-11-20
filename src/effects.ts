@@ -14,7 +14,8 @@
  * it: one sheet rather than one in each, which would stay in step only by being compared.
  *
  * **What it asks of the component.** Its control is the `button` in its shadow root, with a class
- * of `primary` or `secondary`, laid out against itself and a stacking context of its own, with the
+ * of `primary` or `secondary` — a danger button's carries the primary's, beside one of its own that
+ * hands the primary's rules the danger's names — laid out against itself and a stacking context of its own, with the
  * `::before` a theme's glow is drawn on and an `::after` under the label that carries the edge; a
  * `<span class="edge">` in the control, for the edge's band; and the scripts bound as `ui-button`
  * binds them — `arrive()` to its focus and {@link pressed} to its `pointerdown` and `keydown`, the

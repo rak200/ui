@@ -1858,6 +1858,14 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it('keeps a danger button legible, which is its own pair as the primary is', () => {
+                    for (const fill of over('--ui-color-danger-button', palette, scheme)) {
+                        expect(
+                            contrastRatio(paint('--ui-color-danger-button-contrast'), fill),
+                        ).toBeGreaterThanOrEqual(4.5);
+                    }
+                });
+
                 it("keeps a checked control's mark legible, at rest and under the pointer", () => {
                     // The tick, the dot and the thumb are the accent's label, drawn whole on a
                     // fill that may let the page through.
@@ -1974,6 +1982,11 @@ describe('the contrast floors', () => {
                         '--ui-color-primary-hover',
                         '--ui-color-primary-pressed',
                     ],
+                    [
+                        '--ui-color-danger-button',
+                        '--ui-color-danger-button-hover',
+                        '--ui-color-danger-button-pressed',
+                    ],
                 ] as const)('moves %s visibly', (resting, hover, pressed) => {
                     // A component that accepts interaction and shows no feedback is defective,
                     // and *no feedback* includes a mix too small to see. 1.05 is about the least
@@ -2062,6 +2075,19 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it('keeps a hovered danger button legible', () => {
+                    const label = paint('--ui-color-danger-button-contrast');
+
+                    for (const token of [
+                        '--ui-color-danger-button-hover',
+                        '--ui-color-danger-button-pressed',
+                    ] as const) {
+                        for (const fill of over(token, palette, scheme)) {
+                            expect(contrastRatio(label, fill), token).toBeGreaterThanOrEqual(4.5);
+                        }
+                    }
+                });
+
                 it('keeps a secondary button legible on the tint under the pointer', async () => {
                     // Its label against the tint, laid over whatever the button rests on: the
                     // tint stays at least 0.6 opaque over a fill a theme lets the page through.
@@ -2077,6 +2103,7 @@ describe('the contrast floors', () => {
 
                 it.each([
                     ['primary', '--ui-color-primary', '--ui-color-primary-contrast'],
+                    ['danger', '--ui-color-danger-button', '--ui-color-danger-button-contrast'],
                     ['secondary', '--ui-color-surface-control', '--ui-color-text'],
                 ] as const)(
                     "keeps a %s button's label legible where the shimmer's sheen passes under it",

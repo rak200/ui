@@ -405,41 +405,45 @@ defaults['--ui-duration-100']; // '150ms'
 
 The roles computed from the grounds rather than declared beside them.
 
-| Token                            | Covers                                         |
-| -------------------------------- | ---------------------------------------------- |
-| `--ui-color-accent-contrast`     | every mark on the accent                       |
-| `--ui-color-accent-hover`        | a checked control under the pointer            |
-| `--ui-color-accent-pressed`      | the step past the hover                        |
-| `--ui-color-primary`             | the fill of a primary button                   |
-| `--ui-color-primary-contrast`    | its label                                      |
-| `--ui-color-primary-hover`       | a primary button under the pointer             |
-| `--ui-color-primary-pressed`     | a primary button being pressed                 |
-| `--ui-color-selected`            | the choice already made in a select's list     |
-| `--ui-color-selected-contrast`   | its text and its check                         |
-| `--ui-color-selected-hover`      | that choice under the pointer                  |
-| `--ui-color-hover`               | a neutral surface under the pointer            |
-| `--ui-color-pressed`             | a neutral surface being pressed                |
-| `--ui-color-border`              | the boundary of a control                      |
-| `--ui-color-border-overlay`      | the edge of a dialog, a tip, a menu, a list    |
-| `--ui-color-border-raised`       | the edge of a card                             |
-| `--ui-color-border-button-hover` | the edge a button goes to under the pointer    |
-| `--ui-color-text-invalid`        | the value written in a field in error          |
-| `--ui-color-text-muted`          | text that is not a value yet                   |
-| `--ui-duration-state`            | how long a state change takes                  |
-| `--ui-duration-effect`           | how long an effect a moment fires takes        |
-| `--ui-duration-travel`           | how long something takes to cross to its place |
-| `--ui-duration-flourish`         | how long a flourish takes                      |
-| `--ui-duration-follow`           | how long what follows the pointer takes        |
-| `--ui-duration-enter`            | how long an entrance takes                     |
-| `--ui-duration-exit`             | how long an exit takes                         |
-| `--ui-duration-modal`            | how long a modal's effect takes                |
-| `--ui-duration-overlay`          | how long an overlay takes to come and go       |
-| `--ui-elevation-raised`          | a surface lifted off the page                  |
-| `--ui-elevation-control-hover`   | the glow a button lights to under the pointer  |
-| `--ui-text-supporting`           | text that explains what is beside it           |
-| `--ui-color-surface-muted`       | a second surface tone, for grouping            |
-| `--ui-color-surface-raised`      | the colour of a raised surface                 |
-| `--ui-color-surface-control`     | the fill of a control, and of a table          |
+| Token                               | Covers                                         |
+| ----------------------------------- | ---------------------------------------------- |
+| `--ui-color-accent-contrast`        | every mark on the accent                       |
+| `--ui-color-accent-hover`           | a checked control under the pointer            |
+| `--ui-color-accent-pressed`         | the step past the hover                        |
+| `--ui-color-primary`                | the fill of a primary button                   |
+| `--ui-color-primary-contrast`       | its label                                      |
+| `--ui-color-primary-hover`          | a primary button under the pointer             |
+| `--ui-color-primary-pressed`        | a primary button being pressed                 |
+| `--ui-color-danger-button`          | the fill of a danger button                    |
+| `--ui-color-danger-button-contrast` | its label                                      |
+| `--ui-color-danger-button-hover`    | a danger button under the pointer              |
+| `--ui-color-danger-button-pressed`  | a danger button being pressed                  |
+| `--ui-color-selected`               | the choice already made in a select's list     |
+| `--ui-color-selected-contrast`      | its text and its check                         |
+| `--ui-color-selected-hover`         | that choice under the pointer                  |
+| `--ui-color-hover`                  | a neutral surface under the pointer            |
+| `--ui-color-pressed`                | a neutral surface being pressed                |
+| `--ui-color-border`                 | the boundary of a control                      |
+| `--ui-color-border-overlay`         | the edge of a dialog, a tip, a menu, a list    |
+| `--ui-color-border-raised`          | the edge of a card                             |
+| `--ui-color-border-button-hover`    | the edge a button goes to under the pointer    |
+| `--ui-color-text-invalid`           | the value written in a field in error          |
+| `--ui-color-text-muted`             | text that is not a value yet                   |
+| `--ui-duration-state`               | how long a state change takes                  |
+| `--ui-duration-effect`              | how long an effect a moment fires takes        |
+| `--ui-duration-travel`              | how long something takes to cross to its place |
+| `--ui-duration-flourish`            | how long a flourish takes                      |
+| `--ui-duration-follow`              | how long what follows the pointer takes        |
+| `--ui-duration-enter`               | how long an entrance takes                     |
+| `--ui-duration-exit`                | how long an exit takes                         |
+| `--ui-duration-modal`               | how long a modal's effect takes                |
+| `--ui-duration-overlay`             | how long an overlay takes to come and go       |
+| `--ui-elevation-raised`             | a surface lifted off the page                  |
+| `--ui-elevation-control-hover`      | the glow a button lights to under the pointer  |
+| `--ui-text-supporting`              | text that explains what is beside it           |
+| `--ui-color-surface-muted`          | a second surface tone, for grouping            |
+| `--ui-color-surface-raised`         | the colour of a raised surface                 |
+| `--ui-color-surface-control`        | the fill of a control, and of a table          |
 
 **These are write-only, and it is the one cost of the design worth knowing about.** Set one and
 every component picks it up, exactly like a ground token. Read one back and there is nothing to
@@ -464,6 +468,12 @@ formula reads grounds only, so the four cannot point at the accent's derived nam
 accent moves the button; overriding the accent's label or states reaches the checked controls and
 not the button, so set the primary's too. A theme fills the button apart from the checked controls
 through them, as [Glass](theme.md#glass) inverts it.
+
+**The danger button has four names of its own**, `--ui-color-danger-button`, `-danger-button-contrast`,
+`-danger-button-hover` and `-danger-button-pressed`, each computing from `--ui-color-danger` what
+the primary's computes from the accent. Its own rather than the danger's, which is an error's text, a
+field's boundary and a toast's stripe as well: a theme fills the button apart from them through these,
+and a host that moves it apart from the danger sets all four.
 
 **The choice already made in a select's list has three names of its own**, `--ui-color-selected`,
 `-selected-contrast` and `-selected-hover`, where the page draws the list —
@@ -510,33 +520,37 @@ formulas['--ui-duration-state'];
 // 'var(--ui-duration-100, 150ms)'
 ```
 
-| Token                            | Computes                                                          |
-| -------------------------------- | ----------------------------------------------------------------- |
-| `--ui-color-accent-contrast`     | white or black, whichever stands further from the accent          |
-| `--ui-color-accent-hover`        | the accent, 12% of the way toward the pole it has room to move to |
-| `--ui-color-accent-pressed`      | the accent, 22% of the way toward that pole                       |
-| `--ui-color-primary`             | the accent                                                        |
-| `--ui-color-primary-contrast`    | the accent's label                                                |
-| `--ui-color-primary-hover`       | the accent's hover                                                |
-| `--ui-color-primary-pressed`     | the accent's pressed                                              |
-| `--ui-color-selected`            | the accent                                                        |
-| `--ui-color-selected-contrast`   | the accent's label                                                |
-| `--ui-color-selected-hover`      | the accent's hover                                                |
-| `--ui-color-hover`               | the surface, 16% of the way toward the text                       |
-| `--ui-color-pressed`             | the surface, 26% of the way toward the text                       |
-| `--ui-color-border`              | the surface, 50% of the way toward the text                       |
-| `--ui-color-border-overlay`      | the same mix as `--ui-color-border`                               |
-| `--ui-color-border-raised`       | the same mix again                                                |
-| `--ui-color-border-button-hover` | the resting edge, `--ui-color-border-button`                      |
-| `--ui-color-text-invalid`        | the text                                                          |
-| `--ui-color-text-muted`          | the surface, 65% of the way toward the text                       |
-| `--ui-duration-state`            | the first step of the duration scale                              |
-| `--ui-elevation-raised`          | the first step of the elevation scale                             |
-| `--ui-elevation-control-hover`   | the resting glow, `--ui-elevation-control`                        |
-| `--ui-text-supporting`           | the first step of the type scale                                  |
-| `--ui-color-surface-muted`       | the surface, 5% of the way toward the text                        |
-| `--ui-color-surface-raised`      | the surface                                                       |
-| `--ui-color-surface-control`     | the surface                                                       |
+| Token                               | Computes                                                          |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `--ui-color-accent-contrast`        | white or black, whichever stands further from the accent          |
+| `--ui-color-accent-hover`           | the accent, 12% of the way toward the pole it has room to move to |
+| `--ui-color-accent-pressed`         | the accent, 22% of the way toward that pole                       |
+| `--ui-color-primary`                | the accent                                                        |
+| `--ui-color-primary-contrast`       | the accent's label                                                |
+| `--ui-color-primary-hover`          | the accent's hover                                                |
+| `--ui-color-primary-pressed`        | the accent's pressed                                              |
+| `--ui-color-danger-button`          | the danger                                                        |
+| `--ui-color-danger-button-contrast` | white or black, whichever stands further from the danger          |
+| `--ui-color-danger-button-hover`    | the danger, 12% of the way toward the pole it has room to move to |
+| `--ui-color-danger-button-pressed`  | the danger, 22% of the way toward that pole                       |
+| `--ui-color-selected`               | the accent                                                        |
+| `--ui-color-selected-contrast`      | the accent's label                                                |
+| `--ui-color-selected-hover`         | the accent's hover                                                |
+| `--ui-color-hover`                  | the surface, 16% of the way toward the text                       |
+| `--ui-color-pressed`                | the surface, 26% of the way toward the text                       |
+| `--ui-color-border`                 | the surface, 50% of the way toward the text                       |
+| `--ui-color-border-overlay`         | the same mix as `--ui-color-border`                               |
+| `--ui-color-border-raised`          | the same mix again                                                |
+| `--ui-color-border-button-hover`    | the resting edge, `--ui-color-border-button`                      |
+| `--ui-color-text-invalid`           | the text                                                          |
+| `--ui-color-text-muted`             | the surface, 65% of the way toward the text                       |
+| `--ui-duration-state`               | the first step of the duration scale                              |
+| `--ui-elevation-raised`             | the first step of the elevation scale                             |
+| `--ui-elevation-control-hover`      | the resting glow, `--ui-elevation-control`                        |
+| `--ui-text-supporting`              | the first step of the type scale                                  |
+| `--ui-color-surface-muted`          | the surface, 5% of the way toward the text                        |
+| `--ui-color-surface-raised`         | the surface                                                       |
+| `--ui-color-surface-control`        | the surface                                                       |
 
 Each ground inside a formula carries its own default, and that is not decoration. A formula only
 ever runs as the fallback of a name nobody declared — which is exactly the page that inserted no
