@@ -611,8 +611,8 @@ export class UiInput extends UiTextField {
 
     /**
      * What one side draws inside the box: the glyph slotted there, and the text, which the
-     * control's description names. Hidden from the tree, which hears the text through the
-     * description, and not drawn while it holds neither.
+     * control's description names, an empty span where there is none. Hidden from the tree,
+     * which hears the text through the description, and not drawn while it holds neither.
      */
     #affix(side: Side): TemplateResult {
         const text = this[`${side}Text` as const];
@@ -623,9 +623,8 @@ export class UiInput extends UiTextField {
             part=${side}
             aria-hidden="true"
             ?hidden=${text === '' && !this.#slotted.has(side)}
-            ><slot name=${side} @slotchange=${this.#assigned}></slot>${
-                text === '' ? nothing : html`<span id=${side}>${text}</span>`
-            }</span
+            ><slot name=${side} @slotchange=${this.#assigned}></slot
+            ><span id=${side}>${text}</span></span
         >`;
     }
 

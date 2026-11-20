@@ -988,10 +988,27 @@ describe('a prefix and a suffix', () => {
         );
 
         element.prefixText = 'US$';
+        element.suffixText = 'a month';
         await element.updateComplete;
 
         expect(element.getAttribute('prefix-text'), 'reflected').toBe('US$');
+        expect(element.getAttribute('suffix-text'), 'reflected').toBe('a month');
         expect(side(element, 'prefix').textContent.trim()).toBe('US$');
+    });
+
+    it('spaces each side in the space token, round it and between its glyph and its text', async () => {
+        const form = await mount(
+            '<ui-input label="Price" name="price" prefix-text="R$"><span slot="prefix">*</span></ui-input>',
+        );
+        const element = field(form);
+
+        element.style.setProperty('--ui-space', '10px');
+
+        const styles = getComputedStyle(side(element, 'prefix'));
+
+        expect(styles.paddingInlineStart).toBe('10px');
+        expect(styles.paddingInlineEnd).toBe('10px');
+        expect(styles.columnGap, 'half a space').toBe('5px');
     });
 
     it("widens the control's padding to hold each side, and gives it back when a side goes", async () => {
