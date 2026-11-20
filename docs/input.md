@@ -15,6 +15,7 @@ import '@rak200/ui';
 - [A prefix and a suffix](#a-prefix-and-a-suffix)
 - [A clear button, the password shown, and a count](#a-clear-button-the-password-shown-and-a-count)
 - [A button of the page's at the end](#a-button-of-the-pages-at-the-end)
+- [Suggestions](#suggestions)
 - [The element is the control](#the-element-is-the-control)
 - [In a form](#in-a-form)
 - [Validation](#validation)
@@ -195,6 +196,29 @@ in it.
 **Written compact, a `<ui-button>` is drawn inside the box with room round it**:
 `data-ui-density="compact"` on the button takes its space and its text a step down. At the page's
 density it is as tall as the box, and fills it.
+
+## Suggestions
+
+```html
+<ui-input label="City" name="city">
+  <ui-option value="Lisbon"></ui-option>
+  <ui-option value="Porto"></ui-option>
+  <ui-option value="Braga"></ui-option>
+</ui-input>
+```
+
+**A suggestion is a `<ui-option>` written in the element**, as a choice is in a
+[`<ui-select>`](select.md), and the control offers them as the platform's own: the `<datalist>` an
+`<input>` names by its `list`, drawn in the element's root, since an input finds a datalist only in
+its own tree. What the reader picks fills the control, and anything else can still be typed: a
+suggestion is not a choice the field enforces, which is what a select is for.
+
+Each `value` is what the control is filled with, and the choice's text, where there is one, is
+drawn beside it; a choice with no `value` stands for its text, as the platform's `<option>` does. A
+`disabled` one is not offered. A choice written, changed or taken away is offered as it now is.
+
+**How the list is drawn is each engine's own.** Chromium draws a caret at the control's end under
+the pointer and while the focus is in it; Firefox and WebKit draw none.
 
 ## The element is the control
 

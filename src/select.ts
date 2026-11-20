@@ -50,14 +50,15 @@ const clearance = css`calc(${reference('--ui-space')} * 2 + ${arm} * 2)`;
 /**
  * The event a declaration fires when anything about it changes.
  *
- * **Private to this file**, and a mechanism rather than an API: a host listens to
- * `<ui-select>`, never to this.
+ * **Private to the package**, and a mechanism rather than an API: `<ui-select>` and `<ui-input>`,
+ * which takes `<ui-option>`s as its suggestions, listen for it, and a host listens to them, never to
+ * this.
  */
-// Stryker disable next-line StringLiteral: both ends of this event read the constant —
-// the declaration dispatches it and the select listens for it — so a different name, the
-// empty string included, still meets itself. Nothing outside this module names it, which
-// is what makes the mutant provably equivalent rather than merely uncaught.
-const announcement = 'ui-option-changed';
+// Stryker disable next-line StringLiteral: every end of this event reads the constant — the
+// declaration dispatches it, and the select and the input listen for it — so a different name,
+// the empty string included, still meets itself. Nothing names it but through the constant,
+// which is what makes the mutant provably equivalent rather than merely uncaught.
+export const announcement = 'ui-option-changed';
 
 /**
  * What {@link UiOption} and {@link UiOptgroup} have in common, which is that they draw
@@ -106,7 +107,7 @@ class UiDeclaration extends LitElement {
 }
 
 /**
- * One choice in a {@link UiSelect}.
+ * One choice in a {@link UiSelect}, or one suggestion a `<ui-input>` offers.
  *
  * The text is what the reader sees; `value` is what a form submits. `selected` is the
  * **default** — the choice the control starts on and returns to on reset — which is what
