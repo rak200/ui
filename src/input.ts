@@ -15,6 +15,7 @@ import { arrive, watch } from './ring.js';
 import { Description } from './description.js';
 import { kept, restored } from './state.js';
 import { implicit } from './submit.js';
+import { announcement, UiOption } from './select.js';
 
 /**
  * What a styled native control looks like, which both elements share.
@@ -740,6 +741,46 @@ export class UiInput extends UiTextField {
     /** The wait after the last key, at whose end the count is said. */
     #waiting: ReturnType<typeof setTimeout> | undefined;
 
+    /**
+     * Hears a suggestion's property write, which bubbles here from the `<ui-option>` itself, as a
+     * select hears its choices; `src/select.ts` says why nothing removes the listener.
+     */
+    override connectedCallback(): void {
+        super.connectedCallback();
+        this.addEventListener(announcement, this.#redraw);
+    }
+
+    /** Draws again for a suggestion written, changed or taken away. */
+    readonly #redraw = (): void => {
+        this.requestUpdate();
+    };
+
+    /** The suggestions the host wrote, as its own `<ui-option>` children, in their order. */
+    #suggestions(): UiOption[] {
+        return [...this.children].filter((child) => child instanceof UiOption);
+    }
+
+    /**
+     * The suggestions, as the `<datalist>` the control names by its `list`: drawn in here, since an
+     * input finds a datalist only in its own tree, measured in the three engines. Each choice's
+     * `value` is what the control is filled with and its text is drawn beside it; a choice with no
+     * value leaves the attribute out, so its text stands for it, as on the platform's `<option>`.
+     */
+    #list(suggestions: readonly UiOption[]): TemplateResult | typeof nothing {
+        if (suggestions.length === 0) {
+            return nothing;
+        }
+
+        return html`<datalist id="suggestions">
+            ${suggestions.map(
+                (choice) =>
+                    html`<option value=${attribute(choice.value)} ?disabled=${choice.disabled}>
+                        ${choice.textContent}
+                    </option>`,
+            )}
+        </datalist>`;
+    }
+
     /** The slots something was slotted in, which a slot's change reports. */
     readonly #slotted = new Set<Slotted>();
 
@@ -932,6 +973,8 @@ export class UiInput extends UiTextField {
      * frame every text control shares.
      */
     override render(): TemplateResult {
+        const suggestions = this.#suggestions();
+
         return this.frame(
             html`
                 ${this.#side('prefix', [])}
@@ -950,6 +993,7 @@ export class UiInput extends UiTextField {
                     min=${attribute(this.min)}
                     max=${attribute(this.max)}
                     step=${attribute(this.step)}
+                    list=${attribute(suggestions.length === 0 ? '' : 'suggestions')}
                     ?required=${this.required}
                     ?disabled=${this.matches(':disabled')}
                     ?readonly=${this.readonly}
@@ -964,7 +1008,10 @@ export class UiInput extends UiTextField {
                     @change=${this.changed}
                     @keypress=${this.#entered}
                 />
-                ${this.#side('suffix', this.#tools(), true)}
+                ${this.#side('suffix', this.#tools(), true)} ${this.#list(suggestions)}
+                <!-- A suggestion written or taken away, which a slot reports and no property write
+                     does. Hidden, so nothing else a host leaves unslotted is drawn. -->
+                <slot hidden @slotchange=${this.#redraw}></slot>
             `,
             this.#count(),
         );

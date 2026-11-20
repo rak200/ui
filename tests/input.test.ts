@@ -14,11 +14,13 @@ import meta, {
     Disabled,
     Invalid,
     Multiline,
+    Suggestions,
     Text,
 } from '../stories/input.stories.js';
 import '../src/input.js';
 import '../src/tooltip.js';
 import type { UiInput, UiTextarea } from '../src/input.js';
+import type { UiOption } from '../src/select.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 import { kept } from '../src/state.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
@@ -1603,6 +1605,116 @@ describe("a button of the host's at the end", () => {
 
     it("has no violations with a button of the page's at its end", async () => {
         await expectAccessible(await mountStory(Action, meta, 'Action'));
+    });
+});
+
+/** The suggestions a field offers, written as `<ui-option>`s and drawn as the platform's list. */
+describe('suggestions', () => {
+    /** A frame and the update after it, so a slot's change and the redraw it asks for are in. */
+    async function settled(element: Field): Promise<void> {
+        await new Promise(requestAnimationFrame);
+        await element.updateComplete;
+    }
+
+    /** What the control finds by its `list`, each choice as its value and its label. */
+    function offered(element: Field): string[][] {
+        const list = (box(element) as HTMLInputElement).list;
+
+        return list === null ? [] : [...list.options].map((option) => [option.value, option.label]);
+    }
+
+    const cities =
+        '<ui-input label="City" name="city"><ui-option value="Lisbon"></ui-option><ui-option value="Porto">The north</ui-option><ui-option>Braga</ui-option><button slot="action">Go</button></ui-input>';
+
+    it("draws the host's choices as a datalist in its root, which the control finds by its list", async () => {
+        const form = await mount(cities);
+        const element = field(form);
+
+        expect((box(element) as HTMLInputElement).list?.getRootNode()).toBe(element.shadowRoot);
+        expect(offered(element), 'a choice with no value stands for its text').toEqual([
+            ['Lisbon', ''],
+            ['Porto', 'The north'],
+            ['Braga', 'Braga'],
+        ]);
+    });
+
+    it('names no list and draws none where no choice is written', async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+
+        expect(box(element).hasAttribute('list')).toBe(false);
+        expect(element.shadowRoot?.querySelector('datalist')).toBeNull();
+    });
+
+    it('follows a choice written, changed and taken away', async () => {
+        const form = await mount(cities);
+        const element = field(form);
+        const [lisbon, porto] = element.querySelectorAll<UiOption>('ui-option');
+
+        if (lisbon === undefined || porto === undefined) {
+            throw new Error('the choices are not there');
+        }
+
+        const faro = document.createElement('ui-option');
+
+        faro.value = 'Faro';
+        element.append(faro);
+        await settled(element);
+
+        expect(
+            offered(element).map(([value]) => value),
+            'written',
+        ).toEqual(['Lisbon', 'Porto', 'Braga', 'Faro']);
+
+        lisbon.value = 'Lisboa';
+        await lisbon.updateComplete;
+        await settled(element);
+
+        expect(offered(element)[0], 'its value changed').toEqual(['Lisboa', '']);
+
+        porto.textContent = 'Up north';
+        await settled(element);
+
+        expect(offered(element)[1], 'its text changed').toEqual(['Porto', 'Up north']);
+
+        porto.disabled = true;
+        await porto.updateComplete;
+        await settled(element);
+
+        const list = (box(element) as HTMLInputElement).list;
+
+        expect(list?.options[1]?.disabled, 'refused, so the platform offers it no more').toBe(true);
+
+        porto.remove();
+        await settled(element);
+
+        expect(
+            offered(element).map(([value]) => value),
+            'taken away',
+        ).toEqual(['Lisboa', 'Braga', 'Faro']);
+
+        for (const choice of element.querySelectorAll('ui-option')) {
+            choice.remove();
+        }
+
+        await settled(element);
+
+        expect(box(element).hasAttribute('list'), 'every one taken away').toBe(false);
+        expect(element.shadowRoot?.querySelector('datalist')).toBeNull();
+    });
+
+    it('draws nothing else the host leaves unslotted', async () => {
+        const form = await mount(
+            '<ui-input label="City" name="city"><span>stray</span><ui-option value="Lisbon"></ui-option></ui-input>',
+        );
+        const stray = field(form).querySelector('span');
+
+        expect(stray?.assignedSlot, 'heard by the slot that reports the choices').not.toBeNull();
+        expect(stray?.getClientRects().length, 'and drawn nowhere').toBe(0);
+    });
+
+    it('has no violations with suggestions', async () => {
+        await expectAccessible(await mountStory(Suggestions, meta, 'Suggestions'));
     });
 });
 

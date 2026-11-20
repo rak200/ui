@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## Suggestions on `<ui-input>` (#447)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s seventh step: the platform's `<datalist>`,
-drawn in the root from choices the host writes.
-
 ## A `danger` `<ui-button>` (#448)
 
-Four names of its own, computed from the danger as the primary's are from the accent.
+[RFC 0010](docs/proposals/0010-component-features.md)'s eighth step: four names of its own,
+computed from the danger as the primary's are from the accent.
 
 ## A toggle `<ui-button>` (#449)
 

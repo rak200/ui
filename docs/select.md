@@ -91,6 +91,8 @@ real `<option>` elements the platform needs are built from them.
 | `disabled`      | boolean | `false` | whether every choice in it is refused |
 
 Exported as `UiOption` and `UiOptgroup`. Anything else you put inside a `<ui-select>` is ignored.
+A `<ui-input>` takes `<ui-option>`s too, as the [suggestions](input.md#suggestions) its control
+offers.
 
 **A disabled group refuses its choices one by one as well.** iOS takes `disabled` on a group and
 ignores it, so each choice the element draws inside a disabled group carries `disabled` itself,

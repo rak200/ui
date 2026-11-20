@@ -163,6 +163,20 @@ export const Action: StoryObj<InputArgs> = {
 };
 
 /**
+ * Suggestions the control offers, written as a select's choices are: the platform's own list,
+ * which fills the control and leaves anything else to be typed.
+ */
+export const Suggestions: StoryObj<InputArgs> = {
+    render: (): TemplateResult => html`
+        <ui-input label="City" name="city" help="Pick one, or type another.">
+            <ui-option value="Lisbon"></ui-option>
+            <ui-option value="Porto"></ui-option>
+            <ui-option value="Braga"></ui-option>
+        </ui-input>
+    `,
+};
+
+/**
  * In error, and one property says it once.
  *
  * The red boundary, the message under the control and the `aria-describedby` that ties
