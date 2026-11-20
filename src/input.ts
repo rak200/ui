@@ -1,4 +1,13 @@
-import { LitElement, css, html, nothing, type CSSResult, type TemplateResult } from 'lit';
+import {
+    LitElement,
+    css,
+    html,
+    nothing,
+    svg,
+    type CSSResult,
+    type SVGTemplateResult,
+    type TemplateResult,
+} from 'lit';
 import { fieldEffects } from './effects.js';
 import { followed } from './pointer.js';
 import { reference } from './reference.js';
@@ -393,12 +402,18 @@ class UiTextField extends LitElement {
      * screen reader announces descriptions in order, and help text is usually the format
      * requirement — which is the very suggestion a reader needs in order to recover
      * (WCAG 3.3.3).
+     *
+     * `under` is what a control draws right under its box, before the help: a field's count.
      */
-    protected frame(control: TemplateResult): TemplateResult {
+    protected frame(
+        control: TemplateResult,
+        under: TemplateResult | typeof nothing = nothing,
+    ): TemplateResult {
         return html`
             <div class="stack" part="stack">
                 <label for="control" part="label">${this.label}</label>
                 <span class="glow" ${followed()}>${control}</span>
+                ${under}
                 ${
                     this.help === ''
                         ? nothing
@@ -451,28 +466,71 @@ const pickers: ReadonlySet<string> = new Set(['color', 'file']);
 type Side = 'prefix' | 'suffix';
 
 /**
- * What a text field draws in its box beside the control, its prefix and its suffix.
+ * How long a field waits after the last key before it says its count: a reading of typing rather
+ * than of motion, so no token. GOV.UK's own says its count within a second of the reader stopping.
+ */
+const pause = 1000;
+
+/**
+ * The marks a field's buttons are drawn with, the adopted set's geometry on its grid, drawn here
+ * rather than imported, as the toast's dismiss cross is: a component may not ask a host to import
+ * a glyph for its own control to have a mark.
+ */
+const cross = svg`<path d="M18 6 6 18" /><path d="m6 6 12 12" />`;
+
+/** The eye, on a password's button while its text is hidden. */
+const eye = svg`<path
+        d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+    /><circle cx="12" cy="12" r="3" />`;
+
+/** The eye struck through, on a password's button while its text is shown. */
+const struck = svg`<path
+        d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"
+    /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path
+        d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"
+    /><path d="m2 2 20 20" />`;
+
+/** A mark on the set's grid, hidden from the tree: its button is named by its label. */
+function glyph(drawing: SVGTemplateResult): TemplateResult {
+    return html`<svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+    >
+        ${drawing}
+    </svg>`;
+}
+
+/**
+ * What a text field draws in its box beside the control, its prefix and its suffix, with the
+ * buttons it carries at its end, and the count it draws under the box.
  *
- * **Laid over the control's padding, in the box's one cell**, which the control's padding widens
- * to hold: the element measures each side and hands its width over as `--ui-fx-prefix` and
- * `--ui-fx-suffix`, since no rule can read one element's width into another's padding. So the
- * box, its boundary and every effect drawn on it stay the control's own, and the effects' sheet
- * needs no second box to light. A click on either side passes through to the control, which a
- * click anywhere on the box has always reached.
+ * **Each side is laid over the control's padding, in the box's one cell**, which the control's
+ * padding widens to hold: the element measures each side and hands its width over as
+ * `--ui-fx-prefix` and `--ui-fx-suffix`, since no rule can read one element's width into
+ * another's padding. So the box, its boundary and every effect drawn on it stay the control's
+ * own, and the effects' sheet needs no second box to light. A click on what a side draws passes
+ * through to the control, which a click anywhere on the box has always reached; the buttons take
+ * their own.
+ *
+ * **A button is the toast's dismiss button**: no box of its own, the glyph in the muted text, a
+ * hover and a ring, and the 24px WCAG 2.2's 2.5.8 asks of a target.
  */
 const affixes = css`
     .glow > * {
         grid-area: 1 / 1;
     }
 
-    .affix {
+    .side {
         z-index: 1;
         display: inline-flex;
         align-items: center;
         gap: calc(${reference('--ui-space')} / 2);
         align-self: center;
         padding-inline: ${reference('--ui-space')};
-        color: ${reference('--ui-color-text-muted')};
         pointer-events: none;
     }
 
@@ -484,18 +542,86 @@ const affixes = css`
         justify-self: end;
     }
 
+    .affix {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(${reference('--ui-space')} / 2);
+        color: ${reference('--ui-color-text-muted')};
+    }
+
     /* Restated, since the display above outweighs the user agent's for [hidden]. */
+    .side[hidden],
     .affix[hidden] {
         display: none;
     }
 
-    .glow:has(> :disabled) > .affix {
+    .glow:has(> :disabled) > .side {
         opacity: 0.5;
     }
 
     input {
         padding-inline-start: max(${reference('--ui-space')}, var(--ui-fx-prefix, 0px));
         padding-inline-end: max(${reference('--ui-space')}, var(--ui-fx-suffix, 0px));
+    }
+
+    .tool {
+        display: grid;
+        place-items: center;
+        min-inline-size: 24px;
+        min-block-size: 24px;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: ${reference('--ui-radius')};
+        background: none;
+        font: inherit;
+        color: ${reference('--ui-color-text-muted')};
+        cursor: pointer;
+        pointer-events: auto;
+        transition: background-color ${reference('--ui-duration-state')}
+            ${reference('--ui-easing-state')};
+    }
+
+    .tool:hover:not(:disabled) {
+        background: ${reference('--ui-color-hover')};
+    }
+
+    .tool:focus-visible {
+        outline: 2px solid ${reference('--ui-color-focus')};
+        outline-offset: 2px;
+    }
+
+    /* One dimension, as the toast's cross takes: a viewBox gives the glyph its ratio. */
+    .tool svg {
+        inline-size: ${reference('--ui-icon-size')};
+        stroke-width: ${reference('--ui-icon-stroke')};
+    }
+
+    /* Kept in its place while there is nothing to clear, so the value does not move as the first
+       character arrives, and out of the tree and the tab order. */
+    .tool.idle {
+        visibility: hidden;
+    }
+
+    /* A search's own clear button, which Chromium and WebKit draw and Firefox does not, given way
+       to the one a page asked for, which would otherwise be drawn beside it — captured in WebKit. */
+    :host([clear-label]:not([clear-label=''])) input::-webkit-search-cancel-button {
+        display: none;
+    }
+
+    .count {
+        color: ${reference('--ui-color-text')};
+        font-size: ${reference('--ui-text-supporting')};
+    }
+
+    /* Said and not seen: the count is drawn above, and this is its voice once typing stops. */
+    .said {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
     }
 `;
 
@@ -530,6 +656,9 @@ export class UiInput extends UiTextField {
         // that sets properties would write to it and fail. Named as Material Web names its own.
         prefixText: { type: String, attribute: 'prefix-text', reflect: true },
         suffixText: { type: String, attribute: 'suffix-text', reflect: true },
+        clearLabel: { type: String, attribute: 'clear-label', reflect: true },
+        revealLabel: { type: String, attribute: 'reveal-label', reflect: true },
+        countText: { type: String, attribute: 'count-text', reflect: true },
         type: { type: String, reflect: true },
         inputmode: { type: String, reflect: true },
         pattern: { type: String, reflect: true },
@@ -565,6 +694,34 @@ export class UiInput extends UiTextField {
     /** Text drawn after the control, inside its box, and heard with it. A glyph goes in `suffix`. */
     suffixText = '';
 
+    /**
+     * The name of a button drawn at the control's end that empties it, there while the control
+     * holds a value the reader can change. Empty draws none.
+     */
+    clearLabel = '';
+
+    /**
+     * The name of a pressed button drawn at the end of a password's control, which shows its text
+     * while pressed. Empty draws none, and a control of another type has none.
+     */
+    revealLabel = '';
+
+    /**
+     * A sentence counting what the control holds, drawn under it and describing it: `{count}` is
+     * where the number of its characters goes, and `{remaining}` where the number its `maxlength`
+     * still allows. Said again once the reader stops typing. Empty draws none.
+     */
+    countText = '';
+
+    /** Whether a password's text is shown, which its button turns. */
+    #revealed = false;
+
+    /** The count as it was last said, which the live region under the control carries. */
+    #said = '';
+
+    /** The wait after the last key, at whose end the count is said. */
+    #waiting: ReturnType<typeof setTimeout> | undefined;
+
     /** The sides a glyph was slotted on, which a slot's change reports. */
     readonly #slotted = new Set<Side>();
 
@@ -583,16 +740,16 @@ export class UiInput extends UiTextField {
     };
 
     /**
-     * Hands each side's width to the control's padding as its text, its glyph or the space token
-     * changes it, written on this element, as the toast writes its dwell on itself, and inherited
-     * into the root. A side with nothing on it is not drawn, measures nothing and writes nothing,
-     * so a field that carries nothing keeps its own style untouched.
+     * Hands each side's width to the control's padding as what it draws, its buttons or the space
+     * token change it, written on this element, as the toast writes its dwell on itself, and
+     * inherited into the root. A side with nothing on it is not drawn, measures nothing and
+     * writes nothing, so a field that carries nothing keeps its own style untouched.
      */
     readonly #measuring = new ResizeObserver((entries) => {
         for (const { target } of entries) {
-            const affix = target as HTMLElement;
-            const width = affix.offsetWidth;
-            const name = `--ui-fx-${String(affix.dataset['side'])}`;
+            const side = target as HTMLElement;
+            const width = side.offsetWidth;
+            const name = `--ui-fx-${String(side.dataset['side'])}`;
 
             if (width === 0) {
                 this.style.removeProperty(name);
@@ -604,28 +761,137 @@ export class UiInput extends UiTextField {
 
     /** Starts measuring both sides, which are drawn for as long as the element is. */
     override firstUpdated(): void {
-        for (const affix of this.renderRoot.querySelectorAll('.affix')) {
-            this.#measuring.observe(affix);
+        for (const side of this.renderRoot.querySelectorAll('.side')) {
+            this.#measuring.observe(side);
         }
     }
 
+    /** What the reader typed, taken as the field takes it, and the count's wait begun again. */
+    readonly #typing = (event: Event): void => {
+        this.typed(event);
+        this.#wait();
+    };
+
     /**
-     * What one side draws inside the box: the glyph slotted there, and the text, which the
-     * control's description names, an empty span where there is none. Hidden from the tree,
-     * which hears the text through the description, and not drawn while it holds neither.
+     * Empties the control, says so as the platform's own clear does, and hands the focus back to
+     * the control, since the button goes from under it.
      */
-    #affix(side: Side): TemplateResult {
+    readonly #clear = (): void => {
+        this.value = '';
+        this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+        this.#wait();
+
+        for (const control of this.renderRoot.querySelectorAll('input')) {
+            control.focus();
+        }
+    };
+
+    /** Shows a password's text, or hides it again. */
+    readonly #reveal = (): void => {
+        this.#revealed = !this.#revealed;
+        this.requestUpdate();
+    };
+
+    /**
+     * Begins the wait after which the count is said, ending any wait before it, so the count is
+     * said once the reader stops typing rather than at each key.
+     */
+    #wait(): void {
+        clearTimeout(this.#waiting);
+        this.#waiting = setTimeout(() => {
+            this.#said = this.#counted();
+            this.requestUpdate();
+        }, pause);
+    }
+
+    /** The count's sentence, with its numbers written in. */
+    #counted(): string {
+        const count = this.value.length;
+        const most = Number.parseInt(this.maxlength, 10);
+
+        return this.countText
+            .replaceAll('{count}', String(count))
+            .replaceAll('{remaining}', Number.isNaN(most) ? '' : String(most - count));
+    }
+
+    /** Whether a password's button is drawn: the control is a password's, and the button named. */
+    #revealing(): boolean {
+        return this.type === 'password' && this.revealLabel !== '';
+    }
+
+    /**
+     * The buttons drawn at the control's end, each only where its label names it. The clear one
+     * keeps its place while there is nothing to clear, idle, so the value does not move as the
+     * first character arrives.
+     */
+    #tools(): TemplateResult[] {
+        const tools: TemplateResult[] = [];
+
+        if (this.clearLabel !== '') {
+            const idle = this.value === '' || this.readonly || this.matches(':disabled');
+
+            tools.push(
+                html`<button
+                    type="button"
+                    class=${idle ? 'tool idle' : 'tool'}
+                    part="clear"
+                    aria-label=${this.clearLabel}
+                    @click=${this.#clear}
+                >
+                    ${glyph(cross)}
+                </button>`,
+            );
+        }
+
+        if (this.#revealing()) {
+            tools.push(
+                html`<button
+                    type="button"
+                    class="tool"
+                    part="reveal"
+                    aria-label=${this.revealLabel}
+                    aria-pressed=${String(this.#revealed)}
+                    ?disabled=${this.matches(':disabled')}
+                    @click=${this.#reveal}
+                >
+                    ${glyph(this.#revealed ? struck : eye)}
+                </button>`,
+            );
+        }
+
+        return tools;
+    }
+
+    /**
+     * One side of the box: the glyph slotted there and the text, which the control's description
+     * names, an empty span where there is none, hidden from the tree, which hears the text through
+     * the description; and the buttons the side carries, which are not. Not drawn while it holds
+     * none of them.
+     */
+    #side(side: Side, tools: readonly TemplateResult[]): TemplateResult {
         const text = this[`${side}Text` as const];
+        const marked = text !== '' || this.#slotted.has(side);
 
         return html`<span
-            class="affix"
+            class="side"
             data-side=${side}
             part=${side}
-            aria-hidden="true"
-            ?hidden=${text === '' && !this.#slotted.has(side)}
-            ><slot name=${side} @slotchange=${this.#assigned}></slot
-            ><span id=${side}>${text}</span></span
+            ?hidden=${!marked && tools.length === 0}
+            ><span class="affix" aria-hidden="true" ?hidden=${!marked}
+                ><slot name=${side} @slotchange=${this.#assigned}></slot
+                ><span id=${side}>${text}</span></span
+            >${tools}</span
         >`;
+    }
+
+    /** The count under the control, and the live region it is said in once typing stops. */
+    #count(): TemplateResult | typeof nothing {
+        return this.countText === ''
+            ? nothing
+            : html`<span class="count" id="count" part="count" aria-hidden="true"
+                      >${this.#counted()}</span
+                  ><span class="said" aria-live="polite">${this.#said}</span>`;
     }
 
     /**
@@ -639,40 +905,47 @@ export class UiInput extends UiTextField {
         }
     };
 
-    /** A native `<input>` between what it carries on each side, in the frame every text control shares. */
+    /**
+     * A native `<input>` between what it carries on each side, and its count under it, in the
+     * frame every text control shares.
+     */
     override render(): TemplateResult {
-        return this.frame(html`
-            ${this.#affix('prefix')}
-            <input
-                id="control"
-                part="control"
-                type=${this.type}
-                .value=${this.value}
-                name=${attribute(this.name)}
-                placeholder=${attribute(this.placeholder)}
-                autocomplete=${attribute(this.autocomplete)}
-                inputmode=${attribute(this.inputmode)}
-                pattern=${attribute(this.pattern)}
-                minlength=${attribute(this.minlength)}
-                maxlength=${attribute(this.maxlength)}
-                min=${attribute(this.min)}
-                max=${attribute(this.max)}
-                step=${attribute(this.step)}
-                ?required=${this.required}
-                ?disabled=${this.matches(':disabled')}
-                ?readonly=${this.readonly}
-                aria-invalid=${this.invalid()}
-                aria-describedby=${this.described(
-                    this.prefixText === '' ? '' : 'prefix',
-                    this.suffixText === '' ? '' : 'suffix',
-                )}
-                @focus=${arrive}
-                @input=${this.typed}
-                @change=${this.changed}
-                @keypress=${this.#entered}
-            />
-            ${this.#affix('suffix')}
-        `);
+        return this.frame(
+            html`
+                ${this.#side('prefix', [])}
+                <input
+                    id="control"
+                    part="control"
+                    type=${this.#revealing() && this.#revealed ? 'text' : this.type}
+                    .value=${this.value}
+                    name=${attribute(this.name)}
+                    placeholder=${attribute(this.placeholder)}
+                    autocomplete=${attribute(this.autocomplete)}
+                    inputmode=${attribute(this.inputmode)}
+                    pattern=${attribute(this.pattern)}
+                    minlength=${attribute(this.minlength)}
+                    maxlength=${attribute(this.maxlength)}
+                    min=${attribute(this.min)}
+                    max=${attribute(this.max)}
+                    step=${attribute(this.step)}
+                    ?required=${this.required}
+                    ?disabled=${this.matches(':disabled')}
+                    ?readonly=${this.readonly}
+                    aria-invalid=${this.invalid()}
+                    aria-describedby=${this.described(
+                        this.prefixText === '' ? '' : 'prefix',
+                        this.suffixText === '' ? '' : 'suffix',
+                        this.countText === '' ? '' : 'count',
+                    )}
+                    @focus=${arrive}
+                    @input=${this.#typing}
+                    @change=${this.changed}
+                    @keypress=${this.#entered}
+                />
+                ${this.#side('suffix', this.#tools())}
+            `,
+            this.#count(),
+        );
     }
 }
 

@@ -756,7 +756,8 @@ export function buttonEffects(component: string): CSSResult {
  * theme's glow is drawn on, with the control's size and corner; and `arrive()` is bound to the
  * control's focus, with `watch()` called as the component connects. The sheet comes after the
  * component's own. What the box holds beside the control, an `.affix` laid over its padding as
- * `<ui-input>`'s prefix and suffix are, takes the halo the control's text takes.
+ * `<ui-input>`'s prefix and suffix are, takes the halo the control's text takes, wherever in the
+ * box it is drawn.
  *
  * **Nothing moves the control on its own.** A field is where the reference measured motion getting in the way
  * of the reader, who is typing or choosing there: an effect changes what is round the control, or
@@ -988,7 +989,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
 
             /* What a field carries beside its control, laid over the same fill, takes the halo its
                text takes while the sheen passes under both. */
-            .glow:has(> ${control}:focus-visible) > .affix {
+            .glow:has(> ${control}:focus-visible) .affix {
                 animation: ui-halo ${reference('--ui-duration-loop')} linear
                     ${reference('--ui-iteration-settle')};
             }
@@ -1190,7 +1191,7 @@ export function fieldEffects(component: string, able: string): CSSResult {
                         ${reference('--ui-iteration-settle')};
             }
 
-            .glow:has(> ${control}[aria-invalid='true']) > .affix {
+            .glow:has(> ${control}[aria-invalid='true']) .affix {
                 animation: ui-halo ${reference('--ui-duration-flourish')} linear
                     ${reference('--ui-iteration-settle')};
             }

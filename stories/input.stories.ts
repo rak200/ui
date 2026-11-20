@@ -102,6 +102,32 @@ export const Affixes: StoryObj<InputArgs> = {
 };
 
 /**
+ * The buttons a field carries at its end, each named by its label, and the count under it.
+ *
+ * The clear button keeps its place while there is nothing to clear; the password's is pressed
+ * while its text is shown; the count is heard again once the reader stops typing.
+ */
+export const Tools: StoryObj<InputArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+            <ui-input label="Search" name="q" type="search" clear-label="Clear"></ui-input>
+            <ui-input
+                label="Password"
+                name="password"
+                type="password"
+                reveal-label="Show password"
+            ></ui-input>
+            <ui-input
+                label="Headline"
+                name="headline"
+                maxlength="60"
+                count-text="{remaining} characters left"
+            ></ui-input>
+        </div>
+    `,
+};
+
+/**
  * In error, and one property says it once.
  *
  * The red boundary, the message under the control and the `aria-describedby` that ties

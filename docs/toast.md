@@ -76,8 +76,10 @@ that shows one on purpose quiets that code round it.
 `ToastVariant` is exported for a host that needs the type: `'info' | 'success' | 'warning' |
 'danger'`.
 
-**`dismiss-label` is this package's one user-facing string.** It is an attribute precisely because it
-is one: a page that is not in English replaces it rather than forking the component.
+**`dismiss-label` is a user-facing string, and so it is an attribute**: a page that is not in
+English replaces it rather than forking the component. The package's others are `<ui-input>`'s
+`clear-label`, `reveal-label` and `count-text`, which have no default, since each draws its part
+only where a page writes it.
 
 ## Two regions, and why not one
 

@@ -9,6 +9,7 @@ import { mountStory } from './stories.js';
 import meta, {
     Affixes,
     Constrained,
+    Tools,
     Disabled,
     Invalid,
     Multiline,
@@ -966,6 +967,17 @@ describe('a prefix and a suffix', () => {
         return part(element, name);
     }
 
+    /** What a side draws, its glyph and its text, without the buttons it carries. */
+    function mark(element: Field, name: 'prefix' | 'suffix'): HTMLElement {
+        const found = side(element, name).querySelector<HTMLElement>('.affix');
+
+        if (found === null) {
+            throw new Error(`the ${name} draws no mark`);
+        }
+
+        return found;
+    }
+
     const priced =
         '<ui-input label="Price" name="price" help="Billed monthly." prefix-text="R$" suffix-text="per month"></ui-input>';
 
@@ -975,8 +987,8 @@ describe('a prefix and a suffix', () => {
 
         expect(side(element, 'prefix').textContent.trim()).toBe('R$');
         expect(side(element, 'suffix').textContent.trim()).toBe('per month');
-        expect(side(element, 'prefix').getAttribute('aria-hidden')).toBe('true');
-        expect(side(element, 'suffix').getAttribute('aria-hidden')).toBe('true');
+        expect(mark(element, 'prefix').getAttribute('aria-hidden')).toBe('true');
+        expect(mark(element, 'suffix').getAttribute('aria-hidden')).toBe('true');
         // Nearer the value than the instruction under it.
         expect(box(element).getAttribute('aria-describedby')).toBe('prefix suffix help');
 
@@ -1050,6 +1062,8 @@ describe('a prefix and a suffix', () => {
 
         expect(side(element, 'prefix').hidden).toBe(true);
         expect(side(element, 'suffix').hidden).toBe(true);
+        expect(element.shadowRoot?.querySelector('[part="count"]'), 'no count').toBeNull();
+        expect(element.shadowRoot?.querySelector('[aria-live]'), 'nor its voice').toBeNull();
         expect(element.hasAttribute('style')).toBe(false);
         expect(box(element).getAttribute('aria-describedby')).toBe('help');
     });
@@ -1118,13 +1132,351 @@ describe('a prefix and a suffix', () => {
 
         element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
 
-        expect(getComputedStyle(side(element, 'prefix')).color).toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(mark(element, 'prefix')).color).toBe('rgb(1, 2, 3)');
         expect(getComputedStyle(side(element, 'prefix')).opacity).toBe('1');
 
         element.disabled = true;
         await element.updateComplete;
 
         expect(getComputedStyle(side(element, 'prefix')).opacity).toBe('0.5');
+    });
+});
+
+/** The buttons a field carries at its end, and the count it draws under its box. */
+describe('the clear button, the password shown, and the count', () => {
+    /** One of the buttons at the control's end, by its part. */
+    function tool(element: Field, name: 'clear' | 'reveal'): HTMLButtonElement {
+        return part(element, name) as HTMLButtonElement;
+    }
+
+    /** Two frames, so the observer measuring each side has answered the first. */
+    async function measured(): Promise<void> {
+        for (let frame = 0; frame < 2; frame++) {
+            await new Promise(requestAnimationFrame);
+        }
+    }
+
+    /** Types into the control as a reader's key does: the value, and its input event. */
+    function type(element: Field, value: string): void {
+        const control = box(element);
+
+        control.value = value;
+        control.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    }
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('draws a clear button only where its label names it, idle while there is nothing to clear', async () => {
+        const bare = await mount(fixture);
+
+        expect(field(bare).shadowRoot?.querySelector('[part="clear"]'), 'none unasked').toBeNull();
+        expect(part(field(bare), 'suffix').hidden).toBe(true);
+
+        const form = await mount('<ui-input label="Find" name="q" clear-label="Clear"></ui-input>');
+        const element = field(form) as UiInput;
+
+        await measured();
+
+        expect(tool(element, 'clear').getAttribute('aria-label')).toBe('Clear');
+        expect(getComputedStyle(tool(element, 'clear')).visibility, 'idle while empty').toBe(
+            'hidden',
+        );
+        expect(
+            Number.parseFloat(getComputedStyle(box(element)).paddingInlineEnd),
+            'its place kept, so the value does not move as it comes',
+        ).toBe(part(element, 'suffix').offsetWidth);
+
+        type(element, 'abc');
+        await element.updateComplete;
+
+        expect(getComputedStyle(tool(element, 'clear')).visibility).toBe('visible');
+
+        element.readonly = true;
+        await element.updateComplete;
+
+        expect(getComputedStyle(tool(element, 'clear')).visibility, 'read-only').toBe('hidden');
+
+        element.readonly = false;
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(getComputedStyle(tool(element, 'clear')).visibility, 'disabled').toBe('hidden');
+
+        element.clearLabel = 'Empty';
+        await element.updateComplete;
+
+        expect(element.getAttribute('clear-label'), 'reflected').toBe('Empty');
+    });
+
+    it('empties the control, says so with input and change, and hands the focus back', async () => {
+        const form = await mount(
+            '<ui-input label="Find" name="q" value="abc" clear-label="Clear"></ui-input>',
+        );
+        const element = field(form);
+        const heard: string[] = [];
+
+        // Heard on the form, so both bubble, as the platform's own do.
+        form.addEventListener('input', () => heard.push('input'));
+        form.addEventListener('change', () => heard.push('change'));
+
+        expect(tool(element, 'clear').querySelectorAll('path').length, 'the cross').toBe(2);
+
+        await userEvent.click(tool(element, 'clear'));
+        await element.updateComplete;
+
+        expect(element.value).toBe('');
+        expect(box(element).value).toBe('');
+        expect(heard).toEqual(['input', 'change']);
+        expect(element.shadowRoot?.activeElement, 'the focus on the control').toBe(box(element));
+        expect([...new FormData(form)]).toEqual([['q', '']]);
+    });
+
+    it("says its emptying past another component's root, as the platform's own input event does", async () => {
+        const outer = document.createElement('div');
+
+        document.body.append(outer);
+        outer.attachShadow({ mode: 'open' }).innerHTML =
+            '<ui-input label="Find" name="q" value="abc" clear-label="Clear"></ui-input>';
+
+        const element = outer.shadowRoot?.querySelector('ui-input');
+
+        if (element === null || element === undefined) {
+            throw new Error('no field in the root');
+        }
+        const heard: string[] = [];
+
+        await element.updateComplete;
+        outer.addEventListener('input', () => heard.push('input'));
+        outer.addEventListener('change', () => heard.push('change'));
+
+        tool(element, 'clear').click();
+
+        // input is composed and leaves the root it was said in; change is not, as a control's.
+        expect(heard).toEqual(['input']);
+
+        outer.remove();
+    });
+
+    it("draws a pressed button on a password's control, which shows its text while pressed", async () => {
+        const form = await mount(
+            '<ui-input label="Password" name="p" type="password" reveal-label="Show password"></ui-input>',
+        );
+        const element = field(form) as UiInput;
+        const button = tool(element, 'reveal');
+
+        expect(button.getAttribute('aria-label')).toBe('Show password');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(box(element).type).toBe('password');
+        expect(button.querySelectorAll('path').length, 'the eye').toBe(1);
+
+        await userEvent.click(button);
+        await element.updateComplete;
+
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+        expect(box(element).getAttribute('type'), 'shown').toBe('text');
+        expect(element.getAttribute('type'), "the element's own type kept").toBe('password');
+        expect(button.querySelectorAll('path').length, 'struck through').toBe(4);
+
+        await userEvent.click(button);
+        await element.updateComplete;
+
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(box(element).type, 'hidden again').toBe('password');
+
+        await userEvent.click(button);
+        element.revealLabel = '';
+        await element.updateComplete;
+
+        expect(box(element).type, 'hidden with its button gone').toBe('password');
+
+        element.revealLabel = 'Show';
+        await element.updateComplete;
+
+        expect(element.getAttribute('reveal-label'), 'reflected').toBe('Show');
+    });
+
+    it('draws no password button on another type, nor unnamed, nor one that can be pressed disabled', async () => {
+        const text = await mount('<ui-input label="Name" name="n" reveal-label="Show"></ui-input>');
+
+        expect(field(text).shadowRoot?.querySelector('[part="reveal"]'), 'a text field').toBeNull();
+
+        const unnamed = await mount(
+            '<ui-input label="Password" name="p" type="password"></ui-input>',
+        );
+
+        expect(field(unnamed).shadowRoot?.querySelector('[part="reveal"]'), 'unnamed').toBeNull();
+
+        const disabled = await mount(
+            '<ui-input label="Password" name="p" type="password" reveal-label="Show" disabled></ui-input>',
+        );
+
+        expect(tool(field(disabled), 'reveal').disabled).toBe(true);
+    });
+
+    it('holds both buttons in the padding it widens at its end', async () => {
+        const form = await mount(
+            '<ui-input label="Password" name="p" type="password" value="x" clear-label="Clear" reveal-label="Show"></ui-input>',
+        );
+        const element = field(form);
+
+        await measured();
+
+        const end = Number.parseFloat(getComputedStyle(box(element)).paddingInlineEnd);
+
+        expect(end).toBe(part(element, 'suffix').offsetWidth);
+        expect(end, 'room for two targets').toBeGreaterThanOrEqual(48);
+    });
+
+    it('gives each button a 24px target, a hover and a ring', async () => {
+        const form = await mount(
+            '<ui-input label="Find" name="q" value="abc" clear-label="Clear"></ui-input>',
+        );
+        const element = field(form);
+        const button = tool(element, 'clear');
+
+        element.style.setProperty('--ui-color-hover', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-duration-state', '0s');
+
+        expect(button.getBoundingClientRect().width).toBeGreaterThanOrEqual(24);
+        expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(24);
+
+        await userEvent.hover(button);
+
+        expect(getComputedStyle(button).backgroundColor).toBe('rgb(1, 2, 3)');
+
+        await userEvent.click(box(element));
+        await userEvent.tab();
+
+        expect(element.shadowRoot?.activeElement, 'reached by Tab after the control').toBe(button);
+        expect(getComputedStyle(button).outlineStyle).toBe('solid');
+    });
+
+    it('draws its count under the control, the numbers written in, and is described by it', async () => {
+        const form = await mount(`
+            <ui-input label="Comment" name="c" maxlength="10" help="Be kind."
+                count-text="{count} typed, {remaining} left"></ui-input>
+        `);
+        const element = field(form) as UiInput;
+
+        expect(part(element, 'count').textContent.trim()).toBe('0 typed, 10 left');
+        expect(part(element, 'count').getAttribute('aria-hidden')).toBe('true');
+        expect(box(element).getAttribute('aria-describedby'), 'before the help').toBe('count help');
+
+        type(element, 'abc');
+        await element.updateComplete;
+
+        expect(part(element, 'count').textContent.trim(), 'at each key').toBe('3 typed, 7 left');
+
+        element.maxlength = '';
+        await element.updateComplete;
+
+        expect(part(element, 'count').textContent.trim(), 'nothing left to count').toBe(
+            '3 typed,  left',
+        );
+
+        element.countText = 'Counted';
+        await element.updateComplete;
+
+        expect(element.getAttribute('count-text'), 'reflected').toBe('Counted');
+    });
+
+    it('says its count once the reader stops typing, not at each key', async () => {
+        const form = await mount(
+            '<ui-input label="Comment" name="c" maxlength="10" count-text="{remaining} left"></ui-input>',
+        );
+        const element = field(form) as UiInput;
+        const said = element.renderRoot.querySelector('[aria-live]');
+
+        expect(said?.getAttribute('aria-live')).toBe('polite');
+
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+        type(element, 'a');
+        vi.advanceTimersByTime(500);
+        type(element, 'ab');
+        vi.advanceTimersByTime(999);
+        await element.updateComplete;
+
+        expect(said?.textContent, 'nothing yet, a key came within the second').toBe('');
+
+        vi.advanceTimersByTime(1);
+        await element.updateComplete;
+
+        expect(said?.textContent).toBe('8 left');
+
+        element.clearLabel = 'Clear';
+        await element.updateComplete;
+        tool(element, 'clear').click();
+        vi.advanceTimersByTime(1000);
+        await element.updateComplete;
+
+        expect(said?.textContent, 'and after a clear').toBe('10 left');
+    });
+
+    it('paints its buttons, its marks and its count from the tokens, each read on its own', async () => {
+        const form = await mount(`
+            <ui-input label="Find" name="q" value="abc" clear-label="Clear" suffix-text="x"
+                count-text="{count}"><span slot="suffix">*</span></ui-input>
+        `);
+        const element = field(form);
+
+        for (const [token, value] of [
+            ['--ui-space', '10px'],
+            ['--ui-radius', '7px'],
+            ['--ui-color-text-muted', 'rgb(1, 2, 3)'],
+            ['--ui-color-focus', 'rgb(4, 5, 6)'],
+            ['--ui-color-text', 'rgb(7, 8, 9)'],
+            ['--ui-duration-state', '123ms'],
+            ['--ui-easing-state', 'linear'],
+            ['--ui-icon-size', '19px'],
+            ['--ui-icon-stroke', '3'],
+            ['--ui-text-supporting', '17px'],
+        ] as const) {
+            element.style.setProperty(token, value);
+        }
+
+        const button = tool(element, 'clear');
+        const drawn = getComputedStyle(button);
+
+        expect(drawn.borderTopLeftRadius, '--ui-radius').toBe('7px');
+        expect(drawn.color, '--ui-color-text-muted').toBe('rgb(1, 2, 3)');
+        expect(drawn.transitionDuration, '--ui-duration-state').toBe('0.123s');
+        expect(drawn.transitionTimingFunction, '--ui-easing-state').toBe('linear');
+
+        const svg = button.querySelector('svg');
+
+        if (svg === null) {
+            throw new Error('the button draws no mark');
+        }
+
+        const glyph = getComputedStyle(svg);
+
+        expect(glyph.width, '--ui-icon-size').toBe('19px');
+        expect(glyph.strokeWidth, '--ui-icon-stroke').toBe('3px');
+
+        const mark = part(element, 'suffix').querySelector('.affix');
+
+        if (mark === null) {
+            throw new Error('the suffix draws no mark');
+        }
+
+        expect(getComputedStyle(mark).columnGap, 'half a space, glyph to text').toBe('5px');
+
+        const count = getComputedStyle(part(element, 'count'));
+
+        expect(count.color, '--ui-color-text').toBe('rgb(7, 8, 9)');
+        expect(count.fontSize, '--ui-text-supporting').toBe('17px');
+
+        await userEvent.click(box(element));
+        await userEvent.tab();
+
+        expect(getComputedStyle(button).outlineColor, '--ui-color-focus').toBe('rgb(4, 5, 6)');
+    });
+
+    it('has no violations with its buttons and its count', async () => {
+        await expectAccessible(await mountStory(Tools, meta, 'Tools'));
     });
 });
 
@@ -1391,6 +1743,17 @@ describe("a form's moments on a field", () => {
         return found;
     }
 
+    /** What a side of a field draws, which takes the halo its text takes. */
+    function affix(element: Field, name: 'prefix' | 'suffix'): HTMLElement {
+        const found = part(element, name).querySelector<HTMLElement>('.affix');
+
+        if (found === null) {
+            throw new Error(`the ${name} draws no mark`);
+        }
+
+        return found;
+    }
+
     /** The animations an element's one list plays, the kinds that play nothing left out. */
     function playing(target: Element, pseudo?: string): readonly string[] {
         return getComputedStyle(target, pseudo)
@@ -1427,7 +1790,7 @@ describe("a form's moments on a field", () => {
             '<ui-input label="Amount" error="Wrong." prefix-text="R$"></ui-input>',
         );
 
-        expect(playing(part(field(flashed), 'prefix')), 'beside the flash').toEqual(['ui-halo']);
+        expect(playing(affix(field(flashed), 'prefix')), 'beside the flash').toEqual(['ui-halo']);
 
         flashed.remove();
         sheet(glass);
@@ -1436,11 +1799,11 @@ describe("a form's moments on a field", () => {
 
         swept.dataset['uiTheme'] = glass.name;
 
-        expect(playing(part(field(swept), 'suffix')), 'nothing at rest').toEqual([]);
+        expect(playing(affix(field(swept), 'suffix')), 'nothing at rest').toEqual([]);
 
         await userEvent.tab();
 
-        expect(playing(part(field(swept), 'suffix')), 'under the sheen').toEqual(['ui-halo']);
+        expect(playing(affix(field(swept), 'suffix')), 'under the sheen').toEqual(['ui-halo']);
     });
 
     it("takes the label to the accent at the focus under the default theme's taste", async () => {

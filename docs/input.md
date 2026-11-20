@@ -13,6 +13,7 @@ import '@rak200/ui';
 - [`<ui-input>`](#ui-input)
 - [`<ui-textarea>`](#ui-textarea)
 - [A prefix and a suffix](#a-prefix-and-a-suffix)
+- [A clear button, the password shown, and a count](#a-clear-button-the-password-shown-and-a-count)
 - [The element is the control](#the-element-is-the-control)
 - [In a form](#in-a-form)
 - [Validation](#validation)
@@ -54,6 +55,9 @@ the element, so nothing has to be called.
 | `step`         | string  | `''`     | the granularity the value must fall on                 |
 | `prefix-text`  | string  | `''`     | text drawn before the value, inside the box            |
 | `suffix-text`  | string  | `''`     | text drawn after the value, inside the box             |
+| `clear-label`  | string  | `''`     | names a button that empties the control                |
+| `reveal-label` | string  | `''`     | names a button that shows a password's text            |
+| `count-text`   | string  | `''`     | a sentence counting what the control holds             |
 | `required`     | boolean | `false`  | the form is invalid while the control is empty         |
 | `disabled`     | boolean | `false`  | refuses interaction, and submits nothing               |
 | `readonly`     | boolean | `false`  | shows a value it will not let you change               |
@@ -122,6 +126,41 @@ framework that sets properties would write to it and fail.
 boundary and every effect on it stay the control's own, and a click on either side reaches the
 control. The text is drawn in `--ui-color-text-muted`, as a placeholder is, and takes the halo the
 control's text takes while a light passes under it.
+
+## A clear button, the password shown, and a count
+
+```html
+<ui-input label="Search" name="q" type="search" clear-label="Clear"></ui-input>
+<ui-input label="Password" name="password" type="password" reveal-label="Show password"></ui-input>
+<ui-input
+  label="Headline"
+  name="headline"
+  maxlength="60"
+  count-text="{remaining} characters left"
+></ui-input>
+```
+
+Each is drawn only where its attribute is written, and the attribute is the words a reader hears,
+so a page in another language writes its own.
+
+**`clear-label` names a button at the control's end that empties it.** It is there while the control
+holds a value the reader can change, and keeps its place while there is nothing to clear, so the
+value does not move as the first character arrives. Pressed, it empties the control, says so with
+`input` and `change` as the platform's own clear does, and hands the focus back to the control. On
+a `search`, the clear button Chromium and WebKit draw of their own gives way to it.
+
+**`reveal-label` names a button at the end of a password's control** that shows its text while it
+is pressed, which `aria-pressed` says, and hides it again. The element's own `type` stays
+`password`, so a form and a password manager read it as one. A control of another type draws none.
+
+**`count-text` is a sentence counting what the control holds**, drawn under the box and describing
+the control, after a prefix and a suffix and before the help: `{count}` is where the number of its
+characters goes, and `{remaining}` where the number its `maxlength` still allows. The count drawn
+changes at each key; what a screen reader hears is said a second after the reader stops typing, as
+GOV.UK's character count says its own, so a reader typing is not interrupted at each letter.
+
+The buttons are drawn as the toast's dismiss button is, in the muted text, with a hover, a ring and
+a 24px target, and the box's padding widens to hold them.
 
 ## The element is the control
 
@@ -374,6 +413,9 @@ Every colour is a [token](tokens.md); nothing here is hardcoded.
 | `error`    | the message, when there is one         |
 | `prefix`   | what is drawn before the value         |
 | `suffix`   | what is drawn after the value          |
+| `clear`    | the button that empties the control    |
+| `reveal`   | the button that shows a password       |
+| `count`    | the count drawn under the box          |
 
 The hover rules are guarded against `:disabled` **and** `[readonly]`, measured rather than assumed:
 a disabled control still matches `:hover`, and a readonly one accepts a pointer it will do nothing
