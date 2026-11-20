@@ -12,8 +12,10 @@ them. A card "grows no `clickable` attribute", and a toast's one control is its 
 
 A fifth came out of [RFC 0011](0011-the-console.md)'s rollout: a `<ui-button>` the keys still reach
 while it cannot be used, so that a tooltip saying why is shown by them, and not by a pointer alone.
+A sixth was asked for after the second look below: an arrow on a tooltip's tip, pointing at its
+trigger.
 
-This proposal studies the five and a catalogue round them. It decides which enter, and what each
+This proposal studies the six and a catalogue round them. It decides which enter, and what each
 costs the decision it meets. New components are [RFC 0009](0009-new-components.md)'s.
 
 ## Study
@@ -285,6 +287,40 @@ the three engines, an input in a root found a datalist written beside it there, 
 options, and found none written in the host's tree, which is the tree-scope rule again. So a field's
 suggestions are drawn in its root, from choices the host writes, as a select's are.
 
+### Measured: an arrow on the tip, pointing at its trigger
+
+`docs/tooltip.md` leaves an arrow to the host, with `data-side` to select on. Drawn by the package,
+the arrow has to be the tip's own: the tip is the host's element and a popover, so only what it
+holds goes with it into the top layer, and a pseudo-element is the one thing the tooltip's sheet can
+give it without writing into the host's element. Each case below was measured on bare elements
+shaped as the tooltip is, a slotted tip shown from its trigger and placed by `position-area`, in
+Chromium 153, Firefox 155 and WebKit 26.5. The sheet's `::slotted(*)::before` was generated on the
+tip in all three.
+
+**CSS cannot point it at the trigger.** The arrow was anchored to the trigger from inside the tip,
+by the anchor the tip is shown from or by a name on the trigger, as a pseudo-element or as a child,
+placed `absolute` or `fixed`, under a backdrop filter or none. Chromium and Firefox resolved none of
+the 24 cases. WebKit resolved a named anchor on a child alone, and measured it from the viewport
+rather than from the tip. So the element writes the arrow's place, from the two boxes `#side()`
+already reads as the tip shows and on every scroll and resize: the trigger's middle, less where the
+tip starts. Where the tip is pulled inside the screen, that is not the tip's middle, and the arrow
+was found at the trigger's middle there too.
+
+**The popover's own overflow clips it.** The user agent gives a popover `overflow: auto`, and an
+arrow in the gap under the tip was neither drawn nor found by the pointer in the three engines. With
+the tip's overflow visible, it was drawn, and a point on it was taken as the tip. So the pointer
+crosses that much of the gap on the tip, the way onto it 1.4.13 asks for.
+
+**Firefox loses the tip's anchor if the arrow moves by an inset.** With the place written as a
+custom property the `::before`'s `left` reads, Firefox put the tip in the corner of the screen once
+the property was written, and left it there, where the other two kept it against its trigger. Read
+by `translate` or by a margin, or the arrow turned to the other side by an attribute, the tip stayed
+in place in all three. So the arrow moves by `translate`.
+
+**What it is drawn in is the tip's**: the surface, the edge and the shadow, and the edge again in
+forced colors. Glass's surface is translucent, so any part of the arrow laid over the tip shows
+twice, and how the arrow meets the edge there is its pull request's to draw.
+
 ## Proposed design
 
 ### What enters, in this order
@@ -313,23 +349,29 @@ suggestions are drawn in its root, from choices the host writes, as a select's a
    the card's target, and the card adopts the rule that spreads it over itself into the host's tree,
    lifting what the card holds above it. `docs/card.md`'s refusal of `clickable` stands; what
    changes is that the stretched link is drawn by the package rather than left to the host.
-8. **`<ui-dialog>` opened from markup**, answering `--show` and `--close` from any button aimed at
+8. **An arrow on `<ui-tooltip>`'s tip, pointing at its trigger**, which `docs/tooltip.md` leaves to
+   the host today. The sheet draws it as the tip's `::before`, in the gap on the side `data-side`
+   names, in the tip's surface, edge and shadow, and lets the tip's overflow show. Its place along
+   the tip is the trigger's middle, which the element writes from the two boxes `#side()` reads and
+   the arrow takes by `translate`, kept clear of the tip's rounded corners. A rule of the host's on
+   the tip's `::before` outweighs the sheet's, so `content: none` there takes the arrow away.
+9. **`<ui-dialog>` opened from markup**, answering `--show` and `--close` from any button aimed at
    it.
-9. **A placeholder on `<ui-select>`**, the platform's own: a first choice with no value, which a
-   required select refuses.
-10. **A clear button, the password shown, and a count on `<ui-input>`**, each a part of the root.
+10. **A placeholder on `<ui-select>`**, the platform's own: a first choice with no value, which a
+    required select refuses.
+11. **A clear button, the password shown, and a count on `<ui-input>`**, each a part of the root.
     The clear button and the password's switch are named by attributes. The count is a sentence
     describing the control, written by an attribute with a place for the number, and heard once the
     reader stops typing.
-11. **A sticky header and a sticky first column on `<ui-table>`.** The column sticks within the box
+12. **A sticky header and a sticky first column on `<ui-table>`.** The column sticks within the box
     that scrolls already. The header sticks within a box given a height of its own, which the host
     sets.
-12. **Items that tick, and sections, in `<ui-menu>`**: `menuitemcheckbox` and `menuitemradio` with
+13. **Items that tick, and sections, in `<ui-menu>`**: `menuitemcheckbox` and `menuitemradio` with
     `aria-checked` on the host's items, and `role="group"` named by a heading, all in the host's
     tree.
-13. **`<ui-button-group>`**: the buttons drawn joined, and named together as a group. Whether it
+14. **`<ui-button-group>`**: the buttons drawn joined, and named together as a group. Whether it
     takes the toolbar's keyboard too is the study's to settle.
-14. **Submenus in `<ui-menu>`**, last, once the pointer's way into one is measured. The layer and
+15. **Submenus in `<ui-menu>`**, last, once the pointer's way into one is measured. The layer and
     its dismissal are left to the platform, as measured. The menu writes <kbd>→</kbd>, <kbd>←</kbd>
     and the focus between the two panels.
 
@@ -363,11 +405,16 @@ look is yet to be chosen from. The proposal stays in study, so another feature c
   where the pointer rests, so a new tab and the link's menu are lost over most of it.
 - **A slotted prefix that the control is described by**: the reference would cross the root.
 - **A `clickable` attribute**: everything `docs/card.md` says it would reimplement.
+- **An arrow placed by CSS alone**, anchored to the trigger from inside the tip: measured, Chromium
+  and Firefox resolve it in no form, and WebKit in one, measured from the viewport.
+- **The arrow left to the host**, as `docs/tooltip.md` leaves it now: every page draws the same
+  shape, and none can keep it at the trigger's middle where the tip is pulled inside the screen
+  without the boxes the element already reads.
 
 ## Decision
 
 **Not taken yet.** The proposal stays in study, so that more features can join it before its set is
-closed. Three questions are settled, and the proposed design above is written to them:
+closed. Four questions are settled, and the proposed design above is written to them:
 
 1. **A card opens where it is clicked by the stretched link**, over the redundant click.
 2. **Five more join the eight proposed**: the input's clear button, password and count; the table's
@@ -375,6 +422,8 @@ closed. Three questions are settled, and the proposed design above is written to
    and submenus.
 3. **An `aria-disabled` `<ui-button>` joins them**, the button the keys still reach while it cannot
    be used, which RFC 0011's rollout found.
+4. **An arrow on a tooltip's tip, pointing at its trigger, joins them**, asked for after the second
+   look.
 
 ## Rollout
 
