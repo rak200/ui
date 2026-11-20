@@ -403,113 +403,113 @@ first, being the cheapest, and the menu last, where the two dearest steps are.
 **The fields.**
 
 1. **`<ui-textarea>` grows with its text**, between its least height and a greatest one the host
-   sets. An engine without `field-sizing`, Firefox before 152, keeps the box as it is.
+   sets. An engine without `field-sizing`, Firefox before 152, keeps the box as it is. #441
 2. **A `help` on `<ui-checkbox>` and `<ui-switch>`**, the instruction every other field takes,
-   joined to the description as a field's is.
+   joined to the description as a field's is. #442
 3. **A placeholder on `<ui-select>`**, the platform's own: a first choice with no value, which a
-   required select refuses.
+   required select refuses. #443
 4. **A prefix and a suffix on `<ui-input>`.** The text comes as the `prefix` and `suffix`
    attributes, rendered in the root and joining the description; a glyph comes as a slot of the same
-   name, hidden from the tree.
+   name, hidden from the tree. #444
 5. **A clear button, the password shown, and a count on `<ui-input>`**, each a part of the root,
    after the suffix. The clear button and the password's switch are named by attributes. The count
    is a sentence describing the control, written by an attribute with a place for the number, and
-   heard once the reader stops typing.
+   heard once the reader stops typing. #445
 6. **A button of the host's at `<ui-input>`'s end**, slotted after the control and its parts, named
-   by itself, and reached by Tab after the control.
+   by itself, and reached by Tab after the control. #446
 7. **Suggestions on `<ui-input>`**, the platform's `<datalist>`, drawn in the root from choices the
-   host writes, as a select's are, since a datalist is found only in its input's tree.
+   host writes, as a select's are, since a datalist is found only in its input's tree. #447
 
 **The button.**
 
 8. **A `danger` `<ui-button>`**, filled with four names of its own, computed from the danger as the
-   primary's are from the accent, and measured over every palette.
+   primary's are from the accent, and measured over every palette. #448
 9. **A toggle `<ui-button>`**: `pressed`, written on the platform's button as `aria-pressed`, and
-   drawn in the selected names a select's chosen option has.
+   drawn in the selected names a select's chosen option has. #449
 10. **An `aria-disabled` `<ui-button>`**, which the keys still reach while it cannot be used. The
     host writes `aria-disabled="true"`, as on a `<button>`. The button is drawn as a disabled one
     is, with its effects stood down, and refuses a press, so neither it nor <kbd>Enter</kbd> in a
     field sends its form. It keeps its tab stop, so the keys show a tooltip on it, and its own
     button carries the state, for a tree that does not take it from the host. `docs/tooltip.md`'s
-    answer for a disabled control then points at it.
+    answer for a disabled control then points at it. #450
 11. **`<ui-button-group>`**: the buttons drawn joined, their shared corners squared through
     `::part(button)` by rules the group adopts into the host's tree, and named together as a group.
     With `toolbar` it takes the APG toolbar's keyboard: one tab stop, by a roving tabindex on the
     buttons' hosts, the arrows and their mirror, Home and End, for which `<ui-button>` delegates its
-    focus. It comes after the toggle, whose buttons a toolbar most often holds.
-12. **A busy `<ui-button>`**, #439, once RFC 0009's progress has landed, and at the end of the list
+    focus. It comes after the toggle, whose buttons a toolbar most often holds. #451
+12. **A busy `<ui-button>`**, once RFC 0009's progress has landed, and at the end of the list
     if it has not by its turn. It refuses a press and keeps its tab stop, as an `aria-disabled` one
     does. After a second it draws the indeterminate ring in place of its label, keeping its width.
     How it says it is busy to a reader is its manual page's to measure: a name that changes on the
-    focused button is announced by some readers and not by others.
+    focused button is announced by some readers and not by others. #439
 
 **The icon and the tooltip.**
 
 13. **`<ui-icon>` turned where the text runs right to left**, for a glyph the host marks as pointing
-    one way, by `:host(:dir(rtl))`.
+    one way, by `:host(:dir(rtl))`. #452
 14. **A side of its own for `<ui-tooltip>`'s tip**, below its trigger or beside it where the host
     asks, by `position-area` and its fallbacks for each side, and in an island by anchored insets
     read in the tip's direction, as measured. `data-side` names the side it took, the inline ones
-    too.
+    too. #453
 15. **An arrow on `<ui-tooltip>`'s tip, pointing at its trigger**, after the side, so it is drawn
     once for every side, where `docs/tooltip.md` leaves it to the host today. The sheet draws it as
     the tip's `::before`, in the gap on the side `data-side` names, in the tip's surface, edge and
     shadow, and lets the tip's overflow show. Its place along the tip is the trigger's middle, which
     the element writes from the two boxes `#side()` reads and the arrow takes by `translate`, kept
     clear of the tip's rounded corners. A rule of the host's on the tip's `::before` outweighs the
-    sheet's, so `content: none` there takes the arrow away.
+    sheet's, so `content: none` there takes the arrow away. #454
 
 **The dialog and the toast.**
 
 16. **`<ui-dialog>` opened from markup**, answering `--show` and `--close` from any button aimed at
-    it.
+    it. #455
 17. **`<ui-dialog>` closed by its form**: a `<form method="dialog">` in it closes it, with the value
     of the button that sent it, as the platform does for a form in a `<dialog>` it holds, and the
-    limit `docs/dialog.md` lists goes.
+    limit `docs/dialog.md` lists goes. #456
 18. **An alert `<ui-dialog>`**, `role="alertdialog"` on its dialog, for a choice the reader has to
-    make.
+    make. #457
 19. **A heading on `<ui-toast>`**, a slot above the message, read with it in the toaster's region.
+    #458
 20. **An action on `<ui-toast>`**, a slot for a button the host writes. A toast with an action never
-    expires, and `docs/toast.md` asks for an action the page offers elsewhere too.
+    expires, and `docs/toast.md` asks for an action the page offers elsewhere too. #459
 
 **The card, the table and the radio group.**
 
 21. **A card that opens where it is clicked**, by the stretched link: the host names the link that
     is the card's target, and the card adopts the rule that spreads it over itself into the host's
     tree, lifting what the card holds above it. `docs/card.md`'s refusal of `clickable` stands; what
-    changes is that the stretched link is drawn by the package rather than left to the host.
+    changes is that the stretched link is drawn by the package rather than left to the host. #460
 22. **Numeric columns on `<ui-table>`**, end-aligned in tabular figures, for the cells the host
-    marks, in the rules the table adopts.
+    marks, in the rules the table adopts. #461
 23. **A sticky header and a sticky first column on `<ui-table>`.** The column sticks within the box
     that scrolls already. The header sticks within a box given a height of its own, which the host
-    sets.
+    sets. #462
 24. **`<ui-radio>` choices drawn as cards**, the joined drawing the button group gives its row,
-    larger, with a description for each choice in the group's root, where its controls are.
+    larger, with a description for each choice in the group's root, where its controls are. #463
 
 **The menu.**
 
 25. **`<ui-menu>` hung from the trigger's other edge**, where the host asks: the edge the panel
-    already turns to where the first would run off the screen.
+    already turns to where the first would run off the screen. #464
 26. **Items that tick, and sections, in `<ui-menu>`**: `menuitemcheckbox` and `menuitemradio` with
     `aria-checked` on the host's items, and `role="group"` named by a heading, all in the host's
-    tree.
+    tree. #465
 27. **A shortcut and a description on `<ui-menu>`'s items**, drawn at the item's end and under its
     label, by rules the menu adopts into the host's tree as the table adopts its own, since
-    `::slotted()` stops at the item.
+    `::slotted()` stops at the item. #466
 28. **Submenus in `<ui-menu>`.** The layer and its dismissal are left to the platform, as measured.
     The menu writes <kbd>→</kbd>, <kbd>←</kbd> and the focus between the two panels. An item opens
     its submenu 100ms after the pointer comes onto it, and an open submenu waits for the pointer
     across the area from where it left the item to the submenu's corners, for 300ms at most, while
-    the items it crosses open nothing.
+    the items it crosses open nothing. #467
 29. **`<ui-menu>` opened at the pointer**, last: a context menu. The pointer's `contextmenu` opens
     it where the pointer is, and the menu key and <kbd>Shift</kbd>+<kbd>F10</kbd> open it at the
     focused element, read as keys, since only Chromium sends `contextmenu` for them, measured. Its
     panel is shown from a point, a zero-size element where it was asked for, which places it and
-    turns it back inside the screen in the three engines.
+    turns it back inside the screen in the three engines. #468
 
-**The rest of the first catalogue is left out for now**, each for the reason its row gives, and so
-are the two rows the second look turns down. The proposal stays in study, so another feature can
-still join it.
+**The rest of the first catalogue is left out**, each for the reason its row gives, and so are the
+two rows the second look turns down.
 
 ### What each feature brings with it
 
@@ -554,8 +554,8 @@ still join it.
 
 ## Decision
 
-**Not taken yet.** The proposal stays in study, so that more features can join it before its set is
-closed. Six questions are settled, and the proposed design above is written to them:
+**Accepted** on 2026-11-20. Its set is closed, every question the study left is settled, and the
+proposed design above is written to the answers:
 
 1. **A card opens where it is clicked by the stretched link**, over the redundant click.
 2. **Five more join the eight proposed**: the input's clear button, password and count; the table's
@@ -575,11 +575,15 @@ closed. Six questions are settled, and the proposed design above is written to t
    - a context menu reads its keys itself, and its panel is placed from a point;
    - a tip's own side takes anchored insets in an island.
 
+It is built in the design's order, each step an issue of its own, #441 to #468, and the busy
+button's, #439.
+
 ## Rollout
 
-1. **One pull request for each step above**, in its order. The busy button waits for RFC 0009's
-   progress, which #439 holds. The last pull request marks this proposal `Implemented`.
-2. **Each step enters ROADMAP.md with an issue of its own** once this proposal is accepted.
+1. **One pull request for each step above**, in its order, each closing the issue named at its end.
+   The busy button waits for RFC 0009's progress, which #439 holds. The last pull request marks
+   this proposal `Implemented`.
+2. **Each step is in ROADMAP.md with its issue**, and the pull request that delivers it removes it.
 
 ## Related
 
