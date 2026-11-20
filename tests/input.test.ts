@@ -6,7 +6,14 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { Constrained, Disabled, Invalid, Multiline, Text } from '../stories/input.stories.js';
+import meta, {
+    Affixes,
+    Constrained,
+    Disabled,
+    Invalid,
+    Multiline,
+    Text,
+} from '../stories/input.stories.js';
 import '../src/input.js';
 import '../src/tooltip.js';
 import type { UiInput, UiTextarea } from '../src/input.js';
@@ -943,6 +950,168 @@ describe('ui-textarea', () => {
 });
 
 /**
+ * What a field carries in its box beside the control, laid over the control's padding, which the
+ * control widens by each side's measured width.
+ */
+describe('a prefix and a suffix', () => {
+    /** Two frames, so the observer measuring each side has answered the first. */
+    async function measured(): Promise<void> {
+        for (let frame = 0; frame < 2; frame++) {
+            await new Promise(requestAnimationFrame);
+        }
+    }
+
+    /** One side's box, drawn whatever it holds. */
+    function side(element: Field, name: 'prefix' | 'suffix'): HTMLElement {
+        return part(element, name);
+    }
+
+    const priced =
+        '<ui-input label="Price" name="price" help="Billed monthly." prefix-text="R$" suffix-text="per month"></ui-input>';
+
+    it('draws its text in the box, hidden from the tree, and describes the control by it', async () => {
+        const form = await mount(priced);
+        const element = field(form) as UiInput;
+
+        expect(side(element, 'prefix').textContent.trim()).toBe('R$');
+        expect(side(element, 'suffix').textContent.trim()).toBe('per month');
+        expect(side(element, 'prefix').getAttribute('aria-hidden')).toBe('true');
+        expect(side(element, 'suffix').getAttribute('aria-hidden')).toBe('true');
+        // Nearer the value than the instruction under it.
+        expect(box(element).getAttribute('aria-describedby')).toBe('prefix suffix help');
+
+        element.error = 'Too high.';
+        await element.updateComplete;
+
+        expect(box(element).getAttribute('aria-describedby'), 'the error first').toBe(
+            'error prefix suffix help',
+        );
+
+        element.prefixText = 'US$';
+        await element.updateComplete;
+
+        expect(element.getAttribute('prefix-text'), 'reflected').toBe('US$');
+        expect(side(element, 'prefix').textContent.trim()).toBe('US$');
+    });
+
+    it("widens the control's padding to hold each side, and gives it back when a side goes", async () => {
+        const form = await mount(priced);
+        const element = field(form) as UiInput;
+
+        element.style.setProperty('--ui-space', '10px');
+        await measured();
+
+        const control = box(element);
+        const styles = getComputedStyle(control);
+
+        expect(Number.parseFloat(styles.paddingInlineStart)).toBe(
+            side(element, 'prefix').offsetWidth,
+        );
+        expect(Number.parseFloat(styles.paddingInlineEnd)).toBe(
+            side(element, 'suffix').offsetWidth,
+        );
+        expect(side(element, 'prefix').offsetWidth, 'wider than the space alone').toBeGreaterThan(
+            10,
+        );
+
+        element.prefixText = '';
+        element.suffixText = '';
+        await element.updateComplete;
+        await measured();
+
+        expect(getComputedStyle(control).paddingInlineStart).toBe('10px');
+        expect(getComputedStyle(control).paddingInlineEnd).toBe('10px');
+        expect(side(element, 'prefix').hidden, 'not drawn').toBe(true);
+        expect(element.getAttribute('style'), 'and nothing left written').not.toMatch(/--ui-fx-/);
+    });
+
+    it('writes nothing on a field that carries nothing, nor describes it by a side', async () => {
+        const form = await mount(fixture);
+        const element = field(form);
+
+        await measured();
+
+        expect(side(element, 'prefix').hidden).toBe(true);
+        expect(side(element, 'suffix').hidden).toBe(true);
+        expect(element.hasAttribute('style')).toBe(false);
+        expect(box(element).getAttribute('aria-describedby')).toBe('help');
+    });
+
+    it('takes a glyph in a slot of the same name, hidden from the tree, and lets it go', async () => {
+        const form = await mount(
+            '<ui-input label="Search" name="q"><span slot="prefix">*</span></ui-input>',
+        );
+        const element = field(form);
+
+        await measured();
+
+        expect(side(element, 'prefix').hidden, 'drawn for its glyph').toBe(false);
+        expect(Number.parseFloat(getComputedStyle(box(element)).paddingInlineStart)).toBe(
+            side(element, 'prefix').offsetWidth,
+        );
+        expect(box(element).hasAttribute('aria-describedby'), 'a glyph describes nothing').toBe(
+            false,
+        );
+
+        element.querySelector('[slot="prefix"]')?.remove();
+        await element.updateComplete;
+        await measured();
+
+        expect(side(element, 'prefix').hidden, 'gone with it').toBe(true);
+    });
+
+    it('lays the prefix at the start and the suffix at the end, right to left as well', async () => {
+        const form = await mount(`<div dir="rtl">${priced}</div>`);
+        const element = field(form);
+
+        await measured();
+
+        const control = box(element).getBoundingClientRect();
+        const prefix = side(element, 'prefix').getBoundingClientRect();
+        const suffix = side(element, 'suffix').getBoundingClientRect();
+
+        expect(Math.round(prefix.right), 'the prefix at the right').toBe(Math.round(control.right));
+        expect(Math.round(suffix.left), 'the suffix at the left').toBe(Math.round(control.left));
+    });
+
+    it('passes a click on either side through to the control', async () => {
+        // Read where a point lands rather than driving the pointer there, which lands scaled
+        // off the frame the suite runs in: the control, whose own click focuses it.
+        const form = await mount(priced);
+        const element = field(form);
+
+        await measured();
+
+        for (const name of ['prefix', 'suffix'] as const) {
+            const at = side(element, name).getBoundingClientRect();
+
+            expect(
+                element.shadowRoot?.elementFromPoint(
+                    at.left + at.width / 2,
+                    at.top + at.height / 2,
+                ),
+                name,
+            ).toBe(box(element));
+        }
+    });
+
+    it('is drawn muted, and dims with a control that cannot be used', async () => {
+        const form = await mount(priced);
+        const element = field(form);
+
+        element.style.setProperty('--ui-color-text-muted', 'rgb(1, 2, 3)');
+
+        expect(getComputedStyle(side(element, 'prefix')).color).toBe('rgb(1, 2, 3)');
+        expect(getComputedStyle(side(element, 'prefix')).opacity).toBe('1');
+
+        element.disabled = true;
+        await element.updateComplete;
+
+        expect(getComputedStyle(side(element, 'prefix')).opacity).toBe('0.5');
+    });
+});
+
+/**
  * A component that accepts interaction and shows no feedback is defective. Nothing here
  * restates a colour: the question a hover asks is *did it move*.
  */
@@ -1234,6 +1403,29 @@ describe("a form's moments on a field", () => {
         expect(playing(box(element)), 'the flash, and its halo').toEqual(['ui-flash', 'ui-halo']);
     });
 
+    it('haloes what a field carries beside its control as its text, under the flash and the sheen', async () => {
+        sheet();
+
+        const flashed = await mount(
+            '<ui-input label="Amount" error="Wrong." prefix-text="R$"></ui-input>',
+        );
+
+        expect(playing(part(field(flashed), 'prefix')), 'beside the flash').toEqual(['ui-halo']);
+
+        flashed.remove();
+        sheet(glass);
+
+        const swept = await mount('<ui-input label="Amount" suffix-text="BRL"></ui-input>');
+
+        swept.dataset['uiTheme'] = glass.name;
+
+        expect(playing(part(field(swept), 'suffix')), 'nothing at rest').toEqual([]);
+
+        await userEvent.tab();
+
+        expect(playing(part(field(swept), 'suffix')), 'under the sheen').toEqual(['ui-halo']);
+    });
+
     it("takes the label to the accent at the focus under the default theme's taste", async () => {
         const element = await erring();
         const resting = getComputedStyle(part(element, 'label')).color;
@@ -1439,6 +1631,10 @@ describe('accessibility', () => {
 
     it('has no violations as a textarea', async () => {
         await expectAccessible(await mountStory(Multiline, meta, 'Multiline'));
+    });
+
+    it('has no violations with a text and a glyph on its sides', async () => {
+        await expectAccessible(await mountStory(Affixes, meta, 'Affixes'));
     });
 
     it('has no violations in error', async () => {

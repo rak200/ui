@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A prefix and a suffix on `<ui-input>` (#444)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s fourth step: the text as attributes,
-joined to the control's description, and a glyph as a slot hidden from the tree.
-
 ## A clear button, the password shown, and a count on `<ui-input>` (#445)
 
-Three parts of the field's root, named by attributes, the count heard once the reader stops typing.
+[RFC 0010](docs/proposals/0010-component-features.md)'s fifth step: three parts of the field's
+root, named by attributes, the count heard once the reader stops typing.
 
 ## A button of the host's at `<ui-input>`'s end (#446)
 

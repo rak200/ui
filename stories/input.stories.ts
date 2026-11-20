@@ -13,6 +13,7 @@
 // type-only import whole, so a lone `import type` would drop the side effect that
 // registers the elements and the tags below would never upgrade.
 import '@rak200/ui';
+import '@rak200/ui/icons/search.js';
 import { html, type TemplateResult } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 
@@ -74,6 +75,29 @@ export const Multiline: StoryObj<InputArgs> = {
             rows="4"
             ?disabled=${disabled}
         ></ui-textarea>
+    `,
+};
+
+/**
+ * Text before and after the value, inside the box, and a glyph in a slot of the same name.
+ *
+ * The text is heard with the control, after an error and before the help; the glyph is hidden
+ * from the tree. Either is laid over the control's padding, which widens to hold it.
+ */
+export const Affixes: StoryObj<InputArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+            <ui-input
+                label="Price"
+                name="price"
+                help="Billed monthly."
+                prefix-text="R$"
+                suffix-text="per month"
+            ></ui-input>
+            <ui-input label="Search" name="q" type="search">
+                <ui-icon slot="prefix" name="search"></ui-icon>
+            </ui-input>
+        </div>
     `,
 };
 

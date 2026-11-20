@@ -12,6 +12,7 @@ import '@rak200/ui';
 
 - [`<ui-input>`](#ui-input)
 - [`<ui-textarea>`](#ui-textarea)
+- [A prefix and a suffix](#a-prefix-and-a-suffix)
 - [The element is the control](#the-element-is-the-control)
 - [In a form](#in-a-form)
 - [Validation](#validation)
@@ -51,6 +52,8 @@ the element, so nothing has to be called.
 | `min`          | string  | `''`     | the lowest accepted value                              |
 | `max`          | string  | `''`     | the highest accepted value                             |
 | `step`         | string  | `''`     | the granularity the value must fall on                 |
+| `prefix-text`  | string  | `''`     | text drawn before the value, inside the box            |
+| `suffix-text`  | string  | `''`     | text drawn after the value, inside the box             |
 | `required`     | boolean | `false`  | the form is invalid while the control is empty         |
 | `disabled`     | boolean | `false`  | refuses interaction, and submits nothing               |
 | `readonly`     | boolean | `false`  | shows a value it will not let you change               |
@@ -94,6 +97,31 @@ scrolls, as it always has.
 it.
 
 Exported as `UiTextarea`.
+
+## A prefix and a suffix
+
+```html
+<ui-input label="Price" name="price" prefix-text="R$" suffix-text="per month"></ui-input>
+```
+
+**Text comes as an attribute**, `prefix-text` or `suffix-text`, and is drawn inside the box before
+or after the value, at the start and the end of its own direction. It is heard with the control, as
+part of its description, after an error and before the help: `R$` is the unit the value is read in.
+Not `prefix`, which is a property every element already has, its namespace prefix, read-only, so a
+framework that sets properties would write to it and fail.
+
+**A glyph comes in a slot of the same name**, hidden from the tree, where a text would be heard:
+
+```html
+<ui-input label="Search" name="q">
+  <ui-icon slot="prefix" name="search"></ui-icon>
+</ui-input>
+```
+
+**Either side is laid over the control's padding**, which widens to hold it, so the box, its
+boundary and every effect on it stay the control's own, and a click on either side reaches the
+control. The text is drawn in `--ui-color-text-muted`, as a placeholder is, and takes the halo the
+control's text takes while a light passes under it.
 
 ## The element is the control
 
@@ -344,6 +372,8 @@ Every colour is a [token](tokens.md); nothing here is hardcoded.
 | `control`  | the `<input>` or `<textarea>` itself   |
 | `help`     | the supporting text, when there is one |
 | `error`    | the message, when there is one         |
+| `prefix`   | what is drawn before the value         |
+| `suffix`   | what is drawn after the value          |
 
 The hover rules are guarded against `:disabled` **and** `[readonly]`, measured rather than assumed:
 a disabled control still matches `:hover`, and a readonly one accepts a pointer it will do nothing

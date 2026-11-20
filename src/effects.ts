@@ -752,10 +752,11 @@ export function buttonEffects(component: string): CSSResult {
  * read-only to guard against, so its sheet names none.
  *
  * **What it asks of the component.** Its control is the element `component` names — an `<input>`,
- * a `<textarea>` or a `<select>` — and the one child of a `.glow` box in its shadow root, the box a
+ * a `<textarea>` or a `<select>` — and the child of a `.glow` box in its shadow root, the box a
  * theme's glow is drawn on, with the control's size and corner; and `arrive()` is bound to the
  * control's focus, with `watch()` called as the component connects. The sheet comes after the
- * component's own.
+ * component's own. What the box holds beside the control, an `.affix` laid over its padding as
+ * `<ui-input>`'s prefix and suffix are, takes the halo the control's text takes.
  *
  * **Nothing moves the control on its own.** A field is where the reference measured motion getting in the way
  * of the reader, who is typing or choosing there: an effect changes what is round the control, or
@@ -984,6 +985,13 @@ export function fieldEffects(component: string, able: string): CSSResult {
                     ui-halo ${reference('--ui-duration-loop')} linear
                         ${reference('--ui-iteration-settle')};
             }
+
+            /* What a field carries beside its control, laid over the same fill, takes the halo its
+               text takes while the sheen passes under both. */
+            .glow:has(> ${control}:focus-visible) > .affix {
+                animation: ui-halo ${reference('--ui-duration-loop')} linear
+                    ${reference('--ui-iteration-settle')};
+            }
         }
 
         /* The halo a field's text and placeholder take for as long as a light passes under them —
@@ -1180,6 +1188,11 @@ export function fieldEffects(component: string, able: string): CSSResult {
                         ${reference('--ui-iteration-settle')},
                     ui-halo ${reference('--ui-duration-flourish')} linear
                         ${reference('--ui-iteration-settle')};
+            }
+
+            .glow:has(> ${control}[aria-invalid='true']) > .affix {
+                animation: ui-halo ${reference('--ui-duration-flourish')} linear
+                    ${reference('--ui-iteration-settle')};
             }
         }
 

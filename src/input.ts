@@ -422,10 +422,15 @@ class UiTextField extends LitElement {
      * every element that takes the handoff instead of restated in each. The composition
      * itself moved there with it, which is why this no longer joins a list by hand:
      * `<ui-checkbox>` needed the same one, and two answers to one problem is one too many.
+     *
+     * **What the control carries beside it comes between the error and the help**, the ids
+     * `beside` names: a field's prefix and suffix, the unit the value is read in, nearer the
+     * value than the instruction under it.
      */
-    protected described(): string | typeof nothing {
+    protected described(...beside: string[]): string | typeof nothing {
         return this.#description.described(
             this.error === '' ? '' : 'error',
+            ...beside,
             this.help === '' ? '' : 'help',
         );
     }
@@ -442,6 +447,58 @@ class UiTextField extends LitElement {
  */
 const pickers: ReadonlySet<string> = new Set(['color', 'file']);
 
+/** The two sides a field's control carries something on, read in its own direction. */
+type Side = 'prefix' | 'suffix';
+
+/**
+ * What a text field draws in its box beside the control, its prefix and its suffix.
+ *
+ * **Laid over the control's padding, in the box's one cell**, which the control's padding widens
+ * to hold: the element measures each side and hands its width over as `--ui-fx-prefix` and
+ * `--ui-fx-suffix`, since no rule can read one element's width into another's padding. So the
+ * box, its boundary and every effect drawn on it stay the control's own, and the effects' sheet
+ * needs no second box to light. A click on either side passes through to the control, which a
+ * click anywhere on the box has always reached.
+ */
+const affixes = css`
+    .glow > * {
+        grid-area: 1 / 1;
+    }
+
+    .affix {
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: calc(${reference('--ui-space')} / 2);
+        align-self: center;
+        padding-inline: ${reference('--ui-space')};
+        color: ${reference('--ui-color-text-muted')};
+        pointer-events: none;
+    }
+
+    [data-side='prefix'] {
+        justify-self: start;
+    }
+
+    [data-side='suffix'] {
+        justify-self: end;
+    }
+
+    /* Restated, since the display above outweighs the user agent's for [hidden]. */
+    .affix[hidden] {
+        display: none;
+    }
+
+    .glow:has(> :disabled) > .affix {
+        opacity: 0.5;
+    }
+
+    input {
+        padding-inline-start: max(${reference('--ui-space')}, var(--ui-fx-prefix, 0px));
+        padding-inline-end: max(${reference('--ui-space')}, var(--ui-fx-suffix, 0px));
+    }
+`;
+
 /**
  * A text input, drawn from the token layer rather than replaced.
  *
@@ -452,6 +509,11 @@ const pickers: ReadonlySet<string> = new Set(['color', 'file']);
  * `type`, `pattern`, `min`, `max`, `step` — are handed to a real `<input>` that validates
  * them itself.
  *
+ * **A prefix and a suffix are drawn inside its box**: text as `prefix-text` and `suffix-text`,
+ * rendered here and joined to the control's description, since a text slotted from the host's
+ * tree is one the control could not be described by; and a glyph in the `prefix` or `suffix`
+ * slot, hidden from the tree. {@link affixes} says how they are laid out.
+ *
  * @example
  * ```html
  * <ui-input label="Amount" help="In BRL, two decimals." type="number" name="amount"></ui-input>
@@ -459,11 +521,15 @@ const pickers: ReadonlySet<string> = new Set(['color', 'file']);
  */
 export class UiInput extends UiTextField {
     /** The styles its shadow root adopts. */
-    static override readonly styles: CSSResult[] = [field, fieldEffects('input', typed)];
+    static override readonly styles: CSSResult[] = [field, affixes, fieldEffects('input', typed)];
 
     /** The properties Lit observes on this element. */
     static override readonly properties = {
         ...UiTextField.properties,
+        // Not `prefix`, the namespace prefix every element already has, read-only: a framework
+        // that sets properties would write to it and fail. Named as Material Web names its own.
+        prefixText: { type: String, attribute: 'prefix-text', reflect: true },
+        suffixText: { type: String, attribute: 'suffix-text', reflect: true },
         type: { type: String, reflect: true },
         inputmode: { type: String, reflect: true },
         pattern: { type: String, reflect: true },
@@ -491,6 +557,79 @@ export class UiInput extends UiTextField {
     step = '';
 
     /**
+     * Text drawn before the control, inside its box, such as `R$` or `https://`, and heard with
+     * it. A glyph goes in the `prefix` slot instead.
+     */
+    prefixText = '';
+
+    /** Text drawn after the control, inside its box, and heard with it. A glyph goes in `suffix`. */
+    suffixText = '';
+
+    /** The sides a glyph was slotted on, which a slot's change reports. */
+    readonly #slotted = new Set<Side>();
+
+    /** Takes note of a glyph slotted on a side, or taken from it. */
+    readonly #assigned = (event: Event): void => {
+        const slot = event.target as HTMLSlotElement;
+        const side = slot.name as Side;
+
+        if (slot.assignedNodes().length > 0) {
+            this.#slotted.add(side);
+        } else {
+            this.#slotted.delete(side);
+        }
+
+        this.requestUpdate();
+    };
+
+    /**
+     * Hands each side's width to the control's padding as its text, its glyph or the space token
+     * changes it, written on this element, as the toast writes its dwell on itself, and inherited
+     * into the root. A side with nothing on it is not drawn, measures nothing and writes nothing,
+     * so a field that carries nothing keeps its own style untouched.
+     */
+    readonly #measuring = new ResizeObserver((entries) => {
+        for (const { target } of entries) {
+            const affix = target as HTMLElement;
+            const width = affix.offsetWidth;
+            const name = `--ui-fx-${String(affix.dataset['side'])}`;
+
+            if (width === 0) {
+                this.style.removeProperty(name);
+            } else {
+                this.style.setProperty(name, `${String(width)}px`);
+            }
+        }
+    });
+
+    /** Starts measuring both sides, which are drawn for as long as the element is. */
+    override firstUpdated(): void {
+        for (const affix of this.renderRoot.querySelectorAll('.affix')) {
+            this.#measuring.observe(affix);
+        }
+    }
+
+    /**
+     * What one side draws inside the box: the glyph slotted there, and the text, which the
+     * control's description names. Hidden from the tree, which hears the text through the
+     * description, and not drawn while it holds neither.
+     */
+    #affix(side: Side): TemplateResult {
+        const text = this[`${side}Text` as const];
+
+        return html`<span
+            class="affix"
+            data-side=${side}
+            part=${side}
+            aria-hidden="true"
+            ?hidden=${text === '' && !this.#slotted.has(side)}
+            ><slot name=${side} @slotchange=${this.#assigned}></slot>${
+                text === '' ? nothing : html`<span id=${side}>${text}</span>`
+            }</span
+        >`;
+    }
+
+    /**
      * <kbd>Enter</kbd>, handed on to the form as the platform's own `<input>` would take it:
      * `src/submit.ts` carries the whole of it. Not from a control that opens a picker on the key
      * instead, which submits nothing in any engine.
@@ -501,9 +640,10 @@ export class UiInput extends UiTextField {
         }
     };
 
-    /** A native `<input>`, in the frame every text control shares. */
+    /** A native `<input>` between what it carries on each side, in the frame every text control shares. */
     override render(): TemplateResult {
         return this.frame(html`
+            ${this.#affix('prefix')}
             <input
                 id="control"
                 part="control"
@@ -523,12 +663,16 @@ export class UiInput extends UiTextField {
                 ?disabled=${this.matches(':disabled')}
                 ?readonly=${this.readonly}
                 aria-invalid=${this.invalid()}
-                aria-describedby=${this.described()}
+                aria-describedby=${this.described(
+                    this.prefixText === '' ? '' : 'prefix',
+                    this.suffixText === '' ? '' : 'suffix',
+                )}
                 @focus=${arrive}
                 @input=${this.typed}
                 @change=${this.changed}
                 @keypress=${this.#entered}
             />
+            ${this.#affix('suffix')}
         `);
     }
 }
