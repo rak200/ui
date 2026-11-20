@@ -452,8 +452,12 @@ the shadow roots it is drawn in, and on the root the whole page, read at every l
 
 **A console that speaks too often is one nobody reads**, so a line speaks unasked only for a
 failure the page cannot see otherwise: silent, known the moment it is written, and out of axe's
-sight. RFC 0011 holds the rest for a diagnosis the page asks for, and `tests/silence.ts` fails any
-test on a console call it did not expect, every story and every example in `docs/` among them.
+sight. **The rest is `diagnose()`**, an entry of its own, `@rak200/ui/diagnose.js`, which a page
+asks once it is done, since what is missing as a component connects may still arrive. It returns
+what it finds as data, logs it at `info` only when asked and only what the page has not heard, and
+leaves to axe the names axe reports. `tests/silence.ts` fails any test on a console call it did
+not expect, and every story and every example in `docs/` is diagnosed with its log on as it
+mounts, so a component written wrong in either fails the test that mounted it.
 
 ## Every visual decision is a token
 

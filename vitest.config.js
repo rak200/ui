@@ -26,12 +26,13 @@ export default mergeConfig(
             // The array form, and the order is the rule: an alias matches by prefix, so a
             // lone `@rak200/ui` entry rewrites `@rak200/ui/icons/x.js` into
             // `src/index.ts/icons/x.js`. `.storybook/main.ts` carries the same pair for
-            // the same reason.
+            // the same reason, and so does the diagnosis's entry, which the prefix would take too.
             alias: [
                 {
                     find: /^@rak200\/ui\/icons\/(.*)\.js$/,
                     replacement: `${join(here, 'src', 'icons')}/$1.ts`,
                 },
+                { find: '@rak200/ui/diagnose.js', replacement: join(here, 'src', 'diagnose.ts') },
                 { find: '@rak200/ui', replacement: join(here, 'src', 'index.ts') },
             ],
         },

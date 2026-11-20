@@ -1,5 +1,6 @@
 import { LitElement, css, html, unsafeCSS, type SVGTemplateResult, type TemplateResult } from 'lit';
 import { warn } from './console.js';
+import * as lines from './lines.js';
 import { query } from './motion.js';
 import { reference } from './reference.js';
 
@@ -16,9 +17,8 @@ const eased = [drawn('enter', 'pop'), drawn('enter', 'refocus'), drawn('hover', 
  *
  * Module-level and shared by every instance, which is what makes `name` an attribute a
  * plain page can write: a glyph module is imported for its side effect and the markup
- * below it starts working. Nothing else in this package keeps state at module level, and
- * the alternative here was making the glyph a value the host has to pass — which needs a
- * build step and rules out the page that only emits tags.
+ * below it starts working. The alternative was making the glyph a value the host has to
+ * pass, which needs a build step and rules out the page that only emits tags.
  */
 const glyphs = new Map<string, SVGTemplateResult>();
 
@@ -68,6 +68,11 @@ export function register(name: string, glyph: SVGTemplateResult): void {
     for (const icon of pending) {
         icon.requestUpdate();
     }
+}
+
+/** Whether a glyph is registered under `name`, which is what `diagnose()` asks of an icon. #426 */
+export function registered(name: string): boolean {
+    return glyphs.has(name);
 }
 
 /**
@@ -444,7 +449,7 @@ export class UiIcon extends LitElement {
     #blank(): boolean {
         return (
             this.name !== '' &&
-            !glyphs.has(this.name) &&
+            !registered(this.name) &&
             this.children.length === 0 &&
             this.isConnected
         );
@@ -461,13 +466,7 @@ export class UiIcon extends LitElement {
             return;
         }
 
-        warn(
-            'ui-icon:unregistered',
-            this.name,
-            `<ui-icon name="${this.name}"> drew nothing: no glyph is registered under that name. ` +
-                `Import it — import '@rak200/ui/icons/${this.name}.js' — or slot an <svg> of your own.`,
-            this,
-        );
+        warn('ui-icon:unregistered', this.name, lines.unregistered(this.name), this);
     };
 }
 

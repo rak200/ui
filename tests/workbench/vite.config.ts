@@ -116,6 +116,7 @@ export default defineConfig({
         // gives: an alias matches by prefix, so the glyphs' entry comes first.
         alias: [
             { find: /^@rak200\/ui\/icons\/(.*)\.js$/, replacement: `${inside('src/icons/')}$1.ts` },
+            { find: '@rak200/ui/diagnose.js', replacement: inside('src/diagnose.ts') },
             { find: '@rak200/ui', replacement: inside('src/index.ts') },
         ],
     },

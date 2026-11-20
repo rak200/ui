@@ -21,7 +21,8 @@
       // The fourth reader of this mapping, and the same rule CLAUDE.md states for the
       // first three: a tool that resolves module names itself needs its own line, or it
       // silently loads `dist/`.
-      "@rak200/ui/icons/*.js": ["./src/icons/*.ts"]
+      "@rak200/ui/icons/*.js": ["./src/icons/*.ts"],
+      "@rak200/ui/diagnose.js": ["./src/diagnose.ts"]
     }
   },
   // `stories` and `.storybook` are included so they are typechecked at all: the shared

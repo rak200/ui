@@ -50,7 +50,10 @@ the element, so nothing has to be called.
 ## `open`
 
 ```html
-<ui-dialog open>…</ui-dialog>
+<ui-dialog open>
+  <h2 slot="title">Delete account</h2>
+  …
+</ui-dialog>
 ```
 
 Whether the dialog is showing. Reflected, so a host stylesheet can select on it and a host can read

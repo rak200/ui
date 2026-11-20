@@ -29,12 +29,14 @@ src/
 ├── checkbox.ts      # <ui-checkbox> and <ui-switch> — the drawing the platform has no element for
 ├── console.ts       # the console manager — internal, every line the package says, once a cause
 ├── description.ts   # the sentence a tooltip hands over — internal, shared by every control that takes one
+├── diagnose.ts      # diagnose() — the diagnose.js entry, what a page is told when it asks
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── effects.ts       # the effects a component draws — internal, one sheet for each kind: a button's, a field's
 ├── held.ts          # a focus a surface holds — internal, the mark a card's sheet draws its focus from
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
 ├── input.ts         # <ui-input> and <ui-textarea> — the control, its label and its message
+├── lines.ts         # what each line that speaks always says — internal, shared with the diagnosis
 ├── menu.ts          # <ui-menu> — a menu button, and both ends of one ARIA relationship
 ├── motion.ts        # which effect runs: the names that are not tokens, and the query — internal
 ├── next.ts          # the next tip — internal, a tip glided over from the one closed just before
@@ -66,11 +68,13 @@ tests/               # mirrors src/, one test file per unit
 ├── checkbox.test.ts
 ├── console.test.ts
 ├── description.test.ts
+├── diagnose.test.ts
 ├── dialog.test.ts
 ├── effects.test.ts
 ├── held.test.ts
 ├── icon.test.ts
 ├── input.test.ts
+├── lines.test.ts
 ├── menu.test.ts
 ├── motion.test.ts
 ├── next.test.ts
@@ -237,6 +241,15 @@ explains. This file restates none of them.
   inside a widget the arrows move through, by its `role` on what it is drawn in, which is how a
   `<ui-menu>`'s slotted item is reached. Both walks that climb a tree, here and in
   `src/console.ts`, step in the loop's header, so a body a slip empties still ends.
+- **Why `diagnose()` is an entry of its own that reads each element by its tag, and why every story
+  and docs example is diagnosed as it mounts** — the docblock on `src/diagnose.ts`,
+  `docs/diagnose.md` and RFC 0011. Nothing in the package imports it, so a page that never asks
+  loads none of it, and what it shares with a component is imported rather than written twice: the
+  four lines that speak always are `src/lines.ts`, the takers a `Description` was built for are its
+  registry in `src/description.ts`, which `stranded()` reads without handing a sentence over, and a
+  glyph is asked of `registered()` in `src/icon.ts`. `tests/stories.ts` and `tests/docs.test.ts` log
+  a diagnosis of what they mount, so `tests/silence.ts` fails on a finding, and a region that quiets
+  a code on purpose, as the theme's specimen toasts do, is left out as the console leaves it out.
 - **Which browsers the package supports, and how that moves** — [ARCHITECTURE.md](ARCHITECTURE.md),
   _The browser floor_, which says what sets it, what a feature newer than it has to do, and why a
   raise is an ordinary change. `tests/manual/browser-floor.mjs` recounts it from `src/`, and its
@@ -366,10 +379,10 @@ explains. This file restates none of them.
 - **Why the build is two `tsc` passes, and why the order matters** — `tsconfig.icons.json` runs
   first and emits the glyphs without source maps; `tsconfig.build.json` runs second and re-emits
   everything else with them. Reversing it strips the maps from the whole package.
-- **Why `@rak200/ui/icons/*` needs its own alias entry in four resolvers** — an alias matches by
-  prefix, so a lone `@rak200/ui` entry rewrites `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`.
-  The specific entry comes first in `.storybook/main.ts`, `vitest.config.js`, `tsconfig.json` and
-  `tests/workbench/vite.config.ts`.
+- **Why `@rak200/ui/icons/*` and `@rak200/ui/diagnose.js` need their own alias entries in four
+  resolvers** — an alias matches by prefix, so a lone `@rak200/ui` entry rewrites
+  `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`. The specific entries come first in
+  `.storybook/main.ts`, `vitest.config.js`, `tsconfig.json` and `tests/workbench/vite.config.ts`.
 - **Why `ui-table` adopts a stylesheet into the host's tree instead of styling with
   `::slotted()`** — the docblock on `rules` in `src/table.ts`, and `docs/table.md`'s _Where the
   styles actually live_. `::slotted()` matches the top level of what a slot was given and nothing

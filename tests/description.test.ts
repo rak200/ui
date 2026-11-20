@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { LitElement, html, nothing, type TemplateResult } from 'lit';
-import { Description } from '../src/description.js';
+import { Description, stranded } from '../src/description.js';
 
 /**
  * The smallest host the carrier needs: something that renders and can be asked to redraw.
@@ -53,6 +53,26 @@ const control = (element: Host): HTMLElement => {
 
     return found;
 };
+
+/** A trigger of someone else's, drawing a control in its own shadow root and taking no sentence. */
+class FocusesInside extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<button type="button">Save</button>';
+    }
+}
+
+customElements.define('test-described-focuses-inside', FocusesInside);
+
+/** One whose shadow content is decoration, named and described on the host itself. */
+class DrawsDecoration extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<span>★</span>';
+    }
+}
+
+customElements.define('test-described-decoration', DrawsDecoration);
 
 afterEach(() => {
     document.body.replaceChildren();
@@ -200,5 +220,37 @@ describe('Description', () => {
         await element.updateComplete;
 
         expect(element.shadowRoot?.getElementById('description')?.hasAttribute('part')).toBe(false);
+    });
+});
+
+describe('stranded', () => {
+    // RFC 0011, #426: the diagnosis asks this without handing a sentence over, so it reads the
+    // takers a Description was built for, which are the elements the dispatch would reach.
+    it('is a trigger that focuses a control inside its own shadow root and takes no sentence', () => {
+        const trigger = document.createElement('test-described-focuses-inside');
+
+        document.body.append(trigger);
+
+        expect(stranded(trigger)).toBe(true);
+    });
+
+    it('is never a host a Description was built for, which takes the sentence', async () => {
+        expect(stranded(await mount())).toBe(false);
+    });
+
+    it('is never a trigger whose shadow content is decoration', () => {
+        const trigger = document.createElement('test-described-decoration');
+
+        document.body.append(trigger);
+
+        expect(stranded(trigger)).toBe(false);
+    });
+
+    it('is never a trigger with no shadow root', () => {
+        const trigger = document.createElement('button');
+
+        document.body.append(trigger);
+
+        expect(stranded(trigger)).toBe(false);
     });
 });

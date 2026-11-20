@@ -1,5 +1,7 @@
 import { LitElement, css, html, unsafeCSS, type TemplateResult } from 'lit';
 import { warn } from './console.js';
+import { stranded } from './description.js';
+import * as lines from './lines.js';
 import { query } from './motion.js';
 import { arrived, left } from './next.js';
 import { unreachable } from './reach.js';
@@ -14,14 +16,6 @@ const side = 'data-side';
 
 /** The query each of the tip's effects is drawn under: the consumer's choice, else a taste. */
 const drawn = query('tooltip');
-
-/**
- * What makes a trigger's shadow root the thing the browser actually focuses.
- *
- * A tab stop the host wrote counts with the natives: what decides this is that focus lands
- * inside the boundary, not how the element was made able to take it.
- */
-const focusable = 'a[href], button, input, select, textarea, [tabindex]';
 
 /**
  * What a tooltip written inside one describes: the button or the link it lies in, which is what
@@ -816,30 +810,20 @@ export class UiTooltip extends LitElement {
      * for: the answer is the dispatch's return value rather than a roster of tags, which
      * is why the rollout closing changed nothing here.
      *
-     * **The condition is the focusable descendant, not the shadow root.** A component
-     * whose shadow content is decoration is named and described on the host itself, and is
-     * correct as it stands.
+     * **The rule is `stranded()`, in `src/description.ts`**, which `diagnose()` asks as well: it
+     * reads the takers a `Description` was built for, which here the refused dispatch already
+     * said, and the focusable descendant, never the shadow root alone. RFC 0011, #426
      *
      * **Once a trigger's tag, through the console manager**, as `ui-tooltip:stranded`: it was
      * said again at every edit of the tip, since each edit hands the sentence over again, and
      * the manager is what remembers the tag, for the page. RFC 0011, #423
      */
     #complain(trigger: HTMLElement): void {
-        const inside = trigger.shadowRoot?.querySelector(focusable) ?? null;
-
-        if (inside === null) {
+        if (!stranded(trigger)) {
             return;
         }
 
-        warn(
-            'ui-tooltip:stranded',
-            trigger.localName,
-            `<ui-tooltip> described <${trigger.localName}>, and the description will not ` +
-                `arrive: it focuses a control inside its own shadow root, which an id in ` +
-                `your tree cannot reach. Where the text has to be announced, the trigger has ` +
-                `to be a control you wrote — a native <button>, <a href> or form control.`,
-            trigger,
-        );
+        warn('ui-tooltip:stranded', trigger.localName, lines.stranded(trigger.localName), trigger);
     }
 
     /**
@@ -884,9 +868,7 @@ export class UiTooltip extends LitElement {
         warn(
             'ui-tooltip:unreachable',
             trigger.localName,
-            `<ui-tooltip> describes a <${trigger.localName}> the keys never reach: it takes no ` +
-                `tab stop, so only a pointer shows the tip. Write the trigger as a <button> or an ` +
-                `<a href>, which take one.`,
+            lines.unreachable(trigger.localName),
             trigger,
         );
     }
