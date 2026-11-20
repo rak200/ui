@@ -10,7 +10,10 @@ on a toast, and a card that opens wherever it is clicked. A look past them was a
 changes a component that ships, and two of them meet a decision a page in `docs/` records against
 them. A card "grows no `clickable` attribute", and a toast's one control is its dismiss button.
 
-This proposal studies the four and a catalogue round them. It decides which enter, and what each
+A fifth came out of [RFC 0011](0011-the-console.md)'s rollout: a `<ui-button>` the keys still reach
+while it cannot be used, so that a tooltip saying why is shown by them, and not by a pointer alone.
+
+This proposal studies the five and a catalogue round them. It decides which enter, and what each
 costs the decision it meets. New components are [RFC 0009](0009-new-components.md)'s.
 
 ## Study
@@ -33,6 +36,38 @@ when the button comes back to rest, the focus is not on it. So a busy button ref
 Adobe's Spectrum takes the same shape from the other side: a pending button disables its events at
 once, and shows its spinner only after a second, so a quick task flashes nothing
 ([React Spectrum](https://react-spectrum.adobe.com/react-spectrum/Button.html)).
+
+### Measured: `aria-disabled` keeps the tab stop, and refuses nothing
+
+A disabled button takes no tab stop, so a tooltip saying why it is disabled is shown by a pointer
+alone, which RFC 0011 measured and `docs/tooltip.md` says. `aria-disabled="true"` is the state's
+other spelling: the button stays in the tab order, and refusing the press is left to whoever wrote
+it. The APG's _Focusability of disabled controls_ keeps one focusable where a reader has to find
+it, such as a toolbar's button or a menu's item
+([APG](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/)).
+
+Each button was written in a tooltip between two others, reached by Tab from the first, then
+pointed at and clicked. Chromium 153, Firefox 155 and WebKit 26.5 measured alike, and the pointer
+showed the tip on all four:
+
+| The button                         | Tab stops on it | The keys show its tip | A click arrives |
+| ---------------------------------- | --------------- | --------------------- | --------------- |
+| `<button disabled>`                | no              | no                    | no              |
+| `<button aria-disabled="true">`    | yes             | yes                   | yes             |
+| `<ui-button disabled>`             | no              | no                    | no              |
+| `<ui-button aria-disabled="true">` | yes, inside it  | yes                   | yes             |
+
+**A `<ui-button>` keeps the tab stop under it, and nothing else.** Chromium's tree reports the
+button drawn inside it disabled, since the state reaches the focusable elements inside the one that
+carries it; what Firefox's and WebKit's report was not read. But the element reads only
+`:disabled`, so the button is drawn enabled, its effects play, a click reaches the page and a submit
+button sends its form. A page refuses the press today by cancelling the click, which the element
+honours, and reaches the look only through `::part(button)`.
+
+Two libraries give the state a name of their own. Material's button takes `soft-disabled`, "disabled
+but still focusable" ([Material Web](https://material-web.dev/components/button/)). Fluent's takes
+`disabled-focusable`, which writes `aria-disabled` through its internals and stops the press
+([Fluent UI](https://github.com/microsoft/fluentui/tree/master/packages/web-components/src/button)).
 
 ### A toast with an action
 
@@ -207,35 +242,42 @@ corner.
 2. **A prefix and a suffix on `<ui-input>`.** The text comes as the `prefix` and `suffix`
    attributes, rendered in the root and joining the description; a glyph comes as a slot of the same
    name, hidden from the tree.
-3. **A busy `<ui-button>`**, once RFC 0009's progress has landed. It refuses a press and keeps its
-   tab stop. After a second it draws the indeterminate ring in place of its label, keeping its
-   width. How it says it is busy to a reader is its manual page's to measure: a name that changes on
-   the focused button is announced by some readers and not by others.
-4. **A `danger` `<ui-button>`**, filled with four names of its own, computed from the danger as the
+3. **An `aria-disabled` `<ui-button>`**, which the keys still reach while it cannot be used. The
+   host writes `aria-disabled="true"`, as on a `<button>`. The button is drawn as a disabled one
+   is, with its effects stood down, and refuses a press, so neither it nor <kbd>Enter</kbd> in a
+   field sends its form. It keeps its tab stop, so the keys show a tooltip on it, and its own button
+   carries the state, for a tree that does not take it from the host. `docs/tooltip.md`'s answer
+   for a disabled control then points at it.
+4. **A busy `<ui-button>`**, once RFC 0009's progress has landed. It refuses a press and keeps its
+   tab stop, as an `aria-disabled` one does. After a second it draws the indeterminate ring in
+   place of its label, keeping its width. How it says it is busy to a reader is its manual page's
+   to measure: a name that changes on the focused button is announced by some readers and not by
+   others.
+5. **A `danger` `<ui-button>`**, filled with four names of its own, computed from the danger as the
    primary's are from the accent, and measured over every palette.
-5. **An action on `<ui-toast>`**, a slot for a button the host writes. A toast with an action never
+6. **An action on `<ui-toast>`**, a slot for a button the host writes. A toast with an action never
    expires, and `docs/toast.md` asks for an action the page offers elsewhere too.
-6. **A card that opens where it is clicked**, by the stretched link: the host names the link that is
+7. **A card that opens where it is clicked**, by the stretched link: the host names the link that is
    the card's target, and the card adopts the rule that spreads it over itself into the host's tree,
    lifting what the card holds above it. `docs/card.md`'s refusal of `clickable` stands; what
    changes is that the stretched link is drawn by the package rather than left to the host.
-7. **`<ui-dialog>` opened from markup**, answering `--show` and `--close` from any button aimed at
+8. **`<ui-dialog>` opened from markup**, answering `--show` and `--close` from any button aimed at
    it.
-8. **A placeholder on `<ui-select>`**, the platform's own: a first choice with no value, which a
+9. **A placeholder on `<ui-select>`**, the platform's own: a first choice with no value, which a
    required select refuses.
-9. **A clear button, the password shown, and a count on `<ui-input>`**, each a part of the root.
-   The clear button and the password's switch are named by attributes. The count is a sentence
-   describing the control, written by an attribute with a place for the number, and heard once the
-   reader stops typing.
-10. **A sticky header and a sticky first column on `<ui-table>`.** The column sticks within the box
+10. **A clear button, the password shown, and a count on `<ui-input>`**, each a part of the root.
+    The clear button and the password's switch are named by attributes. The count is a sentence
+    describing the control, written by an attribute with a place for the number, and heard once the
+    reader stops typing.
+11. **A sticky header and a sticky first column on `<ui-table>`.** The column sticks within the box
     that scrolls already. The header sticks within a box given a height of its own, which the host
     sets.
-11. **Items that tick, and sections, in `<ui-menu>`**: `menuitemcheckbox` and `menuitemradio` with
+12. **Items that tick, and sections, in `<ui-menu>`**: `menuitemcheckbox` and `menuitemradio` with
     `aria-checked` on the host's items, and `role="group"` named by a heading, all in the host's
     tree.
-12. **`<ui-button-group>`**: the buttons drawn joined, and named together as a group. Whether it
+13. **`<ui-button-group>`**: the buttons drawn joined, and named together as a group. Whether it
     takes the toolbar's keyboard too is the study's to settle.
-13. **Submenus in `<ui-menu>`**, last, once the pointer's way into one is measured. The layer and
+14. **Submenus in `<ui-menu>`**, last, once the pointer's way into one is measured. The layer and
     its dismissal are left to the platform, as measured. The menu writes <kbd>→</kbd>, <kbd>←</kbd>
     and the focus between the two panels.
 
@@ -256,6 +298,12 @@ stays in study, so another feature can still join it.
 ### Alternatives, and what retired each
 
 - **A busy button that is `disabled`**: measured, it drops the focus in every engine.
+- **An attribute of its own** for a button the keys reach while it is disabled, as Material's
+  `soft-disabled` and Fluent's `disabled-focusable`: a second word for a state ARIA names already.
+  Beside it, the `aria-disabled` a page writes on a `<button>`, and would write on a `<ui-button>`,
+  would go on being heard as disabled in Chromium while the button is drawn and pressed as enabled.
+- **The refusal left to the page**, as `docs/tooltip.md` leaves it on a `<button>`: every page
+  writes the same listener, and the look is behind the root, which only `::part(button)` reaches.
 - **A toast whose action expires with it**: the action is gone before a keyboard reader arrives.
 - **The action as an `alertdialog`**, Carbon's shape: it is right for an action the reader must
   take, and that is a dialog, which the package has.
@@ -267,12 +315,14 @@ stays in study, so another feature can still join it.
 ## Decision
 
 **Not taken yet.** The proposal stays in study, so that more features can join it before its set is
-closed. Two questions are settled, and the proposed design above is written to them:
+closed. Three questions are settled, and the proposed design above is written to them:
 
 1. **A card opens where it is clicked by the stretched link**, over the redundant click.
 2. **Five more join the eight proposed**: the input's clear button, password and count; the table's
    sticky header and first column; the menu's items that tick and its sections; a group of buttons;
    and submenus.
+3. **An `aria-disabled` `<ui-button>` joins them**, the button the keys still reach while it cannot
+   be used, which RFC 0011's rollout found.
 
 ## Rollout
 
@@ -287,4 +337,5 @@ closed. Two questions are settled, and the proposed design above is written to t
 - RFC 0016, which deferred sorting and selection in a table, and submenus in a menu, which this
   proposal takes back up.
 - [RFC 0011](0011-the-console.md), which measured that a menu takes no item a component of the
-  page forwards through a slot, and sent taking them here.
+  page forwards through a slot, and sent taking them here, and whose rollout found the
+  `aria-disabled` button.
