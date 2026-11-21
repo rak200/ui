@@ -38,9 +38,10 @@ import '@rak200/ui';
 | `trigger` | the button's label — inline content, not a control         |
 | _default_ | the items: `<button>`s and `<a href>`s, and `<hr>` between |
 
-| Property | Type      | Default | Means                                            |
-| -------- | --------- | ------- | ------------------------------------------------ |
-| `open`   | `boolean` | `false` | whether the menu is showing; reflected, settable |
+| Property | Type        | Default   | Means                                                                          |
+| -------- | ----------- | --------- | ------------------------------------------------------------------------------ |
+| `open`   | `boolean`   | `false`   | whether the menu is showing; reflected, settable                               |
+| `align`  | `MenuAlign` | `'start'` | which of the trigger's edges the panel hangs from: `start` or `end`; reflected |
 
 The class is exported as `UiMenu` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
@@ -173,6 +174,20 @@ It writes `data-side` — `block-start` or `block-end` — on the panel, so a ho
 gap has something to select on. The CSS writes the side nowhere, so the element reads it off where
 the panel landed, and foretells it before the panel is first drawn, by the height the panel had when
 it was last open: the panel's entrance comes from that side.
+
+**`align="end"` hangs it from the trigger's trailing edge** instead, its right edge where the page
+runs left to right and its left edge where it runs right to left, so a menu at the end of a toolbar
+opens toward the toolbar rather than past it. It turns to the leading edge where it would run off
+the screen, by the same flip that turns the default to the trailing edge, and it opens below or
+above as any menu does.
+
+```html
+<ui-menu align="end">
+  <span slot="trigger">Actions</span>
+  <button type="button">Rename</button>
+  <button type="button">Delete</button>
+</ui-menu>
+```
 
 **It hangs from where the trigger rests**, which is the box the component takes up. A trigger you
 move through `::part(trigger)` — grown under the pointer, say — moves alone, and the panel stays
