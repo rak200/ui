@@ -3,20 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A busy `<ui-button>` (#439)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twelfth step: blocked until RFC 0009's
-progress lands, the `aria-disabled` button it rests on having landed, and moved to the end of the
-list if it has not by its turn.
-
-## `<ui-icon>` turned right to left (#452)
-
-For a glyph the host marks as pointing one way, by `:host(:dir(rtl))`.
-
 ## A side of its own for `<ui-tooltip>`'s tip (#453)
 
-Below or beside its trigger, and in a passage of another direction by anchored insets read in the
-tip's own.
+[RFC 0010](docs/proposals/0010-component-features.md)'s fourteenth step: below or beside its
+trigger, and in a passage of another direction by anchored insets read in the tip's own.
 
 ## An arrow on `<ui-tooltip>`'s tip (#454)
 
@@ -79,6 +69,12 @@ across.
 
 A context menu, opened by the pointer and by the menu key and Shift+F10 read as keys. The last
 step, which marks RFC 0010 `Implemented`.
+
+## A busy `<ui-button>` (#439)
+
+[RFC 0010](docs/proposals/0010-component-features.md)'s twelfth step, at the end of the list since
+its turn came before RFC 0009's progress landed, which it still waits on; the `aria-disabled`
+button it rests on has landed.
 
 ## Design tokens beyond the web (#24)
 
