@@ -118,13 +118,13 @@ shown on purpose where none is ever written, as a specimen is, takes
 
 ### `ui-menu:not-an-item`
 
-**A menu takes as items only the `<button>` and `<a href>` written as its own children**, so a
-child that is neither is drawn as written, passed over by the keys and left out of the menu's
-choices. A [diagnosis](diagnose.md) says it for each one, for the page to judge. A tooltip, a
-`<div>` or a list written round items, a form round a submit button, a label round a checkbox and a
-component's own element round each item are mistakes, which axe reports too once the menu is open.
-An `<a>` with no `href` may be a link left inert on purpose, and a `<span>` naming a section has no
-place in a menu yet.
+**A menu takes as items only the `<button>` and `<a href>` written as its own children or in a
+section it holds**, a `role="group"`, so a child that is neither an item nor a section is drawn as
+written, passed over by the keys and left out of the menu's choices. A [diagnosis](diagnose.md) says
+it for each one, for the page to judge. A tooltip, a `<div>` or a list written round items, a form
+round a submit button, a label round a checkbox and a component's own element round each item are
+mistakes, which axe reports too once the menu is open. An `<a>` with no `href` may be a link left
+inert on purpose, and a `<span>` naming a section belongs inside the section, which it names.
 
 Write each item as the menu's own child, and what was round it, a tooltip among them, inside it.
 [menu.md](menu.md#items-are-yours-the-trigger-is-not) says what a menu takes.

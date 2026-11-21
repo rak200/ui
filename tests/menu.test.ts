@@ -12,6 +12,7 @@ import meta, {
     Disabled,
     Links,
     Menu,
+    TicksAndSections,
 } from '../stories/menu.stories.js';
 import '../src/menu.js';
 import '../src/button.js';
@@ -1478,6 +1479,399 @@ describe("hung from the trigger's trailing edge, where the host asks", () => {
     });
 });
 
+/**
+ * Items that tick, and sections, RFC 0010's: `menuitemcheckbox` and `menuitemradio` with
+ * `aria-checked` on the host's items, and a `role="group"` of the host's named by a heading it holds.
+ */
+describe('items that tick, and sections', () => {
+    const ticked = `
+        <ui-menu>
+            <span slot="trigger">View</span>
+            <button type="button" role="menuitemcheckbox" aria-checked="true">Show the ruler</button>
+            <button type="button" role="menuitemcheckbox">Show the grid</button>
+            <hr />
+            <div role="group" aria-labelledby="sort">
+                <span id="sort">Sort by</span>
+                <button type="button" role="menuitemradio" aria-checked="true">Name</button>
+                <button type="button" role="menuitemradio" aria-checked="false">Date</button>
+            </div>
+            <div role="group" aria-labelledby="size">
+                <span id="size">Size</span>
+                <button type="button" role="menuitemradio" aria-checked="false">Small</button>
+                <button type="button" role="menuitemradio" aria-checked="true">Large</button>
+            </div>
+            <button type="button">Reset</button>
+        </ui-menu>
+    `;
+
+    /** An item of the fixture's, by its text. */
+    function named(host: ParentNode, text: string): HTMLElement {
+        const found = [...host.querySelectorAll<HTMLElement>('ui-menu button')].find(
+            (button) => button.textContent.trim() === text,
+        );
+
+        if (found === undefined) {
+            throw new Error(`no item named ${text}`);
+        }
+
+        return found;
+    }
+
+    /** Whether an item says it is checked. */
+    function checked(host: ParentNode, text: string): string | null {
+        return named(host, text).getAttribute('aria-checked');
+    }
+
+    /** Opens the menu from the keys, onto its first item. */
+    async function fromTheKeys(element: UiMenu): Promise<void> {
+        trigger(element).focus();
+        await userEvent.keyboard('{ArrowDown}');
+        await settle();
+    }
+
+    it('keeps the role the host wrote on an item that ticks, and says it is unchecked where the host wrote nothing', async () => {
+        const host = await mount(ticked);
+
+        expect(named(host, 'Show the grid').getAttribute('role')).toBe('menuitemcheckbox');
+        expect(checked(host, 'Show the grid'), 'unchecked, said').toBe('false');
+        expect(checked(host, 'Show the ruler'), 'as the host wrote it').toBe('true');
+        expect(named(host, 'Date').getAttribute('role')).toBe('menuitemradio');
+        expect(named(host, 'Reset').getAttribute('role'), 'an item that does not tick').toBe(
+            'menuitem',
+        );
+
+        for (const text of ['Show the ruler', 'Name', 'Large', 'Reset']) {
+            expect(named(host, text).getAttribute('tabindex'), text).toBe('-1');
+        }
+    });
+
+    it('ticks a checkbox over on a click, and closes the menu as any item does', async () => {
+        const host = await mount(ticked);
+
+        await open(menu(host));
+        await userEvent.click(named(host, 'Show the grid'));
+
+        expect(checked(host, 'Show the grid')).toBe('true');
+        expect(menu(host).open, 'closed').toBe(false);
+
+        await open(menu(host));
+        await userEvent.click(named(host, 'Show the grid'));
+
+        expect(checked(host, 'Show the grid'), 'and back').toBe('false');
+    });
+
+    it('ticks a radio on a click, one at a time in its section, and leaves the other section alone', async () => {
+        const host = await mount(ticked);
+
+        await open(menu(host));
+        await userEvent.click(named(host, 'Date'));
+
+        expect([checked(host, 'Name'), checked(host, 'Date')]).toEqual(['false', 'true']);
+        expect([checked(host, 'Small'), checked(host, 'Large')], 'the other section').toEqual([
+            'false',
+            'true',
+        ]);
+    });
+
+    it("ticks a radio among the menu's own children apart from the radios in a section", async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">View</span>
+                <button type="button" role="menuitemradio" aria-checked="true">Light</button>
+                <button type="button" role="menuitemradio" aria-checked="false">Dark</button>
+                <div role="group" aria-labelledby="zoom">
+                    <span id="zoom">Zoom</span>
+                    <button type="button" role="menuitemradio" aria-checked="true">Fit</button>
+                </div>
+            </ui-menu>
+        `);
+
+        await open(menu(host));
+        await userEvent.click(named(host, 'Dark'));
+
+        expect([checked(host, 'Light'), checked(host, 'Dark')]).toEqual(['false', 'true']);
+        expect(checked(host, 'Fit'), 'in a section of its own').toBe('true');
+    });
+
+    it('lets a listener on the item read the state the click set, and announces change', async () => {
+        const host = await mount(ticked);
+        const item = named(host, 'Show the grid');
+        const read: (string | null)[] = [];
+        const changed: EventTarget[] = [];
+
+        item.addEventListener('click', () => {
+            read.push(item.getAttribute('aria-checked'));
+        });
+        menu(host).addEventListener('change', (event) => {
+            if (event.target !== null) {
+                changed.push(event.target);
+            }
+        });
+
+        await open(menu(host));
+        await userEvent.click(item);
+
+        expect(read, 'the state the click set').toEqual(['true']);
+        expect(changed, 'announced from the item').toEqual([item]);
+    });
+
+    it('ticks an item with the space bar and keeps the menu open, announcing change', async () => {
+        const host = await mount(ticked);
+        const changed: EventTarget[] = [];
+
+        menu(host).addEventListener('change', (event) => {
+            if (event.target !== null) {
+                changed.push(event.target);
+            }
+        });
+
+        await fromTheKeys(menu(host));
+
+        expect(focused()).toBe('Show the ruler');
+
+        await userEvent.keyboard(' ');
+
+        expect(checked(host, 'Show the ruler'), 'ticked over').toBe('false');
+        expect(menu(host).open, 'still open').toBe(true);
+
+        await userEvent.keyboard(' ');
+
+        expect(checked(host, 'Show the ruler'), 'and back').toBe('true');
+        expect(changed).toEqual([named(host, 'Show the ruler'), named(host, 'Show the ruler')]);
+
+        await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}');
+
+        expect(focused()).toBe('Date');
+
+        await userEvent.keyboard(' ');
+
+        expect([checked(host, 'Name'), checked(host, 'Date')], 'a radio').toEqual([
+            'false',
+            'true',
+        ]);
+        expect(menu(host).open, 'still open').toBe(true);
+    });
+
+    it('ticks an item with Enter and closes the menu', async () => {
+        const host = await mount(ticked);
+
+        await fromTheKeys(menu(host));
+        await userEvent.keyboard('{ArrowDown}{Enter}');
+        await settle();
+
+        expect(checked(host, 'Show the grid')).toBe('true');
+        expect(menu(host).open, 'closed').toBe(false);
+    });
+
+    it('leaves an item that ticks and cannot be used as it is', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">View</span>
+                <button type="button" role="menuitemcheckbox" aria-checked="false" aria-disabled="true">Locked</button>
+                <button type="button">Reset</button>
+            </ui-menu>
+        `);
+
+        await open(menu(host));
+        named(host, 'Locked').click();
+
+        expect(checked(host, 'Locked')).toBe('false');
+    });
+
+    it('takes the items of a section as its own, the keys passing through sections and over their headings', async () => {
+        const host = await mount(ticked);
+        const seen: string[] = [];
+
+        await fromTheKeys(menu(host));
+
+        for (let step = 0; step < 7; step += 1) {
+            seen.push(focused());
+            await userEvent.keyboard('{ArrowDown}');
+        }
+
+        expect(seen).toEqual([
+            'Show the ruler',
+            'Show the grid',
+            'Name',
+            'Date',
+            'Small',
+            'Large',
+            'Reset',
+        ]);
+
+        await userEvent.keyboard('{End}');
+
+        expect(focused(), 'End').toBe('Reset');
+
+        await userEvent.keyboard('s');
+
+        expect(focused(), 'typed').toBe('Show the ruler');
+
+        await wait(forgotten);
+        await userEvent.keyboard('l');
+
+        expect(focused(), 'typed, into a section').toBe('Large');
+    });
+
+    it('wires an item written into a section after the menu did, as it opens', async () => {
+        const host = await mount(ticked);
+        const late = document.createElement('button');
+
+        late.type = 'button';
+        late.textContent = 'Kind';
+        only(host, '[aria-labelledby="sort"]').append(late);
+
+        await open(menu(host));
+
+        expect([late.getAttribute('role'), late.getAttribute('tabindex')]).toEqual([
+            'menuitem',
+            '-1',
+        ]);
+    });
+
+    it('draws the tick of a checked item in its text: the checkbox tick for a checkbox, the radio dot for a radio', async () => {
+        const host = await mount(ticked);
+
+        await open(menu(host));
+
+        for (const [text, mask] of [
+            ['Show the ruler', 'svg'],
+            ['Name', 'radial-gradient'],
+            ['Large', 'radial-gradient'],
+        ] as const) {
+            const before = getComputedStyle(named(host, text), '::before');
+
+            expect(before.content, text).toBe('""');
+            expect(before.maskImage, text).toContain(mask);
+            expect(before.backgroundColor, `${text}, in its text`).toBe(
+                getComputedStyle(named(host, text)).color,
+            );
+        }
+
+        for (const text of ['Show the grid', 'Date', 'Small']) {
+            expect(getComputedStyle(named(host, text), '::before').content, text).toBe('none');
+        }
+    });
+
+    it('keeps a column at the start of an item that ticks, for its tick, in a section or not', async () => {
+        const host = await mount(ticked);
+
+        menu(host).style.setProperty('--ui-space', '8px');
+        menu(host).style.fontSize = '16px';
+
+        expect(getComputedStyle(named(host, 'Show the grid')).paddingLeft).toBe('28px');
+        expect(getComputedStyle(named(host, 'Date')).paddingLeft).toBe('28px');
+        expect(
+            getComputedStyle(named(host, 'Reset')).paddingLeft,
+            'an item that does not tick',
+        ).toBe('8px');
+    });
+
+    it('draws an item in a section as one of its own, by the rules it adopts', async () => {
+        const host = await mount(ticked);
+
+        await open(menu(host));
+
+        const own = getComputedStyle(named(host, 'Reset'));
+        const inSection = getComputedStyle(named(host, 'Small'));
+
+        for (const property of [
+            'display',
+            'minBlockSize',
+            'paddingTop',
+            'paddingRight',
+            'borderTopLeftRadius',
+            'textAlign',
+            'cursor',
+            'transitionDuration',
+        ] as const) {
+            expect(inSection[property], property).toBe(own[property]);
+        }
+    });
+
+    it('draws the heading of a section as its title, in the muted text at the supporting size', async () => {
+        const host = await mount(ticked);
+
+        menu(host).style.setProperty('--ui-text-supporting', '11px');
+
+        const heading = getComputedStyle(only(host, '#sort'));
+
+        expect(heading.display).toBe('block');
+        expect(heading.color).toBe(resolved('--ui-color-text-muted'));
+        expect(heading.fontSize).toBe('11px');
+    });
+
+    it('gives a rule of the host for its own button the last word in a section', async () => {
+        const host = await mount(`<style>.mine { padding: 3px; }</style>${ticked}`);
+
+        named(host, 'Small').classList.add('mine');
+
+        expect(getComputedStyle(named(host, 'Small')).paddingTop).toBe('3px');
+    });
+
+    it('adopts the rules for a section once into the tree it joins, a shadow root as well', async () => {
+        await mount(ticked);
+
+        const before = document.adoptedStyleSheets.length;
+
+        await mount(ticked);
+
+        expect(document.adoptedStyleSheets.length, 'once for two menus').toBe(before);
+
+        const outer = document.createElement('div');
+        const root = outer.attachShadow({ mode: 'open' });
+        const kept = new CSSStyleSheet();
+
+        root.adoptedStyleSheets = [kept];
+        document.body.append(outer);
+        root.innerHTML = ticked;
+        await (only(root, 'ui-menu') as UiMenu).updateComplete;
+
+        expect(root.adoptedStyleSheets, 'beside the sheet the root had').toHaveLength(2);
+        expect(root.adoptedStyleSheets[0], 'which it keeps').toBe(kept);
+        expect(getComputedStyle(only(root, '#sort')).display, 'drawn there').toBe('block');
+    });
+
+    it("draws the tick in the system's text under forced colours, which take its fill", async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            const host = await mount(ticked);
+            const probe = document.createElement('div');
+
+            probe.style.color = 'CanvasText';
+            document.body.append(probe);
+
+            const text = getComputedStyle(probe).color;
+
+            probe.remove();
+
+            await open(menu(host));
+
+            expect(matchMedia('(forced-colors: active)').matches, 'the mode is on').toBe(true);
+            expect(
+                getComputedStyle(named(host, 'Show the ruler'), '::before').backgroundColor,
+            ).toBe(text);
+            expect(getComputedStyle(named(host, 'Large'), '::before').backgroundColor).toBe(text);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it('is accessible open with items that tick and sections, and with the focus in a section', async () => {
+        const host = await mount(ticked);
+
+        await open(menu(host));
+        await still(menu(host));
+        await expectAccessible(host);
+
+        named(host, 'Date').focus();
+        await expectAccessible(host);
+    });
+});
+
 describe('the values, all of which come from the token layer', () => {
     it('draws the trigger as the secondary button it is', async () => {
         // Measured against the real thing rather than asserted to match it, which is the
@@ -2627,6 +3021,7 @@ describe('menu stories', () => {
         ['Links', Links],
         ['AtTheEdge', AtTheEdge],
         ['AlignedToTheEnd', AlignedToTheEnd],
+        ['TicksAndSections', TicksAndSections],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });

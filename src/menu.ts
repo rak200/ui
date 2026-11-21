@@ -1,4 +1,4 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, unsafeCSS, type CSSResult, type TemplateResult } from 'lit';
 import { Description } from './description.js';
 import { buttonEffects, panelEffects, pressed, type Panel } from './effects.js';
 import { follow } from './pointer.js';
@@ -20,6 +20,135 @@ const panelId = 'menu';
 
 /** Which way the panel went, for a host that wants to select on it. */
 const side = 'data-side';
+
+/** What a menu takes as an item: a button or a link of the host's, its own or in a section. */
+const taken =
+    ':scope > button:not([slot]), :scope > a[href]:not([slot]), :scope > [role="group"] > button, :scope > [role="group"] > a[href]';
+
+/** The roles of an item that ticks, which the host writes and the menu keeps. */
+const ticking = '[role="menuitemcheckbox"], [role="menuitemradio"]';
+
+/** The checkbox's tick, as `src/checkbox.ts` masks it, which a checked item that ticks as one draws. */
+const tick = css`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E")`;
+
+/** The radio's dot, as `src/radio.ts` masks it, which a checked item that ticks as a radio draws. */
+const dot = css`radial-gradient(circle closest-side, #000 100%, transparent 100%)`;
+
+/**
+ * An item's box: it fills the row, reads from its start, answers a pointer, and is no shorter
+ * than the 24px WCAG 2.2's 2.5.8 asks of a target — see the comment where the menu's own sheet
+ * writes it for its items.
+ */
+const box = css`
+    --ui-fx-line: 1;
+    display: block;
+    inline-size: 100%;
+    min-block-size: 24px;
+    box-sizing: border-box;
+    text-align: start;
+    font: inherit;
+    border: none;
+    border-radius: ${reference('--ui-radius')};
+    padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
+    background: none;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color ${reference('--ui-duration-state')}
+        ${reference('--ui-easing-state')};
+`;
+
+/** An item that ticks keeps a column at its start, as wide as a line is tall, for its tick. */
+const column = css`
+    position: relative;
+    padding-inline-start: calc(${reference('--ui-space')} * 1.5 + 1em);
+`;
+
+/** The tick, drawn in the item's own text in that column while the item is checked. */
+const drawn = css`
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: ${reference('--ui-space')};
+    inline-size: 1em;
+    background-color: currentColor;
+    mask-position: center;
+    mask-repeat: no-repeat;
+`;
+
+/**
+ * The rules for what a section holds, which cannot live in the menu's shadow root.
+ *
+ * **A section is a `role="group"` of the host's**, among the menu's children, holding items and the
+ * heading that names it, which `::slotted()` does not reach: it matches what a slot was given and
+ * nothing below it. So these rules are adopted into the tree the menu is in, which `getRootNode()`
+ * finds, as `<ui-table>` adopts its own, and draw an item in a section as the menu's own sheet draws
+ * one of its children. They are written at no weight, so a rule of the host's for its own button
+ * outweighs them, as it outweighs `::slotted()`'s; and every selector names a menu, so nothing
+ * outside one is touched.
+ *
+ * **The heading is whatever in the section is no item**, which the section names itself by with
+ * `aria-labelledby`: drawn as a section's title, in the muted text at the supporting size, and
+ * passed over by the keys, which move over items alone.
+ */
+export const rules: CSSResult = css`
+    :where(ui-menu > [role='group'] > :is(button, a)) {
+        ${box}
+    }
+
+    :where(ui-menu > [role='group'] > [hidden]) {
+        display: none;
+    }
+
+    :where(
+        ui-menu > [role='group'] > :is(button:not(:disabled), a:not([aria-disabled='true'])):hover
+    ) {
+        background: ${reference('--ui-color-hover')};
+    }
+
+    :where(ui-menu > [role='group'] > :is(button, a):focus-visible) {
+        outline: 2px solid ${reference('--ui-color-focus')};
+        outline-offset: -2px;
+    }
+
+    :where(ui-menu > [role='group'] > :is(button:disabled, [aria-disabled='true'])) {
+        color: ${reference('--ui-color-text-muted')};
+        cursor: not-allowed;
+    }
+
+    :where(ui-menu > [role='group'] > :not(button, a, [hidden])) {
+        display: block;
+        padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
+        color: ${reference('--ui-color-text-muted')};
+        font-size: ${reference('--ui-text-supporting')};
+    }
+
+    :where(ui-menu > [role='group'] > :is(${unsafeCSS(ticking)})) {
+        ${column}
+    }
+
+    :where(ui-menu > [role='group'] > [role='menuitemcheckbox'][aria-checked='true'])::before {
+        ${drawn}
+        mask-image: ${tick};
+        mask-size: 1em;
+    }
+
+    :where(ui-menu > [role='group'] > [role='menuitemradio'][aria-checked='true'])::before {
+        ${drawn}
+        mask-image: ${dot};
+        mask-size: 0.5em;
+    }
+
+    @media (forced-colors: active) {
+        :where(ui-menu > [role='group'] > [aria-checked='true'])::before {
+            background-color: CanvasText;
+        }
+    }
+`;
+
+/** One sheet for the whole page, adopted once into each tree a menu joins — see {@link rules}. */
+const sheet = new CSSStyleSheet();
+sheet.replaceSync(rules.cssText);
 
 // Stryker disable all: read once, at import, into the styles the class is defined with — so in the
 // warm process Stryker switches mutants in, the original selectors stand before any mutant is
@@ -112,6 +241,12 @@ function band(): HTMLSpanElement {
  * writes `role="menuitem"` and a tabindex on them and nothing else. Containment is what
  * crosses the boundary here — a slotted item really is inside the `role="menu"` panel,
  * which `ARCHITECTURE.md` records under `<ui-toaster>` and which a reference could not do.
+ *
+ * **An item may tick, and items may be gathered in sections**, RFC 0010's, both written by the
+ * host: an item the host makes `menuitemcheckbox` or `menuitemradio` keeps that role, its
+ * `aria-checked` turned by a press, a radio's one at a time in its section; and a section is a
+ * `role="group"` among the menu's children, named by a heading it holds, its items taken and moved
+ * through as the menu's own are, and drawn by {@link rules}, which `::slotted()` cannot be.
  *
  * ## What the platform does, and what is left
  *
@@ -380,22 +515,7 @@ export class UiMenu extends LitElement {
            without. */
             ::slotted(button),
             ::slotted(a) {
-                --ui-fx-line: 1;
-                display: block;
-                inline-size: 100%;
-                min-block-size: 24px;
-                box-sizing: border-box;
-                text-align: start;
-                font: inherit;
-                border: none;
-                border-radius: ${reference('--ui-radius')};
-                padding: calc(${reference('--ui-space')} / 2) ${reference('--ui-space')};
-                background: none;
-                color: inherit;
-                text-decoration: none;
-                cursor: pointer;
-                transition: background-color ${reference('--ui-duration-state')}
-                    ${reference('--ui-easing-state')};
+                ${box}
             }
 
             /* An item written hidden is not drawn, as the platform draws nothing hidden. The
@@ -424,6 +544,35 @@ export class UiMenu extends LitElement {
             ::slotted([aria-disabled='true']) {
                 color: ${reference('--ui-color-text-muted')};
                 cursor: not-allowed;
+            }
+
+            /* An item that ticks, menuitemcheckbox or menuitemradio as the host wrote it, keeps a
+               column at its start for its tick, drawn while aria-checked says it is checked: the
+               checkbox's tick and the radio's dot, in the item's own text. An item in a section is
+               drawn the same by the rules the menu adopts, which ::slotted() does not reach. */
+            ::slotted(:is(${unsafeCSS(ticking)})) {
+                ${column}
+            }
+
+            ::slotted([role='menuitemcheckbox'][aria-checked='true'])::before {
+                ${drawn}
+                mask-image: ${tick};
+                mask-size: 1em;
+            }
+
+            ::slotted([role='menuitemradio'][aria-checked='true'])::before {
+                ${drawn}
+                mask-image: ${dot};
+                mask-size: 0.5em;
+            }
+
+            /* Forced colours force a background back to the canvas, a mask's with it, so the tick
+               names the system's text, which the mode keeps — as heavy as the rules above, which
+               it follows. */
+            @media (forced-colors: active) {
+                ::slotted(:is(${unsafeCSS(ticking)})[aria-checked='true'])::before {
+                    background-color: CanvasText;
+                }
             }
 
             /* An hr already claims role="separator" — measured — so the platform owns what it
@@ -558,6 +707,7 @@ export class UiMenu extends LitElement {
         panel.addEventListener('beforetoggle', this.#onBeforeToggle);
         panel.addEventListener('toggle', this.#onToggle);
         panel.addEventListener('keydown', this.#onMenuKey);
+        panel.addEventListener('click', this.#onTick, { capture: true });
         panel.addEventListener('click', this.#onChoose);
 
         const items = slot();
@@ -566,11 +716,21 @@ export class UiMenu extends LitElement {
     }
 
     /**
-     * Starts watching the page's focus as the first menu connects, so the ring the reader saw
-     * before the trigger's first focus is already recorded when the glide needs it.
+     * Adopts the rules for what a section holds into the tree it joined, and starts watching the
+     * page's focus as the first menu connects, so the ring the reader saw before the trigger's first
+     * focus is already recorded when the glide needs it.
      */
     override connectedCallback(): void {
         super.connectedCallback();
+
+        // `connectedCallback` runs when the element is connected to a document, so the root is a
+        // `Document` or a `ShadowRoot`, both of which carry `adoptedStyleSheets`.
+        const root = this.getRootNode() as Document | ShadowRoot;
+
+        if (!root.adoptedStyleSheets.includes(sheet)) {
+            root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+        }
+
         // Stryker disable next-line CallExpression: watch() adds the page's two listeners, and in
         // the warm process Stryker switches mutants in, a run before has already added them, so the
         // call gone changes nothing a test can see. Outside the runner's reach, not an equivalent
@@ -637,13 +797,13 @@ export class UiMenu extends LitElement {
         return html`${this.#trigger}${this.#panel}${this.#description.carrier()}`;
     }
 
-    /** The items, which are the host's own controls rather than anything rendered here. */
+    /**
+     * The items, which are the host's own controls rather than anything rendered here: its children,
+     * and the children of a section among them, in the order they are written, so the keys pass
+     * through sections as through the rest.
+     */
     #items(): HTMLElement[] {
-        return [
-            ...this.querySelectorAll<HTMLElement>(
-                ':scope > button:not([slot]), :scope > a[href]:not([slot])',
-            ),
-        ];
+        return [...this.querySelectorAll<HTMLElement>(taken)];
     }
 
     /**
@@ -676,8 +836,53 @@ export class UiMenu extends LitElement {
      */
     readonly #wire = (): void => {
         for (const item of this.#items()) {
-            item.setAttribute('role', 'menuitem');
+            // An item that ticks keeps the role the host wrote, and says it is unchecked where the
+            // host wrote nothing, since the state is one the role requires.
+            if (item.matches(ticking)) {
+                if (!item.hasAttribute('aria-checked')) {
+                    item.setAttribute('aria-checked', 'false');
+                }
+            } else {
+                item.setAttribute('role', 'menuitem');
+            }
+
             item.setAttribute('tabindex', '-1');
+        }
+    };
+
+    /**
+     * Turns an item that ticks: a checkbox's state turns over, and a radio's goes to it from the
+     * other radios of its section — or of the menu's own children, outside a section — and the item
+     * announces `change`, which a press with the space bar fires where it fires no click.
+     */
+    #tick(item: HTMLElement): void {
+        if (item.getAttribute('role') === 'menuitemcheckbox') {
+            item.setAttribute('aria-checked', String(item.getAttribute('aria-checked') !== 'true'));
+        } else {
+            for (const other of this.#items()) {
+                if (
+                    other.parentElement === item.parentElement &&
+                    other.matches('[role="menuitemradio"]')
+                ) {
+                    other.setAttribute('aria-checked', String(other === item));
+                }
+            }
+        }
+
+        item.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    /**
+     * Ticks the item a click lands on, before anything else hears the click: in capture, on the
+     * panel, which the click passes on its way to the item, so a listener on the item reads the state
+     * the click set. The click goes on to close the menu, as any item's does.
+     */
+    readonly #onTick = (event: MouseEvent): void => {
+        const path = event.composedPath();
+        const item = this.#enabled().find((one) => path.includes(one));
+
+        if (item?.matches(ticking) === true) {
+            this.#tick(item);
         }
     };
 
@@ -724,8 +929,12 @@ export class UiMenu extends LitElement {
                 // followed on Enter and never on Space, and an item's activation stays the
                 // platform's, so on a link the key does nothing, and moves no page under the
                 // open menu either.
+                // An item that ticks is ticked by the space bar and keeps the menu open, as the APG
+                // asks, where Enter and a click tick it and close it as any item's do.
                 if (this.#typed !== '') {
                     this.#type(event.key);
+                } else if (event.target instanceof HTMLElement && event.target.matches(ticking)) {
+                    this.#tick(event.target);
                 } else if (event.target instanceof HTMLButtonElement) {
                     return;
                 }
@@ -796,6 +1005,9 @@ export class UiMenu extends LitElement {
             return;
         }
 
+        // Again as it opens, for an item written into a section after the menu first wired its
+        // items: a slot reports its own children, and a section's are not.
+        this.#wire();
         this.#side();
         this.#edge(this.#fromEnd);
         this.#fromEnd = false;

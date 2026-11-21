@@ -61,14 +61,15 @@ customElements.define('test-diagnose-draws-a-toast', DrawsAToast);
 const said = {
     notAnItem: (tag: string): string =>
         `<ui-menu> holds a <${tag}> that is not an item: the menu takes as items only the ` +
-        `<button> and <a href> written as its own children, so what this one holds is drawn as ` +
-        `written, passed over by the keys and left out of the menu's choices. Write each item ` +
-        `as the menu's own child, and what was round it, such as a tooltip, inside it.`,
+        `<button> and <a href> written as its own children or in a section it holds, a ` +
+        `role="group", so what this one holds is drawn as written, passed over by the keys and ` +
+        `left out of the menu's choices. Write each item as the menu's own child, and what was ` +
+        `round it, such as a tooltip, inside it.`,
     forwarded:
         '<ui-menu> is handed items through a <slot>, and takes none of them: it takes as items ' +
-        'only the <button> and <a href> written as its own children, so what the slot forwards ' +
-        "is drawn as written and passed over by the keys. Write the items as the menu's own " +
-        'children, in the tree the menu is in.',
+        'only the <button> and <a href> written as its own children or in a section it holds, ' +
+        'so what the slot forwards is drawn as written and passed over by the keys. Write the ' +
+        "items as the menu's own children, in the tree the menu is in.",
     noItems:
         '<ui-menu> holds no item, so it opens an empty panel. Write its items as its own ' +
         'children, each a <button> or an <a href>.',
@@ -259,6 +260,17 @@ describe('a menu, as RFC 0011 measured what a host writes in one', () => {
                 message: said.notAnItem(child.localName),
             },
         ]);
+    });
+
+    it('takes a section for no mistake, and a menu that holds only sections for one with items', async () => {
+        const section =
+            '<div role="group" aria-labelledby="sort"><span id="sort">Sort by</span>' +
+            '<button type="button" role="menuitemradio" aria-checked="true">Name</button></div>';
+
+        expect(
+            diagnose(await mount(menu(`${section}<button type="button">Reset</button>`))),
+        ).toEqual([]);
+        expect(diagnose(await mount(menu(section))), 'sections alone').toEqual([]);
     });
 
     it("finds each of a component's own elements round an item", async () => {

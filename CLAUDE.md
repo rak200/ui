@@ -235,7 +235,8 @@ explains. This file restates none of them.
 - **Why a tooltip written inside a button or a link describes it, hides its tip from the name and
   keeps a click on the tip from it** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one
   tree scope_, the docblock on `UiTooltip` in `src/tooltip.ts`, and `docs/tooltip.md`'s _Inside a
-  button or a link_. A menu takes an item only as its own child, so a tooltip on an item is written
+  button or a link_. A menu takes an item only as its own child or in a section of its own, so a tooltip on an item is
+  written
   inside it; the tip is shown from its trigger, `showPopover({ source })`, which anchors it with no
   name, inside the button or round a child alike.
 - **Why every line the package says goes through `src/console.ts`, said once a page for each code
@@ -380,6 +381,14 @@ explains. This file restates none of them.
   measures it against a secondary `ui-button` state by state, with every duration the sheet moves
   over taken out — and never a script's, whose time of nothing is the collapse's, under which
   nothing runs.
+- **Why a menu keeps the role of an item that ticks and turns its `aria-checked`, why the space bar
+  ticks without closing, and why a section's items are drawn by rules the menu adopts** — the
+  docblocks on `UiMenu`, `#tick` and `rules` in `src/menu.ts`, the comments beside the tick's rules,
+  and `docs/menu.md`'s _Items that tick, and sections_. The tick turns in capture on the panel, so a
+  listener on the item reads the state its click set, and the item announces `change`, which a
+  press of the space bar needs, firing no click. `::slotted()` reaches a section and nothing in it,
+  so its items take the menu's item rules from the host's tree, at no weight, as the table's rows
+  take theirs; `src/diagnose.ts` takes a section for no mistake.
 - **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
   lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided
