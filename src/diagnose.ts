@@ -70,8 +70,8 @@ function note(
     found.push({ finding: { code, element, message }, cause });
 }
 
-/** What a menu takes as an item, as `src/menu.ts` reads its children. */
-const item = 'button:not([slot]), a[href]:not([slot])';
+/** What a menu takes as an item, as `src/menu.ts` reads its children: a submenu among them. */
+const item = 'button:not([slot]), a[href]:not([slot]), ui-menu';
 
 /** A section of a menu's, whose items `src/menu.ts` takes as its own, and whose heading names it. */
 const section = '[role="group"]';
@@ -101,8 +101,8 @@ function menu(element: Element, found: Found[]): void {
                 'ui-menu:forwarded',
                 child,
                 `<ui-menu> is handed items through a <slot>, and takes none of them: it takes as ` +
-                    `items only the <button> and <a href> written as its own children or in a ` +
-                    `section it holds, so what the slot forwards is drawn as written and passed ` +
+                    `items only the <button>, the <a href> and the <ui-menu> written as its own ` +
+                    `children or in a section it holds, so what the slot forwards is drawn as written and passed ` +
                     `over by the keys. Write the items as the menu's own children, in the tree the ` +
                     `menu is in.`,
             );
@@ -112,8 +112,8 @@ function menu(element: Element, found: Found[]): void {
                 'ui-menu:not-an-item',
                 child,
                 `<ui-menu> holds a <${child.localName}> that is not an item: the menu takes as ` +
-                    `items only the <button> and <a href> written as its own children or in a ` +
-                    `section it holds, a role="group", so what this one holds is drawn as written, ` +
+                    `items only the <button>, the <a href> and the <ui-menu> written as its own ` +
+                    `children or in a section it holds, a role="group", so what this one holds is drawn as written, ` +
                     `passed over by the keys and left out of the menu's choices. Write each item ` +
                     `as the menu's own child, and what was round it, such as a tooltip, inside it.`,
             );

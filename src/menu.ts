@@ -23,7 +23,7 @@ const side = 'data-side';
 
 /** What a menu takes as an item: a button or a link of the host's, its own or in a section. */
 const taken =
-    ':scope > button:not([slot]), :scope > a[href]:not([slot]), :scope > [role="group"] > button, :scope > [role="group"] > a[href]';
+    ':scope > button:not([slot]), :scope > a[href]:not([slot]), :scope > ui-menu, :scope > [role="group"] > button, :scope > [role="group"] > a[href], :scope > [role="group"] > ui-menu';
 
 /** The ids the menu gives the descriptions it names, numbered across the page. */
 let sequence = 0;
@@ -268,6 +268,50 @@ function band(): HTMLSpanElement {
 }
 
 /**
+ * How long the pointer rests on a submenu's trigger before it opens, and how long an open submenu
+ * waits for the pointer on its way across: Radix's, which RFC 0010 took. A reading of the pointer,
+ * not motion, so no token, and nothing reduced motion collapses.
+ */
+const resting = 100;
+
+/** How long an open submenu waits for the pointer on its way to it — see {@link resting}. */
+const crossing = 300;
+
+/** A point on the screen, as a pointer reads it. */
+interface Point {
+    readonly x: number;
+    readonly y: number;
+}
+
+/** Whether a point lies inside a polygon, by the crossings of a ray cast from it. */
+function inside(area: readonly Point[], x: number, y: number): boolean {
+    let within = false;
+
+    for (const [at, here] of area.entries()) {
+        const there = area.at(at - 1) ?? here;
+
+        if (
+            here.y > y !== there.y > y &&
+            x < ((there.x - here.x) * (y - here.y)) / (there.y - here.y) + here.x
+        ) {
+            within = !within;
+        }
+    }
+
+    return within;
+}
+
+/** What an item is typed to: its label, a submenu's by the label of its trigger. */
+function label(item: HTMLElement): string {
+    const text =
+        item instanceof UiMenu
+            ? item.querySelector(':scope > [slot="trigger"]')?.textContent
+            : item.textContent;
+
+    return (text ?? '').trim().toLowerCase();
+}
+
+/**
  * A menu button: one trigger, one menu, and the ARIA relationship between them.
  *
  * **The trigger is rendered here rather than slotted, which is the opposite of every other
@@ -287,6 +331,12 @@ function band(): HTMLSpanElement {
  * `aria-checked` turned by a press, a radio's one at a time in its section; and a section is a
  * `role="group"` among the menu's children, named by a heading it holds, its items taken and moved
  * through as the menu's own are, and drawn by {@link rules}, which `::slotted()` cannot be.
+ *
+ * **A menu written in another is a submenu**, RFC 0010's: its trigger is drawn as an item of the
+ * menu round it, under the `submenu` state, reached by that menu's keys, and its panel opens beside
+ * it, by the arrow toward the inline end, a press, or the pointer resting on it for {@link resting},
+ * and waits for the pointer on its way across for {@link crossing} at most. The layer and its
+ * dismissal are the platform's: a popover in another's panel is its child among the open popovers.
  *
  * ## What the platform does, and what is left
  *
@@ -538,6 +588,84 @@ export class UiMenu extends LitElement {
                 left: anchor(left);
             }
 
+            /* submenu: a menu written in another is drawn as one of its items. Its trigger fills
+               the row with an item's box, its caret turned toward the inline end, where the panel
+               opens; and it stands down the effects of a button the trigger answers on a menu of
+               its own, which no item takes — under the menu's own name, so a choice above it
+               reaches what it holds as before. */
+            :host(:state(submenu)) {
+                display: block;
+                --ui-motion-menu-hover-fill: none;
+                --ui-motion-menu-hover-border: none;
+                --ui-motion-menu-hover-shadow: none;
+                --ui-motion-menu-focus-fill: none;
+                --ui-motion-menu-focus-move: none;
+                --ui-motion-menu-focus-ring: none;
+                --ui-motion-menu-focus-shadow: none;
+                --ui-motion-menu-press-fill: none;
+                --ui-motion-menu-press-move: none;
+                --ui-motion-menu-press-shadow: none;
+                /* And the caret's turn as its panel opens, which flips it where it points down. */
+                --ui-motion-menu-caret: none;
+            }
+
+            :host(:state(submenu)) [part~='trigger'] {
+                ${box}
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: ${reference('--ui-space')};
+                isolation: auto;
+            }
+
+            :host(:state(submenu)) [part~='trigger']::before,
+            :host(:state(submenu)) [part~='trigger']::after {
+                content: none;
+            }
+
+            /* Lit under the pointer, as an item is, and while its panel is open, so the item the
+               open panel hangs from is the one lit. */
+            :host(:state(submenu)) [part~='trigger']:is(:hover, :active),
+            :host(:state(submenu)[open]) [part~='trigger'] {
+                background: ${reference('--ui-color-hover')};
+            }
+
+            :host(:state(submenu)) [part~='trigger']:focus-visible {
+                outline-offset: -2px;
+            }
+
+            /* Turned toward where the panel opens, and kept there as it opens: heavier than the
+               turn a menu's caret takes as its own panel opens below it. */
+            :host(:state(submenu)) svg,
+            :host(:state(submenu)[open]) svg {
+                rotate: -90deg;
+            }
+
+            :host(:state(submenu):dir(rtl)) svg,
+            :host(:state(submenu)[open]:dir(rtl)) svg {
+                rotate: 90deg;
+            }
+
+            /* The panel beside its trigger, its first item level with it — the panel's padding and
+               its edge above the item — and clear of the edge of the panel round it, by that
+               panel's padding and edge; toward the inline end, turned to the start and up where it
+               would run off the screen, by the platform's flips. */
+            :host(:state(submenu)) [popover] {
+                top: calc(anchor(top) - ${reference('--ui-space')} / 2 - 1px);
+                left: anchor(right);
+                margin: 0;
+                margin-inline-start: calc(${reference('--ui-space')} / 2 + 1px);
+                position-try-fallbacks:
+                    flip-inline,
+                    flip-block,
+                    flip-block flip-inline;
+            }
+
+            :host(:state(submenu):dir(rtl)) [popover] {
+                left: auto;
+                right: anchor(left);
+            }
+
             /* The gap between the panel and its trigger: a margin on the side the trigger is on,
            which the flip moves to the other side with the panel. */
             [popover] {
@@ -693,6 +821,27 @@ export class UiMenu extends LitElement {
      */
     #returning = false;
 
+    /** Where the menu keeps its states: `submenu`, while it is written in another menu. */
+    readonly #internals = this.attachInternals();
+
+    /**
+     * Whether the menu is written in another, or in a section of one: a submenu, whose trigger is
+     * an item of that menu and whose panel opens beside it.
+     */
+    #submenu = false;
+
+    /** The submenu's opening, once the pointer has rested on its trigger. */
+    #opening = 0;
+
+    /** Whether the pointer opened the menu, which leaves the focus where it was. */
+    #pointed = false;
+
+    /** Ends the wait for the pointer on its way to an open submenu, closing it or not. */
+    #crossed: ((close: boolean) => void) | undefined;
+
+    /** The submenu, written in this menu, that waits for the pointer on its way to it. */
+    #waiting: UiMenu | undefined;
+
     /**
      * The panel's height as it was last measured open, which foretells its side before it opens:
      * a closed popover measures nothing. None until the first open, which then hangs below its
@@ -730,6 +879,8 @@ export class UiMenu extends LitElement {
         // copy of it.
         trigger.setAttribute('popovertarget', panelId);
         trigger.addEventListener('keydown', this.#onTriggerKey);
+        trigger.addEventListener('pointerenter', this.#onRest);
+        trigger.addEventListener('pointerleave', this.#onDepart);
         // A secondary button's effects, which the trigger answers as that button does: the
         // sheet draws them by the class and on the band, and the scripts they need are bound
         // as ui-button binds them — src/effects.ts says what it asks of a button.
@@ -747,6 +898,7 @@ export class UiMenu extends LitElement {
         panel.addEventListener('beforetoggle', this.#onBeforeToggle);
         panel.addEventListener('toggle', this.#onToggle);
         panel.addEventListener('keydown', this.#onMenuKey);
+        panel.addEventListener('pointerenter', this.#onArrive);
         panel.addEventListener('click', this.#onTick, { capture: true });
         panel.addEventListener('click', this.#onChoose);
 
@@ -771,6 +923,8 @@ export class UiMenu extends LitElement {
             root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
         }
 
+        this.#nest();
+
         // Stryker disable next-line CallExpression: watch() adds the page's two listeners, and in
         // the warm process Stryker switches mutants in, a run before has already added them, so the
         // call gone changes nothing a test can see. Outside the runner's reach, not an equivalent
@@ -785,6 +939,8 @@ export class UiMenu extends LitElement {
         // framework unmounted would otherwise keep re-placing an element that is no longer
         // in a document.
         this.#watching.abort();
+        window.clearTimeout(this.#opening);
+        this.#crossed?.(false);
 
         // Stryker disable next-line CallExpression: this reaches exactly two things in Lit
         // and this element has neither — `__controllers` is empty, because nothing here
@@ -876,6 +1032,11 @@ export class UiMenu extends LitElement {
      */
     readonly #wire = (): void => {
         for (const item of this.#items()) {
+            // A submenu draws its own trigger as an item, which is what it is reached by.
+            if (item instanceof UiMenu) {
+                continue;
+            }
+
             // An item that ticks keeps the role the host wrote, and says it is unchecked where the
             // host wrote nothing, since the state is one the role requires.
             if (item.matches(ticking)) {
@@ -973,6 +1134,17 @@ export class UiMenu extends LitElement {
 
     /** Opens onto an end of the list, which is the one thing a click cannot ask for. */
     readonly #onTriggerKey = (event: KeyboardEvent): void => {
+        // A submenu's trigger is an item of the menu round it, which the arrows up and down move
+        // over, and opens it by the arrow toward the inline end, as the APG's menu has it.
+        if (this.#submenu) {
+            if (event.key === this.#toward()) {
+                event.preventDefault();
+                this.open = true;
+            }
+
+            return;
+        }
+
         if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
             return;
         }
@@ -985,6 +1157,20 @@ export class UiMenu extends LitElement {
     };
 
     readonly #onMenuKey = (event: KeyboardEvent): void => {
+        // A key a submenu's panel took already, on its way out through this panel.
+        if (event.defaultPrevented) {
+            return;
+        }
+
+        // The arrow back, in a submenu: it closes, and the focus goes back to its trigger.
+        if (this.#submenu && event.key === this.#back()) {
+            this.#returning = true;
+            this.open = false;
+            event.preventDefault();
+
+            return;
+        }
+
         switch (event.key) {
             case 'ArrowDown':
                 this.#step(1);
@@ -999,8 +1185,14 @@ export class UiMenu extends LitElement {
                 this.#edge(true);
                 break;
             case 'Escape':
-                // The platform closes it; this only says where the focus should land.
+                // The platform closes it; this only says where the focus should land. A
+                // submenu's keeps it from the menu round it, which the platform leaves open.
                 this.#returning = true;
+
+                if (this.#submenu) {
+                    event.stopPropagation();
+                }
+
                 return;
             case 'Tab':
                 // The focus is already leaving and the default is what carries it there.
@@ -1047,8 +1239,10 @@ export class UiMenu extends LitElement {
      */
     readonly #onChoose = (event: MouseEvent): void => {
         const path = event.composedPath();
+        const item = this.#enabled().find((one) => path.includes(one));
 
-        if (!this.#enabled().some((item) => path.includes(item))) {
+        // A submenu's trigger opens it; only a choice made in its panel closes this one too.
+        if (item === undefined || (item instanceof UiMenu && !path.includes(item.#panel))) {
             return;
         }
 
@@ -1085,6 +1279,7 @@ export class UiMenu extends LitElement {
 
         if (!this.open) {
             this.#watching.abort();
+            this.#crossed?.(false);
             this.#give();
 
             return;
@@ -1094,7 +1289,14 @@ export class UiMenu extends LitElement {
         // items: a slot reports its own children, and a section's are not.
         this.#wire();
         this.#side();
-        this.#edge(this.#fromEnd);
+
+        // Opened by the pointer resting on a submenu's trigger, the focus stays where it was, so
+        // the submenu can close behind the pointer without dropping it.
+        if (!this.#pointed) {
+            this.#edge(this.#fromEnd);
+        }
+
+        this.#pointed = false;
         this.#fromEnd = false;
 
         this.#watching = new AbortController();
@@ -1122,6 +1324,147 @@ export class UiMenu extends LitElement {
 
         this.#returning = false;
         this.#trigger.focus();
+    }
+
+    /** The menu this submenu is written in, or in a section of. */
+    #parent(): UiMenu | undefined {
+        const parent = this.parentElement;
+        const above = parent?.parentElement;
+
+        return parent instanceof UiMenu ? parent : above instanceof UiMenu ? above : undefined;
+    }
+
+    /**
+     * Opens a submenu once the pointer has rested on its trigger, unless another submenu of the same
+     * menu waits for the pointer on its way across, which what it crosses does not take from it. A
+     * touch is no pointer resting: a tap opens the submenu as a press of its trigger does.
+     */
+    readonly #onRest = (event: PointerEvent): void => {
+        if (!this.#submenu || event.pointerType === 'touch') {
+            return;
+        }
+
+        // Back on the trigger, the submenu it opened no longer waits.
+        this.#crossed?.(false);
+        window.clearTimeout(this.#opening);
+        this.#opening = window.setTimeout(() => {
+            const parent = this.#parent();
+            const waiting = parent === undefined ? undefined : parent.#waiting;
+
+            if (!this.open && (waiting === undefined || waiting === this)) {
+                this.#pointed = true;
+                this.open = true;
+            }
+        }, resting);
+    };
+
+    /**
+     * Waits, as the pointer leaves an open submenu's trigger, for it to reach the submenu: across the
+     * area from where it left, five pixels back, to the submenu's corners, for {@link crossing} at
+     * most. It closes the submenu as the pointer leaves that area or the time runs out, and the wait
+     * ends where the pointer reaches the submenu or comes back to its trigger.
+     */
+    readonly #onDepart = (event: PointerEvent): void => {
+        window.clearTimeout(this.#opening);
+
+        if (!this.#submenu || !this.open || event.pointerType === 'touch') {
+            return;
+        }
+
+        const box = this.#panel.getBoundingClientRect();
+        // Which way the submenu lies from where the pointer left, after any flip.
+        const way = box.left >= event.clientX ? 1 : -1;
+        const near = way > 0 ? box.left : box.right;
+        const far = way > 0 ? box.right : box.left;
+        const area: Point[] = [
+            { x: event.clientX - way * 5, y: event.clientY },
+            { x: near, y: box.top },
+            { x: far, y: box.top },
+            { x: far, y: box.bottom },
+            { x: near, y: box.bottom },
+        ];
+        const parent = this.#parent();
+        const watching = new AbortController();
+        const timer = window.setTimeout(() => {
+            end(true);
+        }, crossing);
+        const end = (close: boolean): void => {
+            watching.abort();
+            window.clearTimeout(timer);
+            this.#crossed = undefined;
+
+            if (parent !== undefined && parent.#waiting === this) {
+                parent.#waiting = undefined;
+            }
+
+            if (close) {
+                this.open = false;
+            }
+        };
+
+        this.#crossed?.(false);
+        this.#crossed = end;
+
+        if (parent !== undefined) {
+            parent.#waiting = this;
+        }
+
+        document.addEventListener(
+            'pointermove',
+            (moved: PointerEvent) => {
+                if (!inside(area, moved.clientX, moved.clientY)) {
+                    end(true);
+                }
+            },
+            { signal: watching.signal },
+        );
+    };
+
+    /** The pointer has reached the submenu it was on its way to, which waits for it no longer. */
+    readonly #onArrive = (): void => {
+        this.#crossed?.(false);
+    };
+
+    /**
+     * Makes the menu a submenu where it is written in another, or in a section of one, and a menu of
+     * its own where it is not: its trigger an item of the menu round it, reached by that menu's keys
+     * and out of the tab order, and drawn as an item, under the `submenu` state.
+     */
+    #nest(): void {
+        const parent = this.parentElement;
+        const trigger = this.#trigger;
+
+        this.#submenu =
+            parent instanceof UiMenu ||
+            (parent?.matches('[role="group"]') === true && parent.parentElement instanceof UiMenu);
+
+        if (this.#submenu) {
+            this.#internals.states.add('submenu');
+            trigger.setAttribute('role', 'menuitem');
+            trigger.setAttribute('tabindex', '-1');
+        } else {
+            this.#internals.states.delete('submenu');
+            trigger.removeAttribute('role');
+            trigger.removeAttribute('tabindex');
+        }
+    }
+
+    /** The arrow toward the inline end, which opens a submenu: right, and left right to left. */
+    #toward(): string {
+        return this.matches(':dir(rtl)') ? 'ArrowLeft' : 'ArrowRight';
+    }
+
+    /** The arrow back, toward the inline start, which closes a submenu. */
+    #back(): string {
+        return this.matches(':dir(rtl)') ? 'ArrowRight' : 'ArrowLeft';
+    }
+
+    /**
+     * {@inheritDoc HTMLElement.focus} The focus goes to the trigger, which is what the menu is
+     * reached by, and how the menu round a submenu moves onto it.
+     */
+    override focus(options?: FocusOptions): void {
+        this.#trigger.focus(options);
     }
 
     /** Moves by one, wrapping at either end, which is what the APG pattern asks for. */
@@ -1168,9 +1511,7 @@ export class UiMenu extends LitElement {
         const wrapped = items.slice(0, at + 1);
         const order = [...after, ...wrapped];
 
-        order
-            .find((item) => item.textContent.trim().toLowerCase().startsWith(this.#typed))
-            ?.focus();
+        order.find((item) => label(item).startsWith(this.#typed))?.focus();
     }
 
     /**
