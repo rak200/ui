@@ -299,11 +299,11 @@ its trigger answers on a menu of its own stand down, as no item takes them.
 - **A choice made in it closes both**, the focus going back to the first trigger, as a choice
   anywhere does; a press of its trigger opens it and leaves the menu round it open.
 - **The pointer opens it after resting on its trigger for 100ms**, and leaves the focus where it was.
-  As the pointer leaves the trigger for the open submenu, the submenu waits for it across the area
-  from where it left, five pixels back, to the submenu's corners, for 300ms at most, while the items
-  it crosses open nothing; leaving that area or running out of time closes it. A touch opens it as a
-  press of its trigger does. The two times are a reading of the pointer, Radix's, rather than motion,
-  so they are no token and reduced motion leaves them as they are.
+  As the pointer leaves the trigger for the open submenu, the submenu waits for it across the
+  triangle from where it left, five pixels back, to the corners of its near edge, for 300ms at most,
+  while the items it crosses open nothing; leaving that triangle or running out of time closes it. A
+  touch opens it as a press of its trigger does. The two times are a reading of the pointer, Radix's,
+  rather than motion, so they are no token and reduced motion leaves them as they are.
 
 The layer and its dismissal are the platform's: a popover in another's panel is its child among the
 open popovers, measured for RFC 0010, so a click elsewhere closes both and Escape the one on top.

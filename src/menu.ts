@@ -292,6 +292,10 @@ function inside(area: readonly Point[], x: number, y: number): boolean {
 
         if (
             here.y > y !== there.y > y &&
+            // Stryker disable next-line EqualityOperator: equivalent — a closed polygon has as many
+            // crossings on one side of a point as on the other, odd or even, so `>=` reads the same
+            // answer off the other side; and `<=` reads another only for a point exactly on an
+            // edge, the line between on the way and off it, which is no more one than the other.
             x < ((there.x - here.x) * (y - here.y)) / (there.y - here.y) + here.x
         ) {
             within = !within;
@@ -825,10 +829,10 @@ export class UiMenu extends LitElement {
     readonly #internals = this.attachInternals();
 
     /**
-     * Whether the menu is written in another, or in a section of one: a submenu, whose trigger is
-     * an item of that menu and whose panel opens beside it.
+     * The menu this one is written in, or in a section of, which makes it a submenu, whose trigger
+     * is an item of that menu and whose panel opens beside it: none where it is a menu of its own.
      */
-    #submenu = false;
+    #above: UiMenu | undefined;
 
     /** The submenu's opening, once the pointer has rested on its trigger. */
     #opening = 0;
@@ -836,8 +840,8 @@ export class UiMenu extends LitElement {
     /** Whether the pointer opened the menu, which leaves the focus where it was. */
     #pointed = false;
 
-    /** Ends the wait for the pointer on its way to an open submenu, closing it or not. */
-    #crossed: ((close: boolean) => void) | undefined;
+    /** Ends the wait for the pointer on its way to an open submenu, which it leaves as it is. */
+    #crossed: (() => void) | undefined;
 
     /** The submenu, written in this menu, that waits for the pointer on its way to it. */
     #waiting: UiMenu | undefined;
@@ -940,7 +944,7 @@ export class UiMenu extends LitElement {
         // in a document.
         this.#watching.abort();
         window.clearTimeout(this.#opening);
-        this.#crossed?.(false);
+        this.#crossed?.();
 
         // Stryker disable next-line CallExpression: this reaches exactly two things in Lit
         // and this element has neither — `__controllers` is empty, because nothing here
@@ -1136,7 +1140,7 @@ export class UiMenu extends LitElement {
     readonly #onTriggerKey = (event: KeyboardEvent): void => {
         // A submenu's trigger is an item of the menu round it, which the arrows up and down move
         // over, and opens it by the arrow toward the inline end, as the APG's menu has it.
-        if (this.#submenu) {
+        if (this.#above !== undefined) {
             if (event.key === this.#toward()) {
                 event.preventDefault();
                 this.open = true;
@@ -1163,7 +1167,7 @@ export class UiMenu extends LitElement {
         }
 
         // The arrow back, in a submenu: it closes, and the focus goes back to its trigger.
-        if (this.#submenu && event.key === this.#back()) {
+        if (this.#above !== undefined && event.key === this.#back()) {
             this.#returning = true;
             this.open = false;
             event.preventDefault();
@@ -1189,7 +1193,7 @@ export class UiMenu extends LitElement {
                 // submenu's keeps it from the menu round it, which the platform leaves open.
                 this.#returning = true;
 
-                if (this.#submenu) {
+                if (this.#above !== undefined) {
                     event.stopPropagation();
                 }
 
@@ -1279,7 +1283,8 @@ export class UiMenu extends LitElement {
 
         if (!this.open) {
             this.#watching.abort();
-            this.#crossed?.(false);
+            // The pointer's way to a submenu ends as it closes, whatever closed it.
+            this.#crossed?.();
             this.#give();
 
             return;
@@ -1326,32 +1331,22 @@ export class UiMenu extends LitElement {
         this.#trigger.focus();
     }
 
-    /** The menu this submenu is written in, or in a section of. */
-    #parent(): UiMenu | undefined {
-        const parent = this.parentElement;
-        const above = parent?.parentElement;
-
-        return parent instanceof UiMenu ? parent : above instanceof UiMenu ? above : undefined;
-    }
-
     /**
      * Opens a submenu once the pointer has rested on its trigger, unless another submenu of the same
      * menu waits for the pointer on its way across, which what it crosses does not take from it. A
      * touch is no pointer resting: a tap opens the submenu as a press of its trigger does.
      */
     readonly #onRest = (event: PointerEvent): void => {
-        if (!this.#submenu || event.pointerType === 'touch') {
+        const above = this.#above;
+
+        if (above === undefined || event.pointerType === 'touch') {
             return;
         }
 
         // Back on the trigger, the submenu it opened no longer waits.
-        this.#crossed?.(false);
-        window.clearTimeout(this.#opening);
+        this.#crossed?.();
         this.#opening = window.setTimeout(() => {
-            const parent = this.#parent();
-            const waiting = parent === undefined ? undefined : parent.#waiting;
-
-            if (!this.open && (waiting === undefined || waiting === this)) {
+            if (!this.open && above.#waiting === undefined) {
                 this.#pointed = true;
                 this.open = true;
             }
@@ -1360,60 +1355,51 @@ export class UiMenu extends LitElement {
 
     /**
      * Waits, as the pointer leaves an open submenu's trigger, for it to reach the submenu: across the
-     * area from where it left, five pixels back, to the submenu's corners, for {@link crossing} at
-     * most. It closes the submenu as the pointer leaves that area or the time runs out, and the wait
-     * ends where the pointer reaches the submenu or comes back to its trigger.
+     * triangle from where it left, five pixels back, to the corners of the submenu's near edge, for
+     * {@link crossing} at most. It closes the submenu as the pointer leaves that triangle or the time
+     * runs out, and the wait ends where the pointer reaches the submenu or comes back to its trigger,
+     * and as the submenu closes. Radix's area takes the submenu's far corners too, which only a
+     * pointer over the submenu reaches, and its arrival there has ended the wait already.
      */
     readonly #onDepart = (event: PointerEvent): void => {
         window.clearTimeout(this.#opening);
 
-        if (!this.#submenu || !this.open || event.pointerType === 'touch') {
+        const above = this.#above;
+
+        if (above === undefined || !this.open || event.pointerType === 'touch') {
             return;
         }
 
         const box = this.#panel.getBoundingClientRect();
-        // Which way the submenu lies from where the pointer left, after any flip.
-        const way = box.left >= event.clientX ? 1 : -1;
-        const near = way > 0 ? box.left : box.right;
-        const far = way > 0 ? box.right : box.left;
+        // Whether the submenu hangs ahead of its trigger or, turned, behind it: a panel a host
+        // hangs flush against the trigger starts where the trigger ends, and is ahead.
+        const ahead = box.left >= this.#trigger.getBoundingClientRect().right;
+        const near = ahead ? box.left : box.right;
         const area: Point[] = [
-            { x: event.clientX - way * 5, y: event.clientY },
+            { x: event.clientX + (ahead ? -5 : 5), y: event.clientY },
             { x: near, y: box.top },
-            { x: far, y: box.top },
-            { x: far, y: box.bottom },
             { x: near, y: box.bottom },
         ];
-        const parent = this.#parent();
         const watching = new AbortController();
+        // Closing is all the wait does as it fails: the submenu closing is what ends it.
         const timer = window.setTimeout(() => {
-            end(true);
+            this.open = false;
         }, crossing);
-        const end = (close: boolean): void => {
+
+        this.#crossed?.();
+        this.#crossed = (): void => {
             watching.abort();
             window.clearTimeout(timer);
             this.#crossed = undefined;
-
-            if (parent !== undefined && parent.#waiting === this) {
-                parent.#waiting = undefined;
-            }
-
-            if (close) {
-                this.open = false;
-            }
+            above.#waiting = undefined;
         };
-
-        this.#crossed?.(false);
-        this.#crossed = end;
-
-        if (parent !== undefined) {
-            parent.#waiting = this;
-        }
+        above.#waiting = this;
 
         document.addEventListener(
             'pointermove',
             (moved: PointerEvent) => {
                 if (!inside(area, moved.clientX, moved.clientY)) {
-                    end(true);
+                    this.open = false;
                 }
             },
             { signal: watching.signal },
@@ -1422,7 +1408,7 @@ export class UiMenu extends LitElement {
 
     /** The pointer has reached the submenu it was on its way to, which waits for it no longer. */
     readonly #onArrive = (): void => {
-        this.#crossed?.(false);
+        this.#crossed?.();
     };
 
     /**
@@ -1434,18 +1420,22 @@ export class UiMenu extends LitElement {
         const parent = this.parentElement;
         const trigger = this.#trigger;
 
-        this.#submenu =
-            parent instanceof UiMenu ||
-            (parent?.matches('[role="group"]') === true && parent.parentElement instanceof UiMenu);
+        this.#above =
+            parent instanceof UiMenu
+                ? parent
+                : parent?.matches('[role="group"]') === true &&
+                    parent.parentElement instanceof UiMenu
+                  ? parent.parentElement
+                  : undefined;
 
-        if (this.#submenu) {
-            this.#internals.states.add('submenu');
-            trigger.setAttribute('role', 'menuitem');
-            trigger.setAttribute('tabindex', '-1');
-        } else {
+        if (this.#above === undefined) {
             this.#internals.states.delete('submenu');
             trigger.removeAttribute('role');
             trigger.removeAttribute('tabindex');
+        } else {
+            this.#internals.states.add('submenu');
+            trigger.setAttribute('role', 'menuitem');
+            trigger.setAttribute('tabindex', '-1');
         }
     }
 
