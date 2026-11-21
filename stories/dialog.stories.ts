@@ -169,3 +169,30 @@ export const OpenedFromMarkup: StoryObj<DialogArgs> = {
         </div>
     `,
 };
+
+/**
+ * Closed by its form, with no script: a `<form method="dialog">` in it, sent by a button in its
+ * actions, closes it with that button's value as its `returnValue`, as the platform closes a
+ * `<dialog>` for a form it holds.
+ */
+export const ClosedByItsForm: StoryObj<DialogArgs> = {
+    render: ({ title, body }): TemplateResult => html`
+        <div>
+            <button type="button" commandfor="closed-by-its-form" command="--show">
+                Delete account
+            </button>
+            <ui-dialog id="closed-by-its-form">
+                <h2 slot="title">${title}</h2>
+                <form method="dialog" id="closed-by-its-form-choice">
+                    <p>${body}</p>
+                </form>
+                <button slot="actions" form="closed-by-its-form-choice" value="cancel">
+                    Cancel
+                </button>
+                <button slot="actions" form="closed-by-its-form-choice" value="delete">
+                    Delete
+                </button>
+            </ui-dialog>
+        </div>
+    `,
+};
