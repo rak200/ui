@@ -37,6 +37,10 @@ the tip appears, and where it lands.
 The class is exported as `UiTooltip` for a host that needs the type; importing the package registers
 the element, so nothing has to be called.
 
+| Attribute | Type          | Default         | Means                                   |
+| --------- | ------------- | --------------- | --------------------------------------- |
+| `side`    | `TooltipSide` | `'block-start'` | the side of its trigger the tip goes on |
+
 ## Slots
 
 | Slot      | Holds                                                              |
@@ -198,8 +202,31 @@ mirrors a centred tip there and put it off the screen in every form measured (Mo
 where the trigger's edges are placed alike in all three engines. A right-to-left page is no such
 part: the tip is centred there, as it is left to right.
 
+### A side of its own
+
+```html
+<ui-tooltip side="inline-end">
+  <button type="button">Save</button>
+  <span slot="tip">Saves without closing the dialog.</span>
+</ui-tooltip>
+```
+
+**`side` asks for another side**, one of the `TooltipSide` names, in the tip's own direction:
+`block-start`, above the trigger, which is where a tip goes until told otherwise; `block-end`,
+below it; `inline-start` and `inline-end`, beside it at its start and its end — left and right in a
+passage left to right, right and left in one right to left — centred on its middle. Each turns to
+the opposite side where its own has no room, and keeps the gap on its trigger's side. A name it does
+not know is above. Reflected.
+
+**In a part of the page whose direction is not the page's**, a side of its own is taken by the
+trigger's edges, read in the tip's direction: below hangs from the trigger's leading edge as above
+does, and beside starts from the edge on its side, centred on the trigger's middle. Measured, the
+platform's own placement read such a part's sides in the page's direction in Chromium and WebKit,
+and Firefox misplaced the tip on every side there.
+
 **The side it took is written as [`data-side`](#styling)**, since the CSS writes it nowhere: the
-element reads it off where the tip landed as it is shown, and again on every scroll and resize.
+element reads it off where the tip landed as it is shown, again on every scroll and resize, and as
+`side` changes while the tip is open.
 
 **The tip is shown from its trigger, which is what anchors it**, so it needs no anchor name: an
 `anchor-name` of your own on the trigger leaves the tip where it is.
@@ -273,8 +300,9 @@ an icon's entrance among them; the tooltip's own names, `--ui-motion-tooltip-ent
 
 Each is a transition, so a tip you leave before it has arrived turns back from where it is, and one
 pointed at again as it leaves comes back from where it got to. **None scales a tip**, as RFC 0004
-chose. An entrance comes from the side the tip last landed on, since the side is read once the tip
-is shown — above its trigger until it has landed below.
+chose. A tip beside its trigger moves across the line, toward the trigger and away, where one above
+or below it moves up and down. An entrance comes from the side the tip last landed on, since the
+side is read once the tip is shown — the side asked for until it has landed somewhere else.
 
 **Only Chromium plays an exit.** A tip is held on the page while it goes by transitioning its
 display and its overlay, which Chromium honours for a popover; Firefox and WebKit take a popover
@@ -326,8 +354,9 @@ lift were all already here.
 one line, and a sentence wraps at a readable measure rather than at whatever the trigger happens to
 be near.
 
-The `data-side` attribute is written on your tip and says which way it went — `block-start` or
-`block-end` — so a host that wants an arrow, or a different gap, has something to select on.
+The `data-side` attribute is written on your tip and says which way it went — `block-start`,
+`block-end`, `inline-start` or `inline-end`, in the tip's direction — so a host that wants an arrow,
+or a different gap, has something to select on.
 
 `::part()` is not exposed. There is nothing in the shadow root to aim it at: the trigger and the tip
 are your own elements, styleable directly.
