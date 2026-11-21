@@ -328,6 +328,16 @@ export const derivedTokens = [
     '--ui-color-primary-contrast',
     '--ui-color-primary-hover',
     '--ui-color-primary-pressed',
+    // The danger button's fill, its label and its two states, arriving with it — RFC 0010. Its
+    // own, as the primary's are, rather than the danger's: the danger is an error's text, a
+    // field's boundary and a toast's stripe as well, and a theme fills the button apart from them
+    // the way Glass fills the primary apart from the checked controls. Each computes from the
+    // danger what the primary's does from the accent: a host that moves the button apart from the
+    // danger sets all four.
+    '--ui-color-danger-button',
+    '--ui-color-danger-button-contrast',
+    '--ui-color-danger-button-hover',
+    '--ui-color-danger-button-pressed',
     // The choice already made in a list the page draws, its text and its fill under the
     // pointer, arriving with `ui-select`'s list — #303. A fill apart from the checked
     // controls' for the reason the primary button has one: Glass marks the choice with a tint
@@ -536,24 +546,26 @@ function pole(name: Token, channel: string): string {
 const crossover = 0.1791;
 
 /**
- * The pole the accent's states move toward. Away from the label while the label has little
- * to spare, toward it once the label stands at 10:1 or more: lighten at or under 0.055 (a
- * white label at 10:1 and up) or between the crossover and 0.45 (a black label under 10:1),
- * darken otherwise.
+ * The pole a fill's states move toward, the accent's or the danger's. Away from the label while
+ * the label has little to spare, toward it once the label stands at 10:1 or more: lighten at or
+ * under 0.055 (a white label at 10:1 and up) or between the crossover and 0.45 (a black label
+ * under 10:1), darken otherwise.
  *
  * Away from the label always left a very light or a very dark accent no room to move, 697
  * of 4096 under the 1.05 the suite asks; toward it always took the label under 4.5:1 on
  * 1978. With the turn anywhere from 8.5:1 to 12:1 only black fails, its hover at 1.03 under
  * every shape — measured for RFC 0003, and 10 sits in the middle.
  */
-const room = pole(
-    '--ui-color-accent',
-    `clamp(0, ${step(`0.055 - ${luminance}`)} + ${step(`${luminance} - ${String(crossover)}`)} * ${step(`0.45 - ${luminance}`)}, 1)`,
-);
+function room(fill: Token): string {
+    return pole(
+        fill,
+        `clamp(0, ${step(`0.055 - ${luminance}`)} + ${step(`${luminance} - ${String(crossover)}`)} * ${step(`0.45 - ${luminance}`)}, 1)`,
+    );
+}
 
-/** `amount`% of the way from the accent toward the pole its states have room to move to. */
-function shade(amount: number): string {
-    return `color-mix(in oklab, ${room} ${String(amount)}%, ${ground('--ui-color-accent')})`;
+/** `amount`% of the way from `fill` toward the pole its states have room to move to. */
+function shade(fill: Token, amount: number): string {
+    return `color-mix(in oklab, ${room(fill)} ${String(amount)}%, ${ground(fill)})`;
 }
 
 /**
@@ -628,17 +640,23 @@ export const formulas: Readonly<Record<DerivedToken, string>> = {
     // Toward whichever pole has room rather than toward the text, which ran out of room on
     // an accent already near it: the docblock on `room` carries the measurement. The light
     // scheme's hover moves from `#255cd4` to `#1d52c6`, the pole being black there.
-    '--ui-color-accent-hover': shade(12),
-    '--ui-color-accent-pressed': shade(22),
+    '--ui-color-accent-hover': shade('--ui-color-accent', 12),
+    '--ui-color-accent-pressed': shade('--ui-color-accent', 22),
     // The accent's own, until a theme fills the primary button apart from it.
     '--ui-color-primary': ground('--ui-color-accent'),
     '--ui-color-primary-contrast': label,
-    '--ui-color-primary-hover': shade(12),
-    '--ui-color-primary-pressed': shade(22),
+    '--ui-color-primary-hover': shade('--ui-color-accent', 12),
+    '--ui-color-primary-pressed': shade('--ui-color-accent', 22),
+    // The danger's own, as the primary's are the accent's, until a theme fills the danger button
+    // apart from the danger: the label its far pole, the states toward whichever pole has room.
+    '--ui-color-danger-button': ground('--ui-color-danger'),
+    '--ui-color-danger-button-contrast': farPole(ground('--ui-color-danger')),
+    '--ui-color-danger-button-hover': shade('--ui-color-danger', 12),
+    '--ui-color-danger-button-pressed': shade('--ui-color-danger', 22),
     // The accent's own, until a theme marks the choice already made apart from it.
     '--ui-color-selected': ground('--ui-color-accent'),
     '--ui-color-selected-contrast': label,
-    '--ui-color-selected-hover': shade(12),
+    '--ui-color-selected-hover': shade('--ui-color-accent', 12),
     // 3.39:1 on the light surface and 3.96:1 on the dark one, against a floor of 3. The
     // step below clears neither — 45% is 2.94 in light, which is what a value chosen by
     // eye would have shipped.

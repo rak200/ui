@@ -26,7 +26,7 @@ const meta: Meta<ButtonArgs> = {
     // so the panel works and nothing more. A `description` here would start the second API
     // surface this playground exists without.
     argTypes: {
-        variant: { control: 'inline-radio', options: ['primary', 'secondary'] },
+        variant: { control: 'inline-radio', options: ['primary', 'secondary', 'danger'] },
         disabled: { control: 'boolean' },
         label: { control: 'text' },
     },
@@ -48,6 +48,14 @@ export const Secondary: StoryObj<ButtonArgs> = {
 };
 
 /**
+ * A primary's weight in the danger, for an action that cannot be taken back: its own four names,
+ * computed from the danger as the primary's are from the accent, and its effects lit in the danger.
+ */
+export const Danger: StoryObj<ButtonArgs> = {
+    args: { variant: 'danger', label: 'Delete' },
+};
+
+/**
  * Refusing interaction, which is a different rendering rather than the same one greyed:
  * the cursor changes with the opacity, and the real `<button>` underneath carries the
  * semantics the platform gives it.
@@ -57,7 +65,7 @@ export const Disabled: StoryObj<ButtonArgs> = {
 };
 
 /**
- * Both weights side by side, for the states a screenshot cannot show.
+ * Every weight side by side, for the states a screenshot cannot show.
  *
  * Hover one and press it: the background moves toward the text over
  * `--ui-duration-state`, and the pressed colour lands with no transition at all, because a
@@ -73,6 +81,7 @@ export const States: StoryObj<ButtonArgs> = {
         <div style="display: flex; gap: 0.5rem; align-items: center">
             <ui-button>Save</ui-button>
             <ui-button variant="secondary">Cancel</ui-button>
+            <ui-button variant="danger">Delete</ui-button>
             <ui-button disabled>Unavailable</ui-button>
         </div>
     `,

@@ -71,8 +71,9 @@ slot without an `<ui-icon>` round it sits as inline content does.
 <ui-button variant="secondary">Cancel</ui-button>
 ```
 
-How much visual weight the button carries — `primary` (the default) or `secondary`. Reflected, so
-it can be read back from the attribute and selected on in CSS.
+How much visual weight the button carries — `primary` (the default) or `secondary` — or `danger`,
+a primary's weight for an action that cannot be taken back. Reflected, so it can be read back from
+the attribute and selected on in CSS.
 
 **A primary button is filled with its own four names**: `--ui-color-primary`, its label
 `--ui-color-primary-contrast`, and `--ui-color-primary-hover` and `--ui-color-primary-pressed`. Each
@@ -80,6 +81,18 @@ computes what the accent's own does, from `--ui-color-accent`, so moving the acc
 Overriding the accent's label or its states does not reach the button; set the primary's too. A
 theme can fill the button apart from the checked controls, which is what [Glass](theme.md#glass)
 does. A secondary button is the surface and the text.
+
+**A danger button is a primary drawn in the danger**, with four names of its own:
+`--ui-color-danger-button`, its label `--ui-color-danger-button-contrast`, and
+`--ui-color-danger-button-hover` and `--ui-color-danger-button-pressed`. Each computes from
+`--ui-color-danger` what the primary's does from the accent, so moving the danger moves the button,
+and every effect a primary is lit in the accent, a glow, a sheen, a light that follows the pointer,
+is lit in the danger. Its own names rather than the danger's, since the danger is an error's text and
+a field's boundary too: a theme fills the button apart from them through these.
+
+```html
+<ui-button variant="danger">Delete</ui-button>
+```
 
 ## `disabled`
 
@@ -116,7 +129,7 @@ does: `action=publish` here, and nothing from a button with no `name`. Both refl
 
 ## `ButtonVariant`
 
-The union of accepted `variant` values: `'primary' | 'secondary'`.
+The union of accepted `variant` values: `'primary' | 'secondary' | 'danger'`.
 
 ## `ButtonType`
 

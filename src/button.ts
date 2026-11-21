@@ -5,8 +5,8 @@ import { reference } from './reference.js';
 import { followed } from './pointer.js';
 import { arrive, watch } from './ring.js';
 
-/** How much visual weight a button carries. */
-export type ButtonVariant = 'primary' | 'secondary';
+/** How much visual weight a button carries, and a primary's weight in the danger. */
+export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
 /** What a button does to the form it is in, as `<button>` spells it. */
 export type ButtonType = 'submit' | 'reset' | 'button';
@@ -24,6 +24,10 @@ export type ButtonType = 'submit' | 'reset' | 'button';
  * measured in three engines (#379). The element joins the form through `ElementInternals`,
  * as the fields do, and a click submits or resets it as a `<button>` of the same `type`
  * would, through `requestSubmit()` and `reset()`.
+ *
+ * **A danger button is a primary drawn in the danger**, for an action that cannot be taken back.
+ * It takes the primary's class, so every rule and effect a primary takes is its own, and a class
+ * of its own hands those rules the danger's names in the place of the primary's and the accent's.
  *
  * @example
  * ```html
@@ -144,6 +148,18 @@ export class UiButton extends LitElement {
             button.primary {
                 background: ${reference('--ui-color-primary')};
                 color: ${reference('--ui-color-primary-contrast')};
+            }
+
+            /* A danger button carries the primary's class as well, so this is all it adds: the
+           danger button's four names where the primary's rules read the primary's, and the danger
+           where the effects read the accent a primary is lit in. What it holds inherits them, so
+           an icon in it glows in the danger too. */
+            button.danger {
+                --ui-color-accent: ${reference('--ui-color-danger')};
+                --ui-color-primary: ${reference('--ui-color-danger-button')};
+                --ui-color-primary-contrast: ${reference('--ui-color-danger-button-contrast')};
+                --ui-color-primary-hover: ${reference('--ui-color-danger-button-hover')};
+                --ui-color-primary-pressed: ${reference('--ui-color-danger-button-pressed')};
             }
 
             /* A control's fill, as a field's: a theme may let the page through it. */
@@ -323,11 +339,16 @@ export class UiButton extends LitElement {
         }
     }
 
+    /** The classes the button is drawn under: a danger button takes the primary's as well. */
+    #classes(): string {
+        return this.variant === 'danger' ? 'primary danger' : this.variant;
+    }
+
     /** A native `<button>` around the default slot, described by what a tooltip hands it. */
     override render(): TemplateResult {
         return html`
             <button
-                class=${this.variant}
+                class=${this.#classes()}
                 ?disabled=${this.matches(':disabled')}
                 aria-describedby=${this.#description.described()}
                 part="button"

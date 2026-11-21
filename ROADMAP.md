@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A `danger` `<ui-button>` (#448)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s eighth step: four names of its own,
-computed from the danger as the primary's are from the accent.
-
 ## A toggle `<ui-button>` (#449)
 
-`pressed`, written as `aria-pressed` and drawn in the selected names.
+[RFC 0010](docs/proposals/0010-component-features.md)'s ninth step: `pressed`, written as
+`aria-pressed` and drawn in the selected names.
 
 ## An `aria-disabled` `<ui-button>` (#450)
 
