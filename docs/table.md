@@ -13,19 +13,19 @@ data, sorts nothing, and selects nothing.
       <tr>
         <th scope="col">Number</th>
         <th scope="col">Client</th>
-        <th scope="col" style="text-align: end">Total</th>
+        <th scope="col" data-ui-numeric>Total</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td>0001</td>
         <td>Papelaria Aurora</td>
-        <td style="text-align: end">R$ 1.200,00</td>
+        <td data-ui-numeric>R$ 1.200,00</td>
       </tr>
       <tr>
         <td>0002</td>
         <td>Marcenaria Vale</td>
-        <td style="text-align: end">R$ 840,50</td>
+        <td data-ui-numeric>R$ 840,50</td>
       </tr>
     </tbody>
   </table>
@@ -66,14 +66,18 @@ It also means everything the platform gives you still works: `colspan`, `rowspan
 | `thead th`                 | the second surface tone, so a one-row table still reads as having a header   |
 | `tbody tr:nth-child(even)` | the same tone, as a stripe                                                   |
 | `caption`                  | below the table, start-aligned, muted, at the supporting size                |
+| `[data-ui-numeric]`        | `text-align: end` and tabular figures, on the cells you mark                 |
 
 **`text-align: start` on every cell is a correction rather than a decoration.** The platform centres
 a `th` and only a `th`, which leaves a header sitting off the column it heads. `start` rather than
 `left`, so a right-to-left page needs no second rule.
 
-**Aligning a column is yours**, and needs nothing from this element: `text-align` inherits, so
-`style="text-align: end"` on the cells of a numeric column is the whole of it. The stories show that
-on a currency column.
+**A numeric column is marked cell by cell**: `data-ui-numeric` on each of its cells, and on the
+header over it, aligns them to the end in tabular figures, each figure the same width, so the
+amounts line up by their places. `end` rather than `right`, so a right-to-left page needs no second
+rule. A column is no element of the table's, and `<col>` takes no `text-align`, so the mark goes on
+the cells, as [GOV.UK's tables](https://design-system.service.gov.uk/components/table/) mark theirs.
+A cell you do not mark is as it was.
 
 **The caption reads after the table**, which reverses the platform's default on purpose: a caption
 that _explains_ a table belongs after it, and one that _titles_ it is a heading you write outside

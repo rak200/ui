@@ -59,6 +59,11 @@ for (const name of ['--ui-fx-veil', '--ui-fx-tint']) {
  * Every selector is prefixed with the element, so what is adopted cannot reach a table
  * the host wrote somewhere else.
  *
+ * **A numeric column is marked cell by cell**, `data-ui-numeric` on each of its cells and on its
+ * header, as GOV.UK's tables mark theirs: a column is no element of the table's, `<col>` takes no
+ * `text-align`, and reading which cells share a column off its header would be script for what an
+ * attribute on each cell says.
+ *
  * **RFC 0004's motion for a row is here too, for the same reason**: the row under the pointer and
  * a row the host adds are the host's, in the host's tree. A row's container is its `tbody`, which
  * inherits a choice from the `<ui-table>` round it and anywhere above, so every scope reaches it.
@@ -80,11 +85,19 @@ export const rules: CSSResult = css`
         padding: ${reference('--ui-space')};
         /* start rather than left, so a right-to-left page needs no second rule — and
            declared at all because the platform centres a th and only a th, which makes a
-           header sit off the column it heads. A host aligning a numeric column writes
-           text-align on their own cells; it inherits, so nothing here has to offer it. */
+           header sit off the column it heads. A numeric cell the host marks goes to the end,
+           below. */
         text-align: start;
         vertical-align: top;
         border-block-end: 1px solid ${reference('--ui-color-border')};
+    }
+
+    /* A numeric cell the host marks, and the header it marks over it: to the end, so a column of
+       amounts lines up by its last figure, and in tabular figures, each the same width, so the
+       places line up above one another. end rather than right, for start's reason above. */
+    ui-table :is(th, td)[data-ui-numeric] {
+        text-align: end;
+        font-variant-numeric: tabular-nums;
     }
 
     /* The header rests on the second surface tone rather than on a heavier rule, so a
