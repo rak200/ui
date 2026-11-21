@@ -6,14 +6,83 @@ import { follow } from './pointer.js';
 import { reference } from './reference.js';
 
 /**
+ * The rules that spread a card's link over it, which cannot live in its shadow root.
+ *
+ * **The link is the host's, inside what the host slots**: an `<a>` in the header's heading, where
+ * `::slotted()`, which matches what a slot was given and nothing below it, does not reach. So these
+ * rules are adopted into the tree the card is in, which `getRootNode()` finds, as `<ui-table>` and
+ * `<ui-button-group>` adopt theirs: a card inside another component's shadow root spreads its link
+ * there.
+ *
+ * **The link marked `data-ui-card-link` covers the card**, its boundary and its corner too: the
+ * link's `::after` is laid out against the card, the box positioned nearest above it, so wherever
+ * the pointer is on the card, it is over the link — a middle click, a new tab, the link's menu and
+ * the address shown as the pointer rests are the link's, as RFC 0010 chose this over a click
+ * redirected from script. The text under it cannot be selected, which RFC 0010 accepted for those.
+ *
+ * **What the card holds that takes a click or a focus of its own is lifted over the link**, or its
+ * click would land on the link: the platform's controls and the package's, each the host's element.
+ * At no weight, so a `position` the host gave one stands; and only in a card that holds a link,
+ * which is a stacking context of its own, so a control lifted there does not rise over what follows
+ * the card. Every selector names a card, so nothing outside one is touched.
+ */
+export const rules: CSSResult = css`
+    ui-card:has([data-ui-card-link]) {
+        isolation: isolate;
+    }
+
+    ui-card [data-ui-card-link]::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: ${reference('--ui-radius')};
+    }
+
+    :where(
+        ui-card:has([data-ui-card-link])
+            :is(
+                a[href],
+                button,
+                input,
+                select,
+                textarea,
+                summary,
+                label,
+                iframe,
+                audio[controls],
+                video[controls],
+                [tabindex],
+                [contenteditable]:not([contenteditable='false']),
+                ui-button,
+                ui-checkbox,
+                ui-switch,
+                ui-input,
+                ui-textarea,
+                ui-select,
+                ui-radio-group,
+                ui-menu
+            ):not([data-ui-card-link])
+    ) {
+        position: relative;
+        z-index: 1;
+    }
+`;
+
+/** One sheet for the whole page, adopted once into each tree a card joins — see {@link rules}. */
+const sheet = new CSSStyleSheet();
+sheet.replaceSync(rules.cssText);
+
+/**
  * A container: a surface with a boundary, a corner and a lift.
  *
- * **Presentational, and deliberately not interactive.** A card that reacts to a click is a
- * button or a link, and both already exist — here and in the platform. This element grows
- * no `clickable` attribute, because the first thing such an attribute has to do is
- * reimplement keyboard activation, the accessible name and the disabled semantics that
- * `<button>` and `<a>` carry for free. `docs/card.md` sends a reader there rather than
- * leaving them to find out.
+ * **It grows no `clickable` attribute, and opens where it is clicked by a link of the host's.** A
+ * card that reacts to a click is a button or a link, and both already exist — here and in the
+ * platform: the first thing a `clickable` attribute would have to do is reimplement keyboard
+ * activation, the accessible name and the disabled semantics that `<button>` and `<a>` carry for
+ * free. So a card that opens where it is clicked holds a link the host wrote, marked
+ * `data-ui-card-link`, which the card spreads over itself by {@link rules}: the link stays the one
+ * stop for the keys, read by its own text, and the pointer anywhere on the card is over it.
+ * `docs/card.md` sends a reader there rather than leaving them to find out.
  *
  * **It claims no role either.** There is no card element and no APG pattern for one, so
  * the shadow root renders slots and, beside them, the empty layers its effects are drawn on —
@@ -62,12 +131,21 @@ export class UiCard extends LitElement {
     }
 
     /**
-     * {@inheritDoc LitElement.connectedCallback} A card put back on the page arrives anew, and once it
-     * is drawn it plays the entrance its sheet chose that a sheet cannot draw — its pieces or its
-     * grain.
+     * {@inheritDoc LitElement.connectedCallback} It adopts the rules that spread its link over it
+     * into the tree it joined. A card put back on the page arrives anew, and once it is drawn it
+     * plays the entrance its sheet chose that a sheet cannot draw — its pieces or its grain.
      */
     override connectedCallback(): void {
         super.connectedCallback();
+
+        // `connectedCallback` runs when the element is connected to a document, so the root is a
+        // `Document` or a `ShadowRoot`, both of which carry `adoptedStyleSheets`.
+        const root = this.getRootNode() as Document | ShadowRoot;
+
+        if (!root.adoptedStyleSheets.includes(sheet)) {
+            root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+        }
+
         this.#internals.states.delete('leaving');
         this.#departure = undefined;
         void this.updateComplete.then(() => {

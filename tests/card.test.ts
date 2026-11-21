@@ -3,9 +3,21 @@ import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { BodyOnly, Card, OutOfOrder, Row, WithLink } from '../stories/card.stories.js';
+import meta, {
+    BodyOnly,
+    Card,
+    OpensWhereItIsClicked,
+    OutOfOrder,
+    Row,
+    WithLink,
+} from '../stories/card.stories.js';
 import '../src/card.js';
 import '../src/button.js';
+import '../src/checkbox.js';
+import '../src/input.js';
+import '../src/menu.js';
+import '../src/radio.js';
+import '../src/select.js';
 import type { UiCard } from '../src/card.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
@@ -526,6 +538,211 @@ describe("the pointer and a focus it holds, under the default theme's taste", ()
  * How a card comes onto the page and leaves it — RFC 0004's entrance and exit, and the way out a card
  * owns, since nothing that removes it waits for an exit.
  */
+/**
+ * A card that opens where it is clicked, RFC 0010's: the link marked `data-ui-card-link`, spread
+ * over the card by the rules it adopts into the tree it is in. What the pointer is over is read off
+ * `elementFromPoint`, the hit test a click, a middle click and the link's menu are all aimed by, so
+ * each point read is one of those for all three.
+ */
+describe('opened where it is clicked', () => {
+    /** A card whose heading holds the link marked as its target, with `held` in its body. */
+    function linked(held = ''): string {
+        return `
+            <ui-card style="inline-size: 20rem">
+                <h3 slot="header" style="margin: 0">
+                    <a href="#monthly" data-ui-card-link>Monthly plan</a>
+                </h3>
+                <p style="margin: 0">Everything in the free tier.</p>
+                ${held}
+                <div slot="footer" style="block-size: 2rem"></div>
+            </ui-card>
+        `;
+    }
+
+    /** What the pointer is over at the middle of `element`, in the tree `root` is. */
+    function middle(element: Element, root: Document | ShadowRoot = document): Element | null {
+        const box = element.getBoundingClientRect();
+
+        return root.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    }
+
+    it('covers the card with the link, its boundary and its corner too', async () => {
+        const host = await mount(linked());
+        const element = card(host);
+        const link = only(host, 'a');
+
+        element.style.setProperty('--ui-radius', '16px');
+
+        const box = element.getBoundingClientRect();
+
+        expect(middle(element), 'its middle').toBe(link);
+        expect(middle(only(host, 'p')), 'its text').toBe(link);
+        expect(document.elementFromPoint(box.left + 0.5, box.top + 40), 'its boundary').toBe(link);
+        expect(document.elementFromPoint(box.right - 6, box.bottom - 6), 'inside its corner').toBe(
+            link,
+        );
+        expect(
+            document.elementFromPoint(box.right - 1, box.bottom - 1),
+            'outside its corner, where the card is not drawn',
+        ).not.toBe(link);
+    });
+
+    it('isolates a card that holds a link, so what it lifts stays inside it', async () => {
+        const host = await mount(linked());
+
+        expect(getComputedStyle(card(host)).isolation).toBe('isolate');
+    });
+
+    it('leaves a card whose link is not marked as it was', async () => {
+        const host = await mount(`
+            <ui-card style="inline-size: 20rem">
+                <h3 slot="header" style="margin: 0"><a href="#monthly">Monthly plan</a></h3>
+                <p style="margin: 0">Everything in the free tier.</p>
+                <div slot="footer"><button type="button">Compare</button></div>
+            </ui-card>
+        `);
+        const text = only(host, 'p');
+
+        expect(middle(text), 'its text').toBe(text);
+        expect(getComputedStyle(only(host, 'a'), '::after').content, 'nothing after the link').toBe(
+            'none',
+        );
+        expect(getComputedStyle(only(host, 'button')).position, 'a control as it was').toBe(
+            'static',
+        );
+        expect(getComputedStyle(card(host)).isolation, 'unisolated').toBe('auto');
+    });
+
+    it.each([
+        ['a link of its own', '<a href="#other">Other</a>'],
+        ['a button', '<button type="button">Compare</button>'],
+        ['a field', '<input aria-label="Seats" />'],
+        ['a list of choices', '<select aria-label="Term"><option>Monthly</option></select>'],
+        ['a text area', '<textarea aria-label="Note"></textarea>'],
+        ['a summary', '<details><summary>Details</summary></details>'],
+        ['a label', '<label for="elsewhere">Seats</label>'],
+        ['a frame', '<iframe title="Map" style="block-size: 2rem"></iframe>'],
+        ['a video with its controls', '<video controls style="block-size: 2rem"></video>'],
+        ['an audio with its controls', '<audio controls></audio>'],
+        ['anything with a tabindex', '<span tabindex="0">Note</span>'],
+        ['anything editable', '<div contenteditable>Note</div>'],
+        ['a ui-button', '<ui-button>Compare</ui-button>'],
+        ['a ui-checkbox', '<ui-checkbox label="Remember"></ui-checkbox>'],
+        ['a ui-switch', '<ui-switch label="Renew"></ui-switch>'],
+        ['a ui-input', '<ui-input label="Seats"></ui-input>'],
+        ['a ui-textarea', '<ui-textarea label="Note"></ui-textarea>'],
+        [
+            'a ui-select',
+            '<ui-select label="Term"><ui-option value="m">Monthly</ui-option></ui-select>',
+        ],
+        [
+            'a ui-radio-group',
+            '<ui-radio-group label="Term"><ui-radio value="m">Monthly</ui-radio></ui-radio-group>',
+        ],
+        [
+            'a ui-menu',
+            '<ui-menu><span slot="trigger">Actions</span><button type="button">Rename</button></ui-menu>',
+        ],
+    ])('lifts %s over the link, so it takes its own click', async (_, control) => {
+        const host = await mount(linked(`<div data-held>${control}</div>`));
+        const held = only(host, '[data-held] > *');
+
+        await (held as Partial<UiCard>).updateComplete;
+
+        const hit = middle(held);
+
+        expect(hit !== null && held.contains(hit), `over ${hit?.localName ?? 'nothing'}`).toBe(
+            true,
+        );
+    });
+
+    it('lifts a control written before the link as well', async () => {
+        const host = await mount(`
+            <ui-card style="inline-size: 20rem">
+                <h3 slot="header" style="margin: 0">
+                    <button type="button">★</button>
+                    <a href="#monthly" data-ui-card-link>Monthly plan</a>
+                </h3>
+                <p style="margin: 0">Everything in the free tier.</p>
+            </ui-card>
+        `);
+        const star = only(host, 'button');
+
+        expect(middle(star)).toBe(star);
+    });
+
+    it('keeps a position the host gave a control, and lifts it all the same', async () => {
+        const host = await mount(`
+            <style>.corner { position: absolute; inset-block-start: 0.5rem; inset-inline-end: 0.5rem; }</style>
+            ${linked('<button type="button" class="corner">×</button>')}
+        `);
+        const corner = only(host, '.corner');
+
+        expect(getComputedStyle(corner).position, 'where the host put it').toBe('absolute');
+        expect(middle(corner), 'over the link').toBe(corner);
+    });
+
+    it('adopts its rules once into the tree it joins, a shadow root as well', async () => {
+        await mount(linked());
+
+        const before = document.adoptedStyleSheets.length;
+
+        await mount(linked());
+
+        expect(document.adoptedStyleSheets.length, 'once for two cards').toBe(before);
+
+        const outer = document.createElement('div');
+        const root = outer.attachShadow({ mode: 'open' });
+        const kept = new CSSStyleSheet();
+
+        root.adoptedStyleSheets = [kept];
+        document.body.append(outer);
+        root.innerHTML = linked();
+
+        const inside = only(root, 'ui-card') as UiCard;
+
+        await inside.updateComplete;
+
+        expect(root.adoptedStyleSheets, 'beside the sheet the root had').toHaveLength(2);
+        expect(root.adoptedStyleSheets[0], 'which it keeps').toBe(kept);
+        expect(middle(inside, root), 'its link spread there').toBe(only(root, 'a'));
+    });
+
+    it('stops once at the link for the keys, and marks the card as a focus on anything it holds does', async () => {
+        const host = await mount(`
+            <button type="button" id="before">Before</button>
+            ${linked('<button type="button" id="after">Compare</button>')}
+        `);
+
+        only(host, '#before').focus();
+        await userEvent.keyboard('{Tab}');
+
+        expect(document.activeElement, 'the link first').toBe(only(host, 'a'));
+        expect(card(host).hasAttribute('data-focus-visible'), 'the card marked').toBe(true);
+
+        await userEvent.keyboard('{Tab}');
+
+        expect(document.activeElement, 'then what follows it').toBe(only(host, '#after'));
+    });
+
+    // Last, since a press of the pointer leaves the focus that follows it unseen in the page the
+    // suite keeps.
+    it('follows the link on a click on the card', async () => {
+        const host = await mount(linked());
+        const link = only(host, 'a');
+        const heard: (EventTarget | null)[] = [];
+
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            heard.push(event.target);
+        });
+
+        await userEvent.click(card(host));
+
+        expect(heard).toEqual([link]);
+    });
+});
+
 describe('arriving and leaving', () => {
     it("fades a card in as it is put on the page, under the default theme's taste", async () => {
         const host = await under(fixture);
@@ -680,5 +897,35 @@ describe('accessibility', () => {
 
     it('has no violations when the card carries a link', async () => {
         await expectAccessible(await mountStory(WithLink, meta, 'WithLink'));
+    });
+
+    it('has no violations when the whole card opens its link', async () => {
+        await expectAccessible(
+            await mountStory(OpensWhereItIsClicked, meta, 'OpensWhereItIsClicked'),
+        );
+    });
+
+    it('has no violations with the link covering the card under the pointer, at its focus, or with a control over it focused', async () => {
+        const host = await mount(`
+            <button type="button" id="before">Before</button>
+            <ui-card style="inline-size: 20rem">
+                <h3 slot="header" style="margin: 0">
+                    <a href="#monthly" data-ui-card-link>Monthly plan</a>
+                </h3>
+                <p style="margin: 0">Everything in the free tier.</p>
+                <div slot="footer"><ui-button>Compare</ui-button></div>
+            </ui-card>
+        `);
+        const element = card(host);
+
+        await userEvent.hover(element);
+        await expectAccessible(element);
+
+        only(host, '#before').focus();
+        await userEvent.keyboard('{Tab}');
+        await expectAccessible(element);
+
+        await userEvent.keyboard('{Tab}');
+        await expectAccessible(element);
     });
 });

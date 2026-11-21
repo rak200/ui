@@ -5,7 +5,7 @@ One page per unit, sized by what a reader would look up on its own.
 | Unit            | Doc                        | What it covers                                                     |
 | --------------- | -------------------------- | ------------------------------------------------------------------ |
 | `UiButton`      | [button.md](button.md)     | the `<ui-button>` element, its attributes and its parts            |
-| `UiCard`        | [card.md](card.md)         | the `<ui-card>` element, its regions, and why it is not a button   |
+| `UiCard`        | [card.md](card.md)         | `<ui-card>`, its regions, why it is not a button, and its link     |
 | `UiCheckbox`    | [checkbox.md](checkbox.md) | `<ui-checkbox>` and `<ui-switch>`, and which one to reach for      |
 | `UiDialog`      | [dialog.md](dialog.md)     | the `<ui-dialog>` element, what it delegates and what it adds      |
 | `UiButtonGroup` | [group.md](group.md)       | `<ui-button-group>`, the joined buttons, and a toolbar's keyboard  |
