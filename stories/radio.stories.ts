@@ -136,3 +136,34 @@ export const RightToLeft: StoryObj<GroupArgs> = {
         </ui-radio-group>
     `,
 };
+
+/**
+ * Choices drawn as cards, each with a description under its text: joined to one another in a
+ * column, the one chosen drawn in the selected names, and a click anywhere on a card choosing it.
+ */
+export const Cards: StoryObj<GroupArgs> = {
+    render: ({ label }): TemplateResult => html`
+        <ui-radio-group label=${label} name="plan" variant="cards" style="max-inline-size: 28rem">
+            <ui-radio value="free" description="One project, and the community forum."
+                >Free</ui-radio
+            >
+            <ui-radio value="pro" checked description="Unlimited projects, and priority support."
+                >Pro</ui-radio
+            >
+            <ui-radio value="team" description="Everything in Pro, for the whole team."
+                >Team</ui-radio
+            >
+        </ui-radio-group>
+    `,
+};
+
+/** Cards in a row, each as wide as the next, the corners at either end of the row rounded. */
+export const CardsInARow: StoryObj<GroupArgs> = {
+    render: (): TemplateResult => html`
+        <ui-radio-group label="Billing" name="billing" variant="cards" orientation="horizontal">
+            <ui-radio value="monthly" description="Pay as you go.">Monthly</ui-radio>
+            <ui-radio value="yearly" checked description="Two months off.">Yearly</ui-radio>
+            <ui-radio value="once" description="Pay once, keep it.">Once</ui-radio>
+        </ui-radio-group>
+    `,
+};

@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [Why the choices are not `<input type="radio">`](#why-the-choices-are-not-input-typeradio)
 - [In a form](#in-a-form)
 - [Orientation](#orientation)
+- [Cards](#cards)
 - [Errors](#errors)
 - [Supplementary text](#supplementary-text)
 - [Interaction states](#interaction-states)
@@ -42,6 +43,7 @@ own name, help and message, and it joins the form in their place.
 | `help`        | supporting text, which an error does not replace        |
 | `error`       | the message, which also paints the boundaries           |
 | `orientation` | `vertical` (the default) or `horizontal`                |
+| `variant`     | `radios` (the default) or `cards`                       |
 | `required`    | invalid while no choice is made                         |
 | `disabled`    | the whole set refuses interaction, and submits nothing  |
 
@@ -51,11 +53,25 @@ element, so nothing has to be called.
 
 ## `<ui-radio>`
 
-One choice: a `value`, whether it is `checked` by default, whether it is `disabled`, and the text
-beside it.
+One choice: a `value`, whether it is `checked` by default, whether it is `disabled`, a
+`description`, and the text beside it.
 
 **It draws nothing.** The group renders the real `<input type="radio">` and the `<label>` around
 it. Exported as `UiRadio`.
+
+```html
+<ui-radio-group label="Plan" name="plan">
+  <ui-radio value="free" description="One project, and the community forum.">Free</ui-radio>
+  <ui-radio value="pro" description="Unlimited projects, and priority support.">Pro</ui-radio>
+</ui-radio-group>
+```
+
+**A `description` is drawn under the choice's text and heard with it**, in the muted text at the
+supporting size, from where the text starts. The group draws it in its own root beside the control,
+since a reference reaches nothing in your tree from in there, and the control names it with
+`aria-describedby`. It is drawn inside the label, so a click on it chooses the choice, and hidden
+there, so the control's name stays the choice's text alone. It describes the one choice, where
+[`help`](#supplementary-text) describes the set.
 
 ## The behaviour is the platform's
 
@@ -127,6 +143,39 @@ options out **and** sets `aria-orientation`, so the drawn shape and the announce
 disagree — which is why it exists at all rather than leaving the layout to a `flex-direction` rule
 in your own stylesheet. Arrow keys work either way; that part is the platform's and was never
 oriented.
+
+## Cards
+
+```html
+<ui-radio-group label="Plan" name="plan" variant="cards">
+  <ui-radio value="free" description="One project, and the community forum.">Free</ui-radio>
+  <ui-radio value="pro" checked description="Unlimited projects, and priority support."
+    >Pro</ui-radio
+  >
+  <ui-radio value="team" description="Everything in Pro, for the whole team.">Team</ui-radio>
+</ui-radio-group>
+```
+
+**`variant="cards"` draws each choice as a card**, typed as `RadioVariant`: larger than a radio and
+its text, on a control's fill and edge, and joined to the next as
+[`<ui-button-group>`](group.md)'s buttons are, each edge they share drawn once and the corners they
+share squared. A column of them follows `orientation`'s default, and `horizontal` lays them in one
+row, each as wide as the next, the first at the start: the left, or the right where the set runs right to left.
+
+- **The card chosen is drawn in the selected names** a select's chosen option is drawn in, laid over
+  the card's fill and edged in the accent; its text and its description take the selected names'
+  label. Every palette holds them at 4.5:1, chosen or not, at rest and under the pointer.
+- **The control stays in the card**, drawn as it is, so what says a choice is made is the radio
+  still; the card is its surface.
+- **A click anywhere on a card chooses it**: the card is the label. The keyboard is the platform's
+  radio group's, as it is in every drawing: one tab stop, and the arrows moving and choosing.
+- **Under the pointer an unchosen card's edge goes to the text**, as a control's does, and a card
+  under the pointer or chosen is drawn over its neighbours, so its whole edge shows. The set is a
+  stacking context of its own, so it is drawn over them alone and never over what follows the set.
+- **An error edges every card in the danger**, as it edges every control, and a disabled card is
+  muted and takes no pointer's edge.
+- **Under forced colours**, which take the chosen card's fill back to a card's, its edge is the
+  system's highlight, as the control's fill is.
 
 ## Errors
 

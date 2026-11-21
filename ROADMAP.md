@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-radio>` choices drawn as cards (#463)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-fourth step: the button group's
-joined drawing, larger, with a description for each choice.
-
 ## `<ui-menu>` hung from the trigger's other edge (#464)
 
-The trailing edge, where the host asks.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-fifth step: the trailing edge, where
+the host asks.
 
 ## Items that tick, and sections, in `<ui-menu>` (#465)
 

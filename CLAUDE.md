@@ -292,6 +292,12 @@ explains. This file restates none of them.
   a radio the content attribute is `defaultChecked`, so once anything has set the property the
   attribute stops driving the live state — measured, as a reset that left the control where the
   reader had put it.
+- **Why a choice's `description` is drawn hidden inside its label and named by `aria-describedby`,
+  and why `variant="cards"` joins the choices as a group's buttons are** — the docblock on `#draw`
+  and the comments beside the cards' rules in `src/radio.ts`, and `docs/radio.md`'s _`<ui-radio>`_
+  and _Cards_. In the label, a click on the description chooses the choice; hidden there, the
+  control's name stays the choice's text; the card chosen takes the selected names, which
+  `tests/tokens.test.ts` holds at 4.5:1 over a card's fill in every palette.
 - **Why `ui-select` writes the box out instead of sharing `ui-input`'s** — the docblock on
   `src/select.ts`, and `tests/select.test.ts`'s _the box, against the input it has to match_, which
   is the mechanism that answers `src/input.ts`'s objection to duplication on its own terms. The same
