@@ -208,23 +208,28 @@ explains. This file restates none of them.
   forced-colors override lives in `UiCheckbox`'s own sheet rather than the shared one**, because a
   later sheet at equal specificity wins; the comment there carries the measurement.
 - **Why `ui-tooltip` and `ui-menu` are placed by CSS anchor positioning, why each still reads its
-  side off the boxes, and why a tip in a direction island and the menu hang from the trigger's
-  edges** — [ARCHITECTURE.md](ARCHITECTURE.md), _The platform owns what the platform is good at_,
-  and the docblock on `UiTooltip` in `src/tooltip.ts` and the comments beside each component's
-  anchor rules. The CSS writes nowhere the side `data-side` reports, so `#side()` reads it from the
-  two middles as the overlay shows and on every scroll and resize, and the menu's `#predict()`
-  foretells it in `beforetoggle` by the panel's last height and its gap, since `toggle` comes a task
-  late; Firefox mirrors an area's inline alignment where an overlay's direction is not the page's
-  (Mozilla 2019601), so the menu takes anchored insets everywhere and a tip takes them in an island,
-  which `#island()` marks as the tip shows. A tip's own `side` takes `position-area` and the
-  fallback that turns it, and in an island anchored insets read in the tip's direction, which
-  `#side()` reads back by `:dir()` as the sheet places it. The floor rose to Chrome 144, Firefox 148
-  and Safari 26.2 for the tooltip's `position-area`, which `tests/manual/browser-floor.mjs` carries
-  in `mended`, past the releases BCD dates. #300 holds the measurements. `popover="manual"` and the
-  Escape handler carry their reasons beside them, and `#complain()` carries the one a reader hits
-  first: a reference written from out here reaches no control drawn inside a shadow root, which #156
-  measured and RFC 0006 answered — so what the warning is left pointing at is a trigger **someone
-  else** wrote that does not take the handoff.
+  side off the boxes, why a tip in a direction island and the menu hang from the trigger's edges,
+  and why a tip's arrow is placed by script** — [ARCHITECTURE.md](ARCHITECTURE.md), _The platform
+  owns what the platform is good at_, and the docblock on `UiTooltip` in `src/tooltip.ts` and the
+  comments beside each component's anchor rules. The CSS writes nowhere the side `data-side`
+  reports, so `#side()` reads it from the two middles as the overlay shows and on every scroll and
+  resize, and the menu's `#predict()` foretells it in `beforetoggle` by the panel's last height and
+  its gap, since `toggle` comes a task late; Firefox mirrors an area's inline alignment where an
+  overlay's direction is not the page's (Mozilla 2019601), so the menu takes anchored insets
+  everywhere and a tip takes them in an island, which `#island()` marks as the tip shows. A tip's
+  own `side` takes `position-area` and the fallback that turns it, and in an island anchored insets
+  read in the tip's direction, which `#side()` reads back by `:dir()` as the sheet places it. A
+  tip's arrow is its `::before`, which takes by `translate` the place `#side()` writes from the same
+  boxes, since Firefox lost the tip's anchor when an inset of the arrow's moved, and the tooltip's
+  `#reflow` reads in a task once the frame a scroll came in is laid out, since Chromium and Firefox
+  move the tip after the scroll event; the comments beside the arrow's rules and on `#reflow` carry
+  both, and `tests/manual/tooltip-arrow.html` is where a person sees them in each engine. The floor
+  rose to Chrome 144, Firefox 148 and Safari 26.2 for the tooltip's `position-area`, which
+  `tests/manual/browser-floor.mjs` carries in `mended`, past the releases BCD dates. #300 holds the
+  measurements. `popover="manual"` and the Escape handler carry their reasons beside them, and
+  `#complain()` carries the one a reader hits first: a reference written from out here reaches no
+  control drawn inside a shadow root, which #156 measured and RFC 0006 answered — so what the
+  warning is left pointing at is a trigger **someone else** wrote that does not take the handoff.
 - **Why a tooltip written inside a button or a link describes it, hides its tip from the name and
   keeps a click on the tip from it** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one
   tree scope_, the docblock on `UiTooltip` in `src/tooltip.ts`, and `docs/tooltip.md`'s _Inside a

@@ -12,6 +12,7 @@ import meta, {
     OnAControlYouWrote,
     Sides,
     Tooltip,
+    WithoutAnArrow,
 } from '../stories/tooltip.stories.js';
 import '../src/tooltip.js';
 import '../src/input.js';
@@ -147,6 +148,17 @@ async function painted(): Promise<void> {
         requestAnimationFrame(() => {
             resolve(null);
         });
+    });
+}
+
+/**
+ * Waits for the reading a scroll or a resize asks for, which runs in a task once the frame the
+ * event came in has been laid out: a frame, then a task queued behind the reading's own.
+ */
+async function reread(): Promise<void> {
+    await painted();
+    await new Promise((resolve) => {
+        setTimeout(resolve, 0);
     });
 }
 
@@ -1025,7 +1037,7 @@ describe('when it shows', () => {
         // since an adjoining top margin collapses into the wrapper's own and moves nothing.
         only(host, '#mover').style.paddingBlockStart = '0px';
         window.dispatchEvent(new Event('resize'));
-        await painted();
+        await reread();
 
         expect(tip(host).getAttribute('data-side')).toBe('block-end');
     });
@@ -1062,10 +1074,10 @@ describe('when it shows', () => {
 
         scroller.scrollTop = 30;
         await scrolled;
-        await painted();
+        await reread();
 
         window.dispatchEvent(new Event('resize'));
-        await painted();
+        await reread();
 
         expect(tip(host).getAttribute('data-side'), 'nothing read it').toBe('block-end');
     });
@@ -1136,7 +1148,7 @@ describe('when it shows', () => {
 
         element.remove();
         window.dispatchEvent(new Event('resize'));
-        await painted();
+        await reread();
 
         expect(shown.getAttribute('data-side'), 'nothing read it again').toBe('block-start');
     });
@@ -1168,7 +1180,7 @@ describe('when it shows', () => {
         const thrown = await escaped(async () => {
             element.remove();
             window.dispatchEvent(new Event('resize'));
-            await painted();
+            await reread();
         });
 
         expect(thrown, 'nothing is still placing a detached element').toEqual([]);
@@ -2136,7 +2148,7 @@ describe('where it lands', () => {
 
         scroller.scrollTop = 30;
         await scrolled;
-        await painted();
+        await reread();
 
         const anchor = trigger(host).getBoundingClientRect();
         const box = tip(host).getBoundingClientRect();
@@ -2159,7 +2171,7 @@ describe('where it lands', () => {
         const thrown = await escaped(async () => {
             tip(host).remove();
             window.dispatchEvent(new Event('resize'));
-            await painted();
+            await reread();
         });
 
         expect(thrown).toEqual([]);
@@ -2174,7 +2186,7 @@ describe('where it lands', () => {
         const thrown = await escaped(async () => {
             trigger(host).remove();
             window.dispatchEvent(new Event('resize'));
-            await painted();
+            await reread();
         });
 
         expect(thrown).toEqual([]);
@@ -2427,6 +2439,407 @@ describe('a side of its own', () => {
         held(host, 0);
 
         expect(getComputedStyle(tip(host)).transform).toBe('matrix(1, 0, 0, 1, 4, 0)');
+    });
+});
+
+/**
+ * The arrow, RFC 0010's: the tip's own `::before`, so a point on it is the tip, where the gap round
+ * it is no part of anything. A pseudo-element has no box a script can ask for, so it is found here
+ * where the pointer would find it, a pixel and a half into the gap off the tip.
+ */
+describe('an arrow, pointing at its trigger', () => {
+    /** A tooltip asking for `side`, set where `style` puts it, its trigger and tip saying these. */
+    const pointed = (side: string, style: string, tipped = 'Saves.', label = 'Save'): string =>
+        `<div style="${style}"><ui-tooltip side="${side}"><button type="button">${label}</button><span slot="tip">${tipped}</span></ui-tooltip></div>`;
+
+    /** The tip's edge toward its trigger, as the axis the arrow moves along and where it lies. */
+    function edge(host: ParentNode): { along: 'x' | 'y'; line: number; start: number } {
+        const anchor = trigger(host).getBoundingClientRect();
+        const box = tip(host).getBoundingClientRect();
+
+        if (box.bottom <= anchor.top) {
+            return { along: 'x', line: box.bottom, start: box.left };
+        }
+
+        if (box.top >= anchor.bottom) {
+            return { along: 'x', line: -box.top, start: box.left };
+        }
+
+        return box.right <= anchor.left
+            ? { along: 'y', line: box.right, start: box.top }
+            : { along: 'y', line: -box.left, start: box.top };
+    }
+
+    /**
+     * Whether the point `depth` pixels into the gap off the tip, `at` pixels along its edge from
+     * its start, is the tip. A line read negative is an edge the gap lies before, above or left.
+     */
+    function tipAt(host: ParentNode, at: number, depth = 1.5): boolean {
+        const { along, line, start } = edge(host);
+        const across = line < 0 ? -line - depth : line + depth;
+        const point: [number, number] = along === 'x' ? [start + at, across] : [across, start + at];
+
+        return document.elementFromPoint(...point) === tip(host);
+    }
+
+    /** Where along the tip's edge, from its start, its trigger's middle is. */
+    function middle(host: ParentNode): number {
+        const anchor = trigger(host).getBoundingClientRect();
+        const { along, start } = edge(host);
+
+        return along === 'x'
+            ? anchor.left + anchor.width / 2 - start
+            : anchor.top + anchor.height / 2 - start;
+    }
+
+    /** Shows the tip by the focus, which a scroll leaves open, and lets it land. */
+    async function shown(host: HTMLElement): Promise<void> {
+        trigger(host).focus();
+        await painted();
+    }
+
+    /** Scrolls `scroller` to `to` on `axis`, and waits for the reading the scroll asks for. */
+    async function scrolled(
+        scroller: HTMLElement,
+        axis: 'left' | 'top',
+        to: number,
+    ): Promise<void> {
+        const heard = new Promise((resolve) => {
+            scroller.addEventListener('scroll', resolve, { once: true });
+        });
+
+        if (axis === 'left') {
+            scroller.scrollLeft = to;
+        } else {
+            scroller.scrollTop = to;
+        }
+
+        await heard;
+        await reread();
+    }
+
+    it.each([
+        ['above it', 'block-start', ''],
+        ['below it', 'block-end', ''],
+        ['at its start', 'inline-start', ''],
+        ['at its end', 'inline-end', ''],
+        ['at its start, right to left', 'inline-start', 'rtl'],
+        ['at its end, right to left', 'inline-end', 'rtl'],
+    ] as const)(
+        "points at its trigger's middle from %s, and only there",
+        async (_where, side, dir) => {
+            const host = await mount(pointed(side, 'display: flex; justify-content: center'));
+
+            only(host, 'div').dir = dir;
+            await shown(host);
+
+            expect(tipAt(host, middle(host)), 'at the middle').toBe(true);
+            expect(tipAt(host, middle(host) + 5), 'past it').toBe(false);
+            expect(tipAt(host, middle(host) - 5), 'before it').toBe(false);
+        },
+    );
+
+    it.each([
+        ['pulled inside at the left', '', 'position: fixed; top: 200px; left: 40px'],
+        ['pulled inside at the right', '', 'position: fixed; top: 200px; right: 40px'],
+        [
+            'pulled down inside the top, beside it',
+            'inline-end',
+            'position: fixed; top: 8px; left: 80px',
+        ],
+        ['hung from its edge in an island', 'block-end', 'padding-inline-start: 150px'],
+    ] as const)(
+        "points at its trigger's middle where the tip is %s, rather than at its own",
+        async (where, side, style) => {
+            const host = await mount(
+                pointed(
+                    side,
+                    style,
+                    'A description long enough<br />to run off the edge, on lines<br />of its own.',
+                    'S',
+                ),
+            );
+
+            only(host, 'div').dir = where.includes('island') ? 'rtl' : '';
+            await shown(host);
+
+            const box = tip(host).getBoundingClientRect();
+            const own = edge(host).along === 'x' ? box.width / 2 : box.height / 2;
+
+            expect(Math.abs(own - middle(host)), 'apart').toBeGreaterThan(8);
+            expect(tipAt(host, middle(host)), "at the trigger's middle").toBe(true);
+            expect(tipAt(host, own), "at the tip's own").toBe(false);
+        },
+    );
+
+    it.each([
+        ['start', 'left: 0'],
+        ['end', 'right: 0'],
+    ] as const)(
+        "keeps clear of the tip's rounded corners at its %s, by the radius and half its base",
+        async (end, inset) => {
+            // A trigger narrower than the corner, at the screen's edge: its middle lies over the
+            // tip's corner, 4px in, and the arrow's own middle goes no nearer the end than the
+            // radius and half its base, 10px and 6px.
+            const host = await mount(
+                pointed(
+                    '',
+                    `position: fixed; top: 200px; ${inset}; --ui-radius: 10px; --ui-space: 12px`,
+                    'A description long enough to be pulled inside.',
+                    '',
+                ),
+            );
+
+            trigger(host).style.cssText =
+                'box-sizing: border-box; inline-size: 8px; block-size: 16px; padding: 0';
+            await shown(host);
+
+            const span = tip(host).getBoundingClientRect().width;
+            const clear = end === 'start' ? 16 : span - 16;
+
+            expect(
+                Math.abs(middle(host) - clear),
+                "the trigger's middle, past the clearance",
+            ).toBeCloseTo(12, 0);
+            // Half its base is 4.5px a pixel and a half into the gap.
+            expect(
+                [clear - 3, clear + 3].map((at) => tipAt(host, at)),
+                'on the arrow',
+            ).toEqual([true, true]);
+            expect(
+                [clear - 6, clear + 6].map((at) => tipAt(host, at)),
+                'either side',
+            ).toEqual([false, false]);
+        },
+    );
+
+    it('reaches across the gap, its base twice as broad as it is long', async () => {
+        const host = await mount(
+            pointed('', 'display: flex; justify-content: center; --ui-space: 12px'),
+        );
+
+        await shown(host);
+
+        const at = middle(host);
+
+        expect(tipAt(host, at, 5), 'a pixel short of the trigger').toBe(true);
+        expect(
+            [at - 5, at + 5].map((each) => tipAt(host, each, 0.5)),
+            'by its base, 6px either side',
+        ).toEqual([true, true]);
+        expect(
+            [at - 7, at + 7].map((each) => tipAt(host, each, 0.5)),
+            'and no further',
+        ).toEqual([false, false]);
+    });
+
+    it("is drawn in the tip's surface, edge and shadow", async () => {
+        const host = await mount(
+            pointed(
+                '',
+                'display: flex; justify-content: center; --ui-color-surface-raised: rgb(1, 2, 3); --ui-color-border-overlay: rgb(4, 5, 6); --ui-elevation-raised: 0 0 0 1px rgb(7, 8, 9)',
+            ),
+        );
+
+        await shown(host);
+
+        const arrow = getComputedStyle(tip(host), '::before');
+        const drawn = getComputedStyle(tip(host));
+
+        expect([arrow.backgroundColor, arrow.borderTopColor, arrow.boxShadow]).toEqual([
+            'rgb(1, 2, 3)',
+            'rgb(4, 5, 6)',
+            'rgb(7, 8, 9) 0px 0px 0px 1px',
+        ]);
+        expect(
+            [arrow.backgroundColor, arrow.borderTopColor, arrow.boxShadow],
+            'as the tip is',
+        ).toEqual([drawn.backgroundColor, drawn.borderTopColor, drawn.boxShadow]);
+    });
+
+    it('lets the tip show what lies outside it, and breaks a word longer than its ceiling inside it', async () => {
+        const host = await mount(
+            pointed('', 'display: flex; justify-content: center', 'x'.repeat(120)),
+        );
+
+        await shown(host);
+
+        expect(getComputedStyle(tip(host)).overflow).toBe('visible');
+        expect(tip(host).scrollWidth, 'nothing runs out of it').toBeLessThanOrEqual(
+            tip(host).clientWidth,
+        );
+    });
+
+    it('follows a scroll that pulls the tip further inside the screen, once its frame is laid out', async () => {
+        // Chromium keeps the tip inside the screen through a scroll, so as the trigger is
+        // scrolled toward the edge the tip stays at it and the trigger's middle moves along it.
+        const host = await mount(`
+            <div id="scroller" style="position: fixed; top: 200px; left: 0; inline-size: 300px; overflow-x: auto">
+                <div style="inline-size: 900px; padding-inline-start: 80px">
+                    <ui-tooltip>
+                        <button type="button">S</button>
+                        <span slot="tip">A description long enough to be pulled inside.</span>
+                    </ui-tooltip>
+                </div>
+            </div>
+        `);
+
+        await shown(host);
+
+        const before = middle(host);
+
+        await scrolled(only(host, '#scroller'), 'left', 30);
+
+        expect(middle(host), 'moved along the tip').toBeCloseTo(before - 30, 0);
+        expect(tipAt(host, middle(host)), "at the trigger's middle still").toBe(true);
+    });
+
+    it('stays on its trigger through a scroll that moves the tip with it', async () => {
+        // In a page of its own, Chromium and Firefox move the tip after the scroll event, so the
+        // arrow placed in the event went off its trigger by the scroll. The page this suite runs
+        // in has the tip moved by the event already, so what this holds is the arrow on its
+        // trigger once the reading has come; tests/manual/tooltip-arrow.html is where the wait
+        // is seen.
+        const host = await mount(`
+            <div id="scroller" style="block-size: 240px; overflow-y: auto">
+                <div style="block-size: 900px; padding-block-start: 120px; padding-inline-start: 40px">
+                    <ui-tooltip side="inline-end">
+                        <button type="button">Save</button>
+                        <span slot="tip">Saves.</span>
+                    </ui-tooltip>
+                </div>
+            </div>
+        `);
+
+        await shown(host);
+        await scrolled(only(host, '#scroller'), 'top', 30);
+
+        expect(tipAt(host, middle(host)), "at the trigger's middle").toBe(true);
+    });
+
+    it('says the side it turned to on a scroll, and points from there', async () => {
+        // Above its trigger with a few pixels to spare, then none: the platform turns the tip
+        // below as it lays the frame out, after the scroll event.
+        const host = await mount(`
+            <div id="scroller" style="position: fixed; top: 0; left: 100px; block-size: 240px; overflow-y: auto">
+                <div style="block-size: 900px; padding-block-start: 40px">${fixture}</div>
+            </div>
+        `);
+
+        await shown(host);
+
+        expect(tip(host).getAttribute('data-side'), 'above to begin with').toBe('block-start');
+
+        await scrolled(only(host, '#scroller'), 'top', 15);
+
+        expect(tip(host).getAttribute('data-side'), 'below now').toBe('block-end');
+        expect(tipAt(host, middle(host)), "at the trigger's middle, from above").toBe(true);
+    });
+
+    it('reads nothing for a resize once the tip has closed, before the reading came', async () => {
+        // A closed tip measures nothing at the origin, which a reading would take for a tip above
+        // and to the left, where this one was below its trigger.
+        const host = await mount(fixture, '0px');
+
+        await shown(host);
+
+        const before = [tip(host).getAttribute('data-side'), tip(host).style.cssText];
+
+        expect(before[0], 'below, at the top').toBe('block-end');
+
+        window.dispatchEvent(new Event('resize'));
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await reread();
+
+        expect(tip(host).matches(':popover-open'), 'closed').toBe(false);
+        expect([tip(host).getAttribute('data-side'), tip(host).style.cssText]).toEqual(before);
+    });
+
+    it("is taken away by a rule of the host's on the tip's ::before", async () => {
+        const host = await mount(`
+            <style>.plain [slot='tip']::before { content: none; }</style>
+            <div class="plain" style="display: flex; justify-content: center">${fixture}</div>
+        `);
+
+        await shown(host);
+
+        expect(getComputedStyle(tip(host), '::before').content).toBe('none');
+        expect(tipAt(host, middle(host))).toBe(false);
+    });
+
+    /** What the arrow is cut by, with `style` written round the tooltip, under Glass if asked. */
+    async function cut(style: string, themed = false): Promise<string> {
+        const sheet = themed
+            ? `<style>${tokenStyleSheet()}\n${themeStyleSheet(glass)}</style>`
+            : '';
+        const host = await mount(
+            `${sheet}<div${themed ? ' data-ui-theme="glass"' : ''} style="display: flex; justify-content: center; ${style}">${fixture}</div>`,
+        );
+
+        await shown(host);
+
+        const clip = getComputedStyle(tip(host), '::before').clipPath;
+
+        host.remove();
+
+        return clip;
+    }
+
+    it('meets the tip at its edge on glass, where elsewhere it lays its surface over the edge', async () => {
+        const over = await cut('--ui-backdrop-raised: none');
+
+        expect(over, 'cut at all').toMatch(/^polygon\(/);
+        expect(await cut(''), 'nothing said').toBe(over);
+        expect(await cut('--ui-backdrop-raised: blur(10px)'), 'glass').not.toBe(over);
+    });
+
+    it.each([
+        ['prefers-contrast', 'more'],
+        ['prefers-reduced-transparency', 'reduce'],
+    ] as const)(
+        'meets the tip at its edge under Glass, and over it again under %s',
+        async (feature, value) => {
+            const over = await cut('');
+
+            expect(await cut('', true), 'glass').not.toBe(over);
+
+            await cdp().send('Emulation.setEmulatedMedia', {
+                features: [{ name: feature, value }],
+            });
+
+            try {
+                expect(await cut('', true), 'the glass stood down').toBe(over);
+            } finally {
+                await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+            }
+        },
+    );
+
+    it('keeps its edge under forced colours, as the tip keeps its own', async () => {
+        const host = await mount(pointed('', 'display: flex; justify-content: center'));
+
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            await shown(host);
+
+            const arrow = getComputedStyle(tip(host), '::before');
+            const drawn = getComputedStyle(tip(host));
+
+            expect(matchMedia('(forced-colors: active)').matches, 'the mode is on').toBe(true);
+            expect([arrow.borderTopColor, arrow.backgroundColor]).toEqual([
+                drawn.borderTopColor,
+                drawn.backgroundColor,
+            ]);
+            expect(arrow.borderTopColor, 'an edge apart from the surface').not.toBe(
+                arrow.backgroundColor,
+            );
+            expect(tipAt(host, middle(host)), 'drawn').toBe(true);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
     });
 });
 
@@ -2698,5 +3111,17 @@ describe('accessibility', () => {
 
     it('has no violations on a side of its own', async () => {
         await expectAccessible(await mountStory(Sides, meta, 'Sides'));
+    });
+
+    it('has no violations without an arrow, and draws none once shown', async () => {
+        const host = await mountStory(WithoutAnArrow, meta, 'WithoutAnArrow');
+
+        await expectAccessible(host);
+
+        only(host, 'ui-button').focus();
+        await painted();
+
+        expect(tip(host).getAttribute('data-side'), 'shown').toBe('block-start');
+        expect(getComputedStyle(tip(host), '::before').content).toBe('none');
     });
 });

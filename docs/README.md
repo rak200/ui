@@ -17,7 +17,7 @@ One page per unit, sized by what a reader would look up on its own.
 | `UiTable`       | [table.md](table.md)       | the `<ui-table>` element, what it styles, and what it is not       |
 | `Theme`         | [theme.md](theme.md)       | the shipped themes, the shape a theme takes, and its stylesheet    |
 | `UiToaster`     | [toast.md](toast.md)       | `<ui-toaster>` and `<ui-toast>`, the two regions and the clock     |
-| `UiTooltip`     | [tooltip.md](tooltip.md)   | the `<ui-tooltip>` element, when it shows, and where it lands      |
+| `UiTooltip`     | [tooltip.md](tooltip.md)   | `<ui-tooltip>`, when it shows, where it lands, and where it points |
 | tokens          | [tokens.md](tokens.md)     | the design tokens, their defaults, and how a host overrides them   |
 | console         | [console.md](console.md)   | every line the package says, its codes, and how a page quiets them |
 | `diagnose`      | [diagnose.md](diagnose.md) | everything the components can tell is wrong, when a page asks      |
