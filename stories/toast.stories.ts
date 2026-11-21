@@ -119,3 +119,19 @@ export const Heading: StoryObj<ToastArgs> = {
         </ui-toaster>
     `,
 };
+
+/**
+ * An action, a button the host writes, for something the page offers elsewhere too: the toast
+ * holding it never expires, since a keyboard reader comes to the toaster after the whole page, and
+ * Tab reaches it there.
+ */
+export const Action: StoryObj<ToastArgs> = {
+    render: ({ duration }): TemplateResult => html`
+        <ui-toaster>
+            <ui-toast variant="success" duration=${duration}>
+                Invoice deleted.
+                <button slot="action" type="button">Undo</button>
+            </ui-toast>
+        </ui-toaster>
+    `,
+};

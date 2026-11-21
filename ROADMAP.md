@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## An action on `<ui-toast>` (#459)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twentieth step: a slot for a button the host
-writes, on a toast that then never expires.
-
 ## A card that opens where it is clicked (#460)
 
-By the stretched link the card draws, lifting what it holds above it.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-first step: by the stretched link the
+card draws, lifting what it holds above it.
 
 ## Numeric columns on `<ui-table>` (#461)
 
