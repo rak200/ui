@@ -529,7 +529,33 @@ export class UiDialog extends LitElement {
     /** The rain this dialog has drawn, by the colour and the density it was drawn at. */
     readonly #rains = new Map<string, Promise<string>>();
 
-    /** Builds the dialog, and routes Esc and every close through `open`, announcing `ui-close`. */
+    /**
+     * Answers a button aimed at this element by `commandfor`: `--show` opens the dialog and
+     * `--close` closes it, as {@link show} and {@link close} do, so a page opens one with no
+     * script. Every other command is left alone.
+     *
+     * **A command of the element's own, and none of a `<dialog>`'s**: a button aimed at a custom
+     * element fired nothing for `show-modal`, and fired `--show`, in Chromium 153, Firefox 155 and
+     * WebKit 26.5, measured for RFC 0010. The opening is the one `show()` makes, so the focus goes
+     * back to the button the dialog was opened from, as the platform gives it back to whatever had
+     * it. Only a `CommandEvent` is a command: an event of the name a script dispatched carries none.
+     */
+    readonly #command = (event: Event): void => {
+        if (!(event instanceof CommandEvent)) {
+            return;
+        }
+
+        if (event.command === '--show') {
+            this.show();
+        } else if (event.command === '--close') {
+            this.close();
+        }
+    };
+
+    /**
+     * Builds the dialog, routes Esc and every close through `open`, announcing `ui-close`, and
+     * answers the commands a button aims at the element.
+     */
     constructor() {
         super();
 
@@ -563,6 +589,8 @@ export class UiDialog extends LitElement {
             this.open = false;
             this.dispatchEvent(new Event('ui-close', { bubbles: true, composed: true }));
         });
+
+        this.addEventListener('command', this.#command);
     }
 
     /** Starts watching the title, so a rewritten one renames the dialog. */

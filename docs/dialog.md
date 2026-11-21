@@ -14,6 +14,7 @@ import '@rak200/ui';
 - [Slots](#slots)
 - [`open`](#open)
 - [`show()` and `close()`](#show-and-close)
+- [Opened from markup](#opened-from-markup)
 - [The `ui-close` event](#the-ui-close-event)
 - [What the platform does, and what this element adds](#what-the-platform-does-and-what-this-element-adds)
 - [The accessible name](#the-accessible-name)
@@ -60,8 +61,8 @@ Whether the dialog is showing. Reflected, so a host stylesheet can select on it 
 it back.
 
 **It is the single source of truth, and the only one.** The attribute, the property, the methods
-below and <kbd>Esc</kbd> all move this one value, so there is no second path that can disagree with
-it. Setting it to `false` runs the [exit](#motion) and closes when that has finished.
+below, a button's [command](#opened-from-markup) and <kbd>Esc</kbd> all move this one value, so there
+is no second path that can disagree with it. Setting it to `false` runs the [exit](#motion) and closes when that has finished.
 
 A dialog that is dismissed sets `open` back to `false` itself and
 [announces it](#the-ui-close-event). A host that binds `open` from its own state should listen for
@@ -80,6 +81,31 @@ that opened by its own route would produce a state the attribute does not descri
 `show()` is named for the pair it forms with `close()`. It is always modal — there is no
 non-modal mode, because the `open` attribute on a bare `<dialog>` is exactly the thing that looks
 modal and traps nobody.
+
+## Opened from markup
+
+```html
+<button type="button" commandfor="delete-account" command="--show">Delete account</button>
+
+<ui-dialog id="delete-account">
+  <h2 slot="title">Delete account</h2>
+  <p>This cannot be undone.</p>
+  <button slot="actions" type="button" commandfor="delete-account" command="--close">Cancel</button>
+</ui-dialog>
+```
+
+**A button aimed at the dialog by `commandfor` opens and closes it, with no script.**
+`command="--show"` opens it as `show()` does, and `command="--close"` closes it as `close()` does,
+its exit and all; any other command is left alone. The platform hands any element a command as a
+`command` event, and a `<dialog>`'s own, `show-modal` and `close`, reach no custom element, in
+Chromium 153, Firefox 155 and WebKit 26.5 alike, so these two are the element's own. Only a
+`CommandEvent` is a command, so an event of the name a script dispatches opens nothing.
+
+**The focus goes back where `close()` sends it**: to whatever had it as the dialog opened, which is
+the button wherever pressing it focuses it, from the keys in every engine.
+
+**The button is a `<button>` of yours.** `commandfor` names the dialog by its `id` in the button's
+own tree, and it is a button's attribute, which a `<ui-button>` does not hand the button it draws.
 
 ## The `ui-close` event
 
