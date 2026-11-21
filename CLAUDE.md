@@ -412,8 +412,8 @@ explains. This file restates none of them.
   round the slotted buttons, named by a copied string, since containment crosses a root where a
   reference does not.
 - **Why `ui-table` adopts a stylesheet into the host's tree instead of styling with
-  `::slotted()`** — the docblock on `rules` in `src/table.ts`, and `docs/table.md`'s _Where the
-  styles actually live_. `::slotted()` matches the top level of what a slot was given and nothing
+  `::slotted()`, and why a numeric column is marked cell by cell** — the docblock on `rules` in
+  `src/table.ts`, and `docs/table.md`'s _Where the styles actually live_ and _What it styles_. `::slotted()` matches the top level of what a slot was given and nothing
   below it, and every part of a table worth styling is a descendant — so the rules go where the
   table is, found with `getRootNode()` rather than `document`, because a `<ui-table>` inside another
   component's shadow root would be bare otherwise. The tab stop beside it carries WCAG 2.1.1 and

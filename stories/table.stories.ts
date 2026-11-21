@@ -43,7 +43,7 @@ function body(rows: readonly Invoice[]): TemplateResult {
                     <tr>
                         <td>${row.number}</td>
                         <td>${row.client}</td>
-                        <td style="text-align: end">${row.total}</td>
+                        <td data-ui-numeric>${row.total}</td>
                     </tr>
                 `,
             )}
@@ -76,7 +76,7 @@ const meta: Meta<TableArgs> = {
                     <tr>
                         <th scope="col">Number</th>
                         <th scope="col">Client</th>
-                        <th scope="col" style="text-align: end">Total</th>
+                        <th scope="col" data-ui-numeric>Total</th>
                     </tr>
                 </thead>
                 ${body(rows)}
@@ -87,7 +87,7 @@ const meta: Meta<TableArgs> = {
 
 export default meta;
 
-/** The ordinary case: a caption, a header, striped rows, and one column aligned by the host. */
+/** The ordinary case: a caption, a header, striped rows, and one column the host marks numeric. */
 export const Table: StoryObj<TableArgs> = {};
 
 /**
@@ -105,7 +105,7 @@ export const NoCaption: StoryObj<TableArgs> = {
                     <tr>
                         <th scope="col">Number</th>
                         <th scope="col">Client</th>
-                        <th scope="col" style="text-align: end">Total</th>
+                        <th scope="col" data-ui-numeric>Total</th>
                     </tr>
                 </thead>
                 ${body(rows)}
@@ -130,7 +130,7 @@ export const Scrolling: StoryObj<TableArgs> = {
                         <th scope="col">Client</th>
                         <th scope="col">Raised</th>
                         <th scope="col">Due</th>
-                        <th scope="col" style="text-align: end">Total</th>
+                        <th scope="col" data-ui-numeric>Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -141,7 +141,7 @@ export const Scrolling: StoryObj<TableArgs> = {
                                 <td>${row.client}</td>
                                 <td>12/08/2026</td>
                                 <td>11/09/2026</td>
-                                <td style="text-align: end">${row.total}</td>
+                                <td data-ui-numeric>${row.total}</td>
                             </tr>
                         `,
                     )}
@@ -165,7 +165,7 @@ export const RowHeaders: StoryObj<TableArgs> = {
                     <tr>
                         <th scope="col">Number</th>
                         <th scope="col">Client</th>
-                        <th scope="col" style="text-align: end">Total</th>
+                        <th scope="col" data-ui-numeric>Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -174,7 +174,7 @@ export const RowHeaders: StoryObj<TableArgs> = {
                             <tr>
                                 <th scope="row">${row.number}</th>
                                 <td>${row.client}</td>
-                                <td style="text-align: end">${row.total}</td>
+                                <td data-ui-numeric>${row.total}</td>
                             </tr>
                         `,
                     )}
@@ -182,4 +182,42 @@ export const RowHeaders: StoryObj<TableArgs> = {
             </table>
         </ui-table>
     `,
+};
+
+/**
+ * Numeric columns, each cell and its header marked `data-ui-numeric`: to the end in tabular
+ * figures, so the amounts line up by their places, and to the end right to left as well, which is
+ * the left.
+ */
+export const NumericColumns: StoryObj<TableArgs> = {
+    render: ({ rows }): TemplateResult => {
+        const priced = (direction: 'ltr' | 'rtl'): TemplateResult => html`
+            <ui-table dir=${direction}>
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Client</th>
+                            <th scope="col" data-ui-numeric>Items</th>
+                            <th scope="col" data-ui-numeric>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(
+                            (row, place) => html`
+                                <tr>
+                                    <td>${row.client}</td>
+                                    <td data-ui-numeric>${String(3 + place * 7)}</td>
+                                    <td data-ui-numeric>${row.total}</td>
+                                </tr>
+                            `,
+                        )}
+                    </tbody>
+                </table>
+            </ui-table>
+        `;
+
+        return html`<div style="display: grid; gap: 1.5rem">
+            ${priced('ltr')} ${priced('rtl')}
+        </div>`;
+    },
 };
