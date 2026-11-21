@@ -6,7 +6,7 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
+import meta, { Heading, Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
 import '../src/toast.js';
 import '../src/card.js';
 // The vendored glyphs the toast's icons are copied from, registered here so the copy can be
@@ -411,6 +411,108 @@ describe('ui-toast', () => {
 
         expect(toast(host).getAttribute('variant')).toBe('success');
     });
+});
+
+/**
+ * A heading, RFC 0010's: a slot above the message, in the toast as the message is, so the region
+ * the variant chooses reads the two together as the toast joins it.
+ */
+describe('a heading', () => {
+    /** A toast of `variant` with a heading written as `tag`, and a message under it. */
+    const headed = (variant = 'info', tag = 'strong'): string => `
+        <ui-toaster>
+            <ui-toast variant="${variant}" duration="0"><${tag} slot="heading">Invoice sent</${tag}>It is on its way to Acme.</ui-toast>
+        </ui-toaster>
+    `;
+
+    /** The message's text as laid out: the toast's last child, a text node. */
+    function message(host: ParentNode): DOMRect {
+        const text = toast(host).lastChild;
+
+        if (!(text instanceof Text)) {
+            throw new Error('the message is no text');
+        }
+
+        const range = document.createRange();
+
+        range.selectNodeContents(text);
+
+        return range.getBoundingClientRect();
+    }
+
+    it('draws the heading above the message, on a line of its own, where the message starts', async () => {
+        const host = await mount(headed());
+        const heading = only(host, '[slot=heading]').getBoundingClientRect();
+
+        expect(heading.bottom, 'above it').toBeLessThanOrEqual(message(host).top + 0.5);
+        expect(heading.left, 'from the same start').toBeCloseTo(message(host).left, 0);
+    });
+
+    it("resets the heading element's own margin, and leaves it the weight of its element", async () => {
+        const host = await mount(headed('info', 'h3'));
+        const { marginBlockStart, marginBlockEnd, fontWeight } = getComputedStyle(
+            only(host, '[slot=heading]'),
+        );
+
+        expect([marginBlockStart, marginBlockEnd]).toEqual(['0px', '0px']);
+        expect(fontWeight, 'a heading is bold by its element').toBe('700');
+    });
+
+    it("yields to a host's own rule for the heading, as slotted content does", async () => {
+        const host = await mount(
+            `<style>.spaced [slot='heading'] { margin-block-end: 3px; }</style><div class="spaced">${headed()}</div>`,
+        );
+
+        expect(getComputedStyle(only(host, '[slot=heading]')).marginBlockEnd).toBe('3px');
+    });
+
+    it.each([
+        ['info', 'polite'],
+        ['danger', 'assertive'],
+    ] as const)(
+        "is in the toast before the message, so the %s toast's %s region reads them as one",
+        async (variant, region) => {
+            const host = await mount(headed(variant));
+            const heading = only(host, '[slot=heading]');
+            const slots = [
+                ...(toast(host).shadowRoot?.querySelectorAll('[part=message] slot') ?? []),
+            ];
+
+            expect(heading.parentElement, 'the toast holds it').toBe(toast(host));
+            expect(toast(host).assignedSlot?.parentElement?.getAttribute('aria-live')).toBe(region);
+            expect(
+                slots.map((slot) => slot.getAttribute('name')),
+                'the heading first, in the message',
+            ).toEqual(['heading', null]);
+            expect(heading.assignedSlot, 'drawn in its slot').toBe(slots[0]);
+        },
+    );
+
+    it('draws a toast with no heading as it was, the slot taking no room', async () => {
+        const host = await mount(fixture);
+        const part = toast(host).shadowRoot?.querySelector('[part=message]');
+        const text = toast(host).firstChild;
+
+        if (!(part instanceof HTMLElement) || !(text instanceof Text)) {
+            throw new Error('no message in the toast');
+        }
+
+        const range = document.createRange();
+
+        range.selectNodeContents(text);
+
+        expect(part.getBoundingClientRect().top, 'the message at the top').toBeCloseTo(
+            range.getBoundingClientRect().top,
+            0,
+        );
+    });
+
+    it.each(['info', 'danger'] as const)(
+        'meets the bar with a heading, a %s toast',
+        async (variant) => {
+            await expectAccessible(await mount(headed(variant)));
+        },
+    );
 });
 
 /** Each variant, and the colour its edge and its icon are painted from. */
@@ -1828,6 +1930,7 @@ describe('toast stories', () => {
         ['Outcomes', Outcomes],
         ['Timed', Timed],
         ['Long', Long],
+        ['Heading', Heading],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });

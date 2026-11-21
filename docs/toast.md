@@ -73,6 +73,11 @@ that shows one on purpose quiets that code round it.
 | ----------- | ---------------------------------------------- |
 | `dismiss()` | runs the exit, announces it, removes the toast |
 
+| Slot      | Holds                                     |
+| --------- | ----------------------------------------- |
+| `heading` | a heading above the message, read with it |
+| _default_ | the message                               |
+
 `ToastVariant` is exported for a host that needs the type: `'info' | 'success' | 'warning' |
 'danger'`.
 
@@ -80,6 +85,24 @@ that shows one on purpose quiets that code round it.
 English replaces it rather than forking the component. The package's others are `<ui-input>`'s
 `clear-label`, `reveal-label` and `count-text`, which have no default, since each draws its part
 only where a page writes it.
+
+### A heading
+
+```html
+<ui-toaster>
+  <ui-toast variant="success">
+    <strong slot="heading">Invoice sent</strong>
+    It is on its way to Acme.
+  </ui-toast>
+</ui-toaster>
+```
+
+**A heading goes above the message**, on a line of its own, from where the message starts, and the
+icon sits on its line, which is the toast's first. It is in the toast as the message is, and the
+toast is the one thing that joins the region, so the heading joins it with the message, before it,
+in the region the variant chooses. Its weight is its element's, a `<strong>` or a heading of yours,
+and a heading's own margin is reset, where a rule of yours for it still beats that, as for anything
+slotted. A toast with none is drawn as it was.
 
 ## Two regions, and why not one
 
