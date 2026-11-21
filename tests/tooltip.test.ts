@@ -10,6 +10,7 @@ import meta, {
     AtTheEdge,
     Inside,
     OnAControlYouWrote,
+    Sides,
     Tooltip,
 } from '../stories/tooltip.stories.js';
 import '../src/tooltip.js';
@@ -2205,6 +2206,230 @@ describe('where it lands', () => {
  * child. The label starts at the button's start, as an item's does, so its middle is not the
  * button's.
  */
+describe('a side of its own', () => {
+    /** A tooltip asking for `side`, on a trigger set where `style` puts it, in `dir` if one. */
+    const asked = (
+        side: string,
+        style = 'display: flex; justify-content: center',
+        dir = '',
+    ): string =>
+        `<div style="${style}"${dir === '' ? '' : ` dir="${dir}"`}><ui-tooltip side="${side}"><button type="button">Save</button><span slot="tip">Saves.</span></ui-tooltip></div>`;
+
+    /** Shows the tip and measures it against its trigger, once placed. */
+    async function landed(host: HTMLElement): Promise<{ anchor: DOMRect; box: DOMRect }> {
+        await userEvent.hover(trigger(host));
+        await painted();
+
+        return {
+            anchor: trigger(host).getBoundingClientRect(),
+            box: tip(host).getBoundingClientRect(),
+        };
+    }
+
+    /** One of the tip's signs, as the sheet resolved it. */
+    const sign = (host: ParentNode, axis: 'toward' | 'across'): string =>
+        getComputedStyle(tip(host)).getPropertyValue(`--ui-fx-${axis}`);
+
+    it('is above its trigger until told otherwise, the side reflected', async () => {
+        const host = await mount(fixture);
+        const element = only(host, 'ui-tooltip') as UiTooltip;
+
+        expect(element.side).toBe('block-start');
+        expect(element.getAttribute('side')).toBe('block-start');
+
+        element.side = 'inline-end';
+        await element.updateComplete;
+
+        expect(element.getAttribute('side'), 'reflected').toBe('inline-end');
+    });
+
+    it('goes below its trigger where asked, centred on it', async () => {
+        const host = await mount(asked('block-end'));
+        const { anchor, box } = await landed(host);
+
+        expect(box.top - anchor.bottom, 'below, by the gap').toBeGreaterThan(0);
+        expect((box.left + box.right) / 2).toBeCloseTo((anchor.left + anchor.right) / 2, 0);
+        expect(tip(host).getAttribute('data-side')).toBe('block-end');
+    });
+
+    it.each([
+        ['inline-start', 'left', 'inline-start'],
+        ['inline-end', 'right', 'inline-end'],
+    ] as const)(
+        'goes beside its trigger at its %s, on its %s, centred on its middle',
+        async (side, where, said) => {
+            const host = await mount(asked(side));
+            const { anchor, box } = await landed(host);
+
+            if (where === 'left') {
+                expect(anchor.left - box.right, 'left of it, by the gap').toBeGreaterThan(0);
+            } else {
+                expect(box.left - anchor.right, 'right of it, by the gap').toBeGreaterThan(0);
+            }
+
+            expect((box.top + box.bottom) / 2).toBeCloseTo((anchor.top + anchor.bottom) / 2, 0);
+            expect(tip(host).getAttribute('data-side')).toBe(said);
+        },
+    );
+
+    it.each([
+        ['inline-start', 'left: 0', 'inline-end'],
+        ['inline-end', 'right: 0', 'inline-start'],
+        ['block-end', 'bottom: 0', 'block-start'],
+    ] as const)(
+        'turns from %s to the opposite side where its own has no room',
+        async (side, edge, said) => {
+            const host = await mount(asked(side, `position: fixed; ${edge}`));
+
+            await landed(host);
+
+            expect(tip(host).getAttribute('data-side')).toBe(said);
+        },
+    );
+
+    it('keeps its gap on its trigger side, beside it as above it', async () => {
+        const sides = ['block-end', 'inline-start', 'inline-end'] as const;
+        const margins: string[][] = [];
+
+        for (const side of sides) {
+            const host = await mount(asked(side));
+
+            only(host, 'ui-tooltip').style.setProperty('--ui-space', '10px');
+
+            const { marginTop, marginRight, marginBottom, marginLeft } = getComputedStyle(
+                tip(host),
+            );
+
+            margins.push([marginTop, marginRight, marginBottom, marginLeft]);
+        }
+
+        expect(margins).toEqual([
+            ['5px', '0px', '0px', '0px'],
+            ['0px', '5px', '0px', '0px'],
+            ['0px', '0px', '0px', '5px'],
+        ]);
+    });
+
+    it.each([
+        ['inline-start', 'right', 'inline-start'],
+        ['inline-end', 'left', 'inline-end'],
+    ] as const)(
+        "takes its %s in an island by its trigger's edges, read in the tip's direction: on its %s",
+        async (side, where, said) => {
+            const host = await mount(asked(side, 'display: flex; justify-content: center', 'rtl'));
+            const { anchor, box } = await landed(host);
+
+            expect(only(host, 'ui-tooltip').matches(':state(island)'), 'an island').toBe(true);
+
+            if (where === 'right') {
+                expect(box.left - anchor.right).toBeGreaterThan(0);
+            } else {
+                expect(anchor.left - box.right).toBeGreaterThan(0);
+            }
+
+            expect((box.top + box.bottom) / 2, 'centred on its middle').toBeCloseTo(
+                (anchor.top + anchor.bottom) / 2,
+                0,
+            );
+            expect(tip(host).getAttribute('data-side')).toBe(said);
+        },
+    );
+
+    it("goes below in an island from its trigger's bottom, hung from its leading edge", async () => {
+        const host = await mount(asked('block-end', 'padding-inline-start: 150px', 'rtl'));
+        const { anchor, box } = await landed(host);
+
+        expect(box.top - anchor.bottom).toBeGreaterThan(0);
+        expect(box.right).toBeCloseTo(anchor.right, 0);
+        expect(tip(host).getAttribute('data-side')).toBe('block-end');
+    });
+
+    it('reads its start on the right in a right-to-left page, where it is no island', async () => {
+        document.documentElement.dir = 'rtl';
+
+        try {
+            const host = await mount(asked('inline-start'));
+            const { anchor, box } = await landed(host);
+
+            expect(only(host, 'ui-tooltip').matches(':state(island)')).toBe(false);
+            expect(box.left - anchor.right).toBeGreaterThan(0);
+            expect(tip(host).getAttribute('data-side')).toBe('inline-start');
+        } finally {
+            document.documentElement.removeAttribute('dir');
+        }
+    });
+
+    it('reads its side again where the side changes while the tip is open, and writes none on a tip never shown', async () => {
+        const host = await mount(asked('block-start'));
+        const element = only(host, 'ui-tooltip') as UiTooltip;
+
+        element.side = 'inline-end';
+        await element.updateComplete;
+
+        expect(tip(host).hasAttribute('data-side'), 'never shown').toBe(false);
+
+        element.side = 'block-start';
+        await element.updateComplete;
+        await landed(host);
+        element.side = 'inline-end';
+        await element.updateComplete;
+
+        expect(tip(host).getAttribute('data-side')).toBe('inline-end');
+    });
+
+    it('reads its side by the two middles beside a trigger wider than its tip', async () => {
+        // A trigger far wider than the tip, so a side read off anything but the trigger's middle
+        // — a point past its start — reads the other side.
+        const host = await mount(
+            `<div style="display: flex; justify-content: center"><ui-tooltip side="inline-start"><button type="button" style="inline-size: 240px">Save</button><span slot="tip">Saves.</span></ui-tooltip></div>`,
+        );
+
+        await landed(host);
+
+        expect(tip(host).getAttribute('data-side')).toBe('inline-start');
+    });
+
+    it('goes above where the side is none it knows', async () => {
+        const host = await mount(asked('nowhere'));
+        const { anchor, box } = await landed(host);
+
+        expect(box.bottom).toBeLessThan(anchor.top);
+        expect(tip(host).getAttribute('data-side')).toBe('block-start');
+    });
+
+    it('moves toward its trigger across the line beside it, from the side asked for until it lands', async () => {
+        const start = await mount(asked('inline-start'));
+        const turned = await mount(
+            asked('inline-start', 'display: flex; justify-content: center', 'rtl'),
+        );
+        const below = await mount(asked('block-end'));
+
+        expect([sign(start, 'toward'), sign(start, 'across')], 'asked: left of it').toEqual([
+            '0',
+            '1',
+        ]);
+        expect(sign(turned, 'across'), 'asked: right of it, right to left').toBe('-1');
+        expect([sign(below, 'toward'), sign(below, 'across')], 'asked: below').toEqual(['-1', '0']);
+
+        const edge = await mount(asked('inline-start', 'position: fixed; left: 0'));
+
+        await landed(edge);
+
+        expect(sign(edge, 'across'), 'landed on the other side').toBe('-1');
+    });
+
+    it("rises from across the line as it shows beside its trigger, over the overlay's step", async () => {
+        const host = await mount(asked('inline-start'));
+
+        only(host, 'ui-tooltip').style.cssText =
+            '--ui-motion-enter: rise; --ui-duration-overlay: 7s';
+        await userEvent.hover(trigger(host));
+        held(host, 0);
+
+        expect(getComputedStyle(tip(host)).transform).toBe('matrix(1, 0, 0, 1, 4, 0)');
+    });
+});
+
 describe('inside a button or a link', () => {
     /** A button, or a link, holding a tooltip round its label: a mark and a word. */
     const inside = (tag: 'button' | 'a'): string => `
@@ -2469,5 +2694,9 @@ describe('accessibility', () => {
 
     it('has no violations inside something that clips', async () => {
         await expectAccessible(await mountStory(Inside, meta, 'Inside'));
+    });
+
+    it('has no violations on a side of its own', async () => {
+        await expectAccessible(await mountStory(Sides, meta, 'Sides'));
     });
 });

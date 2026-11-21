@@ -216,9 +216,11 @@ explains. This file restates none of them.
   foretells it in `beforetoggle` by the panel's last height and its gap, since `toggle` comes a task
   late; Firefox mirrors an area's inline alignment where an overlay's direction is not the page's
   (Mozilla 2019601), so the menu takes anchored insets everywhere and a tip takes them in an island,
-  which `#island()` marks as the tip shows. The floor rose to Chrome 144, Firefox 148 and Safari
-  26.2 for the tooltip's `position-area`, which `tests/manual/browser-floor.mjs` carries in
-  `mended`, past the releases BCD dates. #300 holds the measurements. `popover="manual"` and the
+  which `#island()` marks as the tip shows. A tip's own `side` takes `position-area` and the
+  fallback that turns it, and in an island anchored insets read in the tip's direction, which
+  `#side()` reads back by `:dir()` as the sheet places it. The floor rose to Chrome 144, Firefox 148
+  and Safari 26.2 for the tooltip's `position-area`, which `tests/manual/browser-floor.mjs` carries
+  in `mended`, past the releases BCD dates. #300 holds the measurements. `popover="manual"` and the
   Escape handler carry their reasons beside them, and `#complain()` carries the one a reader hits
   first: a reference written from out here reaches no control drawn inside a shadow root, which #156
   measured and RFC 0006 answered — so what the warning is left pointing at is a trigger **someone

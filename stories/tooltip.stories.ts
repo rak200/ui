@@ -105,6 +105,35 @@ export const AtTheEdge: StoryObj<TooltipArgs> = {
 };
 
 /**
+ * A side of its own for each tip: above, the default, below, and beside the trigger at its start
+ * and its end, each turning to the opposite side where its own has no room.
+ */
+export const Sides: StoryObj<TooltipArgs> = {
+    render: (): TemplateResult => html`
+        <div
+            style="padding-block: 3rem; display: flex; gap: 6rem; justify-content: center; flex-wrap: wrap"
+        >
+            <ui-tooltip>
+                <button type="button">Above</button>
+                <span slot="tip">Above, until told otherwise.</span>
+            </ui-tooltip>
+            <ui-tooltip side="block-end">
+                <button type="button">Below</button>
+                <span slot="tip">Below it.</span>
+            </ui-tooltip>
+            <ui-tooltip side="inline-start">
+                <button type="button">Start</button>
+                <span slot="tip">At its start.</span>
+            </ui-tooltip>
+            <ui-tooltip side="inline-end">
+                <button type="button">End</button>
+                <span slot="tip">At its end.</span>
+            </ui-tooltip>
+        </div>
+    `,
+};
+
+/**
  * Inside something that clips, which is the other case it usually gets wrong.
  *
  * The tip is a popover, so the platform promotes it to the top layer and it is not clipped
