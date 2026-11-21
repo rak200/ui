@@ -39,6 +39,11 @@ would need every one of them written by hand, and would get one of them wrong.
 The class is exported as `UiButton` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
 
+**It hands its focus to its button.** `focus()` on the element lands on the button it draws, and a
+`tabindex` on the element decides that button's stop: `-1` takes it out of the tab order, `0` keeps
+one stop. An element with no `tabindex` keeps the stop its button has. That is what lets
+[`<ui-button-group toolbar>`](group.md#toolbar) rove one stop over its buttons.
+
 Every state below is asserted against [axe](https://github.com/dequelabs/axe-core) in the suite,
 for WCAG A/AA, inside the real browser it renders in — including through the shadow root, which is
 where a check that stops at the host silently passes.

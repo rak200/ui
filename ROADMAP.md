@@ -3,16 +3,11 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-button-group>` (#451)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s eleventh step: the buttons joined, their
-shared corners squared through `::part(button)`, and with `toolbar` the APG toolbar's keyboard, for
-which `<ui-button>` delegates its focus.
-
 ## A busy `<ui-button>` (#439)
 
-Blocked until RFC 0009's progress lands, the `aria-disabled` button it rests on having landed, and
-moved to the end of the list if it has not by its turn.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twelfth step: blocked until RFC 0009's
+progress lands, the `aria-disabled` button it rests on having landed, and moved to the end of the
+list if it has not by its turn.
 
 ## `<ui-icon>` turned right to left (#452)
 

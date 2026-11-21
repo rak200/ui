@@ -128,6 +128,37 @@ describe('ui-button', () => {
         expect(inner(element).classList.contains('primary')).toBe(true);
     });
 
+    it("hands its focus to its own button, and a tabindex on it decides that button's stop", async () => {
+        const element = await mount('<ui-button>Save</ui-button>');
+
+        element.focus();
+
+        expect(element.shadowRoot?.activeElement, 'focus() reaches its button').toBe(
+            inner(element),
+        );
+
+        for (const [tabindex, reached] of [
+            ['-1', 'after'],
+            ['0', 'ui-button'],
+        ] as const) {
+            const passed = await mount(
+                `<button type="button" id="before">Before</button><ui-button tabindex="${tabindex}">Save</ui-button><button type="button" id="after">After</button>`,
+            );
+            const before = passed.parentElement?.querySelector<HTMLButtonElement>('#before');
+
+            before?.focus();
+            await userEvent.tab();
+
+            const active = document.activeElement;
+
+            expect(active?.id === '' ? active.localName : active?.id, `tabindex ${tabindex}`).toBe(
+                reached,
+            );
+
+            passed.parentElement?.remove();
+        }
+    });
+
     it('draws a danger button as a primary, in the danger', async () => {
         const element = await mount('<ui-button variant="danger">Delete</ui-button>');
 
