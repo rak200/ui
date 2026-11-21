@@ -78,6 +78,15 @@ function contain(event: Event): void {
 }
 
 /**
+ * Writes on a tip where along it its arrow points, from the tip's start, and the tip's length along
+ * that edge, which the sheet keeps the arrow clear of the corners by.
+ */
+function aim(tip: HTMLElement, at: number, span: number): void {
+    tip.style.setProperty('--ui-fx-arrow', `${String(at)}px`);
+    tip.style.setProperty('--ui-fx-arrow-span', `${String(span)}px`);
+}
+
+/**
  * Supplementary text on hover and on keyboard focus.
  *
  * **Everything is slotted**, for a measured reason: an IDREF does not cross a shadow
@@ -122,11 +131,12 @@ function contain(event: Event): void {
  * button it lies inside, and an `anchor-name` of the host's on the trigger replaced it.
  *
  * **Two things stay script.** The CSS writes nowhere which side it took, which `data-side` hands
- * a host who draws an arrow and the tip's motion reads, so the side is read off the two boxes as
- * the tip shows, and again on every scroll and resize. And where the tip's direction is not the
- * page's, Firefox mirrors a centred tip off the screen — Mozilla 2019601, in every form #300's
- * follow-up measured — so the tip is marked an island as it shows, and the sheet hangs it from
- * its trigger's leading edge there.
+ * a host, and the tip's motion and its arrow read, so the side is read off the two boxes as the tip
+ * shows, and again once each scroll and resize has been laid out; and with it where along the tip
+ * its arrow points, the trigger's middle, which CSS cannot point the arrow at from inside the tip,
+ * as RFC 0010 measured. And where the tip's direction is not the page's, Firefox mirrors a centred
+ * tip off the screen — Mozilla 2019601, in every form #300's follow-up measured — so the tip is
+ * marked an island as it shows, and the sheet hangs it from its trigger's leading edge there.
  *
  * A positioning dependency was the other option the issue named. It solves scroll containers,
  * virtual anchors and continuous auto-update, none of which a tooltip against a real element
@@ -298,6 +308,120 @@ export class UiTooltip extends LitElement {
         :host([side='inline-end']:state(island)) slot[name='tip']::slotted(:dir(ltr)) {
             right: auto;
             left: anchor(right);
+        }
+
+        /* The arrow, pointing at the trigger from the side the tip landed on: the tip's own
+           ::before, which goes with the tip into the top layer, and the one thing of the tip's
+           this sheet can draw without writing into it. A square turned an eighth, in the tip's
+           surface, edge and shadow, cut along the tip's edge so that its half toward the trigger
+           is drawn, filling the gap.
+
+           CSS cannot point it at the trigger from inside the tip, measured for RFC 0010 in all
+           three engines, so the element writes the trigger's middle along the tip, from the tip's
+           start, as --ui-fx-arrow, and the tip's length along that edge as --ui-fx-arrow-span,
+           from the boxes it reads the side off. The arrow takes the place by translate: Firefox
+           lost the tip's anchor once an inset of the arrow's moved, where a translate kept it.
+
+           A rule of the host's on the tip's ::before outweighs every one of these, as a rule
+           outside a root does, so content: none there takes the arrow away. */
+        slot[name='tip']::slotted(*) {
+            /* The user agent's overflow: auto for a popover clipped the arrow, which lies outside
+               the tip, and kept the pointer from it. So a word longer than the tip's ceiling
+               breaks inside the tip rather than running out of it. */
+            overflow: visible;
+            overflow-wrap: anywhere;
+        }
+
+        slot[name='tip']::slotted([data-side])::before {
+            /* The arrow's middle along the tip: the trigger's, kept clear of the rounded corners by
+               the radius and half the arrow's base. */
+            --ui-fx-arrow-at: clamp(
+                calc(${reference('--ui-radius')} + ${reference('--ui-space')} / 2),
+                var(--ui-fx-arrow),
+                calc(
+                    var(--ui-fx-arrow-span) - ${reference('--ui-radius')} -
+                        ${reference('--ui-space')} / 2
+                )
+            );
+
+            content: '';
+            position: absolute;
+            box-sizing: border-box;
+            /* Reaching across the gap, the half it draws is as long as the gap, and twice as
+               broad at its base. */
+            width: calc(${reference('--ui-space')} / 2 * sqrt(2));
+            aspect-ratio: 1;
+            background: ${reference('--ui-color-surface-raised')};
+            border: 1px solid ${reference('--ui-color-border-overlay')};
+            box-shadow: ${reference('--ui-elevation-raised')};
+            /* The half on the trigger's side of the diagonal is drawn, with what its shadow
+               reaches, and the line of the tip's edge, a pixel in from the line its corners turn
+               about, which the arrow lays its surface over, so it opens into the tip. */
+            clip-path: polygon(
+                calc(100% - 1px * sqrt(2) + 3rem) -3rem,
+                calc(100% + 3rem) -3rem,
+                calc(100% + 3rem) calc(100% + 3rem),
+                -3rem calc(100% + 3rem),
+                -3rem calc(100% - 1px * sqrt(2) + 3rem)
+            );
+        }
+
+        /* Its middle on the tip's outer edge, a pixel out from the box it is placed in, at its place
+           along that edge, and turned so its corner toward the trigger is the square's bottom
+           right. Placed by top and left alone, and half its size back by the translate: placed by
+           bottom, Chromium took a point as on the arrow a pixel from where it drew it.
+
+           Under a tip above its trigger, pointing down at it. */
+        slot[name='tip']::slotted([data-side='block-start'])::before {
+            top: calc(100% + 1px);
+            left: -1px;
+            translate: calc(var(--ui-fx-arrow-at) - 50%) -50%;
+            rotate: 45deg;
+        }
+
+        /* Over a tip below its trigger, pointing up at it. */
+        slot[name='tip']::slotted([data-side='block-end'])::before {
+            top: -1px;
+            left: -1px;
+            translate: calc(var(--ui-fx-arrow-at) - 50%) -50%;
+            rotate: -135deg;
+        }
+
+        /* At the right of a tip at its trigger's left, as it is drawn, pointing right at it. */
+        slot[name='tip']::slotted([data-side='inline-start']:dir(ltr))::before,
+        slot[name='tip']::slotted([data-side='inline-end']:dir(rtl))::before {
+            top: -1px;
+            left: calc(100% + 1px);
+            translate: -50% calc(var(--ui-fx-arrow-at) - 50%);
+            rotate: -45deg;
+        }
+
+        /* At the left of a tip at its trigger's right, pointing left at it. */
+        slot[name='tip']::slotted([data-side='inline-end']:dir(ltr))::before,
+        slot[name='tip']::slotted([data-side='inline-start']:dir(rtl))::before {
+            top: -1px;
+            left: -1px;
+            translate: -50% calc(var(--ui-fx-arrow-at) - 50%);
+            rotate: 135deg;
+        }
+
+        /* Whether the theme raises its surfaces as glass, as the dialog reads it: the backdrop
+           filter of a raised surface, through the token's fallback, which reads a glass standing
+           down as none, where a query on the token itself took it for glass. */
+        :host {
+            --ui-fx-glass: ${reference('--ui-backdrop-raised')};
+        }
+
+        /* On glass the arrow meets the tip at its edge, which runs on across the arrow's base: the
+           surface is translucent, so a part of the arrow laid over the tip would show twice. */
+        @container not style(--ui-fx-glass: none) {
+            slot[name='tip']::slotted([data-side])::before {
+                clip-path: polygon(
+                    calc(100% + 3rem) -3rem,
+                    calc(100% + 3rem) calc(100% + 3rem),
+                    -3rem calc(100% + 3rem)
+                );
+            }
         }
 
         /* Which side of the tip its trigger is on, as a sign on each axis, which what moves a tip
@@ -561,9 +685,26 @@ export class UiTooltip extends LitElement {
      */
     #watching = new AbortController();
 
-    /** Re-places the tip under anything that moves the trigger while it is open. */
+    /**
+     * Reads the side and the arrow's place again under anything that moves the trigger while the
+     * tip is open, in a task of its own, once the frame the event came in has been laid out.
+     *
+     * **Not in the event.** The platform moves an anchored tip after the scroll that moved its
+     * trigger, as it lays that frame out: in Chromium and Firefox the tip's box read in the event,
+     * in a microtask or in that frame's animation callbacks is where it was before the scroll,
+     * where the trigger's is where it is now, measured — so an arrow placed from them pointed off
+     * the trigger by the scroll, and a tip that turned to the other side said the side it had left.
+     * A task queued in the event runs once that frame is laid out, where both have followed, and
+     * during a scroll every frame's own reading is of that frame. WebKit had moved the tip by the
+     * event already.
+     */
     readonly #reflow = (): void => {
-        this.#side();
+        setTimeout((): void => {
+            // A tip closed before the task came reads as a box of nothing, which would say a side.
+            if (this.#shown) {
+                this.#side();
+            }
+        });
     };
 
     /**
@@ -1120,7 +1261,9 @@ export class UiTooltip extends LitElement {
     /**
      * Writes which side of its trigger the tip landed on, read off where the platform put it, by
      * the two middles, which none of the tip's effects moves across: above or below, and for a tip
-     * asked to go beside its trigger, at its start or its end, in the tip's own direction.
+     * asked to go beside its trigger, at its start or its end, in the tip's own direction. And
+     * where along the tip its arrow points, the trigger's middle, which is not the tip's where the
+     * platform pulled the tip inside the screen.
      */
     #side(): void {
         const trigger = this.#trigger();
@@ -1145,6 +1288,7 @@ export class UiTooltip extends LitElement {
                 landed,
                 leftward === tip.matches(':dir(rtl)') ? 'inline-end' : 'inline-start',
             );
+            aim(tip, anchor.top + anchor.height / 2 - box.top, box.height);
 
             return;
         }
@@ -1155,6 +1299,7 @@ export class UiTooltip extends LitElement {
             // laid over its trigger's middle, which the platform never places it at.
             box.top + box.height / 2 < anchor.top + anchor.height / 2 ? 'block-start' : 'block-end',
         );
+        aim(tip, anchor.left + anchor.width / 2 - box.left, box.width);
     }
 }
 

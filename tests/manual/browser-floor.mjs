@@ -109,7 +109,7 @@ const heard = {
     'api.Window.requestIdleCallback':
         'WebKit has none, and src/dialog.ts asks whether the window has one first: without it, the rain is drawn ahead a second after the dialog joins the page rather than in an idle moment',
     [styleQueries]:
-        "every motion effect is drawn under src/motion.ts's query, and an engine without style queries matches none of them, so each component keeps today's motion",
+        "every motion effect is drawn under src/motion.ts's query, and an engine without style queries matches none of them, so each component keeps today's motion; and src/tooltip.ts's arrow meets a tip's edge on glass under one, so in Firefox before 151 it lays its surface over the edge there, as it does on an opaque tip",
     'css.at-rules.media.prefers-reduced-transparency':
         'only Chromium knows it, and src/theme.ts lists it beside prefers-contrast: more, so an engine without it still answers the list through the other',
     'css.properties.appearance.base-select': drawnList,

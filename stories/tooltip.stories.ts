@@ -85,8 +85,8 @@ export const OnAControlYouWrote: StoryObj<TooltipArgs> = {
 /**
  * Against the edge of the viewport, which is the case a tooltip usually gets wrong.
  *
- * The tip is pulled back inside rather than centred off the screen, and it flips below the
- * trigger when there is no room above.
+ * The tip is pulled back inside rather than centred off the screen, its arrow still at the
+ * trigger's middle, and it flips below the trigger when there is no room above.
  */
 export const AtTheEdge: StoryObj<TooltipArgs> = {
     args: { tip: 'A description long enough that centring it would run off the edge.' },
@@ -128,6 +128,26 @@ export const Sides: StoryObj<TooltipArgs> = {
             <ui-tooltip side="inline-end">
                 <button type="button">End</button>
                 <span slot="tip">At its end.</span>
+            </ui-tooltip>
+        </div>
+    `,
+};
+
+/**
+ * Without its arrow, taken away by a rule of the host's on the tip's `::before`, which outweighs the
+ * component's own as any rule outside a shadow root does.
+ */
+export const WithoutAnArrow: StoryObj<TooltipArgs> = {
+    render: ({ label, tip }): TemplateResult => html`
+        <style>
+            .plain [slot='tip']::before {
+                content: none;
+            }
+        </style>
+        <div class="plain" style="padding-block: 6rem; display: flex; justify-content: center">
+            <ui-tooltip>
+                <ui-button>${label}</ui-button>
+                <span slot="tip">${tip}</span>
             </ui-tooltip>
         </div>
     `,
