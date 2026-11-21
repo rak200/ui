@@ -405,6 +405,20 @@ describe('opened from markup', () => {
         await element.updateComplete;
 
         expect(element.open, 'a command, whoever made it').toBe(true);
+
+        // Made with no button behind it, so no value to take: closed all the same, the value as
+        // it was.
+        element.returnValue = 'before';
+
+        const done = closed(element);
+
+        element.dispatchEvent(new CommandEvent('command', { command: '--close' }));
+        await done;
+
+        expect([element.open, element.returnValue], 'closed by one with no button').toEqual([
+            false,
+            'before',
+        ]);
     });
 
     it('meets the bar closed and open, the buttons aimed at it', async () => {
@@ -619,6 +633,25 @@ describe('closed by its form', () => {
             true,
         ]);
         expect([nested.returnValue, outer.returnValue]).toEqual(['kept', '']);
+    });
+
+    it('closes for a form sent with no button, by requestSubmit(), its value left as it was', async () => {
+        const element = await mount(formed());
+        const form = control('choice');
+
+        if (!(form instanceof HTMLFormElement)) {
+            throw new Error('no form in the fixture');
+        }
+
+        element.returnValue = 'before';
+        await open(element);
+
+        const done = closed(element);
+
+        form.requestSubmit();
+        await done;
+
+        expect([element.open, element.returnValue]).toEqual([false, 'before']);
     });
 
     it('takes no submit dispatched at something that is not a form', async () => {
