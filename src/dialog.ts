@@ -499,6 +499,7 @@ export class UiDialog extends LitElement {
     /** The properties Lit observes on this element. */
     static override readonly properties = {
         open: { type: Boolean, reflect: true },
+        alert: { type: Boolean, reflect: true },
     };
 
     /**
@@ -513,6 +514,15 @@ export class UiDialog extends LitElement {
      * states beside its own.
      */
     open = false;
+
+    /**
+     * Whether the dialog asks for a choice the reader has to make, the APG's alert dialog:
+     * `role="alertdialog"` on the `<dialog>` in its root, which is what a screen reader meets as
+     * the focus goes in. Its name is its title's, as any dialog's is, and the rest of it is a
+     * dialog's: the focus, <kbd>Esc</kbd> and the scroll lock are the same, and it takes no light
+     * dismissal, as none does. Reflected.
+     */
+    alert = false;
 
     /** The real `<dialog>` this component is a shell around. */
     readonly #dialog = build();
@@ -674,8 +684,18 @@ export class UiDialog extends LitElement {
         this.#label();
     }
 
-    /** Opens or closes the real `<dialog>` when `open` disagrees with it. */
+    /**
+     * Writes the role an alert asks for on the real `<dialog>`, and opens or closes it when `open`
+     * disagrees with it.
+     */
     override updated(): void {
+        // Written on every update, as the role follows `alert` whether or not the dialog moves.
+        if (this.alert) {
+            this.#dialog.setAttribute('role', 'alertdialog');
+        } else {
+            this.#dialog.removeAttribute('role');
+        }
+
         // Compared against the platform's own state rather than against Lit's changed
         // properties, and it has to be: on the first update Lit reports every initialised
         // property as changed, so a dialog that has never been open would run the closing

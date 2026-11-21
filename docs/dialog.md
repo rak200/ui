@@ -13,6 +13,7 @@ import '@rak200/ui';
 - [`<ui-dialog>`](#ui-dialog)
 - [Slots](#slots)
 - [`open`](#open)
+- [`alert`](#alert)
 - [`show()` and `close()`](#show-and-close)
 - [Opened from markup](#opened-from-markup)
 - [Closed by its form](#closed-by-its-form)
@@ -70,6 +71,26 @@ A dialog that is dismissed sets `open` back to `false` itself and
 [announces it](#the-ui-close-event). A host that binds `open` from its own state should listen for
 that event and follow it, the same way a `<details>` or a native `<dialog>` is followed — otherwise
 the next render puts the dialog straight back up.
+
+## `alert`
+
+```html
+<ui-dialog alert>
+  <h2 slot="title">Delete account</h2>
+  <p>This cannot be undone.</p>
+  <ui-button slot="actions" variant="secondary">Cancel</ui-button>
+  <ui-button slot="actions" variant="danger">Delete</ui-button>
+</ui-dialog>
+```
+
+**For a choice the reader has to make**, the APG's alert dialog: `alert` gives the `<dialog>` in
+the element's root `role="alertdialog"`, which is what a screen reader meets as the focus goes in,
+so it can say the dialog is an alert rather than a dialog. Reflected.
+
+**It is a dialog in every other way.** Its name is its title's, as any dialog's is; the focus goes
+in and comes back as a dialog's does, <kbd>Esc</kbd> dismisses it, as the APG lets an alert dialog
+be dismissed, and the page is held behind it. It takes no light dismissal, as no dialog here does.
+What a screen reader says of it is measured by a person, on `tests/manual/dialog-alert.html`.
 
 ## `show()` and `close()`
 

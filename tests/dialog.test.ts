@@ -5,6 +5,7 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, {
+    Alert,
     ClosedByItsForm,
     Confirm,
     Long,
@@ -706,6 +707,84 @@ describe('closed by its form', () => {
 
     it('meets the bar open and closed, its form in it', async () => {
         const element = await mount(formed());
+
+        await expectAccessible(document.body);
+        await open(element);
+        await expectAccessible(document.body);
+    });
+});
+
+/**
+ * An alert, RFC 0010's: the APG's alert dialog, for a choice the reader has to make, which is
+ * `role="alertdialog"` on the dialog in the root and a dialog in every other way.
+ */
+describe('an alert', () => {
+    /** The behavioural fixture, asked to be an alert. */
+    const alerting = fixture.replace('<ui-dialog>', '<ui-dialog alert>');
+
+    it('is no alert until asked, and reflects the asking', async () => {
+        const element = await mount(fixture);
+
+        expect([element.alert, inner(element).hasAttribute('role')], 'a dialog').toEqual([
+            false,
+            false,
+        ]);
+
+        element.alert = true;
+        await element.updateComplete;
+
+        expect(element.hasAttribute('alert'), 'reflected').toBe(true);
+        expect(inner(element).getAttribute('role')).toBe('alertdialog');
+    });
+
+    it('gives its dialog the role, named by its title as any dialog is, and takes it back', async () => {
+        const element = await mount(alerting);
+
+        expect(element.alert, 'from the attribute').toBe(true);
+        expect([
+            inner(element).getAttribute('role'),
+            inner(element).getAttribute('aria-label'),
+        ]).toEqual(['alertdialog', 'Delete account']);
+
+        element.removeAttribute('alert');
+        await element.updateComplete;
+
+        expect(inner(element).hasAttribute('role'), 'a dialog again').toBe(false);
+    });
+
+    it('keeps its role while it opens and closes', async () => {
+        const element = await mount(alerting);
+
+        await open(element);
+
+        expect(inner(element).getAttribute('role'), 'open').toBe('alertdialog');
+
+        await close(element);
+
+        expect(inner(element).getAttribute('role'), 'closed').toBe('alertdialog');
+    });
+
+    it('takes the focus in, holds the page and goes on Escape, as a dialog does', async () => {
+        const element = await mount(alerting);
+
+        await open(element);
+
+        expect(document.activeElement?.id, 'the focus went in').toBe('confirm');
+        expect(document.documentElement.style.overflow, 'the page held').toBe('hidden');
+
+        const done = closed(element);
+
+        await userEvent.keyboard('{Escape}');
+        await done;
+
+        expect(
+            [element.open, document.documentElement.style.overflow],
+            'gone, the page given back',
+        ).toEqual([false, '']);
+    });
+
+    it('meets the bar closed and open', async () => {
+        const element = await mount(alerting);
 
         await expectAccessible(document.body);
         await open(element);
@@ -1962,6 +2041,7 @@ describe('ui-dialog stories', () => {
         ['Nested', Nested],
         ['OpenedFromMarkup', OpenedFromMarkup],
         ['ClosedByItsForm', ClosedByItsForm],
+        ['Alert', Alert],
     ] as const)('%s renders a real dialog and meets the bar', async (name, story) => {
         const container = await mountStory(story, meta, name);
         const element = only(container);
