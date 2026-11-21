@@ -13,6 +13,7 @@ import '@rak200/ui';
 - [`<ui-menu>`](#ui-menu)
 - [Items are yours; the trigger is not](#items-are-yours-the-trigger-is-not)
 - [Items that tick, and sections](#items-that-tick-and-sections)
+- [A shortcut and a description](#a-shortcut-and-a-description)
 - [With an icon](#with-an-icon)
 - [The keyboard](#the-keyboard)
 - [What the platform does, and what is left](#what-the-platform-does-and-what-is-left)
@@ -116,6 +117,35 @@ supporting size. An `<hr>` sets a section apart from what is round it.
 at no weight, so a rule of yours for your own button still has the last word, as it has for the
 menu's own items. An item written into a section after the menu was drawn is taken as the menu
 opens.
+
+## A shortcut and a description
+
+```html
+<ui-menu>
+  <span slot="trigger">File</span>
+  <button type="button">
+    Rename <kbd>F2</kbd><span data-ui-description>Give the file a new name.</span>
+  </button>
+  <button type="button">Duplicate <kbd>Ctrl+D</kbd></button>
+</ui-menu>
+```
+
+**A shortcut is a `<kbd>` in the item**, drawn at the item's end on the label's line — the right
+edge where the page runs left to right, the left where it runs right to left — in the muted text and
+the label's own size, so the two stand on one baseline. It floats to the end, so an icon and the
+label beside it stay on one line. It stays in the item's name, so the shortcut is heard with it.
+
+**A description is an element of yours marked `data-ui-description`**, drawn on a line of its own
+under the label, from where the label starts, in the muted text at the supporting size. The menu
+names it in the item's `aria-describedby`, giving it an `id` where it has none and keeping an id of
+yours beside it, and hides it from the item's name, so it is heard after the name rather than as
+part of it. Take it away and the reference goes with it, as the menu next opens.
+
+**Under the pointer both take the item's own text**: on the fill an item takes there, the muted
+text fell under 4.5:1 in some of the shipped palettes, where at rest it holds 4.5:1 everywhere.
+
+They are drawn by the rules the menu adopts into the tree it is in, which reach into an item as
+[sections](#items-that-tick-and-sections) need them to, in a section or not.
 
 ## With an icon
 

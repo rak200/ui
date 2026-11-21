@@ -25,6 +25,9 @@ const side = 'data-side';
 const taken =
     ':scope > button:not([slot]), :scope > a[href]:not([slot]), :scope > [role="group"] > button, :scope > [role="group"] > a[href]';
 
+/** The ids the menu gives the descriptions it names, numbered across the page. */
+let sequence = 0;
+
 /** The roles of an item that ticks, which the host writes and the menu keeps. */
 const ticking = '[role="menuitemcheckbox"], [role="menuitemradio"]';
 
@@ -90,8 +93,45 @@ const drawn = css`
  * **The heading is whatever in the section is no item**, which the section names itself by with
  * `aria-labelledby`: drawn as a section's title, in the muted text at the supporting size, and
  * passed over by the keys, which move over items alone.
+ *
+ * **What an item holds is drawn here too**, its own children or a section's, for the same reason:
+ * a shortcut, the host's `<kbd>`, at the item's end on its label's line, in the muted text and the
+ * label's own size, so the two stand on one baseline; and a description, the host's element marked
+ * `data-ui-description`, on a line of its own under the label, from where the label starts, in the
+ * muted text at the supporting size. Under the pointer both take the item's own text. The shortcut floats to the end rather than the item turning
+ * into a grid, which would lay an icon and the label beside it out apart.
  */
 export const rules: CSSResult = css`
+    :where(ui-menu > :is(button, a) > kbd, ui-menu > [role='group'] > :is(button, a) > kbd) {
+        float: inline-end;
+        margin-inline-start: calc(${reference('--ui-space')} * 2);
+        font: inherit;
+        color: ${reference('--ui-color-text-muted')};
+    }
+
+    :where(
+        ui-menu > :is(button, a) > [data-ui-description],
+        ui-menu > [role='group'] > :is(button, a) > [data-ui-description]
+    ) {
+        display: block;
+        color: ${reference('--ui-color-text-muted')};
+        font-size: ${reference('--ui-text-supporting')};
+    }
+
+    /* Under the pointer both take the item's own text: on the fill an item takes there the muted
+       text fell to 3.28:1 in a palette of the shipped ones, where at rest it holds 4.5:1. */
+    :where(
+        ui-menu
+            > :is(button:not(:disabled), a:not([aria-disabled='true'])):hover
+            > :is(kbd, [data-ui-description]),
+        ui-menu
+            > [role='group']
+            > :is(button:not(:disabled), a:not([aria-disabled='true'])):hover
+            > :is(kbd, [data-ui-description])
+    ) {
+        color: inherit;
+    }
+
     :where(ui-menu > [role='group'] > :is(button, a)) {
         ${box}
     }
@@ -847,8 +887,53 @@ export class UiMenu extends LitElement {
             }
 
             item.setAttribute('tabindex', '-1');
+            this.#describe(item);
         }
     };
+
+    /** The id each item's description was given in its `aria-describedby`, where the menu wrote it. */
+    readonly #described = new WeakMap<HTMLElement, string>();
+
+    /**
+     * Names an item's description in its `aria-describedby`, and hides it from the item's name.
+     *
+     * The description is inside the item, so it is part of the name the item's content gives it;
+     * hidden there, it stays out of the name, and `aria-describedby` reaches a hidden node it names,
+     * so the item is described by it. The id the host gave it is kept, and one is given where it has
+     * none; an id of the host's own in `aria-describedby` stays beside it, and the one the menu wrote
+     * goes where the description has.
+     */
+    #describe(item: HTMLElement): void {
+        const description = item.querySelector<HTMLElement>(':scope > [data-ui-description]');
+        const written = this.#described.get(item);
+        const ids = (item.getAttribute('aria-describedby') ?? '')
+            .split(' ')
+            .filter((id) => id !== '' && id !== written);
+
+        if (description === null) {
+            this.#described.delete(item);
+        } else {
+            if (description.id === '') {
+                // Stryker disable next-line UpdateOperator: two descriptions on one page must get
+                // different ids, and a decrementing counter delivers that as well as an
+                // incrementing one. No input distinguishes them — an equivalent mutant.
+                description.id = `ui-menu-description-${String(++sequence)}`;
+            }
+
+            description.setAttribute('aria-hidden', 'true');
+            this.#described.set(item, description.id);
+
+            if (!ids.includes(description.id)) {
+                ids.push(description.id);
+            }
+        }
+
+        if (ids.length === 0) {
+            item.removeAttribute('aria-describedby');
+        } else {
+            item.setAttribute('aria-describedby', ids.join(' '));
+        }
+    }
 
     /**
      * Turns an item that ticks: a checkbox's state turns over, and a radio's goes to it from the

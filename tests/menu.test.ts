@@ -13,6 +13,7 @@ import meta, {
     Disabled,
     Links,
     Menu,
+    ShortcutsAndDescriptions,
     TicksAndSections,
 } from '../stories/menu.stories.js';
 import '../src/menu.js';
@@ -1968,6 +1969,210 @@ describe('items that tick, and sections', () => {
     });
 });
 
+/**
+ * A shortcut and a description on an item, RFC 0010's: the host's `<kbd>` and its element marked
+ * `data-ui-description`, drawn by rules the menu adopts into the host's tree.
+ */
+describe('a shortcut and a description on an item', () => {
+    /** A menu whose first item has both, written in `direction`, with a section of its own. */
+    function marked(direction: 'ltr' | 'rtl' = 'ltr'): string {
+        return `
+            <div dir="${direction}" style="padding-inline-start: 240px">
+                <ui-menu>
+                    <span slot="trigger">File</span>
+                    <button type="button">Rename <kbd>F2</kbd><span data-ui-description>Give the file a new name.</span></button>
+                    <button type="button">Delete</button>
+                    <div role="group" aria-labelledby="share">
+                        <span id="share">Share</span>
+                        <button type="button">Copy the link <kbd>Ctrl+L</kbd><span data-ui-description>Anyone with it can open the file.</span></button>
+                    </div>
+                </ui-menu>
+            </div>
+        `;
+    }
+
+    /** The first item of the fixture, which has both. */
+    function first(host: ParentNode): HTMLElement {
+        return only(host, 'ui-menu > button');
+    }
+
+    it.each([
+        ['left to right, at the right', 'ltr'],
+        ['right to left, at the left', 'rtl'],
+    ] as const)(
+        "draws the shortcut at the item's end on its label's line, and the description under the label, %s",
+        async (_, direction) => {
+            const host = await mount(marked(direction));
+
+            await open(menu(host));
+
+            const item = first(host).getBoundingClientRect();
+            const kbd = only(first(host), 'kbd').getBoundingClientRect();
+            const description = only(first(host), '[data-ui-description]').getBoundingClientRect();
+            const padding = Number.parseFloat(getComputedStyle(first(host)).paddingLeft);
+            const label = document.createRange();
+
+            label.setStart(first(host).firstChild ?? first(host), 0);
+            label.setEnd(first(host).firstChild ?? first(host), 'Rename'.length);
+
+            const text = label.getBoundingClientRect();
+
+            if (direction === 'ltr') {
+                expect(kbd.right, 'at the end').toBeCloseTo(item.right - padding, 0);
+                expect(description.left, 'from where the label starts').toBeCloseTo(text.left, 0);
+            } else {
+                expect(kbd.left, 'at the end').toBeCloseTo(item.left + padding, 0);
+                expect(description.right, 'from where the label starts').toBeCloseTo(text.right, 0);
+            }
+
+            expect(kbd.top, "on the label's line").toBeCloseTo(text.top, 0);
+            expect(description.top >= text.bottom - 1, 'under the label').toBe(true);
+        },
+    );
+
+    it('draws both in the muted text, the shortcut at the label size and the description at the supporting size', async () => {
+        const host = await mount(marked());
+
+        menu(host).style.setProperty('--ui-text-supporting', '11px');
+        first(host).style.fontSize = '17px';
+
+        const kbd = getComputedStyle(only(first(host), 'kbd'));
+        const description = getComputedStyle(only(first(host), '[data-ui-description]'));
+
+        expect([kbd.color, kbd.fontSize, kbd.fontFamily]).toEqual([
+            resolved('--ui-color-text-muted'),
+            '17px',
+            getComputedStyle(first(host)).fontFamily,
+        ]);
+        expect([description.color, description.fontSize, description.display]).toEqual([
+            resolved('--ui-color-text-muted'),
+            '11px',
+            'block',
+        ]);
+    });
+
+    it("gives both the item's own text under the pointer, where the muted text would fall short", async () => {
+        const host = await mount(marked());
+
+        await open(menu(host));
+        await userEvent.hover(first(host));
+
+        const text = getComputedStyle(first(host)).color;
+
+        expect(getComputedStyle(only(first(host), 'kbd')).color).toBe(text);
+        expect(getComputedStyle(only(first(host), '[data-ui-description]')).color).toBe(text);
+
+        const inSection = only(host, '[role="group"] > button');
+
+        await userEvent.hover(inSection);
+
+        expect(getComputedStyle(only(inSection, 'kbd')).color, 'in a section').toBe(
+            getComputedStyle(inSection).color,
+        );
+        expect(getComputedStyle(only(first(host), 'kbd')).color, 'once it has left').toBe(
+            resolved('--ui-color-text-muted'),
+        );
+    });
+
+    it('sets the shortcut apart from the label by twice the space', async () => {
+        const host = await mount(marked());
+
+        menu(host).style.setProperty('--ui-space', '7px');
+
+        expect(getComputedStyle(only(first(host), 'kbd')).marginLeft).toBe('14px');
+    });
+
+    it('draws them in an item of a section the same', async () => {
+        const host = await mount(marked());
+        const item = only(host, '[role="group"] > button');
+
+        expect(getComputedStyle(only(item, 'kbd')).cssFloat).toBe(
+            getComputedStyle(only(first(host), 'kbd')).cssFloat,
+        );
+        expect(getComputedStyle(only(item, '[data-ui-description]')).display).toBe('block');
+    });
+
+    it('describes the item with its description, hidden from its name, and leaves the shortcut in the name', async () => {
+        const host = await mount(marked());
+        const description = only(first(host), '[data-ui-description]');
+
+        expect(description.id, 'given an id').not.toBe('');
+        expect(first(host).getAttribute('aria-describedby'), 'named').toBe(description.id);
+        expect(description.getAttribute('aria-hidden'), 'out of the name').toBe('true');
+        expect(only(first(host), 'kbd').hasAttribute('aria-hidden'), 'the shortcut heard').toBe(
+            false,
+        );
+
+        const other = only(only(host, '[role="group"]'), '[data-ui-description]');
+
+        expect(other.id, 'an id of its own').not.toBe(description.id);
+        expect(only(host, '[role="group"] > button').getAttribute('aria-describedby')).toBe(
+            other.id,
+        );
+    });
+
+    it('keeps the id a host gave its description, and an id of its own beside it', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">File</span>
+                <button type="button" aria-describedby="elsewhere">Rename <span id="mine" data-ui-description>New name.</span></button>
+            </ui-menu>
+            <p id="elsewhere">Renaming keeps the history.</p>
+        `);
+
+        expect(first(host).getAttribute('aria-describedby')).toBe('elsewhere mine');
+    });
+
+    it('takes the reference away as the description goes, and gives it again as one comes', async () => {
+        const host = await mount(marked());
+        const item = first(host);
+
+        only(item, '[data-ui-description]').remove();
+        await open(menu(host));
+
+        expect(item.hasAttribute('aria-describedby'), 'gone with it').toBe(false);
+
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        const again = document.createElement('span');
+
+        again.dataset['uiDescription'] = '';
+        again.textContent = 'A new name.';
+        item.append(again);
+        await open(menu(host));
+
+        expect(item.getAttribute('aria-describedby'), 'named again').toBe(again.id);
+    });
+
+    it('keeps the shortcut and the description in an item with an icon on its line', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">File</span>
+                <button type="button"><ui-icon><svg viewBox="0 0 24 24"></svg></ui-icon> Edit <kbd>Ctrl+E</kbd></button>
+            </ui-menu>
+        `);
+
+        await open(menu(host));
+
+        const icon = only(first(host), 'ui-icon').getBoundingClientRect();
+        const kbd = only(first(host), 'kbd').getBoundingClientRect();
+
+        expect(Math.abs(icon.top + icon.height / 2 - (kbd.top + kbd.height / 2)) < 4).toBe(true);
+    });
+
+    it('is accessible open with shortcuts and descriptions, and with the focus on one', async () => {
+        const host = await mount(marked());
+
+        await open(menu(host));
+        await still(menu(host));
+        await expectAccessible(host);
+
+        only(host, '[role="group"] > button').focus();
+        await expectAccessible(host);
+    });
+});
+
 describe('the values, all of which come from the token layer', () => {
     it('draws the trigger as the secondary button it is', async () => {
         // Measured against the real thing rather than asserted to match it, which is the
@@ -3118,6 +3323,7 @@ describe('menu stories', () => {
         ['AtTheEdge', AtTheEdge],
         ['AlignedToTheEnd', AlignedToTheEnd],
         ['TicksAndSections', TicksAndSections],
+        ['ShortcutsAndDescriptions', ShortcutsAndDescriptions],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });
