@@ -2418,9 +2418,12 @@ describe('submenus', () => {
 
         await open(byId(host, 'outer'));
         trigger(byId(host, 'share')).click();
-        await settle();
+        // The property follows the platform's own state, which `toggle` brings a task later.
+        await vi.waitFor(() => {
+            expect(byId(host, 'share').open).toBe(true);
+        });
 
-        expect([byId(host, 'share').open, byId(host, 'outer').open]).toEqual([true, true]);
+        expect(byId(host, 'outer').open, 'the menu round it').toBe(true);
     });
 
     it("types to a submenu's trigger by its label", async () => {
@@ -2624,7 +2627,10 @@ describe('submenus', () => {
 
         await open(byId(host, 'outer'));
         trigger(share).click();
-        await settle();
+        // Open as the touch lifts, which `toggle` says a task after the press.
+        await vi.waitFor(() => {
+            expect(share.open).toBe(true);
+        });
 
         const middle = middleOf(trigger(share));
 
