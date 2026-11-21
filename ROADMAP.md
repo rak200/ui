@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A heading on `<ui-toast>` (#458)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s nineteenth step: a slot above the message,
-read with it.
-
 ## An action on `<ui-toast>` (#459)
 
-A slot for a button the host writes, on a toast that then never expires.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twentieth step: a slot for a button the host
+writes, on a toast that then never expires.
 
 ## A card that opens where it is clicked (#460)
 

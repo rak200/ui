@@ -269,6 +269,9 @@ export class UiToaster extends LitElement {
  * are — and while it leaves it is in the custom state `leaving`, which a host's sheet reads as
  * `ui-toast:state(leaving)`.
  *
+ * **A heading goes in the `heading` slot**, above the message on a line of its own: in the toast as
+ * the message is, so it joins the region with the message, before it, as the toast joins it.
+ *
  * @example
  * ```html
  * <ui-toaster>
@@ -423,6 +426,16 @@ export class UiToast extends LitElement {
                 /* The pair, never half of it: the surface was chosen against the text, and the
                toast's own colour is its variant's. */
                 color: ${reference('--ui-color-text')};
+            }
+
+            /* The heading, above the message on a line of its own, in the toast as the message
+               is, so the region reads them together, once, as the toast joins it. Its weight is
+               its element's, as a dialog's title's is, and a heading's own margin would only
+               part it from the message: reset, where a host's own rule still beats this, since
+               for slotted content the outer tree wins. With none, the slot draws nothing. */
+            slot[name='heading']::slotted(*) {
+                display: block;
+                margin: 0;
             }
 
             button {
@@ -686,8 +699,8 @@ export class UiToast extends LitElement {
     }
 
     /**
-     * The variant's icon, the message, and a button that dismisses it, beside the empty layers the
-     * pointer's and a focus's effects are drawn on.
+     * The variant's icon, the message under its heading, and a button that dismisses it, beside the
+     * empty layers the pointer's and a focus's effects are drawn on.
      */
     override render(): TemplateResult {
         return html`
@@ -708,7 +721,7 @@ export class UiToast extends LitElement {
             >
                 ${glyphs[this.variant]}
             </svg>
-            <div part="message"><slot></slot></div>
+            <div part="message"><slot name="heading"></slot><slot></slot></div>
             <button
                 type="button"
                 part="dismiss"
