@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## An alert `<ui-dialog>` (#457)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s eighteenth step: `role="alertdialog"`, for a
-choice the reader has to make.
-
 ## A heading on `<ui-toast>` (#458)
 
-A slot above the message, read with it.
+[RFC 0010](docs/proposals/0010-component-features.md)'s nineteenth step: a slot above the message,
+read with it.
 
 ## An action on `<ui-toast>` (#459)
 
