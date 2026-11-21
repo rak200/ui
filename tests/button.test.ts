@@ -7,7 +7,14 @@ import { expectAccessible } from './a11y.js';
 import { escaped } from './escaped.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { Danger, Disabled, Primary, Secondary, States } from '../stories/button.stories.js';
+import meta, {
+    Danger,
+    Disabled,
+    Primary,
+    Secondary,
+    States,
+    Toggle,
+} from '../stories/button.stories.js';
 import '../src/button.js';
 import '../src/tooltip.js';
 import type { UiButton } from '../src/button.js';
@@ -518,6 +525,171 @@ describe('every visual decision a button paints is a token', () => {
         await press(inner(element), true);
 
         expect(background(element)).toBe('rgb(1, 2, 3)');
+    });
+});
+
+/** A toggle: whether it is pressed, said on its own button, turned by a click, drawn as it is. */
+describe('a toggle', () => {
+    /** A task, so the click the element acts on a task later has been acted on. */
+    async function acted(element: UiButton): Promise<void> {
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        await element.updateComplete;
+    }
+
+    it('says whether it is pressed on its own button, where a plain button says nothing', async () => {
+        const plain = await mount('<ui-button>Save</ui-button>');
+
+        expect(inner(plain).hasAttribute('aria-pressed')).toBe(false);
+
+        const element = await mount('<ui-button toggle>Bold</ui-button>');
+
+        expect(inner(element).getAttribute('aria-pressed'), 'not pressed').toBe('false');
+
+        element.pressed = true;
+        await element.updateComplete;
+
+        expect(inner(element).getAttribute('aria-pressed')).toBe('true');
+        expect(element.hasAttribute('pressed'), 'reflected').toBe(true);
+
+        plain.toggle = true;
+        await plain.updateComplete;
+
+        expect(plain.hasAttribute('toggle'), 'reflected').toBe(true);
+        expect(inner(plain).getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('turns on a click, a task later, and says so with change', async () => {
+        const element = await mount('<ui-button toggle>Bold</ui-button>');
+        const heard: boolean[] = [];
+        const hear = (): void => {
+            heard.push(element.pressed);
+        };
+
+        document.addEventListener('change', hear);
+
+        try {
+            inner(element).click();
+
+            expect(element.pressed, 'not yet: a listener may still cancel it').toBe(false);
+
+            await acted(element);
+
+            expect(element.pressed).toBe(true);
+            expect(inner(element).getAttribute('aria-pressed')).toBe('true');
+
+            inner(element).click();
+            await acted(element);
+
+            expect(element.pressed, 'and back').toBe(false);
+            expect(heard, 'once each, bubbling to the page').toEqual([true, false]);
+        } finally {
+            document.removeEventListener('change', hear);
+        }
+    });
+
+    it('turns nothing on a button that is not a toggle, and says nothing', async () => {
+        const element = await mount('<ui-button type="button">Save</ui-button>');
+        let heard = 0;
+        const hear = (): void => {
+            heard += 1;
+        };
+
+        element.addEventListener('change', hear);
+        inner(element).click();
+        await acted(element);
+        element.removeEventListener('change', hear);
+
+        expect(element.pressed).toBe(false);
+        expect(heard).toBe(0);
+    });
+
+    it('stays as it was where the click is cancelled, or the button cannot be used', async () => {
+        const element = await mount('<ui-button toggle>Bold</ui-button>');
+        const cancel = (event: Event): void => {
+            event.preventDefault();
+        };
+
+        element.addEventListener('click', cancel);
+        element.click();
+        await acted(element);
+
+        expect(element.pressed, 'cancelled').toBe(false);
+
+        element.removeEventListener('click', cancel);
+        element.disabled = true;
+        await element.updateComplete;
+        element.click();
+        await acted(element);
+
+        expect(element.pressed, 'disabled').toBe(false);
+    });
+
+    it('is drawn as a secondary until it is pressed, whatever its variant', async () => {
+        const element = await mount('<ui-button toggle variant="danger">Bold</ui-button>');
+
+        element.style.setProperty('--ui-color-surface-control', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-text', 'rgb(4, 5, 6)');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor).toBe('rgb(1, 2, 3)');
+        expect(styles.color).toBe('rgb(4, 5, 6)');
+    });
+
+    it('is drawn in the selected names while it is pressed, under the pointer and pressed too', async () => {
+        const element = await mount(
+            '<ui-button toggle pressed variant="secondary">Bold</ui-button>',
+        );
+
+        element.style.setProperty('--ui-color-selected', 'rgb(1, 2, 3)');
+        element.style.setProperty('--ui-color-selected-contrast', 'rgb(4, 5, 6)');
+        element.style.setProperty('--ui-color-selected-hover', 'rgb(7, 8, 9)');
+        element.style.setProperty('--ui-color-primary', 'rgb(10, 0, 0)');
+        element.style.setProperty('--ui-duration-state', '0s');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor, '--ui-color-selected').toBe('rgb(1, 2, 3)');
+        expect(styles.color, '--ui-color-selected-contrast').toBe('rgb(4, 5, 6)');
+
+        await userEvent.hover(inner(element));
+
+        expect(background(element), '--ui-color-selected-hover').toBe('rgb(7, 8, 9)');
+
+        element.style.setProperty('--ui-color-selected-hover', 'rgb(0, 10, 0)');
+        await press(inner(element), true);
+
+        expect(background(element), 'pressed, in the hover').toBe('rgb(0, 10, 0)');
+    });
+
+    it("names the system's highlight in forced colours, under a fill a moment draws too", async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            const element = await mount('<ui-button toggle pressed>Bold</ui-button>');
+            const reference = document.createElement('div');
+
+            reference.style.background = 'Highlight';
+            reference.style.color = 'HighlightText';
+            document.body.append(reference);
+            element.style.setProperty('--ui-motion-hover-fill', 'tint');
+            element.style.setProperty('--ui-duration-state', '0s');
+
+            const highlight = getComputedStyle(reference);
+
+            expect(background(element)).toBe(highlight.backgroundColor);
+            expect(getComputedStyle(inner(element)).color).toBe(highlight.color);
+
+            await userEvent.hover(inner(element));
+
+            expect(background(element), 'under the pointer').toBe(highlight.backgroundColor);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
     });
 });
 
@@ -2335,6 +2507,7 @@ describe('ui-button stories', () => {
         ['Primary', Primary],
         ['Secondary', Secondary],
         ['Danger', Danger],
+        ['Toggle', Toggle],
         ['Disabled', Disabled],
         ['States', States],
     ] as const)('%s renders a real button and meets the bar', async (name, story) => {

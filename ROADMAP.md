@@ -3,15 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A toggle `<ui-button>` (#449)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s ninth step: `pressed`, written as
-`aria-pressed` and drawn in the selected names.
-
 ## An `aria-disabled` `<ui-button>` (#450)
 
-Drawn and refused as a disabled button, and still reached by the keys, so a tooltip on it is shown
-by them.
+[RFC 0010](docs/proposals/0010-component-features.md)'s tenth step: drawn and refused as a
+disabled button, and still reached by the keys, so a tooltip on it is shown by them.
 
 ## `<ui-button-group>` (#451)
 

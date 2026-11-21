@@ -1,4 +1,4 @@
-import { LitElement, css, html, type TemplateResult } from 'lit';
+import { LitElement, css, html, nothing, type TemplateResult } from 'lit';
 import { Description } from './description.js';
 import { buttonEffects, pressed } from './effects.js';
 import { reference } from './reference.js';
@@ -28,6 +28,13 @@ export type ButtonType = 'submit' | 'reset' | 'button';
  * **A danger button is a primary drawn in the danger**, for an action that cannot be taken back.
  * It takes the primary's class, so every rule and effect a primary takes is its own, and a class
  * of its own hands those rules the danger's names in the place of the primary's and the accent's.
+ *
+ * **A toggle says whether it is pressed**, through `aria-pressed` on its own button, and a click
+ * turns it, a task later as it acts on a form, so a listener that cancels the click keeps it as it
+ * was. It has one weight of its own, whatever its `variant`: a secondary's while it is not pressed,
+ * and a primary's in the selected names a select's chosen option has while it is, since a
+ * primary's fill is the accent those names are too, and a primary toggle would look the same
+ * pressed or not.
  *
  * @example
  * ```html
@@ -162,6 +169,28 @@ export class UiButton extends LitElement {
                 --ui-color-primary-pressed: ${reference('--ui-color-danger-button-pressed')};
             }
 
+            /* A toggle that is pressed is drawn as a primary, so this hands the primary's rules the
+           selected names a select's chosen option is drawn in. Those names have no pressed state of
+           their own, so a press on it is drawn in their hover. */
+            button[aria-pressed='true'] {
+                --ui-color-primary: ${reference('--ui-color-selected')};
+                --ui-color-primary-contrast: ${reference('--ui-color-selected-contrast')};
+                --ui-color-primary-hover: ${reference('--ui-color-selected-hover')};
+                --ui-color-primary-pressed: ${reference('--ui-color-selected-hover')};
+            }
+
+            /* Forced colours draw every button in the system's two colours for one, which would
+           take a toggle's state away with its fill, so a pressed one names the system's colours
+           for a highlight, which the mode keeps, as a checked box does. The one important
+           declaration here: every fill the effects' sheet draws in a moment comes after this sheet
+           and outweighs this rule, and the mode would force that fill back to a button's colour. */
+            @media (forced-colors: active) {
+                button[aria-pressed='true'] {
+                    background: Highlight !important;
+                    color: HighlightText !important;
+                }
+            }
+
             /* A control's fill, as a field's: a theme may let the page through it. */
             button.secondary {
                 background: ${reference('--ui-color-surface-control')};
@@ -209,6 +238,8 @@ export class UiButton extends LitElement {
         type: { type: String, reflect: true },
         name: { type: String, reflect: true },
         value: { type: String, reflect: true },
+        toggle: { type: Boolean, reflect: true },
+        pressed: { type: Boolean, reflect: true },
     };
 
     /**
@@ -242,6 +273,15 @@ export class UiButton extends LitElement {
 
     /** What the button submits under its `name`, while it is the one submitting. Reflected. */
     value = '';
+
+    /** Whether the button is a toggle, which says whether it is pressed and turns on a click. */
+    toggle = false;
+
+    /**
+     * Whether a toggle is pressed. A click turns it, and the element says so with `change`;
+     * written by the page, it says nothing. Reflected, so CSS can select on it.
+     */
+    pressed = false;
 
     readonly #internals = this.attachInternals();
 
@@ -317,13 +357,25 @@ export class UiButton extends LitElement {
         });
     };
 
-    /** What a click does to the form, once nothing cancelled it and the button can be used. */
+    /**
+     * What a click does, once nothing cancelled it and the button can be used: a toggle turns, and
+     * says so, and then the form is acted on.
+     */
     #act(event: Event): void {
-        const { form } = this;
-
         // Read here as well as given to the inner button, which refuses a click by hand and not one
         // a script dispatches on the element.
-        if (event.defaultPrevented || this.matches(':disabled') || form === null) {
+        if (event.defaultPrevented || this.matches(':disabled')) {
+            return;
+        }
+
+        if (this.toggle) {
+            this.pressed = !this.pressed;
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        const { form } = this;
+
+        if (form === null) {
             return;
         }
 
@@ -339,8 +391,15 @@ export class UiButton extends LitElement {
         }
     }
 
-    /** The classes the button is drawn under: a danger button takes the primary's as well. */
+    /**
+     * The classes the button is drawn under: a toggle a secondary's, or a primary's while it is
+     * pressed, whatever its variant, and a danger button the primary's as well as its own.
+     */
     #classes(): string {
+        if (this.toggle) {
+            return this.pressed ? 'primary' : 'secondary';
+        }
+
         return this.variant === 'danger' ? 'primary danger' : this.variant;
     }
 
@@ -350,6 +409,7 @@ export class UiButton extends LitElement {
             <button
                 class=${this.#classes()}
                 ?disabled=${this.matches(':disabled')}
+                aria-pressed=${this.toggle ? String(this.pressed) : nothing}
                 aria-describedby=${this.#description.described()}
                 part="button"
                 @focus=${arrive}
