@@ -38,6 +38,7 @@ data, sorts nothing, and selects nothing.
 - [What it styles](#what-it-styles)
 - [It is not a data grid](#it-is-not-a-data-grid)
 - [The scroll, and when it takes a tab stop](#the-scroll-and-when-it-takes-a-tab-stop)
+- [A header and a first column that stick](#a-header-and-a-first-column-that-stick)
 - [Where the styles actually live](#where-the-styles-actually-live)
 - [Motion](#motion)
 - [Styling](#styling)
@@ -63,7 +64,7 @@ It also means everything the platform gives you still works: `colspan`, `rowspan
 | the element                | a boundary, a corner, and horizontal scrolling                               |
 | `table`                    | collapsed borders, full width, the font, and the text on a control's fill    |
 | `th`, `td`                 | padding from `--ui-space`, a bottom rule, `text-align: start`, top alignment |
-| `thead th`                 | the second surface tone, so a one-row table still reads as having a header   |
+| `thead th`                 | the second surface tone, and stuck to the top of a box given a height        |
 | `tbody tr:nth-child(even)` | the same tone, as a stripe                                                   |
 | `caption`                  | below the table, start-aligned, muted, at the supporting size                |
 | `[data-ui-numeric]`        | `text-align: end` and tabular figures, on the cells you mark                 |
@@ -126,6 +127,43 @@ not fail WCAG 4.1.2, which is the WCAG working group's answer in
 `aria-label` on `<ui-table>` is a name an engine may drop, though Chromium exposes it; the
 `<caption>` is what names your table. If you want the box to be a named region, write
 `role="region"` and the name on it yourself, which makes the name valid.
+
+## A header and a first column that stick
+
+```html
+<ui-table sticky-column style="max-block-size: 20rem">
+  <table>
+    …
+  </table>
+</ui-table>
+```
+
+| Attribute       | Does                                                            |
+| --------------- | --------------------------------------------------------------- |
+| `sticky-column` | the first cell of each row sticks to the box's start; reflected |
+
+**The header sticks to the top of the box once you give the box a height.** The box scrolls
+sideways, which makes it the header's scroll container, so the header sticks within it and nowhere
+else: give `<ui-table>` a `max-block-size` or a `block-size`, and as the box scrolls down the header
+stays at its top, its rule with it. A box with no height of its own does not scroll down, and its
+header stays where it is, as it always did: the page scrolled past the table takes the header with
+it.
+
+**`sticky-column` keeps the first cell of each row at the box's start** as the box scrolls
+sideways, the left edge where the table runs left to right and the right where it runs right to
+left, so the column that names each row stays in view. The cell at the header's corner sticks both
+ways, over both. Each cell that sticks takes its row's fill, so what scrolls under it does not show
+through, and a row under the pointer lights under it too. It is the first cell of each row, which is
+the first column wherever no cell above spans rows into it.
+
+**The box is a stacking context of its own**, so the header and the column it lifts over the rows
+are lifted inside it alone, never over what follows it; the box clips what it holds already, so
+nothing in it rose over the page before.
+
+**Under [Glass](theme.md#glass)**, where the table's fill is a fifth opaque, what sticks blurs what
+passes under it, as a raised surface blurs the page: the header while the box scrolls down, which
+the element marks as the custom state `overflowing-block`, and a column made sticky. Each cell blurs
+apart, so a faint line can show between two.
 
 ## Where the styles actually live
 

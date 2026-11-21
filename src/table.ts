@@ -116,6 +116,62 @@ export const rules: CSSResult = css`
         background: ${reference('--ui-color-surface-muted')};
     }
 
+    /* The header sticks to the top of the box: the box scrolls sideways, which makes it the
+       header's scroll container, so the header sticks within it once the host gives it a
+       height to scroll down in, and stays where it is otherwise — measured for RFC 0010. Over
+       the rows, and over a first column made sticky, which pass under it. */
+    ui-table thead :is(th, td) {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        /* Its rule drawn inside it, so it goes where the header goes: a collapsed border is the
+           table's, and stayed where the header started as the header stuck, in all three
+           engines — measured. */
+        border-block-end: 0;
+        box-shadow: inset 0 -1px 0 ${reference('--ui-color-border')};
+    }
+
+    /* Forced colours take every shadow away, the header's rule with it, so the rule is a border
+       there again, drawn where the header starts. */
+    @media (forced-colors: active) {
+        ui-table thead :is(th, td) {
+            border-block-end: 1px solid;
+        }
+    }
+
+    /* sticky-column: the first cell of each row sticks to the box's start as the box scrolls
+       sideways, which it does already — measured for RFC 0010 — and the cell at the header's
+       corner sticks both ways, over both. Each takes its row's fill, the table's where the row
+       has none at no weight, so what scrolls under it does not show through. */
+    ui-table[sticky-column] :is(th, td):first-child {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 1;
+    }
+
+    ui-table[sticky-column] thead :is(th, td):first-child {
+        z-index: 3;
+    }
+
+    :where(ui-table[sticky-column] :is(tbody, tfoot) > tr) {
+        background-color: ${reference('--ui-color-surface-control')};
+    }
+
+    ui-table[sticky-column] :is(tbody, tfoot) > tr > :is(th, td):first-child {
+        background: inherit;
+    }
+
+    /* Under glass, where a fill is a fifth opaque, what sticks over the rows blurs what passes
+       under it, as a raised surface blurs the page: the header where the box scrolls down, which
+       the element marks, and a first column made sticky. Each cell blurs apart, which leaves a
+       faint line between two where a row's frost, blurred as one, has none: a header that stuck
+       as one row and blurred as one showed what passed under its corner unblurred in Chromium —
+       measured. The backdrop is none outside glass. */
+    ui-table:state(overflowing-block) thead :is(th, td),
+    ui-table[sticky-column] :is(th, td):first-child {
+        backdrop-filter: ${reference('--ui-backdrop-raised')};
+    }
+
     /* Below the table rather than above it, which is the platform's default reversed on
        purpose: a caption that explains a table reads after it, and one that titles it is a
        heading the host writes outside this element. */
@@ -228,6 +284,14 @@ sheet.replaceSync(rules.cssText);
  * rule, in all three. A table that fits takes no stop, and a click in one of its cells
  * leaves the focus where it was.
  *
+ * **Its header sticks to the box, and its first column where the host asks.** The box scrolls
+ * sideways, which makes it the header's scroll container, so the header sticks to its top once the
+ * host gives it a height to scroll down in, and stays where it is otherwise; `sticky-column` keeps
+ * the first cell of each row at the box's start as it scrolls sideways — RFC 0010 measured both in
+ * the three engines. The box is a stacking context of its own, so what sticks is lifted over the
+ * rows inside it alone, and it marks itself `overflowing-block` while it scrolls down, where the
+ * sheet frosts the header under glass.
+ *
  * **It needs no name.** A focusable box that exposes the `generic` role it has does not fail
  * 4.1.2, which is what the WCAG working group answered in w3c/wcag#3029, and ARIA prohibits
  * naming a `generic`: the `<caption>` is what names the table. A host that wants the box to
@@ -258,6 +322,10 @@ export class UiTable extends LitElement {
                consumer already has their hands on: a tabindex or a role they write lands
                on what scrolls. */
             overflow-x: auto;
+            /* A stacking context of its own, so the header and a column that stick, each
+               lifted over the rows, are lifted inside the box alone and never over what follows
+               it: the box clips what it holds already, so nothing in it rose over the page. */
+            isolation: isolate;
             border: 1px solid ${reference('--ui-color-border')};
             border-radius: ${reference('--ui-radius')};
         }
@@ -269,6 +337,17 @@ export class UiTable extends LitElement {
             outline-offset: 2px;
         }
     `;
+
+    /** The properties Lit observes on this element. */
+    static override readonly properties = {
+        stickyColumn: { type: Boolean, reflect: true, attribute: 'sticky-column' },
+    };
+
+    /**
+     * Whether the first cell of each row sticks to the box's start as it scrolls sideways, the
+     * cell at the header's corner both ways. Reflected as `sticky-column`.
+     */
+    stickyColumn = false;
 
     /** The attributes it watches: Lit's own, and the tab stop, which is this element's or the host's. */
     static override get observedAttributes(): string[] {
@@ -288,7 +367,10 @@ export class UiTable extends LitElement {
     /** Set while this element writes the stop, so its own write is not read as the host's. */
     #writing = false;
 
-    /** Where the table keeps its states: `settled`, from two frames after it joins a page. */
+    /**
+     * Where the table keeps its states: `settled`, from two frames after it joins a page, and
+     * `overflowing-block`, while its box scrolls down.
+     */
     readonly #internals = this.attachInternals();
 
     /**
@@ -359,9 +441,11 @@ export class UiTable extends LitElement {
             UiTable.#pass = undefined;
 
             const stops = tables.map((table) => table.#stop());
+            const downs = tables.map((table) => table.#down());
 
             tables.forEach((table, at) => {
                 table.#write(stops[at] === true);
+                table.#mark(downs[at] === true);
             });
         });
     }
@@ -381,13 +465,10 @@ export class UiTable extends LitElement {
         old: string | null,
         value: string | null,
     ): void {
-        // Stryker disable next-line CallExpression: Lit maps an attribute to a reactive
-        // property here, and this element has none — `tabindex` is the only attribute it
-        // observes, so the call does nothing today. Lit requires it of an override, and the
-        // day a property arrives the mutant stops being equivalent.
         super.attributeChangedCallback(name, old, value);
 
-        if (!this.#writing) {
+        // `sticky-column` is observed too, as Lit maps it to its property, and is no tab stop.
+        if (name === 'tabindex' && !this.#writing) {
             this.#owned = value === null;
             this.#measure();
         }
@@ -444,9 +525,30 @@ export class UiTable extends LitElement {
         }
     }
 
-    /** Weighs the stop and writes what it found, for the observer, the focus and the host. */
+    /** Weighs the stop and the box's height and writes what it found, for the observer, the focus and the host. */
     #measure(): void {
-        this.#write(this.#stop());
+        const stop = this.#stop();
+        const down = this.#down();
+
+        this.#write(stop);
+        this.#mark(down);
+    }
+
+    /** Whether the box scrolls down: its table taller than the height the host gave it. */
+    #down(): boolean {
+        return this.scrollHeight > this.clientHeight;
+    }
+
+    /**
+     * Marks the table `overflowing-block` while its box scrolls down, where the rows pass under
+     * the header that sticks over them, which the sheet frosts there under glass.
+     */
+    #mark(down: boolean): void {
+        if (down) {
+            this.#internals.states.add('overflowing-block');
+        } else {
+            this.#internals.states.delete('overflowing-block');
+        }
     }
 
     /**
@@ -458,11 +560,7 @@ export class UiTable extends LitElement {
         // component's shadow root is that component.
         const root = this.getRootNode() as Document | ShadowRoot;
 
-        return (
-            this.scrollWidth > this.clientWidth ||
-            this.scrollHeight > this.clientHeight ||
-            root.activeElement === this
-        );
+        return this.scrollWidth > this.clientWidth || this.#down() || root.activeElement === this;
     }
 
     /** Writes the stop or takes it away, unless the stop is the host's to decide. */

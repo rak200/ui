@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { cdp, userEvent } from 'vitest/browser';
+// The provider's own types, which give `cdp()` its Chromium commands.
+import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, {
@@ -7,6 +9,7 @@ import meta, {
     NumericColumns,
     RowHeaders,
     Scrolling,
+    StickyHeaderAndColumn,
     Table,
 } from '../stories/table.stories.js';
 import '../src/table.js';
@@ -729,6 +732,273 @@ describe('numeric columns, which the host marks cell by cell', () => {
     });
 });
 
+/**
+ * A header and a first column that stick, RFC 0010's: the header within a box given a height, and
+ * the first cell of each row, under `sticky-column`, within the box that scrolls sideways already.
+ */
+describe('a header and a first column that stick', () => {
+    /** A table of twelve rows and six columns, wider than its box, which `style` sizes. */
+    function long(
+        attributes = '',
+        style = 'inline-size: 20rem; max-block-size: 10rem',
+        direction: 'ltr' | 'rtl' = 'ltr',
+    ): string {
+        const head = ['Client', 'Number', 'Issued', 'Due', 'Status', 'Total']
+            .map((name) => `<th scope="col">${name}</th>`)
+            .join('');
+        const body = Array.from(
+            { length: 12 },
+            (_, at) =>
+                `<tr><th scope="row">Client ${String(at)}</th><td>${String(at)}</td><td>2026-01-01</td><td>2026-02-01</td><td>Open</td><td>R$ 1,00</td></tr>`,
+        ).join('');
+
+        return `
+            <ui-table ${attributes} dir="${direction}" style="${style}">
+                <table style="inline-size: 40rem">
+                    <thead><tr>${head}</tr></thead>
+                    <tbody>${body}</tbody>
+                </table>
+            </ui-table>
+        `;
+    }
+
+    /** The box's padding edges, inside its border and its scrollbar, where what sticks lands. */
+    function edges(box: UiTable): { top: number; left: number; right: number } {
+        const outer = box.getBoundingClientRect();
+        const left = outer.left + box.clientLeft;
+
+        return { top: outer.top + box.clientTop, left, right: left + box.clientWidth };
+    }
+
+    /** Whether the box is marked as one that scrolls down. */
+    function down(box: UiTable): boolean {
+        return box.matches(':state(overflowing-block)');
+    }
+
+    it('sticks the header to the top of a box given a height, its rule drawn inside it', async () => {
+        const host = await mount(long());
+        const box = table(host);
+        const header = only(host, 'thead th:nth-child(3)');
+
+        box.scrollTop = 60;
+        await laidOut();
+
+        expect(header.getBoundingClientRect().top, 'at the top').toBeCloseTo(edges(box).top, 0);
+
+        const styles = getComputedStyle(header);
+
+        expect(styles.borderBottomWidth, 'no border left behind').toBe('0px');
+        expect(styles.boxShadow, 'its rule').toBe(
+            `${resolved('--ui-color-border')} 0px -1px 0px 0px inset`,
+        );
+    });
+
+    it('leaves a header in a box with no height where it is, for the page to take with it', async () => {
+        const host = await mount(
+            `${long('', 'inline-size: 20rem')}<div style="block-size: 200vh"></div>`,
+        );
+        const header = only(host, 'thead th');
+        const before = header.getBoundingClientRect().top;
+
+        try {
+            window.scrollBy(0, 40);
+            await laidOut();
+
+            expect(header.getBoundingClientRect().top).toBeCloseTo(before - 40, 0);
+        } finally {
+            window.scrollTo(0, 0);
+        }
+    });
+
+    it.each([
+        ['left to right, at the left', 'ltr'],
+        ['right to left, at the right', 'rtl'],
+    ] as const)(
+        "keeps the first cell of each row at the box's start under sticky-column, %s",
+        async (_, direction) => {
+            const host = await mount(long('sticky-column', undefined, direction));
+            const box = table(host);
+
+            box.scrollLeft = direction === 'ltr' ? 100 : -100;
+            box.scrollTop = 60;
+            await laidOut();
+
+            const start = direction === 'ltr' ? edges(box).left : edges(box).right;
+            const at = (cell: Element): number =>
+                direction === 'ltr'
+                    ? cell.getBoundingClientRect().left
+                    : cell.getBoundingClientRect().right;
+            const corner = only(host, 'thead th:first-child');
+
+            expect(at(only(host, 'tbody tr:nth-child(6) > th')), 'a row').toBeCloseTo(start, 0);
+            expect(at(corner), 'the corner').toBeCloseTo(start, 0);
+            expect(corner.getBoundingClientRect().top, 'the corner, at the top').toBeCloseTo(
+                edges(box).top,
+                0,
+            );
+        },
+    );
+
+    it('leaves the first column where it is without sticky-column', async () => {
+        const host = await mount(long());
+        const box = table(host);
+        const cell = only(host, 'tbody tr:nth-child(2) > th');
+
+        box.scrollLeft = 100;
+        await laidOut();
+
+        expect(getComputedStyle(cell).position).toBe('static');
+        expect(cell.getBoundingClientRect().left, 'scrolled away').toBeCloseTo(
+            edges(box).left - 100,
+            0,
+        );
+        expect(painted(cell), 'with no fill of its own').toBe('rgba(0, 0, 0, 0)');
+    });
+
+    it('lifts the corner over the header, and the header over the column', async () => {
+        const host = await mount(long('sticky-column'));
+        const box = table(host);
+        const corner = only(host, 'thead th:first-child');
+
+        expect(
+            [corner, only(host, 'thead th:nth-child(2)'), only(host, 'tbody th')].map(
+                (cell) => getComputedStyle(cell).zIndex,
+            ),
+        ).toEqual(['3', '2', '1']);
+
+        box.scrollLeft = 100;
+        box.scrollTop = 60;
+        await laidOut();
+
+        const drawn = corner.getBoundingClientRect();
+
+        expect(
+            document.elementFromPoint(drawn.left + drawn.width / 2, drawn.top + drawn.height / 2),
+            'over what passes under it',
+        ).toBe(corner);
+    });
+
+    it("gives each cell that sticks its row's fill: the table's, the stripe, or the host's own", async () => {
+        const host = await mount(long('sticky-column'));
+        const first = (place: number): HTMLElement =>
+            only(host, `tbody tr:nth-child(${String(place)}) > th`);
+
+        expect(painted(first(1)), 'a row with no fill of its own').toBe(
+            resolved('--ui-color-surface-control', 'background-color'),
+        );
+        expect(painted(first(2)), 'a striped row').toBe(
+            resolved('--ui-color-surface-muted', 'background-color'),
+        );
+
+        only(host, 'tbody tr:nth-child(3)').style.backgroundColor = 'rgb(200, 10, 20)';
+
+        expect(painted(first(3)), 'a fill the host wrote on the row').toBe('rgb(200, 10, 20)');
+    });
+
+    it('is a stacking context of its own, so what sticks is lifted inside it alone', async () => {
+        const host = await mount(long());
+
+        expect(getComputedStyle(table(host)).isolation).toBe('isolate');
+    });
+
+    it('marks its box as one that scrolls down as it renders, and as its height comes and goes', async () => {
+        const tall = await mount(long());
+        const fits = await mount(long('', 'inline-size: 20rem'));
+
+        expect(down(table(tall)), 'given a height, as it renders').toBe(true);
+        expect(down(table(fits)), 'given none, as it renders').toBe(false);
+
+        table(fits).style.maxBlockSize = '10rem';
+        await laidOut();
+
+        expect(down(table(fits)), 'given one').toBe(true);
+
+        table(fits).style.maxBlockSize = '';
+        await laidOut();
+
+        expect(down(table(fits)), 'its height taken back').toBe(false);
+    });
+
+    it('frosts the header while the box scrolls down, and a column made sticky, where the theme raises glass', async () => {
+        const host = await mount(
+            `<div style="--ui-backdrop-raised: blur(7px)">${long('sticky-column')}${long('', 'inline-size: 20rem')}</div>`,
+        );
+        const [tall, fits] = [...host.querySelectorAll('ui-table')];
+        const frost = (box: Element | undefined, selector: string): string =>
+            getComputedStyle(only(box ?? host, selector)).backdropFilter;
+
+        expect(frost(tall, 'thead th:nth-child(2)'), 'the header, scrolling down').toBe(
+            'blur(7px)',
+        );
+        expect(frost(tall, 'tbody tr:nth-child(2) > th'), 'the column').toBe('blur(7px)');
+        expect(frost(tall, 'tbody tr:nth-child(2) > td'), 'a cell that does not stick').toBe(
+            'none',
+        );
+        expect(frost(fits, 'thead th:nth-child(2)'), 'the header of a box that fits').toBe('none');
+    });
+
+    it('reflects sticky-column, and takes it from the attribute', async () => {
+        const host = await mount(long());
+        const box = table(host);
+
+        box.stickyColumn = true;
+        await box.updateComplete;
+
+        expect(box.hasAttribute('sticky-column'), 'reflected').toBe(true);
+
+        box.removeAttribute('sticky-column');
+
+        expect(box.stickyColumn, 'taken away').toBe(false);
+
+        box.setAttribute('sticky-column', '');
+
+        expect(box.stickyColumn, 'written').toBe(true);
+    });
+
+    it('keeps the stop its own while sticky-column is written', async () => {
+        const host = await mount(wide);
+        const box = table(host);
+
+        expect(box.getAttribute('tabindex'), 'its stop').toBe('0');
+
+        box.setAttribute('sticky-column', '');
+        only(host, 'table').style.inlineSize = '5rem';
+        await laidOut();
+
+        expect(box.hasAttribute('tabindex'), 'taken away by the element as the table fits').toBe(
+            false,
+        );
+    });
+
+    it("draws the header's rule as a border under forced colours, which take its shadow away", async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            const host = await mount(long());
+            const styles = getComputedStyle(only(host, 'thead th'));
+
+            expect(matchMedia('(forced-colors: active)').matches, 'the mode is on').toBe(true);
+            expect([styles.borderBottomWidth, styles.borderBottomStyle]).toEqual(['1px', 'solid']);
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it('is accessible scrolled both ways, with the focus on its box', async () => {
+        const host = await mount(long('sticky-column'));
+        const box = table(host);
+
+        box.scrollLeft = 100;
+        box.scrollTop = 60;
+        box.focus();
+        await laidOut();
+
+        await expectAccessible(box);
+    });
+});
+
 describe("a row's motion, RFC 0004's", () => {
     it.each([0, 1])(
         'lays a veil of the text over the row under the pointer, over a state, striped or not: row %s',
@@ -953,6 +1223,7 @@ describe('table stories', () => {
         ['Scrolling', Scrolling],
         ['RowHeaders', RowHeaders],
         ['NumericColumns', NumericColumns],
+        ['StickyHeaderAndColumn', StickyHeaderAndColumn],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });

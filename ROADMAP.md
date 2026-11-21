@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A sticky header and a sticky first column on `<ui-table>` (#462)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-third step: the column within the box
-that scrolls already, and the header within a box given a height.
-
 ## `<ui-radio>` choices drawn as cards (#463)
 
-The button group's joined drawing, larger, with a description for each choice.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-fourth step: the button group's
+joined drawing, larger, with a description for each choice.
 
 ## `<ui-menu>` hung from the trigger's other edge (#464)
 
