@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-dialog>` opened from markup (#455)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s sixteenth step: `--show` and `--close`, from
-any button aimed at it with `commandfor`.
-
 ## `<ui-dialog>` closed by its form (#456)
 
-A `<form method="dialog">` in it closes it, with the value of the button that sent it.
+[RFC 0010](docs/proposals/0010-component-features.md)'s seventeenth step: a `<form method="dialog">`
+in it closes it, with the value of the button that sent it.
 
 ## An alert `<ui-dialog>` (#457)
 
