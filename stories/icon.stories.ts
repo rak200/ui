@@ -19,6 +19,7 @@ import '@rak200/ui/icons/check.js';
 import '@rak200/ui/icons/circle-alert.js';
 import '@rak200/ui/icons/search.js';
 import '@rak200/ui/icons/trash-2.js';
+import '@rak200/ui/icons/arrow-right.js';
 import { html, type TemplateResult } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 
@@ -111,6 +112,25 @@ export const Sizes: StoryObj<IconArgs> = {
             <span style="font-size: 1rem"><ui-icon name="check"></ui-icon> normal</span>
             <span style="font-size: 1.5rem"><ui-icon name="check"></ui-icon> grande</span>
             <ui-icon name="check" style="--ui-icon-size: 3rem"></ui-icon>
+        </div>
+    `,
+};
+
+/**
+ * A glyph that points one way, marked `directional`, beside one that is not, left to right and
+ * right to left: the arrow turns with the reading, the check never does.
+ */
+export const Directional: StoryObj<IconArgs> = {
+    render: (): TemplateResult => html`
+        <div style="display: flex; flex-direction: column; gap: 0.5rem">
+            <p style="margin: 0">
+                Next <ui-icon name="arrow-right" directional></ui-icon>
+                <ui-icon name="check"></ui-icon>
+            </p>
+            <p dir="rtl" style="margin: 0">
+                הבא <ui-icon name="arrow-right" directional></ui-icon>
+                <ui-icon name="check"></ui-icon>
+            </p>
         </div>
     `,
 };

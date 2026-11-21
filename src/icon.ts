@@ -138,6 +138,14 @@ export class UiIcon extends LitElement {
             margin-block: calc((1lh - ${reference('--ui-icon-size')}) / 2 * var(--ui-fx-line, 0));
         }
 
+        /* A glyph marked as pointing one way, an arrow onward, turns where the text runs right to
+           left, read off the element's own direction: :dir() reaches into a root, measured in the
+           three engines for RFC 0010. On the element rather than the glyph, whose scale the effects
+           ease, and by scale alone, which moves nothing round it. */
+        :host([directional]:dir(rtl)) {
+            scale: -1 1;
+        }
+
         /* That line: one character with no width, in the text's own face and leading, so no
            spacing the text carries takes any of the glyph's room. */
         :host::before {
@@ -305,6 +313,7 @@ export class UiIcon extends LitElement {
     static override readonly properties = {
         name: { type: String, reflect: true },
         label: { type: String, reflect: true },
+        directional: { type: Boolean, reflect: true },
     };
 
     /**
@@ -323,6 +332,13 @@ export class UiIcon extends LitElement {
      * is the only thing an icon-only button has to go on.
      */
     label = '';
+
+    /**
+     * Whether the glyph points one way, an arrow onward say, and so turns where the text runs right
+     * to left. A glyph cannot say which way it points, so the page marks the ones that turn.
+     * Reflected, which is what the turn is drawn from.
+     */
+    directional = false;
 
     /** Joins the icons that are redrawn when a glyph is registered. */
     override connectedCallback(): void {

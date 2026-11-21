@@ -15,6 +15,7 @@ import '@rak200/ui/icons/x.js';
 - [Importing glyphs](#importing-glyphs)
 - [The accessible name](#the-accessible-name)
 - [In a line of text](#in-a-line-of-text)
+- [Right to left](#right-to-left)
 - [A mark the set does not have](#a-mark-the-set-does-not-have)
 - [What this costs](#what-this-costs)
 - [Motion](#motion)
@@ -27,10 +28,11 @@ import '@rak200/ui/icons/x.js';
 <ui-icon name="check"></ui-icon> <ui-icon name="search" label="Search"></ui-icon>
 ```
 
-| Attribute | Type     | Default | What it does                                                 |
-| --------- | -------- | ------- | ------------------------------------------------------------ |
-| `name`    | `string` | `''`    | Which glyph to draw, as registered by importing its module   |
-| `label`   | `string` | `''`    | The accessible name. Unset, the icon is hidden from the tree |
+| Attribute     | Type      | Default | What it does                                                 |
+| ------------- | --------- | ------- | ------------------------------------------------------------ |
+| `name`        | `string`  | `''`    | Which glyph to draw, as registered by importing its module   |
+| `label`       | `string`  | `''`    | The accessible name. Unset, the icon is hidden from the tree |
+| `directional` | `boolean` | `false` | The glyph points one way, and turns right to left            |
 
 Exported as `UiIcon`, along with `register` for adding a glyph by hand.
 
@@ -113,6 +115,19 @@ standing alone keeps no room under it, and draws over no line beside it.
 its label does: in a [`<ui-button>`](button.md#with-an-icon), and in a
 [`<ui-menu>`](menu.md#with-an-icon)'s trigger and items. A `vertical-align` or a `margin` you
 write on `ui-icon` outweighs the element's own, as a rule of yours on any element does.
+
+## Right to left
+
+```html
+<a href="/next">Next <ui-icon name="arrow-right" directional></ui-icon></a>
+```
+
+**An arrow that points onward points the other way where the text runs right to left**, and a
+glyph cannot say which way it points, so you mark the ones that turn with `directional`. Where the
+icon's own direction is right to left, set on it or on anything above it, the icon is drawn turned,
+left for right; anywhere else it is drawn as it is. A check, a search, a cross never turn, and are
+written without it. The turn is the icon's own and moves nothing round it, and its effects play on
+the turned glyph as on any other. Reflected.
 
 ## A mark the set does not have
 

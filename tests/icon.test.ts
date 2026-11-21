@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { Bespoke, Decorative, IconOnly, Named, Sizes } from '../stories/icon.stories.js';
+import meta, {
+    Bespoke,
+    Decorative,
+    Directional,
+    IconOnly,
+    Named,
+    Sizes,
+} from '../stories/icon.stories.js';
 import { forget } from '../src/console.js';
 import { register, registered, UiIcon } from '../src/icon.js';
 import '../src/button.js';
@@ -11,6 +18,7 @@ import '../src/button.js';
 import '../src/icons/x.js';
 import '../src/icons/check.js';
 import '../src/icons/circle-alert.js';
+import '../src/icons/arrow-right.js';
 import { svg } from 'lit';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { tokenStyleSheet } from '../src/tokens.js';
@@ -1016,5 +1024,58 @@ describe('accessibility', () => {
 
     it('has no violations across sizes', async () => {
         await expectAccessible(await mountStory(Sizes, meta, 'Sizes'));
+    });
+});
+
+/** A glyph that points one way, turned where the text runs right to left. */
+describe('right to left', () => {
+    /** Mounts markup and waits for each icon in it to render. */
+    async function drawn(markup: string): Promise<UiIcon> {
+        const host = document.createElement('div');
+
+        host.innerHTML = markup;
+        document.body.append(host);
+
+        const icon = host.querySelector('ui-icon');
+
+        if (icon === null) {
+            throw new Error('no icon in the fixture');
+        }
+
+        await icon.updateComplete;
+
+        return icon;
+    }
+
+    it('turns a glyph marked directional where the text runs right to left, and no other', async () => {
+        const turned = await drawn(
+            '<div dir="rtl"><ui-icon name="arrow-right" directional></ui-icon></div>',
+        );
+
+        expect(getComputedStyle(turned).scale).toBe('-1 1');
+
+        const onward = await drawn('<ui-icon name="arrow-right" directional></ui-icon>');
+
+        expect(getComputedStyle(onward).scale, 'left to right').toBe('none');
+
+        const unmarked = await drawn('<div dir="rtl"><ui-icon name="check"></ui-icon></div>');
+
+        expect(getComputedStyle(unmarked).scale, 'unmarked').toBe('none');
+
+        unmarked.directional = true;
+        await unmarked.updateComplete;
+
+        expect(unmarked.hasAttribute('directional'), 'reflected').toBe(true);
+        expect(getComputedStyle(unmarked).scale, 'marked by the property').toBe('-1 1');
+    });
+
+    it("reads the icon's own direction, an attribute on it as well as one above it", async () => {
+        const icon = await drawn('<ui-icon name="arrow-right" directional dir="rtl"></ui-icon>');
+
+        expect(getComputedStyle(icon).scale).toBe('-1 1');
+    });
+
+    it('has no violations, turned and not', async () => {
+        await expectAccessible(await mountStory(Directional, meta, 'Directional'));
     });
 });
