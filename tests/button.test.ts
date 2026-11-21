@@ -8,6 +8,7 @@ import { escaped } from './escaped.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, {
+    AriaDisabled,
     Danger,
     Disabled,
     Primary,
@@ -17,6 +18,7 @@ import meta, {
 } from '../stories/button.stories.js';
 import '../src/button.js';
 import '../src/tooltip.js';
+import { buttonEffects } from '../src/effects.js';
 import type { UiButton } from '../src/button.js';
 import { tokenStyleSheet } from '../src/tokens.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
@@ -693,6 +695,208 @@ describe('a toggle', () => {
     });
 });
 
+/** A button the page marks aria-disabled: drawn and refused as a disabled one, still reached. */
+describe('aria-disabled', () => {
+    /** A task, so a click the element acts on a task later has been acted on. */
+    async function acted(element: UiButton): Promise<void> {
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        await element.updateComplete;
+    }
+
+    it('is drawn as a disabled button is, its own button marked, and follows the attribute', async () => {
+        const element = await mount('<ui-button aria-disabled="true">Save</ui-button>');
+
+        element.style.setProperty('--ui-color-primary', 'rgb(0, 0, 255)');
+        element.style.setProperty('--ui-color-primary-contrast', 'rgb(255, 0, 0)');
+        // The colour is the question, not the motion: read where it lands.
+        element.style.setProperty('--ui-duration-state', '0s');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor, 'its fill, by half').toBe('color(srgb 0 0 1 / 0.5)');
+        expect(styles.color, 'its label, by half').toBe('color(srgb 1 0 0 / 0.5)');
+        expect(styles.opacity, 'and never the button, which would fade its ring').toBe('1');
+        expect(styles.cursor).toBe('not-allowed');
+        expect(getComputedStyle(inner(element), '::before').boxShadow, 'nothing glows').toBe(
+            'none',
+        );
+        expect(inner(element).getAttribute('aria-disabled'), 'its own button').toBe('true');
+        expect(inner(element).disabled, 'and never disabled, which would take its stop').toBe(
+            false,
+        );
+
+        element.setAttribute('aria-disabled', 'false');
+        await element.updateComplete;
+
+        expect(getComputedStyle(inner(element)).backgroundColor, '"false" is not disabled').toBe(
+            'rgb(0, 0, 255)',
+        );
+        expect(inner(element).hasAttribute('aria-disabled')).toBe(false);
+
+        element.setAttribute('aria-disabled', 'true');
+        await element.updateComplete;
+
+        expect(inner(element).getAttribute('aria-disabled'), 'and back').toBe('true');
+    });
+
+    it("fades a secondary's fill and label by half too", async () => {
+        const element = await mount(
+            '<ui-button variant="secondary" aria-disabled="true">Cancel</ui-button>',
+        );
+
+        element.style.setProperty('--ui-color-surface-control', 'rgb(0, 255, 0)');
+        element.style.setProperty('--ui-color-text', 'rgb(0, 0, 255)');
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.backgroundColor).toBe('color(srgb 0 1 0 / 0.5)');
+        expect(styles.color).toBe('color(srgb 0 0 1 / 0.5)');
+    });
+
+    it("names the system's colour for the unavailable in forced colours", async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            const element = await mount('<ui-button aria-disabled="true">Save</ui-button>');
+            const reference = document.createElement('div');
+
+            reference.style.color = 'GrayText';
+            document.body.append(reference);
+
+            const grey = getComputedStyle(reference).color;
+
+            expect(getComputedStyle(inner(element)).color).toBe(grey);
+            expect(getComputedStyle(inner(element), '::after').borderTopColor, 'its edge').toBe(
+                grey,
+            );
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+
+    it('keeps its tab stop and the ring the keys show it by', async () => {
+        const element = await mount('<ui-button aria-disabled="true">Save</ui-button>');
+
+        await userEvent.tab();
+
+        expect(element.shadowRoot?.activeElement, 'tab reached it').toBe(inner(element));
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.outlineStyle).toBe('solid');
+        expect(styles.opacity, 'at its full strength').toBe('1');
+    });
+
+    it('answers neither the pointer nor a press', async () => {
+        const element = await mount('<ui-button aria-disabled="true">Save</ui-button>');
+        const resting = background(element);
+
+        await userEvent.hover(inner(element));
+
+        expect(background(element), 'hovered').toBe(resting);
+
+        await press(inner(element), true);
+
+        expect(background(element), 'pressed').toBe(resting);
+    });
+
+    it("stands its effects down, the focus's among them", async () => {
+        const element = await mount('<ui-button aria-disabled="true">Save</ui-button>');
+
+        element.style.setProperty('--ui-motion-focus-move', 'lift');
+        element.style.setProperty('--ui-motion-focus-ring', 'glide');
+        element.style.setProperty('--ui-motion-hover-fill', 'tint');
+
+        const resting = background(element);
+
+        await userEvent.tab();
+
+        const styles = getComputedStyle(inner(element));
+
+        expect(styles.translate, 'no lift').toBe('none');
+        expect(styles.getPropertyValue('--ui-fx-ring'), 'no flight handed to the ring').toBe('');
+
+        await userEvent.hover(inner(element));
+
+        expect(background(element), 'no tint').toBe(resting);
+    });
+
+    it('keeps a click from the page, the form and the toggle, as a disabled button sends none', async () => {
+        const form = document.createElement('form');
+        let sent = 0;
+        let heard = 0;
+        const hear = (): void => {
+            heard += 1;
+        };
+
+        form.innerHTML =
+            '<ui-button aria-disabled="true">Send</ui-button><ui-button toggle aria-disabled="true" type="button">Bold</ui-button>';
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            sent += 1;
+        });
+        document.body.append(form);
+
+        const [send, bold] = form.querySelectorAll('ui-button');
+
+        if (send === undefined || bold === undefined) {
+            throw new Error('the buttons are not there');
+        }
+
+        await send.updateComplete;
+        await bold.updateComplete;
+        document.addEventListener('click', hear);
+
+        try {
+            inner(send).click();
+            send.click();
+            inner(bold).click();
+            await acted(send);
+        } finally {
+            document.removeEventListener('click', hear);
+        }
+
+        expect(heard, 'no listener hears it').toBe(0);
+        expect(sent, 'the form is not sent').toBe(0);
+        expect(bold.pressed, 'the toggle does not turn').toBe(false);
+        expect(
+            send.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })),
+            'cancelled, so nothing round it acts on it by default either',
+        ).toBe(false);
+    });
+
+    it("sends nothing by Enter in a field, where it is the form's default button", async () => {
+        const form = document.createElement('form');
+        let sent = 0;
+
+        form.innerHTML =
+            '<ui-input label="Name" name="name"></ui-input><ui-button aria-disabled="true">Send</ui-button>';
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            sent += 1;
+        });
+        document.body.append(form);
+
+        const field = form.querySelector('ui-input');
+
+        await field?.updateComplete;
+        field?.shadowRoot?.querySelector('input')?.focus();
+        await userEvent.keyboard('{Enter}');
+
+        for (let task = 0; task < 2; task++) {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        }
+
+        expect(sent).toBe(0);
+    });
+});
+
 /**
  * A component that accepts interaction and shows no feedback is defective, which is the
  * rule that brought the interaction colours and the first motion tokens into the token
@@ -753,17 +957,37 @@ describe('the interaction states', () => {
         expect(styleText()).toContain(':focus-visible');
     });
 
-    it('guards every interaction rule against :disabled, over the whole sheet', () => {
+    it('guards every interaction rule against a button that cannot be used, over the whole sheet', () => {
         // The behavioural half is asserted above, on this button. This half is structural
         // and reaches the rules a later variant might add: ordering does not save them,
-        // because the `:disabled` rule sets different properties and never collides.
-        const rules = [...styleText().matchAll(/button[a-z.\-:()]*:(?:hover|active)/g)];
+        // because the disabled rule sets different properties and never collides. The guard
+        // is read as one name, so the pattern walks a selector that holds it.
+        const guard = ":not(:disabled, [aria-disabled='true'])";
+        const rules = [
+            ...styleText()
+                .replaceAll(guard, ':usable')
+                .matchAll(/button[a-z.\-:()]*:(?:hover|active)/g),
+        ];
 
         for (const [rule] of rules) {
-            expect(rule, rule).toContain(':not(:disabled)');
+            expect(rule, rule).toContain(':usable');
         }
 
         expect(rules.length, 'and there are some to guard').toBeGreaterThan(0);
+
+        // And every effect drawn for the focus, which a button marked aria-disabled still takes,
+        // where its own ring, which is no effect, is drawn whatever the button is.
+        const focused = [
+            ...String(buttonEffects('button'))
+                .replaceAll(guard, ':usable')
+                .matchAll(/button[a-z.\-:()]*:focus-visible/g),
+        ];
+
+        for (const [rule] of focused) {
+            expect(rule, rule).toContain(':usable');
+        }
+
+        expect(focused.length, 'and there are some of those').toBeGreaterThan(0);
     });
 
     it('moves the colour over the state duration, and moves nothing else', async () => {
@@ -2508,6 +2732,7 @@ describe('ui-button stories', () => {
         ['Secondary', Secondary],
         ['Danger', Danger],
         ['Toggle', Toggle],
+        ['AriaDisabled', AriaDisabled],
         ['Disabled', Disabled],
         ['States', States],
     ] as const)('%s renders a real button and meets the bar', async (name, story) => {

@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing, type TemplateResult } from 'lit';
 import { Description } from './description.js';
-import { buttonEffects, pressed } from './effects.js';
+import { buttonEffects, pressed, usable } from './effects.js';
 import { reference } from './reference.js';
 import { followed } from './pointer.js';
 import { arrive, watch } from './ring.js';
@@ -35,6 +35,13 @@ export type ButtonType = 'submit' | 'reset' | 'button';
  * and a primary's in the selected names a select's chosen option has while it is, since a
  * primary's fill is the accent those names are too, and a primary toggle would look the same
  * pressed or not.
+ *
+ * **A button the page marks `aria-disabled="true"` cannot be used and keeps its tab stop**, so the
+ * keys reach it and show a tooltip on it, where a disabled one takes no stop. It is drawn as a
+ * disabled one is, its effects stood down, and refuses a press as one does: a click on it is
+ * cancelled and reaches neither the page nor the form, so <kbd>Enter</kbd> in a field sends nothing
+ * by it either. Its
+ * own button carries the state too, for a tree that does not take it from the element.
  *
  * @example
  * ```html
@@ -101,7 +108,7 @@ export class UiButton extends LitElement {
                 box-shadow: ${reference('--ui-elevation-control')};
             }
 
-            button:not(:disabled):hover::before {
+            button${usable}:hover::before {
                 box-shadow: ${reference('--ui-elevation-control-hover')};
             }
 
@@ -129,7 +136,7 @@ export class UiButton extends LitElement {
                 color: transparent;
             }
 
-            button:not(:disabled):hover::after {
+            button${usable}:hover::after {
                 border-color: ${reference('--ui-color-border-button-hover')};
             }
 
@@ -138,8 +145,48 @@ export class UiButton extends LitElement {
                 opacity: 0.5;
             }
 
+            /* A button marked aria-disabled is drawn as a disabled one is, and keeps its tab stop,
+           so the ring the keys show it by is drawn at its full strength: its fill and its label
+           are faded by half rather than the button, whose opacity faded the ring with them, to
+           2.1:1 from the light surface and 2.7:1 from the dark, under the 3:1 its floor asks. The
+           edge is the label's colour, and fades with it. */
+            button[aria-disabled='true'] {
+                cursor: not-allowed;
+            }
+
+            button.primary[aria-disabled='true'] {
+                background: color-mix(in srgb, ${reference('--ui-color-primary')} 50%, transparent);
+                color: color-mix(
+                    in srgb,
+                    ${reference('--ui-color-primary-contrast')} 50%,
+                    transparent
+                );
+            }
+
+            button.secondary[aria-disabled='true'] {
+                background: color-mix(
+                    in srgb,
+                    ${reference('--ui-color-surface-control')} 50%,
+                    transparent
+                );
+                color: color-mix(in srgb, ${reference('--ui-color-text')} 50%, transparent);
+            }
+
+            /* Forced colours draw every button alike, where a disabled one is drawn in GrayText, the
+           mode's colour for what is unavailable, which a fade does not survive: so one marked
+           aria-disabled names it, after the fades it takes the place of. */
+            @media (forced-colors: active) {
+                button:is(.primary, .secondary)[aria-disabled='true'] {
+                    color: GrayText;
+                }
+
+                button[aria-disabled='true']::after {
+                    border-color: GrayText;
+                }
+            }
+
             /* Nothing that cannot be used glows: a glow says a control is there to be reached. */
-            button:disabled::before {
+            button:is(:disabled, [aria-disabled='true'])::before {
                 box-shadow: none;
             }
 
@@ -197,15 +244,16 @@ export class UiButton extends LitElement {
                 color: ${reference('--ui-color-text')};
             }
 
-            /* The :not(:disabled) guard is measured rather than assumed: a disabled button
-       still matches :hover and :active, so without it the button would light up under a
-       pointer that cannot activate it. Ordering does not substitute for the guard — both
-       rules below outrank the resting one on specificity whatever their position. */
-            button.primary:not(:disabled):hover {
+            /* The guard is measured rather than assumed: a disabled button still matches :hover and
+       :active, so without it the button would light up under a pointer that cannot activate it,
+       and one marked aria-disabled matches them as any button does. Ordering does not substitute
+       for the guard — both rules below outrank the resting one on specificity whatever their
+       position. src/effects.ts writes the guard, for its own rules and these. */
+            button.primary${usable}:hover {
                 background: ${reference('--ui-color-primary-hover')};
             }
 
-            button.secondary:not(:disabled):hover {
+            button.secondary${usable}:hover {
                 background: ${reference('--ui-color-hover')};
             }
 
@@ -214,12 +262,12 @@ export class UiButton extends LitElement {
        rather than a second token: it is a fact about how long a click lasts, not a
        decision a host would want to retune. And the pressed state is never the only
        feedback a component gives — activating by Enter produces no :active at all. */
-            button.primary:not(:disabled):active {
+            button.primary${usable}:active {
                 background: ${reference('--ui-color-primary-pressed')};
                 transition-duration: 0s;
             }
 
-            button.secondary:not(:disabled):active {
+            button.secondary${usable}:active {
                 background: ${reference('--ui-color-pressed')};
                 transition-duration: 0s;
             }
@@ -307,6 +355,24 @@ export class UiButton extends LitElement {
         this.addEventListener('click', this.#clicked);
     }
 
+    /** The attributes the element watches: its properties', and `aria-disabled`, which the page writes. */
+    static override get observedAttributes(): string[] {
+        return [...super.observedAttributes, 'aria-disabled'];
+    }
+
+    /**
+     * Draws again for each attribute it watches: Lit's own already ask through their properties,
+     * and `aria-disabled`, which its own button carries as well, has none to ask through.
+     */
+    override attributeChangedCallback(
+        name: string,
+        old: string | null,
+        value: string | null,
+    ): void {
+        super.attributeChangedCallback(name, old, value);
+        this.requestUpdate();
+    }
+
     /**
      * Starts watching the page's focus as the first button connects, so the ring the reader saw
      * before the button's first focus is already recorded when the glide needs it.
@@ -352,10 +418,24 @@ export class UiButton extends LitElement {
      * cancelled it, wherever it sits, has cancelled what it does, as it does on `<button>`.
      */
     readonly #clicked = (event: Event): void => {
+        // Refused as a disabled button's is, which sends no click at all: kept from every listener
+        // after this one, the first the element has, and from what the element does with it.
+        if (this.#refused()) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            return;
+        }
+
         setTimeout(() => {
             this.#act(event);
         });
     };
+
+    /** Whether the page marked the button `aria-disabled="true"`, which ARIA reads as disabled. */
+    #refused(): boolean {
+        return this.getAttribute('aria-disabled') === 'true';
+    }
 
     /**
      * What a click does, once nothing cancelled it and the button can be used: a toggle turns, and
@@ -410,6 +490,7 @@ export class UiButton extends LitElement {
                 class=${this.#classes()}
                 ?disabled=${this.matches(':disabled')}
                 aria-pressed=${this.toggle ? String(this.pressed) : nothing}
+                aria-disabled=${this.#refused() ? 'true' : nothing}
                 aria-describedby=${this.#description.described()}
                 part="button"
                 @focus=${arrive}

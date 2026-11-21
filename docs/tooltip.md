@@ -101,10 +101,20 @@ menu or another widget the arrows move through is reached by the arrows, and say
 tip on one is common and meant to say why the control is disabled. The platform takes a disabled
 control out of the tab order: Tab passes a disabled `<button>` or `<ui-button>` by, and a pointer
 alone shows its tip, in Chromium 153, Firefox 155 and WebKit 26.5 alike. Where the reason matters to
-a reader on the keyboard, write `aria-disabled="true"` on a `<button>` in place of `disabled`. The
-button keeps its tab stop, so the keys show the tip, and a screen reader hears it as disabled all
-the same. The press still arrives and the platform draws the button as enabled, so refusing the
-press and drawing the disabled look are the page's:
+a reader on the keyboard, write `aria-disabled="true"` in place of `disabled`. The button keeps its
+tab stop, so the keys show the tip, and a screen reader hears it as disabled all the same. A
+`<ui-button>` is then drawn as a disabled one and refuses the press itself, as
+[button.md](button.md#disabled) says:
+
+```html
+<ui-tooltip>
+  <ui-button aria-disabled="true">Save</ui-button>
+  <span slot="tip">Saving needs a name first.</span>
+</ui-tooltip>
+```
+
+On a `<button>` the press still arrives and the platform draws the button as enabled, so refusing
+the press and drawing the disabled look are yours:
 
 ```html
 <ui-tooltip>
