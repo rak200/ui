@@ -3,17 +3,11 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-menu>` opened at the pointer (#468)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-ninth step: a context menu, opened by
-the pointer and by the menu key and Shift+F10 read as keys. The last step, which marks RFC 0010
-`Implemented`.
-
 ## A busy `<ui-button>` (#439)
 
 [RFC 0010](docs/proposals/0010-component-features.md)'s twelfth step, at the end of the list since
 its turn came before RFC 0009's progress landed, which it still waits on; the `aria-disabled`
-button it rests on has landed.
+button it rests on has landed. The last step left, which marks RFC 0010 `Implemented`.
 
 ## Design tokens beyond the web (#24)
 

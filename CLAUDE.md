@@ -400,6 +400,13 @@ explains. This file restates none of them.
   and `resting` in `src/menu.ts`, and `docs/menu.md`'s _Submenus_. RFC 0010 measured the layer and its
   dismissal as the platform's; the two times are Radix's, a reading of the pointer and so no token,
   and a submenu opened by the pointer leaves the focus where it was, so it can close behind it.
+- **Why a context menu reads the menu key and Shift+F10 itself, hangs from a point of its own, and
+  opens once the secondary button is up where it came down** — the docblocks on `#serve`,
+  `#onContext` and `#onContextKey` in `src/menu.ts`, the comment beside `.point`, `docs/menu.md`'s
+  _Opened at the pointer_, and `tests/manual/menu-context.html`. Only Chromium sends `contextmenu` for
+  the keys, and the key kept from its default keeps that away, measured for RFC 0010; a zero-size
+  element anchors the panel and is turned back inside the screen in the three engines; Linux sends
+  `contextmenu` with the button down, and the platform dismissed the menu as the press ended.
 - **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
   lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided
