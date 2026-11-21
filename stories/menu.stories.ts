@@ -167,3 +167,24 @@ export const TicksAndSections: StoryObj<MenuArgs> = {
         </ui-menu>
     `,
 };
+
+/**
+ * A shortcut and a description on an item: the host's `<kbd>` drawn at the item's end, and its
+ * element marked `data-ui-description` under the label, heard after the item's name.
+ */
+export const ShortcutsAndDescriptions: StoryObj<MenuArgs> = {
+    render: (): TemplateResult => html`
+        <ui-menu>
+            <span slot="trigger">File</span>
+            <button type="button">
+                Rename <kbd>F2</kbd><span data-ui-description>Give the file a new name.</span>
+            </button>
+            <button type="button">Duplicate <kbd>Ctrl+D</kbd></button>
+            <hr />
+            <button type="button">
+                Delete <kbd>Del</kbd
+                ><span data-ui-description>It goes to the bin for a month.</span>
+            </button>
+        </ui-menu>
+    `,
+};

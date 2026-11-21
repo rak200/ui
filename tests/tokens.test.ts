@@ -2000,6 +2000,25 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it("keeps a menu item's shortcut and description legible, at rest and under the pointer", () => {
+                    // Both are the muted text on the panel, a raised surface laid over the page,
+                    // and the item's own text on an item under the pointer, whose fill is laid over
+                    // the panel: the muted text fell to 3.28:1 there.
+                    const panel = raised(palette, scheme);
+
+                    expect(
+                        contrastRatio(paint('--ui-color-text-muted'), panel),
+                        'at rest',
+                    ).toBeGreaterThanOrEqual(4.5);
+                    expect(
+                        contrastRatio(
+                            paint('--ui-color-text'),
+                            laid('--ui-color-hover', panel, scheme, palette),
+                        ),
+                        'under the pointer',
+                    ).toBeGreaterThanOrEqual(4.5);
+                });
+
                 it('keeps the focus ring at 3:1 against the surface — WCAG 1.4.11, which axe cannot see', () => {
                     // `outline-offset` shows the surface on both sides of the ring, so the
                     // surface is what the ring is adjacent to. This is the assertion the shipped
