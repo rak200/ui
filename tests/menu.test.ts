@@ -2027,6 +2027,42 @@ describe('a shortcut and a description on an item', () => {
         expect(first(host).getAttribute('aria-describedby')).toBe('elsewhere mine');
     });
 
+    it('names a description once where the host listed its id already', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">File</span>
+                <button type="button" aria-describedby="mine">Rename <span id="mine" data-ui-description>New name.</span></button>
+            </ui-menu>
+        `);
+
+        expect(first(host).getAttribute('aria-describedby')).toBe('mine');
+    });
+
+    it('forgets the id it wrote once the description has gone, and leaves the host the same id later', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">File</span>
+                <button type="button">Rename <span id="mine" data-ui-description>New name.</span></button>
+            </ui-menu>
+            <p id="elsewhere-mine">Renaming keeps the history.</p>
+        `);
+        const item = first(host);
+
+        only(item, '[data-ui-description]').remove();
+        await open(menu(host));
+
+        expect(item.hasAttribute('aria-describedby'), 'gone with it').toBe(false);
+
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        only(host, '#elsewhere-mine').id = 'mine';
+        item.setAttribute('aria-describedby', 'mine');
+        await open(menu(host));
+
+        expect(item.getAttribute('aria-describedby'), "the host's own, kept").toBe('mine');
+    });
+
     it('takes the reference away as the description goes, and gives it again as one comes', async () => {
         const host = await mount(marked());
         const item = first(host);
