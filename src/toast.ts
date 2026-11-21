@@ -247,10 +247,10 @@ export class UiToaster extends LitElement {
  *
  * ## Dismissal
  *
- * Manual always, timed unless the toast is an error or `duration` is `0`. There is
- * deliberately no way to remove the dismiss button: a toast that cannot be dismissed *and*
- * does not expire is a permanent obstruction, and that combination is one attribute away in
- * every kit that offers the knob.
+ * Manual always, timed unless the toast is an error, holds an action, or `duration` is `0`. There
+ * is deliberately no way to remove the dismiss button: a toast that cannot be dismissed *and* does
+ * not expire is a permanent obstruction, and that combination is one attribute away in every kit
+ * that offers the knob.
  *
  * The timer stops while the pointer is over the toast or the focus is inside it, and starts
  * again when both have left — a notice must not expire while it is being read, which is
@@ -438,6 +438,12 @@ export class UiToast extends LitElement {
                 margin: 0;
             }
 
+            /* The action, the host's own button, between the message and the dismiss button, at
+               its own width, where the message gives way and wraps. */
+            slot[name='action']::slotted(*) {
+                flex: none;
+            }
+
             button {
                 flex: none;
                 display: grid;
@@ -564,10 +570,10 @@ export class UiToast extends LitElement {
     /**
      * How long the toast waits before dismissing itself, in milliseconds; `0` never.
      *
-     * Ignored when the variant is `danger`, which never expires. Not a token, for the
-     * reason the default carries: every duration name collapses under reduced motion, and
-     * a dwell time that collapsed would take the notice away from the reader who asked for
-     * less movement.
+     * Ignored when the variant is `danger`, or the toast holds an action, neither of which ever
+     * expires. Not a token, for the reason the default carries: every duration name collapses under
+     * reduced motion, and a dwell time that collapsed would take the notice away from the reader
+     * who asked for less movement.
      */
     duration = dwell;
 
@@ -688,8 +694,9 @@ export class UiToast extends LitElement {
         this.#route();
 
         // The time left, which the ring the taste may choose draws: the toast's own dwell, where
-        // it has a clock — never an error, and never a toast told to stay.
-        if (this.variant !== 'danger' && this.duration > 0) {
+        // it has a clock — never an error, never a toast told to stay, and never one holding an
+        // action.
+        if (this.variant !== 'danger' && this.duration > 0 && !this.#acting()) {
             this.#internals.states.add('timed');
             this.style.setProperty('--ui-fx-dwell', `${String(this.duration)}ms`);
         } else {
@@ -699,8 +706,8 @@ export class UiToast extends LitElement {
     }
 
     /**
-     * The variant's icon, the message under its heading, and a button that dismisses it, beside the
-     * empty layers the pointer's and a focus's effects are drawn on.
+     * The variant's icon, the message under its heading, the host's action, and a button that
+     * dismisses it, beside the empty layers the pointer's and a focus's effects are drawn on.
      */
     override render(): TemplateResult {
         return html`
@@ -722,6 +729,7 @@ export class UiToast extends LitElement {
                 ${glyphs[this.variant]}
             </svg>
             <div part="message"><slot name="heading"></slot><slot></slot></div>
+            <slot name="action" @slotchange=${this.#acted}></slot>
             <button
                 type="button"
                 part="dismiss"
@@ -766,8 +774,9 @@ export class UiToast extends LitElement {
     /** Starts the clock, unless this toast has none to start. */
     #start(): void {
         // An error is never taken away from the reader, and `0` is how a host asks for the
-        // same thing on any other variant.
-        if (this.variant === 'danger' || this.duration === 0) {
+        // same thing on any other variant; and an action is never taken away from a keyboard
+        // reader, who comes to the toaster after the whole page.
+        if (this.variant === 'danger' || this.duration === 0 || this.#acting()) {
             return;
         }
 
@@ -782,6 +791,30 @@ export class UiToast extends LitElement {
 
         this.#timer = 0;
     }
+
+    /**
+     * Whether the toast holds an action, a child of the host's in its `action` slot: read off the
+     * children rather than the slot, so the clock knows it as the toast connects, before the slot
+     * is drawn.
+     */
+    #acting(): boolean {
+        return this.querySelector(':scope > [slot="action"]') !== null;
+    }
+
+    /**
+     * Follows an action that comes or goes after the toast has: its clock stops for one, and starts
+     * again from the beginning without one, unless the reader is in the toast, which holds it; and
+     * the time left is drawn again.
+     */
+    readonly #acted = (): void => {
+        this.#stop();
+
+        if (!this.matches(':hover, :focus-within')) {
+            this.#start();
+        }
+
+        this.requestUpdate();
+    };
 
     /** Fades the toast out, tells whoever is listening, and then removes it. */
     async #exit(): Promise<void> {
