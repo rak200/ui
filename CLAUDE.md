@@ -394,6 +394,12 @@ explains. This file restates none of them.
   `rules` and `#describe` in `src/menu.ts`, and `docs/menu.md`'s _A shortcut and a description_. A
   grid would lay an icon and the label apart; the description in the item would join its name; and
   the muted text fell to 3.28:1 on an item under the pointer, which `tests/tokens.test.ts` floors.
+- **Why a menu written in another is a submenu, drawn as an item with the button's effects stood
+  down, and why the pointer opens it after resting and it waits for the pointer on its way across**
+  — the docblock on `UiMenu`, the comments beside the submenu's rules and on `#onRest`, `#onDepart`
+  and `resting` in `src/menu.ts`, and `docs/menu.md`'s _Submenus_. RFC 0010 measured the layer and its
+  dismissal as the platform's; the two times are Radix's, a reading of the pointer and so no token,
+  and a submenu opened by the pointer leaves the focus where it was, so it can close behind it.
 - **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
   lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided

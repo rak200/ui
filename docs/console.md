@@ -118,8 +118,9 @@ shown on purpose where none is ever written, as a specimen is, takes
 
 ### `ui-menu:not-an-item`
 
-**A menu takes as items only the `<button>` and `<a href>` written as its own children or in a
-section it holds**, a `role="group"`, so a child that is neither an item nor a section is drawn as
+**A menu takes as items only the `<button>`, the `<a href>` and the `<ui-menu>` written as its own
+children or in a section it holds**, a `role="group"` — a `<ui-menu>` there is a
+[submenu](menu.md#submenus) — so a child that is neither an item nor a section is drawn as
 written, passed over by the keys and left out of the menu's choices. A [diagnosis](diagnose.md) says
 it for each one, for the page to judge. A tooltip, a `<div>` or a list written round items, a form
 round a submit button, a label round a checkbox and a component's own element round each item are
