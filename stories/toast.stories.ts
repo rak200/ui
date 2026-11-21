@@ -100,3 +100,22 @@ export const Long: StoryObj<ToastArgs> = {
             'The export finished, but four rows were skipped because they had no billing address on file.',
     },
 };
+
+/**
+ * A heading above the message, on a line of its own: read with the message, once, in the region
+ * the variant chooses, and drawn in the weight of the element the host writes it as.
+ */
+export const Heading: StoryObj<ToastArgs> = {
+    render: ({ duration }): TemplateResult => html`
+        <ui-toaster>
+            <ui-toast variant="success" duration=${duration}>
+                <strong slot="heading">Invoice sent</strong>
+                It is on its way to Acme, and a copy is in your outbox.
+            </ui-toast>
+            <ui-toast variant="danger">
+                <strong slot="heading">Could not reach the server</strong>
+                Your changes are kept here until it answers.
+            </ui-toast>
+        </ui-toaster>
+    `,
+};
