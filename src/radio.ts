@@ -252,11 +252,8 @@ export class UiRadioGroup extends LitElement {
                 flex-wrap: nowrap;
             }
 
+            /* Laid out as any choice is, its description under its text by the rule above. */
             :host([variant='cards']) .option {
-                display: grid;
-                grid-template-columns: auto 1fr;
-                align-items: center;
-                row-gap: calc(${reference('--ui-space')} / 4);
                 flex: 1 1 0;
                 position: relative;
                 padding: calc(${reference('--ui-space')} * 1.5);
