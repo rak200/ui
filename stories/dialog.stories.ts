@@ -196,3 +196,21 @@ export const ClosedByItsForm: StoryObj<DialogArgs> = {
         </div>
     `,
 };
+
+/**
+ * An alert, for a choice the reader has to make: the APG's alert dialog, `role="alertdialog"` on
+ * the dialog in its root, and a dialog in every other way.
+ */
+export const Alert: StoryObj<DialogArgs> = {
+    render: ({ title, body }): TemplateResult => html`
+        <div>
+            <ui-button @click=${opens}>Delete account</ui-button>
+            <ui-dialog alert>
+                <h2 slot="title">${title}</h2>
+                <p>${body}</p>
+                <ui-button slot="actions" variant="secondary" @click=${closes}>Cancel</ui-button>
+                <ui-button slot="actions" variant="danger" @click=${closes}>Delete</ui-button>
+            </ui-dialog>
+        </div>
+    `,
+};
