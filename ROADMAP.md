@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A card that opens where it is clicked (#460)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-first step: by the stretched link the
-card draws, lifting what it holds above it.
-
 ## Numeric columns on `<ui-table>` (#461)
 
-End-aligned in tabular figures, for the cells the host marks.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-second step: end-aligned in tabular
+figures, for the cells the host marks.
 
 ## A sticky header and a sticky first column on `<ui-table>` (#462)
 

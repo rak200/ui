@@ -27,7 +27,7 @@ import { reference } from '../src/reference.js';
 import { kinds, type Taste } from '../src/motion.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { UiButton } from '../src/button.js';
-import { UiCard } from '../src/card.js';
+import { UiCard, rules as cardRules } from '../src/card.js';
 import { UiButtonGroup, rules as groupRules } from '../src/group.js';
 import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { UiDialog } from '../src/dialog.js';
@@ -1352,6 +1352,8 @@ describe('the references components write', () => {
         // The rules the group adopts into the tree its buttons are in, as the table's are.
         groupRules,
         UiCard.styles,
+        // The rules the card adopts into the tree its link is in, as the table's are.
+        cardRules,
         UiCheckbox.styles,
         UiDialog.styles,
         UiIcon.styles,

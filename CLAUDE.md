@@ -272,6 +272,14 @@ explains. This file restates none of them.
   default shadow writes one colour that all but vanishes on a dark page, so the derived boundary is
   what both schemes have; the missing role is the same rule `ui-button` states from the other
   side — there is no card element to delegate to, so what a card _means_ stays the host's.
+- **Why a card opens where it is clicked by a link the host marks, spread over it by rules it
+  adopts, and why a card that holds one is isolated** — the docblocks on `rules` and `UiCard` in
+  `src/card.ts`, and `docs/card.md`'s _Opened where it is clicked_. RFC 0010 chose the stretched
+  link over a click redirected from script, and the link is the host's `<a>` inside what it slots,
+  marked `data-ui-card-link`, where `::slotted()` does not reach, so the rules go into the tree the
+  card is in, as the table's and the group's do. What the card holds that takes a click is lifted
+  over the link at no weight, and only in a card that holds one, which is a stacking context so the
+  lift stays inside it.
 - **Why `ui-radio-group` hand-rolls no roving tabindex** — the docblock on `UiRadioGroup` in
   `src/radio.ts`, and `tests/radio.test.ts`'s _the behaviour, which the platform already had_,
   which measures the APG pattern rather than citing it — in the arrangement the controls are
