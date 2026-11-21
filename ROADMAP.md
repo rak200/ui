@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## `<ui-menu>` hung from the trigger's other edge (#464)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-fifth step: the trailing edge, where
-the host asks.
-
 ## Items that tick, and sections, in `<ui-menu>` (#465)
 
-`menuitemcheckbox` and `menuitemradio` on the host's items, and groups named by a heading.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-sixth step: `menuitemcheckbox` and
+`menuitemradio` on the host's items, and groups named by a heading.
 
 ## A shortcut and a description on `<ui-menu>`'s items (#466)
 

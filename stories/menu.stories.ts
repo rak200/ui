@@ -116,3 +116,25 @@ export const AtTheEdge: StoryObj<MenuArgs> = {
         </div>
     `,
 };
+
+/**
+ * Hung from the trigger's trailing edge with `align="end"`, as a menu at the end of a toolbar is:
+ * the panel ends where its trigger ends, and turns to the leading edge where it would run off the
+ * screen, as the one at the start of the row does here.
+ */
+export const AlignedToTheEnd: StoryObj<MenuArgs> = {
+    render: ({ label }): TemplateResult => html`
+        <div style="display: flex; justify-content: space-between">
+            <ui-menu align="end">
+                <span slot="trigger">${label}</span>
+                <button type="button">A much longer item than the trigger</button>
+                <button type="button">Duplicate</button>
+            </ui-menu>
+            <ui-menu align="end">
+                <span slot="trigger">${label}</span>
+                <button type="button">A much longer item than the trigger</button>
+                <button type="button">Duplicate</button>
+            </ui-menu>
+        </div>
+    `,
+};
