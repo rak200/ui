@@ -1873,6 +1873,14 @@ describe('a description for each choice', () => {
         expect(getComputedStyle(description).fontSize).toBe('13px');
     });
 
+    it('spaces a description from its text by a quarter of the space', async () => {
+        const form = await mount(described());
+
+        group(form).style.setProperty('--ui-space', '16px');
+
+        expect(getComputedStyle(labelOf(radio(form))).rowGap).toBe('4px');
+    });
+
     it('gives each description an id of its own, which its own control names', async () => {
         const form = await mount(described());
         const [free, pro] = controls(form);
@@ -1973,6 +1981,27 @@ describe('drawn as cards', () => {
             '1px',
             resolved('--ui-color-border'),
         ]);
+    });
+
+    it('spaces the description in a card from its text by a quarter of the space', async () => {
+        const form = await mount(described('variant="cards"'));
+
+        group(form).style.setProperty('--ui-space', '20px');
+
+        expect(getComputedStyle(cards(form)[0] ?? document.body).rowGap).toBe('5px');
+    });
+
+    it("eases a card's fill and edge over a state's step, each its own time and curve", async () => {
+        const form = await mount(described('variant="cards"'));
+
+        group(form).style.setProperty('--ui-duration-state', '123ms');
+        group(form).style.setProperty('--ui-easing-state', 'steps(3)');
+
+        const option = getComputedStyle(cards(form)[0] ?? document.body);
+
+        expect(option.transitionProperty).toBe('background-color, border-color');
+        expect(option.transitionDuration).toBe('0.123s, 0.123s');
+        expect(option.transitionTimingFunction).toBe('steps(3), steps(3)');
     });
 
     it('joins the cards in a column, each edge they share drawn once and the corners they share squared', async () => {
