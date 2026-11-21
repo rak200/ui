@@ -13,6 +13,7 @@ import '@rak200/ui';
 - [`<ui-card>`](#ui-card)
 - [Slots](#slots)
 - [It is not a button](#it-is-not-a-button)
+- [Opened where it is clicked](#opened-where-it-is-clicked)
 - [It claims no role](#it-claims-no-role)
 - [A row of cards](#a-row-of-cards)
 - [Taking a card away](#taking-a-card-away)
@@ -66,8 +67,50 @@ Put the interactive element **inside**, over the part that is actually the targe
 </ui-card>
 ```
 
-If the whole card must be clickable, that is one link wrapping the content — yours to write, and
-yours to give an accessible name that says where it goes.
+**Where the whole card must open the link, mark it**, and the card spreads it over itself:
+[Opened where it is clicked](#opened-where-it-is-clicked). A link wrapping the whole card would open
+it too, at the cost of a name that is the whole card's text.
+
+## Opened where it is clicked
+
+```html
+<ui-card>
+  <h3 slot="header"><a href="/plans/monthly" data-ui-card-link>Monthly plan</a></h3>
+  <p>Everything in the free tier, plus priority support.</p>
+  <div slot="footer"><ui-button variant="secondary">Compare plans</ui-button></div>
+</ui-card>
+```
+
+**The link you mark `data-ui-card-link` covers the card**, its boundary and its corner too, so a
+click anywhere on the card follows it. What the pointer is over is the link, so a middle click, a
+new tab, the link's menu and the address shown as the pointer rests are all the link's. It stays one
+stop for the keys, read by its own text rather than by the whole card's, and a focus on it raises the
+card as a focus on anything the card holds does. The text under it cannot be selected: dragging across
+it drags the link. Mark one link in a card.
+
+**A control in the card takes its own click**, lifted over the link: a link of its own, a
+`<button>`, a field, a `<select>`, a `<textarea>`, a `<label>`, a `<summary>`, an `<iframe>`, a
+`<video>` or an `<audio>` with its controls, anything with a `tabindex` or editable, and
+`<ui-button>`, `<ui-checkbox>`, `<ui-switch>`, `<ui-input>`, `<ui-textarea>`, `<ui-select>`,
+`<ui-radio-group>` and `<ui-menu>`. Each is lifted by `position: relative` and a `z-index`, at no
+weight, so a `position` you gave it stands. A control of your own that is none of these takes
+`position: relative; z-index: 1` from you.
+
+**The cover is laid out against the card**, which is the box positioned nearest above the link: a
+heading or a wrapper round the link that you position takes its place, and the cover covers that
+alone.
+
+**A card that holds a link is a stacking context of its own**, so what it lifts over the link stays
+inside it and does not rise over what follows the card. A dropdown in such a card that is no popover
+stays under what follows it as well; `<ui-menu>` is a popover, and rises over everything.
+
+**The ring the browser draws at the link's focus is the link's.** Chromium and Firefox draw it round
+the link's text; WebKit draws it round the whole card, which the link covers, with square corners.
+
+**The rules are adopted into the tree the card is in**, as [`<ui-table>`](table.md)'s are: the link
+is yours, inside what you slot, where the card's own stylesheet does not reach, since `::slotted()`
+matches what a slot was given and nothing below it. A card in another component's shadow root adopts
+them there, and every rule names a card, so a link you mark outside one is left as it is.
 
 ## It claims no role
 
@@ -241,7 +284,7 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | what it does to the page behind      | `--ui-backdrop-raised`, nothing unless set                              |
 | text                                 | `--ui-color-text`                                                       |
 | boundary                             | `--ui-color-border-raised`, the boundary's mix unless set               |
-| corner                               | `--ui-radius`                                                           |
+| corner, and the link's cover         | `--ui-radius`                                                           |
 | lift                                 | `--ui-elevation-raised`, lit in the accent if written in `currentColor` |
 | font                                 | `--ui-font`                                                             |
 
@@ -267,4 +310,5 @@ ui-card {
 ```
 
 `::part()` is not exposed. There is nothing in the shadow root to aim it at — the regions are your
-own elements, in your own tree, so they are styleable directly.
+own elements, in your own tree, so they are styleable directly. So is the link's cover, as
+`[data-ui-card-link]::after`.

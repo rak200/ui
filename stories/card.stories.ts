@@ -107,7 +107,7 @@ export const Row: StoryObj<CardArgs> = {
 };
 
 /**
- * A card that is a link, which is how a clickable card is written.
+ * A card that carries a link, the target where the link is.
  *
  * `<ui-card>` grows no `clickable` attribute: the first thing one would have to do is
  * reimplement keyboard activation, the accessible name and the focus ring that an `<a>`
@@ -120,6 +120,22 @@ export const WithLink: StoryObj<CardArgs> = {
                 <a href="#monthly">${heading}</a>
             </h3>
             <p style="margin: 0">${body}</p>
+        </ui-card>
+    `,
+};
+
+/**
+ * A card that opens where it is clicked: its link, marked `data-ui-card-link`, is spread over the
+ * card, and the button in the footer is lifted over the link, so it takes its own click.
+ */
+export const OpensWhereItIsClicked: StoryObj<CardArgs> = {
+    render: ({ heading, body }): TemplateResult => html`
+        <ui-card style="max-inline-size: 24rem">
+            <h3 slot="header" style="margin: 0">
+                <a href="#monthly" data-ui-card-link>${heading}</a>
+            </h3>
+            <p style="margin: 0">${body}</p>
+            <div slot="footer"><ui-button variant="secondary">Compare</ui-button></div>
         </ui-card>
     `,
 };
