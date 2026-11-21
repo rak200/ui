@@ -191,8 +191,9 @@ explains. This file restates none of them.
 - **Why no component here brings a state machine, and what would change that** —
   [ARCHITECTURE.md](ARCHITECTURE.md), _Behaviour is delegated_, which carries the whole of it.
   `src/dialog.ts` has only its own half beside the lines it explains: why `showModal()` and never
-  the `open` attribute, why the accessible name is a copied string rather than an IDREF, and why a
-  button's command reaches it only by a name of its own.
+  the `open` attribute, why the accessible name is a copied string rather than an IDREF, why a
+  button's command reaches it only by a name of its own, and why its form closes it a task after the
+  `submit`.
 - **Why a relationship needs one tree scope, and which of the two arrangements a component
   takes** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, which also
   records why the rule used to be stated as _light-DOM only_, what that read too broadly, and what
