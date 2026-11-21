@@ -278,6 +278,18 @@ export class UiButton extends LitElement {
     /** Takes part in the form it sits in. */
     static readonly formAssociated = true;
 
+    /**
+     * Focus is delegated, so `focus()` on the element lands on its button, and a `tabindex` on
+     * the element decides that button's stop, which a toolbar's roving tabindex is written in.
+     * Measured for RFC 0010 in the three engines: without it, `focus()` landed on the element,
+     * where <kbd>Enter</kbd> and <kbd>Space</kbd> press nothing, and `tabindex="0"` made two stops
+     * of one button. An element with no `tabindex` keeps the one stop it had.
+     */
+    static override readonly shadowRootOptions = {
+        ...LitElement.shadowRootOptions,
+        delegatesFocus: true,
+    };
+
     /** The properties Lit observes on this element. */
     static override readonly properties = {
         variant: { type: String, reflect: true },

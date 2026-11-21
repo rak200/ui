@@ -28,6 +28,7 @@ import { kinds, type Taste } from '../src/motion.js';
 import { glass, matrix, themeStyleSheet } from '../src/theme.js';
 import { UiButton } from '../src/button.js';
 import { UiCard } from '../src/card.js';
+import { UiButtonGroup, rules as groupRules } from '../src/group.js';
 import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { UiDialog } from '../src/dialog.js';
 import { UiIcon } from '../src/icon.js';
@@ -1347,6 +1348,9 @@ describe('the references components write', () => {
     // hand-write a fallback, which is exactly what this block exists to stop.
     const styles = [
         UiButton.styles,
+        UiButtonGroup.styles,
+        // The rules the group adopts into the tree its buttons are in, as the table's are.
+        groupRules,
         UiCard.styles,
         UiCheckbox.styles,
         UiDialog.styles,

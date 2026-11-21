@@ -32,6 +32,7 @@ src/
 ├── diagnose.ts      # diagnose() — the diagnose.js entry, what a page is told when it asks
 ├── dialog.ts        # <ui-dialog> — a modal, and the scroll lock the platform leaves out
 ├── effects.ts       # the effects a component draws — internal, one sheet for each kind: a button's, a field's
+├── group.ts         # <ui-button-group> — buttons joined from outside, and a toolbar's one tab stop
 ├── held.ts          # a focus a surface holds — internal, the mark a card's sheet draws its focus from
 ├── icon.ts          # <ui-icon> — the wrapper, and the registry a plain page writes into
 ├── icons/           # 2048 generated glyph modules, plus all.ts and the ISC notice
@@ -71,6 +72,7 @@ tests/               # mirrors src/, one test file per unit
 ├── diagnose.test.ts
 ├── dialog.test.ts
 ├── effects.test.ts
+├── group.test.ts
 ├── held.test.ts
 ├── icon.test.ts
 ├── input.test.ts
@@ -111,6 +113,7 @@ stories/             # mirrors src/ too — what the playground shows
 ├── card.stories.ts
 ├── checkbox.stories.ts
 ├── dialog.stories.ts
+├── group.stories.ts
 ├── icon.stories.ts
 ├── input.stories.ts
 ├── menu.stories.ts
@@ -383,6 +386,14 @@ explains. This file restates none of them.
   resolvers** — an alias matches by prefix, so a lone `@rak200/ui` entry rewrites
   `@rak200/ui/icons/x.js` into `src/index.ts/icons/x.js`. The specific entries come first in
   `.storybook/main.ts`, `vitest.config.js`, `tsconfig.json` and `tests/workbench/vite.config.ts`.
+- **Why `ui-button-group` squares its buttons' corners from the host's tree, and why `ui-button`
+  delegates its focus** — the docblocks on `rules` and `UiButtonGroup` in `src/group.ts` and on
+  `shadowRootOptions` in `src/button.ts`, and `docs/group.md`. `::slotted()` takes no `::part()`
+  after it, so the rules are adopted into the tree the buttons are in, as the table's are; and a
+  toolbar's roving tabindex lands on the buttons' elements, which only a host that delegates its
+  focus turns into its button's stop, measured for RFC 0010. The group is a role its root draws
+  round the slotted buttons, named by a copied string, since containment crosses a root where a
+  reference does not.
 - **Why `ui-table` adopts a stylesheet into the host's tree instead of styling with
   `::slotted()`** — the docblock on `rules` in `src/table.ts`, and `docs/table.md`'s _Where the
   styles actually live_. `::slotted()` matches the top level of what a slot was given and nothing
