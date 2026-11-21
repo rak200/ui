@@ -173,7 +173,8 @@ function idle(then: () => void): void {
  * the top layer, the inert background, the focus trap, <kbd>Esc</kbd> and — the half
  * everyone forgets — **focus returning to whatever opened it** the platform's job rather
  * than this file's. What is written here is the part the platform leaves out: the scroll
- * lock, the accessible name across the shadow boundary, and an exit that can be seen.
+ * lock, the accessible name across the shadow boundary, an exit that can be seen, and the close a
+ * form in it asks for, which the platform makes only for a form inside a `<dialog>`.
  *
  * A state machine over a `<div>` would mean giving up the top layer to re-acquire a focus
  * trap the user agent already enforces — see `ARCHITECTURE.md`, *Behaviour is delegated*
@@ -498,6 +499,7 @@ export class UiDialog extends LitElement {
     /** The properties Lit observes on this element. */
     static override readonly properties = {
         open: { type: Boolean, reflect: true },
+        alert: { type: Boolean, reflect: true },
     };
 
     /**
@@ -512,6 +514,15 @@ export class UiDialog extends LitElement {
      * states beside its own.
      */
     open = false;
+
+    /**
+     * Whether the dialog asks for a choice the reader has to make, the APG's alert dialog:
+     * `role="alertdialog"` on the `<dialog>` in its root, which is what a screen reader meets as
+     * the focus goes in. Its name is its title's, as any dialog's is, and the rest of it is a
+     * dialog's: the focus, <kbd>Esc</kbd> and the scroll lock are the same, and it takes no light
+     * dismissal, as none does. Reflected.
+     */
+    alert = false;
 
     /** The real `<dialog>` this component is a shell around. */
     readonly #dialog = build();
@@ -529,7 +540,76 @@ export class UiDialog extends LitElement {
     /** The rain this dialog has drawn, by the colour and the density it was drawn at. */
     readonly #rains = new Map<string, Promise<string>>();
 
-    /** Builds the dialog, and routes Esc and every close through `open`, announcing `ui-close`. */
+    /**
+     * Answers a button aimed at this element by `commandfor`: `--show` opens the dialog and
+     * `--close` closes it, as {@link show} and {@link close} do, so a page opens one with no
+     * script. Every other command is left alone.
+     *
+     * **A command of the element's own, and none of a `<dialog>`'s**: a button aimed at a custom
+     * element fired nothing for `show-modal`, and fired `--show`, in Chromium 153, Firefox 155 and
+     * WebKit 26.5, measured for RFC 0010. The opening is the one `show()` makes, so the focus goes
+     * back to the button the dialog was opened from, as the platform gives it back to whatever had
+     * it. Only a `CommandEvent` is a command: an event of the name a script dispatched carries none.
+     *
+     * **`--close` takes the button's `value`** for {@link returnValue}, as a `<dialog>`'s own
+     * `close` command does, and a button with none leaves it as it was, as there, measured.
+     */
+    readonly #command = (event: Event): void => {
+        if (!(event instanceof CommandEvent)) {
+            return;
+        }
+
+        if (event.command === '--show') {
+            this.show();
+        } else if (event.command === '--close') {
+            this.close(event.source?.getAttribute('value') ?? undefined);
+        }
+    };
+
+    /**
+     * Closes the dialog for a form in it whose method is `dialog`, with the value of the button
+     * that sent it, as the platform closes a `<dialog>` for a form it holds.
+     *
+     * **The platform closes nothing here**: it closes a form's nearest `<dialog>`, and a form
+     * slotted into this element has none, the `<dialog>` being in its root. Measured for RFC 0010,
+     * in Chromium 153, Firefox 155 and WebKit 26.5, the `submit` reached the element with its
+     * button as the submitter, the dialog stayed open and nothing was sent; closed from it with the
+     * button's value, the dialog took the value as its `returnValue`. So the element closes itself:
+     * only for a form whose nearest dialog it is, so a form in a dialog inside it closes that one;
+     * by the method the submission takes, a button's `formmethod` over its form's `method`; and
+     * with the button's `value`, where one with none leaves {@link returnValue} as it was, as
+     * Chromium and WebKit do and the standard asks, measured, where Firefox writes it empty.
+     *
+     * **A task after the event**, once every listener has heard it, as the platform closes a
+     * `<dialog>` once its form's `submit` has been dispatched: one that cancels the submit,
+     * wherever it listens, keeps the dialog open.
+     */
+    readonly #submitted = (event: SubmitEvent): void => {
+        const form = event.target;
+
+        if (!(form instanceof HTMLFormElement) || form.closest('dialog, ui-dialog') !== this) {
+            return;
+        }
+
+        const { submitter } = event;
+
+        if ((submitter?.getAttribute('formmethod')?.toLowerCase() ?? form.method) !== 'dialog') {
+            return;
+        }
+
+        const value = submitter?.getAttribute('value') ?? undefined;
+
+        setTimeout(() => {
+            if (!event.defaultPrevented) {
+                this.close(value);
+            }
+        });
+    };
+
+    /**
+     * Builds the dialog, routes Esc and every close through `open`, announcing `ui-close`, and
+     * answers the commands a button aims at the element and the forms in it.
+     */
     constructor() {
         super();
 
@@ -563,6 +643,9 @@ export class UiDialog extends LitElement {
             this.open = false;
             this.dispatchEvent(new Event('ui-close', { bubbles: true, composed: true }));
         });
+
+        this.addEventListener('command', this.#command);
+        this.addEventListener('submit', this.#submitted);
     }
 
     /** Starts watching the title, so a rewritten one renames the dialog. */
@@ -601,8 +684,18 @@ export class UiDialog extends LitElement {
         this.#label();
     }
 
-    /** Opens or closes the real `<dialog>` when `open` disagrees with it. */
+    /**
+     * Writes the role an alert asks for on the real `<dialog>`, and opens or closes it when `open`
+     * disagrees with it.
+     */
     override updated(): void {
+        // Written on every update, as the role follows `alert` whether or not the dialog moves.
+        if (this.alert) {
+            this.#dialog.setAttribute('role', 'alertdialog');
+        } else {
+            this.#dialog.removeAttribute('role');
+        }
+
         // Compared against the platform's own state rather than against Lit's changed
         // properties, and it has to be: on the first update Lit reports every initialised
         // property as changed, so a dialog that has never been open would run the closing
@@ -634,9 +727,32 @@ export class UiDialog extends LitElement {
         this.open = true;
     }
 
-    /** Closes the dialog, running the exit. Sugar over `open = false`, for the same reason. */
-    close(): void {
+    /**
+     * Closes the dialog, running the exit. Sugar over `open = false`, for the same reason, and
+     * `value`, where given, is the {@link returnValue} it closes with, as a `<dialog>`'s `close()`
+     * takes one.
+     */
+    close(value?: string): void {
+        if (value !== undefined) {
+            this.returnValue = value;
+        }
+
         this.open = false;
+    }
+
+    /**
+     * The value the dialog was last closed with: the `value` of the button that sent a form in it,
+     * or of the one whose `--close` closed it, or one given to {@link close}. The `<dialog>`'s own,
+     * which an opening leaves as it is, and which nothing reflects. Read it as `ui-close` is
+     * announced.
+     */
+    get returnValue(): string {
+        return this.#dialog.returnValue;
+    }
+
+    /** Writes the value the dialog is taken as closed with, as a `<dialog>`'s takes one. */
+    set returnValue(value: string) {
+        this.#dialog.returnValue = value;
     }
 
     /**

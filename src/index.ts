@@ -11,7 +11,7 @@ export { UiOptgroup, UiOption, UiSelect } from './select.js';
 export { UiTable } from './table.js';
 export { glass, matrix, themeStyleSheet, type Taste, type Theme } from './theme.js';
 export { UiToast, UiToaster, type ToastVariant } from './toast.js';
-export { UiTooltip } from './tooltip.js';
+export { UiTooltip, type TooltipSide } from './tooltip.js';
 export {
     tokens,
     derivedTokens,

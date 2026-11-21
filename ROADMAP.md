@@ -3,38 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## A side of its own for `<ui-tooltip>`'s tip (#453)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s fourteenth step: below or beside its
-trigger, and in a passage of another direction by anchored insets read in the tip's own.
-
-## An arrow on `<ui-tooltip>`'s tip (#454)
-
-Pointing at its trigger's middle, drawn as the tip's `::before` and moved by `translate`.
-
-## `<ui-dialog>` opened from markup (#455)
-
-`--show` and `--close`, from any button aimed at it with `commandfor`.
-
-## `<ui-dialog>` closed by its form (#456)
-
-A `<form method="dialog">` in it closes it, with the value of the button that sent it.
-
-## An alert `<ui-dialog>` (#457)
-
-`role="alertdialog"`, for a choice the reader has to make.
-
-## A heading on `<ui-toast>` (#458)
-
-A slot above the message, read with it.
-
-## An action on `<ui-toast>` (#459)
-
-A slot for a button the host writes, on a toast that then never expires.
-
 ## A card that opens where it is clicked (#460)
 
-By the stretched link the card draws, lifting what it holds above it.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-first step: by the stretched link the
+card draws, lifting what it holds above it.
 
 ## Numeric columns on `<ui-table>` (#461)
 

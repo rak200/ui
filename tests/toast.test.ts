@@ -6,7 +6,7 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
+import meta, { Action, Heading, Long, Outcomes, Timed, Toast } from '../stories/toast.stories.js';
 import '../src/toast.js';
 import '../src/card.js';
 // The vendored glyphs the toast's icons are copied from, registered here so the copy can be
@@ -410,6 +410,227 @@ describe('ui-toast', () => {
         await toast(host).updateComplete;
 
         expect(toast(host).getAttribute('variant')).toBe('success');
+    });
+});
+
+/**
+ * A heading, RFC 0010's: a slot above the message, in the toast as the message is, so the region
+ * the variant chooses reads the two together as the toast joins it.
+ */
+describe('a heading', () => {
+    /** A toast of `variant` with a heading written as `tag`, and a message under it. */
+    const headed = (variant = 'info', tag = 'strong'): string => `
+        <ui-toaster>
+            <ui-toast variant="${variant}" duration="0"><${tag} slot="heading">Invoice sent</${tag}>It is on its way to Acme.</ui-toast>
+        </ui-toaster>
+    `;
+
+    /** The message's text as laid out: the toast's last child, a text node. */
+    function message(host: ParentNode): DOMRect {
+        const text = toast(host).lastChild;
+
+        if (!(text instanceof Text)) {
+            throw new Error('the message is no text');
+        }
+
+        const range = document.createRange();
+
+        range.selectNodeContents(text);
+
+        return range.getBoundingClientRect();
+    }
+
+    it('draws the heading above the message, on a line of its own, where the message starts', async () => {
+        const host = await mount(headed());
+        const heading = only(host, '[slot=heading]').getBoundingClientRect();
+
+        expect(heading.bottom, 'above it').toBeLessThanOrEqual(message(host).top + 0.5);
+        expect(heading.left, 'from the same start').toBeCloseTo(message(host).left, 0);
+    });
+
+    it("resets the heading element's own margin, and leaves it the weight of its element", async () => {
+        const host = await mount(headed('info', 'h3'));
+        const { marginBlockStart, marginBlockEnd, fontWeight } = getComputedStyle(
+            only(host, '[slot=heading]'),
+        );
+
+        expect([marginBlockStart, marginBlockEnd]).toEqual(['0px', '0px']);
+        expect(fontWeight, 'a heading is bold by its element').toBe('700');
+    });
+
+    it("yields to a host's own rule for the heading, as slotted content does", async () => {
+        const host = await mount(
+            `<style>.spaced [slot='heading'] { margin-block-end: 3px; }</style><div class="spaced">${headed()}</div>`,
+        );
+
+        expect(getComputedStyle(only(host, '[slot=heading]')).marginBlockEnd).toBe('3px');
+    });
+
+    it.each([
+        ['info', 'polite'],
+        ['danger', 'assertive'],
+    ] as const)(
+        "is in the toast before the message, so the %s toast's %s region reads them as one",
+        async (variant, region) => {
+            const host = await mount(headed(variant));
+            const heading = only(host, '[slot=heading]');
+            const slots = [
+                ...(toast(host).shadowRoot?.querySelectorAll('[part=message] slot') ?? []),
+            ];
+
+            expect(heading.parentElement, 'the toast holds it').toBe(toast(host));
+            expect(toast(host).assignedSlot?.parentElement?.getAttribute('aria-live')).toBe(region);
+            expect(
+                slots.map((slot) => slot.getAttribute('name')),
+                'the heading first, in the message',
+            ).toEqual(['heading', null]);
+            expect(heading.assignedSlot, 'drawn in its slot').toBe(slots[0]);
+        },
+    );
+
+    it('draws a toast with no heading as it was, the slot taking no room', async () => {
+        const host = await mount(fixture);
+        const part = toast(host).shadowRoot?.querySelector('[part=message]');
+        const text = toast(host).firstChild;
+
+        if (!(part instanceof HTMLElement) || !(text instanceof Text)) {
+            throw new Error('no message in the toast');
+        }
+
+        const range = document.createRange();
+
+        range.selectNodeContents(text);
+
+        expect(part.getBoundingClientRect().top, 'the message at the top').toBeCloseTo(
+            range.getBoundingClientRect().top,
+            0,
+        );
+    });
+
+    it.each(['info', 'danger'] as const)(
+        'meets the bar with a heading, a %s toast',
+        async (variant) => {
+            await expectAccessible(await mount(headed(variant)));
+        },
+    );
+});
+
+/**
+ * An action, RFC 0010's: a slot for a button the host writes. A keyboard reader comes to the toaster
+ * after the whole page, so a toast holding one never expires, as an error never does.
+ */
+describe('an action', () => {
+    /** A toast with a clock of `duration`, holding an action unless asked not to. */
+    const acting = (duration = brief, action = true): string => `
+        <ui-toaster>
+            <ui-toast duration="${String(duration)}">Invoice deleted.${action ? '<button slot="action" type="button" id="undo">Undo</button>' : ''}</ui-toast>
+        </ui-toaster>
+    `;
+
+    /** One of the toast's own parts, by name. */
+    function part(host: ParentNode, name: string): HTMLElement {
+        const found = toast(host).shadowRoot?.querySelector(`[part=${name}]`);
+
+        if (!(found instanceof HTMLElement)) {
+            throw new Error(`no ${name} in the toast`);
+        }
+
+        return found;
+    }
+
+    it('draws the action in its slot, between the message and the dismiss button', async () => {
+        const host = await mount(acting(0));
+        const action = only(host, '#undo');
+
+        expect(action.assignedSlot?.getAttribute('name')).toBe('action');
+        expect(action.getBoundingClientRect().left, 'after the message').toBeGreaterThanOrEqual(
+            part(host, 'message').getBoundingClientRect().right,
+        );
+        expect(
+            action.getBoundingClientRect().right,
+            'before the dismiss button',
+        ).toBeLessThanOrEqual(part(host, 'dismiss').getBoundingClientRect().left);
+    });
+
+    it('stays until it is dismissed, its clock never running', async () => {
+        const host = await mount(acting());
+
+        await wait(settled);
+
+        expect(toast(host).isConnected).toBe(true);
+    });
+
+    it('draws no time left on a toast holding one', async () => {
+        const host = await mount(acting(9000));
+
+        expect([
+            toast(host).matches(':state(timed)'),
+            toast(host).style.getPropertyValue('--ui-fx-dwell'),
+        ]).toEqual([false, '']);
+    });
+
+    it('expires as it did without one', async () => {
+        const host = await mount(acting(brief, false));
+        const element = toast(host);
+
+        await dismissed(element);
+
+        expect(element.isConnected).toBe(false);
+    });
+
+    it('is reached by Tab in the toaster, and Escape from it still dismisses the toast', async () => {
+        const host = await mount(`<button type="button" id="before">Before</button>${acting(0)}`);
+        const element = toast(host);
+
+        only(host, '#before').focus();
+        await userEvent.tab();
+
+        expect(document.activeElement, 'the action, next').toBe(only(host, '#undo'));
+
+        const announced = dismissed(element);
+
+        await userEvent.keyboard('{Escape}');
+        await announced;
+
+        expect(element.isConnected).toBe(false);
+    });
+
+    it('stops its clock for an action that comes after it, and starts it again once that goes', async () => {
+        const host = await mount(acting(brief, false));
+        const element = toast(host);
+        const button = Object.assign(document.createElement('button'), {
+            slot: 'action',
+            type: 'button',
+            textContent: 'Undo',
+        });
+
+        element.append(button);
+        await wait(settled);
+
+        expect(element.isConnected, 'held by the action').toBe(true);
+        expect(element.matches(':state(timed)'), 'no time left drawn').toBe(false);
+
+        const announced = dismissed(element);
+
+        button.remove();
+        await announced;
+
+        expect(element.isConnected, 'gone once the action went').toBe(false);
+    });
+
+    it('keeps its clock held where the reader is in the toast as an action goes', async () => {
+        const host = await mount(acting());
+        const element = toast(host);
+
+        part(host, 'dismiss').focus();
+        only(host, '#undo').remove();
+        await wait(settled);
+
+        expect(element.isConnected).toBe(true);
+    });
+
+    it('meets the bar holding an action', async () => {
+        await expectAccessible(await mount(acting(0)));
     });
 });
 
@@ -1828,6 +2049,8 @@ describe('toast stories', () => {
         ['Outcomes', Outcomes],
         ['Timed', Timed],
         ['Long', Long],
+        ['Heading', Heading],
+        ['Action', Action],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });

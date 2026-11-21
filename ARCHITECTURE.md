@@ -156,15 +156,18 @@ against its trigger through every scroll, with no script — #300 measured both 
 lines of arithmetic used to, in all three engines. That raised the floor to the releases where the
 tooltip's `position-area` works as written, since an engine without the rules shows the overlay at
 the screen's corner rather than near its trigger. **Two things stay script, both small.** The CSS
-writes nowhere which side it took, and `data-side` is what a host selects an arrow or a gap on and
-what the overlays' motion reads, so each component reads the side off the two boxes as it shows and
-on every scroll and resize. And Firefox mirrors an area's inline alignment where an overlay's
-direction is not the page's — Mozilla 2019601 — which put a centred tip off the screen in every form
-measured: the menu is hung by anchored insets, which Firefox does not mirror, and a tip in such an
-island is marked as it shows and hangs from its trigger's leading edge too. A flipped overlay stays
-on the side it flipped to while it still fits, where the script went back to the side it prefers,
-and a panel at the screen's trailing edge hangs from its trigger's other edge rather than being
-pushed inside.
+writes nowhere which side it took, and `data-side` is what a host selects a gap on, what the
+overlays' motion reads and the side a tip's arrow is drawn on, so each component reads the side off
+the two boxes as it shows and on every scroll and resize. The tooltip writes from the same two boxes
+where along the tip its arrow points, the trigger's middle, which CSS cannot point an arrow at from
+inside the tip, and reads them once the frame a scroll came in has been laid out, since Chromium and
+Firefox move an anchored tip after the scroll that moved its trigger. And Firefox mirrors an area's
+inline alignment where an overlay's direction is not the page's — Mozilla 2019601 — which put a
+centred tip off the screen in every form measured: the menu is hung by anchored insets, which
+Firefox does not mirror, and a tip in such an island is marked as it shows and hangs from its
+trigger's leading edge too. A flipped overlay stays on the side it flipped to while it still fits,
+where the script went back to the side it prefers, and a panel at the screen's trailing edge hangs
+from its trigger's other edge rather than being pushed inside.
 
 **Where no element exists, the component says so rather than pretending one does.** `<ui-switch>` is
 a native checkbox carrying `role="switch"` and a drawing, because there is nothing else for it to

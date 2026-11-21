@@ -4,7 +4,14 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { Confirm, Long, Nested } from '../stories/dialog.stories.js';
+import meta, {
+    Alert,
+    ClosedByItsForm,
+    Confirm,
+    Long,
+    Nested,
+    OpenedFromMarkup,
+} from '../stories/dialog.stories.js';
 import '../src/dialog.js';
 import { applyLock, reservedGutter } from '../src/dialog.js';
 import type { UiDialog } from '../src/dialog.js';
@@ -292,6 +299,496 @@ describe('focus', () => {
     it('keeps a visible focus ring, for the dialog the platform focuses itself', () => {
         expect(styleText()).toContain('focus-visible');
         expect(styleText()).toContain('outline:');
+    });
+});
+
+/**
+ * Opened from markup, RFC 0010's: a button aimed at the element by `commandfor`, whose `--show`
+ * and `--close` it answers, so a page opens a dialog with no script.
+ */
+describe('opened from markup', () => {
+    /** A button aimed at the dialog with `opening`, and one inside it with `closing`. */
+    const commanded = (opening = '--show', closing = '--close'): string => `
+        <button type="button" id="opener" commandfor="commanded" command="${opening}">Open</button>
+        <ui-dialog id="commanded">
+            <h2 slot="title">Delete account</h2>
+            <p>This cannot be undone.</p>
+            <button slot="actions" type="button" id="closer" commandfor="commanded" command="${closing}">Cancel</button>
+        </ui-dialog>
+    `;
+
+    /** A button of the fixture's, by its id. */
+    function button(id: string): HTMLButtonElement {
+        const found = document.getElementById(id);
+
+        if (!(found instanceof HTMLButtonElement)) {
+            throw new Error(`no #${id} in the fixture`);
+        }
+
+        return found;
+    }
+
+    /**
+     * Presses a button of the fixture's from the keys, and lets what it asked for land. From the
+     * keys, so a pointer's press leaves no later focus unseen in the page the suite keeps.
+     */
+    async function press(element: UiDialog, id: string): Promise<void> {
+        button(id).focus();
+        await userEvent.keyboard('{Enter}');
+        await element.updateComplete;
+        await still(element);
+    }
+
+    it('opens on --show from a button aimed at it, and closes on --close from one inside it', async () => {
+        const element = await mount(commanded());
+
+        await press(element, 'opener');
+
+        expect([element.open, inner(element).open], 'open').toEqual([true, true]);
+
+        const done = closed(element);
+
+        button('closer').focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect([element.open, inner(element).open], 'closed, by its exit').toEqual([false, false]);
+    });
+
+    it('gives the focus back to the button it was opened from, as close() does', async () => {
+        const element = await mount(commanded());
+
+        await press(element, 'opener');
+
+        expect(document.activeElement, 'the focus went in').toBe(button('closer'));
+
+        const done = closed(element);
+
+        button('closer').focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect(document.activeElement).toBe(button('opener'));
+    });
+
+    it.each(['show-modal', 'toggle-popover', '--toggle', '--open'])(
+        'stays closed for a command it does not take, %s',
+        async (command) => {
+            const element = await mount(commanded(command));
+
+            await press(element, 'opener');
+
+            expect([element.open, inner(element).open]).toEqual([false, false]);
+        },
+    );
+
+    it.each(['close', 'request-close', '--hide', '--show'])(
+        'stays open for a command it does not take from inside it, %s',
+        async (command) => {
+            const element = await mount(commanded('--show', command));
+
+            await press(element, 'opener');
+            await press(element, 'closer');
+
+            expect([element.open, inner(element).open]).toEqual([true, true]);
+        },
+    );
+
+    it('takes no event a script dispatched under the name, and a command a script made', async () => {
+        const element = await mount(commanded());
+
+        element.dispatchEvent(Object.assign(new Event('command'), { command: '--show' }));
+        await element.updateComplete;
+
+        expect(element.open, 'no command in an event of the name').toBe(false);
+
+        element.dispatchEvent(new CommandEvent('command', { command: '--show' }));
+        await element.updateComplete;
+
+        expect(element.open, 'a command, whoever made it').toBe(true);
+
+        // Made with no button behind it, so no value to take: closed all the same, the value as
+        // it was.
+        element.returnValue = 'before';
+
+        const done = closed(element);
+
+        element.dispatchEvent(new CommandEvent('command', { command: '--close' }));
+        await done;
+
+        expect([element.open, element.returnValue], 'closed by one with no button').toEqual([
+            false,
+            'before',
+        ]);
+    });
+
+    it('meets the bar closed and open, the buttons aimed at it', async () => {
+        const element = await mount(commanded());
+        const page = document.body;
+
+        await expectAccessible(page);
+        await press(element, 'opener');
+        await expectAccessible(page);
+    });
+
+    it.each([
+        ['the value of the button whose --close closed it', 'cancelled', 'cancelled'],
+        ['none where the button has none', null, 'before'],
+    ] as const)(
+        "closes with %s, as the platform's close command does",
+        async (_with, valued, taken) => {
+            const element = await mount(commanded());
+
+            if (valued !== null) {
+                button('closer').value = valued;
+            }
+
+            element.returnValue = 'before';
+            await press(element, 'opener');
+
+            const done = closed(element);
+
+            button('closer').focus();
+            await userEvent.keyboard('{Enter}');
+            await done;
+
+            expect(element.returnValue).toBe(taken);
+        },
+    );
+});
+
+/**
+ * Closed by its form, RFC 0010's: the platform closes a form's nearest `<dialog>`, which a form
+ * slotted into the element has none of, so the element closes itself for its form's `submit`,
+ * with the value of the button that sent it.
+ */
+describe('closed by its form', () => {
+    /**
+     * A dialog holding a form with `form` as its method and these buttons, and a button in its
+     * actions sending it by `form=`. A form that is sent anywhere is sent into the frame beside
+     * it, so the page stays where it is.
+     */
+    const formed = (
+        method = 'method="dialog"',
+        buttons = '<button id="kept" value="kept">Keep</button><button id="bare">Bare</button>',
+    ): string => `
+        <iframe name="sink" hidden></iframe>
+        <ui-dialog>
+            <h2 slot="title">Delete account</h2>
+            <form id="choice" ${method} action="about:blank" target="sink">
+                <p>This cannot be undone.</p>
+                ${buttons}
+            </form>
+            <button slot="actions" id="sent" form="choice" value="delete">Delete</button>
+        </ui-dialog>
+    `;
+
+    /** A control of the fixture's, by its id. */
+    function control(id: string): HTMLElement {
+        const found = document.getElementById(id);
+
+        if (found === null) {
+            throw new Error(`no #${id} in the fixture`);
+        }
+
+        return found;
+    }
+
+    /** Sends the form from one of its buttons, by the keys, once the dialog is open. */
+    async function send(id: string): Promise<void> {
+        control(id).focus();
+        await userEvent.keyboard('{Enter}');
+    }
+
+    /** Waits past the task the element closes in, and anything it asked of the dialog. */
+    async function settled(element: UiDialog): Promise<void> {
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        await element.updateComplete;
+        await still(element);
+    }
+
+    it.each([
+        ['a button in it', 'kept', 'kept'],
+        ['a button in its actions, by form=', 'sent', 'delete'],
+    ] as const)(
+        "closes for a form whose method is dialog, sent by %s, with that button's value",
+        async (_by, id, value) => {
+            const element = await mount(formed());
+
+            await open(element);
+
+            const done = closed(element);
+
+            await send(id);
+            await done;
+
+            expect([element.open, inner(element).open], 'closed').toEqual([false, false]);
+            expect(element.returnValue).toBe(value);
+        },
+    );
+
+    it('leaves returnValue as it was for a button with no value, as the standard asks', async () => {
+        const element = await mount(formed());
+
+        element.returnValue = 'before';
+        await open(element);
+
+        const done = closed(element);
+
+        await send('bare');
+        await done;
+
+        expect(element.returnValue).toBe('before');
+    });
+
+    it.each([
+        ['on the form', (): EventTarget => control('choice')],
+        ['on the document, which hears it after the element', (): EventTarget => document],
+    ] as const)('stays open where a listener %s cancels the submit', async (_where, target) => {
+        const element = await mount(formed());
+        const where = target();
+        const cancel = (event: Event): void => {
+            event.preventDefault();
+        };
+
+        where.addEventListener('submit', cancel);
+        onTestFinished(() => {
+            where.removeEventListener('submit', cancel);
+        });
+        await open(element);
+        await send('kept');
+        await settled(element);
+
+        expect([element.open, inner(element).open]).toEqual([true, true]);
+        expect(element.returnValue, 'nothing taken').toBe('');
+    });
+
+    it.each(['method="get"', 'method="post"', ''])(
+        'leaves a form with another method alone: %j',
+        async (method) => {
+            const element = await mount(formed(method));
+
+            await open(element);
+            await send('kept');
+            await settled(element);
+
+            expect([element.open, inner(element).open]).toEqual([true, true]);
+        },
+    );
+
+    it.each([
+        [
+            'closes for a button whose formmethod is dialog, in a form sent anywhere',
+            'method="get"',
+            'formmethod="Dialog"',
+            false,
+        ],
+        [
+            'stays open for a button whose formmethod is get, in a dialog form',
+            'method="dialog"',
+            'formmethod="get"',
+            true,
+        ],
+    ] as const)('%s', async (_case, method, override, staying) => {
+        const element = await mount(
+            formed(method, `<button id="overridden" ${override} value="overridden">Send</button>`),
+        );
+
+        await open(element);
+        await send('overridden');
+        await settled(element);
+
+        expect(element.open, 'open').toBe(staying);
+        expect(element.returnValue).toBe(staying ? '' : 'overridden');
+    });
+
+    it("closes a dialog inside it for that one's form, and leaves itself open", async () => {
+        const outer = await mount(`
+            <ui-dialog id="outer">
+                <h2 slot="title">Edit workspace</h2>
+                <ui-dialog id="nested">
+                    <h2 slot="title">Delete workspace</h2>
+                    <form method="dialog"><button id="kept" value="kept">Keep it</button></form>
+                </ui-dialog>
+            </ui-dialog>
+        `);
+        const nested = outer.querySelector('ui-dialog');
+
+        if (nested === null) {
+            throw new Error('no dialog inside the dialog');
+        }
+
+        await open(outer);
+        await open(nested);
+
+        const done = closed(nested);
+
+        await send('kept');
+        await done;
+        await settled(outer);
+
+        expect([nested.open, outer.open], 'the one inside closed, the one round it open').toEqual([
+            false,
+            true,
+        ]);
+        expect([nested.returnValue, outer.returnValue]).toEqual(['kept', '']);
+    });
+
+    it('closes for a form sent with no button, by requestSubmit(), its value left as it was', async () => {
+        const element = await mount(formed());
+        const form = control('choice');
+
+        if (!(form instanceof HTMLFormElement)) {
+            throw new Error('no form in the fixture');
+        }
+
+        element.returnValue = 'before';
+        await open(element);
+
+        const done = closed(element);
+
+        form.requestSubmit();
+        await done;
+
+        expect([element.open, element.returnValue]).toEqual([false, 'before']);
+    });
+
+    it('takes no submit dispatched at something that is not a form', async () => {
+        const element = await mount(
+            formed(
+                'method="dialog"',
+                '<button id="kept" formmethod="dialog" value="kept">Keep</button>',
+            ),
+        );
+
+        const paragraph = element.querySelector('p');
+
+        if (paragraph === null) {
+            throw new Error('no paragraph in the fixture');
+        }
+
+        await open(element);
+        paragraph.dispatchEvent(
+            new SubmitEvent('submit', { bubbles: true, submitter: control('kept') }),
+        );
+        await settled(element);
+
+        expect(element.open).toBe(true);
+    });
+
+    it('closes with a value close() is given, and keeps it through a close given none', async () => {
+        const element = await mount(formed());
+
+        await open(element);
+
+        let done = closed(element);
+
+        element.close('given');
+        await done;
+
+        expect([element.returnValue, inner(element).returnValue], 'given').toEqual([
+            'given',
+            'given',
+        ]);
+
+        await open(element);
+        done = closed(element);
+        element.close();
+        await done;
+
+        expect(element.returnValue, 'kept').toBe('given');
+
+        element.returnValue = 'written';
+
+        expect(inner(element).returnValue, 'written to the dialog').toBe('written');
+    });
+
+    it('meets the bar open and closed, its form in it', async () => {
+        const element = await mount(formed());
+
+        await expectAccessible(document.body);
+        await open(element);
+        await expectAccessible(document.body);
+    });
+});
+
+/**
+ * An alert, RFC 0010's: the APG's alert dialog, for a choice the reader has to make, which is
+ * `role="alertdialog"` on the dialog in the root and a dialog in every other way.
+ */
+describe('an alert', () => {
+    /** The behavioural fixture, asked to be an alert. */
+    const alerting = fixture.replace('<ui-dialog>', '<ui-dialog alert>');
+
+    it('is no alert until asked, and reflects the asking', async () => {
+        const element = await mount(fixture);
+
+        expect([element.alert, inner(element).hasAttribute('role')], 'a dialog').toEqual([
+            false,
+            false,
+        ]);
+
+        element.alert = true;
+        await element.updateComplete;
+
+        expect(element.hasAttribute('alert'), 'reflected').toBe(true);
+        expect(inner(element).getAttribute('role')).toBe('alertdialog');
+    });
+
+    it('gives its dialog the role, named by its title as any dialog is, and takes it back', async () => {
+        const element = await mount(alerting);
+
+        expect(element.alert, 'from the attribute').toBe(true);
+        expect([
+            inner(element).getAttribute('role'),
+            inner(element).getAttribute('aria-label'),
+        ]).toEqual(['alertdialog', 'Delete account']);
+
+        element.removeAttribute('alert');
+        await element.updateComplete;
+
+        expect(inner(element).hasAttribute('role'), 'a dialog again').toBe(false);
+    });
+
+    it('keeps its role while it opens and closes', async () => {
+        const element = await mount(alerting);
+
+        await open(element);
+
+        expect(inner(element).getAttribute('role'), 'open').toBe('alertdialog');
+
+        await close(element);
+
+        expect(inner(element).getAttribute('role'), 'closed').toBe('alertdialog');
+    });
+
+    it('takes the focus in, holds the page and goes on Escape, as a dialog does', async () => {
+        const element = await mount(alerting);
+
+        await open(element);
+
+        expect(document.activeElement?.id, 'the focus went in').toBe('confirm');
+        expect(document.documentElement.style.overflow, 'the page held').toBe('hidden');
+
+        const done = closed(element);
+
+        await userEvent.keyboard('{Escape}');
+        await done;
+
+        expect(
+            [element.open, document.documentElement.style.overflow],
+            'gone, the page given back',
+        ).toEqual([false, '']);
+    });
+
+    it('meets the bar closed and open', async () => {
+        const element = await mount(alerting);
+
+        await expectAccessible(document.body);
+        await open(element);
+        await expectAccessible(document.body);
     });
 });
 
@@ -1542,6 +2039,9 @@ describe('ui-dialog stories', () => {
         ['Confirm', Confirm],
         ['Long', Long],
         ['Nested', Nested],
+        ['OpenedFromMarkup', OpenedFromMarkup],
+        ['ClosedByItsForm', ClosedByItsForm],
+        ['Alert', Alert],
     ] as const)('%s renders a real dialog and meets the bar', async (name, story) => {
         const container = await mountStory(story, meta, name);
         const element = only(container);
@@ -1550,5 +2050,50 @@ describe('ui-dialog stories', () => {
 
         await open(element);
         await expectAccessible(container);
+    });
+
+    it('closes ClosedByItsForm by its form, with the value of the button that sent it', async () => {
+        const container = await mountStory(ClosedByItsForm, meta, 'ClosedByItsForm');
+        const element = only(container);
+        const sender = container.querySelector<HTMLButtonElement>('button[value="delete"]');
+
+        if (sender === null) {
+            throw new Error('the story rendered no button to send its form');
+        }
+
+        await open(element);
+
+        const done = closed(element);
+
+        sender.focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect([element.open, element.returnValue]).toEqual([false, 'delete']);
+    });
+
+    it('opens OpenedFromMarkup from its button, and closes it from one inside, with no script', async () => {
+        const container = await mountStory(OpenedFromMarkup, meta, 'OpenedFromMarkup');
+        const element = only(container);
+        const [opener, cancel] = container.querySelectorAll('button');
+
+        if (opener === undefined || cancel === undefined) {
+            throw new Error('the story rendered no buttons');
+        }
+
+        opener.focus();
+        await userEvent.keyboard('{Enter}');
+        await element.updateComplete;
+        await still(element);
+
+        expect(element.open, 'open').toBe(true);
+
+        const done = closed(element);
+
+        cancel.focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect(element.open, 'closed').toBe(false);
     });
 });

@@ -13,7 +13,11 @@ import '@rak200/ui';
 - [`<ui-dialog>`](#ui-dialog)
 - [Slots](#slots)
 - [`open`](#open)
+- [`alert`](#alert)
 - [`show()` and `close()`](#show-and-close)
+- [Opened from markup](#opened-from-markup)
+- [Closed by its form](#closed-by-its-form)
+- [`returnValue`](#returnvalue)
 - [The `ui-close` event](#the-ui-close-event)
 - [What the platform does, and what this element adds](#what-the-platform-does-and-what-this-element-adds)
 - [The accessible name](#the-accessible-name)
@@ -60,13 +64,33 @@ Whether the dialog is showing. Reflected, so a host stylesheet can select on it 
 it back.
 
 **It is the single source of truth, and the only one.** The attribute, the property, the methods
-below and <kbd>Esc</kbd> all move this one value, so there is no second path that can disagree with
-it. Setting it to `false` runs the [exit](#motion) and closes when that has finished.
+below, a button's [command](#opened-from-markup) and <kbd>Esc</kbd> all move this one value, so there
+is no second path that can disagree with it. Setting it to `false` runs the [exit](#motion) and closes when that has finished.
 
 A dialog that is dismissed sets `open` back to `false` itself and
 [announces it](#the-ui-close-event). A host that binds `open` from its own state should listen for
 that event and follow it, the same way a `<details>` or a native `<dialog>` is followed — otherwise
 the next render puts the dialog straight back up.
+
+## `alert`
+
+```html
+<ui-dialog alert>
+  <h2 slot="title">Delete account</h2>
+  <p>This cannot be undone.</p>
+  <ui-button slot="actions" variant="secondary">Cancel</ui-button>
+  <ui-button slot="actions" variant="danger">Delete</ui-button>
+</ui-dialog>
+```
+
+**For a choice the reader has to make**, the APG's alert dialog: `alert` gives the `<dialog>` in
+the element's root `role="alertdialog"`, which is what a screen reader meets as the focus goes in,
+so it can say the dialog is an alert rather than a dialog. Reflected.
+
+**It is a dialog in every other way.** Its name is its title's, as any dialog's is; the focus goes
+in and comes back as a dialog's does, <kbd>Esc</kbd> dismisses it, as the APG lets an alert dialog
+be dismissed, and the page is held behind it. It takes no light dismissal, as no dialog here does.
+What a screen reader says of it is measured by a person, on `tests/manual/dialog-alert.html`.
 
 ## `show()` and `close()`
 
@@ -75,11 +99,85 @@ document.querySelector('ui-dialog').show();
 ```
 
 Sugar over `open = true` and `open = false`. They are deliberately not a second way in: a method
-that opened by its own route would produce a state the attribute does not describe.
+that opened by its own route would produce a state the attribute does not describe. `close(value)`
+takes a value, as a `<dialog>`'s does, which is the dialog's [`returnValue`](#returnvalue) once it
+closes; `close()` leaves that as it was.
 
 `show()` is named for the pair it forms with `close()`. It is always modal — there is no
 non-modal mode, because the `open` attribute on a bare `<dialog>` is exactly the thing that looks
 modal and traps nobody.
+
+## Opened from markup
+
+```html
+<button type="button" commandfor="delete-account" command="--show">Delete account</button>
+
+<ui-dialog id="delete-account">
+  <h2 slot="title">Delete account</h2>
+  <p>This cannot be undone.</p>
+  <button slot="actions" type="button" commandfor="delete-account" command="--close">Cancel</button>
+</ui-dialog>
+```
+
+**A button aimed at the dialog by `commandfor` opens and closes it, with no script.**
+`command="--show"` opens it as `show()` does, and `command="--close"` closes it as `close()` does,
+its exit and all, with the button's `value` as its [`returnValue`](#returnvalue), as a `<dialog>`'s
+own `close` command takes one; any other command is left alone. The platform hands any element a command as a
+`command` event, and a `<dialog>`'s own, `show-modal` and `close`, reach no custom element, in
+Chromium 153, Firefox 155 and WebKit 26.5 alike, so these two are the element's own. Only a
+`CommandEvent` is a command, so an event of the name a script dispatches opens nothing.
+
+**The focus goes back where `close()` sends it**: to whatever had it as the dialog opened, which is
+the button wherever pressing it focuses it, from the keys in every engine.
+
+**The button is a `<button>` of yours.** `commandfor` names the dialog by its `id` in the button's
+own tree, and it is a button's attribute, which a `<ui-button>` does not hand the button it draws.
+
+## Closed by its form
+
+```html
+<ui-dialog>
+  <h2 slot="title">Delete account</h2>
+  <form method="dialog" id="choice">
+    <p>This cannot be undone.</p>
+  </form>
+  <button slot="actions" form="choice" value="cancel">Cancel</button>
+  <button slot="actions" form="choice" value="delete">Delete</button>
+</ui-dialog>
+```
+
+**A `<form method="dialog">` in it closes it**, with the `value` of the button that sent it as its
+[`returnValue`](#returnvalue), as a form in a `<dialog>` closes that. The platform closes a form's
+nearest `<dialog>`, and a form slotted into this element has none, since its `<dialog>` is in its
+root: measured in Chromium 153, Firefox 155 and WebKit 26.5, the `submit` reached the element with
+its button as the submitter, and nothing closed or was sent. So the element closes itself:
+
+- **for a form whose nearest dialog it is**, so a form in a dialog inside it closes that one alone;
+- **by the method the submission takes**, a button's `formmethod` over its form's `method`, so a
+  form sent anywhere else is left alone;
+- **once every listener has heard the `submit`**, as the platform closes a `<dialog>` once its
+  form's `submit` has been dispatched, so a listener that cancels it, wherever it listens, keeps the
+  dialog open.
+
+A button with no `value` leaves `returnValue` as it was, as Chromium and WebKit do and the HTML
+standard asks, where Firefox writes it empty. A [`<ui-button>`](button.md#in-a-form) reports no
+submitter, so a form one sends closes the dialog and leaves `returnValue` as it was.
+
+## `returnValue`
+
+```js
+dialog.addEventListener('ui-close', () => {
+  if (dialog.returnValue === 'delete') {
+    // Delete.
+  }
+});
+```
+
+The value the dialog was last closed with: the `value` of the button that sent [its
+form](#closed-by-its-form), or of the button whose [`--close`](#opened-from-markup) closed it, or
+one given to `close(value)`. It is the `<dialog>`'s own, so an opening leaves it as it is, nothing
+reflects it, and a host can write it. It is there to read as [`ui-close`](#the-ui-close-event) is
+announced.
 
 ## The `ui-close` event
 
@@ -227,10 +325,6 @@ scrim is left.
 
 ## Limits
 
-- **`<form method="dialog">` does not close it.** Measured, and it is a property of slotting rather
-  than of this element: the platform looks for the form's nearest ancestor `<dialog>` in the node
-  tree, and slotted content is not a descendant of the element it is slotted into. Close it from
-  the [event](#the-ui-close-event) side instead — call `close()`, or set `open`.
 - **No light dismiss.** Clicking the scrim does nothing. The APG pattern does not ask for it,
   dismissing a destructive confirm by a stray click is a real cost, and the platform is
   standardising `closedby` — inventing a different answer now would be one to un-invent.

@@ -11,8 +11,14 @@ import { halt, ready, write } from './typing.js';
 /** Distinguishes one tooltip's generated id from another's. */
 let sequence = 0;
 
-/** Which side of its trigger the tip landed on, read from where the platform put it. */
-const side = 'data-side';
+/** The attribute that says which side of its trigger the tip landed on, read off where it is. */
+const landed = 'data-side';
+
+/**
+ * The side of its trigger a tip is placed on, in the tip's own direction: above it, below it, or
+ * beside it at its start or its end.
+ */
+export type TooltipSide = 'block-start' | 'block-end' | 'inline-start' | 'inline-end';
 
 /** The query each of the tip's effects is drawn under: the consumer's choice, else a taste. */
 const drawn = query('tooltip');
@@ -72,6 +78,15 @@ function contain(event: Event): void {
 }
 
 /**
+ * Writes on a tip where along it its arrow points, from the tip's start, and the tip's length along
+ * that edge, which the sheet keeps the arrow clear of the corners by.
+ */
+function aim(tip: HTMLElement, at: number, span: number): void {
+    tip.style.setProperty('--ui-fx-arrow', `${String(at)}px`);
+    tip.style.setProperty('--ui-fx-arrow-span', `${String(span)}px`);
+}
+
+/**
  * Supplementary text on hover and on keyboard focus.
  *
  * **Everything is slotted**, for a measured reason: an IDREF does not cross a shadow
@@ -106,7 +121,9 @@ function contain(event: Event): void {
  *
  * **The platform places it**, by CSS anchor positioning: above its trigger and centred on it,
  * below where there is no room above, pulled inside the viewport at either edge, and kept against
- * its trigger through every scroll with no script. #300 measured the CSS putting the tip where
+ * its trigger through every scroll with no script. A host asks for another side with `side` —
+ * below, or beside the trigger at its start or its end, centred on its middle — and the tip turns
+ * to the opposite side where its own has no room. #300 measured the CSS putting the tip where
  * thirty lines of arithmetic used to, in all three engines, and the floor rose to meet it.
  *
  * **The tip is shown from its trigger**, `showPopover({ source })`, which makes the trigger its
@@ -114,11 +131,12 @@ function contain(event: Event): void {
  * button it lies inside, and an `anchor-name` of the host's on the trigger replaced it.
  *
  * **Two things stay script.** The CSS writes nowhere which side it took, which `data-side` hands
- * a host who draws an arrow and the tip's motion reads, so the side is read off the two boxes as
- * the tip shows, and again on every scroll and resize. And where the tip's direction is not the
- * page's, Firefox mirrors a centred tip off the screen — Mozilla 2019601, in every form #300's
- * follow-up measured — so the tip is marked an island as it shows, and the sheet hangs it from
- * its trigger's leading edge there.
+ * a host, and the tip's motion and its arrow read, so the side is read off the two boxes as the tip
+ * shows, and again once each scroll and resize has been laid out; and with it where along the tip
+ * its arrow points, the trigger's middle, which CSS cannot point the arrow at from inside the tip,
+ * as RFC 0010 measured. And where the tip's direction is not the page's, Firefox mirrors a centred
+ * tip off the screen — Mozilla 2019601, in every form #300's follow-up measured — so the tip is
+ * marked an island as it shows, and the sheet hangs it from its trigger's leading edge there.
  *
  * A positioning dependency was the other option the issue named. It solves scroll containers,
  * virtual anchors and continuous auto-update, none of which a tooltip against a real element
@@ -134,6 +152,18 @@ function contain(event: Event): void {
  * ```
  */
 export class UiTooltip extends LitElement {
+    /** The properties Lit observes on this element. */
+    static override readonly properties = {
+        side: { type: String, reflect: true },
+    };
+
+    /**
+     * The side of its trigger the tip is placed on, in the tip's own direction, where it has the
+     * room: `block-start`, above it, until told otherwise. Reflected, which is what the sheet
+     * places the tip by.
+     */
+    side: TooltipSide = 'block-start';
+
     /** The styles its shadow root adopts. */
     static override readonly styles = css`
         /* No box of its own: a wrapper that laid something out would move the trigger it
@@ -188,6 +218,23 @@ export class UiTooltip extends LitElement {
             position-try-fallbacks: flip-block;
         }
 
+        /* A side of the host's own, written as side: below the trigger, or beside it at its start
+           or its end, each by position-area and the fallback that turns it to the opposite side.
+           Beside it, the tip is centred on the trigger's middle. */
+        :host([side='block-end']) slot[name='tip']::slotted(*) {
+            position-area: block-end;
+        }
+
+        :host([side='inline-start']) slot[name='tip']::slotted(*) {
+            position-area: inline-start;
+            position-try-fallbacks: flip-inline;
+        }
+
+        :host([side='inline-end']) slot[name='tip']::slotted(*) {
+            position-area: inline-end;
+            position-try-fallbacks: flip-inline;
+        }
+
         /* The gap between the tip and its trigger: a margin on the side the trigger is on, which
            the flip moves to the other side with the tip, so the gap and the side cannot disagree.
 
@@ -198,6 +245,20 @@ export class UiTooltip extends LitElement {
            way. */
         slot[name='tip']::slotted(*) {
             margin-block-end: calc(${reference('--ui-space')} / 2);
+        }
+
+        :host([side='block-end']) slot[name='tip']::slotted(*) {
+            margin-block: calc(${reference('--ui-space')} / 2) 0;
+        }
+
+        :host([side='inline-start']) slot[name='tip']::slotted(*) {
+            margin-block-end: 0;
+            margin-inline-end: calc(${reference('--ui-space')} / 2);
+        }
+
+        :host([side='inline-end']) slot[name='tip']::slotted(*) {
+            margin-block-end: 0;
+            margin-inline-start: calc(${reference('--ui-space')} / 2);
         }
 
         /* An island, where the tip's direction is not the page's: it hangs from its trigger's
@@ -221,16 +282,198 @@ export class UiTooltip extends LitElement {
             right: anchor(right);
         }
 
-        /* Which side of the tip its trigger is on, as a sign on the block axis, which what moves a
-           tip toward its trigger or away reads. The side is read off where the tip landed, after
-           its first style, so an entrance comes from the side the tip last landed on — above its
-           trigger, where a tip goes first, until it has landed below. */
+        /* A side of the host's own in an island, by the trigger's edges read in the tip's own
+           direction, as measured for RFC 0010: position-area read an island's inline sides in the
+           page's direction in Chromium and WebKit, and Firefox misplaced the tip on every side
+           there. Below, from its trigger's bottom; beside, from the edge on its side, centred on
+           the trigger's middle, turning to the other side where that runs off the screen. */
+        :host([side='block-end']:state(island)) slot[name='tip']::slotted(*) {
+            bottom: auto;
+            top: anchor(bottom);
+        }
+
+        :host([side^='inline']:state(island)) slot[name='tip']::slotted(*) {
+            bottom: auto;
+            align-self: anchor-center;
+            position-try-fallbacks: flip-inline;
+        }
+
+        :host([side='inline-start']:state(island)) slot[name='tip']::slotted(:dir(ltr)),
+        :host([side='inline-end']:state(island)) slot[name='tip']::slotted(:dir(rtl)) {
+            left: auto;
+            right: anchor(left);
+        }
+
+        :host([side='inline-start']:state(island)) slot[name='tip']::slotted(:dir(rtl)),
+        :host([side='inline-end']:state(island)) slot[name='tip']::slotted(:dir(ltr)) {
+            right: auto;
+            left: anchor(right);
+        }
+
+        /* The arrow, pointing at the trigger from the side the tip landed on: the tip's own
+           ::before, which goes with the tip into the top layer, and the one thing of the tip's
+           this sheet can draw without writing into it. A square turned an eighth, in the tip's
+           surface, edge and shadow, cut along the tip's edge so that its half toward the trigger
+           is drawn, filling the gap.
+
+           CSS cannot point it at the trigger from inside the tip, measured for RFC 0010 in all
+           three engines, so the element writes the trigger's middle along the tip, from the tip's
+           start, as --ui-fx-arrow, and the tip's length along that edge as --ui-fx-arrow-span,
+           from the boxes it reads the side off. The arrow takes the place by translate: Firefox
+           lost the tip's anchor once an inset of the arrow's moved, where a translate kept it.
+
+           A rule of the host's on the tip's ::before outweighs every one of these, as a rule
+           outside a root does, so content: none there takes the arrow away. */
         slot[name='tip']::slotted(*) {
+            /* The user agent's overflow: auto for a popover clipped the arrow, which lies outside
+               the tip, and kept the pointer from it. So a word longer than the tip's ceiling
+               breaks inside the tip rather than running out of it. */
+            overflow: visible;
+            overflow-wrap: anywhere;
+        }
+
+        slot[name='tip']::slotted([data-side])::before {
+            /* The arrow's middle along the tip: the trigger's, kept clear of the rounded corners by
+               the radius and half the arrow's base. */
+            --ui-fx-arrow-at: clamp(
+                calc(${reference('--ui-radius')} + ${reference('--ui-space')} / 2),
+                var(--ui-fx-arrow),
+                calc(
+                    var(--ui-fx-arrow-span) - ${reference('--ui-radius')} -
+                        ${reference('--ui-space')} / 2
+                )
+            );
+
+            content: '';
+            position: absolute;
+            box-sizing: border-box;
+            /* Reaching across the gap, the half it draws is as long as the gap, and twice as
+               broad at its base. */
+            width: calc(${reference('--ui-space')} / 2 * sqrt(2));
+            aspect-ratio: 1;
+            background: ${reference('--ui-color-surface-raised')};
+            border: 1px solid ${reference('--ui-color-border-overlay')};
+            box-shadow: ${reference('--ui-elevation-raised')};
+            /* The half on the trigger's side of the diagonal is drawn, with what its shadow
+               reaches, and the line of the tip's edge, a pixel in from the line its corners turn
+               about, which the arrow lays its surface over, so it opens into the tip. */
+            clip-path: polygon(
+                calc(100% - 1px * sqrt(2) + 3rem) -3rem,
+                calc(100% + 3rem) -3rem,
+                calc(100% + 3rem) calc(100% + 3rem),
+                -3rem calc(100% + 3rem),
+                -3rem calc(100% - 1px * sqrt(2) + 3rem)
+            );
+        }
+
+        /* Its middle on the tip's outer edge, a pixel out from the box it is placed in, at its place
+           along that edge, and turned so its corner toward the trigger is the square's bottom
+           right. Placed by top and left alone, and half its size back by the translate: placed by
+           bottom, Chromium took a point as on the arrow a pixel from where it drew it.
+
+           Under a tip above its trigger, pointing down at it. */
+        slot[name='tip']::slotted([data-side='block-start'])::before {
+            top: calc(100% + 1px);
+            left: -1px;
+            translate: calc(var(--ui-fx-arrow-at) - 50%) -50%;
+            rotate: 45deg;
+        }
+
+        /* Over a tip below its trigger, pointing up at it. */
+        slot[name='tip']::slotted([data-side='block-end'])::before {
+            top: -1px;
+            left: -1px;
+            translate: calc(var(--ui-fx-arrow-at) - 50%) -50%;
+            rotate: -135deg;
+        }
+
+        /* At the right of a tip at its trigger's left, as it is drawn, pointing right at it. */
+        slot[name='tip']::slotted([data-side='inline-start']:dir(ltr))::before,
+        slot[name='tip']::slotted([data-side='inline-end']:dir(rtl))::before {
+            top: -1px;
+            left: calc(100% + 1px);
+            translate: -50% calc(var(--ui-fx-arrow-at) - 50%);
+            rotate: -45deg;
+        }
+
+        /* At the left of a tip at its trigger's right, pointing left at it. */
+        slot[name='tip']::slotted([data-side='inline-end']:dir(ltr))::before,
+        slot[name='tip']::slotted([data-side='inline-start']:dir(rtl))::before {
+            top: -1px;
+            left: -1px;
+            translate: -50% calc(var(--ui-fx-arrow-at) - 50%);
+            rotate: 135deg;
+        }
+
+        /* Whether the theme raises its surfaces as glass, as the dialog reads it: the backdrop
+           filter of a raised surface, through the token's fallback, which reads a glass standing
+           down as none, where a query on the token itself took it for glass. */
+        :host {
+            --ui-fx-glass: ${reference('--ui-backdrop-raised')};
+        }
+
+        /* On glass the arrow meets the tip at its edge, which runs on across the arrow's base: the
+           surface is translucent, so a part of the arrow laid over the tip would show twice. */
+        @container not style(--ui-fx-glass: none) {
+            slot[name='tip']::slotted([data-side])::before {
+                clip-path: polygon(
+                    calc(100% + 3rem) -3rem,
+                    calc(100% + 3rem) calc(100% + 3rem),
+                    -3rem calc(100% + 3rem)
+                );
+            }
+        }
+
+        /* Which side of the tip its trigger is on, as a sign on each axis, which what moves a tip
+           toward its trigger or away reads: on the block axis for a tip above or below it, and on
+           the inline one, left or right as it is drawn, for a tip beside it. Until the tip has
+           landed it is the side the host asked for; once landed, the side it was read off where it
+           is, after its first style, which a flip may have turned, so an entrance comes from the
+           side the tip last landed on. The landed side's rules weigh what the asked side's do, and
+           come after them. */
+        slot[name='tip']::slotted(*) {
+            --ui-fx-toward: 1;
+            --ui-fx-across: 0;
+        }
+
+        :host([side='block-end']) slot[name='tip']::slotted(*) {
+            --ui-fx-toward: -1;
+        }
+
+        :host([side^='inline']) slot[name='tip']::slotted(*) {
+            --ui-fx-toward: 0;
+        }
+
+        :host([side='inline-start']) slot[name='tip']::slotted(:dir(ltr)),
+        :host([side='inline-end']) slot[name='tip']::slotted(:dir(rtl)) {
+            --ui-fx-across: 1;
+        }
+
+        :host([side='inline-end']) slot[name='tip']::slotted(:dir(ltr)),
+        :host([side='inline-start']) slot[name='tip']::slotted(:dir(rtl)) {
+            --ui-fx-across: -1;
+        }
+
+        :host slot[name='tip']::slotted([data-side='block-start']) {
             --ui-fx-toward: 1;
         }
 
-        slot[name='tip']::slotted([data-side='block-end']) {
+        :host slot[name='tip']::slotted([data-side='block-end']) {
             --ui-fx-toward: -1;
+        }
+
+        :host slot[name='tip']::slotted([data-side^='inline']) {
+            --ui-fx-toward: 0;
+        }
+
+        :host slot[name='tip']::slotted([data-side='inline-start']:dir(ltr)),
+        :host slot[name='tip']::slotted([data-side='inline-end']:dir(rtl)) {
+            --ui-fx-across: 1;
+        }
+
+        :host slot[name='tip']::slotted([data-side='inline-end']:dir(ltr)),
+        :host slot[name='tip']::slotted([data-side='inline-start']:dir(rtl)) {
+            --ui-fx-across: -1;
         }
 
         /* RFC 0004's: how a tip comes and goes, each a transition, so a tip the reader leaves
@@ -250,7 +493,10 @@ export class UiTooltip extends LitElement {
             @starting-style {
                 slot[name='tip']::slotted(:popover-open) {
                     opacity: 0;
-                    transform: translateY(calc(var(--ui-fx-toward) * 0.25rem));
+                    transform: translate(
+                        calc(var(--ui-fx-across) * 0.25rem),
+                        calc(var(--ui-fx-toward) * 0.25rem)
+                    );
                 }
             }
         }
@@ -285,7 +531,10 @@ export class UiTooltip extends LitElement {
         @container ${unsafeCSS(drawn('exit', 'sink'))} {
             slot[name='tip']::slotted(:not(:popover-open)) {
                 opacity: 0;
-                transform: translateY(calc(var(--ui-fx-toward) * 0.25rem));
+                transform: translate(
+                    calc(var(--ui-fx-across) * 0.25rem),
+                    calc(var(--ui-fx-toward) * 0.25rem)
+                );
                 transition:
                     opacity ${reference('--ui-duration-overlay')} ${reference('--ui-easing-exit')},
                     transform ${reference('--ui-duration-overlay')} ${reference('--ui-easing-exit')},
@@ -436,9 +685,26 @@ export class UiTooltip extends LitElement {
      */
     #watching = new AbortController();
 
-    /** Re-places the tip under anything that moves the trigger while it is open. */
+    /**
+     * Reads the side and the arrow's place again under anything that moves the trigger while the
+     * tip is open, in a task of its own, once the frame the event came in has been laid out.
+     *
+     * **Not in the event.** The platform moves an anchored tip after the scroll that moved its
+     * trigger, as it lays that frame out: in Chromium and Firefox the tip's box read in the event,
+     * in a microtask or in that frame's animation callbacks is where it was before the scroll,
+     * where the trigger's is where it is now, measured — so an arrow placed from them pointed off
+     * the trigger by the scroll, and a tip that turned to the other side said the side it had left.
+     * A task queued in the event runs once that frame is laid out, where both have followed, and
+     * during a scroll every frame's own reading is of that frame. WebKit had moved the tip by the
+     * event already.
+     */
     readonly #reflow = (): void => {
-        this.#side();
+        setTimeout((): void => {
+            // A tip closed before the task came reads as a box of nothing, which would say a side.
+            if (this.#shown) {
+                this.#side();
+            }
+        });
     };
 
     /**
@@ -534,6 +800,13 @@ export class UiTooltip extends LitElement {
         this.#unwire();
 
         super.disconnectedCallback();
+    }
+
+    /** Reads the side again where it changed while the tip is open, which the sheet moved it to. */
+    override updated(): void {
+        if (this.#shown) {
+            this.#side();
+        }
     }
 
     /** The trigger, from the default slot, and the tip, from `tip`. */
@@ -986,8 +1259,11 @@ export class UiTooltip extends LitElement {
     }
 
     /**
-     * Writes which side of its trigger the tip landed on, read off where the platform put it: above
-     * or below by the two middles, which none of the tip's effects moves across.
+     * Writes which side of its trigger the tip landed on, read off where the platform put it, by
+     * the two middles, which none of the tip's effects moves across: above or below, and for a tip
+     * asked to go beside its trigger, at its start or its end, in the tip's own direction. And
+     * where along the tip its arrow points, the trigger's middle, which is not the tip's where the
+     * platform pulled the tip inside the screen.
      */
     #side(): void {
         const trigger = this.#trigger();
@@ -1000,12 +1276,30 @@ export class UiTooltip extends LitElement {
         const anchor = trigger.getBoundingClientRect();
         const box = tip.getBoundingClientRect();
 
+        if (this.side === 'inline-start' || this.side === 'inline-end') {
+            // Stryker disable next-line EqualityOperator: equivalent — two middles level are a tip
+            // laid over its trigger's middle, which the platform never places one beside it at.
+            const leftward = box.left + box.width / 2 < anchor.left + anchor.width / 2;
+
+            // Left is the start where the tip reads left to right, and the end where it reads
+            // right to left: asked of :dir(), which the sheet places the tip by, so the side the
+            // tip says and the side it was put on cannot disagree.
+            tip.setAttribute(
+                landed,
+                leftward === tip.matches(':dir(rtl)') ? 'inline-end' : 'inline-start',
+            );
+            aim(tip, anchor.top + anchor.height / 2 - box.top, box.height);
+
+            return;
+        }
+
         tip.setAttribute(
-            side,
+            landed,
             // Stryker disable next-line EqualityOperator: equivalent — two middles level are a tip
             // laid over its trigger's middle, which the platform never places it at.
             box.top + box.height / 2 < anchor.top + anchor.height / 2 ? 'block-start' : 'block-end',
         );
+        aim(tip, anchor.left + anchor.width / 2 - box.left, box.width);
     }
 }
 

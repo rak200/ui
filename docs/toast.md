@@ -73,6 +73,12 @@ that shows one on purpose quiets that code round it.
 | ----------- | ---------------------------------------------- |
 | `dismiss()` | runs the exit, announces it, removes the toast |
 
+| Slot      | Holds                                                       |
+| --------- | ----------------------------------------------------------- |
+| `heading` | a heading above the message, read with it                   |
+| _default_ | the message                                                 |
+| `action`  | a button of yours, beside the message; the toast then stays |
+
 `ToastVariant` is exported for a host that needs the type: `'info' | 'success' | 'warning' |
 'danger'`.
 
@@ -80,6 +86,47 @@ that shows one on purpose quiets that code round it.
 English replaces it rather than forking the component. The package's others are `<ui-input>`'s
 `clear-label`, `reveal-label` and `count-text`, which have no default, since each draws its part
 only where a page writes it.
+
+### A heading
+
+```html
+<ui-toaster>
+  <ui-toast variant="success">
+    <strong slot="heading">Invoice sent</strong>
+    It is on its way to Acme.
+  </ui-toast>
+</ui-toaster>
+```
+
+**A heading goes above the message**, on a line of its own, from where the message starts, and the
+icon sits on its line, which is the toast's first. It is in the toast as the message is, and the
+toast is the one thing that joins the region, so the heading joins it with the message, before it,
+in the region the variant chooses. Its weight is its element's, a `<strong>` or a heading of yours,
+and a heading's own margin is reset, where a rule of yours for it still beats that, as for anything
+slotted. A toast with none is drawn as it was.
+
+### An action
+
+```html
+<ui-toaster>
+  <ui-toast variant="success">
+    Invoice deleted.
+    <button slot="action" type="button">Undo</button>
+  </ui-toast>
+</ui-toaster>
+```
+
+**A button of yours goes in the `action` slot**, between the message and the dismiss button, at its
+own width. **A toast holding one never expires**, as an error never does, and draws no time left:
+the toaster sits last in `<body>`, so a reader on the keyboard comes to the action after the whole
+page, against a clock that would not stop until they arrived. Tab reaches it there, and
+<kbd>Esc</kbd> from it dismisses the toast, as from anywhere in it. An action that comes after the
+toast stops its clock, and one that goes starts it again from the beginning, unless the reader is
+in the toast.
+
+**Offer in a toast only what the page offers elsewhere too**, the undo of a deletion the list itself
+can also reverse: a reader who never reaches the toast does not have what is only in it. An action
+the reader has to take is a [dialog's](dialog.md#alert), which takes the focus to it.
 
 ## Two regions, and why not one
 
