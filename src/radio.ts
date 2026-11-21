@@ -11,6 +11,9 @@ import { implicit } from './submit.js';
 /** Which way a group lays its options out, and announces that it did. */
 export type RadioOrientation = 'vertical' | 'horizontal';
 
+/** What a group draws each choice as: a radio beside its text, or a card, joined to the next. */
+export type RadioVariant = 'radios' | 'cards';
+
 // Stryker disable next-line StringLiteral: both ends of this event read the constant — the
 // declaration dispatches it and the group listens for it — so a different name, the empty
 // string included, still meets itself. Nothing outside this module names it, which is what
@@ -83,6 +86,7 @@ export class UiRadio extends LitElement {
         value: { type: String, reflect: true },
         checked: { type: Boolean, reflect: true },
         disabled: { type: Boolean, reflect: true },
+        description: { type: String, reflect: true },
     };
 
     /** What the group submits while this choice is the one in force. */
@@ -93,6 +97,12 @@ export class UiRadio extends LitElement {
 
     /** Whether this one choice refuses interaction, the rest of the set staying live. */
     disabled = false;
+
+    /**
+     * What describes this choice, drawn under its text in the group's root and heard with it: the
+     * group renders the control, so the text has to be there too, where a reference reaches it.
+     */
+    description = '';
 
     /**
      * Tells the group something changed, on every update and on every slot change.
@@ -131,6 +141,11 @@ export class UiRadio extends LitElement {
  * own name, help and message, and form participation through `ElementInternals` — a
  * control in a shadow root has no form owner, so the element answers for the value, the
  * validity and the three form lifecycle callbacks.
+ *
+ * **It draws each choice as a radio beside its text, or, as `variant="cards"`, as a card**,
+ * joined to the next as a group's buttons are, the one chosen in the selected names a select's
+ * chosen option is drawn in: RFC 0010's. A choice's `description` is drawn in either, under its
+ * text.
  *
  * @example
  * ```html
@@ -204,6 +219,115 @@ export class UiRadioGroup extends LitElement {
             .option:has(input:disabled) {
                 color: ${reference('--ui-color-text-muted')};
                 cursor: not-allowed;
+            }
+
+            /* A choice that has a description lays the description under its text, from where the
+               text starts, the control centred on the text's line as it is without one. */
+            .option:has(.description) {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                row-gap: calc(${reference('--ui-space')} / 4);
+            }
+
+            .description {
+                grid-column: 2;
+                color: ${reference('--ui-color-text-muted')};
+                font-size: ${reference('--ui-text-supporting')};
+            }
+
+            /* cards: each choice a card, larger than a radio and its text, joined to the next as a
+               group's buttons are, each edge they share drawn once and the corners they share
+               squared; a row of them is as wide as the set, each card as wide as the next. The
+               card is the label, so a click anywhere on it chooses it, and the control stays in
+               it, drawn as it is: the card is the choice's surface, and the control says it is
+               the one made. */
+            /* A stacking context of its own, so the card drawn over its neighbours is drawn over
+               them alone, never over what follows the set. */
+            :host([variant='cards']) .options {
+                gap: 0;
+                isolation: isolate;
+            }
+
+            :host([variant='cards'][orientation='horizontal']) .options {
+                flex-wrap: nowrap;
+            }
+
+            /* Laid out as any choice is, its description under its text by the rule above. */
+            :host([variant='cards']) .option {
+                flex: 1 1 0;
+                position: relative;
+                padding: calc(${reference('--ui-space')} * 1.5);
+                background-color: ${reference('--ui-color-surface-control')};
+                border: 1px solid ${reference('--ui-color-border')};
+                transition:
+                    background-color ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')},
+                    border-color ${reference('--ui-duration-state')}
+                        ${reference('--ui-easing-state')};
+            }
+
+            :host([variant='cards']:not([orientation='horizontal'])) .option + .option {
+                margin-block-start: -1px;
+            }
+
+            :host([variant='cards'][orientation='horizontal']) .option + .option {
+                margin-inline-start: -1px;
+            }
+
+            :host([variant='cards']:not([orientation='horizontal'])) .option:first-child {
+                border-start-start-radius: ${reference('--ui-radius')};
+                border-start-end-radius: ${reference('--ui-radius')};
+            }
+
+            :host([variant='cards']:not([orientation='horizontal'])) .option:last-child {
+                border-end-start-radius: ${reference('--ui-radius')};
+                border-end-end-radius: ${reference('--ui-radius')};
+            }
+
+            :host([variant='cards'][orientation='horizontal']) .option:first-child {
+                border-start-start-radius: ${reference('--ui-radius')};
+                border-end-start-radius: ${reference('--ui-radius')};
+            }
+
+            :host([variant='cards'][orientation='horizontal']) .option:last-child {
+                border-start-end-radius: ${reference('--ui-radius')};
+                border-end-end-radius: ${reference('--ui-radius')};
+            }
+
+            /* Under the pointer an unchosen card's edge goes to the text, as a control's does, and
+               the card is drawn over its neighbours, so its whole edge shows. */
+            :host([variant='cards']) .option:hover:has(input:not(:disabled)) {
+                border-color: ${reference('--ui-color-text')};
+                z-index: 1;
+            }
+
+            /* The card chosen is drawn in the selected names a select's chosen option is, laid over
+               a card's own fill, and edged in the accent, over its neighbours. */
+            :host([variant='cards']) .option:has(input:checked) {
+                background-image: linear-gradient(
+                    ${reference('--ui-color-selected')},
+                    ${reference('--ui-color-selected')}
+                );
+                color: ${reference('--ui-color-selected-contrast')};
+                border-color: ${reference('--ui-color-accent')};
+                z-index: 1;
+            }
+
+            :host([variant='cards']) .option:has(input:checked) .description {
+                color: inherit;
+            }
+
+            :host([variant='cards']) .option:hover:has(input:checked:not(:disabled)) {
+                background-image: linear-gradient(
+                    ${reference('--ui-color-selected-hover')},
+                    ${reference('--ui-color-selected-hover')}
+                );
+                border-color: ${reference('--ui-color-accent')};
+            }
+
+            /* The set's error edges every card in the danger, as it edges every control. */
+            :host([variant='cards']) .options[aria-invalid='true'] .option {
+                border-color: ${reference('--ui-color-danger')};
             }
 
             /* appearance: none is this component's whole cost, and it is taken for the reason
@@ -348,6 +472,11 @@ export class UiRadioGroup extends LitElement {
                     border-color: GrayText;
                     opacity: 1;
                 }
+
+                /* A chosen card's fill is forced back to a card's, so its edge says it is chosen. */
+                :host([variant='cards']) .option:has(input:checked) {
+                    border-color: Highlight;
+                }
             }
         `,
         controlEffects('radio'),
@@ -379,6 +508,7 @@ export class UiRadioGroup extends LitElement {
         // declaration is written out to say which of the two `value` is, not to change it.
         value: { type: String },
         orientation: { type: String, reflect: true },
+        variant: { type: String, reflect: true },
         required: { type: Boolean, reflect: true },
         // Written onto the attribute by `willUpdate()` rather than reflected, which says why.
         disabled: { type: Boolean },
@@ -418,6 +548,9 @@ export class UiRadioGroup extends LitElement {
 
     /** Which way the options are laid out, and what the group announces it did. */
     orientation: RadioOrientation = 'vertical';
+
+    /** What each choice is drawn as: a radio beside its text, the default, or a card. */
+    variant: RadioVariant = 'radios';
 
     /** Whether a form is invalid while no choice is made. */
     required = false;
@@ -611,8 +744,15 @@ export class UiRadioGroup extends LitElement {
      * control has been interacted with — or once anything has set the property — the
      * attribute stops driving the live state. Measured, as a reset that redrew the
      * declared default and left the control on the choice the reader had made.
+     *
+     * **A choice's description is drawn in its label, hidden, and named by `aria-describedby`.**
+     * In the label it is part of what a click chooses; hidden there it stays out of the name the
+     * label gives the control, which is the choice's text alone; and `aria-describedby` reaches a
+     * hidden node it names, so the control is described by it.
      */
-    #draw(choice: UiRadio, chosen: string): TemplateResult {
+    #draw(choice: UiRadio, chosen: string, at: number): TemplateResult {
+        const described = choice.description === '' ? undefined : `description-${String(at)}`;
+
         return html`<label class="option" part="option">
             <span class="frame" ${followed()}
                 ><input
@@ -623,11 +763,23 @@ export class UiRadioGroup extends LitElement {
                     .checked=${choice.value === chosen}
                     ?disabled=${this.matches(':disabled') || choice.disabled}
                     ?required=${this.required}
+                    aria-describedby=${described ?? nothing}
                     @change=${this.#changed}
                     @focus=${arrive}
                     @keypress=${this.#entered}
             /></span>
             <span part="option-label">${choice.textContent}</span>
+            ${
+                described === undefined
+                    ? nothing
+                    : html`<span
+                          class="description"
+                          id=${described}
+                          part="option-description"
+                          aria-hidden="true"
+                          >${choice.description}</span
+                      >`
+            }
         </label>`;
     }
 
@@ -650,7 +802,7 @@ export class UiRadioGroup extends LitElement {
                     aria-invalid=${this.error === '' ? nothing : 'true'}
                     aria-describedby=${this.#described()}
                 >
-                    ${this.#choices().map((choice) => this.#draw(choice, chosen))}
+                    ${this.#choices().map((choice, at) => this.#draw(choice, chosen, at))}
                 </div>
                 ${
                     this.help === ''

@@ -6,6 +6,8 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
 import meta, {
+    Cards,
+    CardsInARow,
     Disabled,
     Horizontal,
     Invalid,
@@ -20,7 +22,8 @@ import '../src/tooltip.js';
 import type { UiRadio, UiRadioGroup } from '../src/radio.js';
 import type { UiCheckbox } from '../src/checkbox.js';
 import { glass, matrix, themeStyleSheet, type Theme } from '../src/theme.js';
-import { tokenStyleSheet } from '../src/tokens.js';
+import { reference } from '../src/reference.js';
+import { tokenStyleSheet, type DerivedToken, type Token } from '../src/tokens.js';
 import { kept } from '../src/state.js';
 
 /** The markup the behavioural tests use, unless one needs a different shape. */
@@ -1790,6 +1793,430 @@ describe('the description a tooltip hands over', () => {
     });
 });
 
+/** What a token computes to on `property`, so an assertion names the token rather than its value. */
+function resolved(token: Token | DerivedToken, property = 'color'): string {
+    const probe = document.createElement('div');
+
+    probe.style.setProperty(property, String(reference(token)));
+    document.body.append(probe);
+
+    try {
+        return getComputedStyle(probe).getPropertyValue(property);
+    } finally {
+        probe.remove();
+    }
+}
+
+/** The choices of a set, each with a description, under `attributes` on the group. */
+function described(attributes = ''): string {
+    return `
+        <ui-radio-group label="Plan" name="plan" ${attributes}>
+            <ui-radio value="free" description="One project.">Free</ui-radio>
+            <ui-radio value="pro" description="Unlimited projects.">Pro</ui-radio>
+            <ui-radio value="max">Max</ui-radio>
+        </ui-radio-group>
+    `;
+}
+
+/** The option a control is drawn in, which is its label. */
+function cards(form: HTMLFormElement): HTMLLabelElement[] {
+    return controls(form).map(labelOf);
+}
+
+/** The description drawn for a control, by the reference its control carries. */
+function descriptionOf(control: HTMLInputElement): HTMLElement | null {
+    const id = control.getAttribute('aria-describedby');
+    const root = control.getRootNode() as ShadowRoot;
+
+    return id === null ? null : root.getElementById(id);
+}
+
+describe('a description for each choice', () => {
+    it('draws it under the text of its choice, from where the text starts, and describes the control with it', async () => {
+        const form = await mount(described());
+        const [free] = controls(form);
+
+        if (free === undefined) {
+            throw new Error('no control');
+        }
+
+        const description = descriptionOf(free);
+        const text = labelOf(free).querySelector('[part="option-label"]');
+
+        expect(description?.textContent, 'its text').toBe('One project.');
+        expect(description?.getAttribute('aria-hidden'), 'out of the name').toBe('true');
+        expect(labelOf(free).contains(description), 'in the label, which a click chooses').toBe(
+            true,
+        );
+        expect(description?.getBoundingClientRect().left, 'from where the text starts').toBeCloseTo(
+            text?.getBoundingClientRect().left ?? Number.NaN,
+            0,
+        );
+        expect(
+            (description?.getBoundingClientRect().top ?? 0) >=
+                (text?.getBoundingClientRect().bottom ?? Number.POSITIVE_INFINITY) - 1,
+            'under it',
+        ).toBe(true);
+    });
+
+    it('draws it in the muted text at the supporting size', async () => {
+        const form = await mount(described());
+        const description = descriptionOf(radio(form));
+
+        if (description === null) {
+            throw new Error('no description');
+        }
+
+        group(form).style.setProperty('--ui-text-supporting', '13px');
+
+        expect(getComputedStyle(description).color).toBe(resolved('--ui-color-text-muted'));
+        expect(getComputedStyle(description).fontSize).toBe('13px');
+    });
+
+    it('spaces a description from its text by a quarter of the space', async () => {
+        const form = await mount(described());
+
+        group(form).style.setProperty('--ui-space', '16px');
+
+        expect(getComputedStyle(labelOf(radio(form))).rowGap).toBe('4px');
+    });
+
+    it('gives each description an id of its own, which its own control names', async () => {
+        const form = await mount(described());
+        const [free, pro] = controls(form);
+
+        expect(free?.getAttribute('aria-describedby')).not.toBe(
+            pro?.getAttribute('aria-describedby'),
+        );
+        expect(pro === undefined ? '' : descriptionOf(pro)?.textContent).toBe(
+            'Unlimited projects.',
+        );
+    });
+
+    it('draws none and describes nothing for a choice without one', async () => {
+        const form = await mount(described());
+        const max = controls(form)[2];
+
+        expect(max?.hasAttribute('aria-describedby')).toBe(false);
+        expect(max === undefined ? null : labelOf(max).querySelector('.description')).toBeNull();
+    });
+
+    it('follows a description as it changes, and takes it away as it goes', async () => {
+        const form = await mount(described());
+        const free = choice(form, 'free');
+
+        free.description = 'Two projects.';
+        await settled(group(form));
+
+        expect(descriptionOf(radio(form))?.textContent).toBe('Two projects.');
+
+        free.description = '';
+        await settled(group(form));
+
+        expect(radio(form).hasAttribute('aria-describedby'), 'no reference').toBe(false);
+        expect(labelOf(radio(form)).querySelector('.description'), 'no text').toBeNull();
+    });
+
+    it('reflects description, and takes it from the attribute', async () => {
+        const form = await mount(described());
+        const max = choice(form, 'max');
+
+        max.description = 'Everything.';
+        await max.updateComplete;
+
+        expect(max.getAttribute('description')).toBe('Everything.');
+
+        max.setAttribute('description', 'All of it.');
+
+        expect(max.description).toBe('All of it.');
+    });
+
+    it('chooses its choice when the description is clicked', async () => {
+        const form = await mount(described());
+        const description = descriptionOf(radio(form));
+
+        description?.click();
+        await settled(group(form));
+
+        expect(group(form).value).toBe('free');
+    });
+});
+
+describe('drawn as cards', () => {
+    /** The radius each corner of an option draws, from the top left clockwise. */
+    function corners(option: Element): string[] {
+        const style = getComputedStyle(option);
+
+        return [
+            style.borderTopLeftRadius,
+            style.borderTopRightRadius,
+            style.borderBottomRightRadius,
+            style.borderBottomLeftRadius,
+        ];
+    }
+
+    it('draws radios, as it always did, until it is told to draw cards', async () => {
+        const form = await mount(described());
+
+        expect(group(form).variant).toBe('radios');
+        expect(group(form).getAttribute('variant'), 'reflected').toBe('radios');
+
+        const option = getComputedStyle(cards(form)[0] ?? document.body);
+
+        expect([option.paddingTop, option.borderTopWidth]).toEqual(['0px', '0px']);
+    });
+
+    it('draws a card larger than a radio and its text, on a control fill and edge', async () => {
+        const form = await mount(described('variant="cards"'));
+
+        group(form).style.setProperty('--ui-space', '10px');
+
+        const option = getComputedStyle(cards(form)[0] ?? document.body);
+
+        expect(option.paddingTop, 'larger').toBe('15px');
+        expect(option.backgroundColor, 'on a control fill').toBe(
+            resolved('--ui-color-surface-control', 'background-color'),
+        );
+        expect([option.borderTopWidth, option.borderTopColor], 'edged as a control').toEqual([
+            '1px',
+            resolved('--ui-color-border'),
+        ]);
+    });
+
+    it('spaces the description in a card from its text by a quarter of the space', async () => {
+        const form = await mount(described('variant="cards"'));
+
+        group(form).style.setProperty('--ui-space', '20px');
+
+        expect(getComputedStyle(cards(form)[0] ?? document.body).rowGap).toBe('5px');
+    });
+
+    it("eases a card's fill and edge over a state's step, each its own time and curve", async () => {
+        const form = await mount(described('variant="cards"'));
+
+        group(form).style.setProperty('--ui-duration-state', '123ms');
+        group(form).style.setProperty('--ui-easing-state', 'steps(3)');
+
+        const option = getComputedStyle(cards(form)[0] ?? document.body);
+
+        expect(option.transitionProperty).toBe('background-color, border-color');
+        expect(option.transitionDuration).toBe('0.123s, 0.123s');
+        expect(option.transitionTimingFunction).toBe('steps(3), steps(3)');
+    });
+
+    it('joins the cards in a column, each edge they share drawn once and the corners they share squared', async () => {
+        const form = await mount(described('variant="cards"'));
+
+        group(form).style.setProperty('--ui-radius', '9px');
+
+        const [first, second, third] = cards(form);
+
+        if (first === undefined || second === undefined || third === undefined) {
+            throw new Error('three cards');
+        }
+
+        expect(second.getBoundingClientRect().top, 'one edge between them').toBeCloseTo(
+            first.getBoundingClientRect().bottom - 1,
+            0,
+        );
+        expect(corners(first)).toEqual(['9px', '9px', '0px', '0px']);
+        expect(corners(second)).toEqual(['0px', '0px', '0px', '0px']);
+        expect(corners(third)).toEqual(['0px', '0px', '9px', '9px']);
+    });
+
+    it.each([
+        ['left to right, the first at the left', 'ltr'],
+        ['right to left, the first at the right', 'rtl'],
+    ] as const)('joins the cards in a row, each as wide as the next, %s', async (_, direction) => {
+        const form = await mount(
+            `<div dir="${direction}" style="inline-size: 30rem">${described('variant="cards" orientation="horizontal"')}</div>`,
+        );
+
+        group(form).style.setProperty('--ui-radius', '9px');
+
+        const [first, second, third] = cards(form);
+
+        if (first === undefined || second === undefined || third === undefined) {
+            throw new Error('three cards');
+        }
+
+        const [one, two] = [first.getBoundingClientRect(), second.getBoundingClientRect()];
+
+        expect(two.width, 'as wide').toBeCloseTo(one.width, 0);
+        expect(two.top, 'in one row').toBeCloseTo(one.top, 0);
+
+        if (direction === 'ltr') {
+            expect(two.left, 'one edge between them').toBeCloseTo(one.right - 1, 0);
+            expect(corners(first)).toEqual(['9px', '0px', '0px', '9px']);
+            expect(corners(third)).toEqual(['0px', '9px', '9px', '0px']);
+        } else {
+            expect(two.right, 'one edge between them').toBeCloseTo(one.left + 1, 0);
+            expect(corners(first)).toEqual(['0px', '9px', '9px', '0px']);
+            expect(corners(third)).toEqual(['9px', '0px', '0px', '9px']);
+        }
+
+        expect(corners(second), 'the middle one squared').toEqual(['0px', '0px', '0px', '0px']);
+    });
+
+    it('keeps a row of cards in one row', async () => {
+        const form = await mount(
+            `<div style="inline-size: 12rem">${described('variant="cards" orientation="horizontal"')}</div>`,
+        );
+        const tops = cards(form).map((option) => Math.round(option.getBoundingClientRect().top));
+
+        expect(new Set(tops).size).toBe(1);
+    });
+
+    it('draws the card chosen in the selected names, edged in the accent and over its neighbours', async () => {
+        const form = await mount(described('variant="cards" value="pro"'));
+
+        withoutMotion(form);
+
+        const [free, pro] = cards(form);
+        const chosen = getComputedStyle(pro ?? document.body);
+        const selected = resolved('--ui-color-selected', 'background-color');
+
+        expect(chosen.backgroundImage, 'the selected fill').toBe(
+            `linear-gradient(${selected}, ${selected})`,
+        );
+        expect(chosen.color, 'its label').toBe(resolved('--ui-color-selected-contrast'));
+        expect(chosen.borderTopColor, 'edged in the accent').toBe(resolved('--ui-color-accent'));
+        expect(chosen.zIndex, 'over its neighbours').toBe('1');
+        expect(
+            getComputedStyle(pro?.querySelector('.description') ?? document.body).color,
+            'its description in the same label',
+        ).toBe(resolved('--ui-color-selected-contrast'));
+        expect(getComputedStyle(free ?? document.body).backgroundImage, 'the others').toBe('none');
+    });
+
+    it('edges an unchosen card in the text under the pointer, over its neighbours, and moves a chosen fill', async () => {
+        const form = await mount(described('variant="cards" value="pro"'));
+
+        withoutMotion(form);
+
+        const [free, pro] = cards(form);
+
+        if (free === undefined || pro === undefined) {
+            throw new Error('two cards');
+        }
+
+        await userEvent.hover(free);
+
+        expect(getComputedStyle(free).borderTopColor, 'its edge').toBe(resolved('--ui-color-text'));
+        expect(getComputedStyle(free).zIndex, 'over its neighbours').toBe('1');
+
+        await userEvent.hover(pro);
+
+        const hover = resolved('--ui-color-selected-hover', 'background-color');
+
+        expect(getComputedStyle(pro).backgroundImage, 'the chosen fill moved').toBe(
+            `linear-gradient(${hover}, ${hover})`,
+        );
+        expect(getComputedStyle(pro).borderTopColor, 'still edged in the accent').toBe(
+            resolved('--ui-color-accent'),
+        );
+    });
+
+    it('leaves a disabled card as it is under the pointer', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" variant="cards">
+                <ui-radio value="free">Free</ui-radio>
+                <ui-radio value="pro" disabled>Pro</ui-radio>
+            </ui-radio-group>
+        `);
+
+        withoutMotion(form);
+
+        const pro = cards(form)[1];
+
+        if (pro === undefined) {
+            throw new Error('two cards');
+        }
+
+        await userEvent.hover(pro);
+
+        expect(getComputedStyle(pro).borderTopColor).toBe(resolved('--ui-color-border'));
+        expect(getComputedStyle(pro).zIndex).toBe('auto');
+    });
+
+    it('edges every card in the danger in error', async () => {
+        const form = await mount(described('variant="cards" value="pro" error="Pick again."'));
+
+        withoutMotion(form);
+
+        for (const option of cards(form)) {
+            expect(getComputedStyle(option).borderTopColor).toBe(resolved('--ui-color-danger'));
+        }
+    });
+
+    it('chooses a card from anywhere on it', async () => {
+        const form = await mount(described('variant="cards"'));
+        const pro = cards(form)[1];
+
+        pro?.click();
+        await settled(group(form));
+
+        expect(group(form).value).toBe('pro');
+    });
+
+    it('keeps the platform keyboard, the arrows moving and choosing from card to card', async () => {
+        const form = await mount(described('variant="cards" value="free"'));
+
+        radio(form).focus();
+        await userEvent.keyboard('{ArrowDown}');
+        await settled(group(form));
+
+        expect(group(form).value).toBe('pro');
+    });
+
+    it('is a stacking context of its own, so a card drawn over its neighbours is drawn over them alone', async () => {
+        const form = await mount(described('variant="cards"'));
+
+        expect(getComputedStyle(part(group(form), 'options')).isolation).toBe('isolate');
+    });
+
+    it('takes the variant from the attribute, and reflects it', async () => {
+        const form = await mount(described());
+
+        group(form).setAttribute('variant', 'cards');
+
+        expect(group(form).variant).toBe('cards');
+
+        group(form).variant = 'radios';
+        await group(form).updateComplete;
+
+        expect(group(form).getAttribute('variant')).toBe('radios');
+    });
+
+    it("edges the chosen card in the system's highlight under forced colours, which take its fill", async () => {
+        await cdp().send('Emulation.setEmulatedMedia', {
+            features: [{ name: 'forced-colors', value: 'active' }],
+        });
+
+        try {
+            const form = await mount(described('variant="cards" value="pro"'));
+
+            withoutMotion(form);
+
+            expect(matchMedia('(forced-colors: active)').matches, 'the mode is on').toBe(true);
+            const probe = document.createElement('div');
+
+            probe.style.color = 'Highlight';
+            document.body.append(probe);
+
+            const highlight = getComputedStyle(probe).color;
+
+            probe.remove();
+
+            expect(getComputedStyle(cards(form)[1] ?? document.body).borderTopColor).toBe(
+                highlight,
+            );
+        } finally {
+            await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+        }
+    });
+});
+
 describe('accessibility', () => {
     it('has no violations as a labelled group', async () => {
         await expectAccessible(await mountStory(RadioGroup, meta, 'RadioGroup'));
@@ -1817,6 +2244,29 @@ describe('accessibility', () => {
 
     it('has no violations right to left', async () => {
         await expectAccessible(await mountStory(RightToLeft, meta, 'RightToLeft'));
+    });
+
+    it('has no violations drawn as cards', async () => {
+        await expectAccessible(await mountStory(Cards, meta, 'Cards'));
+    });
+
+    it('has no violations drawn as cards in a row', async () => {
+        await expectAccessible(await mountStory(CardsInARow, meta, 'CardsInARow'));
+    });
+
+    it('has no violations drawn as cards in error, with one disabled, and with the focus on one', async () => {
+        const form = await mount(`
+            <ui-radio-group label="Plan" name="plan" variant="cards" error="Pick again.">
+                <ui-radio value="free" description="One project.">Free</ui-radio>
+                <ui-radio value="pro" description="Unlimited projects." disabled>Pro</ui-radio>
+                <ui-radio value="max" description="Everything.">Max</ui-radio>
+            </ui-radio-group>
+        `);
+
+        await expectAccessible(group(form));
+
+        radio(form).focus();
+        await expectAccessible(group(form));
     });
 });
 

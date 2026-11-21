@@ -1970,6 +1970,34 @@ describe('the contrast floors', () => {
                     }
                 });
 
+                it('keeps a choice drawn as a card legible, chosen or not, at rest and under the pointer', () => {
+                    // A card is a control's fill, its text and its description the text and the
+                    // muted text; the card chosen lays the selected names over that fill. Each is
+                    // read through to whatever the set rests on, as a theme may let it through.
+                    for (const beside of outside(palette, scheme)) {
+                        const card = laid('--ui-color-surface-control', beside, scheme, palette);
+
+                        for (const token of ['--ui-color-text', '--ui-color-text-muted'] as const) {
+                            expect(contrastRatio(paint(token), card), token).toBeGreaterThanOrEqual(
+                                4.5,
+                            );
+                        }
+
+                        for (const fill of [
+                            '--ui-color-selected',
+                            '--ui-color-selected-hover',
+                        ] as const) {
+                            expect(
+                                contrastRatio(
+                                    paint('--ui-color-selected-contrast'),
+                                    laid(fill, card, scheme, palette),
+                                ),
+                                fill,
+                            ).toBeGreaterThanOrEqual(4.5);
+                        }
+                    }
+                });
+
                 it('keeps the focus ring at 3:1 against the surface — WCAG 1.4.11, which axe cannot see', () => {
                     // `outline-offset` shows the surface on both sides of the ring, so the
                     // surface is what the ring is adjacent to. This is the assertion the shipped

@@ -6,7 +6,7 @@ export { UiDialog } from './dialog.js';
 export { UiIcon, register } from './icon.js';
 export { UiInput, UiTextarea } from './input.js';
 export { UiMenu } from './menu.js';
-export { UiRadio, UiRadioGroup, type RadioOrientation } from './radio.js';
+export { UiRadio, UiRadioGroup, type RadioOrientation, type RadioVariant } from './radio.js';
 export { UiOptgroup, UiOption, UiSelect } from './select.js';
 export { UiTable } from './table.js';
 export { glass, matrix, themeStyleSheet, type Taste, type Theme } from './theme.js';
