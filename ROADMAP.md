@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## Numeric columns on `<ui-table>` (#461)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-second step: end-aligned in tabular
-figures, for the cells the host marks.
-
 ## A sticky header and a sticky first column on `<ui-table>` (#462)
 
-The column within the box that scrolls already, and the header within a box given a height.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-third step: the column within the box
+that scrolls already, and the header within a box given a height.
 
 ## `<ui-radio>` choices drawn as cards (#463)
 

@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { NoCaption, RowHeaders, Scrolling, Table } from '../stories/table.stories.js';
+import meta, {
+    NoCaption,
+    NumericColumns,
+    RowHeaders,
+    Scrolling,
+    Table,
+} from '../stories/table.stories.js';
 import '../src/table.js';
 import { reference } from '../src/reference.js';
 import type { DerivedToken, Token } from '../src/tokens.js';
@@ -646,6 +652,83 @@ const veil = (share: number): string =>
 const times =
     '--ui-duration-state: 0.6s; --ui-easing-state: steps(3); --ui-duration-flourish: 2s; --ui-easing-exit: steps(4)';
 
+/**
+ * A numeric column, RFC 0010's: each cell and its header marked `data-ui-numeric`, which the rules
+ * the table adopts align to the end in tabular figures.
+ */
+describe('numeric columns, which the host marks cell by cell', () => {
+    /** A table whose Total column is marked numeric, its header too, written in `direction`. */
+    function priced(direction: 'ltr' | 'rtl' = 'ltr'): string {
+        return `
+            <ui-table dir="${direction}" style="inline-size: 24rem">
+                <table>
+                    <thead>
+                        <tr><th scope="col">Client</th><th scope="col" data-ui-numeric>Total</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Papelaria Aurora</td><td data-ui-numeric>R$ 1.200,00</td></tr>
+                        <tr><td>Studio Bergamota</td><td data-ui-numeric>R$ 96,00</td></tr>
+                    </tbody>
+                </table>
+            </ui-table>
+        `;
+    }
+
+    /** The box the text of a cell is drawn in. */
+    function text(cell: Element): DOMRect {
+        const range = document.createRange();
+
+        range.selectNodeContents(cell);
+
+        return range.getBoundingClientRect();
+    }
+
+    it('aligns a marked cell and the header over it to the end, in tabular figures', async () => {
+        const host = await mount(priced());
+
+        for (const cell of host.querySelectorAll('[data-ui-numeric]')) {
+            const styles = getComputedStyle(cell);
+
+            expect(styles.textAlign, cell.localName).toBe('end');
+            expect(styles.fontVariantNumeric, cell.localName).toBe('tabular-nums');
+        }
+    });
+
+    it('leaves a cell it is not told about as it was', async () => {
+        const host = await mount(priced());
+
+        for (const cell of host.querySelectorAll(':is(th, td):not([data-ui-numeric])')) {
+            const styles = getComputedStyle(cell);
+
+            expect(styles.textAlign, cell.localName).toBe('start');
+            expect(styles.fontVariantNumeric, cell.localName).toBe('normal');
+        }
+    });
+
+    it.each([
+        ['left to right, at the right', 'ltr', 'right'],
+        ['right to left, at the left', 'rtl', 'left'],
+    ] as const)('lines a marked column up at its end, %s', async (_, direction, edge) => {
+        const host = await mount(priced(direction));
+        const cells = [...host.querySelectorAll<HTMLElement>('[data-ui-numeric]')];
+        const padding = Number.parseFloat(getComputedStyle(only(host, 'td')).paddingLeft);
+
+        for (const cell of cells) {
+            const inside = cell.getBoundingClientRect();
+            const end = edge === 'right' ? inside.right - padding : inside.left + padding;
+
+            expect(text(cell)[edge], cell.textContent).toBeCloseTo(end, 0);
+        }
+    });
+
+    it('is accessible with a row under the pointer', async () => {
+        const host = await mount(priced());
+
+        await userEvent.hover(only(host, 'tbody td[data-ui-numeric]'));
+        await expectAccessible(table(host));
+    });
+});
+
 describe("a row's motion, RFC 0004's", () => {
     it.each([0, 1])(
         'lays a veil of the text over the row under the pointer, over a state, striped or not: row %s',
@@ -869,6 +952,7 @@ describe('table stories', () => {
         ['NoCaption', NoCaption],
         ['Scrolling', Scrolling],
         ['RowHeaders', RowHeaders],
+        ['NumericColumns', NumericColumns],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });
