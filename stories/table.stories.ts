@@ -221,3 +221,42 @@ export const NumericColumns: StoryObj<TableArgs> = {
         </div>`;
     },
 };
+
+/**
+ * A header and a first column that stick: the box is given a height, so it scrolls down and its
+ * header stays at its top, and `sticky-column` keeps the column that names each row at its start as
+ * it scrolls sideways, the corner at both.
+ */
+export const StickyHeaderAndColumn: StoryObj<TableArgs> = {
+    render: ({ caption, rows }): TemplateResult => html`
+        <ui-table sticky-column style="max-inline-size: 28rem; max-block-size: 14rem">
+            <table style="inline-size: 48rem">
+                <caption>
+                    ${caption}
+                </caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Client</th>
+                        <th scope="col">Number</th>
+                        <th scope="col">Issued</th>
+                        <th scope="col">Due</th>
+                        <th scope="col" data-ui-numeric>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${[...rows, ...rows, ...rows].map(
+                        (row, place) => html`
+                            <tr>
+                                <th scope="row">${row.client}</th>
+                                <td>${row.number}</td>
+                                <td>2026-0${String(1 + (place % 9))}-01</td>
+                                <td>2026-0${String(1 + ((place + 1) % 9))}-15</td>
+                                <td data-ui-numeric>${row.total}</td>
+                            </tr>
+                        `,
+                    )}
+                </tbody>
+            </table>
+        </ui-table>
+    `,
+};
