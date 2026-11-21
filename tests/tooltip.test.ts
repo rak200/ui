@@ -914,6 +914,21 @@ describe('when it shows', () => {
         expect(tip(host).matches(':popover-open'), 'and closes when focus leaves').toBe(false);
     });
 
+    it('shows on the keys for a <ui-button> marked aria-disabled, which keeps its tab stop', async () => {
+        // A disabled one takes no stop, which the docs answer with this.
+        const host = await mount(`
+            <ui-tooltip>
+                <ui-button aria-disabled="true">Save</ui-button>
+                <span slot="tip">Saving needs a name first.</span>
+            </ui-tooltip>
+        `);
+
+        await userEvent.tab();
+
+        expect(document.activeElement?.localName, 'tab reached the button').toBe('ui-button');
+        expect(tip(host).matches(':popover-open')).toBe(true);
+    });
+
     it('defers to focus on a touch screen, where there is no hover to answer', async () => {
         const host = await mount(fixture);
 

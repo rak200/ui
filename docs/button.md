@@ -108,6 +108,18 @@ host stylesheet can select on it. A tooltip on a disabled button is therefore sh
 [tooltip.md](tooltip.md#the-trigger-has-to-be-focusable-and-in-your-tree) says what to write where
 the reason it is disabled matters to a reader on the keyboard.
 
+```html
+<ui-button aria-disabled="true">Save</ui-button>
+```
+
+**`aria-disabled="true"` is the state's other spelling, and keeps the tab stop.** Written by you,
+as on a `<button>`, it makes a button that cannot be used and that the keys still reach, so a
+tooltip on it is shown by them. It is drawn as a disabled button is, with its effects stood down,
+and refuses a press as one does: a click on it is cancelled and reaches no listener of yours, sends
+no form and turns no toggle, so <kbd>Enter</kbd> in a field sends nothing by it either. Its own button carries
+the state as well, for a tree that does not take it from the element. Any other value, `false`
+among them, is a button that can be used.
+
 ## `type`
 
 ```html

@@ -245,6 +245,17 @@ export function pressed(event: PointerEvent | KeyboardEvent): void {
 }
 
 /**
+ * The guard every rule a button answers the reader with carries: a button that can be used, which
+ * is neither disabled nor marked `aria-disabled` by the page, RFC 0010's. The second keeps its tab
+ * stop, so a rule written for the focus carries the guard too, where a disabled button, which no
+ * focus reaches, never needed it there. One selector list in one `:not()`, so it weighs what
+ * `:not(:disabled)` did where it takes that guard's place; a rule for the focus takes it inside
+ * `:where()`, which weighs nothing, so no rule's place in the cascade moves — measured, as the
+ * shimmer's sweep drawn over the ripple it gives way to once the guard had weighed on it.
+ */
+export const usable = unsafeCSS(":not(:disabled, [aria-disabled='true'])");
+
+/**
  * The sheet of a button's effects, for the component whose tag less `ui-` is `component`: each
  * effect drawn under that component's query, so its own taste reaches it.
  *
@@ -357,29 +368,29 @@ export function buttonEffects(component: string): CSSResult {
            already, and a little more of it left the fill as it was — measured for RFC 0004 on
            Matrix's primary — so its tint is the hover colour it already goes to. */
         @container ${pointerTint} {
-            button.secondary:not(:disabled):hover:not(:active) {
+            button.secondary${usable}:hover:not(:active) {
                 background: ${tint};
             }
         }
 
         /* none under the pointer: nothing, so the fill stays as it rests. */
         @container ${pointerRest} {
-            button.primary:not(:disabled):hover:not(:active) {
+            button.primary${usable}:hover:not(:active) {
                 background: ${reference('--ui-color-primary')};
             }
 
-            button.secondary:not(:disabled):hover:not(:active) {
+            button.secondary${usable}:hover:not(:active) {
                 background: ${reference('--ui-color-surface-control')};
             }
         }
 
         /* highlight at the focus: the hover colour, for as long as the focus stays. */
         @container ${focusHighlight} {
-            button.primary:not(:disabled):focus-visible:not(:active) {
+            button.primary${usable}:focus-visible:not(:active) {
                 background: ${reference('--ui-color-primary-hover')};
             }
 
-            button.secondary:not(:disabled):focus-visible:not(:active) {
+            button.secondary${usable}:focus-visible:not(:active) {
                 background: ${reference('--ui-color-hover')};
             }
         }
@@ -389,45 +400,45 @@ export function buttonEffects(component: string): CSSResult {
            then under the pointer, then at the focus, each over the last, as the colours above
            are. */
         @container ${pressRest} {
-            button.primary:not(:disabled):active {
+            button.primary${usable}:active {
                 background: ${reference('--ui-color-primary')};
             }
 
-            button.secondary:not(:disabled):active {
+            button.secondary${usable}:active {
                 background: ${reference('--ui-color-surface-control')};
             }
 
-            button.primary:not(:disabled):hover:active {
+            button.primary${usable}:hover:active {
                 background: ${reference('--ui-color-primary-hover')};
             }
 
-            button.secondary:not(:disabled):hover:active {
+            button.secondary${usable}:hover:active {
                 background: ${reference('--ui-color-hover')};
             }
         }
 
         @container ${pressRest} and ${pointerTint} {
-            button.secondary:not(:disabled):hover:active {
+            button.secondary${usable}:hover:active {
                 background: ${tint};
             }
         }
 
         @container ${pressRest} and ${pointerRest} {
-            button.primary:not(:disabled):hover:active {
+            button.primary${usable}:hover:active {
                 background: ${reference('--ui-color-primary')};
             }
 
-            button.secondary:not(:disabled):hover:active {
+            button.secondary${usable}:hover:active {
                 background: ${reference('--ui-color-surface-control')};
             }
         }
 
         @container ${pressRest} and ${focusHighlight} {
-            button.primary:not(:disabled):focus-visible:active {
+            button.primary${usable}:focus-visible:active {
                 background: ${reference('--ui-color-primary-hover')};
             }
 
-            button.secondary:not(:disabled):focus-visible:active {
+            button.secondary${usable}:focus-visible:active {
                 background: ${reference('--ui-color-hover')};
             }
         }
@@ -450,7 +461,7 @@ export function buttonEffects(component: string): CSSResult {
            way, so the collapse takes it to nothing and nothing follows. */
         @media (hover: hover) {
             @container ${following} {
-                button:not(:disabled) {
+                button${usable} {
                     --ui-fx-follow: ${reference('--ui-duration-effect')};
                 }
             }
@@ -461,7 +472,7 @@ export function buttonEffects(component: string): CSSResult {
            the sheen is drawn in, so the label keeps its 4.5:1 under it as under the sheen. The
            focus wins. */
         @container ${unsafeCSS(drawn('hover-fill', 'spotlight'))} {
-            button:not(:disabled):where(:not(:focus-visible))::after {
+            button${usable}:where(:not(:focus-visible))::after {
                 background-image: ${spotlight};
             }
         }
@@ -469,7 +480,7 @@ export function buttonEffects(component: string): CSSResult {
         /* cast: the pointer's shadow, on the button's own, at rest as under the pointer, since it
            is as strong as the pointer is near. The focus wins, and a press is drawn over it. */
         @container ${unsafeCSS(drawn('hover-shadow', 'cast'))} {
-            button:not(:disabled):where(:not(:focus-visible)) {
+            button${usable}:where(:not(:focus-visible)) {
                 box-shadow: ${cast};
             }
         }
@@ -502,7 +513,7 @@ export function buttonEffects(component: string): CSSResult {
         }
 
         @container ${unsafeCSS(drawn('hover-border', 'edge'))} {
-            button:not(:disabled):where(:not(:focus-visible)) .edge {
+            button${usable}:where(:not(:focus-visible)) .edge {
                 opacity: var(--ui-fx-pointer-near, 0);
             }
         }
@@ -510,7 +521,7 @@ export function buttonEffects(component: string): CSSResult {
         /* The edge a theme gives the pointer is that moment's answer from before effects existed,
            so the band, or none, takes its place: the edge stays as it rests. */
         @container ${pointerBorder} {
-            button:not(:disabled):hover::after {
+            button${usable}:hover::after {
                 border-color: ${reference('--ui-color-border-button')};
             }
         }
@@ -521,7 +532,7 @@ export function buttonEffects(component: string): CSSResult {
            minutes, and four rounds stay inside the five seconds a loop that settles keeps to. On
            the layer under the label, through a property of its own. */
         @container ${unsafeCSS(drawn('focus-fill', 'shimmer'))} {
-            button:focus-visible::after {
+            button:where(${usable}):focus-visible::after {
                 background-image: linear-gradient(
                     100deg,
                     transparent 35%,
@@ -555,7 +566,7 @@ export function buttonEffects(component: string): CSSResult {
            circle's stay inside the sheen's strength together, so the label keeps its 4.5:1 under
            both as under the sheen. After the shimmer and the spotlight, which it outranks there. */
         @container ${unsafeCSS(drawn('press-fill', 'ripple'))} {
-            button:not(:disabled) {
+            button${usable} {
                 --ui-fx-ripple-time: ${reference('--ui-duration-flourish')};
                 --ui-fx-ripple-curve: ${reference('--ui-easing-enter')};
             }
@@ -578,13 +589,13 @@ export function buttonEffects(component: string): CSSResult {
            glow the button rests with stays under it. At the focus a choice for the focus's
            shadow does, since the focus wins. */
         @container ${pointerShadow} {
-            button:not(:disabled):hover::before {
+            button${usable}:hover::before {
                 box-shadow: ${reference('--ui-elevation-control')};
             }
         }
 
         @container ${focusShadow} {
-            button:not(:disabled):focus-visible::before {
+            button${usable}:focus-visible::before {
                 box-shadow: ${reference('--ui-elevation-control')};
             }
         }
@@ -596,31 +607,31 @@ export function buttonEffects(component: string): CSSResult {
            rules at a press's weight, so a press, written after them, is drawn over them. */
         @media (hover: hover) {
             @container ${unsafeCSS(drawn('hover-shadow', 'raise'))} {
-                button:not(:disabled):hover:where(:not(:focus-visible)) {
+                button${usable}:hover:where(:not(:focus-visible)) {
                     box-shadow: ${raise};
                 }
             }
 
             @container ${unsafeCSS(drawn('hover-shadow', 'glow'))} {
-                button:not(:disabled):hover:where(:not(:focus-visible)) {
+                button${usable}:hover:where(:not(:focus-visible)) {
                     box-shadow: ${glow};
                 }
             }
         }
 
         @container ${unsafeCSS(drawn('focus-shadow', 'raise'))} {
-            button:focus-visible {
+            button:where(${usable}):focus-visible {
                 box-shadow: ${raise};
             }
         }
 
         /* inner: the light held inside the boundary, for as long as the focus stays. */
         @container ${unsafeCSS(drawn('focus-shadow', 'inner'))} {
-            button.secondary:focus-visible {
+            button.secondary:where(${usable}):focus-visible {
                 box-shadow: ${inner};
             }
 
-            button.primary:focus-visible {
+            button.primary:where(${usable}):focus-visible {
                 box-shadow: ${innerOnPrimary};
             }
         }
@@ -631,7 +642,7 @@ export function buttonEffects(component: string): CSSResult {
            reference brightens the button itself at the peak too, and on the light scheme's
            primary that took the white label from 5.17:1 to 2.32:1 — measured for RFC 0004. */
         @container ${unsafeCSS(drawn('focus-shadow', 'burst'))} {
-            button:focus-visible {
+            button:where(${usable}):focus-visible {
                 animation: ui-burst ${reference('--ui-duration-flourish')}
                     ${reference('--ui-easing-enter')};
             }
@@ -649,7 +660,7 @@ export function buttonEffects(component: string): CSSResult {
 
         /* Two pixels up, the ring with it, for as long as the focus stays. */
         @container ${unsafeCSS(drawn('focus-move', 'lift'))} {
-            button:focus-visible {
+            button:where(${usable}):focus-visible {
                 translate: 0 -2px;
             }
         }
@@ -657,7 +668,7 @@ export function buttonEffects(component: string): CSSResult {
         /* The press: transitions rather than animations, so letting go runs them back where an
            animation would be cut short the moment the press ended — RFC 0004's S7. */
         @container ${unsafeCSS(drawn('press-move', 'squish'))} {
-            button:not(:disabled):active {
+            button${usable}:active {
                 scale: 0.96;
             }
         }
@@ -675,13 +686,13 @@ export function buttonEffects(component: string): CSSResult {
                     ${reference('--ui-easing-enter')}, ${spring};
             }
 
-            button:not(:disabled):active {
+            button${usable}:active {
                 scale: 0.9;
             }
         }
 
         @container ${unsafeCSS(drawn('press-shadow', 'sink'))} {
-            button:not(:disabled):active {
+            button${usable}:active {
                 box-shadow: ${sink};
             }
         }
@@ -694,7 +705,7 @@ export function buttonEffects(component: string): CSSResult {
            a pixel either way of where they came to rest, and the cracks flickered — measured for
            RFC 0004. */
         @container ${unsafeCSS(drawn('press-move', 'shatter'))} {
-            button:not(:disabled) {
+            button${usable} {
                 --ui-fx-press: shatter;
                 --ui-fx-press-time: ${reference('--ui-duration-effect')};
                 --ui-fx-press-curve: ${reference('--ui-easing-move')};
@@ -709,7 +720,7 @@ export function buttonEffects(component: string): CSSResult {
            flies. */
         @media (forced-colors: none) {
             @container ${unsafeCSS(drawn('focus-ring', 'glide'))} {
-                button:focus-visible {
+                button:where(${usable}):focus-visible {
                     --ui-fx-ring: glide;
                     --ui-fx-ring-time: ${reference('--ui-duration-travel')};
                     --ui-fx-ring-curve: ${reference('--ui-easing-move')};
@@ -720,7 +731,7 @@ export function buttonEffects(component: string): CSSResult {
                into two lines thrown either way in the danger and the info, RFC 0004's glitch
                colours. A flourish, on a straight clock, since its steps are counted along it. */
             @container ${unsafeCSS(drawn('focus-ring', 'glitch'))} {
-                button:focus-visible {
+                button:where(${usable}):focus-visible {
                     --ui-fx-ring: glitch;
                     --ui-fx-ring-time: ${reference('--ui-duration-flourish')};
                     --ui-fx-ring-curve: linear;
@@ -734,7 +745,7 @@ export function buttonEffects(component: string): CSSResult {
                into focus and goes out of it, on the curves an arrival and a departure take, over a
                quarter again an effect's time. */
             @container ${unsafeCSS(drawn('focus-ring', 'refocus'))} {
-                button:focus-visible {
+                button:where(${usable}):focus-visible {
                     --ui-fx-ring: refocus;
                     --ui-fx-ring-time: ${reference('--ui-duration-effect')};
                     --ui-fx-ring-curve: ${reference('--ui-easing-enter')};

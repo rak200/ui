@@ -69,6 +69,19 @@ export const Toggle: StoryObj<ButtonArgs> = {
 };
 
 /**
+ * Marked `aria-disabled` by the page: drawn and refused as a disabled button is, and still reached
+ * by Tab, so the keys show what a tooltip on it says.
+ */
+export const AriaDisabled: StoryObj<ButtonArgs> = {
+    render: (): TemplateResult => html`
+        <ui-tooltip>
+            <ui-button aria-disabled="true">Save</ui-button>
+            <span slot="tip">Saving needs a name first.</span>
+        </ui-tooltip>
+    `,
+};
+
+/**
  * Refusing interaction, which is a different rendering rather than the same one greyed:
  * the cursor changes with the opacity, and the real `<button>` underneath carries the
  * semantics the platform gives it.
