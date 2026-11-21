@@ -4,6 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // which needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
+import { escaped } from './escaped.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, {
@@ -2138,6 +2139,15 @@ describe('submenus', () => {
         `;
     }
 
+    /** A menu holding two submenus, one after the other. */
+    const pair = `
+        <ui-menu id="outer">
+            <span slot="trigger">File</span>
+            <ui-menu id="share"><span slot="trigger">Share</span><button type="button">Copy the link</button></ui-menu>
+            <ui-menu id="export"><span slot="trigger">Export</span><button type="button">As PDF</button></ui-menu>
+        </ui-menu>
+    `;
+
     /** One of the fixture's menus, by its id. */
     function byId(host: ParentNode, id: string): UiMenu {
         return only(host, `#${id}`) as UiMenu;
@@ -2197,6 +2207,25 @@ describe('submenus', () => {
         expect(trigger(share).hasAttribute('tabindex')).toBe(false);
     });
 
+    it('takes a menu written straight into a shadow root for a menu of its own, throwing nothing', async () => {
+        const outer = document.createElement('div');
+        const root = outer.attachShadow({ mode: 'open' });
+
+        document.body.append(outer);
+
+        try {
+            const thrown = await escaped(async () => {
+                root.innerHTML = `<ui-menu><span slot="trigger">File</span><button type="button">Rename</button></ui-menu>`;
+                await (only(root, 'ui-menu') as UiMenu).updateComplete;
+            });
+
+            expect(thrown, 'nothing thrown').toEqual([]);
+            expect(only(root, 'ui-menu').matches(':state(submenu)')).toBe(false);
+        } finally {
+            outer.remove();
+        }
+    });
+
     it.each([
         ['left to right', 'ltr', 'ArrowRight', 'ArrowLeft'],
         ['right to left', 'rtl', 'ArrowLeft', 'ArrowRight'],
@@ -2232,6 +2261,71 @@ describe('submenus', () => {
         },
     );
 
+    it.each([
+        ['left to right', 'ltr', 'ArrowRight', 'ArrowLeft'],
+        ['right to left', 'rtl', 'ArrowLeft', 'ArrowRight'],
+    ] as const)(
+        'opens and closes a submenu of a submenu by the arrows, leaving the one round it open, %s',
+        async (_, direction, toward, back) => {
+            const host = await mount(`
+                <div dir="${direction}" style="padding-inline-start: 40px">
+                    <ui-menu id="outer">
+                        <span slot="trigger">File</span>
+                        <ui-menu id="share">
+                            <span slot="trigger">Share</span>
+                            <button type="button">Copy the link</button>
+                            <ui-menu id="post">
+                                <span slot="trigger">Post</span>
+                                <button type="button">To the team</button>
+                            </ui-menu>
+                        </ui-menu>
+                    </ui-menu>
+                </div>
+            `);
+            const share = byId(host, 'share');
+            const post = byId(host, 'post');
+
+            trigger(byId(host, 'outer')).focus();
+            await userEvent.keyboard('{ArrowDown}');
+            await settle();
+            await userEvent.keyboard(`{${toward}}`);
+            await settle();
+            await userEvent.keyboard(`{ArrowDown}{${toward}}`);
+            await settle();
+
+            expect([post.open, share.open], 'open, and the one round it').toEqual([true, true]);
+            expect(focused(), 'onto its first item').toBe('To the team');
+
+            await userEvent.keyboard(`{${back}}`);
+            await settle();
+
+            expect([post.open, share.open], 'closed alone').toEqual([false, true]);
+            expect(document.activeElement, 'back on its trigger').toBe(post);
+        },
+    );
+
+    it('leaves a menu of its own open, the focus where it is, on the arrows to either side', async () => {
+        const host = await mount(nested());
+        const outer = byId(host, 'outer');
+
+        trigger(outer).focus();
+        await userEvent.keyboard('{ArrowDown}');
+        await settle();
+        await userEvent.keyboard('{ArrowLeft}{ArrowRight}');
+        await settle();
+
+        expect(outer.open).toBe(true);
+        expect(focused()).toBe('Rename');
+    });
+
+    it('takes the arrow that opens a submenu, which would scroll the page under it otherwise', async () => {
+        const host = await mount(nested());
+
+        await open(byId(host, 'outer'));
+
+        expect(keydown(trigger(byId(host, 'share')), 'ArrowRight').defaultPrevented).toBe(true);
+    });
+
     it('moves over a submenu with the arrows up and down rather than opening it', async () => {
         const host = await mount(nested());
         const outer = byId(host, 'outer');
@@ -2259,6 +2353,48 @@ describe('submenus', () => {
 
         expect([share.open, byId(host, 'outer').open]).toEqual([false, true]);
         expect(document.activeElement).toBe(share);
+    });
+
+    it('keeps an Escape in a submenu from the menu round it, which would take the focus back as it closed later', async () => {
+        // Above the menu, where no panel opens over it.
+        const host = await mount(
+            `<button type="button" id="elsewhere">Elsewhere</button>${nested()}`,
+        );
+        const outer = byId(host, 'outer');
+
+        trigger(outer).focus();
+        await userEvent.keyboard('{ArrowDown}');
+        await settle();
+        await userEvent.keyboard('{ArrowDown}{ArrowRight}');
+        await settle();
+        await userEvent.keyboard('{Escape}');
+        await settle();
+        await userEvent.click(only(host, '#elsewhere'));
+        await settle();
+
+        expect(outer.open, 'closed by the click').toBe(false);
+        expect(document.activeElement, 'where the click put it').toBe(only(host, '#elsewhere'));
+    });
+
+    it('leaves an Escape in a menu of its own to the page', async () => {
+        const host = await mount(nested());
+        let heard = 0;
+        const listen = (event: KeyboardEvent): void => {
+            heard += event.key === 'Escape' ? 1 : 0;
+        };
+
+        document.addEventListener('keydown', listen);
+
+        try {
+            trigger(byId(host, 'outer')).focus();
+            await userEvent.keyboard('{ArrowDown}');
+            await settle();
+            await userEvent.keyboard('{Escape}');
+        } finally {
+            document.removeEventListener('keydown', listen);
+        }
+
+        expect(heard).toBe(1);
     });
 
     it('closes both on a choice made in a submenu, the focus going back to the first trigger', async () => {
@@ -2298,6 +2434,28 @@ describe('submenus', () => {
         expect(document.activeElement).toBe(byId(host, 'share'));
     });
 
+    it('types past a submenu whose trigger has no label, throwing nothing', async () => {
+        const host = await mount(`
+            <ui-menu id="outer">
+                <span slot="trigger">File</span>
+                <button type="button">Rename</button>
+                <ui-menu><button type="button">Copy the link</button></ui-menu>
+                <button type="button">Delete</button>
+            </ui-menu>
+        `);
+
+        trigger(byId(host, 'outer')).focus();
+        await userEvent.keyboard('{ArrowDown}');
+        await settle();
+
+        const thrown = await escaped(async () => {
+            await userEvent.keyboard('s');
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(focused(), 'where it was').toBe('Rename');
+    });
+
     it.each([
         ['left to right', 'ltr', '-90deg'],
         ['right to left', 'rtl', '90deg'],
@@ -2313,6 +2471,7 @@ describe('submenus', () => {
 
             expect(drawn.display).toBe('flex');
             expect([drawn.paddingTop, drawn.paddingLeft]).toEqual(['5px', '10px']);
+            expect(drawn.columnGap, 'the caret apart from the label by the space').toBe('10px');
             expect(drawn.backgroundColor, 'no fill at rest').toBe('rgba(0, 0, 0, 0)');
             expect(getComputedStyle(trigger(share), '::after').content, 'no edge').toBe('none');
             expect(getComputedStyle(caret(share)).rotate).toBe(turned);
@@ -2445,8 +2604,96 @@ describe('submenus', () => {
         expect(share.open, 'a touch').toBe(false);
     });
 
-    it('keeps an open submenu while the pointer crosses toward it, and closes it as the pointer leaves the way', async () => {
+    it('opens the submenu the pointer rests on after passing over the trigger of another', async () => {
+        const host = await mount(pair);
+        const exported = byId(host, 'export');
+
+        await open(byId(host, 'outer'));
+        trigger(byId(host, 'share')).dispatchEvent(pointer('pointerenter'));
+        await wait(50);
+        trigger(byId(host, 'share')).dispatchEvent(pointer('pointerleave'));
+        trigger(exported).dispatchEvent(pointer('pointerenter'));
+        await wait(150);
+
+        expect([byId(host, 'share').open, exported.open]).toEqual([false, true]);
+    });
+
+    it('leaves a submenu a press opened open as a touch lifts off its trigger', async () => {
         const host = await mount(nested());
+        const share = byId(host, 'share');
+
+        await open(byId(host, 'outer'));
+        trigger(share).click();
+        await settle();
+
+        const middle = middleOf(trigger(share));
+
+        trigger(share).dispatchEvent(pointer('pointerleave', middle.x, middle.y, 'touch'));
+        await wait(350);
+
+        expect(share.open).toBe(true);
+    });
+
+    it('keeps a menu of its own open as the pointer leaves its trigger, and opens nothing as it rests there', async () => {
+        const host = await mount(nested());
+        const outer = byId(host, 'outer');
+        const thrown = await escaped(async () => {
+            trigger(outer).dispatchEvent(pointer('pointerenter'));
+            await wait(150);
+
+            expect(outer.open, 'rested on').toBe(false);
+
+            await open(outer);
+            trigger(outer).dispatchEvent(
+                pointer('pointerleave', ...Object.values(middleOf(trigger(outer)))),
+            );
+            await wait(350);
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(outer.open, 'left').toBe(true);
+    });
+
+    it.each([
+        ['left to right', 'ltr', 1],
+        ['right to left', 'rtl', -1],
+    ] as const)(
+        'keeps an open submenu while the pointer crosses toward it, and closes it as the pointer leaves the way, %s',
+        async (_, direction, toward) => {
+            const host = await mount(nested(direction));
+            const share = byId(host, 'share');
+
+            await open(byId(host, 'outer'));
+            share.open = true;
+            await settle();
+
+            const from = trigger(share).getBoundingClientRect();
+            const box = panel(share).getBoundingClientRect();
+            const exit = {
+                x: toward > 0 ? from.right - 2 : from.left + 2,
+                y: from.top + from.height / 2,
+            };
+            const near = toward > 0 ? box.left : box.right;
+
+            trigger(share).dispatchEvent(pointer('pointerleave', exit.x, exit.y));
+            // On the way to its lower corner.
+            document.dispatchEvent(
+                pointer('pointermove', (exit.x + near) / 2, (exit.y + box.bottom) / 2 - 2),
+            );
+
+            expect(share.open, 'on the way').toBe(true);
+
+            // Straight down, off the way.
+            document.dispatchEvent(pointer('pointermove', exit.x - toward * 20, from.bottom + 20));
+
+            expect(share.open, 'off it').toBe(false);
+        },
+    );
+
+    it('keeps an open submenu while the pointer crosses on a slant up toward it, close by its corner', async () => {
+        // Low on the page, where a crossing figured from the sum of two heights rather than their
+        // difference would lie a pixel off the submenu's edge.
+        const host = await mount(nested('ltr', 'margin-block-start: 120px'));
         const share = byId(host, 'share');
 
         await open(byId(host, 'outer'));
@@ -2458,21 +2705,47 @@ describe('submenus', () => {
         const exit = { x: from.right - 2, y: from.top + from.height / 2 };
 
         trigger(share).dispatchEvent(pointer('pointerleave', exit.x, exit.y));
-        // On the way to its lower corner.
-        document.dispatchEvent(
-            pointer('pointermove', (exit.x + box.left) / 2, (exit.y + box.bottom) / 2 - 2),
-        );
+        // A pixel above where it left, and two short of the submenu.
+        document.dispatchEvent(pointer('pointermove', box.left - 2, exit.y - 1));
 
-        expect(share.open, 'on the way').toBe(true);
-
-        // Straight down, off the way.
-        document.dispatchEvent(pointer('pointermove', exit.x - 20, from.bottom + 20));
-
-        expect(share.open, 'off it').toBe(false);
+        expect(share.open).toBe(true);
     });
 
-    it('takes five pixels back from where the pointer left for the way', async () => {
-        const host = await mount(nested());
+    it.each([
+        ['left to right', 'ltr', 1],
+        ['right to left', 'rtl', -1],
+    ] as const)(
+        'takes five pixels back from where the pointer left for the way, %s',
+        async (_, direction, toward) => {
+            const host = await mount(nested(direction));
+            const share = byId(host, 'share');
+
+            await open(byId(host, 'outer'));
+            share.open = true;
+            await settle();
+
+            const from = trigger(share).getBoundingClientRect();
+            const exit = {
+                x: toward > 0 ? from.right - 2 : from.left + 2,
+                y: from.top + from.height / 2,
+            };
+
+            trigger(share).dispatchEvent(pointer('pointerleave', exit.x, exit.y));
+            document.dispatchEvent(pointer('pointermove', exit.x - toward * 3, exit.y));
+
+            expect(share.open, 'three pixels back').toBe(true);
+
+            document.dispatchEvent(pointer('pointermove', exit.x - toward * 7, exit.y));
+
+            expect(share.open, 'seven pixels back').toBe(false);
+        },
+    );
+
+    it('takes a submenu a host hangs flush against its trigger for one ahead of it', async () => {
+        const host = await mount(`
+            <style>#share::part(menu) { margin-inline-start: 0 }</style>
+            ${nested()}
+        `);
         const share = byId(host, 'share');
 
         await open(byId(host, 'outer'));
@@ -2480,16 +2753,15 @@ describe('submenus', () => {
         await settle();
 
         const from = trigger(share).getBoundingClientRect();
-        const exit = { x: from.right - 2, y: from.top + from.height / 2 };
+        const box = panel(share).getBoundingClientRect();
 
-        trigger(share).dispatchEvent(pointer('pointerleave', exit.x, exit.y));
-        document.dispatchEvent(pointer('pointermove', exit.x - 3, exit.y));
+        expect(box.left, 'flush').toBe(from.right);
 
-        expect(share.open, 'three pixels back').toBe(true);
+        trigger(share).dispatchEvent(pointer('pointerleave', from.right - 2, from.bottom - 1));
+        // Down across the item below, toward the submenu's lower part.
+        document.dispatchEvent(pointer('pointermove', from.right - 1, from.bottom + 2));
 
-        document.dispatchEvent(pointer('pointermove', exit.x - 7, exit.y));
-
-        expect(share.open, 'seven pixels back').toBe(false);
+        expect(share.open).toBe(true);
     });
 
     it('closes an open submenu once the wait runs out, and keeps it where the pointer reaches it or comes back', async () => {
@@ -2530,14 +2802,50 @@ describe('submenus', () => {
         expect(share.open, 'come back to').toBe(true);
     });
 
+    it('waits for nothing once the pointer has reached an open submenu, wherever the pointer goes after', async () => {
+        const host = await mount(nested());
+        const share = byId(host, 'share');
+
+        await open(byId(host, 'outer'));
+        share.open = true;
+        await settle();
+
+        const from = trigger(share).getBoundingClientRect();
+        const thrown = await escaped(async () => {
+            // Reached with no wait to end, as a submenu opened by a press is.
+            panel(share).dispatchEvent(pointer('pointerenter'));
+            trigger(share).dispatchEvent(
+                pointer('pointerleave', from.right - 2, from.top + from.height / 2),
+            );
+            panel(share).dispatchEvent(pointer('pointerenter'));
+            // Far off the way, as the pointer goes on past the submenu.
+            document.dispatchEvent(pointer('pointermove', 0, 0));
+            await wait(350);
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(share.open, 'still open').toBe(true);
+    });
+
+    it('opens nothing once a submenu the pointer rested on is taken out', async () => {
+        const host = await mount(nested());
+        const share = byId(host, 'share');
+
+        await open(byId(host, 'outer'));
+
+        const thrown = await escaped(async () => {
+            trigger(share).dispatchEvent(pointer('pointerenter'));
+            await wait(50);
+            share.remove();
+            await wait(100);
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(share.open, 'never opened').toBe(false);
+    });
+
     it('opens nothing the pointer crosses while a submenu waits for it', async () => {
-        const host = await mount(`
-            <ui-menu id="outer">
-                <span slot="trigger">File</span>
-                <ui-menu id="share"><span slot="trigger">Share</span><button type="button">Copy the link</button></ui-menu>
-                <ui-menu id="export"><span slot="trigger">Export</span><button type="button">As PDF</button></ui-menu>
-            </ui-menu>
-        `);
+        const host = await mount(pair);
         const share = byId(host, 'share');
         const exported = byId(host, 'export');
 
