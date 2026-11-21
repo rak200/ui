@@ -73,6 +73,9 @@ function note(
 /** What a menu takes as an item, as `src/menu.ts` reads its children. */
 const item = 'button:not([slot]), a[href]:not([slot])';
 
+/** A section of a menu's, whose items `src/menu.ts` takes as its own, and whose heading names it. */
+const section = '[role="group"]';
+
 /**
  * What a menu holds that is no item and no mistake: its trigger, a separator, and what a framework
  * writes beside the items without meaning one. Alpine keeps a `<template>` before the items it
@@ -98,20 +101,21 @@ function menu(element: Element, found: Found[]): void {
                 'ui-menu:forwarded',
                 child,
                 `<ui-menu> is handed items through a <slot>, and takes none of them: it takes as ` +
-                    `items only the <button> and <a href> written as its own children, so what ` +
-                    `the slot forwards is drawn as written and passed over by the keys. Write the ` +
-                    `items as the menu's own children, in the tree the menu is in.`,
+                    `items only the <button> and <a href> written as its own children or in a ` +
+                    `section it holds, so what the slot forwards is drawn as written and passed ` +
+                    `over by the keys. Write the items as the menu's own children, in the tree the ` +
+                    `menu is in.`,
             );
-        } else if (!child.matches(item)) {
+        } else if (!child.matches(item) && !child.matches(section)) {
             note(
                 found,
                 'ui-menu:not-an-item',
                 child,
                 `<ui-menu> holds a <${child.localName}> that is not an item: the menu takes as ` +
-                    `items only the <button> and <a href> written as its own children, so what ` +
-                    `this one holds is drawn as written, passed over by the keys and left out of ` +
-                    `the menu's choices. Write each item as the menu's own child, and what was ` +
-                    `round it, such as a tooltip, inside it.`,
+                    `items only the <button> and <a href> written as its own children or in a ` +
+                    `section it holds, a role="group", so what this one holds is drawn as written, ` +
+                    `passed over by the keys and left out of the menu's choices. Write each item ` +
+                    `as the menu's own child, and what was round it, such as a tooltip, inside it.`,
             );
         }
     }

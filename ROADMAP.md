@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## Items that tick, and sections, in `<ui-menu>` (#465)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-sixth step: `menuitemcheckbox` and
-`menuitemradio` on the host's items, and groups named by a heading.
-
 ## A shortcut and a description on `<ui-menu>`'s items (#466)
 
-Drawn by rules the menu adopts into the host's tree.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-seventh step: drawn by rules the menu
+adopts into the host's tree.
 
 ## Submenus in `<ui-menu>` (#467)
 
