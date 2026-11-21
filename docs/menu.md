@@ -19,6 +19,7 @@ import '@rak200/ui';
 - [What the platform does, and what is left](#what-the-platform-does-and-what-is-left)
 - [Where the panel lands](#where-the-panel-lands)
 - [Submenus](#submenus)
+- [Opened at the pointer](#opened-at-the-pointer)
 - [Supplementary text](#supplementary-text)
 - [Motion](#motion)
 - [Styling](#styling)
@@ -40,10 +41,11 @@ import '@rak200/ui';
 | `trigger` | the button's label — inline content, not a control         |
 | _default_ | the items: `<button>`s and `<a href>`s, and `<hr>` between |
 
-| Property | Type        | Default   | Means                                                                          |
-| -------- | ----------- | --------- | ------------------------------------------------------------------------------ |
-| `open`   | `boolean`   | `false`   | whether the menu is showing; reflected, settable                               |
-| `align`  | `MenuAlign` | `'start'` | which of the trigger's edges the panel hangs from: `start` or `end`; reflected |
+| Property  | Type        | Default   | Means                                                                                 |
+| --------- | ----------- | --------- | ------------------------------------------------------------------------------------- |
+| `open`    | `boolean`   | `false`   | whether the menu is showing; reflected, settable                                      |
+| `align`   | `MenuAlign` | `'start'` | which of the trigger's edges the panel hangs from: `start` or `end`; reflected        |
+| `context` | `boolean`   | `false`   | a [context menu](#opened-at-the-pointer), opened from the element it is in; reflected |
 
 The class is exported as `UiMenu` for a host that needs the type; importing the package
 registers the element, so nothing has to be called.
@@ -307,6 +309,39 @@ its trigger answers on a menu of its own stand down, as no item takes them.
 
 The layer and its dismissal are the platform's: a popover in another's panel is its child among the
 open popovers, measured for RFC 0010, so a click elsewhere closes both and Escape the one on top.
+
+## Opened at the pointer
+
+```html
+<div class="canvas">
+  <button type="button">A shape</button>
+  <ui-menu context>
+    <button type="button">Paste</button>
+    <button type="button">Select all</button>
+  </ui-menu>
+</div>
+```
+
+**`context` makes the menu a context menu for the element it is written in.** A secondary click
+there opens it where the pointer is, and keeps the platform's own menu shut; the menu key and
+<kbd>Shift</kbd>+<kbd>F10</kbd> on what has the focus there open it at that element's middle, read as
+keys, since only Chromium sends `contextmenu` for them. It opens once in every engine: the key it
+opens from is kept from its default, which keeps Chromium's own `contextmenu` away. Asked for again
+while it is open, it moves to where it was asked for.
+
+- **No trigger is drawn, and the menu takes no box where it is written.** Its panel hangs from a
+  point, a zero-size element of its own placed where it was asked for, below it and toward the inline
+  end — the right left to right, the left right to left — turned up and toward the start where it
+  would run off the screen, by the same flips that turn the menu's.
+- **The focus goes into it and comes back** as the menu's does: onto its first item as it opens, and
+  back to what had it as Escape or a choice closes it; where nothing had it, it leaves the menu. A
+  click elsewhere closes it and leaves the focus where the click put it.
+- **What happens in the menu stays the menu's**: a secondary click on an item opens nothing.
+- **Linux sends `contextmenu` with the secondary button still down**, and the platform dismisses an
+  open menu as a press that began outside it ends, so the menu opens once the button is up there.
+
+A person runs it in each engine on `tests/manual/menu-context.html`, since a driven menu key is not a
+reader's: the suite dispatches what each engine was measured sending.
 
 ## Supplementary text
 

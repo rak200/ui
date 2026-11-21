@@ -207,3 +207,22 @@ export const WithASubmenu: StoryObj<MenuArgs> = {
         </ui-menu>
     `,
 };
+
+/**
+ * A context menu, `context` on a menu written in the area it serves: a secondary click there opens
+ * it where the pointer is, and the menu key or Shift+F10 at the focused element.
+ */
+export const ContextMenu: StoryObj<MenuArgs> = {
+    render: (): TemplateResult => html`
+        <div
+            style="padding: 1.5rem; border: 1px dashed currentColor; border-radius: 0.5rem; max-inline-size: 24rem"
+        >
+            <p style="margin-block-start: 0">Click here with the secondary button.</p>
+            <button type="button">Or focus me and press the menu key</button>
+            <ui-menu context>
+                <button type="button">Paste</button>
+                <button type="button">Select all</button>
+            </ui-menu>
+        </div>
+    `,
+};
