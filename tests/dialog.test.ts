@@ -4,7 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { mountStory } from './stories.js';
-import meta, { Confirm, Long, Nested } from '../stories/dialog.stories.js';
+import meta, { Confirm, Long, Nested, OpenedFromMarkup } from '../stories/dialog.stories.js';
 import '../src/dialog.js';
 import { applyLock, reservedGutter } from '../src/dialog.js';
 import type { UiDialog } from '../src/dialog.js';
@@ -292,6 +292,122 @@ describe('focus', () => {
     it('keeps a visible focus ring, for the dialog the platform focuses itself', () => {
         expect(styleText()).toContain('focus-visible');
         expect(styleText()).toContain('outline:');
+    });
+});
+
+/**
+ * Opened from markup, RFC 0010's: a button aimed at the element by `commandfor`, whose `--show`
+ * and `--close` it answers, so a page opens a dialog with no script.
+ */
+describe('opened from markup', () => {
+    /** A button aimed at the dialog with `opening`, and one inside it with `closing`. */
+    const commanded = (opening = '--show', closing = '--close'): string => `
+        <button type="button" id="opener" commandfor="commanded" command="${opening}">Open</button>
+        <ui-dialog id="commanded">
+            <h2 slot="title">Delete account</h2>
+            <p>This cannot be undone.</p>
+            <button slot="actions" type="button" id="closer" commandfor="commanded" command="${closing}">Cancel</button>
+        </ui-dialog>
+    `;
+
+    /** A button of the fixture's, by its id. */
+    function button(id: string): HTMLButtonElement {
+        const found = document.getElementById(id);
+
+        if (!(found instanceof HTMLButtonElement)) {
+            throw new Error(`no #${id} in the fixture`);
+        }
+
+        return found;
+    }
+
+    /**
+     * Presses a button of the fixture's from the keys, and lets what it asked for land. From the
+     * keys, so a pointer's press leaves no later focus unseen in the page the suite keeps.
+     */
+    async function press(element: UiDialog, id: string): Promise<void> {
+        button(id).focus();
+        await userEvent.keyboard('{Enter}');
+        await element.updateComplete;
+        await still(element);
+    }
+
+    it('opens on --show from a button aimed at it, and closes on --close from one inside it', async () => {
+        const element = await mount(commanded());
+
+        await press(element, 'opener');
+
+        expect([element.open, inner(element).open], 'open').toEqual([true, true]);
+
+        const done = closed(element);
+
+        button('closer').focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect([element.open, inner(element).open], 'closed, by its exit').toEqual([false, false]);
+    });
+
+    it('gives the focus back to the button it was opened from, as close() does', async () => {
+        const element = await mount(commanded());
+
+        await press(element, 'opener');
+
+        expect(document.activeElement, 'the focus went in').toBe(button('closer'));
+
+        const done = closed(element);
+
+        button('closer').focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect(document.activeElement).toBe(button('opener'));
+    });
+
+    it.each(['show-modal', 'toggle-popover', '--toggle', '--open'])(
+        'stays closed for a command it does not take, %s',
+        async (command) => {
+            const element = await mount(commanded(command));
+
+            await press(element, 'opener');
+
+            expect([element.open, inner(element).open]).toEqual([false, false]);
+        },
+    );
+
+    it.each(['close', 'request-close', '--hide', '--show'])(
+        'stays open for a command it does not take from inside it, %s',
+        async (command) => {
+            const element = await mount(commanded('--show', command));
+
+            await press(element, 'opener');
+            await press(element, 'closer');
+
+            expect([element.open, inner(element).open]).toEqual([true, true]);
+        },
+    );
+
+    it('takes no event a script dispatched under the name, and a command a script made', async () => {
+        const element = await mount(commanded());
+
+        element.dispatchEvent(Object.assign(new Event('command'), { command: '--show' }));
+        await element.updateComplete;
+
+        expect(element.open, 'no command in an event of the name').toBe(false);
+
+        element.dispatchEvent(new CommandEvent('command', { command: '--show' }));
+        await element.updateComplete;
+
+        expect(element.open, 'a command, whoever made it').toBe(true);
+    });
+
+    it('meets the bar closed and open, the buttons aimed at it', async () => {
+        const element = await mount(commanded());
+        const page = document.body;
+
+        await expectAccessible(page);
+        await press(element, 'opener');
+        await expectAccessible(page);
     });
 });
 
@@ -1542,6 +1658,7 @@ describe('ui-dialog stories', () => {
         ['Confirm', Confirm],
         ['Long', Long],
         ['Nested', Nested],
+        ['OpenedFromMarkup', OpenedFromMarkup],
     ] as const)('%s renders a real dialog and meets the bar', async (name, story) => {
         const container = await mountStory(story, meta, name);
         const element = only(container);
@@ -1550,5 +1667,30 @@ describe('ui-dialog stories', () => {
 
         await open(element);
         await expectAccessible(container);
+    });
+
+    it('opens OpenedFromMarkup from its button, and closes it from one inside, with no script', async () => {
+        const container = await mountStory(OpenedFromMarkup, meta, 'OpenedFromMarkup');
+        const element = only(container);
+        const [opener, cancel] = container.querySelectorAll('button');
+
+        if (opener === undefined || cancel === undefined) {
+            throw new Error('the story rendered no buttons');
+        }
+
+        opener.focus();
+        await userEvent.keyboard('{Enter}');
+        await element.updateComplete;
+        await still(element);
+
+        expect(element.open, 'open').toBe(true);
+
+        const done = closed(element);
+
+        cancel.focus();
+        await userEvent.keyboard('{Enter}');
+        await done;
+
+        expect(element.open, 'closed').toBe(false);
     });
 });

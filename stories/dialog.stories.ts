@@ -134,3 +134,38 @@ export const Nested: StoryObj<DialogArgs> = {
         </div>
     `,
 };
+
+/**
+ * Opened from markup, with no script: a button aimed at the dialog by `commandfor`, whose `--show`
+ * opens it, and buttons inside it whose `--close` closes it. Each is a `<button>` of the page's,
+ * since `commandfor` is a button's own attribute.
+ */
+export const OpenedFromMarkup: StoryObj<DialogArgs> = {
+    render: ({ title, body }): TemplateResult => html`
+        <div>
+            <button type="button" commandfor="opened-from-markup" command="--show">
+                Delete account
+            </button>
+            <ui-dialog id="opened-from-markup">
+                <h2 slot="title">${title}</h2>
+                <p>${body}</p>
+                <button
+                    slot="actions"
+                    type="button"
+                    commandfor="opened-from-markup"
+                    command="--close"
+                >
+                    Cancel
+                </button>
+                <button
+                    slot="actions"
+                    type="button"
+                    commandfor="opened-from-markup"
+                    command="--close"
+                >
+                    Delete
+                </button>
+            </ui-dialog>
+        </div>
+    `,
+};
