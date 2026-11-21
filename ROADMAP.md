@@ -3,14 +3,10 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## An arrow on `<ui-tooltip>`'s tip (#454)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s fifteenth step: pointing at its trigger's
-middle, drawn as the tip's `::before` and moved by `translate`.
-
 ## `<ui-dialog>` opened from markup (#455)
 
-`--show` and `--close`, from any button aimed at it with `commandfor`.
+[RFC 0010](docs/proposals/0010-component-features.md)'s sixteenth step: `--show` and `--close`, from
+any button aimed at it with `commandfor`.
 
 ## `<ui-dialog>` closed by its form (#456)
 

@@ -16,6 +16,7 @@ import '@rak200/ui';
 - [What it shows and what dismisses it](#what-it-shows-and-what-dismisses-it)
 - [Touch](#touch)
 - [Where it lands, and who put it there](#where-it-lands-and-who-put-it-there)
+- [The arrow](#the-arrow)
 - [On a control you wrote](#on-a-control-you-wrote)
 - [Inside a button or a link](#inside-a-button-or-a-link)
 - [Motion](#motion)
@@ -53,9 +54,10 @@ element's shadow root could not be the target of the trigger's `aria-describedby
 constraint that shapes [`<ui-input>`](input.md) and every other control here.
 
 What the element writes on your tip: an `id` (only if it has none), `role="tooltip"` (only if you
-wrote no role), `popover="manual"`, and a `data-side` saying which side of the trigger it landed on.
-What it writes on your trigger: `aria-describedby`, **added to** whatever was already there rather
-than replacing it.
+wrote no role), `popover="manual"`, a `data-side` saying which side of the trigger it landed on, and
+in its `style` where along it [the arrow](#the-arrow) points, `--ui-fx-arrow`, and how long that edge
+is, `--ui-fx-arrow-span`. What it writes on your trigger: `aria-describedby`, **added to** whatever
+was already there rather than replacing it.
 
 **And it takes that one entry back out when it lets go.** Replace either child and the wiring
 follows: a new tip is described and the old id is removed, a new trigger is described and the old
@@ -167,7 +169,8 @@ answers all three:
   element wires it.
 - **Hoverable** — the pointer can travel onto the tip and it stays open, because the tip is a DOM
   child of `<ui-tooltip>`: moving into it never leaves the element that is listening. The gap between
-  trigger and tip is `--ui-space` ÷ 2, small enough that a pointer crossing it does not leave first.
+  trigger and tip is `--ui-space` ÷ 2, small enough that a pointer crossing it does not leave first,
+  and at the trigger's middle [the arrow](#the-arrow) fills it, which is the tip's own.
 - **Persistent** — no timer closes it. It stays until you leave it or dismiss it.
 
 There is no delay before it opens and no fade. A tooltip is information asked for; a transition is a
@@ -225,8 +228,10 @@ platform's own placement read such a part's sides in the page's direction in Chr
 and Firefox misplaced the tip on every side there.
 
 **The side it took is written as [`data-side`](#styling)**, since the CSS writes it nowhere: the
-element reads it off where the tip landed as it is shown, again on every scroll and resize, and as
-`side` changes while the tip is open.
+element reads it off where the tip landed as it is shown, as `side` changes while the tip is open,
+and again after every scroll and resize, once the page has been laid out under it. Chromium and
+Firefox move the tip after the scroll that moved its trigger, so read in the scroll the tip was
+where it had been: a tip that turned below on a scroll went on saying it was above.
 
 **The tip is shown from its trigger, which is what anchors it**, so it needs no anchor name: an
 `anchor-name` of your own on the trigger leaves the tip where it is.
@@ -234,6 +239,51 @@ element reads it off where the tip landed as it is shown, again on every scroll 
 A positioning dependency was the other option. It solves scroll containers, virtual anchors and
 continuous auto-update — none of which a tooltip against a real element needs — and it would be this
 package's second runtime dependency.
+
+## The arrow
+
+```html
+<ui-tooltip side="inline-end">
+  <button type="button">Save</button>
+  <span slot="tip">Saves without closing the dialog.</span>
+</ui-tooltip>
+```
+
+**The tip points at its trigger**, from the side it landed on: an arrow in the gap, drawn in the
+tip's surface, boundary and lift, which opens into the tip's edge. Under forced colours it keeps its
+edge, as the tip keeps its own. It is the tip's own `::before`, so it goes where the tip goes, comes
+and goes with it, and a point on it is the tip: the pointer crossing the gap over it has not left.
+
+**It points at the trigger's middle, which is not always the tip's.** Where the tip is pulled inside
+the screen, or hangs from its trigger's edge in a part of the page whose direction is not the
+page's, the arrow is where the trigger is, and it keeps clear of the tip's rounded corners by
+`--ui-radius` and half its base. CSS cannot point it at the trigger from inside the tip — measured,
+in all three engines, for RFC 0010 — so the element writes its place from the same two boxes it
+reads [the side](#a-side-of-its-own) off, and the arrow takes it by `translate`: Firefox lost the
+tip's anchor where an inset of the arrow's moved after the tip was shown, and kept it under a
+translate.
+
+**The tip's overflow shows**, which the arrow outside it needs: the user agent's `overflow: auto`
+for a popover clipped it, and kept the pointer from it. So a word longer than the tip's ceiling
+breaks inside the tip, where it used to scroll.
+
+**Under [Glass](theme.md#glass) it meets the tip at its edge**, which runs on across its base: the
+glass is translucent, so a part of the arrow laid over the tip would show twice. Where the glass
+stands down, under more contrast or less transparency, the arrow opens into the edge again. The
+glass is read through a container style query, which Firefox has from 151, so before it the arrow
+opens into the edge on glass too.
+
+**A rule of yours on the tip's `::before` outweighs every one of the sheet's**, as a rule outside a
+shadow root does, so `content: none` takes the arrow away:
+
+```css
+.plain [slot='tip']::before {
+  content: none;
+}
+```
+
+An arrow of your own is drawn on the tip's `::after`, with this one taken away, so no declaration of
+the sheet's is left under it.
 
 ## On a control you wrote
 
@@ -344,6 +394,8 @@ Every value is a [token](tokens.md); nothing here is hardcoded.
 | corner               | `--ui-radius`                                                               |
 | lift                 | `--ui-elevation-raised`, lit in the tip's text if written in `currentColor` |
 | font                 | `--ui-font`, at `--ui-text-supporting`                                      |
+| arrow                | the gap long, twice that broad, in the surface, boundary and lift above     |
+| arrow's clearance    | `--ui-radius` and half the arrow's base, from each corner                   |
 
 **It is a small raised surface rather than an inverted one.** A dark bubble on a light page is the
 convention, and it would need a colour pair no other component in this kit uses — a category invented
@@ -355,8 +407,8 @@ one line, and a sentence wraps at a readable measure rather than at whatever the
 be near.
 
 The `data-side` attribute is written on your tip and says which way it went — `block-start`,
-`block-end`, `inline-start` or `inline-end`, in the tip's direction — so a host that wants an arrow,
-or a different gap, has something to select on.
+`block-end`, `inline-start` or `inline-end`, in the tip's direction — which is the side the arrow is
+drawn on, and what a host that wants a different gap has to select on.
 
 `::part()` is not exposed. There is nothing in the shadow root to aim it at: the trigger and the tip
 are your own elements, styleable directly.

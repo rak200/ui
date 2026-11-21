@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>A tip's arrow, in three engines</title>
+        <!--
+            Where a <ui-tooltip>'s arrow points, in each engine a reader uses (#454).
+
+            A step, not a test: the suite runs in Chromium alone, and in a page that moves an
+            anchored tip by the scroll event already, where Chromium and Firefox in a page of
+            their own move it as they lay the next frame out. It lives in tests/manual/ for the
+            reasons interaction-states.mjs gives beside it.
+
+            ## Running it
+
+                npm run workbench
+
+            Then open /tests/manual/tooltip-arrow.html at the address Vite prints, in Chrome,
+            Firefox and Safari. The page imports the package from src/, as a scratch page does,
+            with the token sheet and Glass's, and none of the workbench's shell.
+
+            ## Each case
+
+            - Case 1: point at each trigger. The arrow lies in the gap on the trigger's side of
+              the tip, and its point is at the middle of the trigger.
+            - Case 2: the two small triggers sit at the window's edges, and each tip is pulled
+              inside it. The arrow points at the trigger's middle, which is not the tip's, and
+              keeps clear of the tip's rounded corner.
+            - Case 3: Tab to the trigger at the right and narrow the window. The tip is pulled
+              further inside and the arrow moves along it, while the tip stays against its
+              trigger: an inset of the arrow's that moved put the tip in the screen's corner in
+              Firefox, which the arrow's translate does not.
+            - Case 4: Tab to the trigger in the box and scroll the box. The arrow stays on its
+              trigger's middle through the scroll and after it. Then Tab to Turn and scroll the
+              page until Turn nears the top of the window, where its tip turns below: its arrow
+              points up at Turn from the tip's top.
+            - Case 5: point at the trigger, then move straight up onto the tip over the arrow.
+              The tip stays open the whole way. Beside the arrow the gap is no part of the tip,
+              and the tip may close there, as it did before the arrow.
+            - Case 6: press Glass, then point at the trigger. The arrow meets the tip at its edge,
+              which runs across the arrow's base, where without Glass it opens into the tip.
+            - Case 7: in a passage right to left, the tip beside its trigger points at it from
+              the trigger's side, and the one below from its top.
+
+            ## Where it goes
+
+            A comment on #454, with the browser's version and the system. An arrow that points
+            off its trigger's middle, or a tip that leaves its trigger, is a defect of its own.
+        -->
+        <script type="module">
+            import { glass, themeStyleSheet, tokenStyleSheet } from '@rak200/ui';
+
+            const sheet = document.createElement('style');
+            sheet.textContent = `${tokenStyleSheet()}\n${themeStyleSheet(glass)}`;
+            document.head.prepend(sheet);
+
+            document.querySelector('#glass').addEventListener('click', (event) => {
+                const on = document.documentElement.dataset.uiTheme !== 'glass';
+
+                document.documentElement.dataset.uiTheme = on ? 'glass' : '';
+                event.currentTarget.setAttribute('aria-pressed', String(on));
+            });
+        </script>
+        <style>
+            body {
+                margin: 0;
+                padding: 1rem 1rem 100vh;
+                font-family: system-ui, sans-serif;
+                background: var(--ui-color-surface);
+                color: var(--ui-color-text);
+            }
+
+            :root[data-ui-theme='glass'] body {
+                background: repeating-linear-gradient(
+                    45deg,
+                    #e66 0 6px,
+                    #36c 6px 12px,
+                    #fc3 12px 18px
+                );
+            }
+
+            section {
+                margin-block-end: 3rem;
+            }
+
+            h2 {
+                margin: 0 0 3rem;
+                font-size: 1.125rem;
+            }
+
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6rem;
+                justify-content: center;
+            }
+
+            .small {
+                inline-size: 16px;
+                block-size: 16px;
+                padding: 0;
+            }
+
+            .box {
+                block-size: 10rem;
+                inline-size: 20rem;
+                overflow-y: auto;
+                border: 1px solid;
+            }
+
+            .box > div {
+                block-size: 40rem;
+                padding: 4rem 2rem;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>A tip's arrow, in three engines</h1>
+
+        <section>
+            <h2>Case 1: each side</h2>
+            <div class="row">
+                <ui-tooltip>
+                    <button type="button">Above</button>
+                    <span slot="tip">Above it, until told otherwise.</span>
+                </ui-tooltip>
+                <ui-tooltip side="block-end">
+                    <button type="button">Below</button>
+                    <span slot="tip">Below it.</span>
+                </ui-tooltip>
+                <ui-tooltip side="inline-start">
+                    <button type="button">Start</button>
+                    <span slot="tip">At its start.</span>
+                </ui-tooltip>
+                <ui-tooltip side="inline-end">
+                    <button type="button">End</button>
+                    <span slot="tip">At its end.</span>
+                </ui-tooltip>
+            </div>
+        </section>
+
+        <section>
+            <h2>Case 2 and case 3: at the window's edges</h2>
+            <div style="display: flex; justify-content: space-between">
+                <ui-tooltip>
+                    <button type="button" class="small" aria-label="Left"></button>
+                    <span slot="tip">Pulled inside the window at its left edge.</span>
+                </ui-tooltip>
+                <ui-tooltip>
+                    <button type="button" class="small" aria-label="Right"></button>
+                    <span slot="tip">Pulled inside the window at its right edge.</span>
+                </ui-tooltip>
+            </div>
+        </section>
+
+        <section>
+            <h2>Case 4: in a box that scrolls</h2>
+            <div class="box">
+                <div>
+                    <ui-tooltip side="inline-end">
+                        <button type="button">Scroll</button>
+                        <span slot="tip">Beside its trigger as the box scrolls.</span>
+                    </ui-tooltip>
+                </div>
+            </div>
+            <p>
+                <ui-tooltip>
+                    <button type="button">Turn</button>
+                    <span slot="tip">Above, then below.</span>
+                </ui-tooltip>
+            </p>
+        </section>
+
+        <section>
+            <h2>Case 5 and case 6: across the gap, and on glass</h2>
+            <div class="row">
+                <ui-tooltip>
+                    <button type="button">Cross</button>
+                    <span slot="tip">Reached over the arrow.</span>
+                </ui-tooltip>
+                <button type="button" id="glass" aria-pressed="false">Glass</button>
+            </div>
+        </section>
+
+        <section dir="rtl">
+            <h2>Case 7: right to left</h2>
+            <div class="row" lang="he">
+                <ui-tooltip side="inline-start">
+                    <button type="button">התחלה</button>
+                    <span slot="tip">בצד ההתחלה</span>
+                </ui-tooltip>
+                <ui-tooltip side="block-end">
+                    <button type="button">מתחת לכפתור</button>
+                    <span slot="tip">רמז ארוך יותר מהכפתור</span>
+                </ui-tooltip>
+            </div>
+        </section>
+    </body>
+</html>
