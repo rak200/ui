@@ -4,6 +4,7 @@ import { cdp, userEvent } from 'vitest/browser';
 // which needs the same line for the same reason.
 import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
+import { escaped } from './escaped.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
 import meta, {
@@ -1787,6 +1788,56 @@ describe('items that tick, and sections', () => {
         ] as const) {
             expect(inSection[property], property).toBe(own[property]);
         }
+    });
+
+    it('lights an item in a section under the pointer as one of its own', async () => {
+        const host = await mount(ticked);
+
+        menu(host).style.setProperty('--ui-duration-state', '0s');
+        await open(menu(host));
+        await userEvent.hover(named(host, 'Small'));
+
+        const probe = document.createElement('div');
+
+        probe.style.backgroundColor = String(reference('--ui-color-hover'));
+        document.body.append(probe);
+
+        const hover = getComputedStyle(probe).backgroundColor;
+
+        probe.remove();
+
+        expect(getComputedStyle(named(host, 'Small')).backgroundColor).toBe(hover);
+    });
+
+    it("pads the heading of a section as an item is padded, so it starts where an item's label does", async () => {
+        const host = await mount(ticked);
+
+        menu(host).style.setProperty('--ui-space', '10px');
+
+        const heading = getComputedStyle(only(host, '#sort'));
+
+        expect([heading.paddingTop, heading.paddingLeft]).toEqual(['5px', '10px']);
+    });
+
+    it("leaves every item as it is on a click that lands on a section's heading, or on no item, and throws nothing", async () => {
+        const host = await mount(ticked);
+        const before = ['Show the ruler', 'Show the grid', 'Name', 'Date'].map((text) =>
+            checked(host, text),
+        );
+
+        await open(menu(host));
+
+        const thrown = await escaped(() => {
+            only(host, '#sort').click();
+            panel(menu(host)).click();
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(
+            ['Show the ruler', 'Show the grid', 'Name', 'Date'].map((text) => checked(host, text)),
+            'every item as it was',
+        ).toEqual(before);
+        expect(menu(host).open, 'still open').toBe(true);
     });
 
     it('draws the heading of a section as its title, in the muted text at the supporting size', async () => {
