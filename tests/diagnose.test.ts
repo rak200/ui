@@ -61,13 +61,13 @@ customElements.define('test-diagnose-draws-a-toast', DrawsAToast);
 const said = {
     notAnItem: (tag: string): string =>
         `<ui-menu> holds a <${tag}> that is not an item: the menu takes as items only the ` +
-        `<button> and <a href> written as its own children or in a section it holds, a ` +
-        `role="group", so what this one holds is drawn as written, passed over by the keys and ` +
+        `<button>, the <a href> and the <ui-menu> written as its own children or in a section it ` +
+        `holds, a role="group", so what this one holds is drawn as written, passed over by the keys and ` +
         `left out of the menu's choices. Write each item as the menu's own child, and what was ` +
         `round it, such as a tooltip, inside it.`,
     forwarded:
         '<ui-menu> is handed items through a <slot>, and takes none of them: it takes as items ' +
-        'only the <button> and <a href> written as its own children or in a section it holds, ' +
+        'only the <button>, the <a href> and the <ui-menu> written as its own children or in a section it holds, ' +
         'so what the slot forwards is drawn as written and passed over by the keys. Write the ' +
         "items as the menu's own children, in the tree the menu is in.",
     noItems:
@@ -271,6 +271,15 @@ describe('a menu, as RFC 0011 measured what a host writes in one', () => {
             diagnose(await mount(menu(`${section}<button type="button">Reset</button>`))),
         ).toEqual([]);
         expect(diagnose(await mount(menu(section))), 'sections alone').toEqual([]);
+    });
+
+    it('takes a submenu for an item, a menu written in another', async () => {
+        const submenu =
+            '<ui-menu><span slot="trigger">Share</span><button type="button">Copy the link</button></ui-menu>';
+
+        expect(
+            diagnose(await mount(menu(`<button type="button">Rename</button>${submenu}`))),
+        ).toEqual([]);
     });
 
     it("finds each of a component's own elements round an item", async () => {

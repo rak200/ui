@@ -188,3 +188,22 @@ export const ShortcutsAndDescriptions: StoryObj<MenuArgs> = {
         </ui-menu>
     `,
 };
+
+/**
+ * A submenu: a `<ui-menu>` written in another, its trigger drawn as one of the items and its panel
+ * opening beside it — by the arrow toward the inline end, a press, or the pointer resting on it.
+ */
+export const WithASubmenu: StoryObj<MenuArgs> = {
+    render: (): TemplateResult => html`
+        <ui-menu>
+            <span slot="trigger">File</span>
+            <button type="button">Rename</button>
+            <ui-menu>
+                <span slot="trigger">Share</span>
+                <button type="button">Copy the link</button>
+                <button type="button">Email</button>
+            </ui-menu>
+            <button type="button">Delete</button>
+        </ui-menu>
+    `,
+};

@@ -3,15 +3,11 @@
 Pending work, ordered. Released history lives in [CHANGELOG.md](CHANGELOG.md); a delivered entry
 is **removed** by the pull request that delivers it, not annotated as done.
 
-## Submenus in `<ui-menu>` (#467)
-
-[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-eighth step: the platform's layer, the
-menu's keys, and the pointer's way in across the area Radix's waits across.
-
 ## `<ui-menu>` opened at the pointer (#468)
 
-A context menu, opened by the pointer and by the menu key and Shift+F10 read as keys. The last
-step, which marks RFC 0010 `Implemented`.
+[RFC 0010](docs/proposals/0010-component-features.md)'s twenty-ninth step: a context menu, opened by
+the pointer and by the menu key and Shift+F10 read as keys. The last step, which marks RFC 0010
+`Implemented`.
 
 ## A busy `<ui-button>` (#439)
 
