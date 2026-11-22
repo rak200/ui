@@ -5,6 +5,9 @@ import { follow } from './pointer.js';
 import { reference } from './reference.js';
 import { arrive, watch } from './ring.js';
 
+/** Which of the trigger's edges the panel hangs from: its leading edge, or its trailing one. */
+export type MenuAlign = 'start' | 'end';
+
 /**
  * The panel's id, and it needs no counter behind it.
  *
@@ -348,6 +351,18 @@ export class UiMenu extends LitElement {
                 right: anchor(right);
             }
 
+            /* align="end": from the trigger's trailing edge, which right to left is its left edge,
+               turning to the leading edge by the same flip where it would run off the screen. */
+            :host([align='end']) [popover] {
+                left: auto;
+                right: anchor(right);
+            }
+
+            :host([align='end']:dir(rtl)) [popover] {
+                right: auto;
+                left: anchor(left);
+            }
+
             /* The gap between the panel and its trigger: a margin on the side the trigger is on,
            which the flip moves to the other side with the panel. */
             [popover] {
@@ -428,6 +443,7 @@ export class UiMenu extends LitElement {
     /** The properties Lit observes on this element. */
     static override readonly properties = {
         open: { type: Boolean, reflect: true },
+        align: { type: String, reflect: true },
     };
 
     /**
@@ -442,6 +458,13 @@ export class UiMenu extends LitElement {
      * states beside its own.
      */
     open = false;
+
+    /**
+     * Which of the trigger's edges the panel hangs from: `start`, its leading edge, the default, or
+     * `end`, its trailing one. Either turns to the other where the panel would run off the screen.
+     * Reflected.
+     */
+    align: MenuAlign = 'start';
 
     /** The button this component owns, so the relationship below cannot be miswired. */
     readonly #trigger = document.createElement('button');

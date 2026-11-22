@@ -6,7 +6,13 @@ import type {} from '@vitest/browser-playwright';
 import { expectAccessible } from './a11y.js';
 import { pointTo } from './pointing.js';
 import { mountStory } from './stories.js';
-import meta, { AtTheEdge, Disabled, Links, Menu } from '../stories/menu.stories.js';
+import meta, {
+    AlignedToTheEnd,
+    AtTheEdge,
+    Disabled,
+    Links,
+    Menu,
+} from '../stories/menu.stories.js';
 import '../src/menu.js';
 import '../src/button.js';
 import '../src/tooltip.js';
@@ -1376,6 +1382,102 @@ describe('where the panel lands', () => {
  * compares this package with itself, and passes for a rule that names the wrong token, or
  * no token at all. `src/toast.ts` learned that from thirty surviving mutants.
  */
+/** The menu hung from the trigger's trailing edge, RFC 0010's, where the host asks with `align`. */
+describe("hung from the trigger's trailing edge, where the host asks", () => {
+    /** A menu whose panel is wider than its trigger, hung from `align`, in a part of the page `around` styles. */
+    function wide(align: string, around: string): string {
+        return `
+            <div ${around}>
+                <ui-menu ${align}>
+                    <span slot="trigger">Actions</span>
+                    <button type="button">A much longer item than the trigger</button>
+                    <button type="button">Duplicate</button>
+                </ui-menu>
+            </div>
+        `;
+    }
+
+    it('hangs from the leading edge until it is asked otherwise', async () => {
+        const host = await mount(fixture);
+
+        expect(menu(host).align).toBe('start');
+        expect(menu(host).getAttribute('align'), 'reflected').toBe('start');
+    });
+
+    it.each([
+        ['left to right, at its right', 'ltr'],
+        ['right to left, at its left', 'rtl'],
+    ] as const)(
+        'hangs from the trigger\'s trailing edge under align="end", %s',
+        async (_, direction) => {
+            const host = await mount(
+                wide('align="end"', `dir="${direction}" style="padding-inline-start: 300px"`),
+            );
+
+            await open(menu(host));
+
+            const anchor = trigger(menu(host)).getBoundingClientRect();
+            const box = panel(menu(host)).getBoundingClientRect();
+
+            expect(box.width, 'wider than the trigger').toBeGreaterThan(anchor.width);
+            expect(box.top - anchor.bottom, 'below it').toBeCloseTo(4, 0);
+            expect(panel(menu(host)).getAttribute('data-side'), 'the side it says').toBe(
+                'block-end',
+            );
+
+            if (direction === 'ltr') {
+                expect(box.right).toBeCloseTo(anchor.right, 0);
+            } else {
+                expect(box.left).toBeCloseTo(anchor.left, 0);
+            }
+        },
+    );
+
+    it.each([
+        ['left to right, at the left of the screen', 'ltr'],
+        ['right to left, at the right of the screen', 'rtl'],
+    ] as const)(
+        'turns to the leading edge where the trailing one would run off the screen, %s',
+        async (_, direction) => {
+            const host = await mount(wide('align="end"', `dir="${direction}"`));
+
+            await open(menu(host));
+
+            const anchor = trigger(menu(host)).getBoundingClientRect();
+            const box = panel(menu(host)).getBoundingClientRect();
+
+            if (direction === 'ltr') {
+                expect(box.left).toBeCloseTo(anchor.left, 0);
+            } else {
+                expect(box.right).toBeCloseTo(anchor.right, 0);
+            }
+        },
+    );
+
+    it('takes align from the attribute, and reflects it', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        element.setAttribute('align', 'end');
+
+        expect(element.align).toBe('end');
+
+        element.align = 'start';
+        await element.updateComplete;
+
+        expect(element.getAttribute('align')).toBe('start');
+    });
+
+    it('is accessible open, hung from the trailing edge', async () => {
+        const host = await mount(wide('align="end"', 'style="padding-inline-start: 300px"'));
+
+        await open(menu(host));
+        await still(menu(host));
+
+        await expectAccessible(host);
+    });
+});
+
 describe('the values, all of which come from the token layer', () => {
     it('draws the trigger as the secondary button it is', async () => {
         // Measured against the real thing rather than asserted to match it, which is the
@@ -2524,6 +2626,7 @@ describe('menu stories', () => {
         ['Disabled', Disabled],
         ['Links', Links],
         ['AtTheEdge', AtTheEdge],
+        ['AlignedToTheEnd', AlignedToTheEnd],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });
