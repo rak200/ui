@@ -138,3 +138,32 @@ export const AlignedToTheEnd: StoryObj<MenuArgs> = {
         </div>
     `,
 };
+
+/**
+ * Items that tick, and sections: two checkboxes, and two sections of radios, each named by its
+ * heading. The space bar ticks an item and keeps the menu open; Enter and a click tick it and close
+ * it.
+ */
+export const TicksAndSections: StoryObj<MenuArgs> = {
+    render: (): TemplateResult => html`
+        <ui-menu>
+            <span slot="trigger">View</span>
+            <button type="button" role="menuitemcheckbox" aria-checked="true">
+                Show the ruler
+            </button>
+            <button type="button" role="menuitemcheckbox">Show the grid</button>
+            <hr />
+            <div role="group" aria-labelledby="story-sort">
+                <span id="story-sort">Sort by</span>
+                <button type="button" role="menuitemradio" aria-checked="true">Name</button>
+                <button type="button" role="menuitemradio" aria-checked="false">Date</button>
+            </div>
+            <hr />
+            <div role="group" aria-labelledby="story-size">
+                <span id="story-size">Size</span>
+                <button type="button" role="menuitemradio" aria-checked="false">Small</button>
+                <button type="button" role="menuitemradio" aria-checked="true">Large</button>
+            </div>
+        </ui-menu>
+    `,
+};

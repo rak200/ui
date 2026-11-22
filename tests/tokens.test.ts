@@ -33,7 +33,7 @@ import { UiCheckbox, UiSwitch } from '../src/checkbox.js';
 import { UiDialog } from '../src/dialog.js';
 import { UiIcon } from '../src/icon.js';
 import { UiInput, UiTextarea } from '../src/input.js';
-import { UiMenu } from '../src/menu.js';
+import { UiMenu, rules as menuRules } from '../src/menu.js';
 import { UiRadio, UiRadioGroup } from '../src/radio.js';
 import { UiSelect } from '../src/select.js';
 import { rules as tableRules, UiTable, veils } from '../src/table.js';
@@ -1359,6 +1359,8 @@ describe('the references components write', () => {
         UiIcon.styles,
         UiInput.styles,
         UiMenu.styles,
+        // The rules the menu adopts into the tree its sections are in, as the table's are.
+        menuRules,
         UiRadio.styles,
         UiRadioGroup.styles,
         UiSelect.styles,

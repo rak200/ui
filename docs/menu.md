@@ -12,6 +12,7 @@ import '@rak200/ui';
 
 - [`<ui-menu>`](#ui-menu)
 - [Items are yours; the trigger is not](#items-are-yours-the-trigger-is-not)
+- [Items that tick, and sections](#items-that-tick-and-sections)
 - [With an icon](#with-an-icon)
 - [The keyboard](#the-keyboard)
 - [What the platform does, and what is left](#what-the-platform-does-and-what-is-left)
@@ -57,7 +58,8 @@ consumer to get wrong: `aria-haspopup`, `aria-expanded` and `aria-controls` are 
 element you never see.
 
 **The items stay yours**, and they must be natively focusable — a `<button>` or an
-`<a href>`. What the component writes on each is `role="menuitem"` and `tabindex="-1"`;
+`<a href>`, written as the menu's own children or in a [section](#items-that-tick-and-sections).
+What the component writes on each is `role="menuitem"` and `tabindex="-1"`;
 activation, the accessible name and the disabled state stay the platform's. Containment is
 what crosses the boundary here: a slotted item really is inside the `role="menu"` panel, the
 same rule [`<ui-toaster>`](toast.md) relies on and the one a reference cannot borrow.
@@ -72,6 +74,48 @@ neither closes the menu when clicked.
 **A hidden item is left out.** Write `hidden` on it, or hide it with a rule of your own: it is not
 drawn, and the arrow keys and typeahead pass over it. Take `hidden` off and it is back, in its
 place.
+
+## Items that tick, and sections
+
+```html
+<ui-menu>
+  <span slot="trigger">View</span>
+  <button type="button" role="menuitemcheckbox" aria-checked="true">Show the ruler</button>
+  <button type="button" role="menuitemcheckbox">Show the grid</button>
+  <hr />
+  <div role="group" aria-labelledby="view-sort">
+    <span id="view-sort">Sort by</span>
+    <button type="button" role="menuitemradio" aria-checked="true">Name</button>
+    <button type="button" role="menuitemradio" aria-checked="false">Date</button>
+  </div>
+</ui-menu>
+```
+
+**An item ticks when you give it the role**: `role="menuitemcheckbox"` or `role="menuitemradio"` on
+a button of yours, with its `aria-checked`. The menu keeps the role where it writes `menuitem` on
+any other item, writes `aria-checked="false"` where you wrote none, since the role requires the
+state, and draws a tick at the item's start while it is checked: the checkbox's tick, or the
+radio's dot, in the item's own text. A press turns it:
+
+- **a checkbox's state turns over, and a radio's goes to it** from the other radios of its section,
+  or of the menu's own children outside a section;
+- **the space bar ticks it and leaves the menu open**, so several can be ticked in a row, where
+  Enter and a click tick it and close the menu as they close it from any item — the APG's menu;
+- **the item announces `change` for every tick**, the space bar's included, which fires no click,
+  so read `aria-checked` there; a listener on the item for `click` hears the state the click set;
+- an item that cannot be used is left as it is.
+
+**A section is a `role="group"` of yours among the menu's items**, named by a heading it holds: a
+`<span>` with an `id`, which the section's `aria-labelledby` points at. The menu takes the
+section's items as its own, and the arrows, Home, End and typing move through sections as through
+the rest and pass over the heading, which is drawn as the section's title, in the muted text at the
+supporting size. An `<hr>` sets a section apart from what is round it.
+
+**What a section holds is drawn by rules the menu adopts into the tree it is in**, as
+[`<ui-table>`](table.md)'s are, since `::slotted()` reaches the section and nothing in it; written
+at no weight, so a rule of yours for your own button still has the last word, as it has for the
+menu's own items. An item written into a section after the menu was drawn is taken as the menu
+opens.
 
 ## With an icon
 
