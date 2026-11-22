@@ -389,6 +389,11 @@ explains. This file restates none of them.
   press of the space bar needs, firing no click. `::slotted()` reaches a section and nothing in it,
   so its items take the menu's item rules from the host's tree, at no weight, as the table's rows
   take theirs; `src/diagnose.ts` takes a section for no mistake.
+- **Why an item's shortcut floats to its end and its description is hidden in it and named by
+  `aria-describedby`, and why both take the item's own text under the pointer** — the docblocks on
+  `rules` and `#describe` in `src/menu.ts`, and `docs/menu.md`'s _A shortcut and a description_. A
+  grid would lay an icon and the label apart; the description in the item would join its name; and
+  the muted text fell to 3.28:1 on an item under the pointer, which `tests/tokens.test.ts` floors.
 - **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
   lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided
