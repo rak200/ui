@@ -1766,6 +1766,51 @@ describe('items that tick, and sections', () => {
             getComputedStyle(named(host, 'Reset')).paddingLeft,
             'an item that does not tick',
         ).toBe('8px');
+        expect(
+            getComputedStyle(named(host, 'Show the ruler'), '::before').left,
+            'its tick, at the start of the column',
+        ).toBe('8px');
+        expect(getComputedStyle(named(host, 'Name'), '::before').left, 'in a section').toBe('8px');
+    });
+
+    it('rings a focused item in a section from the host own colour, as one of its own', async () => {
+        const host = await mount(ticked);
+        const element = menu(host);
+
+        element.style.setProperty('--ui-color-focus', 'rgb(1, 2, 3)');
+        await fromTheKeys(element);
+        // Past the menu's own two items and the separator, onto the first section's first.
+        await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+
+        const styles = getComputedStyle(named(host, 'Name'));
+
+        expect(document.activeElement, 'on it').toBe(named(host, 'Name'));
+        expect(styles.outlineColor).toBe('rgb(1, 2, 3)');
+        expect(styles.outlineOffset).toBe('-2px');
+    });
+
+    it('mutes an item in a section that cannot be chosen, as one of its own', async () => {
+        const host = await mount(`
+            <ui-menu>
+                <span slot="trigger">View</span>
+                <div role="group" aria-labelledby="sort">
+                    <span id="sort">Sort by</span>
+                    <button type="button" disabled>Name</button>
+                    <a href="#date" aria-disabled="true">Date</a>
+                </div>
+            </ui-menu>
+        `);
+
+        menu(host).style.setProperty('--ui-color-text-muted', 'rgb(4, 5, 6)');
+
+        for (const blocked of host.querySelectorAll<HTMLElement>(
+            '[role="group"] > :is(button, a)',
+        )) {
+            const styles = getComputedStyle(blocked);
+
+            expect(styles.color, blocked.textContent).toBe('rgb(4, 5, 6)');
+            expect(styles.cursor, blocked.textContent).toBe('not-allowed');
+        }
     });
 
     it('draws an item in a section as one of its own, by the rules it adopts', async () => {
