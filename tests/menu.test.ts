@@ -3178,26 +3178,35 @@ describe('opened at the pointer, a context menu', () => {
         expect(corner(menu(host)).y).toBeCloseTo(50, 0);
     });
 
-    it('holds its point in the top layer while it is open, and nothing once it closes', async () => {
-        const host = await mount(served());
-        const layered = (element: UiMenu): number =>
-            element.shadowRoot?.querySelectorAll(':popover-open').length ?? 0;
+    it('leaves from where it opened as it closes, its point kept in the top layer', async () => {
+        const style = document.createElement('style');
+
+        // The default theme's taste, whose panel leaves through a clip, slowed so that it is still
+        // leaving when it is read.
+        style.textContent = tokenStyleSheet();
+        document.body.append(style);
+
+        const host = await mount(
+            served('ltr', 'padding: 20px; block-size: 120px; --ui-duration-overlay: 10s'),
+        );
 
         only(host, '#area').dispatchEvent(secondary(60, 50));
         await shown();
-
-        expect(layered(menu(host)), 'its point and its panel').toBe(2);
-
         await userEvent.keyboard('{Escape}');
         await shown();
 
-        expect(layered(menu(host)), 'closed').toBe(0);
+        expect(menu(host).open, 'closed').toBe(false);
+        expect(corner(menu(host)).x, 'leaving from where it was').toBeCloseTo(60, 0);
+        expect(corner(menu(host)).y).toBeCloseTo(50, 0);
+    });
 
-        const own = await mount(fixture);
+    it('shows a point for a context menu alone: a menu of its own opened by its property shows its panel', async () => {
+        const host = await mount(fixture);
 
-        await open(menu(own));
+        menu(host).open = true;
+        await settle();
 
-        expect(layered(menu(own)), 'a menu of its own, its panel alone').toBe(1);
+        expect(menu(host).shadowRoot?.querySelectorAll(':popover-open').length).toBe(1);
     });
 
     it('opens toward the inline end right to left', async () => {

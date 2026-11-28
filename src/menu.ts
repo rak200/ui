@@ -676,9 +676,12 @@ export class UiMenu extends LitElement {
                from a point, a zero-size element placed where it was asked for, which anchors it as
                a trigger does — below it and toward the inline end, turned back inside the screen by
                the same flips, measured for RFC 0010. The point is a popover the menu shows in the
-               top layer while it is open, where the screen is what it is placed in whatever is
+               top layer as it first opens, where the screen is what it is placed in whatever is
                round the menu: in the page, a card's lift as the focus entered the menu made the
-               card the point's containing block, and the panel went with it, measured. */
+               card the point's containing block, and the panel went with it, measured. It stays
+               there while the menu is in the page, empty and with no size: hidden as the menu
+               closed, it took the panel's anchor away in the middle of its exit, which ran from
+               the screen's corner, measured. */
             :host([context]) {
                 display: contents;
             }
@@ -965,7 +968,7 @@ export class UiMenu extends LitElement {
         panel.append(items);
 
         // Where a context menu's panel hangs from: empty, so it says nothing, and a popover of its
-        // own, shown in the top layer as the menu opens.
+        // own, shown in the top layer as the menu first opens and kept there.
         this.#point.className = 'point';
         this.#point.setAttribute('popover', 'manual');
     }
@@ -1358,8 +1361,6 @@ export class UiMenu extends LitElement {
             this.#watching.abort();
             // The pointer's way to a submenu ends as it closes, whatever closed it.
             this.#crossed?.();
-            // And a context menu's point leaves the top layer with the panel it held.
-            this.#point.hidePopover();
             this.#give();
 
             return;
