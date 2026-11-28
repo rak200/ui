@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.6](https://github.com/rak200/ui/compare/0.9.5...0.9.6) (2026-11-28)
+
+
+### Bug Fixes
+
+* **menu:** a context menu's point in the top layer, which a card's lift no longer moves ([#505](https://github.com/rak200/ui/issues/505)) ([186f747](https://github.com/rak200/ui/commit/186f747a66cc031f1f9128776acfc3c619eb9bde))
+
 ## [0.9.5](https://github.com/rak200/ui/compare/0.9.4...0.9.5) (2026-11-28)
 
 
