@@ -16,6 +16,7 @@ import meta, {
     ShortcutsAndDescriptions,
     TicksAndSections,
     WithASubmenu,
+    ContextMenu,
 } from '../stories/menu.stories.js';
 import '../src/menu.js';
 import '../src/button.js';
@@ -2983,6 +2984,373 @@ describe('submenus', () => {
     });
 });
 
+/**
+ * Opened at the pointer, RFC 0010's: a context menu, `<ui-menu context>` written in what it serves,
+ * opened at the pointer by `contextmenu` and at the focused element by the menu key and Shift+F10.
+ * The events are dispatched at the points that matter, for the frame's scale.
+ */
+describe('opened at the pointer, a context menu', () => {
+    /** An area served by a context menu, with a button in it, written in `direction`. */
+    function served(
+        direction: 'ltr' | 'rtl' = 'ltr',
+        style = 'padding: 20px; block-size: 120px',
+    ): string {
+        return `
+            <div id="area" dir="${direction}" style="${style}">
+                <button type="button" id="inside">Focused</button>
+                <ui-menu context>
+                    <button type="button">Paste</button>
+                    <button type="button">Select all</button>
+                </ui-menu>
+            </div>
+        `;
+    }
+
+    /** A secondary click at a point, as `contextmenu` reaches the page, with the button up or down. */
+    function secondary(x: number, y: number, buttons = 0): MouseEvent {
+        return new MouseEvent('contextmenu', {
+            clientX: x,
+            clientY: y,
+            buttons,
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+        });
+    }
+
+    /**
+     * Lets an opening land: its frame, and the task its `toggle` comes in, which moves the focus and
+     * which a dispatched event, unlike a driven press, does not wait for.
+     */
+    async function shown(): Promise<void> {
+        await settle();
+        await wait(0);
+    }
+
+    /** Where the panel's corner at the point is, in the direction it opens toward. */
+    function corner(element: UiMenu, direction: 'ltr' | 'rtl' = 'ltr'): { x: number; y: number } {
+        const box = panel(element).getBoundingClientRect();
+
+        return { x: direction === 'ltr' ? box.left : box.right, y: box.top };
+    }
+
+    it('opens at the pointer on a secondary click in what it serves, keeping the platform menu shut', async () => {
+        const host = await mount(served());
+        const click = secondary(60, 50);
+
+        only(host, '#area').dispatchEvent(click);
+        await shown();
+
+        expect(click.defaultPrevented, 'the platform menu kept shut').toBe(true);
+        expect(menu(host).open).toBe(true);
+        expect(corner(menu(host)).x).toBeCloseTo(60, 0);
+        expect(corner(menu(host)).y).toBeCloseTo(50, 0);
+        expect(focused(), 'the focus in it').toBe('Paste');
+
+        await userEvent.keyboard('{Escape}');
+        window.dispatchEvent(new PointerEvent('pointerup'));
+        await shown();
+
+        expect(menu(host).open, 'not again as the next button comes up').toBe(false);
+    });
+
+    it('opens once the secondary button is up, where it came with the button down', async () => {
+        const host = await mount(served());
+
+        only(host, '#area').dispatchEvent(secondary(60, 50, 2));
+        await settle();
+
+        expect(menu(host).open, 'the button down').toBe(false);
+
+        window.dispatchEvent(new PointerEvent('pointerup'));
+        await wait(0);
+        await settle();
+
+        expect(menu(host).open, 'up').toBe(true);
+        expect(corner(menu(host)).x).toBeCloseTo(60, 0);
+
+        await userEvent.keyboard('{Escape}');
+        window.dispatchEvent(new PointerEvent('pointerup'));
+        await shown();
+
+        expect(menu(host).open, 'once').toBe(false);
+    });
+
+    it.each([
+        ['the menu key', '{ContextMenu}'],
+        ['Shift+F10', '{Shift>}{F10}{/Shift}'],
+    ])(
+        'opens at the focused element on %s, once, and gives it the focus back on Escape',
+        async (_, keys) => {
+            const host = await mount(served());
+            const button = only(host, '#inside');
+            let heard = 0;
+
+            only(host, '#area').addEventListener('contextmenu', () => {
+                heard += 1;
+            });
+            button.focus();
+            await userEvent.keyboard(keys);
+            await settle();
+
+            const middle = button.getBoundingClientRect();
+
+            expect(menu(host).open).toBe(true);
+            expect(corner(menu(host)).x).toBeCloseTo(middle.left + middle.width / 2, 0);
+            expect(corner(menu(host)).y).toBeCloseTo(middle.top + middle.height / 2, 0);
+            expect(heard, 'no contextmenu besides').toBe(0);
+
+            await userEvent.keyboard('{Escape}');
+            await settle();
+
+            expect(document.activeElement, 'the focus given back').toBe(button);
+        },
+    );
+
+    it('opens for no other key, nor for F10 without Shift', async () => {
+        const host = await mount(served());
+
+        only(host, '#inside').focus();
+        await userEvent.keyboard('{F10}{Shift>}{F9}{/Shift}');
+        await settle();
+
+        expect(menu(host).open).toBe(false);
+    });
+
+    it('leaves what happens in the menu to it', async () => {
+        const host = await mount(served());
+
+        only(host, '#area').dispatchEvent(secondary(60, 50));
+        await settle();
+
+        const inside = secondary(200, 200);
+
+        only(menu(host), 'button').dispatchEvent(inside);
+        only(menu(host), 'button').dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'ContextMenu', bubbles: true, cancelable: true }),
+        );
+
+        expect(inside.defaultPrevented, 'left to it').toBe(false);
+        expect(corner(menu(host)).x, 'where it was').toBeCloseTo(60, 0);
+    });
+
+    it('moves an open context menu to where it is asked for again, keeping where the focus goes back', async () => {
+        const host = await mount(served());
+        const button = only(host, '#inside');
+
+        button.focus();
+        await userEvent.keyboard('{ContextMenu}');
+        await settle();
+        only(host, '#area').dispatchEvent(secondary(120, 90));
+        await settle();
+
+        expect(menu(host).open).toBe(true);
+        expect(corner(menu(host)).x).toBeCloseTo(120, 0);
+        expect(corner(menu(host)).y).toBeCloseTo(90, 0);
+
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        expect(document.activeElement, 'to what had it as the menu first opened').toBe(button);
+    });
+
+    it('turns back inside the screen near its edges', async () => {
+        const host = await mount(served('ltr', 'position: fixed; inset: 0'));
+
+        only(host, '#area').dispatchEvent(secondary(window.innerWidth - 4, window.innerHeight - 4));
+        await settle();
+
+        const box = panel(menu(host)).getBoundingClientRect();
+
+        expect(box.right, 'inside on the right').toBeLessThanOrEqual(window.innerWidth);
+        expect(box.bottom, 'and at the bottom').toBeLessThanOrEqual(window.innerHeight);
+    });
+
+    it('opens toward the inline end right to left', async () => {
+        const host = await mount(served('rtl'));
+
+        only(host, '#area').dispatchEvent(secondary(220, 50));
+        await settle();
+
+        expect(corner(menu(host), 'rtl').x).toBeCloseTo(220, 0);
+    });
+
+    it('draws no trigger, and takes no box where it is written', async () => {
+        const host = await mount(served());
+
+        expect(getComputedStyle(trigger(menu(host))).display).toBe('none');
+        expect(getComputedStyle(menu(host)).display).toBe('contents');
+    });
+
+    it('leaves the menu on Escape where nothing had the focus as it opened', async () => {
+        const host = await mount(served());
+
+        only(host, '#area').dispatchEvent(secondary(60, 50));
+        await settle();
+
+        expect(focused()).toBe('Paste');
+
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        expect(menu(host).contains(document.activeElement), 'out of the menu').toBe(false);
+    });
+
+    it('opens for nothing where it no longer serves: moved out, or no longer a context menu', async () => {
+        const host = await mount(served());
+        const element = menu(host);
+
+        element.context = false;
+        await element.updateComplete;
+
+        const off = secondary(60, 50);
+
+        only(host, '#area').dispatchEvent(off);
+
+        expect([off.defaultPrevented, element.open], 'no longer one').toEqual([false, false]);
+
+        element.context = true;
+        await element.updateComplete;
+
+        // Into an element of its own beside the area, which serves what that element holds alone.
+        const elsewhere = document.createElement('div');
+
+        document.body.append(elsewhere);
+        elsewhere.append(element);
+
+        const moved = secondary(60, 50);
+
+        only(host, '#area').dispatchEvent(moved);
+
+        expect([moved.defaultPrevented, element.open], 'moved out').toEqual([false, false]);
+
+        elsewhere.dispatchEvent(secondary(10, 10));
+        await shown();
+
+        expect(element.open, 'serving where it went').toBe(true);
+    });
+
+    it('leaves the element it served alone once taken out', async () => {
+        const host = await mount(served());
+        const element = menu(host);
+
+        element.remove();
+
+        const thrown = await escaped(async () => {
+            const after = secondary(60, 50);
+
+            only(host, '#area').dispatchEvent(after);
+
+            expect(after.defaultPrevented, 'the platform menu its own again').toBe(false);
+
+            await shown();
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(element.open, 'never opened').toBe(false);
+    });
+
+    it('leaves the focus to a dialog an item opened, throwing nothing', async () => {
+        const host = await mount(`
+            ${served()}
+            <dialog id="asked"><input id="field" aria-label="Name" /></dialog>
+        `);
+        const dialog = only(host, '#asked') as HTMLDialogElement;
+
+        // What the item does: it opens a dialog, which takes the focus to its field.
+        only(menu(host), 'button').addEventListener('click', () => {
+            dialog.showModal();
+        });
+        only(host, '#inside').focus();
+        await userEvent.keyboard('{ContextMenu}');
+        await settle();
+
+        const thrown = await escaped(async () => {
+            await userEvent.keyboard('{Enter}');
+            await settle();
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(document.activeElement, 'in the dialog').toBe(only(host, '#field'));
+
+        dialog.close();
+    });
+
+    it('takes the focus back, throwing nothing, from a choice made where it holds no focus', async () => {
+        const host = await mount(served());
+        const button = only(host, '#inside');
+
+        button.focus();
+        await userEvent.keyboard('{ContextMenu}');
+        await settle();
+        // Out of the menu, which stays open, for a choice the host makes by script.
+        button.focus();
+
+        const thrown = await escaped(async () => {
+            only(menu(host), 'button').click();
+            await shown();
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+        expect(menu(host).open, 'closed').toBe(false);
+        expect(document.activeElement, 'where it was').toBe(button);
+    });
+
+    it('gives a menu of its own the focus back on its trigger, whatever had it as the menu opened', async () => {
+        const host = await mount(
+            `${fixture}<button type="button" id="elsewhere">Elsewhere</button>`,
+        );
+        const element = menu(host);
+
+        only(host, '#elsewhere').focus();
+        element.open = true;
+        await settle();
+        await userEvent.keyboard('{Escape}');
+        await settle();
+
+        expect(document.activeElement, 'the menu').toBe(element);
+        expect(element.shadowRoot?.activeElement, 'its trigger').toBe(trigger(element));
+    });
+
+    it('serves nothing written straight into a shadow root, throwing nothing', async () => {
+        const outer = document.createElement('div');
+        const root = outer.attachShadow({ mode: 'open' });
+
+        document.body.append(outer);
+
+        const thrown = await escaped(async () => {
+            root.innerHTML = `<ui-menu context><button type="button">Paste</button></ui-menu>`;
+            await (only(root, 'ui-menu') as UiMenu).updateComplete;
+        });
+
+        expect(thrown, 'nothing thrown').toEqual([]);
+    });
+
+    it('takes context from the attribute, and reflects it', async () => {
+        const host = await mount(fixture);
+        const element = menu(host);
+
+        element.setAttribute('context', '');
+
+        expect(element.context).toBe(true);
+
+        element.context = false;
+        await element.updateComplete;
+
+        expect(element.hasAttribute('context')).toBe(false);
+    });
+
+    it('is accessible open', async () => {
+        const host = await mount(served());
+
+        only(host, '#area').dispatchEvent(secondary(60, 50));
+        await settle();
+        await still(menu(host));
+
+        await expectAccessible(host);
+    });
+});
+
 describe('the values, all of which come from the token layer', () => {
     it('draws the trigger as the secondary button it is', async () => {
         // Measured against the real thing rather than asserted to match it, which is the
@@ -4135,6 +4503,7 @@ describe('menu stories', () => {
         ['TicksAndSections', TicksAndSections],
         ['ShortcutsAndDescriptions', ShortcutsAndDescriptions],
         ['WithASubmenu', WithASubmenu],
+        ['ContextMenu', ContextMenu],
     ] as const)('renders %s accessibly', async (name, story) => {
         await expectAccessible(await mountStory(story, meta, name));
     });

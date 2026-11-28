@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>A context menu, in three engines</title>
+        <!--
+            Where a <ui-menu context> opens, and what it does with the focus, in each engine a reader
+            uses (#468).
+
+            A step, not a test: the suite runs in Chromium alone and dispatches the events each
+            engine was measured sending, where a reader's menu key and secondary button are the
+            system's. It lives in tests/manual/ for the reasons interaction-states.mjs gives beside
+            it.
+
+            ## Running it
+
+                npm run workbench
+
+            Then open /tests/manual/menu-context.html at the address Vite prints, in Chrome, Firefox
+            and Safari. The page imports the package from src/, as a scratch page does, with the token
+            sheet and none of the workbench's shell.
+
+            ## Each case
+
+            - Case 1: click in the first area with the secondary button. The menu opens with its
+              corner where the pointer is, and the system's own menu does not; the focus is on Paste.
+              Escape closes it and leaves the focus off it.
+            - Case 2: Tab to the button in the first area and press the menu key, then Escape, then
+              Shift+F10. Each opens the menu once, its corner at the button's middle, the focus on
+              Paste; Escape gives the focus back to the button.
+            - Case 3: click with the secondary button near the window's bottom right corner, in the
+              area that sits there. The menu opens above the pointer and toward the left, inside the
+              window.
+            - Case 4: in the area that runs right to left, click with the secondary button. The menu
+              opens with its right corner at the pointer, toward the left.
+            - Case 5: open the menu, then click with the secondary button on one of its items. The
+              menu stays where it was.
+
+            ## Where it goes
+
+            A comment on #468, with the browser's version and the system. A menu that opens twice,
+            away from where it was asked for, or that leaves the focus on an item once it has closed,
+            is a defect of its own.
+        -->
+        <script type="module">
+            import { tokenStyleSheet } from '@rak200/ui';
+
+            const sheet = document.createElement('style');
+            sheet.textContent = tokenStyleSheet();
+            document.head.prepend(sheet);
+        </script>
+        <style>
+            body {
+                margin: 0;
+                padding: 1rem;
+                font-family: system-ui, sans-serif;
+                background: var(--ui-color-surface);
+                color: var(--ui-color-text);
+            }
+
+            .area {
+                margin-block-end: 1rem;
+                padding: 1rem;
+                border: 1px dashed currentColor;
+                border-radius: 0.5rem;
+                block-size: 8rem;
+            }
+
+            #corner {
+                position: fixed;
+                inset-block-end: 0;
+                inset-inline-end: 0;
+                inline-size: 12rem;
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="area">
+            <p>Case 1 and 2: click here with the secondary button, or focus the button.</p>
+            <button type="button">A shape</button>
+            <ui-menu context>
+                <button type="button">Paste</button>
+                <button type="button">Select all</button>
+            </ui-menu>
+        </div>
+        <div class="area" dir="rtl">
+            <p dir="ltr">Case 4: right to left.</p>
+            <ui-menu context>
+                <button type="button">Paste</button>
+                <button type="button">Select all</button>
+            </ui-menu>
+        </div>
+        <div class="area" id="corner">
+            <p>Case 3: near the corner.</p>
+            <ui-menu context>
+                <button type="button">Paste</button>
+                <button type="button">Select all</button>
+            </ui-menu>
+        </div>
+    </body>
+</html>
