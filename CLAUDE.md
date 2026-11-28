@@ -405,8 +405,10 @@ explains. This file restates none of them.
   `#onContext` and `#onContextKey` in `src/menu.ts`, the comment beside `.point`, `docs/menu.md`'s
   _Opened at the pointer_, and `tests/manual/menu-context.html`. Only Chromium sends `contextmenu` for
   the keys, and the key kept from its default keeps that away, measured for RFC 0010; a zero-size
-  element anchors the panel and is turned back inside the screen in the three engines; Linux sends
-  `contextmenu` with the button down, and the platform dismissed the menu as the press ended.
+  element anchors the panel and is turned back inside the screen in the three engines, shown in the
+  top layer while the menu is open, since a card's lift as the focus entered it moved the point with
+  the card; Linux sends `contextmenu` with the button down, and the platform dismissed the menu as
+  the press ended.
 - **Why a tooltip's sentence crosses as text rather than as a reference, and where that text
   lives** — [ARCHITECTURE.md](ARCHITECTURE.md), _A relationship needs one tree scope_, and
   `src/description.ts`, the carrier every control that accepts the handoff shares. RFC 0006 decided

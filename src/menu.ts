@@ -194,18 +194,19 @@ sheet.replaceSync(rules.cssText);
 // warm process Stryker switches mutants in, the original selectors stand before any mutant is
 // active. panelEffects() itself is graded where tests/effects.test.ts builds it at test time.
 /**
- * Where the panel's parts are, for its effects: the popover, the items the host slots into it,
+ * Where the panel's parts are, for its effects: the popover, by the value that tells it from a
+ * context menu's point, which is a popover too, the items the host slots into it,
  * which are its children with no slot of their own, and the trigger's caret, turned as it opens.
  */
 const parts: Panel = {
-    panel: '[popover]',
-    open: '[popover]:popover-open',
-    closed: '[popover]:not(:popover-open)',
-    above: "[popover][data-side='block-start']",
-    items: '[popover]:popover-open slot::slotted(:not([slot]))',
+    panel: "[popover='auto']",
+    open: "[popover='auto']:popover-open",
+    closed: "[popover='auto']:not(:popover-open)",
+    above: "[popover='auto'][data-side='block-start']",
+    items: "[popover='auto']:popover-open slot::slotted(:not([slot]))",
     item: (place) =>
-        `[popover]:popover-open slot::slotted(:nth-child(${String(place)} of :not([slot])))`,
-    rest: '[popover]:popover-open slot::slotted(:nth-child(n + 7 of :not([slot])))',
+        `[popover='auto']:popover-open slot::slotted(:nth-child(${String(place)} of :not([slot])))`,
+    rest: "[popover='auto']:popover-open slot::slotted(:nth-child(n + 7 of :not([slot])))",
     caret: 'svg',
     turned: ':host([open]) svg',
 };
@@ -503,7 +504,7 @@ export class UiMenu extends LitElement {
             /* The panel's own box. position: fixed is what the popover already is; it is
            restated because the anchored insets below place it against the viewport, and a
            reader of those rules should not have to know which stylesheet made it fixed. */
-            [popover] {
+            [popover='auto'] {
                 position: fixed;
                 margin: 0;
                 inset: auto;
@@ -535,7 +536,7 @@ export class UiMenu extends LitElement {
            boundary is what separates the surface from what is under it. On a layer in the
            accent, as the card's is and for its reason, which takes no pointer so the items
            are still what is chosen. */
-            [popover]::before {
+            [popover='auto']::before {
                 content: '';
                 position: absolute;
                 inset: -1px;
@@ -548,7 +549,7 @@ export class UiMenu extends LitElement {
             /* display is named under :popover-open and nowhere else, and that is the trap
            src/dialog.ts fell into once: the user agent hides a closed popover with
            display: none, and an author rule naming display unconditionally outranks it. */
-            [popover]:popover-open {
+            [popover='auto']:popover-open {
                 display: flex;
             }
 
@@ -565,7 +566,7 @@ export class UiMenu extends LitElement {
                 anchor-name: --menu;
             }
 
-            [popover] {
+            [popover='auto'] {
                 position-anchor: --menu;
                 top: anchor(bottom);
                 left: anchor(left);
@@ -575,19 +576,19 @@ export class UiMenu extends LitElement {
                     flip-block flip-inline;
             }
 
-            :host(:dir(rtl)) [popover] {
+            :host(:dir(rtl)) [popover='auto'] {
                 left: auto;
                 right: anchor(right);
             }
 
             /* align="end": from the trigger's trailing edge, which right to left is its left edge,
                turning to the leading edge by the same flip where it would run off the screen. */
-            :host([align='end']) [popover] {
+            :host([align='end']) [popover='auto'] {
                 left: auto;
                 right: anchor(right);
             }
 
-            :host([align='end']:dir(rtl)) [popover] {
+            :host([align='end']:dir(rtl)) [popover='auto'] {
                 right: auto;
                 left: anchor(left);
             }
@@ -654,7 +655,7 @@ export class UiMenu extends LitElement {
                its edge above the item — and clear of the edge of the panel round it, by that
                panel's padding and edge; toward the inline end, turned to the start and up where it
                would run off the screen, by the platform's flips. */
-            :host(:state(submenu)) [popover] {
+            :host(:state(submenu)) [popover='auto'] {
                 top: calc(anchor(top) - ${reference('--ui-space')} / 2 - 1px);
                 left: anchor(right);
                 margin: 0;
@@ -665,7 +666,7 @@ export class UiMenu extends LitElement {
                     flip-block flip-inline;
             }
 
-            :host(:state(submenu):dir(rtl)) [popover] {
+            :host(:state(submenu):dir(rtl)) [popover='auto'] {
                 left: auto;
                 right: anchor(left);
             }
@@ -674,7 +675,10 @@ export class UiMenu extends LitElement {
                focused element, with no trigger drawn and no box of its own there. Its panel hangs
                from a point, a zero-size element placed where it was asked for, which anchors it as
                a trigger does — below it and toward the inline end, turned back inside the screen by
-               the same flips, measured for RFC 0010. */
+               the same flips, measured for RFC 0010. The point is a popover the menu shows in the
+               top layer while it is open, where the screen is what it is placed in whatever is
+               round the menu: in the page, a card's lift as the focus entered the menu made the
+               card the point's containing block, and the panel went with it, measured. */
             :host([context]) {
                 display: contents;
             }
@@ -683,21 +687,26 @@ export class UiMenu extends LitElement {
                 display: none;
             }
 
-            :host([context]) [popover] {
+            :host([context]) [popover='auto'] {
                 position-anchor: --menu-point;
                 margin-block-start: 0;
             }
 
             .point {
                 position: fixed;
+                inset: auto;
                 inline-size: 0;
                 block-size: 0;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                background: none;
                 anchor-name: --menu-point;
             }
 
             /* The gap between the panel and its trigger: a margin on the side the trigger is on,
            which the flip moves to the other side with the panel. */
-            [popover] {
+            [popover='auto'] {
                 margin-block-start: calc(${reference('--ui-space')} / 2);
             }
 
@@ -955,8 +964,10 @@ export class UiMenu extends LitElement {
         items.addEventListener('slotchange', this.#wire);
         panel.append(items);
 
-        // Where a context menu's panel hangs from: empty, so it says nothing.
+        // Where a context menu's panel hangs from: empty, so it says nothing, and a popover of its
+        // own, shown in the top layer as the menu opens.
         this.#point.className = 'point';
+        this.#point.setAttribute('popover', 'manual');
     }
 
     /**
@@ -1034,6 +1045,12 @@ export class UiMenu extends LitElement {
         }
 
         if (this.open) {
+            // A context menu's point first, so it comes before the panel in the top layer, which an
+            // anchor there has to.
+            if (this.context) {
+                this.#point.showPopover();
+            }
+
             this.#panel.showPopover();
         } else {
             this.#panel.hidePopover();
@@ -1341,6 +1358,8 @@ export class UiMenu extends LitElement {
             this.#watching.abort();
             // The pointer's way to a submenu ends as it closes, whatever closed it.
             this.#crossed?.();
+            // And a context menu's point leaves the top layer with the panel it held.
+            this.#point.hidePopover();
             this.#give();
 
             return;

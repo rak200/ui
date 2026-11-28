@@ -3166,6 +3166,40 @@ describe('opened at the pointer, a context menu', () => {
         expect(box.bottom, 'and at the bottom').toBeLessThanOrEqual(window.innerHeight);
     });
 
+    it('opens at the pointer inside an element a transform moves, as a card is as it lifts', async () => {
+        const host = await mount(
+            served('ltr', 'padding: 20px; block-size: 120px; translate: 40px 30px'),
+        );
+
+        only(host, '#area').dispatchEvent(secondary(60, 50));
+        await shown();
+
+        expect(corner(menu(host)).x).toBeCloseTo(60, 0);
+        expect(corner(menu(host)).y).toBeCloseTo(50, 0);
+    });
+
+    it('holds its point in the top layer while it is open, and nothing once it closes', async () => {
+        const host = await mount(served());
+        const layered = (element: UiMenu): number =>
+            element.shadowRoot?.querySelectorAll(':popover-open').length ?? 0;
+
+        only(host, '#area').dispatchEvent(secondary(60, 50));
+        await shown();
+
+        expect(layered(menu(host)), 'its point and its panel').toBe(2);
+
+        await userEvent.keyboard('{Escape}');
+        await shown();
+
+        expect(layered(menu(host)), 'closed').toBe(0);
+
+        const own = await mount(fixture);
+
+        await open(menu(own));
+
+        expect(layered(menu(own)), 'a menu of its own, its panel alone').toBe(1);
+    });
+
     it('opens toward the inline end right to left', async () => {
         const host = await mount(served('rtl'));
 

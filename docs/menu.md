@@ -333,6 +333,10 @@ while it is open, it moves to where it was asked for.
   point, a zero-size element of its own placed where it was asked for, below it and toward the inline
   end — the right left to right, the left right to left — turned up and toward the start where it
   would run off the screen, by the same flips that turn the menu's.
+- **The point is shown in the top layer while the menu is open**, so it stays where the pointer was
+  whatever is round the menu: a transform, a filter or a containment on an element the menu is in
+  makes that element where a fixed element is placed, and a card that lifts as the focus enters it
+  moved the point, and the panel with it, away from the pointer.
 - **The focus goes into it and comes back** as the menu's does: onto its first item as it opens, and
   back to what had it as Escape or a choice closes it; where nothing had it, it leaves the menu. A
   click elsewhere closes it and leaves the focus where the click put it.
