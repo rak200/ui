@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.9.5](https://github.com/rak200/ui/compare/0.9.4...0.9.5) (2026-11-28)
+
+
+### Features
+
+* **button-group:** buttons joined from outside, named together, and a toolbar's one tab stop ([#481](https://github.com/rak200/ui/issues/481)) ([6d75063](https://github.com/rak200/ui/commit/6d7506386d693e90fdba6b696edb755e806e329a))
+* **button:** a danger variant, a primary drawn in the danger with four names of its own ([#478](https://github.com/rak200/ui/issues/478)) ([827f449](https://github.com/rak200/ui/commit/827f44993cad85fc44290c506ddc943402d05ddf))
+* **button:** a toggle, pressed on its own button and turned by a click, drawn in the selected names ([#479](https://github.com/rak200/ui/issues/479)) ([7829952](https://github.com/rak200/ui/commit/7829952d888414a287d31c7b9759653739ac5e5d))
+* **button:** aria-disabled, drawn and refused as a disabled button, and still reached by the keys ([#480](https://github.com/rak200/ui/issues/480)) ([08f717e](https://github.com/rak200/ui/commit/08f717e6196b1dc72f102e67a74a4a108c9b5376))
+* **card:** opened where it is clicked, by the link the host marks, spread over the card ([#493](https://github.com/rak200/ui/issues/493)) ([683bdac](https://github.com/rak200/ui/commit/683bdac139ebfd6addbe4546cc67b1a2149c1dba))
+* **checkbox:** a help on the checkbox and the switch, announced after an error as a field's is ([4240ba3](https://github.com/rak200/ui/commit/4240ba38bdba429ce8e18c4754c6a5ed8d20a925))
+* **dialog:** an alert, role="alertdialog" on the dialog for a choice the reader has to make ([#487](https://github.com/rak200/ui/issues/487)) ([db9dd90](https://github.com/rak200/ui/commit/db9dd9091c30550c66c5f7d212f0d20afeffd294))
+* **dialog:** closed by its form, with the value of the button that sent it as its returnValue ([#486](https://github.com/rak200/ui/issues/486)) ([065aae8](https://github.com/rak200/ui/commit/065aae81ba09368bd370aae6f0fa921db8f1d534))
+* **dialog:** opened from markup, --show and --close from any button aimed at it with commandfor ([#485](https://github.com/rak200/ui/issues/485)) ([9476bb1](https://github.com/rak200/ui/commit/9476bb101602384e3bc97edf29a2d131c36e1b6b))
+* **icon:** directional, a glyph that points one way turned where the text runs right to left ([#482](https://github.com/rak200/ui/issues/482)) ([544a49e](https://github.com/rak200/ui/commit/544a49e2df93b71982314cec1c543d027d65c9e8))
+* **input:** a button of the page's at the box's end, named by itself and reached by Tab after it ([#476](https://github.com/rak200/ui/issues/476)) ([c77e5f9](https://github.com/rak200/ui/commit/c77e5f93516cbc13adf68c240e497a8142efd9ed))
+* **input:** a clear button, the password shown, and a count, each drawn where its label names it ([4240ba3](https://github.com/rak200/ui/commit/4240ba38bdba429ce8e18c4754c6a5ed8d20a925))
+* **input:** a prefix and a suffix, text or a glyph drawn in the box over the control's padding ([4240ba3](https://github.com/rak200/ui/commit/4240ba38bdba429ce8e18c4754c6a5ed8d20a925))
+* **input:** a textarea grows with its text, from its rows to the height the page caps it at ([4240ba3](https://github.com/rak200/ui/commit/4240ba38bdba429ce8e18c4754c6a5ed8d20a925))
+* **input:** suggestions, written as a select's choices and offered as the platform's own list ([#477](https://github.com/rak200/ui/issues/477)) ([a83ac02](https://github.com/rak200/ui/commit/a83ac02f7a0bfea5c387db64c169c55e9d28a03b))
+* **menu:** a context menu, opened at the pointer and by the menu key or Shift+F10 ([#501](https://github.com/rak200/ui/issues/501)) ([826dcca](https://github.com/rak200/ui/commit/826dcca3d8f38bded1e228e5ef4c09af03910d87))
+* **menu:** a shortcut and a description on an item, drawn by rules the menu adopts ([#499](https://github.com/rak200/ui/issues/499)) ([2cad967](https://github.com/rak200/ui/commit/2cad96768f54c4c6a7e884164c5a52e9aba5c03f))
+* **menu:** align="end", the panel hung from the trigger's trailing edge where the host asks ([#497](https://github.com/rak200/ui/issues/497)) ([9b5e357](https://github.com/rak200/ui/commit/9b5e357322dc1893959c6fed6c3fc60e09c88270))
+* **menu:** items that tick, and sections named by a heading, in the host's tree ([#498](https://github.com/rak200/ui/issues/498)) ([ec8c699](https://github.com/rak200/ui/commit/ec8c6996647c1cc45f2dee90002891d66f23e297))
+* **menu:** submenus, a ui-menu written in another, opened beside its trigger ([#500](https://github.com/rak200/ui/issues/500)) ([3506d23](https://github.com/rak200/ui/commit/3506d239cc2333525d1806d06415e8e8c5116f99))
+* **radio:** choices drawn as cards, joined as a group's buttons, each with a description ([#496](https://github.com/rak200/ui/issues/496)) ([e561d18](https://github.com/rak200/ui/commit/e561d181beb01fa9abba83bf880d70c2416d2ff8))
+* **select:** a placeholder, the platform's own first choice with no value, which required refuses ([4240ba3](https://github.com/rak200/ui/commit/4240ba38bdba429ce8e18c4754c6a5ed8d20a925))
+* **table:** a header that sticks to a box given a height, and a first column under sticky-column ([#495](https://github.com/rak200/ui/issues/495)) ([dff0fc6](https://github.com/rak200/ui/commit/dff0fc624f93bd7cea5fb5190a6c92a400a93553))
+* **table:** numeric columns, end-aligned in tabular figures, for the cells the host marks ([#494](https://github.com/rak200/ui/issues/494)) ([4fa1622](https://github.com/rak200/ui/commit/4fa162285cbfe727a654cfafa9e1e7fcaf0aef09))
+* **toast:** a heading above the message, read with it in the region the variant chooses ([#488](https://github.com/rak200/ui/issues/488)) ([eea0710](https://github.com/rak200/ui/commit/eea0710eba34c01cf6dc02ac4a44c4c23b0abe60))
+* **toast:** an action, a button the host writes, on a toast that then never expires ([#489](https://github.com/rak200/ui/issues/489)) ([4069d95](https://github.com/rak200/ui/commit/4069d95b038b144271116708dfa0e345f0bf73e3))
+* **tooltip:** a side of its own for the tip, below its trigger or beside it, in an island too ([#483](https://github.com/rak200/ui/issues/483)) ([eed9d67](https://github.com/rak200/ui/commit/eed9d6784ae33c0265fd690284143b1b31eea30b))
+* **tooltip:** an arrow on the tip, pointing at its trigger's middle from the side it landed on ([#484](https://github.com/rak200/ui/issues/484)) ([4767fa6](https://github.com/rak200/ui/commit/4767fa664300ed1c1e4d9ed916a8e3184641013b))
+
 ## [0.9.4](https://github.com/rak200/ui/compare/0.9.3...0.9.4) (2026-11-20)
 
 
