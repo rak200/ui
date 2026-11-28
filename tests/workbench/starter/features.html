@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RFC 0010's features</title>
+        <!--
+            A scratch page of what RFC 0010 taught the components, each feature on the component it
+            belongs to, written as a consumer writes one. The issue each card's notes name is where
+            the feature was built. The workbench inserts the token sheet and draws its shell over
+            the page, so neither is written here.
+        -->
+        <script type="module" src="./features.ts"></script>
+        <style>
+            body {
+                margin: 0;
+                padding: 1.5rem;
+                background: var(--ui-color-surface);
+                color: var(--ui-color-text);
+                font-family: var(--ui-font);
+            }
+
+            main {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+                gap: 1.5rem;
+                align-items: start;
+                max-inline-size: 72rem;
+            }
+
+            section {
+                display: grid;
+                gap: 1rem;
+            }
+
+            h2 {
+                margin: 0;
+                font-size: 1.125rem;
+            }
+
+            h3 {
+                margin: 0;
+                font-size: 1rem;
+            }
+
+            p {
+                margin: 0;
+            }
+
+            .note {
+                color: var(--ui-color-text-muted);
+                font-size: var(--ui-text-supporting);
+            }
+
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                align-items: center;
+            }
+
+            .tips {
+                padding-block: 2.5rem;
+                justify-content: space-around;
+            }
+
+            .plain [slot='tip']::before {
+                content: none;
+            }
+
+            .area {
+                display: grid;
+                gap: 0.5rem;
+                justify-items: start;
+                padding: 1rem;
+                border: 1px dashed currentColor;
+                border-radius: 0.5rem;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <ui-card>
+                <h2 slot="header">Fields</h2>
+                <section>
+                    <p class="note">Text before and after the value, #444.</p>
+                    <ui-input
+                        label="Price"
+                        name="price"
+                        help="Billed monthly."
+                        prefix-text="R$"
+                        suffix-text="per month"
+                    ></ui-input>
+                    <p class="note">A clear button, the password shown, and a count, #445.</p>
+                    <ui-input label="Search invoices" name="q" type="search" clear-label="Clear">
+                        <ui-icon slot="prefix" name="search"></ui-icon>
+                    </ui-input>
+                    <ui-input
+                        label="Password"
+                        name="password"
+                        type="password"
+                        reveal-label="Show password"
+                    ></ui-input>
+                    <ui-input
+                        label="Headline"
+                        name="headline"
+                        maxlength="60"
+                        count-text="{remaining} characters left"
+                    ></ui-input>
+                    <p class="note">A button of yours at the field's end, #446.</p>
+                    <ui-input label="Token" name="token" value="3f9a-77c2" readonly>
+                        <ui-button
+                            slot="action"
+                            id="copy"
+                            variant="secondary"
+                            data-ui-density="compact"
+                            ><ui-icon name="copy"></ui-icon> Copy</ui-button
+                        >
+                    </ui-input>
+                    <p class="note">Suggestions, which take a value of your own too, #447.</p>
+                    <ui-input label="City" name="city" help="Pick one, or type another.">
+                        <ui-option value="Lisbon"></ui-option>
+                        <ui-option value="Porto"></ui-option>
+                        <ui-option value="Braga"></ui-option>
+                    </ui-input>
+                    <p class="note">A text area that grows with its text, #441.</p>
+                    <ui-textarea
+                        label="Notes"
+                        name="notes"
+                        rows="2"
+                        placeholder="Write a few lines, and it grows with them."
+                    ></ui-textarea>
+                </section>
+            </ui-card>
+
+            <ui-card>
+                <h2 slot="header">Choices</h2>
+                <section>
+                    <p class="note">A placeholder, which a required select refuses, #443.</p>
+                    <ui-select
+                        label="Currency"
+                        name="currency"
+                        placeholder="Choose a currency"
+                        required
+                    >
+                        <ui-option value="brl">Real</ui-option>
+                        <ui-option value="usd">Dollar</ui-option>
+                        <ui-option value="eur">Euro</ui-option>
+                    </ui-select>
+                    <p class="note">A help line under a checkbox and a switch, #442.</p>
+                    <ui-checkbox
+                        label="Send a receipt"
+                        name="receipt"
+                        help="One goes to the address on the order."
+                    ></ui-checkbox>
+                    <ui-switch
+                        label="Email notifications"
+                        name="notify"
+                        help="Once a day, at most."
+                    ></ui-switch>
+                    <p class="note">Choices drawn as cards, each with a description, #463.</p>
+                    <ui-radio-group label="Plan" name="plan" variant="cards">
+                        <ui-radio value="free" description="One project, and the community forum."
+                            >Free</ui-radio
+                        >
+                        <ui-radio
+                            value="pro"
+                            checked
+                            description="Unlimited projects, and priority support."
+                            >Pro</ui-radio
+                        >
+                        <ui-radio value="team" description="Everything in Pro, for the whole team."
+                            >Team</ui-radio
+                        >
+                    </ui-radio-group>
+                </section>
+            </ui-card>
+
+            <ui-card>
+                <h2 slot="header">Buttons</h2>
+                <section>
+                    <p class="note">A danger button, #448, and toggle buttons, #449.</p>
+                    <div class="row">
+                        <ui-button variant="danger">Delete</ui-button>
+                        <ui-button toggle type="button">Bold</ui-button>
+                        <ui-button toggle pressed type="button">Italic</ui-button>
+                    </div>
+                    <p class="note">
+                        A button that keeps its tab stop and says why it does nothing yet, #450.
+                    </p>
+                    <div class="row">
+                        <ui-tooltip>
+                            <ui-button aria-disabled="true">Save</ui-button>
+                            <span slot="tip">Saving needs a name first.</span>
+                        </ui-tooltip>
+                    </div>
+                    <p class="note">A toolbar of joined buttons, one tab stop for all, #451.</p>
+                    <ui-button-group label="Text style" toolbar>
+                        <ui-button toggle pressed type="button"
+                            ><ui-icon name="bold" label="Bold"></ui-icon
+                        ></ui-button>
+                        <ui-button toggle type="button"
+                            ><ui-icon name="italic" label="Italic"></ui-icon
+                        ></ui-button>
+                        <ui-button toggle type="button"
+                            ><ui-icon name="underline" label="Underline"></ui-icon
+                        ></ui-button>
+                    </ui-button-group>
+                    <p class="note">An icon turned where the text runs right to left, #452.</p>
+                    <div class="row">
+                        <ui-button variant="secondary"
+                            >Next <ui-icon name="arrow-right" directional></ui-icon
+                        ></ui-button>
+                        <ui-button variant="secondary" dir="rtl" lang="he"
+                            >הבא <ui-icon name="arrow-right" directional></ui-icon
+                        ></ui-button>
+                    </div>
+                </section>
+            </ui-card>
+
+            <ui-card>
+                <h2 slot="header">Tips</h2>
+                <section>
+                    <p class="note">
+                        A side of each tip's own, #453, and an arrow pointing at its trigger, #454,
+                        which the last tip takes away.
+                    </p>
+                    <div class="row tips">
+                        <ui-tooltip side="block-end">
+                            <ui-button variant="secondary">Below</ui-button>
+                            <span slot="tip">Below it.</span>
+                        </ui-tooltip>
+                        <ui-tooltip side="inline-start">
+                            <ui-button variant="secondary">Start</ui-button>
+                            <span slot="tip">At its start.</span>
+                        </ui-tooltip>
+                        <ui-tooltip side="inline-end">
+                            <ui-button variant="secondary">End</ui-button>
+                            <span slot="tip">At its end.</span>
+                        </ui-tooltip>
+                        <ui-tooltip class="plain">
+                            <ui-button variant="secondary">Plain</ui-button>
+                            <span slot="tip">Above, with no arrow.</span>
+                        </ui-tooltip>
+                    </div>
+                </section>
+            </ui-card>
+
+            <ui-card>
+                <h2 slot="header">Dialogs</h2>
+                <section>
+                    <p class="note">Opened and closed from markup, with no script, #455.</p>
+                    <div class="row">
+                        <button type="button" commandfor="from-markup" command="--show">
+                            Archive the project
+                        </button>
+                    </div>
+                    <p class="note">
+                        Closed by its form, the button that sent it its answer, #456.
+                    </p>
+                    <div class="row">
+                        <button type="button" commandfor="by-its-form" command="--show">
+                            Leave the workspace
+                        </button>
+                        <output id="answer" class="note">No answer yet.</output>
+                    </div>
+                    <p class="note">An alert, for a choice the reader has to make, #457.</p>
+                    <div class="row">
+                        <ui-button id="alarm" variant="danger">Delete the account</ui-button>
+                    </div>
+                </section>
+            </ui-card>
+
+            <ui-card>
+                <h2 slot="header">Toasts</h2>
+                <section>
+                    <p class="note">
+                        A heading above the message, #458, and an action, after which the toast
+                        stays until it is dismissed, #459.
+                    </p>
+                    <div class="row">
+                        <ui-button id="headed" variant="secondary">Send the invoice</ui-button>
+                        <ui-button id="undoable" variant="secondary">Delete the invoice</ui-button>
+                    </div>
+                </section>
+            </ui-card>
+
+            <ui-card>
+                <h3 slot="header">
+                    <a href="#report" data-ui-card-link>The monthly report</a>
+                </h3>
+                <p>
+                    A click anywhere on the card opens the report, #460; the button below keeps its
+                    own.
+                </p>
+                <div slot="footer" class="row">
+                    <ui-button id="compare" variant="secondary">Compare</ui-button>
+                </div>
+            </ui-card>
+
+            <ui-card>
+                <h2 slot="header">Menus</h2>
+                <section>
+                    <p class="note">
+                        Items that tick, and sections named by a heading, #465; a shortcut and a
+                        description on an item, #466; and a submenu, #467.
+                    </p>
+                    <div class="row">
+                        <ui-menu>
+                            <span slot="trigger">View</span>
+                            <button type="button" role="menuitemcheckbox" aria-checked="true">
+                                Show the ruler
+                            </button>
+                            <button type="button" role="menuitemcheckbox">Show the grid</button>
+                            <hr />
+                            <div role="group" aria-labelledby="sort">
+                                <span id="sort">Sort by</span>
+                                <button type="button" role="menuitemradio" aria-checked="true">
+                                    Name
+                                </button>
+                                <button type="button" role="menuitemradio" aria-checked="false">
+                                    Date
+                                </button>
+                            </div>
+                        </ui-menu>
+                        <ui-menu>
+                            <span slot="trigger">File</span>
+                            <button type="button">
+                                Rename <kbd>F2</kbd
+                                ><span data-ui-description>Give the file a new name.</span>
+                            </button>
+                            <button type="button">Duplicate <kbd>Ctrl+D</kbd></button>
+                            <ui-menu>
+                                <span slot="trigger">Share</span>
+                                <button type="button">Copy the link</button>
+                                <button type="button">Email</button>
+                            </ui-menu>
+                            <hr />
+                            <button type="button">
+                                Delete <kbd>Del</kbd
+                                ><span data-ui-description>It goes to the bin for a month.</span>
+                            </button>
+                        </ui-menu>
+                    </div>
+                    <p class="note">Hung from the trigger's other edge, at the row's end, #464.</p>
+                    <div class="row" style="justify-content: end">
+                        <ui-menu align="end">
+                            <span slot="trigger">Sort</span>
+                            <button type="button">Newest first, then by client</button>
+                            <button type="button">Oldest first</button>
+                        </ui-menu>
+                    </div>
+                    <p class="note">
+                        A context menu, opened at the pointer by a secondary click, and at the
+                        focused element by the menu key or Shift+F10, #468.
+                    </p>
+                    <div class="area">
+                        <p>Click here with the secondary button.</p>
+                        <ui-button variant="secondary"
+                            >Or focus me and press the menu key</ui-button
+                        >
+                        <ui-menu context>
+                            <button type="button">Paste</button>
+                            <button type="button">Select all</button>
+                        </ui-menu>
+                    </div>
+                </section>
+            </ui-card>
+
+            <section>
+                <p class="note">
+                    Numeric columns, #461, and a header that sticks to a box given a height, with a
+                    first column that sticks under <code>sticky-column</code>, #462.
+                </p>
+                <ui-table sticky-column style="max-block-size: 16rem">
+                    <table id="ledger" style="inline-size: 44rem">
+                        <caption>
+                            The ledger
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Client</th>
+                                <th scope="col">Number</th>
+                                <th scope="col">Issued</th>
+                                <th scope="col">Due</th>
+                                <th scope="col" data-ui-numeric>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </ui-table>
+            </section>
+        </main>
+
+        <ui-dialog id="from-markup">
+            <h2 slot="title">Archive the project</h2>
+            <p>An archived project is kept, and can be opened again.</p>
+            <button slot="actions" type="button" commandfor="from-markup" command="--close">
+                Cancel
+            </button>
+            <button slot="actions" type="button" commandfor="from-markup" command="--close">
+                Archive
+            </button>
+        </ui-dialog>
+
+        <ui-dialog id="by-its-form">
+            <h2 slot="title">Leave the workspace</h2>
+            <form method="dialog" id="leaving">
+                <p>Your projects stay with the workspace.</p>
+            </form>
+            <button slot="actions" form="leaving" value="stay">Stay</button>
+            <button slot="actions" form="leaving" value="leave">Leave</button>
+        </ui-dialog>
+
+        <ui-dialog id="alert" alert>
+            <h2 slot="title">Delete the account</h2>
+            <p>This cannot be undone. Everything in the workspace goes with it.</p>
+            <ui-button slot="actions" variant="secondary">Cancel</ui-button>
+            <ui-button slot="actions" variant="danger">Delete</ui-button>
+        </ui-dialog>
+
+        <ui-toaster></ui-toaster>
+    </body>
+</html>
