@@ -357,6 +357,19 @@ function named(target: EventTarget | null): string {
     return `${target.localName}${id}${name === null ? '' : `[name=${name}]`}`;
 }
 
+/**
+ * Whether `event` is a dialog's form answering it: a submission that goes nowhere, and closes its
+ * dialog only where nothing prevented it, a `<dialog>` of the platform's as a `<ui-dialog>` does.
+ */
+function answering(event: Event): boolean {
+    return (
+        event instanceof SubmitEvent &&
+        event.target instanceof HTMLFormElement &&
+        (event.submitter?.getAttribute('formmethod')?.toLowerCase() ?? event.target.method) ===
+            'dialog'
+    );
+}
+
 /** What `event` carried, as the log shows it. */
 function carried(event: Event): string {
     const target = event.target;
@@ -365,8 +378,9 @@ function carried(event: Event): string {
         const entries = [...new FormData(target).entries()].map(
             ([name, value]) => `${name}=${typeof value === 'string' ? value : value.name}`,
         );
+        const where = answering(event) ? 'closing its dialog' : 'held on the page';
 
-        return `${entries.length === 0 ? 'nothing' : entries.join(' ')} (held on the page)`;
+        return `${entries.length === 0 ? 'nothing' : entries.join(' ')} (${where})`;
     }
 
     if (!(target instanceof Element)) {
@@ -552,8 +566,9 @@ class WorkbenchShell extends LitElement {
             return;
         }
 
-        if (event.type === 'submit') {
-            // A scratch form has nowhere to go, and leaving would take the log with it.
+        // A scratch form has nowhere to go, and leaving would take the log with it. A dialog's form
+        // goes nowhere either, and held it would leave its dialog open.
+        if (event.type === 'submit' && !answering(event)) {
             event.preventDefault();
         }
 

@@ -8,8 +8,11 @@ A page for using the components while they are built, which
 npm run workbench
 ```
 
-Then open the address Vite prints, on port 5180 unless another server holds it. The first run lays a
-starter page out in `reports/workbench/`, with every component on it.
+Then open the address Vite prints, on port 5180 unless another server holds it. The first run lays
+the starter out in `reports/workbench/`: `index.html`, with every component on it, and
+`features.html`, with each feature [RFC 0010](../../docs/proposals/0010-component-features.md) gave
+them on the component it belongs to. A scratch laid out before a starter page arrived does not get
+it: copy the page and its module from `starter/`.
 
 ## The scratch
 
@@ -41,7 +44,8 @@ reload each save causes.
 - **An effect for one component is written under the component's own name**, at the page:
   `--ui-motion-card-hover-fill` reaches every card and nothing a card holds, where a rule on
   `ui-card` would reach its buttons and fields too. The page's is `--ui-motion-hover-fill`.
-- **A submission is held on the page**, so the log keeps what it sent.
+- **A submission is held on the page**, so the log keeps what it sent. A dialog's form is let
+  through, since it goes nowhere and, held, would leave its dialog open.
 - **While a modal dialog is open the shell is inert**, as everything outside a modal is.
 
 ## When something does not show
