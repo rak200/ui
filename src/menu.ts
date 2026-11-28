@@ -670,6 +670,31 @@ export class UiMenu extends LitElement {
                 right: anchor(left);
             }
 
+            /* context: a menu opened from the element it is written in, at the pointer or at the
+               focused element, with no trigger drawn and no box of its own there. Its panel hangs
+               from a point, a zero-size element placed where it was asked for, which anchors it as
+               a trigger does — below it and toward the inline end, turned back inside the screen by
+               the same flips, measured for RFC 0010. */
+            :host([context]) {
+                display: contents;
+            }
+
+            :host([context]) [part~='trigger'] {
+                display: none;
+            }
+
+            :host([context]) [popover] {
+                position-anchor: --menu-point;
+                margin-block-start: 0;
+            }
+
+            .point {
+                position: fixed;
+                inline-size: 0;
+                block-size: 0;
+                anchor-name: --menu-point;
+            }
+
             /* The gap between the panel and its trigger: a margin on the side the trigger is on,
            which the flip moves to the other side with the panel. */
             [popover] {
@@ -765,6 +790,7 @@ export class UiMenu extends LitElement {
     static override readonly properties = {
         open: { type: Boolean, reflect: true },
         align: { type: String, reflect: true },
+        context: { type: Boolean, reflect: true },
     };
 
     /**
@@ -786,6 +812,25 @@ export class UiMenu extends LitElement {
      * Reflected.
      */
     align: MenuAlign = 'start';
+
+    /**
+     * Whether the menu is a context menu, opened from the element it is written in: at the pointer
+     * by a secondary click, and at the focused element by the menu key or Shift+F10, with no trigger
+     * drawn. Reflected.
+     */
+    context = false;
+
+    /** The point a context menu's panel hangs from, a zero-size element placed where it was asked for. */
+    readonly #point = document.createElement('span');
+
+    /** What stops a context menu listening to the element it is written in. */
+    #serving = new AbortController();
+
+    /**
+     * What had the focus as the menu last opened, however it was opened, which a context menu gives
+     * it back to as it closes.
+     */
+    #before: HTMLElement = document.documentElement;
 
     /** The button this component owns, so the relationship below cannot be miswired. */
     readonly #trigger = document.createElement('button');
@@ -909,6 +954,9 @@ export class UiMenu extends LitElement {
         const items = slot();
         items.addEventListener('slotchange', this.#wire);
         panel.append(items);
+
+        // Where a context menu's panel hangs from: empty, so it says nothing.
+        this.#point.className = 'point';
     }
 
     /**
@@ -928,6 +976,7 @@ export class UiMenu extends LitElement {
         }
 
         this.#nest();
+        this.#serve();
 
         // Stryker disable next-line CallExpression: watch() adds the page's two listeners, and in
         // the warm process Stryker switches mutants in, a run before has already added them, so the
@@ -945,6 +994,7 @@ export class UiMenu extends LitElement {
         this.#watching.abort();
         window.clearTimeout(this.#opening);
         this.#crossed?.();
+        this.#serving.abort();
 
         // Stryker disable next-line CallExpression: this reaches exactly two things in Lit
         // and this element has neither — `__controllers` is empty, because nothing here
@@ -961,6 +1011,7 @@ export class UiMenu extends LitElement {
 
     /** Mirrors `open` onto the trigger, and shows or hides the panel when the two disagree. */
     override updated(): void {
+        this.#serve();
         this.#trigger.setAttribute('aria-expanded', String(this.open));
         this.#description.point(this.#trigger);
 
@@ -994,7 +1045,7 @@ export class UiMenu extends LitElement {
         // The carrier sits beside the trigger rather than inside the panel: the panel is a
         // popover and the reference has to resolve from where the reader's focus lands,
         // which is the trigger's own tree scope and not the layer above it.
-        return html`${this.#trigger}${this.#panel}${this.#description.carrier()}`;
+        return html`${this.#trigger}${this.#panel}${this.#point}${this.#description.carrier()}`;
     }
 
     /**
@@ -1264,9 +1315,14 @@ export class UiMenu extends LitElement {
      * written as it is first drawn. So the side is foretold here by the height the panel had when
      * it was last open, and read on `toggle` from where the panel landed. Only on the way in: a
      * panel on its way out leaves from the side the reader saw it on.
+     *
+     * It is also the last moment what had the focus still has it, which a context menu gives the
+     * focus back to: something always has it, the body where nothing else does, and an element of
+     * SVG's takes it as one of HTML's does.
      */
     readonly #onBeforeToggle = (event: ToggleEvent): void => {
         if (event.newState === 'open') {
+            this.#before = document.activeElement as HTMLElement;
             this.#predict();
         }
     };
@@ -1328,7 +1384,104 @@ export class UiMenu extends LitElement {
         }
 
         this.#returning = false;
-        this.#trigger.focus();
+
+        // A context menu has no trigger to go back to, so the focus goes back to what had it, or
+        // leaves the menu where nothing did: WebKit kept it on the hidden item, measured, where
+        // Chromium and Firefox take it off themselves. An item is all that is blurred, so the
+        // focus a dialog an item opened took is left where it is.
+        if (this.context) {
+            this.querySelector<HTMLElement>(':focus')?.blur();
+            this.#before.focus();
+        } else {
+            this.#trigger.focus();
+        }
+    }
+
+    /**
+     * Listens, as a context menu, to the element it is written in, and to nothing where it is not
+     * one: for a secondary click there, and for the menu key and Shift+F10 on what has the focus in
+     * it. Done again as it connects and as it updates, whatever changed: two listeners, which a
+     * comparison of what it served before would only spare.
+     */
+    #serve(): void {
+        this.#serving.abort();
+        this.#serving = new AbortController();
+
+        const element = this.parentElement;
+
+        if (!this.context || element === null) {
+            return;
+        }
+
+        const watched = { signal: this.#serving.signal };
+
+        element.addEventListener('contextmenu', this.#onContext, watched);
+        element.addEventListener('keydown', this.#onContextKey, watched);
+    }
+
+    /**
+     * Opens a context menu where the pointer asked for it, keeping the platform's own menu shut.
+     *
+     * **A button still down opens it once the button is up.** Linux sends `contextmenu` as the
+     * secondary button goes down, and the platform dismisses an `auto` popover as a press that began
+     * outside it ends, so a menu opened then closed as the button came up — measured in the three
+     * engines. Where `contextmenu` comes with the button up, as it does elsewhere, it opens at once.
+     */
+    readonly #onContext = (event: MouseEvent): void => {
+        // What happens in the menu is the menu's own.
+        if (event.composedPath().includes(this)) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const { clientX, clientY } = event;
+
+        if (event.buttons === 0) {
+            this.#show(clientX, clientY);
+
+            return;
+        }
+
+        window.addEventListener(
+            'pointerup',
+            () => {
+                // A task later, once the platform has dismissed what the press dismisses.
+                window.setTimeout(() => {
+                    this.#show(clientX, clientY);
+                });
+            },
+            { once: true },
+        );
+    };
+
+    /**
+     * Opens a context menu at the focused element on the menu key or Shift+F10, read as keys, since
+     * only Chromium sends `contextmenu` for them — measured for RFC 0010. Preventing the key keeps
+     * Chromium's `contextmenu` away too, so the menu opens once in every engine, measured.
+     */
+    readonly #onContextKey = (event: KeyboardEvent): void => {
+        if (
+            (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) ||
+            event.composedPath().includes(this)
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const box = (event.target as Element).getBoundingClientRect();
+
+        this.#show(box.left + box.width / 2, box.top + box.height / 2);
+    };
+
+    /**
+     * Opens a context menu at a point, or moves an open one there, whose panel follows its point.
+     */
+    #show(x: number, y: number): void {
+        this.#point.style.left = `${String(x)}px`;
+        this.#point.style.top = `${String(y)}px`;
+        this.open = true;
     }
 
     /**
